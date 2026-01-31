@@ -43,14 +43,14 @@ struct Cli {
     verbose: bool,
 
     /// Apply automatic fixes
-    #[arg(long)]
+    #[arg(long, group = "fix_mode")]
     fix: bool,
 
     /// Show what would be fixed without modifying files
-    #[arg(long)]
+    #[arg(long, group = "fix_mode")]
     dry_run: bool,
 
-    /// Only apply safe (HIGH certainty) fixes
+    /// Only apply safe (HIGH certainty) fixes (implies --fix)
     #[arg(long)]
     fix_safe: bool,
 }
@@ -177,7 +177,10 @@ fn validate_command(path: &PathBuf, cli: &Cli) -> anyhow::Result<()> {
         );
     }
 
-    if cli.fix || cli.dry_run {
+    // --fix-safe implies --fix
+    let should_fix = cli.fix || cli.fix_safe || cli.dry_run;
+
+    if should_fix {
         println!();
         let mode = if cli.dry_run { "Preview" } else { "Applying" };
         let safe_mode = if cli.fix_safe { " (safe only)" } else { "" };
@@ -224,7 +227,8 @@ fn validate_command(path: &PathBuf, cli: &Cli) -> anyhow::Result<()> {
         );
     }
 
-    if !cli.fix && (errors > 0 || (cli.strict && warnings > 0)) {
+    // Exit with error if errors remain (even after fixing) or strict mode with warnings
+    if errors > 0 || (cli.strict && warnings > 0) {
         process::exit(1);
     }
 

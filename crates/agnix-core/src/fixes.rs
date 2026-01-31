@@ -113,9 +113,7 @@ fn apply_fixes_to_content(content: &str, fixes: &[&Fix]) -> (String, Vec<String>
             continue;
         }
 
-        let before = &result[..fix.start_byte];
-        let after = &result[fix.end_byte..];
-        result = format!("{}{}{}", before, fix.replacement, after);
+        result.replace_range(fix.start_byte..fix.end_byte, &fix.replacement);
         applied.push(fix.description.clone());
         last_start = fix.start_byte;
     }
