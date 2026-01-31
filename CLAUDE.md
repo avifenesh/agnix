@@ -10,8 +10,9 @@
 2. **Knowledge base is source of truth** - Rules in `knowledge-base/VALIDATION-RULES.md`
 3. **Plain text output** - No emojis, no ASCII art
 4. **Certainty filtering** - HIGH (>95%), MEDIUM (75-95%), LOW (<75%)
-5. **Single binary** - Compile with LTO, strip symbols
+5. **Single binary** - Compile with LTO, strip symbols,
 6. **Track work in GitHub issues** - All tasks tracked there
+7. **Task is not done until tests added** - Every feature/fix must have quality tests
 
 ## Architecture
 
@@ -40,9 +41,10 @@ Format: `[CATEGORY]-[NUMBER]` (AS-004, CC-HK-001, etc.)
 
 ## Current State
 
-- Compiles and runs
-- Validators exist but not wired to `validate_project()`
-- See GitHub issues for tasks
+- Compiles and runs with full validation pipeline
+- `validate_project()` walks directories, detects file types, dispatches validators
+- 45 passing tests
+- See GitHub issues for remaining tasks
 
 ## References
 
