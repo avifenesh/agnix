@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Auto-fix infrastructure with CLI flags:
+  - `--fix`: Apply automatic fixes to detected issues
+  - `--dry-run`: Preview fixes without modifying files
+  - `--fix-safe`: Only apply high-certainty (safe) fixes
+- `Fix` struct with `FixKind` enum (Replace, Insert, Delete) in diagnostics
+- `apply_fixes()` function to process and apply fixes to files
+- Diagnostics now include `[fixable]` marker in output for issues with available fixes
+- Hint message in CLI output when fixable issues are detected
 - Config-based rule filtering with category toggles (skills, hooks, agents, memory, plugins, xml, imports)
 - Target tool filtering - CC-* rules automatically disabled for non-Claude Code targets (Cursor, Codex)
 - Individual rule disabling via `disabled_rules` config list
