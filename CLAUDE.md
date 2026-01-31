@@ -13,9 +13,11 @@
 5. **Single binary** - Compile with LTO, strip symbols,
 6. **Track work in GitHub issues** - All tasks tracked there
 7. **Task is not done until tests added** - Every feature/fix must have quality tests
-8. **Documentation** - Update README, SPEC.md, RULES.md as needed, dont use CLAUDE.md for docs and tracking
+8. **Documentation** - CLAUDE.md is NOT for docs and tracking, use and update README, SPEC.md, RULES.md as needed.
 9. **Always follow the skill/command flow as instructed** - No deviations
 10. **No unnecessary files** - Don't create summary files, plan files, or temp docs unless specifically required
+11. **Never merge without waiting for claude workflow to end successfully** - It might take time, but this is the major quality gate, and most thorough review.
+12. **You MUST follow the flow phases one by one** - If they state to use subagents, tools, or any specific method, you must follow it exactly as described.
 
 ## Architecture
 
