@@ -1,6 +1,7 @@
 //! agnix CLI - The nginx of agent configs
 
 use agnix_core::{
+    apply_fixes,
     config::{LintConfig, TargetTool},
     diagnostics::DiagnosticLevel,
     validate_project,
@@ -40,6 +41,18 @@ struct Cli {
     /// Verbose output
     #[arg(short, long)]
     verbose: bool,
+
+    /// Apply automatic fixes
+    #[arg(long)]
+    fix: bool,
+
+    /// Show what would be fixed without modifying files
+    #[arg(long)]
+    dry_run: bool,
+
+    /// Only apply safe (HIGH certainty) fixes
+    #[arg(long)]
+    fix_safe: bool,
 }
 
 #[derive(Subcommand)]
@@ -75,10 +88,7 @@ fn main() {
 }
 
 fn validate_command(path: &PathBuf, cli: &Cli) -> anyhow::Result<()> {
-    // Load config
     let mut config = LintConfig::load_or_default(cli.config.as_ref());
-
-    // Override target from CLI
     config.target = match cli.target.as_str() {
         "claude-code" => TargetTool::ClaudeCode,
         "cursor" => TargetTool::Cursor,
@@ -89,15 +99,13 @@ fn validate_command(path: &PathBuf, cli: &Cli) -> anyhow::Result<()> {
     println!("{} {}", "Validating:".cyan().bold(), path.display());
     println!();
 
-    // Run validation
     let diagnostics = validate_project(path, &config)?;
 
     if diagnostics.is_empty() {
-        println!("{}", "✓ No issues found".green().bold());
+        println!("{}", "No issues found".green().bold());
         return Ok(());
     }
 
-    // Count by level
     let errors = diagnostics
         .iter()
         .filter(|d| d.level == DiagnosticLevel::Error)
@@ -110,8 +118,8 @@ fn validate_command(path: &PathBuf, cli: &Cli) -> anyhow::Result<()> {
         .iter()
         .filter(|d| d.level == DiagnosticLevel::Info)
         .count();
+    let fixable = diagnostics.iter().filter(|d| d.has_fixes()).count();
 
-    // Display diagnostics
     for diag in &diagnostics {
         let level_str = match diag.level {
             DiagnosticLevel::Error => "error".red().bold(),
@@ -119,13 +127,20 @@ fn validate_command(path: &PathBuf, cli: &Cli) -> anyhow::Result<()> {
             DiagnosticLevel::Info => "info".blue().bold(),
         };
 
+        let fixable_marker = if diag.has_fixes() {
+            " [fixable]".green().to_string()
+        } else {
+            String::new()
+        };
+
         println!(
-            "{}:{}:{} {}: {}",
+            "{}:{}:{} {}: {}{}",
             diag.file.display().to_string().dimmed(),
             diag.line,
             diag.column,
             level_str,
-            diag.message
+            diag.message,
+            fixable_marker
         );
 
         if cli.verbose {
@@ -133,12 +148,15 @@ fn validate_command(path: &PathBuf, cli: &Cli) -> anyhow::Result<()> {
             if let Some(suggestion) = &diag.suggestion {
                 println!("  {} {}", "help:".cyan(), suggestion);
             }
+            for fix in &diag.fixes {
+                let safety = if fix.safe { "safe" } else { "unsafe" };
+                println!("  {} {} ({})", "fix:".green(), fix.description, safety);
+            }
         }
         println!();
     }
 
-    // Summary
-    println!("{}", "─".repeat(60).dimmed());
+    println!("{}", "-".repeat(60).dimmed());
     println!(
         "Found {} {}, {} {}",
         errors,
@@ -151,12 +169,88 @@ fn validate_command(path: &PathBuf, cli: &Cli) -> anyhow::Result<()> {
         println!("  {} info messages", infos);
     }
 
-    // Exit with error code if needed
-    if errors > 0 || (cli.strict && warnings > 0) {
+    if fixable > 0 {
+        println!(
+            "  {} {} automatically fixable",
+            fixable,
+            if fixable == 1 { "issue is" } else { "issues are" }
+        );
+    }
+
+    if cli.fix || cli.dry_run {
+        println!();
+        let mode = if cli.dry_run { "Preview" } else { "Applying" };
+        let safe_mode = if cli.fix_safe { " (safe only)" } else { "" };
+        println!("{} fixes{}...", mode.cyan().bold(), safe_mode);
+
+        let results = apply_fixes(&diagnostics, cli.dry_run, cli.fix_safe)?;
+
+        if results.is_empty() {
+            println!("  No fixes to apply");
+        } else {
+            for result in &results {
+                println!();
+                println!(
+                    "  {} {}",
+                    if cli.dry_run { "Would fix:" } else { "Fixed:" }.green(),
+                    result.path.display()
+                );
+                for desc in &result.applied {
+                    println!("    - {}", desc);
+                }
+
+                if cli.dry_run && cli.verbose {
+                    println!();
+                    println!("  {}:", "Diff".yellow());
+                    show_simple_diff(&result.original, &result.fixed);
+                }
+            }
+
+            println!();
+            let action = if cli.dry_run { "Would fix" } else { "Fixed" };
+            println!(
+                "{} {} {}",
+                action.green().bold(),
+                results.len(),
+                if results.len() == 1 { "file" } else { "files" }
+            );
+        }
+    } else if fixable > 0 {
+        println!();
+        println!(
+            "{} Run with {} to apply fixes",
+            "hint:".cyan(),
+            "--fix".bold()
+        );
+    }
+
+    if !cli.fix && (errors > 0 || (cli.strict && warnings > 0)) {
         process::exit(1);
     }
 
     Ok(())
+}
+
+/// Show a simple line-by-line diff
+fn show_simple_diff(original: &str, fixed: &str) {
+    let orig_lines: Vec<&str> = original.lines().collect();
+    let fixed_lines: Vec<&str> = fixed.lines().collect();
+
+    let max_lines = orig_lines.len().max(fixed_lines.len());
+
+    for i in 0..max_lines {
+        let orig = orig_lines.get(i).copied().unwrap_or("");
+        let fix = fixed_lines.get(i).copied().unwrap_or("");
+
+        if orig != fix {
+            if !orig.is_empty() {
+                println!("    {} {}", "-".red(), orig.red());
+            }
+            if !fix.is_empty() {
+                println!("    {} {}", "+".green(), fix.green());
+            }
+        }
+    }
 }
 
 fn init_command(output: &PathBuf) -> anyhow::Result<()> {

@@ -7,6 +7,72 @@ use thiserror::Error;
 
 pub type LintResult<T> = Result<T, LintError>;
 
+/// Kind of automatic fix
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum FixKind {
+    /// Replace text in range
+    Replace,
+    /// Insert at position (start_byte == end_byte)
+    Insert,
+    /// Delete range (replacement is empty)
+    Delete,
+}
+
+/// An automatic fix for a diagnostic
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Fix {
+    /// Kind of fix operation
+    pub kind: FixKind,
+    /// Byte offset start (inclusive)
+    pub start_byte: usize,
+    /// Byte offset end (exclusive)
+    pub end_byte: usize,
+    /// Text to insert/replace with
+    pub replacement: String,
+    /// Human-readable description of what this fix does
+    pub description: String,
+    /// Whether this fix is safe (HIGH certainty, >95%)
+    pub safe: bool,
+}
+
+impl Fix {
+    /// Create a replacement fix
+    pub fn replace(start: usize, end: usize, replacement: impl Into<String>, description: impl Into<String>, safe: bool) -> Self {
+        Self {
+            kind: FixKind::Replace,
+            start_byte: start,
+            end_byte: end,
+            replacement: replacement.into(),
+            description: description.into(),
+            safe,
+        }
+    }
+
+    /// Create an insertion fix
+    pub fn insert(position: usize, text: impl Into<String>, description: impl Into<String>, safe: bool) -> Self {
+        Self {
+            kind: FixKind::Insert,
+            start_byte: position,
+            end_byte: position,
+            replacement: text.into(),
+            description: description.into(),
+            safe,
+        }
+    }
+
+    /// Create a deletion fix
+    pub fn delete(start: usize, end: usize, description: impl Into<String>, safe: bool) -> Self {
+        Self {
+            kind: FixKind::Delete,
+            start_byte: start,
+            end_byte: end,
+            replacement: String::new(),
+            description: description.into(),
+            safe,
+        }
+    }
+}
+
 /// A diagnostic message from the linter
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Diagnostic {
@@ -17,6 +83,9 @@ pub struct Diagnostic {
     pub column: usize,
     pub rule: String,
     pub suggestion: Option<String>,
+    /// Automatic fixes for this diagnostic
+    #[serde(default)]
+    pub fixes: Vec<Fix>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
@@ -36,6 +105,7 @@ impl Diagnostic {
             column,
             rule: rule.to_string(),
             suggestion: None,
+            fixes: Vec::new(),
         }
     }
 
@@ -48,12 +118,35 @@ impl Diagnostic {
             column,
             rule: rule.to_string(),
             suggestion: None,
+            fixes: Vec::new(),
         }
     }
 
     pub fn with_suggestion(mut self, suggestion: String) -> Self {
         self.suggestion = Some(suggestion);
         self
+    }
+
+    /// Add an automatic fix to this diagnostic
+    pub fn with_fix(mut self, fix: Fix) -> Self {
+        self.fixes.push(fix);
+        self
+    }
+
+    /// Add multiple automatic fixes to this diagnostic
+    pub fn with_fixes(mut self, fixes: impl IntoIterator<Item = Fix>) -> Self {
+        self.fixes.extend(fixes);
+        self
+    }
+
+    /// Check if this diagnostic has any fixes available
+    pub fn has_fixes(&self) -> bool {
+        !self.fixes.is_empty()
+    }
+
+    /// Check if this diagnostic has any safe fixes available
+    pub fn has_safe_fixes(&self) -> bool {
+        self.fixes.iter().any(|f| f.safe)
     }
 }
 

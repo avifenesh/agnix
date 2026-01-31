@@ -12,6 +12,7 @@
 
 pub mod config;
 pub mod diagnostics;
+pub mod fixes;
 pub mod parsers;
 pub mod rules;
 pub mod schemas;
@@ -21,7 +22,8 @@ use std::path::{Path, PathBuf};
 use rayon::prelude::*;
 
 pub use config::LintConfig;
-pub use diagnostics::{Diagnostic, DiagnosticLevel, LintError, LintResult};
+pub use diagnostics::{Diagnostic, DiagnosticLevel, Fix, FixKind, LintError, LintResult};
+pub use fixes::{apply_fixes, FixResult};
 use rules::Validator;
 
 /// Detected file type for validator dispatch
