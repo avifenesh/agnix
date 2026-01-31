@@ -25,3 +25,6 @@ dist/
 # Temporary docs
 IMPLEMENTATION-NEXT-STEPS.md
 STATUS.md.claude/settings.local.json
+
+.claude/settings.local.json
+.claude/tasks.json
