@@ -25,6 +25,8 @@ dependencies = [
  "anyhow",
  "clap",
  "colored",
+ "serde",
+ "serde_json",
  "similar",
  "toml",
 ]
