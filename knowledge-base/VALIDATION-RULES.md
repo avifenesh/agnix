@@ -363,13 +363,13 @@
 **Requirement**: AGENTS.md MUST be valid markdown
 **Detection**: Parse as markdown, check for syntax errors
 **Fix**: Fix markdown syntax issues
-**Source**: cursor.com/docs/context/rules
+**Source**: developers.openai.com/codex/guides/agents-md, docs.cursor.com/en/context, docs.cline.bot/features/custom-instructions
 
 ### AGM-002 [MEDIUM] Missing Section Headers
 **Requirement**: AGENTS.md SHOULD have clear section headers (##)
 **Detection**: `!content.contains("## ")` or `!content.contains("# ")`
 **Fix**: Add section headers for organization
-**Source**: cursor.com/docs/context/rules
+**Source**: docs.cursor.com/en/context, docs.cline.bot/features/custom-instructions
 
 ### AGM-003 [HIGH] Character Limit (Windsurf)
 **Requirement**: Rules files SHOULD be under 12000 characters for Windsurf compatibility
@@ -390,10 +390,10 @@
 **Source**: Multi-platform compatibility
 
 ### AGM-006 [MEDIUM] Nested AGENTS.md Hierarchy
-**Requirement**: Nested AGENTS.md files combine hierarchically (Cursor)
+**Requirement**: Some tools load AGENTS.md hierarchically (multiple files may apply)
 **Detection**: Multiple AGENTS.md files in directory tree
 **Fix**: Document inheritance behavior
-**Source**: cursor.com/docs/context/rules
+**Source**: developers.openai.com/codex/guides/agents-md, docs.cline.bot/features/custom-instructions, github.com/github/docs/changelog/2025-06-17-github-copilot-coding-agent-now-supports-agents-md-custom-instructions
 
 ---
 
@@ -548,12 +548,15 @@
 ### XP-002 [HIGH] AGENTS.md Platform Compatibility
 **Requirement**: AGENTS.md is a widely-adopted standard used by multiple platforms
 **Supported Platforms**:
-- Cursor (primary support, alternative to .cursor/rules)
-- Cline (alongside .clinerules)
-- Generic AI assistants
+- Codex CLI (OpenAI)
+- OpenCode
+- GitHub Copilot coding agent
+- Cursor (alongside `.cursor/rules/`)
+- Cline (alongside `.clinerules`)
+**Note**: Claude Code uses `CLAUDE.md` (not AGENTS.md)
 **Detection**: Validate AGENTS.md follows markdown conventions
 **Fix**: Ensure AGENTS.md is valid markdown with clear sections
-**Source**: cursor.com/docs/context/rules, cline/cline repo
+**Source**: developers.openai.com/codex/guides/agents-md, opencode.ai/docs/guides/project-docs, docs.cursor.com/en/context, docs.cline.bot/features/custom-instructions, github.com/github/docs/changelog/2025-06-17-github-copilot-coding-agent-now-supports-agents-md-custom-instructions
 
 ### XP-003 [HIGH] Hard-Coded Platform Paths
 **Requirement**: Paths SHOULD use environment variables

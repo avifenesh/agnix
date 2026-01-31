@@ -1,6 +1,6 @@
 # agnix Knowledge Base - Master Index
 
-> 320KB knowledge, 75+ sources, 5 research agents, 74 validation rules
+> 320KB knowledge, 75+ sources, 5 research agents, 80 validation rules
 
 ---
 
@@ -8,11 +8,11 @@
 
 | What You Need | Start Here |
 |---------------|------------|
-| **Implement validator** | [VALIDATION-RULES.md](./VALIDATION-RULES.md) - 74 rules with detection logic |
+| **Implement validator** | [VALIDATION-RULES.md](./VALIDATION-RULES.md) - 80 rules with detection logic |
 | **Understand a standard** | [standards/](#standards) - HARD-RULES files |
 | **Learn best practices** | [standards/](#standards) - OPINIONS files |
 | **Find patterns** | [PATTERNS-CATALOG.md](./PATTERNS-CATALOG.md) - 70 patterns from awesome-slash |
-| **Get architectural context** | [agent-docs/](#agent-docs) - 13 reference docs |
+| **Get architectural context** | [agent-docs/](#agent-docs) - 12 reference docs |
 | **Cross-platform support** | [standards/multi-platform-HARD-RULES.md](./standards/multi-platform-HARD-RULES.md) |
 
 ---
@@ -23,7 +23,7 @@
 knowledge-base/
 ├── INDEX.md                        # This file
 ├── README.md                       # Detailed navigation guide
-├── VALIDATION-RULES.md             # ⭐ Master validation reference (74 rules)
+├── VALIDATION-RULES.md             # ⭐ Master validation reference (80 rules)
 ├── PATTERNS-CATALOG.md             # 70 production-tested patterns
 │
 ├── standards/                      # 12 files, 11,036 lines, 288KB
@@ -45,7 +45,7 @@ knowledge-base/
 │   ├── prompt-engineering-HARD-RULES.md  # 16KB - Research-backed
 │   └── prompt-engineering-OPINIONS.md    # 21KB - Best practices
 │
-└── agent-docs/                     # 13 files, 280KB from awesome-slash
+└── agent-docs/                     # 12 reference docs (mixed sources)
     ├── AI-AGENT-ARCHITECTURE-RESEARCH.md
     ├── CLAUDE-CODE-REFERENCE.md
     ├── CODEX-REFERENCE.md
@@ -71,8 +71,9 @@ knowledge-base/
 | **Claude Code** | 10 | 34KB | 40KB | 42 rules |
 | **Multi-Platform** | 15 | 15KB | 27KB | 3 rules |
 | **Prompt Eng** | 15 | 16KB | 21KB | 4 rules |
+| **AGENTS.md** | 5 | - | - | 6 rules |
 | **awesome-slash** | 12 | - | - | 70 patterns |
-| **Total** | **75+** | **117KB** | **160KB** | **74 rules** |
+| **Total** | **75+** | **117KB** | **160KB** | **80 rules** |
 
 ### Validation Rules by Category
 
@@ -83,13 +84,14 @@ knowledge-base/
 | Claude Hooks | 11 | 9 | 2 | 0 | 2 |
 | Claude Agents | 6 | 6 | 0 | 0 | 1 |
 | Claude Memory | 10 | 6 | 4 | 0 | 2 |
+| AGENTS.md | 6 | 3 | 3 | 0 | 2 |
 | Claude Plugins | 5 | 5 | 0 | 0 | 1 |
 | MCP | 6 | 6 | 0 | 0 | 1 |
 | XML | 3 | 3 | 0 | 0 | 1 |
 | References | 2 | 2 | 0 | 0 | 0 |
 | Prompt Eng | 4 | 2 | 2 | 0 | 1 |
 | Cross-Platform | 3 | 2 | 1 | 0 | 0 |
-| **TOTAL** | **74** | **61** | **13** | **0** | **18** |
+| **TOTAL** | **80** | **64** | **16** | **0** | **20** |
 
 ---
 
@@ -115,7 +117,7 @@ knowledge-base/
 
 ### Surprising Discoveries
 
-1. **AGENTS.md doesn't exist** - No platform uses this name (XP-002)
+1. **AGENTS.md is supported by multiple tools** - but not universal (XP-002)
 2. **Prompt hooks restricted** - Only Stop/SubagentStop supported (CC-HK-002)
 3. **Windows paths break skills** - Must use `/` even on Windows (AS-014)
 4. **No defense against prompt injection** - Unsolved problem (MCP security)
@@ -127,7 +129,7 @@ knowledge-base/
 ### For Implementation
 
 **Start here**: [VALIDATION-RULES.md](./VALIDATION-RULES.md)
-- 74 rules with rule IDs (AS-001, CC-HK-001, etc.)
+- 80 rules with rule IDs (AS-001, CC-HK-001, etc.)
 - Detection pseudocode
 - Auto-fix implementations
 - Priority matrix (P0/P1/P2)
@@ -250,10 +252,10 @@ Total Size:           320KB
 Standards Covered:     5 (Agent Skills, MCP, Claude Code, Multi-Platform, Prompt Eng)
 Sources Consulted:    75+ (specs, docs, research papers, repos)
 Research Agents:       5 (10+ sources each)
-Validation Rules:     74 rules
-Auto-Fixable Rules:   18 rules
+Validation Rules:     80 rules
+Auto-Fixable Rules:   20 rules
 Test Fixtures:        11 files
-Platforms Analyzed:   6 (Claude Code, Cursor, Cline, Roo-Cline, Continue.dev, Aider)
+Platforms Analyzed:   9 (Claude Code, Codex CLI, OpenCode, Copilot, Cursor, Cline, Roo-Cline, Continue.dev, Aider)
 ```
 
 ---

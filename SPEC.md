@@ -1,6 +1,6 @@
 # agnix Technical Reference
 
-> Linter for agent configs. 74 rules across 5 standards.
+> Linter for agent configs. 80 rules across 12 categories.
 
 ## What agnix Validates
 
@@ -8,9 +8,12 @@
 |------|-------|-------|
 | Skills | SKILL.md | 24 |
 | Hooks | settings.json | 11 |
-| Memory | CLAUDE.md, AGENTS.md | 10 |
+| Memory (Claude Code) | CLAUDE.md | 10 |
+| Instructions (Cross-Tool) | AGENTS.md | 6 |
 | Agents | agents/*.md | 6 |
 | Plugins | plugin.json | 5 |
+| Prompt Engineering | CLAUDE.md, AGENTS.md | 4 |
+| Cross-Platform | AGENTS.md | 3 |
 | MCP | tool definitions | 6 |
 | XML | all .md files | 3 |
 | References | @imports | 2 |
@@ -25,7 +28,7 @@ agnix/
 │   │   ├── schemas/    # Type definitions
 │   │   └── rules/      # Validators
 │   └── agnix-cli/      # CLI binary
-├── knowledge-base/     # 74 rules documented
+├── knowledge-base/     # 80 rules documented
 └── tests/fixtures/     # Test cases
 ```
 
@@ -49,10 +52,14 @@ All rules in `knowledge-base/VALIDATION-RULES.md`
 - `CC-SK-nnn`: Claude Code Skills
 - `CC-HK-nnn`: Claude Code Hooks
 - `CC-MEM-nnn`: Claude Code Memory
+- `AGM-nnn`: AGENTS.md (cross-tool instructions)
 - `CC-AG-nnn`: Claude Code Agents
 - `CC-PL-nnn`: Claude Code Plugins
 - `MCP-nnn`: MCP protocol
 - `XML-nnn`: XML validation
+- `REF-nnn`: @import/reference validation
+- `PE-nnn`: Prompt engineering
+- `XP-nnn`: Cross-platform compatibility
 
 ## Key Rules
 

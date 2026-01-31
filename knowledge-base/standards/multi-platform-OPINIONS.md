@@ -7,6 +7,8 @@ This document contains BEST PRACTICES, RECOMMENDATIONS, and STRATEGIC GUIDANCE f
 
 **Last Updated:** 2026-01-31
 
+**NOTE (Cursor):** Cursor's current rules mechanism is `.cursor/rules/*.mdc`. `.cursorrules` is legacy; prefer migrating to Project Rules.
+
 ---
 
 ## Philosophy: When to Use Platform-Specific Features
@@ -19,7 +21,7 @@ Pure Portable ←────────────────→ Platform-Sp
 │  MCP Servers                    │  Hooks (Claude Code only)
 │  Git repos                      │  Custom Modes (Roo-Cline)
 │  Markdown docs                  │  Voice (Aider only)
-│  Environment vars               │  .cursorrules (Cursor)
+│  Environment vars               │  .cursor/rules/*.mdc (Cursor)
 │                                 │
 └─ Maximize reach                 └─ Maximize power
 ```
@@ -29,7 +31,7 @@ Pure Portable ←────────────────→ Platform-Sp
 **Use platform-specific features when:**
 - The feature provides 10x value over generic alternatives
 - Your team standardizes on one platform
-- The feature is irreplaceable (e.g., Cursor's .cursorrules for team-wide AI behavior)
+- The feature is irreplaceable (e.g., Cursor's `.cursor/rules/*.mdc` for team-wide AI behavior)
 
 **Avoid platform-specific features when:**
 - The feature has MCP equivalents (tools, resources, prompts)
@@ -58,7 +60,7 @@ project-root/
 │   │       ├── skills/
 │   │       └── hooks/
 │   ├── cursor/
-│   │   └── .cursorrules
+│   │   └── .cursor/rules/*.mdc
 │   ├── cline/
 │   │   ├── .clinerules/
 │   │   └── .cline/
@@ -89,7 +91,7 @@ project-root/
 ```
 project-root/
 ├── CLAUDE.md                  # Project memory (Claude Code)
-├── .cursorrules               # AI behavior (Cursor)
+├── .cursor/rules/*.mdc        # AI behavior rules (Cursor)
 ├── .aider.conf.yml            # Settings (Aider)
 ├── .continue/
 │   └── config.yaml            # Continue.dev config
@@ -351,7 +353,7 @@ server.setRequestHandler("resources/list", async () => ({
 
 ## Rules Files: Best Practices
 
-### Cursor .cursorrules Guidelines
+### Cursor Rules (.cursor/rules/*.mdc) Guidelines
 
 **RECOMMENDED STRUCTURE:**
 
@@ -442,7 +444,7 @@ When creating a new API endpoint:
 
 # Platform configs WITHOUT secrets (COMMIT THESE)
 # These should be in version control for team sharing:
-# .cursorrules
+# Cursor Rules (Legacy: .cursorrules)
 # .clinerules/
 # .platform/**/*.yml
 # .platform/**/*.yaml
@@ -451,7 +453,7 @@ When creating a new API endpoint:
 ### What TO Commit (Recommended)
 
 **DO commit:**
-- `.cursorrules` - Team-wide AI behavior
+- `.cursor/rules/*.mdc` - Team-wide AI behavior rules (Project Rules)
 - `.aider.conf.yml` - If no API keys present
 - `config.yaml` - If using env vars for secrets
 - `.clinerules/` - Team coding standards
@@ -508,7 +510,7 @@ When creating a new API endpoint:
 
 ### Cross-Platform Testing Reality Check
 
-**You CANNOT test that your .cursorrules work in Cline. They are fundamentally incompatible.**
+**You cannot assume Cursor rules behave identically in other tools.** Cline can read `.cursor/rules/`, but semantics may differ; verify in both.
 
 ### What You CAN Test
 
@@ -637,7 +639,7 @@ ENABLE_MCP_SERVERS=true
 
 3. **Smart Context Rules**
    ```
-   # In .cursorrules or similar
+   # In .cursor/rules/*.mdc (Cursor) or similar
    ## Context Management
    - Only include files mentioned in the conversation
    - Exclude test files unless explicitly debugging tests
@@ -686,7 +688,7 @@ tsc --noEmit
 
 **WHY:** Catches issues before they reach CI/CD.
 
-### Cursor: Master .cursorrules
+### Cursor: Master `.cursor/rules/*.mdc`
 
 **POWER TIP:** Include project-specific anti-patterns
 
@@ -768,7 +770,7 @@ docs: Documentation writing only
 
 **SOLUTION:**
 - Adopt the `.platform/` pattern consistently
-- Use symbolic links if needed: `ln -s .platform/cursor/.cursorrules .cursorrules`
+- Use symbolic links if needed: `ln -s .platform/cursor/.cursor/rules .cursor/rules`
 - Document configuration locations in README
 
 ### Pitfall 3: API Key Leaks
@@ -863,7 +865,7 @@ docs: Documentation writing only
 | Criteria | Best Platform | Runner-Up |
 |----------|---------------|-----------|
 | Easiest Onboarding | Cursor | Continue.dev |
-| Best Collaboration | Cursor (.cursorrules) | Continue.dev (config.yaml) |
+| Best Collaboration | Cursor (.cursor/rules) | Continue.dev (config.yaml) |
 | Most Flexible | Claude Code (MCP + hooks) | Continue.dev |
 | Best for Remote | Continue.dev (headless) | Aider (CLI) |
 | Budget-Conscious | Aider (free) | Continue.dev (bring your own key) |

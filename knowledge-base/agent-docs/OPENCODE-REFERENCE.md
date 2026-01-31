@@ -19,7 +19,7 @@ OpenCode has significant features Claude Code doesn't have:
 
 | Aspect | OpenCode | Claude Code |
 |--------|----------|-------------|
-| Config file | `opencode.jsonc` | `settings.json` |
+| Config file | `opencode.json` (JSONC supported) | `settings.json` |
 | State directory | `.opencode/` | `.claude/` |
 | Commands location | `~/.opencode/commands/` | Plugin commands |
 | Skills location | `.opencode/skill/` | `.claude/skills/` |
@@ -113,7 +113,7 @@ permission:
 System prompt content here...
 ```
 
-### Per-Agent Config in opencode.jsonc
+### Per-Agent Config in opencode.json
 
 ```jsonc
 {
@@ -335,7 +335,7 @@ No duplication needed.
 1. Remote org configs (`.well-known/opencode`)
 2. Global: `~/.config/opencode/opencode.json`
 3. Custom path: `OPENCODE_CONFIG` env var
-4. Project: `opencode.jsonc` in project root
+4. Project: `opencode.json` in project root
 5. Inline: `OPENCODE_CONFIG_CONTENT` env var
 
 ### Variable Substitution
@@ -398,7 +398,7 @@ OpenCode automatically reads:
 1. `AGENTS.md` (preferred)
 2. `CLAUDE.md` (fallback - compatibility)
 3. `.github/copilot-instructions.md`
-4. `.cursorrules`
+4. `.cursor/rules/*.mdc`
 5. `opencode.md`
 
 ### Generating AGENTS.md
@@ -430,7 +430,7 @@ Creates `AGENTS.md` with project context.
 | Issue | Workaround |
 |-------|------------|
 | No checkboxes | Works functionally, just different UI |
-| Model selection | Users can set in `opencode.jsonc` |
+| Model selection | Users can set in `opencode.json` |
 | Agent definitions | MCP tools work; native agents need manual setup |
 
 ---
@@ -504,7 +504,7 @@ OpenCode supports thinking/reasoning across **multiple providers** with differen
 
 ### Configuring Extended Thinking
 
-**Per-Agent (in opencode.jsonc):**
+**Per-Agent (in opencode.json):**
 ```jsonc
 {
   "agent": {
@@ -870,7 +870,7 @@ OpenCode has a pub-sub event system for all operations.
 
 ### Proposal for awesome-slash
 
-Add to user's `opencode.jsonc`:
+Add to user's `opencode.json`:
 
 ```jsonc
 {

@@ -347,6 +347,6 @@ All patterns should meet:
 
 ---
 
-**Last Updated**: 2025-01-31
-**Pattern Source**: awesome-slash v1.x (production-tested)
+**Last Updated**: 2026-01-31
+**Pattern Source**: awesome-slash v3.6.1 (production-tested)
 **Coverage**: 70 patterns, 13 auto-fixes

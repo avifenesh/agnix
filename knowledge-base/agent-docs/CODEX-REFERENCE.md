@@ -343,10 +343,13 @@ All 8 awesome-slash tools work in Codex:
 
 ### AGENTS.md
 
-Codex reads `AGENTS.md` files hierarchically:
-1. `~/.codex/AGENTS.md` (global)
-2. Repository root `AGENTS.md`
-3. Current directory `AGENTS.md`
+Codex supports a small family of `AGENTS*` project instruction files and loads them in a tool-specific precedence order (global + per-directory + override). This means multiple `AGENTS.md` files may apply to a single run.
+
+Commonly used:
+1. `AGENTS.md` - repo/project instructions (may be discovered in multiple directories)
+2. `AGENTS.local.md` - local-only instructions (recommended: gitignored)
+3. `~/.codex/AGENTS.md` - global user instructions
+4. `AGENTS.override.md` - override file (takes precedence over other AGENTS files)
 
 ### Example AGENTS.md
 
@@ -369,7 +372,7 @@ Codex reads `AGENTS.md` files hierarchically:
 
 ### Compatibility with CLAUDE.md
 
-Codex primarily reads `AGENTS.md`, but our MCP server sets `AI_STATE_DIR=.codex` to ensure state files are written to the correct location.
+Codex primarily uses `AGENTS.md` (and related `AGENTS*` files). If you maintain `CLAUDE.md` for Claude Code, you may still keep an `AGENTS.md` with compatible content for Codex.
 
 ---
 

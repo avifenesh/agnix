@@ -869,19 +869,20 @@ You are a [specialized role].
 
 | Platform | Reference Doc | Description |
 |----------|--------------|-------------|
-| **OpenCode** | [OPENCODE-REFERENCE.md](./OPENCODE-REFERENCE.md) | SST OpenCode integration: model selection, commands, MCP, agents |
 | **Claude Code** | [CLAUDE-CODE-REFERENCE.md](./CLAUDE-CODE-REFERENCE.md) | Claude Code specifics: hooks, skills, subagents |
+| **Codex CLI** | [CODEX-REFERENCE.md](./CODEX-REFERENCE.md) | Codex CLI specifics: config, skills, AGENTS.md |
+| **OpenCode** | [OPENCODE-REFERENCE.md](./OPENCODE-REFERENCE.md) | OpenCode specifics: config, commands, AGENTS.md |
 
 ### Key Platform Differences
 
-| Feature | Claude Code | OpenCode | Codex CLI |
-|---------|-------------|----------|-----------|
-| Config file | `settings.json` | `opencode.jsonc` | `config.toml` |
-| State directory | `.claude/` | `.opencode/` | `.codex/` |
-| Command prefix | `/` | `/` | `$` |
-| Model selection | Anthropic only | 75+ providers | OpenAI |
+| Feature | Claude Code | Codex CLI | OpenCode |
+|---------|-------------|----------|----------|
+| Config file | `settings.json` | `config.toml` | `opencode.json` (JSONC supported) |
+| State directory | `.claude/` | `.codex/` | `.opencode/` |
+| Command prefix | `/` | `$` | `/` |
+| Model selection | Anthropic only | OpenAI | 75+ providers |
 | User questions | Checkboxes | Numbered list | Numbered list |
-| Project instructions | `CLAUDE.md` | `AGENTS.md` | `CODEX.md` |
+| Project instructions | `CLAUDE.md` | `AGENTS.md` | `AGENTS.md` |
 
 ### MCP Compatibility
 

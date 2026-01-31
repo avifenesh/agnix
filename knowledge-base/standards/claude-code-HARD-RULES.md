@@ -437,10 +437,9 @@ Additional context: @docs/conventions.md
 
 ### 3.4 Cross-Platform Compatibility
 
-**AGENTS.md** is an alias for CLAUDE.md:
-- Same precedence rules
-- Same @import syntax
-- Both can coexist; no conflicts
+Claude Code documents `CLAUDE.md`/`CLAUDE.local.md` and `.claude/rules/*.md` for memory/rules and does not document `AGENTS.md` as an alternate filename.
+
+If you need cross-tool compatibility, keep a separate `AGENTS.md` (with compatible content) for tools that use it (Codex CLI, OpenCode, Cursor, Cline, Copilot coding agent).
 
 ---
 
