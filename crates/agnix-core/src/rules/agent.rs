@@ -49,8 +49,8 @@ impl AgentValidator {
             current = dir.parent();
             depth += 1;
         }
-        // Fallback: if agent is in `agents/` dir, go up one level
-        path.parent().and_then(|p| p.parent())
+        // No fallback - return None if .claude directory not found
+        None
     }
 
     /// Validate skill name to prevent path traversal attacks.
@@ -116,7 +116,7 @@ impl Validator for AgentValidator {
         };
 
         // CC-AG-001: Missing name field
-        if schema.name.is_none() || schema.name.as_ref().map(|n| n.trim().is_empty()).unwrap_or(true) {
+        if schema.name.as_deref().unwrap_or("").trim().is_empty() {
             diagnostics.push(
                 Diagnostic::error(
                     path.to_path_buf(),
@@ -130,13 +130,7 @@ impl Validator for AgentValidator {
         }
 
         // CC-AG-002: Missing description field
-        if schema.description.is_none()
-            || schema
-                .description
-                .as_ref()
-                .map(|d| d.trim().is_empty())
-                .unwrap_or(true)
-        {
+        if schema.description.as_deref().unwrap_or("").trim().is_empty() {
             diagnostics.push(
                 Diagnostic::error(
                     path.to_path_buf(),
