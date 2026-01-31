@@ -8,6 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- AgentValidator implementation with 6 validation rules (CC-AG-001 to CC-AG-006)
+  - CC-AG-001: Validates required 'name' field in agent frontmatter
+  - CC-AG-002: Validates required 'description' field in agent frontmatter
+  - CC-AG-003: Validates model values (sonnet, opus, haiku, inherit)
+  - CC-AG-004: Validates permissionMode values (default, acceptEdits, dontAsk, bypassPermissions, plan)
+  - CC-AG-005: Validates referenced skills exist at .claude/skills/[name]/SKILL.md
+  - CC-AG-006: Detects conflicts between 'tools' and 'disallowedTools' arrays
+- Path traversal security protection for skill name validation
+- 44 comprehensive tests for agent validation (152 total tests)
+- 7 test fixtures in tests/fixtures/agents/ directory
 - Parallel file validation using rayon for improved performance on large projects
 - Deterministic diagnostic output with sorting by severity and file path
 - Comprehensive tests for parallel validation edge cases

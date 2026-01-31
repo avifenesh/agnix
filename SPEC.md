@@ -69,6 +69,12 @@ All rules in `knowledge-base/VALIDATION-RULES.md`
 | CC-HK-008 | ERROR | Script file not found |
 | CC-HK-009 | WARN | Dangerous command pattern |
 | CC-MEM-005 | WARN | Generic instruction detected |
+| CC-AG-001 | ERROR | Missing agent name field |
+| CC-AG-002 | ERROR | Missing agent description field |
+| CC-AG-003 | ERROR | Invalid model value |
+| CC-AG-004 | ERROR | Invalid permission mode |
+| CC-AG-005 | ERROR | Referenced skill not found |
+| CC-AG-006 | ERROR | Tool/disallowed conflict |
 | XML-001 | ERROR | Unclosed XML tag |
 
 ## CLI

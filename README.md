@@ -4,7 +4,7 @@
 
 Validate agent specifications across Claude Code, Cursor, Codex, and beyond.
 
-**Validates:** Skills • MCP • Hooks • Memory • Plugins
+**Validates:** Skills • MCP • Hooks • Memory • Agents • Plugins
 
 ```bash
 agnix .
@@ -14,6 +14,7 @@ agnix .
 
 - ✅ **Agent Skills** - Validates SKILL.md format (agentskills.io spec)
 - ✅ **Claude Code** - CLAUDE.md, hooks, subagents, plugins
+- ✅ **Subagents** - Agent frontmatter validation (CC-AG-001 to CC-AG-006)
 - ✅ **Generic Instructions** - Detects redundant "be helpful" patterns
 - ✅ **XML Balance** - Ensures tags are properly closed
 - ✅ **@imports** - Validates file references exist
@@ -69,8 +70,11 @@ CLAUDE.md:15:1 warning: Generic instruction 'Be helpful and accurate'
 .claude/skills/review/SKILL.md:4:8 error: Unknown model 'gpt-4'
   help: Use: sonnet, opus, haiku, inherit
 
+.claude/agents/researcher.md:1:0 error: Agent frontmatter is missing required 'name' field
+  help: Add 'name: your-agent-name' to frontmatter
+
 ────────────────────────────────────────────────────────────
-Found 2 errors, 1 warning
+Found 3 errors, 1 warning
 ```
 
 ## Performance
@@ -146,6 +150,7 @@ agnix/
 - [x] XML balance checking
 - [x] @import resolution
 - [x] Hooks validation (CC-HK-006 to CC-HK-009)
+- [x] Agent validation (CC-AG-001 to CC-AG-006)
 - [x] Parallel file validation
 - [ ] MCP tool validation
 - [ ] LSP server
