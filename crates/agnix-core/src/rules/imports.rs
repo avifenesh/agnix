@@ -14,7 +14,8 @@ impl Validator for ImportsValidator {
     fn validate(&self, path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic> {
         let mut diagnostics = Vec::new();
 
-        if !config.rules.import_references {
+        // Check both new category flag and legacy flag for backward compatibility
+        if !config.is_rule_enabled("imports::not_found") || !config.rules.import_references {
             return diagnostics;
         }
 
@@ -43,11 +44,44 @@ impl Validator for ImportsValidator {
                         "imports::not_found",
                         format!("Import not found: @{}", import.path),
                     )
-                    .with_suggestion(format!("Check that the file exists: {}", import_path.display())),
+                    .with_suggestion(format!(
+                        "Check that the file exists: {}",
+                        import_path.display()
+                    )),
                 );
             }
         }
 
         diagnostics
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::config::LintConfig;
+
+    #[test]
+    fn test_config_disabled_imports_category() {
+        let mut config = LintConfig::default();
+        config.rules.imports = false;
+
+        let content = "@nonexistent-file.md";
+        let validator = ImportsValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &config);
+
+        assert!(diagnostics.is_empty());
+    }
+
+    #[test]
+    fn test_legacy_import_references_flag() {
+        let mut config = LintConfig::default();
+        config.rules.import_references = false;
+
+        let content = "@nonexistent-file.md";
+        let validator = ImportsValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &config);
+
+        assert!(diagnostics.is_empty());
     }
 }

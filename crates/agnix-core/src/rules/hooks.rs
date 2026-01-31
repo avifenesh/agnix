@@ -113,7 +113,7 @@ impl HooksValidator {
 }
 
 impl Validator for HooksValidator {
-    fn validate(&self, path: &Path, content: &str, _config: &LintConfig) -> Vec<Diagnostic> {
+    fn validate(&self, path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic> {
         let mut diagnostics = Vec::new();
 
         let raw_value: serde_json::Value = match serde_json::from_str(content) {
@@ -130,32 +130,38 @@ impl Validator for HooksValidator {
             }
         };
 
-        if let Some(hooks_obj) = raw_value.get("hooks").and_then(|h| h.as_object()) {
-            for (event, matchers) in hooks_obj {
-                if let Some(matchers_arr) = matchers.as_array() {
-                    for (matcher_idx, matcher) in matchers_arr.iter().enumerate() {
-                        if let Some(hooks_arr) = matcher.get("hooks").and_then(|h| h.as_array()) {
-                            for (hook_idx, hook) in hooks_arr.iter().enumerate() {
-                                if hook.get("type").is_none() {
-                                    let hook_location = format!(
-                                        "hooks.{}[{}].hooks[{}]",
-                                        event, matcher_idx, hook_idx
-                                    );
-                                    diagnostics.push(
-                                        Diagnostic::error(
-                                            path.to_path_buf(),
-                                            1,
-                                            0,
-                                            "CC-HK-005",
-                                            format!(
-                                                "Hook at {} is missing required 'type' field",
-                                                hook_location
+        // CC-HK-005: Missing type field (pre-parse check)
+        if config.is_rule_enabled("CC-HK-005") {
+            if let Some(hooks_obj) = raw_value.get("hooks").and_then(|h| h.as_object()) {
+                for (event, matchers) in hooks_obj {
+                    if let Some(matchers_arr) = matchers.as_array() {
+                        for (matcher_idx, matcher) in matchers_arr.iter().enumerate() {
+                            if let Some(hooks_arr) =
+                                matcher.get("hooks").and_then(|h| h.as_array())
+                            {
+                                for (hook_idx, hook) in hooks_arr.iter().enumerate() {
+                                    if hook.get("type").is_none() {
+                                        let hook_location = format!(
+                                            "hooks.{}[{}].hooks[{}]",
+                                            event, matcher_idx, hook_idx
+                                        );
+                                        diagnostics.push(
+                                            Diagnostic::error(
+                                                path.to_path_buf(),
+                                                1,
+                                                0,
+                                                "CC-HK-005",
+                                                format!(
+                                                    "Hook at {} is missing required 'type' field",
+                                                    hook_location
+                                                ),
+                                            )
+                                            .with_suggestion(
+                                                "Add 'type': 'command' or 'type': 'prompt'"
+                                                    .to_string(),
                                             ),
-                                        )
-                                        .with_suggestion(
-                                            "Add 'type': 'command' or 'type': 'prompt'".to_string(),
-                                        ),
-                                    );
+                                        );
+                                    }
                                 }
                             }
                         }
@@ -194,60 +200,73 @@ impl Validator for HooksValidator {
             .unwrap_or_else(|| Path::new("."));
 
         for (event, matchers) in &settings.hooks {
-            if !HooksSchema::VALID_EVENTS.contains(&event.as_str()) {
-                let suggestion = find_closest_event(event);
-                diagnostics.push(
-                    Diagnostic::error(
-                        path.to_path_buf(),
-                        1,
-                        0,
-                        "CC-HK-001",
-                        format!(
-                            "Invalid hook event '{}', valid events: {:?}",
-                            event,
-                            HooksSchema::VALID_EVENTS
-                        ),
-                    )
-                    .with_suggestion(suggestion),
-                );
-                continue; // Skip further validation for invalid events
+            // CC-HK-001: Invalid event name
+            if config.is_rule_enabled("CC-HK-001") {
+                if !HooksSchema::VALID_EVENTS.contains(&event.as_str()) {
+                    let suggestion = find_closest_event(event);
+                    diagnostics.push(
+                        Diagnostic::error(
+                            path.to_path_buf(),
+                            1,
+                            0,
+                            "CC-HK-001",
+                            format!(
+                                "Invalid hook event '{}', valid events: {:?}",
+                                event,
+                                HooksSchema::VALID_EVENTS
+                            ),
+                        )
+                        .with_suggestion(suggestion),
+                    );
+                    continue; // Skip further validation for invalid events
+                }
+            } else if !HooksSchema::VALID_EVENTS.contains(&event.as_str()) {
+                // Even if rule is disabled, skip invalid events to avoid runtime errors
+                continue;
             }
 
             for (matcher_idx, matcher) in matchers.iter().enumerate() {
-                if HooksSchema::is_tool_event(event) && matcher.matcher.is_none() {
-                    let hook_location = format!("hooks.{}[{}]", event, matcher_idx);
-                    diagnostics.push(
-                        Diagnostic::error(
-                            path.to_path_buf(),
-                            1,
-                            0,
-                            "CC-HK-003",
-                            format!(
-                                "Tool event '{}' at {} requires a matcher field",
-                                event, hook_location
+                // CC-HK-003: Missing matcher for tool events
+                if config.is_rule_enabled("CC-HK-003") {
+                    if HooksSchema::is_tool_event(event) && matcher.matcher.is_none() {
+                        let hook_location = format!("hooks.{}[{}]", event, matcher_idx);
+                        diagnostics.push(
+                            Diagnostic::error(
+                                path.to_path_buf(),
+                                1,
+                                0,
+                                "CC-HK-003",
+                                format!(
+                                    "Tool event '{}' at {} requires a matcher field",
+                                    event, hook_location
+                                ),
+                            )
+                            .with_suggestion(
+                                "Add 'matcher': '*' for all tools or specify a tool name"
+                                    .to_string(),
                             ),
-                        )
-                        .with_suggestion(
-                            "Add 'matcher': '*' for all tools or specify a tool name".to_string(),
-                        ),
-                    );
+                        );
+                    }
                 }
 
-                if !HooksSchema::is_tool_event(event) && matcher.matcher.is_some() {
-                    let hook_location = format!("hooks.{}[{}]", event, matcher_idx);
-                    diagnostics.push(
-                        Diagnostic::error(
-                            path.to_path_buf(),
-                            1,
-                            0,
-                            "CC-HK-004",
-                            format!(
-                                "Non-tool event '{}' at {} must not have a matcher field",
-                                event, hook_location
-                            ),
-                        )
-                        .with_suggestion("Remove the 'matcher' field".to_string()),
-                    );
+                // CC-HK-004: Matcher on non-tool event
+                if config.is_rule_enabled("CC-HK-004") {
+                    if !HooksSchema::is_tool_event(event) && matcher.matcher.is_some() {
+                        let hook_location = format!("hooks.{}[{}]", event, matcher_idx);
+                        diagnostics.push(
+                            Diagnostic::error(
+                                path.to_path_buf(),
+                                1,
+                                0,
+                                "CC-HK-004",
+                                format!(
+                                    "Non-tool event '{}' at {} must not have a matcher field",
+                                    event, hook_location
+                                ),
+                            )
+                            .with_suggestion("Remove the 'matcher' field".to_string()),
+                        );
+                    }
                 }
 
                 for (hook_idx, hook) in matcher.hooks.iter().enumerate() {
@@ -264,107 +283,124 @@ impl Validator for HooksValidator {
 
                     match hook {
                         Hook::Command { command, .. } => {
-                            if command.is_none() {
-                                diagnostics.push(
-                                    Diagnostic::error(
-                                        path.to_path_buf(),
-                                        1,
-                                        0,
-                                        "CC-HK-006",
-                                        format!(
-                                            "Command hook at {} is missing required 'command' field",
-                                            hook_location
+                            // CC-HK-006: Missing command field
+                            if config.is_rule_enabled("CC-HK-006") {
+                                if command.is_none() {
+                                    diagnostics.push(
+                                        Diagnostic::error(
+                                            path.to_path_buf(),
+                                            1,
+                                            0,
+                                            "CC-HK-006",
+                                            format!(
+                                                "Command hook at {} is missing required 'command' field",
+                                                hook_location
+                                            ),
+                                        )
+                                        .with_suggestion(
+                                            "Add a 'command' field with the command to execute"
+                                                .to_string(),
                                         ),
-                                    )
-                                    .with_suggestion(
-                                        "Add a 'command' field with the command to execute"
-                                            .to_string(),
-                                    ),
-                                );
-                            } else if let Some(cmd) = command {
-                                for script_path in self.extract_script_paths(cmd) {
-                                    if !self.has_unresolved_env_vars(&script_path) {
-                                        let resolved =
-                                            self.resolve_script_path(&script_path, project_dir);
-                                        if !resolved.exists() {
-                                            diagnostics.push(
-                                                Diagnostic::error(
-                                                    path.to_path_buf(),
-                                                    1,
-                                                    0,
-                                                    "CC-HK-008",
-                                                    format!(
-                                                        "Script file not found at '{}' (resolved to '{}')",
-                                                        script_path,
-                                                        resolved.display()
+                                    );
+                                }
+                            }
+
+                            if let Some(cmd) = command {
+                                // CC-HK-008: Script file not found
+                                if config.is_rule_enabled("CC-HK-008") {
+                                    for script_path in self.extract_script_paths(cmd) {
+                                        if !self.has_unresolved_env_vars(&script_path) {
+                                            let resolved = self
+                                                .resolve_script_path(&script_path, project_dir);
+                                            if !resolved.exists() {
+                                                diagnostics.push(
+                                                    Diagnostic::error(
+                                                        path.to_path_buf(),
+                                                        1,
+                                                        0,
+                                                        "CC-HK-008",
+                                                        format!(
+                                                            "Script file not found at '{}' (resolved to '{}')",
+                                                            script_path,
+                                                            resolved.display()
+                                                        ),
+                                                    )
+                                                    .with_suggestion(
+                                                        "Create the script file or correct the path"
+                                                            .to_string(),
                                                     ),
-                                                )
-                                                .with_suggestion(
-                                                    "Create the script file or correct the path"
-                                                        .to_string(),
-                                                ),
-                                            );
+                                                );
+                                            }
                                         }
                                     }
                                 }
 
-                                if let Some((pattern, reason)) =
-                                    self.check_dangerous_patterns(cmd)
-                                {
-                                    diagnostics.push(
-                                        Diagnostic::warning(
-                                            path.to_path_buf(),
-                                            1,
-                                            0,
-                                            "CC-HK-009",
-                                            format!(
-                                                "Potentially dangerous command pattern detected: {}",
-                                                reason
-                                            ),
-                                        )
-                                        .with_suggestion(format!(
-                                            "Review the command for safety. Pattern matched: {}",
-                                            pattern
-                                        )),
-                                    );
+                                // CC-HK-009: Dangerous command patterns
+                                if config.is_rule_enabled("CC-HK-009") {
+                                    if let Some((pattern, reason)) =
+                                        self.check_dangerous_patterns(cmd)
+                                    {
+                                        diagnostics.push(
+                                            Diagnostic::warning(
+                                                path.to_path_buf(),
+                                                1,
+                                                0,
+                                                "CC-HK-009",
+                                                format!(
+                                                    "Potentially dangerous command pattern detected: {}",
+                                                    reason
+                                                ),
+                                            )
+                                            .with_suggestion(format!(
+                                                "Review the command for safety. Pattern matched: {}",
+                                                pattern
+                                            )),
+                                        );
+                                    }
                                 }
                             }
                         }
                         Hook::Prompt { prompt, .. } => {
-                            if !HooksSchema::is_prompt_event(event) {
-                                diagnostics.push(
-                                    Diagnostic::error(
-                                        path.to_path_buf(),
-                                        1,
-                                        0,
-                                        "CC-HK-002",
-                                        format!(
-                                            "Prompt hook at {} is only allowed for Stop and SubagentStop events, not '{}'",
-                                            hook_location, event
+                            // CC-HK-002: Prompt on wrong event
+                            if config.is_rule_enabled("CC-HK-002") {
+                                if !HooksSchema::is_prompt_event(event) {
+                                    diagnostics.push(
+                                        Diagnostic::error(
+                                            path.to_path_buf(),
+                                            1,
+                                            0,
+                                            "CC-HK-002",
+                                            format!(
+                                                "Prompt hook at {} is only allowed for Stop and SubagentStop events, not '{}'",
+                                                hook_location, event
+                                            ),
+                                        )
+                                        .with_suggestion(
+                                            "Use 'type': 'command' instead, or move this hook to Stop/SubagentStop".to_string(),
                                         ),
-                                    )
-                                    .with_suggestion(
-                                        "Use 'type': 'command' instead, or move this hook to Stop/SubagentStop".to_string(),
-                                    ),
-                                );
+                                    );
+                                }
                             }
 
-                            if prompt.is_none() {
-                                diagnostics.push(
-                                    Diagnostic::error(
-                                        path.to_path_buf(),
-                                        1,
-                                        0,
-                                        "CC-HK-007",
-                                        format!(
-                                            "Prompt hook at {} is missing required 'prompt' field",
-                                            hook_location
+                            // CC-HK-007: Missing prompt field
+                            if config.is_rule_enabled("CC-HK-007") {
+                                if prompt.is_none() {
+                                    diagnostics.push(
+                                        Diagnostic::error(
+                                            path.to_path_buf(),
+                                            1,
+                                            0,
+                                            "CC-HK-007",
+                                            format!(
+                                                "Prompt hook at {} is missing required 'prompt' field",
+                                                hook_location
+                                            ),
+                                        )
+                                        .with_suggestion(
+                                            "Add a 'prompt' field with the prompt text".to_string(),
                                         ),
-                                    )
-                                    .with_suggestion(
-                                        "Add a 'prompt' field with the prompt text".to_string(),
-                                    ),
-                                );
+                                    );
+                                }
                             }
                         }
                     }
@@ -1434,5 +1470,113 @@ mod tests {
     fn test_find_closest_event_no_match() {
         let suggestion = find_closest_event("CompletelyInvalid");
         assert!(suggestion.contains("Valid events are"));
+    }
+
+    // ===== Config Wiring Tests =====
+
+    #[test]
+    fn test_config_disabled_hooks_category_returns_empty() {
+        let mut config = LintConfig::default();
+        config.rules.hooks = false;
+
+        let content = r#"{
+            "hooks": {
+                "InvalidEvent": [
+                    {
+                        "hooks": [
+                            { "type": "command", "command": "echo test" }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+        let validator = HooksValidator;
+        let diagnostics = validator.validate(Path::new("settings.json"), content, &config);
+
+        // CC-HK-001 should not fire when hooks category is disabled
+        let cc_hk_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CC-HK-001").collect();
+        assert_eq!(cc_hk_001.len(), 0);
+    }
+
+    #[test]
+    fn test_config_disabled_specific_hook_rule() {
+        let mut config = LintConfig::default();
+        config.rules.disabled_rules = vec!["CC-HK-006".to_string()];
+
+        let content = r#"{
+            "hooks": {
+                "PreToolUse": [
+                    {
+                        "matcher": "Bash",
+                        "hooks": [
+                            { "type": "command" }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+        let validator = HooksValidator;
+        let diagnostics = validator.validate(Path::new("settings.json"), content, &config);
+
+        // CC-HK-006 should not fire when specifically disabled
+        let cc_hk_006: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CC-HK-006").collect();
+        assert_eq!(cc_hk_006.len(), 0);
+    }
+
+    #[test]
+    fn test_config_cursor_target_disables_hooks_rules() {
+        use crate::config::TargetTool;
+
+        let mut config = LintConfig::default();
+        config.target = TargetTool::Cursor;
+
+        let content = r#"{
+            "hooks": {
+                "InvalidEvent": [
+                    {
+                        "hooks": [
+                            { "type": "command", "command": "echo test" }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+        let validator = HooksValidator;
+        let diagnostics = validator.validate(Path::new("settings.json"), content, &config);
+
+        // CC-HK-* rules should not fire for Cursor target
+        let hook_rules: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule.starts_with("CC-HK-"))
+            .collect();
+        assert_eq!(hook_rules.len(), 0);
+    }
+
+    #[test]
+    fn test_config_dangerous_pattern_disabled() {
+        let mut config = LintConfig::default();
+        config.rules.disabled_rules = vec!["CC-HK-009".to_string()];
+
+        let content = r#"{
+            "hooks": {
+                "Stop": [
+                    {
+                        "hooks": [
+                            { "type": "command", "command": "rm -rf /" }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+        let validator = HooksValidator;
+        let diagnostics = validator.validate(Path::new("settings.json"), content, &config);
+
+        // CC-HK-009 should not fire when specifically disabled
+        let cc_hk_009: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CC-HK-009").collect();
+        assert_eq!(cc_hk_009.len(), 0);
     }
 }

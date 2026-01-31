@@ -82,7 +82,7 @@ impl AgentValidator {
 }
 
 impl Validator for AgentValidator {
-    fn validate(&self, path: &Path, content: &str, _config: &LintConfig) -> Vec<Diagnostic> {
+    fn validate(&self, path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic> {
         let mut diagnostics = Vec::new();
 
         // Check if content has frontmatter
@@ -116,131 +116,146 @@ impl Validator for AgentValidator {
         };
 
         // CC-AG-001: Missing name field
-        if schema.name.as_deref().unwrap_or("").trim().is_empty() {
-            diagnostics.push(
-                Diagnostic::error(
-                    path.to_path_buf(),
-                    1,
-                    0,
-                    "CC-AG-001",
-                    "Agent frontmatter is missing required 'name' field".to_string(),
-                )
-                .with_suggestion("Add 'name: your-agent-name' to frontmatter".to_string()),
-            );
-        }
-
-        // CC-AG-002: Missing description field
-        if schema.description.as_deref().unwrap_or("").trim().is_empty() {
-            diagnostics.push(
-                Diagnostic::error(
-                    path.to_path_buf(),
-                    1,
-                    0,
-                    "CC-AG-002",
-                    "Agent frontmatter is missing required 'description' field".to_string(),
-                )
-                .with_suggestion(
-                    "Add 'description: Describe what this agent does' to frontmatter".to_string(),
-                ),
-            );
-        }
-
-        // CC-AG-003: Invalid model value
-        if let Some(model) = &schema.model {
-            if !VALID_MODELS.contains(&model.as_str()) {
+        if config.is_rule_enabled("CC-AG-001") {
+            if schema.name.as_deref().unwrap_or("").trim().is_empty() {
                 diagnostics.push(
                     Diagnostic::error(
                         path.to_path_buf(),
                         1,
                         0,
-                        "CC-AG-003",
-                        format!(
-                            "Invalid model '{}'. Valid values: {}",
-                            model,
-                            VALID_MODELS.join(", ")
-                        ),
+                        "CC-AG-001",
+                        "Agent frontmatter is missing required 'name' field".to_string(),
                     )
-                    .with_suggestion(format!(
-                        "Change model to one of: {}",
-                        VALID_MODELS.join(", ")
-                    )),
+                    .with_suggestion("Add 'name: your-agent-name' to frontmatter".to_string()),
                 );
+            }
+        }
+
+        // CC-AG-002: Missing description field
+        if config.is_rule_enabled("CC-AG-002") {
+            if schema.description.as_deref().unwrap_or("").trim().is_empty() {
+                diagnostics.push(
+                    Diagnostic::error(
+                        path.to_path_buf(),
+                        1,
+                        0,
+                        "CC-AG-002",
+                        "Agent frontmatter is missing required 'description' field".to_string(),
+                    )
+                    .with_suggestion(
+                        "Add 'description: Describe what this agent does' to frontmatter"
+                            .to_string(),
+                    ),
+                );
+            }
+        }
+
+        // CC-AG-003: Invalid model value
+        if config.is_rule_enabled("CC-AG-003") {
+            if let Some(model) = &schema.model {
+                if !VALID_MODELS.contains(&model.as_str()) {
+                    diagnostics.push(
+                        Diagnostic::error(
+                            path.to_path_buf(),
+                            1,
+                            0,
+                            "CC-AG-003",
+                            format!(
+                                "Invalid model '{}'. Valid values: {}",
+                                model,
+                                VALID_MODELS.join(", ")
+                            ),
+                        )
+                        .with_suggestion(format!(
+                            "Change model to one of: {}",
+                            VALID_MODELS.join(", ")
+                        )),
+                    );
+                }
             }
         }
 
         // CC-AG-004: Invalid permission mode
-        if let Some(mode) = &schema.permission_mode {
-            if !VALID_PERMISSION_MODES.contains(&mode.as_str()) {
-                diagnostics.push(
-                    Diagnostic::error(
-                        path.to_path_buf(),
-                        1,
-                        0,
-                        "CC-AG-004",
-                        format!(
-                            "Invalid permissionMode '{}'. Valid values: {}",
-                            mode,
+        if config.is_rule_enabled("CC-AG-004") {
+            if let Some(mode) = &schema.permission_mode {
+                if !VALID_PERMISSION_MODES.contains(&mode.as_str()) {
+                    diagnostics.push(
+                        Diagnostic::error(
+                            path.to_path_buf(),
+                            1,
+                            0,
+                            "CC-AG-004",
+                            format!(
+                                "Invalid permissionMode '{}'. Valid values: {}",
+                                mode,
+                                VALID_PERMISSION_MODES.join(", ")
+                            ),
+                        )
+                        .with_suggestion(format!(
+                            "Change permissionMode to one of: {}",
                             VALID_PERMISSION_MODES.join(", ")
-                        ),
-                    )
-                    .with_suggestion(format!(
-                        "Change permissionMode to one of: {}",
-                        VALID_PERMISSION_MODES.join(", ")
-                    )),
-                );
+                        )),
+                    );
+                }
             }
         }
 
         // CC-AG-005: Referenced skill not found
-        if let Some(skills) = &schema.skills {
-            if let Some(project_root) = Self::find_project_root(path) {
-                for skill_name in skills {
-                    if !Self::skill_exists(project_root, skill_name) {
-                        diagnostics.push(
-                            Diagnostic::error(
-                                path.to_path_buf(),
-                                1,
-                                0,
-                                "CC-AG-005",
-                                format!(
-                                    "Referenced skill '{}' not found at .claude/skills/{}/SKILL.md",
-                                    skill_name, skill_name
-                                ),
-                            )
-                            .with_suggestion(format!(
-                                "Create the skill at .claude/skills/{}/SKILL.md or remove the reference",
-                                skill_name
-                            )),
-                        );
+        if config.is_rule_enabled("CC-AG-005") {
+            if let Some(skills) = &schema.skills {
+                if let Some(project_root) = Self::find_project_root(path) {
+                    for skill_name in skills {
+                        if !Self::skill_exists(project_root, skill_name) {
+                            diagnostics.push(
+                                Diagnostic::error(
+                                    path.to_path_buf(),
+                                    1,
+                                    0,
+                                    "CC-AG-005",
+                                    format!(
+                                        "Referenced skill '{}' not found at .claude/skills/{}/SKILL.md",
+                                        skill_name, skill_name
+                                    ),
+                                )
+                                .with_suggestion(format!(
+                                    "Create the skill at .claude/skills/{}/SKILL.md or remove the reference",
+                                    skill_name
+                                )),
+                            );
+                        }
                     }
                 }
             }
         }
 
         // CC-AG-006: Tool/disallowed conflict
-        if let (Some(tools), Some(disallowed)) = (&schema.tools, &schema.disallowed_tools) {
-            let tools_set: HashSet<&str> = tools.iter().map(|s| s.as_str()).collect();
-            let disallowed_set: HashSet<&str> = disallowed.iter().map(|s| s.as_str()).collect();
+        if config.is_rule_enabled("CC-AG-006") {
+            if let (Some(tools), Some(disallowed)) = (&schema.tools, &schema.disallowed_tools) {
+                let tools_set: HashSet<&str> = tools.iter().map(|s| s.as_str()).collect();
+                let disallowed_set: HashSet<&str> =
+                    disallowed.iter().map(|s| s.as_str()).collect();
 
-            let conflicts: Vec<&str> = tools_set.intersection(&disallowed_set).copied().collect();
+                let conflicts: Vec<&str> =
+                    tools_set.intersection(&disallowed_set).copied().collect();
 
-            if !conflicts.is_empty() {
-                diagnostics.push(
-                    Diagnostic::error(
-                        path.to_path_buf(),
-                        1,
-                        0,
-                        "CC-AG-006",
-                        format!(
-                            "Tool(s) appear in both 'tools' and 'disallowedTools': {}",
-                            conflicts.join(", ")
+                if !conflicts.is_empty() {
+                    diagnostics.push(
+                        Diagnostic::error(
+                            path.to_path_buf(),
+                            1,
+                            0,
+                            "CC-AG-006",
+                            format!(
+                                "Tool(s) appear in both 'tools' and 'disallowedTools': {}",
+                                conflicts.join(", ")
+                            ),
+                        )
+                        .with_suggestion(
+                            "Remove conflicting tool(s) from either 'tools' or 'disallowedTools'"
+                                .to_string(),
                         ),
-                    )
-                    .with_suggestion(
-                        "Remove conflicting tool(s) from either 'tools' or 'disallowedTools'"
-                            .to_string(),
-                    ),
-                );
+                    );
+                }
             }
         }
 
@@ -988,5 +1003,91 @@ Agent instructions"#;
         assert!(!AgentValidator::is_safe_skill_name("path/to/skill"));
         assert!(!AgentValidator::is_safe_skill_name(".hidden"));
         assert!(!AgentValidator::is_safe_skill_name(""));
+    }
+
+    // ===== Config Wiring Tests =====
+
+    #[test]
+    fn test_config_disabled_agents_category_returns_empty() {
+        let mut config = LintConfig::default();
+        config.rules.agents = false;
+
+        let content = r#"---
+description: A test agent without name
+---
+Agent instructions"#;
+
+        let validator = AgentValidator;
+        let diagnostics = validator.validate(Path::new("test-agent.md"), content, &config);
+
+        // CC-AG-001 should not fire when agents category is disabled
+        let cc_ag_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CC-AG-001").collect();
+        assert_eq!(cc_ag_001.len(), 0);
+    }
+
+    #[test]
+    fn test_config_disabled_specific_rule() {
+        let mut config = LintConfig::default();
+        config.rules.disabled_rules = vec!["CC-AG-001".to_string()];
+
+        // Agent missing both name and description
+        let content = r#"---
+model: sonnet
+---
+Agent instructions"#;
+
+        let validator = AgentValidator;
+        let diagnostics = validator.validate(Path::new("test-agent.md"), content, &config);
+
+        // CC-AG-001 should not fire when specifically disabled
+        let cc_ag_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CC-AG-001").collect();
+        assert_eq!(cc_ag_001.len(), 0);
+
+        // But CC-AG-002 should still fire (description is missing)
+        let cc_ag_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CC-AG-002").collect();
+        assert_eq!(cc_ag_002.len(), 1);
+    }
+
+    #[test]
+    fn test_config_cursor_target_disables_agent_rules() {
+        use crate::config::TargetTool;
+
+        let mut config = LintConfig::default();
+        config.target = TargetTool::Cursor;
+
+        let content = r#"---
+description: Agent without name
+---
+Agent instructions"#;
+
+        let validator = AgentValidator;
+        let diagnostics = validator.validate(Path::new("test-agent.md"), content, &config);
+
+        // CC-AG-* rules should not fire for Cursor target
+        let agent_rules: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule.starts_with("CC-AG-"))
+            .collect();
+        assert_eq!(agent_rules.len(), 0);
+    }
+
+    #[test]
+    fn test_config_claude_code_target_enables_agent_rules() {
+        use crate::config::TargetTool;
+
+        let mut config = LintConfig::default();
+        config.target = TargetTool::ClaudeCode;
+
+        let content = r#"---
+description: Agent without name
+---
+Agent instructions"#;
+
+        let validator = AgentValidator;
+        let diagnostics = validator.validate(Path::new("test-agent.md"), content, &config);
+
+        // CC-AG-001 should fire for ClaudeCode target
+        let cc_ag_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CC-AG-001").collect();
+        assert_eq!(cc_ag_001.len(), 1);
     }
 }

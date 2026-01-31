@@ -37,86 +37,98 @@ impl Validator for SkillValidator {
                 }
 
                 // AS-005: Name cannot start or end with hyphen
-                if schema.name.starts_with('-') || schema.name.ends_with('-') {
-                    diagnostics.push(
-                        Diagnostic::error(
-                            path.to_path_buf(),
-                            1,
-                            0,
-                            "AS-005",
-                            format!("Name '{}' cannot start or end with hyphen", schema.name),
-                        )
-                        .with_suggestion(
-                            "Remove leading/trailing hyphens from the name".to_string(),
-                        ),
-                    );
+                if config.is_rule_enabled("AS-005") {
+                    if schema.name.starts_with('-') || schema.name.ends_with('-') {
+                        diagnostics.push(
+                            Diagnostic::error(
+                                path.to_path_buf(),
+                                1,
+                                0,
+                                "AS-005",
+                                format!("Name '{}' cannot start or end with hyphen", schema.name),
+                            )
+                            .with_suggestion(
+                                "Remove leading/trailing hyphens from the name".to_string(),
+                            ),
+                        );
+                    }
                 }
 
                 // AS-006: Name cannot contain consecutive hyphens
-                if schema.name.contains("--") {
-                    diagnostics.push(
-                        Diagnostic::error(
-                            path.to_path_buf(),
-                            1,
-                            0,
-                            "AS-006",
-                            format!(
-                                "Name '{}' cannot contain consecutive hyphens",
-                                schema.name
-                            ),
-                        )
-                        .with_suggestion("Replace '--' with '-' in the name".to_string()),
-                    );
+                if config.is_rule_enabled("AS-006") {
+                    if schema.name.contains("--") {
+                        diagnostics.push(
+                            Diagnostic::error(
+                                path.to_path_buf(),
+                                1,
+                                0,
+                                "AS-006",
+                                format!(
+                                    "Name '{}' cannot contain consecutive hyphens",
+                                    schema.name
+                                ),
+                            )
+                            .with_suggestion("Replace '--' with '-' in the name".to_string()),
+                        );
+                    }
                 }
 
                 // AS-010: Description should include trigger phrase
-                let desc_lower = schema.description.to_lowercase();
-                if !desc_lower.contains("use when") && !desc_lower.contains("use this") {
-                    diagnostics.push(
-                        Diagnostic::warning(
-                            path.to_path_buf(),
-                            1,
-                            0,
-                            "AS-010",
-                            "Description should include a 'Use when...' trigger phrase".to_string(),
-                        )
-                        .with_suggestion(
-                            "Add 'Use when [condition]' to help Claude understand when to invoke this skill".to_string(),
-                        ),
-                    );
+                if config.is_rule_enabled("AS-010") {
+                    let desc_lower = schema.description.to_lowercase();
+                    if !desc_lower.contains("use when") && !desc_lower.contains("use this") {
+                        diagnostics.push(
+                            Diagnostic::warning(
+                                path.to_path_buf(),
+                                1,
+                                0,
+                                "AS-010",
+                                "Description should include a 'Use when...' trigger phrase"
+                                    .to_string(),
+                            )
+                            .with_suggestion(
+                                "Add 'Use when [condition]' to help Claude understand when to invoke this skill".to_string(),
+                            ),
+                        );
+                    }
                 }
 
                 // CC-SK-006: Dangerous auto-invocation check
-                const DANGEROUS_NAMES: &[&str] = &["deploy", "ship", "publish", "delete", "release", "push"];
-                let name_lower = schema.name.to_lowercase();
-                if DANGEROUS_NAMES.iter().any(|d| name_lower.contains(d)) {
-                    if !schema.disable_model_invocation.unwrap_or(false) {
-                        diagnostics.push(Diagnostic::error(
-                            path.to_path_buf(),
-                            1,
-                            0,
-                            "CC-SK-006",
-                            format!(
-                                "Dangerous skill '{}' must set 'disable-model-invocation: true' to prevent accidental invocation",
-                                schema.name
-                            ),
-                        ).with_suggestion("Add 'disable-model-invocation: true' to the frontmatter".to_string()));
+                if config.is_rule_enabled("CC-SK-006") {
+                    const DANGEROUS_NAMES: &[&str] =
+                        &["deploy", "ship", "publish", "delete", "release", "push"];
+                    let name_lower = schema.name.to_lowercase();
+                    if DANGEROUS_NAMES.iter().any(|d| name_lower.contains(d)) {
+                        if !schema.disable_model_invocation.unwrap_or(false) {
+                            diagnostics.push(Diagnostic::error(
+                                path.to_path_buf(),
+                                1,
+                                0,
+                                "CC-SK-006",
+                                format!(
+                                    "Dangerous skill '{}' must set 'disable-model-invocation: true' to prevent accidental invocation",
+                                    schema.name
+                                ),
+                            ).with_suggestion("Add 'disable-model-invocation: true' to the frontmatter".to_string()));
+                        }
                     }
                 }
 
                 // CC-SK-007: Unrestricted Bash warning
-                if let Some(tools) = &schema.allowed_tools {
-                    // Parse space-delimited tool list
-                    let tool_list: Vec<&str> = tools.split_whitespace().collect();
-                    for tool in tool_list {
-                        if tool == "Bash" {
-                            diagnostics.push(Diagnostic::warning(
-                                path.to_path_buf(),
-                                1,
-                                0,
-                                "CC-SK-007",
-                                "Unrestricted Bash access detected. Consider using scoped version for better security.".to_string(),
-                            ).with_suggestion("Use scoped Bash like 'Bash(git:*)' or 'Bash(npm:*)' instead of plain 'Bash'".to_string()));
+                if config.is_rule_enabled("CC-SK-007") {
+                    if let Some(tools) = &schema.allowed_tools {
+                        // Parse space-delimited tool list
+                        let tool_list: Vec<&str> = tools.split_whitespace().collect();
+                        for tool in tool_list {
+                            if tool == "Bash" {
+                                diagnostics.push(Diagnostic::warning(
+                                    path.to_path_buf(),
+                                    1,
+                                    0,
+                                    "CC-SK-007",
+                                    "Unrestricted Bash access detected. Consider using scoped version for better security.".to_string(),
+                                ).with_suggestion("Use scoped Bash like 'Bash(git:*)' or 'Bash(npm:*)' instead of plain 'Bash'".to_string()));
+                            }
                         }
                     }
                 }
@@ -458,5 +470,104 @@ Body"#;
             .collect();
 
         assert_eq!(as_010_warnings.len(), 0);
+    }
+
+    // ===== Config Wiring Tests =====
+
+    #[test]
+    fn test_config_disabled_skills_category() {
+        let mut config = LintConfig::default();
+        config.rules.skills = false;
+
+        let content = r#"---
+name: -bad-name
+description: Missing trigger phrase
+---
+Body"#;
+
+        let validator = SkillValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &config);
+
+        // AS-005 and AS-010 should not fire when skills category is disabled
+        let skill_rules: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule.starts_with("AS-") || d.rule.starts_with("CC-SK-"))
+            .collect();
+        assert_eq!(skill_rules.len(), 0);
+    }
+
+    #[test]
+    fn test_config_disabled_specific_skill_rule() {
+        let mut config = LintConfig::default();
+        config.rules.disabled_rules = vec!["AS-005".to_string()];
+
+        let content = r#"---
+name: -bad-name
+description: Missing trigger phrase
+---
+Body"#;
+
+        let validator = SkillValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &config);
+
+        // AS-005 should not fire when specifically disabled
+        let as_005: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-005").collect();
+        assert_eq!(as_005.len(), 0);
+
+        // But AS-010 should still fire
+        let as_010: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-010").collect();
+        assert_eq!(as_010.len(), 1);
+    }
+
+    #[test]
+    fn test_config_cursor_target_disables_cc_sk_rules() {
+        use crate::config::TargetTool;
+
+        let mut config = LintConfig::default();
+        config.target = TargetTool::Cursor;
+
+        let content = r#"---
+name: deploy-prod
+description: Deploys to production
+---
+Body"#;
+
+        let validator = SkillValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &config);
+
+        // CC-SK-006 should not fire for Cursor target
+        let cc_sk_006: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-SK-006")
+            .collect();
+        assert_eq!(cc_sk_006.len(), 0);
+
+        // But AS-010 should still fire (it's not CC- prefix)
+        let as_010: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-010").collect();
+        assert_eq!(as_010.len(), 1);
+    }
+
+    #[test]
+    fn test_config_claude_code_target_enables_cc_sk_rules() {
+        use crate::config::TargetTool;
+
+        let mut config = LintConfig::default();
+        config.target = TargetTool::ClaudeCode;
+
+        let content = r#"---
+name: deploy-prod
+description: Use when deploying to production
+---
+Body"#;
+
+        let validator = SkillValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &config);
+
+        // CC-SK-006 should fire for ClaudeCode target
+        let cc_sk_006: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-SK-006")
+            .collect();
+        assert_eq!(cc_sk_006.len(), 1);
     }
 }
