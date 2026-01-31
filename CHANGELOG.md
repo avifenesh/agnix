@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- PluginValidator implementation with 5 validation rules (CC-PL-001 to CC-PL-005)
+  - CC-PL-001: Validates plugin.json is in .claude-plugin/ directory
+  - CC-PL-002: Detects misplaced components (skills/agents/hooks) inside .claude-plugin/
+  - CC-PL-003: Validates version uses semver format (X.Y.Z)
+  - CC-PL-004: Validates required fields (name, description, version)
+  - CC-PL-005: Validates name field is not empty
+- Path traversal protection with MAX_TRAVERSAL_DEPTH limit
+- 32 comprehensive tests for plugin validation (234 total tests)
+- 4 test fixtures in tests/fixtures/plugins/ directory
 - Config-based rule filtering with category toggles (skills, hooks, agents, memory, plugins, xml, imports)
 - Target tool filtering - CC-* rules automatically disabled for non-Claude Code targets (Cursor, Codex)
 - Individual rule disabling via `disabled_rules` config list

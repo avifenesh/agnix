@@ -75,6 +75,11 @@ All rules in `knowledge-base/VALIDATION-RULES.md`
 | CC-AG-004 | ERROR | Invalid permission mode |
 | CC-AG-005 | ERROR | Referenced skill not found |
 | CC-AG-006 | ERROR | Tool/disallowed conflict |
+| CC-PL-001 | ERROR | Plugin manifest not in .claude-plugin/ |
+| CC-PL-002 | ERROR | Components inside .claude-plugin/ |
+| CC-PL-003 | ERROR | Invalid semver format |
+| CC-PL-004 | ERROR | Missing required plugin field |
+| CC-PL-005 | ERROR | Empty plugin name |
 | XML-001 | ERROR | Unclosed XML tag |
 
 ## CLI
