@@ -39,28 +39,28 @@ static DANGEROUS_PATTERNS: Lazy<Vec<DangerousPattern>> = Lazy::new(|| {
     ];
     patterns
         .iter()
-        .filter_map(|(pattern, reason)| {
-            Regex::new(&format!("(?i){}", pattern))
-                .ok()
-                .map(|regex| DangerousPattern {
-                    regex,
-                    pattern,
-                    reason,
-                })
+        .map(|&(pattern, reason)| {
+            let regex = Regex::new(&format!("(?i){}", pattern))
+                .expect("Invalid dangerous pattern regex");
+            DangerousPattern {
+                regex,
+                pattern,
+                reason,
+            }
         })
         .collect()
 });
 
 static SCRIPT_PATTERNS: Lazy<Vec<Regex>> = Lazy::new(|| {
     [
-        r"([^\s]+\.sh)\b",
-        r"([^\s]+\.bash)\b",
-        r"([^\s]+\.py)\b",
-        r"([^\s]+\.js)\b",
-        r"([^\s]+\.ts)\b",
+        r#"["']?([^\s"']+\.sh)["']?\b"#,
+        r#"["']?([^\s"']+\.bash)["']?\b"#,
+        r#"["']?([^\s"']+\.py)["']?\b"#,
+        r#"["']?([^\s"']+\.js)["']?\b"#,
+        r#"["']?([^\s"']+\.ts)["']?\b"#,
     ]
     .iter()
-    .filter_map(|p| Regex::new(p).ok())
+    .map(|p| Regex::new(p).expect("Invalid script pattern regex"))
     .collect()
 });
 
@@ -74,19 +74,20 @@ impl HooksValidator {
         None
     }
 
-    fn extract_script_path(&self, command: &str) -> Option<String> {
+    fn extract_script_paths(&self, command: &str) -> Vec<String> {
+        let mut paths = Vec::new();
         for re in SCRIPT_PATTERNS.iter() {
-            if let Some(caps) = re.captures(command) {
+            for caps in re.captures_iter(command) {
                 if let Some(m) = caps.get(1) {
-                    let path = m.as_str();
+                    let path = m.as_str().trim_matches(|c| c == '"' || c == '\'');
                     if path.contains("://") || path.starts_with("http") {
                         continue;
                     }
-                    return Some(path.to_string());
+                    paths.push(path.to_string());
                 }
             }
         }
-        None
+        paths
     }
 
     fn resolve_script_path(&self, script_path: &str, project_dir: &Path) -> std::path::PathBuf {
@@ -101,6 +102,13 @@ impl HooksValidator {
         } else {
             path
         }
+    }
+
+    fn has_unresolved_env_vars(&self, path: &str) -> bool {
+        let after_claude = path
+            .replace("$CLAUDE_PROJECT_DIR", "")
+            .replace("${CLAUDE_PROJECT_DIR}", "");
+        after_claude.contains('$')
     }
 }
 
@@ -167,13 +175,10 @@ impl Validator for HooksValidator {
                                     ),
                                 );
                             } else if let Some(cmd) = command {
-                                if let Some(script_path) = self.extract_script_path(cmd) {
-                                    let resolved =
-                                        self.resolve_script_path(&script_path, project_dir);
-
-                                    if !script_path.contains('$')
-                                        || script_path.contains("CLAUDE_PROJECT_DIR")
-                                    {
+                                for script_path in self.extract_script_paths(cmd) {
+                                    if !self.has_unresolved_env_vars(&script_path) {
+                                        let resolved =
+                                            self.resolve_script_path(&script_path, project_dir);
                                         if !resolved.exists() {
                                             diagnostics.push(
                                                 Diagnostic::error(
@@ -187,9 +192,10 @@ impl Validator for HooksValidator {
                                                         resolved.display()
                                                     ),
                                                 )
-                                                .with_suggestion(format!(
+                                                .with_suggestion(
                                                     "Create the script file or correct the path"
-                                                )),
+                                                        .to_string(),
+                                                ),
                                             );
                                         }
                                     }
@@ -721,39 +727,56 @@ mod tests {
     }
 
     #[test]
-    fn test_extract_script_path_sh() {
+    fn test_extract_script_paths_sh() {
         let validator = HooksValidator;
-        assert_eq!(
-            validator.extract_script_path("bash scripts/hook.sh"),
-            Some("scripts/hook.sh".to_string())
-        );
+        let paths = validator.extract_script_paths("bash scripts/hook.sh");
+        assert_eq!(paths, vec!["scripts/hook.sh"]);
     }
 
     #[test]
-    fn test_extract_script_path_py() {
+    fn test_extract_script_paths_py() {
         let validator = HooksValidator;
-        assert_eq!(
-            validator.extract_script_path("python /path/to/script.py arg1 arg2"),
-            Some("/path/to/script.py".to_string())
-        );
+        let paths = validator.extract_script_paths("python /path/to/script.py arg1 arg2");
+        assert_eq!(paths, vec!["/path/to/script.py"]);
     }
 
     #[test]
-    fn test_extract_script_path_env_var() {
+    fn test_extract_script_paths_env_var() {
         let validator = HooksValidator;
-        assert_eq!(
-            validator.extract_script_path("$CLAUDE_PROJECT_DIR/hooks/setup.sh"),
-            Some("$CLAUDE_PROJECT_DIR/hooks/setup.sh".to_string())
-        );
+        let paths = validator.extract_script_paths("$CLAUDE_PROJECT_DIR/hooks/setup.sh");
+        assert_eq!(paths, vec!["$CLAUDE_PROJECT_DIR/hooks/setup.sh"]);
     }
 
     #[test]
-    fn test_extract_script_path_no_script() {
+    fn test_extract_script_paths_no_script() {
         let validator = HooksValidator;
-        assert_eq!(
-            validator.extract_script_path("echo 'hello world'"),
-            None
-        );
+        let paths = validator.extract_script_paths("echo 'hello world'");
+        assert!(paths.is_empty());
+    }
+
+    #[test]
+    fn test_extract_script_paths_multiple() {
+        let validator = HooksValidator;
+        let paths = validator.extract_script_paths("./first.sh && ./second.sh");
+        assert_eq!(paths.len(), 2);
+        assert!(paths.contains(&"./first.sh".to_string()));
+        assert!(paths.contains(&"./second.sh".to_string()));
+    }
+
+    #[test]
+    fn test_extract_script_paths_quoted() {
+        let validator = HooksValidator;
+        let paths = validator.extract_script_paths("bash \"$CLAUDE_PROJECT_DIR/hooks/test.sh\"");
+        assert_eq!(paths, vec!["$CLAUDE_PROJECT_DIR/hooks/test.sh"]);
+    }
+
+    #[test]
+    fn test_has_unresolved_env_vars() {
+        let validator = HooksValidator;
+        assert!(!validator.has_unresolved_env_vars("./script.sh"));
+        assert!(!validator.has_unresolved_env_vars("$CLAUDE_PROJECT_DIR/script.sh"));
+        assert!(validator.has_unresolved_env_vars("$HOME/script.sh"));
+        assert!(validator.has_unresolved_env_vars("$CLAUDE_PROJECT_DIR/$HOME/script.sh"));
     }
 
     #[test]
