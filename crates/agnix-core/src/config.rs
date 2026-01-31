@@ -41,36 +41,87 @@ pub enum SeverityLevel {
     Info,
 }
 
+/// Helper function for serde default
+fn default_true() -> bool {
+    true
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RuleConfig {
+    /// Enable skills validation (AS-*, CC-SK-*)
+    #[serde(default = "default_true")]
+    pub skills: bool,
+
+    /// Enable hooks validation (CC-HK-*)
+    #[serde(default = "default_true")]
+    pub hooks: bool,
+
+    /// Enable agents validation (CC-AG-*)
+    #[serde(default = "default_true")]
+    pub agents: bool,
+
+    /// Enable memory validation (CC-MEM-*)
+    #[serde(default = "default_true")]
+    pub memory: bool,
+
+    /// Enable plugins validation (CC-PL-*)
+    #[serde(default = "default_true")]
+    pub plugins: bool,
+
+    /// Enable XML balance checking (XML-*)
+    #[serde(default = "default_true")]
+    pub xml: bool,
+
+    /// Enable import reference validation (REF-*)
+    #[serde(default = "default_true")]
+    pub imports: bool,
+
     /// Detect generic instructions in CLAUDE.md
+    #[serde(default = "default_true")]
     pub generic_instructions: bool,
 
     /// Validate YAML frontmatter
+    #[serde(default = "default_true")]
     pub frontmatter_validation: bool,
 
-    /// Check XML tag balance
+    /// Check XML tag balance (legacy - use xml instead)
+    #[serde(default = "default_true")]
     pub xml_balance: bool,
 
-    /// Validate @import references
+    /// Validate @import references (legacy - use imports instead)
+    #[serde(default = "default_true")]
     pub import_references: bool,
 
     /// Validate tool names
+    #[serde(default = "default_true")]
     pub tool_names: bool,
 
     /// Check required fields
+    #[serde(default = "default_true")]
     pub required_fields: bool,
+
+    /// Explicitly disabled rules by ID (e.g., ["CC-AG-001", "AS-005"])
+    #[serde(default)]
+    pub disabled_rules: Vec<String>,
 }
 
 impl Default for RuleConfig {
     fn default() -> Self {
         Self {
+            skills: true,
+            hooks: true,
+            agents: true,
+            memory: true,
+            plugins: true,
+            xml: true,
+            imports: true,
             generic_instructions: true,
             frontmatter_validation: true,
             xml_balance: true,
             import_references: true,
             tool_names: true,
             required_fields: true,
+            disabled_rules: Vec::new(),
         }
     }
 }
@@ -99,5 +150,323 @@ impl LintConfig {
     pub fn load_or_default(path: Option<&PathBuf>) -> Self {
         path.and_then(|p| Self::load(p).ok())
             .unwrap_or_default()
+    }
+
+    /// Check if a specific rule is enabled based on config
+    ///
+    /// A rule is enabled if:
+    /// 1. It's not in the disabled_rules list
+    /// 2. It's applicable to the current target tool
+    /// 3. Its category is enabled
+    pub fn is_rule_enabled(&self, rule_id: &str) -> bool {
+        // Check if explicitly disabled
+        if self.rules.disabled_rules.contains(&rule_id.to_string()) {
+            return false;
+        }
+
+        // Check if rule applies to target
+        if !self.is_rule_for_target(rule_id) {
+            return false;
+        }
+
+        // Check if category is enabled
+        self.is_category_enabled(rule_id)
+    }
+
+    /// Check if a rule applies to the current target tool
+    fn is_rule_for_target(&self, rule_id: &str) -> bool {
+        // CC-* rules only apply to ClaudeCode or Generic targets
+        if rule_id.starts_with("CC-") {
+            return matches!(self.target, TargetTool::ClaudeCode | TargetTool::Generic);
+        }
+        // All other rules (AS-*, XML-*, REF-*) apply to all targets
+        true
+    }
+
+    /// Check if a rule's category is enabled
+    fn is_category_enabled(&self, rule_id: &str) -> bool {
+        // Skills: AS-*, CC-SK-*
+        if rule_id.starts_with("AS-") || rule_id.starts_with("CC-SK-") {
+            return self.rules.skills;
+        }
+
+        // Hooks: CC-HK-*
+        if rule_id.starts_with("CC-HK-") {
+            return self.rules.hooks;
+        }
+
+        // Agents: CC-AG-*
+        if rule_id.starts_with("CC-AG-") {
+            return self.rules.agents;
+        }
+
+        // Memory: CC-MEM-*
+        if rule_id.starts_with("CC-MEM-") {
+            return self.rules.memory;
+        }
+
+        // Plugins: CC-PL-*
+        if rule_id.starts_with("CC-PL-") {
+            return self.rules.plugins;
+        }
+
+        // XML: XML-*, xml::*
+        if rule_id.starts_with("XML-") || rule_id.starts_with("xml::") {
+            return self.rules.xml;
+        }
+
+        // Imports: REF-*, imports::*
+        if rule_id.starts_with("REF-") || rule_id.starts_with("imports::") {
+            return self.rules.imports;
+        }
+
+        // Unknown rules are enabled by default
+        true
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_default_config_enables_all_rules() {
+        let config = LintConfig::default();
+
+        // Test various rule IDs
+        assert!(config.is_rule_enabled("CC-AG-001"));
+        assert!(config.is_rule_enabled("CC-HK-001"));
+        assert!(config.is_rule_enabled("AS-005"));
+        assert!(config.is_rule_enabled("CC-SK-006"));
+        assert!(config.is_rule_enabled("CC-MEM-005"));
+        assert!(config.is_rule_enabled("CC-PL-001"));
+        assert!(config.is_rule_enabled("XML-001"));
+        assert!(config.is_rule_enabled("REF-001"));
+    }
+
+    #[test]
+    fn test_disabled_rules_list() {
+        let mut config = LintConfig::default();
+        config.rules.disabled_rules = vec!["CC-AG-001".to_string(), "AS-005".to_string()];
+
+        assert!(!config.is_rule_enabled("CC-AG-001"));
+        assert!(!config.is_rule_enabled("AS-005"));
+        assert!(config.is_rule_enabled("CC-AG-002"));
+        assert!(config.is_rule_enabled("AS-006"));
+    }
+
+    #[test]
+    fn test_category_disabled_skills() {
+        let mut config = LintConfig::default();
+        config.rules.skills = false;
+
+        assert!(!config.is_rule_enabled("AS-005"));
+        assert!(!config.is_rule_enabled("AS-006"));
+        assert!(!config.is_rule_enabled("CC-SK-006"));
+        assert!(!config.is_rule_enabled("CC-SK-007"));
+
+        // Other categories still enabled
+        assert!(config.is_rule_enabled("CC-AG-001"));
+        assert!(config.is_rule_enabled("CC-HK-001"));
+    }
+
+    #[test]
+    fn test_category_disabled_hooks() {
+        let mut config = LintConfig::default();
+        config.rules.hooks = false;
+
+        assert!(!config.is_rule_enabled("CC-HK-001"));
+        assert!(!config.is_rule_enabled("CC-HK-009"));
+
+        // Other categories still enabled
+        assert!(config.is_rule_enabled("CC-AG-001"));
+        assert!(config.is_rule_enabled("AS-005"));
+    }
+
+    #[test]
+    fn test_category_disabled_agents() {
+        let mut config = LintConfig::default();
+        config.rules.agents = false;
+
+        assert!(!config.is_rule_enabled("CC-AG-001"));
+        assert!(!config.is_rule_enabled("CC-AG-006"));
+
+        // Other categories still enabled
+        assert!(config.is_rule_enabled("CC-HK-001"));
+        assert!(config.is_rule_enabled("AS-005"));
+    }
+
+    #[test]
+    fn test_category_disabled_memory() {
+        let mut config = LintConfig::default();
+        config.rules.memory = false;
+
+        assert!(!config.is_rule_enabled("CC-MEM-005"));
+
+        // Other categories still enabled
+        assert!(config.is_rule_enabled("CC-AG-001"));
+    }
+
+    #[test]
+    fn test_category_disabled_plugins() {
+        let mut config = LintConfig::default();
+        config.rules.plugins = false;
+
+        assert!(!config.is_rule_enabled("CC-PL-001"));
+
+        // Other categories still enabled
+        assert!(config.is_rule_enabled("CC-AG-001"));
+    }
+
+    #[test]
+    fn test_category_disabled_xml() {
+        let mut config = LintConfig::default();
+        config.rules.xml = false;
+
+        assert!(!config.is_rule_enabled("XML-001"));
+        assert!(!config.is_rule_enabled("xml::balance"));
+
+        // Other categories still enabled
+        assert!(config.is_rule_enabled("CC-AG-001"));
+    }
+
+    #[test]
+    fn test_category_disabled_imports() {
+        let mut config = LintConfig::default();
+        config.rules.imports = false;
+
+        assert!(!config.is_rule_enabled("REF-001"));
+        assert!(!config.is_rule_enabled("imports::not_found"));
+
+        // Other categories still enabled
+        assert!(config.is_rule_enabled("CC-AG-001"));
+    }
+
+    #[test]
+    fn test_target_cursor_disables_cc_rules() {
+        let mut config = LintConfig::default();
+        config.target = TargetTool::Cursor;
+
+        // CC-* rules should be disabled for Cursor
+        assert!(!config.is_rule_enabled("CC-AG-001"));
+        assert!(!config.is_rule_enabled("CC-HK-001"));
+        assert!(!config.is_rule_enabled("CC-SK-006"));
+        assert!(!config.is_rule_enabled("CC-MEM-005"));
+
+        // AS-* rules should still work
+        assert!(config.is_rule_enabled("AS-005"));
+        assert!(config.is_rule_enabled("AS-006"));
+
+        // XML and imports should still work
+        assert!(config.is_rule_enabled("XML-001"));
+        assert!(config.is_rule_enabled("REF-001"));
+    }
+
+    #[test]
+    fn test_target_codex_disables_cc_rules() {
+        let mut config = LintConfig::default();
+        config.target = TargetTool::Codex;
+
+        // CC-* rules should be disabled for Codex
+        assert!(!config.is_rule_enabled("CC-AG-001"));
+        assert!(!config.is_rule_enabled("CC-HK-001"));
+
+        // AS-* rules should still work
+        assert!(config.is_rule_enabled("AS-005"));
+    }
+
+    #[test]
+    fn test_target_claude_code_enables_cc_rules() {
+        let mut config = LintConfig::default();
+        config.target = TargetTool::ClaudeCode;
+
+        // All rules should be enabled
+        assert!(config.is_rule_enabled("CC-AG-001"));
+        assert!(config.is_rule_enabled("CC-HK-001"));
+        assert!(config.is_rule_enabled("AS-005"));
+    }
+
+    #[test]
+    fn test_target_generic_enables_all() {
+        let config = LintConfig::default(); // Default is Generic
+
+        // All rules should be enabled
+        assert!(config.is_rule_enabled("CC-AG-001"));
+        assert!(config.is_rule_enabled("CC-HK-001"));
+        assert!(config.is_rule_enabled("AS-005"));
+        assert!(config.is_rule_enabled("XML-001"));
+    }
+
+    #[test]
+    fn test_unknown_rules_enabled_by_default() {
+        let config = LintConfig::default();
+
+        // Unknown rule IDs should be enabled
+        assert!(config.is_rule_enabled("UNKNOWN-001"));
+        assert!(config.is_rule_enabled("skill::schema"));
+        assert!(config.is_rule_enabled("agent::parse"));
+    }
+
+    #[test]
+    fn test_disabled_rules_takes_precedence() {
+        let mut config = LintConfig::default();
+        config.rules.disabled_rules = vec!["AS-005".to_string()];
+
+        // Even with skills enabled, this specific rule is disabled
+        assert!(config.rules.skills);
+        assert!(!config.is_rule_enabled("AS-005"));
+        assert!(config.is_rule_enabled("AS-006"));
+    }
+
+    #[test]
+    fn test_toml_deserialization_with_new_fields() {
+        let toml_str = r#"
+severity = "Warning"
+target = "ClaudeCode"
+exclude = []
+
+[rules]
+skills = true
+hooks = false
+agents = true
+disabled_rules = ["CC-AG-002"]
+"#;
+
+        let config: LintConfig = toml::from_str(toml_str).unwrap();
+
+        assert_eq!(config.target, TargetTool::ClaudeCode);
+        assert!(config.rules.skills);
+        assert!(!config.rules.hooks);
+        assert!(config.rules.agents);
+        assert!(config.rules.disabled_rules.contains(&"CC-AG-002".to_string()));
+
+        // Check rule enablement
+        assert!(config.is_rule_enabled("CC-AG-001"));
+        assert!(!config.is_rule_enabled("CC-AG-002")); // Disabled in list
+        assert!(!config.is_rule_enabled("CC-HK-001")); // hooks category disabled
+    }
+
+    #[test]
+    fn test_toml_deserialization_defaults() {
+        // Minimal config should use defaults
+        let toml_str = r#"
+severity = "Warning"
+target = "Generic"
+exclude = []
+
+[rules]
+"#;
+
+        let config: LintConfig = toml::from_str(toml_str).unwrap();
+
+        // All categories should default to true
+        assert!(config.rules.skills);
+        assert!(config.rules.hooks);
+        assert!(config.rules.agents);
+        assert!(config.rules.memory);
+        assert!(config.rules.plugins);
+        assert!(config.rules.xml);
+        assert!(config.rules.imports);
+        assert!(config.rules.disabled_rules.is_empty());
     }
 }
