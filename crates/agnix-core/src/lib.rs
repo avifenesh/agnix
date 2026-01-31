@@ -482,4 +482,62 @@ mod tests {
             "Expected diagnostics for deploy-prod-* skill names"
         );
     }
+
+    #[test]
+    fn test_parallel_validation_single_file() {
+        // Edge case: verify parallel code works correctly with just one file
+        let temp = tempfile::TempDir::new().unwrap();
+        std::fs::write(
+            temp.path().join("SKILL.md"),
+            "---\nname: deploy-prod\ndescription: Deploys\n---\nBody",
+        )
+        .unwrap();
+
+        let config = LintConfig::default();
+        let diagnostics = validate_project(temp.path(), &config).unwrap();
+
+        // Should have at least one diagnostic for the dangerous name (CC-SK-006)
+        assert!(
+            diagnostics.iter().any(|d| d.rule == "CC-SK-006"),
+            "Expected CC-SK-006 diagnostic for dangerous deploy-prod name"
+        );
+    }
+
+    #[test]
+    fn test_parallel_validation_mixed_results() {
+        // Test mix of valid and invalid files processed in parallel
+        let temp = tempfile::TempDir::new().unwrap();
+
+        // Valid skill (no diagnostics expected)
+        let valid_dir = temp.path().join("valid");
+        std::fs::create_dir_all(&valid_dir).unwrap();
+        std::fs::write(
+            valid_dir.join("SKILL.md"),
+            "---\nname: code-review\ndescription: Use when reviewing code\n---\nBody",
+        )
+        .unwrap();
+
+        // Invalid skill (diagnostics expected)
+        let invalid_dir = temp.path().join("invalid");
+        std::fs::create_dir_all(&invalid_dir).unwrap();
+        std::fs::write(
+            invalid_dir.join("SKILL.md"),
+            "---\nname: deploy-prod\ndescription: Deploys\n---\nBody",
+        )
+        .unwrap();
+
+        let config = LintConfig::default();
+        let diagnostics = validate_project(temp.path(), &config).unwrap();
+
+        // Should have diagnostics only from the invalid skill
+        let error_diagnostics: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.level == DiagnosticLevel::Error)
+            .collect();
+
+        assert!(
+            error_diagnostics.iter().all(|d| d.file.to_string_lossy().contains("invalid")),
+            "Errors should only come from the invalid skill"
+        );
+    }
 }
