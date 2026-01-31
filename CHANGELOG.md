@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- SARIF 2.1.0 output format with `--format sarif` CLI option for CI/CD integration
+  - Full SARIF 2.1.0 specification compliance with JSON schema validation
+  - Includes all 80 validation rules in driver.rules with help URIs
+  - Supports GitHub Code Scanning and other SARIF-compatible tools
+  - Proper exit codes for CI workflows (errors exit 1)
+  - Path normalization for cross-platform compatibility
+  - 8 comprehensive integration tests for SARIF output
 - Comprehensive CI workflow with format check, clippy, machete, and test matrix (3 OS x 2 Rust versions)
 - Security scanning workflow with CodeQL analysis and cargo-audit (runs on push, PR, and weekly schedule)
 - Changelog validation workflow to ensure CHANGELOG.md is updated in PRs

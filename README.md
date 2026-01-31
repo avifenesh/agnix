@@ -62,6 +62,9 @@ agnix --dry-run .
 # Apply only safe (HIGH certainty) fixes
 agnix --fix-safe .
 
+# SARIF output format (for CI/CD and GitHub Code Scanning)
+agnix --format sarif .
+
 # Generate config file
 agnix init
 ```
@@ -91,6 +94,52 @@ Found 4 errors, 1 warning
   2 issues are automatically fixable
 
 hint: Run with --fix to apply fixes
+```
+
+## SARIF Output Format
+
+For CI/CD integration and GitHub Code Scanning, use the `--format sarif` option:
+
+```bash
+agnix --format sarif . > results.sarif
+```
+
+Features:
+- **Full SARIF 2.1.0 compliance** - Compatible with GitHub Code Scanning and other SARIF tools
+- **80 validation rules** - All rules included in `driver.rules` with help URIs linking to documentation
+- **Proper exit codes** - Returns exit code 1 if errors are found (0 for success)
+- **Cross-platform paths** - Automatically normalizes Windows backslashes to forward slashes
+- **Relative paths** - File paths are relative to the validation base directory
+
+Example SARIF output structure:
+```json
+{
+  "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/main/sarif-2.1/schema/sarif-schema-2.1.0.json",
+  "version": "2.1.0",
+  "runs": [{
+    "tool": {
+      "driver": {
+        "name": "agnix",
+        "version": "0.x.x",
+        "informationUri": "https://github.com/avifenesh/agnix",
+        "rules": [...]
+      }
+    },
+    "results": [...]
+  }]
+}
+```
+
+### GitHub Actions Integration
+
+```yaml
+- name: Validate agent configs
+  run: agnix --format sarif . > results.sarif
+  
+- name: Upload SARIF results
+  uses: github/codeql-action/upload-sarif@v2
+  with:
+    sarif_file: results.sarif
 ```
 
 ## Performance
