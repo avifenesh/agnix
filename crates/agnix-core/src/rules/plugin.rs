@@ -147,6 +147,7 @@ impl Validator for PluginValidator {
         }
 
         // CC-PL-003: Version must be valid semver (X.Y.Z)
+        // Only validate when version.is_some(); CC-PL-004 handles missing version
         if config.is_rule_enabled("CC-PL-003") {
             if let Some(version) = &manifest.version {
                 if !Self::is_valid_semver(version) {
@@ -202,6 +203,7 @@ impl Validator for PluginValidator {
         }
 
         // CC-PL-005: Name must not be empty
+        // Only validate empty name if field exists; CC-PL-004 handles missing name
         if config.is_rule_enabled("CC-PL-005") {
             if let Some(name) = &manifest.name {
                 if name.trim().is_empty() {
@@ -876,5 +878,67 @@ mod tests {
         );
         let cc_pl_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CC-PL-001").collect();
         assert!(!cc_pl_001.is_empty());
+    }
+
+    #[test]
+    fn test_cc_pl_003_version_with_whitespace() {
+        let content = r#"{"name": "test", "description": "test", "version": " 1.0.0 "}"#;
+        let diagnostics = validate(content);
+        let cc_pl_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CC-PL-003").collect();
+        assert!(!cc_pl_003.is_empty(), "Version with whitespace should fail CC-PL-003");
+    }
+
+    #[test]
+    fn test_cc_pl_005_tab_only_name() {
+        let content = r#"{"name": "\t\t", "description": "test", "version": "1.0.0"}"#;
+        let diagnostics = validate(content);
+        let cc_pl_005: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CC-PL-005").collect();
+        assert!(!cc_pl_005.is_empty(), "Tab-only name should fail CC-PL-005");
+    }
+
+    #[test]
+    fn test_cc_pl_005_mixed_whitespace_name() {
+        let content = r#"{"name": " \n\r\t ", "description": "test", "version": "1.0.0"}"#;
+        let diagnostics = validate(content);
+        let cc_pl_005: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CC-PL-005").collect();
+        assert!(!cc_pl_005.is_empty(), "Mixed whitespace name should fail CC-PL-005");
+    }
+
+    #[test]
+    fn test_cc_pl_002_component_as_file() {
+        use std::fs::File;
+        let temp_dir = TempDir::new().unwrap();
+        let plugin_dir = temp_dir.path().join("test.claude-plugin");
+        std::fs::create_dir(&plugin_dir).unwrap();
+        let plugin_json = plugin_dir.join("plugin.json");
+        std::fs::write(&plugin_json, r#"{"name": "test", "description": "test", "version": "1.0.0"}"#).unwrap();
+
+        // Create "skills" as a FILE, not a directory
+        let skills_file = plugin_dir.join("skills");
+        File::create(&skills_file).unwrap();
+
+        let content = std::fs::read_to_string(&plugin_json).unwrap();
+        let diagnostics = validate_with_path(&plugin_json, &content);
+
+        // Should NOT raise CC-PL-002 since skills is a file, not a directory
+        let cc_pl_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CC-PL-002").collect();
+        assert!(cc_pl_002.is_empty(), "skills as file should not trigger CC-PL-002");
+    }
+
+    #[test]
+    fn test_cc_pl_003_empty_version_string() {
+        let content = r#"{"name": "test", "description": "test", "version": ""}"#;
+        let diagnostics = validate(content);
+        let cc_pl_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CC-PL-003").collect();
+        assert!(!cc_pl_003.is_empty(), "Empty version string should fail CC-PL-003");
+    }
+
+    #[test]
+    fn test_cc_pl_003_extremely_large_version_numbers() {
+        let content = r#"{"name": "test", "description": "test", "version": "999999999999999.0.0"}"#;
+        let diagnostics = validate(content);
+        // Regex accepts it (valid format), but documenting behavior for extremely large numbers
+        let cc_pl_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CC-PL-003").collect();
+        assert!(cc_pl_003.is_empty(), "Extremely large version numbers pass regex validation");
     }
 }

@@ -550,4 +550,38 @@ mod tests {
             "Errors should only come from the invalid skill"
         );
     }
+
+    #[test]
+    fn test_validate_project_plugin_detection() {
+        // Integration test verifying validate_project() detects and validates plugin.json files
+        let temp = tempfile::TempDir::new().unwrap();
+        let plugin_dir = temp.path().join("my-plugin.claude-plugin");
+        std::fs::create_dir_all(&plugin_dir).unwrap();
+
+        // Create plugin.json with a validation issue (missing description - CC-PL-004)
+        std::fs::write(
+            plugin_dir.join("plugin.json"),
+            r#"{"name": "test-plugin", "version": "1.0.0"}"#,
+        )
+        .unwrap();
+
+        let config = LintConfig::default();
+        let diagnostics = validate_project(temp.path(), &config).unwrap();
+
+        // Should detect the plugin.json and report CC-PL-004 for missing description
+        let plugin_diagnostics: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule.starts_with("CC-PL-"))
+            .collect();
+
+        assert!(
+            !plugin_diagnostics.is_empty(),
+            "validate_project() should detect and validate plugin.json files"
+        );
+
+        assert!(
+            plugin_diagnostics.iter().any(|d| d.rule == "CC-PL-004"),
+            "Should report CC-PL-004 for missing description field"
+        );
+    }
 }

@@ -1,0 +1,26 @@
+{
+  "version": "1.0.0",
+  "task": {
+    "id": "8",
+    "title": "Implement PluginValidator CC-PL-001 to CC-PL-005",
+    "source": "github-issues"
+  },
+  "workflow": {
+    "id": "task-8-plugin-validator",
+    "status": "active",
+    "currentPhase": "exploration"
+  },
+  "git": {
+    "originalBranch": "main",
+    "workingBranch": "feature/plugin-validator-cc-pl-001-005",
+    "worktreePath": "C:/Users/avife/agnix-worktrees/plugin-validator-cc-pl-001-005",
+    "baseSha": "878a693584955b7c98893775234fc71999c4377e",
+    "isWorktree": true,
+    "mainRepoPath": "C:/Users/avife/agnix"
+  },
+  "resume": {
+    "canResume": true,
+    "resumeFromStep": "exploration"
+  },
+  "createdAt": "2026-01-31T00:00:00Z"
+}
