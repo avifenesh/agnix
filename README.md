@@ -18,6 +18,7 @@ agnix .
 - ✅ **XML Balance** - Ensures tags are properly closed
 - ✅ **@imports** - Validates file references exist
 - ✅ **Hooks** - Event and config validation (CC-HK-006 to CC-HK-009)
+- ✅ **Parallel Validation** - Fast processing of large projects using rayon
 - 🚧 **MCP Tools** - Schema validation (coming soon)
 - 🚧 **LSP Server** - Real-time diagnostics (coming soon)
 
@@ -71,6 +72,10 @@ CLAUDE.md:15:1 warning: Generic instruction 'Be helpful and accurate'
 ────────────────────────────────────────────────────────────
 Found 2 errors, 1 warning
 ```
+
+## Performance
+
+agnix validates files in parallel using [rayon](https://github.com/rayon-rs/rayon) for optimal performance on large projects. Results are sorted deterministically (errors first, then by file path) to ensure consistent output across runs.
 
 ## Configuration
 
@@ -141,6 +146,7 @@ agnix/
 - [x] XML balance checking
 - [x] @import resolution
 - [x] Hooks validation (CC-HK-006 to CC-HK-009)
+- [x] Parallel file validation
 - [ ] MCP tool validation
 - [ ] LSP server
 - [ ] VS Code extension

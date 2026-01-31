@@ -29,6 +29,17 @@ agnix/
 └── tests/fixtures/     # Test cases
 ```
 
+### Validation Pipeline
+
+The validation process follows these steps:
+
+1. **Directory Walking** (sequential) - Uses `ignore` crate to traverse directories
+2. **File Collection** - Gathers all relevant file paths with exclusion filtering
+3. **Parallel Validation** - Processes files in parallel using rayon
+4. **Result Sorting** - Deterministic ordering by severity (errors first) then file path
+
+This architecture ensures fast validation on large projects while maintaining consistent, reproducible output.
+
 ## Rule Reference
 
 All rules in `knowledge-base/VALIDATION-RULES.md`
@@ -82,3 +93,10 @@ generic_instructions = true
 [[exclude]]
 "node_modules/**"
 ```
+
+## Performance Characteristics
+
+- File I/O is parallelized across all CPU cores
+- Directory walking remains sequential to maintain compatibility with `ignore` crate
+- Memory usage scales with number of files (diagnostics are collected and sorted)
+- Deterministic output guarantees same results across multiple runs
