@@ -1,0 +1,36 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          { "type": "command", "command": "echo 'Stop should not have matcher'" }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "matcher": "*",
+        "hooks": [
+          { "type": "command", "command": "echo 'SubagentStop should not have matcher'" }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          { "type": "command", "command": "echo 'UserPromptSubmit should not have matcher'" }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "Write",
+        "hooks": [
+          { "type": "command", "command": "echo 'SessionStart should not have matcher'" }
+        ]
+      }
+    ]
+  }
+}

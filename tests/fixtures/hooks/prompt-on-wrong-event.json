@@ -1,0 +1,33 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          { "type": "prompt", "prompt": "prompt hooks not allowed here" }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          { "type": "prompt", "prompt": "prompt hooks not allowed on SessionStart either" }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          { "type": "prompt", "prompt": "this is valid - prompt on Stop is allowed" }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          { "type": "prompt", "prompt": "this is valid - prompt on SubagentStop is allowed" }
+        ]
+      }
+    ]
+  }
+}
