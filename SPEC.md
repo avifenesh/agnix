@@ -53,6 +53,10 @@ All rules in `knowledge-base/VALIDATION-RULES.md`
 | CC-SK-006 | ERROR | Dangerous skill without safety flag |
 | CC-SK-007 | WARN | Unrestricted Bash access |
 | CC-HK-001 | ERROR | Invalid hook event |
+| CC-HK-006 | ERROR | Missing command field |
+| CC-HK-007 | ERROR | Missing prompt field |
+| CC-HK-008 | ERROR | Script file not found |
+| CC-HK-009 | WARN | Dangerous command pattern |
 | CC-MEM-005 | WARN | Generic instruction detected |
 | XML-001 | ERROR | Unclosed XML tag |
 

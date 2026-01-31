@@ -183,6 +183,10 @@ Hooks Validation:
 - [ ] CC-HK-002: Prompt hook restriction
 - [ ] CC-HK-003: Matcher required
 - [ ] CC-HK-005: Type field exists
+- [x] CC-HK-006: Missing command field
+- [x] CC-HK-007: Missing prompt field
+- [x] CC-HK-008: Script file not found
+- [x] CC-HK-009: Dangerous command pattern
 
 Memory Validation:
 - [ ] CC-MEM-001: Import paths exist

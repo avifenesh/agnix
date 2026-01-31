@@ -17,8 +17,8 @@ agnix .
 - ✅ **Generic Instructions** - Detects redundant "be helpful" patterns
 - ✅ **XML Balance** - Ensures tags are properly closed
 - ✅ **@imports** - Validates file references exist
+- ✅ **Hooks** - Event and config validation (CC-HK-006 to CC-HK-009)
 - 🚧 **MCP Tools** - Schema validation (coming soon)
-- 🚧 **Hooks** - Event and config validation (coming soon)
 - 🚧 **LSP Server** - Real-time diagnostics (coming soon)
 
 ## Installation
@@ -140,8 +140,8 @@ agnix/
 - [x] CLAUDE.md rules
 - [x] XML balance checking
 - [x] @import resolution
+- [x] Hooks validation (CC-HK-006 to CC-HK-009)
 - [ ] MCP tool validation
-- [ ] Hooks validation
 - [ ] LSP server
 - [ ] VS Code extension
 - [ ] Auto-fix mode
