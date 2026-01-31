@@ -16,7 +16,6 @@ path = "src/main.rs"
 agnix-core = { path = "../agnix-core" }
 clap.workspace = true
 colored.workspace = true
-miette = { workspace = true, features = ["fancy"] }
 anyhow.workspace = true
 toml = "0.8"
 similar = "2"

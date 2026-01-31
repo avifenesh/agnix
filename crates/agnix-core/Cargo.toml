@@ -16,7 +16,6 @@ thiserror.workspace = true
 anyhow.workspace = true
 pulldown-cmark.workspace = true
 regex.workspace = true
-walkdir.workspace = true
 ignore.workspace = true
 glob.workspace = true
 miette.workspace = true
