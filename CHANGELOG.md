@@ -51,8 +51,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Directory walking remains sequential, only validation is parallelized
 - All validators now respect config-based category toggles and disabled rules
 - Config structure enhanced with category-based toggles (legacy flags still supported)
+- Knowledge base docs refreshed (rule counts, AGENTS.md support tiers, Cursor rules)
 
 ### Performance
 - Significant speed improvements on projects with many files
 - Maintains correctness with deterministic sorting of results
-
