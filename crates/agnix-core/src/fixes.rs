@@ -71,7 +71,7 @@ pub fn apply_fixes(
 
         if fixed != original {
             if !dry_run {
-                std::fs::write(&path, &fixed).map_err(|e| LintError::FileRead {
+                std::fs::write(&path, &fixed).map_err(|e| LintError::FileWrite {
                     path: path.clone(),
                     source: e,
                 })?;
@@ -91,10 +91,12 @@ pub fn apply_fixes(
     Ok(results)
 }
 
-/// Apply fixes to content string, returning new content and applied descriptions
+/// Apply fixes to content string, returning new content and applied descriptions.
+/// Fixes must be sorted by start_byte descending to preserve positions.
 fn apply_fixes_to_content(content: &str, fixes: &[&Fix]) -> (String, Vec<String>) {
     let mut result = content.to_string();
     let mut applied = Vec::new();
+    let mut last_start = usize::MAX;
 
     for fix in fixes {
         if fix.start_byte > result.len() || fix.end_byte > result.len() {
@@ -106,11 +108,16 @@ fn apply_fixes_to_content(content: &str, fixes: &[&Fix]) -> (String, Vec<String>
         if !result.is_char_boundary(fix.start_byte) || !result.is_char_boundary(fix.end_byte) {
             continue;
         }
+        // Skip overlapping fixes (sorted descending, so check against previous fix start)
+        if fix.end_byte > last_start {
+            continue;
+        }
 
         let before = &result[..fix.start_byte];
         let after = &result[fix.end_byte..];
         result = format!("{}{}{}", before, fix.replacement, after);
         applied.push(fix.description.clone());
+        last_start = fix.start_byte;
     }
 
     applied.reverse();
@@ -324,5 +331,26 @@ mod tests {
             applied: vec![],
         };
         assert!(!result_no_changes.has_changes());
+    }
+
+    #[test]
+    fn test_fix_overlapping_skipped() {
+        let content = "hello world";
+        // Overlapping fixes: first at 6-11, second at 4-8
+        // Sorted descending: 6-11 first, then 4-8
+        // 4-8 overlaps with 6-11 (end_byte 8 > start 6), should be skipped
+        let fixes = vec![
+            Fix::replace(6, 11, "universe", "Fix 1", true),
+            Fix::replace(4, 8, "XXX", "Fix 2 overlaps", true),
+        ];
+
+        let mut sorted: Vec<&Fix> = fixes.iter().collect();
+        sorted.sort_by(|a, b| b.start_byte.cmp(&a.start_byte));
+
+        let (result, applied) = apply_fixes_to_content(content, &sorted);
+
+        assert_eq!(result, "hello universe");
+        assert_eq!(applied.len(), 1);
+        assert_eq!(applied[0], "Fix 1");
     }
 }

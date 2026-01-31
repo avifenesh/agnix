@@ -160,6 +160,13 @@ pub enum LintError {
         source: std::io::Error,
     },
 
+    #[error("Failed to write file: {path}")]
+    FileWrite {
+        path: PathBuf,
+        #[source]
+        source: std::io::Error,
+    },
+
     #[error("Failed to parse YAML frontmatter")]
     #[diagnostic(
         code(agnix::yaml_parse),
