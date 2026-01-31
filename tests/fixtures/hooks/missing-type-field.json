@@ -1,0 +1,20 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          { "command": "echo 'missing type field'" },
+          { "prompt": "missing type field on prompt too" }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          { "command": "echo 'another missing type'" }
+        ]
+      }
+    ]
+  }
+}

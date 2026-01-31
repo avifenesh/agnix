@@ -1,0 +1,27 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          { "type": "command", "command": "echo 'valid event'" }
+        ]
+      }
+    ],
+    "InvalidEvent": [
+      {
+        "hooks": [
+          { "type": "command", "command": "echo 'invalid event name'" }
+        ]
+      }
+    ],
+    "pretooluse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          { "type": "command", "command": "echo 'wrong case - should be PreToolUse'" }
+        ]
+      }
+    ]
+  }
+}
