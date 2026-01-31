@@ -128,6 +128,13 @@ pub fn validate_project(path: &Path, config: &LintConfig) -> LintResult<Vec<Diag
 
     let mut diagnostics = Vec::new();
 
+    // Pre-compile exclude patterns once (avoids N+1 pattern compilation)
+    let exclude_patterns: Vec<glob::Pattern> = config
+        .exclude
+        .iter()
+        .filter_map(|p| glob::Pattern::new(p).ok())
+        .collect();
+
     let walker = WalkBuilder::new(path)
         .standard_filters(true)
         .build();
@@ -144,13 +151,8 @@ pub fn validate_project(path: &Path, config: &LintConfig) -> LintResult<Vec<Diag
             continue;
         }
 
-        // Check config excludes
         let path_str = file_path.to_string_lossy();
-        let should_exclude = config.exclude.iter().any(|pattern| {
-            glob::Pattern::new(pattern)
-                .map(|p| p.matches(&path_str))
-                .unwrap_or(false)
-        });
+        let should_exclude = exclude_patterns.iter().any(|p| p.matches(&path_str));
 
         if should_exclude {
             continue;
@@ -376,5 +378,42 @@ mod tests {
         for i in 1..diagnostics.len() {
             assert!(diagnostics[i - 1].level <= diagnostics[i].level);
         }
+    }
+
+    #[test]
+    fn test_validate_invalid_skill_triggers_both_rules() {
+        let temp = tempfile::TempDir::new().unwrap();
+        let skill_path = temp.path().join("SKILL.md");
+        std::fs::write(
+            &skill_path,
+            "---\nname: deploy-prod\ndescription: Deploys\nallowed-tools: Bash Read Write\n---\nBody",
+        )
+        .unwrap();
+
+        let config = LintConfig::default();
+        let diagnostics = validate_file(&skill_path, &config).unwrap();
+
+        assert!(diagnostics.iter().any(|d| d.rule == "CC-SK-006"));
+        assert!(diagnostics.iter().any(|d| d.rule == "CC-SK-007"));
+    }
+
+    #[test]
+    fn test_validate_valid_skill_produces_no_errors() {
+        let temp = tempfile::TempDir::new().unwrap();
+        let skill_path = temp.path().join("SKILL.md");
+        std::fs::write(
+            &skill_path,
+            "---\nname: code-review\ndescription: Use when reviewing code\n---\nBody",
+        )
+        .unwrap();
+
+        let config = LintConfig::default();
+        let diagnostics = validate_file(&skill_path, &config).unwrap();
+
+        let errors: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.level == DiagnosticLevel::Error)
+            .collect();
+        assert!(errors.is_empty());
     }
 }
