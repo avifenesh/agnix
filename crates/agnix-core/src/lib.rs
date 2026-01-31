@@ -16,7 +16,9 @@ pub mod parsers;
 pub mod rules;
 pub mod schemas;
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
+
+use rayon::prelude::*;
 
 pub use config::LintConfig;
 pub use diagnostics::{Diagnostic, DiagnosticLevel, LintError, LintResult};
@@ -126,8 +128,6 @@ pub fn validate_file(path: &Path, config: &LintConfig) -> LintResult<Vec<Diagnos
 pub fn validate_project(path: &Path, config: &LintConfig) -> LintResult<Vec<Diagnostic>> {
     use ignore::WalkBuilder;
 
-    let mut diagnostics = Vec::new();
-
     // Pre-compile exclude patterns once (avoids N+1 pattern compilation)
     let exclude_patterns: Vec<glob::Pattern> = config
         .exclude
@@ -135,44 +135,39 @@ pub fn validate_project(path: &Path, config: &LintConfig) -> LintResult<Vec<Diag
         .filter_map(|p| glob::Pattern::new(p).ok())
         .collect();
 
-    let walker = WalkBuilder::new(path)
+    // Collect all file paths to validate (sequential walk, parallel validation)
+    let paths: Vec<PathBuf> = WalkBuilder::new(path)
         .standard_filters(true)
-        .build();
+        .build()
+        .filter_map(|entry| entry.ok())
+        .filter(|entry| entry.path().is_file())
+        .filter(|entry| {
+            let path_str = entry.path().to_string_lossy();
+            !exclude_patterns.iter().any(|p| p.matches(&path_str))
+        })
+        .map(|entry| entry.path().to_path_buf())
+        .collect();
 
-    for entry in walker {
-        let entry = match entry {
-            Ok(e) => e,
-            Err(_) => continue,
-        };
-
-        let file_path = entry.path();
-
-        if !file_path.is_file() {
-            continue;
-        }
-
-        let path_str = file_path.to_string_lossy();
-        let should_exclude = exclude_patterns.iter().any(|p| p.matches(&path_str));
-
-        if should_exclude {
-            continue;
-        }
-
-        match validate_file(file_path, config) {
-            Ok(file_diagnostics) => diagnostics.extend(file_diagnostics),
-            Err(e) => {
-                diagnostics.push(Diagnostic::error(
-                    file_path.to_path_buf(),
-                    0,
-                    0,
-                    "file::read",
-                    format!("Failed to validate file: {}", e),
-                ));
+    // Validate files in parallel
+    let mut diagnostics: Vec<Diagnostic> = paths
+        .par_iter()
+        .flat_map(|file_path| {
+            match validate_file(file_path, config) {
+                Ok(file_diagnostics) => file_diagnostics,
+                Err(e) => {
+                    vec![Diagnostic::error(
+                        file_path.clone(),
+                        0,
+                        0,
+                        "file::read",
+                        format!("Failed to validate file: {}", e),
+                    )]
+                }
             }
-        }
-    }
+        })
+        .collect();
 
-    // Sort by severity (errors first), then by file path
+    // Sort by severity (errors first), then by file path for deterministic output
     diagnostics.sort_by(|a, b| a.level.cmp(&b.level).then_with(|| a.file.cmp(&b.file)));
 
     Ok(diagnostics)
