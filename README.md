@@ -87,21 +87,50 @@ Create `.agnix.toml` in your project:
 
 ```toml
 severity = "Warning"
-target = "Generic"
+target = "Generic"  # Options: Generic, ClaudeCode, Cursor, Codex
 
 [rules]
+# Category toggles - enable/disable entire rule categories
+skills = true       # AS-*, CC-SK-* rules
+hooks = true        # CC-HK-* rules
+agents = true       # CC-AG-* rules
+memory = true       # CC-MEM-* rules
+plugins = true      # CC-PL-* rules
+xml = true          # XML-* rules
+imports = true      # REF-*, imports::* rules
+
+# Legacy flags (still supported)
 generic_instructions = true
 frontmatter_validation = true
 xml_balance = true
 import_references = true
-tool_names = true
-required_fields = true
+
+# Disable specific rules by ID
+disabled_rules = []  # e.g., ["CC-AG-001", "AS-005"]
 
 [[exclude]]
 "node_modules/**"
 ".git/**"
 "target/**"
 ```
+
+### Target Tool Filtering
+
+When `target` is set to a specific tool, only relevant rules run:
+- **ClaudeCode** or **Generic**: All rules enabled
+- **Cursor** or **Codex**: CC-* rules disabled (Claude Code specific)
+
+### Rule Categories
+
+| Category | Rules | Description |
+|----------|-------|-------------|
+| skills | AS-*, CC-SK-* | Agent skill validation |
+| hooks | CC-HK-* | Hook configuration validation |
+| agents | CC-AG-* | Subagent validation |
+| memory | CC-MEM-* | Memory/CLAUDE.md validation |
+| plugins | CC-PL-* | Plugin validation |
+| xml | xml::* | XML tag balance |
+| imports | imports::* | Import reference validation |
 
 ## Supported Standards
 
@@ -149,9 +178,10 @@ agnix/
 - [x] CLAUDE.md rules
 - [x] XML balance checking
 - [x] @import resolution
-- [x] Hooks validation (CC-HK-006 to CC-HK-009)
+- [x] Hooks validation (CC-HK-001 to CC-HK-009)
 - [x] Agent validation (CC-AG-001 to CC-AG-006)
 - [x] Parallel file validation
+- [x] Config-based rule filtering
 - [ ] MCP tool validation
 - [ ] LSP server
 - [ ] VS Code extension
