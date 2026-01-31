@@ -3,11 +3,10 @@
     "allow": [
       "Skill(ship:ship)",
       "Fetch(*)",
-      "Bash(*)",
+      "Bash(*:*)",
       "Bash(git:*)",
-      "Bash(cargo check:*)",
-      "Bash(cargo test:*)",
-      "Bash(cargo clippy:*)"
+      "Bash(cargo:*)",
+      "Bash(./target/release/agnix:*)"
     ]
   }
 }
