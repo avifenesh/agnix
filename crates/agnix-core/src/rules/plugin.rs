@@ -109,7 +109,8 @@ impl Validator for PluginValidator {
         };
 
         if config.is_rule_enabled("CC-PL-003") {
-            if !is_valid_semver(&schema.version) {
+            let version = schema.version.trim();
+            if !version.is_empty() && !is_valid_semver(version) {
                 diagnostics.push(
                     Diagnostic::error(
                         path.to_path_buf(),
@@ -216,6 +217,23 @@ mod tests {
         let diagnostics = validator.validate(&plugin_path, &fs::read_to_string(&plugin_path).unwrap(), &LintConfig::default());
 
         assert!(diagnostics.iter().any(|d| d.rule == "CC-PL-003"));
+    }
+
+    #[test]
+    fn test_cc_pl_003_skips_empty_version() {
+        let temp = TempDir::new().unwrap();
+        let plugin_path = temp.path().join(".claude-plugin").join("plugin.json");
+        write_plugin(
+            &plugin_path,
+            r#"{"name":"test-plugin","description":"desc","version":""}"#,
+        );
+
+        let validator = PluginValidator;
+        let diagnostics =
+            validator.validate(&plugin_path, &fs::read_to_string(&plugin_path).unwrap(), &LintConfig::default());
+
+        assert!(diagnostics.iter().any(|d| d.rule == "CC-PL-004"));
+        assert!(!diagnostics.iter().any(|d| d.rule == "CC-PL-003"));
     }
 
     #[test]
