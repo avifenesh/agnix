@@ -764,4 +764,42 @@ mod tests {
         assert!(validator.check_dangerous_patterns("Git Reset --Hard").is_some());
         assert!(validator.check_dangerous_patterns("DROP DATABASE test").is_some());
     }
+
+    #[test]
+    fn test_fixture_valid_settings() {
+        let content = include_str!("../../../../tests/fixtures/hooks/valid-settings.json");
+        let diagnostics = validate(content);
+        let errors: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule.starts_with("CC-HK-00"))
+            .collect();
+        assert!(errors.is_empty(), "Valid fixture should have no CC-HK errors");
+    }
+
+    #[test]
+    fn test_fixture_missing_command() {
+        let content = include_str!("../../../../tests/fixtures/hooks/missing-command-field.json");
+        let diagnostics = validate(content);
+        let cc_hk_006: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CC-HK-006").collect();
+        assert!(!cc_hk_006.is_empty(), "Should detect missing command field");
+    }
+
+    #[test]
+    fn test_fixture_missing_prompt() {
+        let content = include_str!("../../../../tests/fixtures/hooks/missing-prompt-field.json");
+        let diagnostics = validate(content);
+        let cc_hk_007: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CC-HK-007").collect();
+        assert!(!cc_hk_007.is_empty(), "Should detect missing prompt field");
+    }
+
+    #[test]
+    fn test_fixture_dangerous_commands() {
+        let content = include_str!("../../../../tests/fixtures/hooks/dangerous-commands.json");
+        let diagnostics = validate(content);
+        let cc_hk_009: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CC-HK-009").collect();
+        assert!(
+            cc_hk_009.len() >= 3,
+            "Should detect multiple dangerous commands"
+        );
+    }
 }
