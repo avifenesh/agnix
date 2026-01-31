@@ -35,38 +35,35 @@ impl Validator for SkillValidator {
 
                 // AS-005: Name cannot start or end with hyphen
                 if config.is_rule_enabled("AS-005")
-                    && (schema.name.starts_with('-') || schema.name.ends_with('-')) {
-                        diagnostics.push(
-                            Diagnostic::error(
-                                path.to_path_buf(),
-                                1,
-                                0,
-                                "AS-005",
-                                format!("Name '{}' cannot start or end with hyphen", schema.name),
-                            )
-                            .with_suggestion(
-                                "Remove leading/trailing hyphens from the name".to_string(),
-                            ),
-                        );
-                    }
+                    && (schema.name.starts_with('-') || schema.name.ends_with('-'))
+                {
+                    diagnostics.push(
+                        Diagnostic::error(
+                            path.to_path_buf(),
+                            1,
+                            0,
+                            "AS-005",
+                            format!("Name '{}' cannot start or end with hyphen", schema.name),
+                        )
+                        .with_suggestion(
+                            "Remove leading/trailing hyphens from the name".to_string(),
+                        ),
+                    );
+                }
 
                 // AS-006: Name cannot contain consecutive hyphens
-                if config.is_rule_enabled("AS-006")
-                    && schema.name.contains("--") {
-                        diagnostics.push(
-                            Diagnostic::error(
-                                path.to_path_buf(),
-                                1,
-                                0,
-                                "AS-006",
-                                format!(
-                                    "Name '{}' cannot contain consecutive hyphens",
-                                    schema.name
-                                ),
-                            )
-                            .with_suggestion("Replace '--' with '-' in the name".to_string()),
-                        );
-                    }
+                if config.is_rule_enabled("AS-006") && schema.name.contains("--") {
+                    diagnostics.push(
+                        Diagnostic::error(
+                            path.to_path_buf(),
+                            1,
+                            0,
+                            "AS-006",
+                            format!("Name '{}' cannot contain consecutive hyphens", schema.name),
+                        )
+                        .with_suggestion("Replace '--' with '-' in the name".to_string()),
+                    );
+                }
 
                 // AS-010: Description should include trigger phrase
                 if config.is_rule_enabled("AS-010") {
@@ -94,8 +91,9 @@ impl Validator for SkillValidator {
                         &["deploy", "ship", "publish", "delete", "release", "push"];
                     let name_lower = schema.name.to_lowercase();
                     if DANGEROUS_NAMES.iter().any(|d| name_lower.contains(d))
-                        && !schema.disable_model_invocation.unwrap_or(false) {
-                            diagnostics.push(Diagnostic::error(
+                        && !schema.disable_model_invocation.unwrap_or(false)
+                    {
+                        diagnostics.push(Diagnostic::error(
                                 path.to_path_buf(),
                                 1,
                                 0,
@@ -105,7 +103,7 @@ impl Validator for SkillValidator {
                                     schema.name
                                 ),
                             ).with_suggestion("Add 'disable-model-invocation: true' to the frontmatter".to_string()));
-                        }
+                    }
                 }
 
                 // CC-SK-007: Unrestricted Bash warning

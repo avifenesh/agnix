@@ -262,44 +262,47 @@ impl Validator for HooksValidator {
             for (matcher_idx, matcher) in matchers.iter().enumerate() {
                 // CC-HK-003: Missing matcher for tool events
                 if config.is_rule_enabled("CC-HK-003")
-                    && HooksSchema::is_tool_event(event) && matcher.matcher.is_none() {
-                        let hook_location = format!("hooks.{}[{}]", event, matcher_idx);
-                        diagnostics.push(
-                            Diagnostic::error(
-                                path.to_path_buf(),
-                                1,
-                                0,
-                                "CC-HK-003",
-                                format!(
-                                    "Tool event '{}' at {} requires a matcher field",
-                                    event, hook_location
-                                ),
-                            )
-                            .with_suggestion(
-                                "Add 'matcher': '*' for all tools or specify a tool name"
-                                    .to_string(),
+                    && HooksSchema::is_tool_event(event)
+                    && matcher.matcher.is_none()
+                {
+                    let hook_location = format!("hooks.{}[{}]", event, matcher_idx);
+                    diagnostics.push(
+                        Diagnostic::error(
+                            path.to_path_buf(),
+                            1,
+                            0,
+                            "CC-HK-003",
+                            format!(
+                                "Tool event '{}' at {} requires a matcher field",
+                                event, hook_location
                             ),
-                        );
-                    }
+                        )
+                        .with_suggestion(
+                            "Add 'matcher': '*' for all tools or specify a tool name".to_string(),
+                        ),
+                    );
+                }
 
                 // CC-HK-004: Matcher on non-tool event
                 if config.is_rule_enabled("CC-HK-004")
-                    && !HooksSchema::is_tool_event(event) && matcher.matcher.is_some() {
-                        let hook_location = format!("hooks.{}[{}]", event, matcher_idx);
-                        diagnostics.push(
-                            Diagnostic::error(
-                                path.to_path_buf(),
-                                1,
-                                0,
-                                "CC-HK-004",
-                                format!(
-                                    "Non-tool event '{}' at {} must not have a matcher field",
-                                    event, hook_location
-                                ),
-                            )
-                            .with_suggestion("Remove the 'matcher' field".to_string()),
-                        );
-                    }
+                    && !HooksSchema::is_tool_event(event)
+                    && matcher.matcher.is_some()
+                {
+                    let hook_location = format!("hooks.{}[{}]", event, matcher_idx);
+                    diagnostics.push(
+                        Diagnostic::error(
+                            path.to_path_buf(),
+                            1,
+                            0,
+                            "CC-HK-004",
+                            format!(
+                                "Non-tool event '{}' at {} must not have a matcher field",
+                                event, hook_location
+                            ),
+                        )
+                        .with_suggestion("Remove the 'matcher' field".to_string()),
+                    );
+                }
 
                 for (hook_idx, hook) in matcher.hooks.iter().enumerate() {
                     let hook_location = format!(
@@ -316,9 +319,8 @@ impl Validator for HooksValidator {
                     match hook {
                         Hook::Command { command, .. } => {
                             // CC-HK-006: Missing command field
-                            if config.is_rule_enabled("CC-HK-006")
-                                && command.is_none() {
-                                    diagnostics.push(
+                            if config.is_rule_enabled("CC-HK-006") && command.is_none() {
+                                diagnostics.push(
                                         Diagnostic::error(
                                             path.to_path_buf(),
                                             1,
@@ -334,7 +336,7 @@ impl Validator for HooksValidator {
                                                 .to_string(),
                                         ),
                                     );
-                                }
+                            }
 
                             if let Some(cmd) = command {
                                 // CC-HK-008: Script file not found
@@ -394,8 +396,9 @@ impl Validator for HooksValidator {
                         Hook::Prompt { prompt, .. } => {
                             // CC-HK-002: Prompt on wrong event
                             if config.is_rule_enabled("CC-HK-002")
-                                && !HooksSchema::is_prompt_event(event) {
-                                    diagnostics.push(
+                                && !HooksSchema::is_prompt_event(event)
+                            {
+                                diagnostics.push(
                                         Diagnostic::error(
                                             path.to_path_buf(),
                                             1,
@@ -410,27 +413,26 @@ impl Validator for HooksValidator {
                                             "Use 'type': 'command' instead, or move this hook to Stop/SubagentStop".to_string(),
                                         ),
                                     );
-                                }
+                            }
 
                             // CC-HK-007: Missing prompt field
-                            if config.is_rule_enabled("CC-HK-007")
-                                && prompt.is_none() {
-                                    diagnostics.push(
-                                        Diagnostic::error(
-                                            path.to_path_buf(),
-                                            1,
-                                            0,
-                                            "CC-HK-007",
-                                            format!(
-                                                "Prompt hook at {} is missing required 'prompt' field",
-                                                hook_location
-                                            ),
-                                        )
-                                        .with_suggestion(
-                                            "Add a 'prompt' field with the prompt text".to_string(),
+                            if config.is_rule_enabled("CC-HK-007") && prompt.is_none() {
+                                diagnostics.push(
+                                    Diagnostic::error(
+                                        path.to_path_buf(),
+                                        1,
+                                        0,
+                                        "CC-HK-007",
+                                        format!(
+                                            "Prompt hook at {} is missing required 'prompt' field",
+                                            hook_location
                                         ),
-                                    );
-                                }
+                                    )
+                                    .with_suggestion(
+                                        "Add a 'prompt' field with the prompt text".to_string(),
+                                    ),
+                                );
+                            }
                         }
                     }
                 }

@@ -114,18 +114,19 @@ impl Validator for AgentValidator {
 
         // CC-AG-001: Missing name field
         if config.is_rule_enabled("CC-AG-001")
-            && schema.name.as_deref().unwrap_or("").trim().is_empty() {
-                diagnostics.push(
-                    Diagnostic::error(
-                        path.to_path_buf(),
-                        1,
-                        0,
-                        "CC-AG-001",
-                        "Agent frontmatter is missing required 'name' field".to_string(),
-                    )
-                    .with_suggestion("Add 'name: your-agent-name' to frontmatter".to_string()),
-                );
-            }
+            && schema.name.as_deref().unwrap_or("").trim().is_empty()
+        {
+            diagnostics.push(
+                Diagnostic::error(
+                    path.to_path_buf(),
+                    1,
+                    0,
+                    "CC-AG-001",
+                    "Agent frontmatter is missing required 'name' field".to_string(),
+                )
+                .with_suggestion("Add 'name: your-agent-name' to frontmatter".to_string()),
+            );
+        }
 
         // CC-AG-002: Missing description field
         if config.is_rule_enabled("CC-AG-002")
@@ -135,21 +136,20 @@ impl Validator for AgentValidator {
                 .unwrap_or("")
                 .trim()
                 .is_empty()
-            {
-                diagnostics.push(
-                    Diagnostic::error(
-                        path.to_path_buf(),
-                        1,
-                        0,
-                        "CC-AG-002",
-                        "Agent frontmatter is missing required 'description' field".to_string(),
-                    )
-                    .with_suggestion(
-                        "Add 'description: Describe what this agent does' to frontmatter"
-                            .to_string(),
-                    ),
-                );
-            }
+        {
+            diagnostics.push(
+                Diagnostic::error(
+                    path.to_path_buf(),
+                    1,
+                    0,
+                    "CC-AG-002",
+                    "Agent frontmatter is missing required 'description' field".to_string(),
+                )
+                .with_suggestion(
+                    "Add 'description: Describe what this agent does' to frontmatter".to_string(),
+                ),
+            );
+        }
 
         // CC-AG-003: Invalid model value
         if config.is_rule_enabled("CC-AG-003") {
