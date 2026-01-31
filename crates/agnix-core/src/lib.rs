@@ -411,4 +411,75 @@ mod tests {
             .collect();
         assert!(errors.is_empty());
     }
+
+    #[test]
+    fn test_parallel_validation_deterministic_output() {
+        // Create a project structure with multiple files that will generate diagnostics
+        let temp = tempfile::TempDir::new().unwrap();
+
+        // Create multiple skill files with issues to ensure non-trivial parallel work
+        for i in 0..5 {
+            let skill_dir = temp.path().join(format!("skill-{}", i));
+            std::fs::create_dir_all(&skill_dir).unwrap();
+            std::fs::write(
+                skill_dir.join("SKILL.md"),
+                format!(
+                    "---\nname: deploy-prod-{}\ndescription: Deploys things\n---\nBody",
+                    i
+                ),
+            )
+            .unwrap();
+        }
+
+        // Create some CLAUDE.md files too
+        for i in 0..3 {
+            let dir = temp.path().join(format!("project-{}", i));
+            std::fs::create_dir_all(&dir).unwrap();
+            std::fs::write(
+                dir.join("CLAUDE.md"),
+                "# Project\n\nBe helpful and concise.\n",
+            )
+            .unwrap();
+        }
+
+        let config = LintConfig::default();
+
+        // Run validation multiple times and verify identical output
+        let first_result = validate_project(temp.path(), &config).unwrap();
+
+        for run in 1..=10 {
+            let result = validate_project(temp.path(), &config).unwrap();
+
+            assert_eq!(
+                first_result.len(),
+                result.len(),
+                "Run {} produced different number of diagnostics",
+                run
+            );
+
+            for (i, (a, b)) in first_result.iter().zip(result.iter()).enumerate() {
+                assert_eq!(
+                    a.file, b.file,
+                    "Run {} diagnostic {} has different file",
+                    run, i
+                );
+                assert_eq!(
+                    a.rule, b.rule,
+                    "Run {} diagnostic {} has different rule",
+                    run, i
+                );
+                assert_eq!(
+                    a.level, b.level,
+                    "Run {} diagnostic {} has different level",
+                    run, i
+                );
+            }
+        }
+
+        // Verify we actually got some diagnostics (the dangerous name rule should fire)
+        assert!(
+            !first_result.is_empty(),
+            "Expected diagnostics for deploy-prod-* skill names"
+        );
+    }
 }
