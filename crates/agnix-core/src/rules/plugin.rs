@@ -147,7 +147,6 @@ impl Validator for PluginValidator {
         }
 
         // CC-PL-003: Version must be valid semver (X.Y.Z)
-        // Only validate when version.is_some(); CC-PL-004 handles missing version
         if config.is_rule_enabled("CC-PL-003") {
             if let Some(version) = &manifest.version {
                 if !Self::is_valid_semver(version) {
@@ -203,7 +202,6 @@ impl Validator for PluginValidator {
         }
 
         // CC-PL-005: Name must not be empty
-        // Only validate empty name if field exists; CC-PL-004 handles missing name
         if config.is_rule_enabled("CC-PL-005") {
             if let Some(name) = &manifest.name {
                 if name.trim().is_empty() {
@@ -937,7 +935,6 @@ mod tests {
     fn test_cc_pl_003_extremely_large_version_numbers() {
         let content = r#"{"name": "test", "description": "test", "version": "999999999999999.0.0"}"#;
         let diagnostics = validate(content);
-        // Regex accepts it (valid format), but documenting behavior for extremely large numbers
         let cc_pl_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CC-PL-003").collect();
         assert!(cc_pl_003.is_empty(), "Extremely large version numbers pass regex validation");
     }

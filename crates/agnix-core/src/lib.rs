@@ -553,7 +553,6 @@ mod tests {
 
     #[test]
     fn test_validate_project_plugin_detection() {
-        // Integration test verifying validate_project() detects and validates plugin.json files
         let temp = tempfile::TempDir::new().unwrap();
         let plugin_dir = temp.path().join("my-plugin.claude-plugin");
         std::fs::create_dir_all(&plugin_dir).unwrap();
