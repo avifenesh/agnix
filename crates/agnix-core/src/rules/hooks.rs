@@ -773,7 +773,7 @@ mod tests {
             .iter()
             .filter(|d| d.rule.starts_with("CC-HK-00"))
             .collect();
-        assert!(errors.is_empty(), "Valid fixture should have no CC-HK errors");
+        assert!(errors.is_empty());
     }
 
     #[test]
@@ -781,7 +781,7 @@ mod tests {
         let content = include_str!("../../../../tests/fixtures/hooks/missing-command-field.json");
         let diagnostics = validate(content);
         let cc_hk_006: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CC-HK-006").collect();
-        assert!(!cc_hk_006.is_empty(), "Should detect missing command field");
+        assert!(!cc_hk_006.is_empty());
     }
 
     #[test]
@@ -789,7 +789,7 @@ mod tests {
         let content = include_str!("../../../../tests/fixtures/hooks/missing-prompt-field.json");
         let diagnostics = validate(content);
         let cc_hk_007: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CC-HK-007").collect();
-        assert!(!cc_hk_007.is_empty(), "Should detect missing prompt field");
+        assert!(!cc_hk_007.is_empty());
     }
 
     #[test]
@@ -797,9 +797,6 @@ mod tests {
         let content = include_str!("../../../../tests/fixtures/hooks/dangerous-commands.json");
         let diagnostics = validate(content);
         let cc_hk_009: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CC-HK-009").collect();
-        assert!(
-            cc_hk_009.len() >= 3,
-            "Should detect multiple dangerous commands"
-        );
+        assert!(cc_hk_009.len() >= 3);
     }
 }
