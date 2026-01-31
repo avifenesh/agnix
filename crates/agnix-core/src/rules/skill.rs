@@ -34,8 +34,8 @@ impl Validator for SkillValidator {
                 }
 
                 // AS-005: Name cannot start or end with hyphen
-                if config.is_rule_enabled("AS-005") {
-                    if schema.name.starts_with('-') || schema.name.ends_with('-') {
+                if config.is_rule_enabled("AS-005")
+                    && (schema.name.starts_with('-') || schema.name.ends_with('-')) {
                         diagnostics.push(
                             Diagnostic::error(
                                 path.to_path_buf(),
@@ -49,11 +49,10 @@ impl Validator for SkillValidator {
                             ),
                         );
                     }
-                }
 
                 // AS-006: Name cannot contain consecutive hyphens
-                if config.is_rule_enabled("AS-006") {
-                    if schema.name.contains("--") {
+                if config.is_rule_enabled("AS-006")
+                    && schema.name.contains("--") {
                         diagnostics.push(
                             Diagnostic::error(
                                 path.to_path_buf(),
@@ -68,7 +67,6 @@ impl Validator for SkillValidator {
                             .with_suggestion("Replace '--' with '-' in the name".to_string()),
                         );
                     }
-                }
 
                 // AS-010: Description should include trigger phrase
                 if config.is_rule_enabled("AS-010") {
@@ -95,8 +93,8 @@ impl Validator for SkillValidator {
                     const DANGEROUS_NAMES: &[&str] =
                         &["deploy", "ship", "publish", "delete", "release", "push"];
                     let name_lower = schema.name.to_lowercase();
-                    if DANGEROUS_NAMES.iter().any(|d| name_lower.contains(d)) {
-                        if !schema.disable_model_invocation.unwrap_or(false) {
+                    if DANGEROUS_NAMES.iter().any(|d| name_lower.contains(d))
+                        && !schema.disable_model_invocation.unwrap_or(false) {
                             diagnostics.push(Diagnostic::error(
                                 path.to_path_buf(),
                                 1,
@@ -108,7 +106,6 @@ impl Validator for SkillValidator {
                                 ),
                             ).with_suggestion("Add 'disable-model-invocation: true' to the frontmatter".to_string()));
                         }
-                    }
                 }
 
                 // CC-SK-007: Unrestricted Bash warning

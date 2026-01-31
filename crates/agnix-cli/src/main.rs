@@ -10,7 +10,7 @@ use clap::{Parser, Subcommand};
 use colored::*;
 use similar::{ChangeTag, TextDiff};
 use std::env;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process;
 
 #[derive(Parser)]
@@ -89,7 +89,7 @@ fn main() {
     }
 }
 
-fn validate_command(path: &PathBuf, cli: &Cli) -> anyhow::Result<()> {
+fn validate_command(path: &Path, cli: &Cli) -> anyhow::Result<()> {
     let config_path = resolve_config_path(path, cli);
     let mut config = LintConfig::load_or_default(config_path.as_ref());
     config.target = match cli.target.as_str() {
@@ -242,14 +242,14 @@ fn validate_command(path: &PathBuf, cli: &Cli) -> anyhow::Result<()> {
     Ok(())
 }
 
-fn resolve_config_path(path: &PathBuf, cli: &Cli) -> Option<PathBuf> {
+fn resolve_config_path(path: &Path, cli: &Cli) -> Option<PathBuf> {
     if let Some(config) = &cli.config {
         return Some(config.clone());
     }
 
     let mut candidates = Vec::new();
     if path.is_dir() {
-        candidates.push(path.clone());
+        candidates.push(path.to_path_buf());
     } else if let Some(parent) = path.parent() {
         candidates.push(parent.to_path_buf());
     }

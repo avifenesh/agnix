@@ -13,7 +13,7 @@ use serde::de::DeserializeOwned;
 /// body content
 /// ```
 pub fn parse_frontmatter<T: DeserializeOwned>(content: &str) -> LintResult<(T, String)> {
-    let (frontmatter, body) = extract_frontmatter(content).map_err(|e| LintError::Other(e))?;
+    let (frontmatter, body) = extract_frontmatter(content).map_err(LintError::Other)?;
     let parsed: T = serde_yaml::from_str(&frontmatter).map_err(|e| LintError::Other(e.into()))?;
     Ok((parsed, body))
 }

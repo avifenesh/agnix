@@ -246,7 +246,7 @@ fn scan_xml_tags_in_text(
     let re = XML_TAG_REGEX.get_or_init(|| Regex::new(r"<(/?)([a-zA-Z_][a-zA-Z0-9_-]*)>").unwrap());
 
     for cap in re.captures_iter(text) {
-        let is_closing = cap.get(1).map_or(false, |m| m.as_str() == "/");
+        let is_closing = cap.get(1).is_some_and(|m| m.as_str() == "/");
         if let Some(name_match) = cap.get(2) {
             let name = name_match.as_str().to_string();
             let start = cap.get(0).unwrap().start();

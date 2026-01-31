@@ -113,8 +113,8 @@ impl Validator for AgentValidator {
         };
 
         // CC-AG-001: Missing name field
-        if config.is_rule_enabled("CC-AG-001") {
-            if schema.name.as_deref().unwrap_or("").trim().is_empty() {
+        if config.is_rule_enabled("CC-AG-001")
+            && schema.name.as_deref().unwrap_or("").trim().is_empty() {
                 diagnostics.push(
                     Diagnostic::error(
                         path.to_path_buf(),
@@ -126,11 +126,10 @@ impl Validator for AgentValidator {
                     .with_suggestion("Add 'name: your-agent-name' to frontmatter".to_string()),
                 );
             }
-        }
 
         // CC-AG-002: Missing description field
-        if config.is_rule_enabled("CC-AG-002") {
-            if schema
+        if config.is_rule_enabled("CC-AG-002")
+            && schema
                 .description
                 .as_deref()
                 .unwrap_or("")
@@ -151,7 +150,6 @@ impl Validator for AgentValidator {
                     ),
                 );
             }
-        }
 
         // CC-AG-003: Invalid model value
         if config.is_rule_enabled("CC-AG-003") {

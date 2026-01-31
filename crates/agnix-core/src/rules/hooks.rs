@@ -261,8 +261,8 @@ impl Validator for HooksValidator {
 
             for (matcher_idx, matcher) in matchers.iter().enumerate() {
                 // CC-HK-003: Missing matcher for tool events
-                if config.is_rule_enabled("CC-HK-003") {
-                    if HooksSchema::is_tool_event(event) && matcher.matcher.is_none() {
+                if config.is_rule_enabled("CC-HK-003")
+                    && HooksSchema::is_tool_event(event) && matcher.matcher.is_none() {
                         let hook_location = format!("hooks.{}[{}]", event, matcher_idx);
                         diagnostics.push(
                             Diagnostic::error(
@@ -281,11 +281,10 @@ impl Validator for HooksValidator {
                             ),
                         );
                     }
-                }
 
                 // CC-HK-004: Matcher on non-tool event
-                if config.is_rule_enabled("CC-HK-004") {
-                    if !HooksSchema::is_tool_event(event) && matcher.matcher.is_some() {
+                if config.is_rule_enabled("CC-HK-004")
+                    && !HooksSchema::is_tool_event(event) && matcher.matcher.is_some() {
                         let hook_location = format!("hooks.{}[{}]", event, matcher_idx);
                         diagnostics.push(
                             Diagnostic::error(
@@ -301,7 +300,6 @@ impl Validator for HooksValidator {
                             .with_suggestion("Remove the 'matcher' field".to_string()),
                         );
                     }
-                }
 
                 for (hook_idx, hook) in matcher.hooks.iter().enumerate() {
                     let hook_location = format!(
@@ -318,8 +316,8 @@ impl Validator for HooksValidator {
                     match hook {
                         Hook::Command { command, .. } => {
                             // CC-HK-006: Missing command field
-                            if config.is_rule_enabled("CC-HK-006") {
-                                if command.is_none() {
+                            if config.is_rule_enabled("CC-HK-006")
+                                && command.is_none() {
                                     diagnostics.push(
                                         Diagnostic::error(
                                             path.to_path_buf(),
@@ -337,7 +335,6 @@ impl Validator for HooksValidator {
                                         ),
                                     );
                                 }
-                            }
 
                             if let Some(cmd) = command {
                                 // CC-HK-008: Script file not found
@@ -396,8 +393,8 @@ impl Validator for HooksValidator {
                         }
                         Hook::Prompt { prompt, .. } => {
                             // CC-HK-002: Prompt on wrong event
-                            if config.is_rule_enabled("CC-HK-002") {
-                                if !HooksSchema::is_prompt_event(event) {
+                            if config.is_rule_enabled("CC-HK-002")
+                                && !HooksSchema::is_prompt_event(event) {
                                     diagnostics.push(
                                         Diagnostic::error(
                                             path.to_path_buf(),
@@ -414,11 +411,10 @@ impl Validator for HooksValidator {
                                         ),
                                     );
                                 }
-                            }
 
                             // CC-HK-007: Missing prompt field
-                            if config.is_rule_enabled("CC-HK-007") {
-                                if prompt.is_none() {
+                            if config.is_rule_enabled("CC-HK-007")
+                                && prompt.is_none() {
                                     diagnostics.push(
                                         Diagnostic::error(
                                             path.to_path_buf(),
@@ -435,7 +431,6 @@ impl Validator for HooksValidator {
                                         ),
                                     );
                                 }
-                            }
                         }
                     }
                 }

@@ -1,5 +1,7 @@
 //! Diagnostic types and error reporting
 
+#![allow(unused_assignments)] // LintError fields used by miette derive macros
+
 use miette::{Diagnostic as MietteDiagnostic, SourceSpan};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
