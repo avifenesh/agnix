@@ -39,40 +39,4 @@ pub struct AgentSchema {
     pub hooks: Option<Value>,
 }
 
-impl AgentSchema {
-    /// Validate model value
-    pub fn validate_model(&self) -> Result<(), String> {
-        if let Some(model) = &self.model {
-            let valid = ["sonnet", "opus", "haiku", "inherit"];
-            if !valid.contains(&model.as_str()) {
-                return Err(format!("Model must be one of: {:?}, got '{}'", valid, model));
-            }
-        }
-        Ok(())
-    }
-
-    /// Validate permission mode
-    pub fn validate_permission_mode(&self) -> Result<(), String> {
-        if let Some(mode) = &self.permission_mode {
-            let valid = ["default", "acceptEdits", "dontAsk", "bypassPermissions", "plan"];
-            if !valid.contains(&mode.as_str()) {
-                return Err(format!("Permission mode must be one of: {:?}, got '{}'", valid, mode));
-            }
-        }
-        Ok(())
-    }
-
-    /// Run all validations
-    pub fn validate(&self) -> Vec<String> {
-        let mut errors = Vec::new();
-
-        if let Err(e) = self.validate_model() {
-            errors.push(e);
-        }
-        if let Err(e) = self.validate_permission_mode() {
-            errors.push(e);
-        }
-
-        errors
-    }
-}
+// Validation is performed in rules/agent.rs (AgentValidator)

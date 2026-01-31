@@ -26,11 +26,19 @@ const VALID_PERMISSION_MODES: &[&str] = &[
 
 pub struct AgentValidator;
 
+/// Maximum directory traversal depth to prevent unbounded filesystem walking
+const MAX_TRAVERSAL_DEPTH: usize = 10;
+
 impl AgentValidator {
-    /// Find the project root by looking for .claude directory
+    /// Find the project root by looking for .claude directory.
+    /// Limited to MAX_TRAVERSAL_DEPTH levels to prevent unbounded traversal.
     fn find_project_root(path: &Path) -> Option<&Path> {
         let mut current = path.parent();
+        let mut depth = 0;
         while let Some(dir) = current {
+            if depth >= MAX_TRAVERSAL_DEPTH {
+                break;
+            }
             if dir.join(".claude").exists() {
                 return Some(dir);
             }
@@ -39,14 +47,31 @@ impl AgentValidator {
                 return dir.parent();
             }
             current = dir.parent();
+            depth += 1;
         }
         // Fallback: if agent is in `agents/` dir, go up one level
-        path.parent()
-            .and_then(|p| p.parent())
+        path.parent().and_then(|p| p.parent())
     }
 
-    /// Check if a skill exists at the expected location
+    /// Validate skill name to prevent path traversal attacks.
+    /// Returns true if the name is safe (alphanumeric, hyphens, underscores only).
+    fn is_safe_skill_name(name: &str) -> bool {
+        !name.is_empty()
+            && !name.contains('/')
+            && !name.contains('\\')
+            && !name.contains("..")
+            && !name.starts_with('.')
+            && name
+                .chars()
+                .all(|c| c.is_alphanumeric() || c == '-' || c == '_')
+    }
+
+    /// Check if a skill exists at the expected location.
+    /// Returns false for invalid skill names (path traversal attempts).
     fn skill_exists(project_root: &Path, skill_name: &str) -> bool {
+        if !Self::is_safe_skill_name(skill_name) {
+            return false;
+        }
         let skill_path = project_root
             .join(".claude")
             .join("skills")
@@ -700,7 +725,7 @@ Agent instructions"#;
 
         assert_eq!(cc_ag_006.len(), 1);
         // Should mention both conflicting tools
-        assert!(cc_ag_006[0].message.contains("Bash") || cc_ag_006[0].message.contains("Read"));
+        assert!(cc_ag_006[0].message.contains("Bash") && cc_ag_006[0].message.contains("Read"));
     }
 
     #[test]
@@ -886,5 +911,88 @@ Agent instructions with full configuration"#;
             .filter(|d| d.level == DiagnosticLevel::Error)
             .collect();
         assert!(errors.is_empty());
+    }
+
+    // ===== Edge Case Tests =====
+
+    #[test]
+    fn test_cc_ag_005_empty_skills_array() {
+        let content = r#"---
+name: my-agent
+description: A test agent
+skills: []
+---
+Agent instructions"#;
+
+        let diagnostics = validate(content);
+        let cc_ag_005: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CC-AG-005").collect();
+        assert_eq!(cc_ag_005.len(), 0);
+    }
+
+    #[test]
+    fn test_cc_ag_006_empty_tools_array() {
+        let content = r#"---
+name: my-agent
+description: A test agent
+tools: []
+disallowedTools:
+  - Bash
+---
+Agent instructions"#;
+
+        let diagnostics = validate(content);
+        let cc_ag_006: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CC-AG-006").collect();
+        assert_eq!(cc_ag_006.len(), 0);
+    }
+
+    #[test]
+    fn test_cc_ag_006_empty_disallowed_array() {
+        let content = r#"---
+name: my-agent
+description: A test agent
+tools:
+  - Bash
+disallowedTools: []
+---
+Agent instructions"#;
+
+        let diagnostics = validate(content);
+        let cc_ag_006: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CC-AG-006").collect();
+        assert_eq!(cc_ag_006.len(), 0);
+    }
+
+    #[test]
+    fn test_skill_name_path_traversal_rejected() {
+        let temp = TempDir::new().unwrap();
+        let claude_dir = temp.path().join(".claude");
+        let agents_dir = claude_dir.join("agents");
+        std::fs::create_dir_all(&agents_dir).unwrap();
+
+        let agent_path = agents_dir.join("test-agent.md");
+
+        // Try path traversal attack
+        let content = r#"---
+name: my-agent
+description: A test agent
+skills:
+  - ../../../etc/passwd
+---
+Agent instructions"#;
+
+        let diagnostics = validate_with_path(&agent_path, content);
+        let cc_ag_005: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CC-AG-005").collect();
+        // Should report as not found (rejected), not as a security breach
+        assert_eq!(cc_ag_005.len(), 1);
+    }
+
+    #[test]
+    fn test_is_safe_skill_name() {
+        assert!(AgentValidator::is_safe_skill_name("my-skill"));
+        assert!(AgentValidator::is_safe_skill_name("skill_name"));
+        assert!(AgentValidator::is_safe_skill_name("skill123"));
+        assert!(!AgentValidator::is_safe_skill_name("../parent"));
+        assert!(!AgentValidator::is_safe_skill_name("path/to/skill"));
+        assert!(!AgentValidator::is_safe_skill_name(".hidden"));
+        assert!(!AgentValidator::is_safe_skill_name(""));
     }
 }
