@@ -29,48 +29,30 @@ impl PluginValidator {
     /// Find the plugin root directory by looking for .claude-plugin parent.
     /// Limited to MAX_TRAVERSAL_DEPTH levels to prevent unbounded traversal.
     fn find_plugin_root(path: &Path) -> Option<&Path> {
-        let mut current = path.parent();
-        let mut depth = 0;
-        while let Some(dir) = current {
-            if depth >= MAX_TRAVERSAL_DEPTH {
-                break;
-            }
-            // Check if we're inside a .claude-plugin directory
-            if let Some(name) = dir.file_name() {
-                if name.to_string_lossy().ends_with(".claude-plugin") {
-                    return Some(dir);
-                }
-            }
-            current = dir.parent();
-            depth += 1;
-        }
-        None
+        path.ancestors()
+            .skip(1) // Start from the parent directory
+            .take(MAX_TRAVERSAL_DEPTH)
+            .find(|dir| {
+                dir.file_name()
+                    .map_or(false, |name| name.to_string_lossy().ends_with(".claude-plugin"))
+            })
     }
 
     /// Check if plugin.json is in the correct .claude-plugin/ directory location.
     /// Returns true if properly located, false otherwise.
     fn is_in_claude_plugin_dir(path: &Path) -> bool {
-        if let Some(parent) = path.parent() {
-            if let Some(name) = parent.file_name() {
-                return name.to_string_lossy().ends_with(".claude-plugin");
-            }
-        }
-        false
+        path.parent()
+            .and_then(|p| p.file_name())
+            .map_or(false, |name| name.to_string_lossy().ends_with(".claude-plugin"))
     }
 
     /// Check for misplaced components (skills, agents, hooks) inside .claude-plugin/
     fn check_misplaced_components(plugin_dir: &Path) -> Vec<String> {
-        let mut misplaced = Vec::new();
-        let components = ["skills", "agents", "hooks"];
-
-        for component in components {
-            let component_path = plugin_dir.join(component);
-            if component_path.exists() && component_path.is_dir() {
-                misplaced.push(component.to_string());
-            }
-        }
-
-        misplaced
+        ["skills", "agents", "hooks"]
+            .iter()
+            .filter(|&&component| plugin_dir.join(component).is_dir())
+            .map(|&s| s.to_string())
+            .collect()
     }
 
     /// Validate semver format (X.Y.Z)
@@ -203,19 +185,17 @@ impl Validator for PluginValidator {
 
         // CC-PL-005: Name must not be empty
         if config.is_rule_enabled("CC-PL-005") {
-            if let Some(name) = &manifest.name {
-                if name.trim().is_empty() {
-                    diagnostics.push(
-                        Diagnostic::error(
-                            path.to_path_buf(),
-                            1,
-                            0,
-                            "CC-PL-005",
-                            "Plugin name cannot be empty".to_string(),
-                        )
-                        .with_suggestion("Provide a meaningful plugin name".to_string()),
-                    );
-                }
+            if manifest.name.as_deref().unwrap_or("").trim().is_empty() && manifest.name.is_some() {
+                diagnostics.push(
+                    Diagnostic::error(
+                        path.to_path_buf(),
+                        1,
+                        0,
+                        "CC-PL-005",
+                        "Plugin name cannot be empty".to_string(),
+                    )
+                    .with_suggestion("Provide a meaningful plugin name".to_string()),
+                );
             }
         }
 

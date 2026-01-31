@@ -37,7 +37,7 @@ pub enum FileType {
     Agent,
     /// settings.json, settings.local.json
     Hooks,
-    /// plugin.json in .claude-plugin/
+    /// plugin.json (validator checks .claude-plugin/ location)
     Plugin,
     /// Other .md files (for XML/import checks)
     GenericMarkdown,
@@ -62,9 +62,8 @@ pub fn detect_file_type(path: &Path) -> FileType {
         "SKILL.md" => FileType::Skill,
         "CLAUDE.md" | "AGENTS.md" => FileType::ClaudeMd,
         "settings.json" | "settings.local.json" => FileType::Hooks,
-        "plugin.json" if parent.map_or(false, |p| p.ends_with(".claude-plugin")) => {
-            FileType::Plugin
-        }
+        // Classify any plugin.json as Plugin - validator checks location constraint (CC-PL-001)
+        "plugin.json" => FileType::Plugin,
         name if name.ends_with(".md") => {
             if parent == Some("agents") || grandparent == Some("agents") {
                 FileType::Agent
@@ -243,12 +242,19 @@ mod tests {
 
     #[test]
     fn test_detect_plugin() {
+        // plugin.json in .claude-plugin/ directory
         assert_eq!(
             detect_file_type(Path::new("my-plugin.claude-plugin/plugin.json")),
             FileType::Plugin
         );
-        assert_ne!(
+        // plugin.json outside .claude-plugin/ is still classified as Plugin
+        // (validator checks location constraint CC-PL-001)
+        assert_eq!(
             detect_file_type(Path::new("some/plugin.json")),
+            FileType::Plugin
+        );
+        assert_eq!(
+            detect_file_type(Path::new("plugin.json")),
             FileType::Plugin
         );
     }
