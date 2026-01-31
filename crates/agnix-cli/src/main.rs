@@ -15,13 +15,10 @@ use std::env;
 use std::path::{Path, PathBuf};
 use std::process;
 
-/// Output format for validation results
 #[derive(Debug, Clone, Copy, Default, ValueEnum)]
 pub enum OutputFormat {
-    /// Human-readable text output with colors
     #[default]
     Text,
-    /// SARIF 2.1.0 JSON format for CI/CD integration
     Sarif,
 }
 

@@ -7,20 +7,12 @@ use agnix_core::diagnostics::{Diagnostic, DiagnosticLevel};
 use serde::Serialize;
 use std::path::Path;
 
-/// SARIF 2.1.0 schema URL
 const SARIF_SCHEMA: &str =
     "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/main/sarif-2.1/schema/sarif-schema-2.1.0.json";
-
-/// SARIF version
 const SARIF_VERSION: &str = "2.1.0";
-
-/// Tool name
 const TOOL_NAME: &str = "agnix";
-
-/// Tool information URI
 const TOOL_INFO_URI: &str = "https://github.com/avifenesh/agnix";
 
-/// Root SARIF log structure
 #[derive(Debug, Serialize)]
 pub struct SarifLog {
     #[serde(rename = "$schema")]
@@ -29,20 +21,17 @@ pub struct SarifLog {
     pub runs: Vec<Run>,
 }
 
-/// A single run of the analysis tool
 #[derive(Debug, Serialize)]
 pub struct Run {
     pub tool: Tool,
     pub results: Vec<SarifResult>,
 }
 
-/// Tool information
 #[derive(Debug, Serialize)]
 pub struct Tool {
     pub driver: Driver,
 }
 
-/// Tool driver (the actual analysis engine)
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Driver {
@@ -52,7 +41,6 @@ pub struct Driver {
     pub rules: Vec<ReportingDescriptor>,
 }
 
-/// Rule descriptor
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ReportingDescriptor {
@@ -62,13 +50,11 @@ pub struct ReportingDescriptor {
     pub help_uri: Option<String>,
 }
 
-/// Message structure
 #[derive(Debug, Serialize)]
 pub struct Message {
     pub text: String,
 }
 
-/// Analysis result (a single diagnostic)
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SarifResult {
@@ -78,14 +64,12 @@ pub struct SarifResult {
     pub locations: Vec<Location>,
 }
 
-/// Location of a result
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Location {
     pub physical_location: PhysicalLocation,
 }
 
-/// Physical file location
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PhysicalLocation {
@@ -93,13 +77,11 @@ pub struct PhysicalLocation {
     pub region: Region,
 }
 
-/// Artifact (file) location
 #[derive(Debug, Serialize)]
 pub struct ArtifactLocation {
     pub uri: String,
 }
 
-/// Region within a file
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Region {
@@ -107,7 +89,6 @@ pub struct Region {
     pub start_column: usize,
 }
 
-/// Convert diagnostic level to SARIF level string
 fn level_to_sarif(level: DiagnosticLevel) -> &'static str {
     match level {
         DiagnosticLevel::Error => "error",
@@ -116,7 +97,6 @@ fn level_to_sarif(level: DiagnosticLevel) -> &'static str {
     }
 }
 
-/// Normalize path to relative URI with forward slashes
 fn path_to_uri(path: &Path, base_path: &Path) -> String {
     let relative = path
         .strip_prefix(base_path)
@@ -126,7 +106,6 @@ fn path_to_uri(path: &Path, base_path: &Path) -> String {
     relative
 }
 
-/// Get all agnix rules for the SARIF driver
 fn get_all_rules() -> Vec<ReportingDescriptor> {
     let rules_data = [
         // Agent Skills Rules (AS-001 to AS-015)
@@ -238,7 +217,6 @@ fn get_all_rules() -> Vec<ReportingDescriptor> {
         .collect()
 }
 
-/// Convert diagnostics to SARIF format
 pub fn diagnostics_to_sarif(diagnostics: &[Diagnostic], base_path: &Path) -> SarifLog {
     let results: Vec<SarifResult> = diagnostics
         .iter()
