@@ -52,6 +52,15 @@ agnix --strict .
 # Target specific tool
 agnix --target claude-code .
 
+# Apply automatic fixes
+agnix --fix .
+
+# Preview fixes without modifying files
+agnix --dry-run .
+
+# Apply only safe (HIGH certainty) fixes
+agnix --fix-safe .
+
 # Generate config file
 agnix init
 ```
@@ -61,10 +70,10 @@ agnix init
 ```
 Validating: .
 
-CLAUDE.md:15:1 warning: Generic instruction 'Be helpful and accurate'
+CLAUDE.md:15:1 warning: Generic instruction 'Be helpful and accurate' [fixable]
   help: Remove generic instructions. Claude already knows this.
 
-.claude/skills/review/SKILL.md:3:1 error: Invalid name 'Review-Code'
+.claude/skills/review/SKILL.md:3:1 error: Invalid name 'Review-Code' [fixable]
   help: Use lowercase letters and hyphens only (e.g., 'code-review')
 
 .claude/skills/review/SKILL.md:4:8 error: Unknown model 'gpt-4'
@@ -75,6 +84,9 @@ CLAUDE.md:15:1 warning: Generic instruction 'Be helpful and accurate'
 
 ────────────────────────────────────────────────────────────
 Found 3 errors, 1 warning
+  2 issues are automatically fixable
+
+hint: Run with --fix to apply fixes
 ```
 
 ## Performance
@@ -182,10 +194,10 @@ agnix/
 - [x] Agent validation (CC-AG-001 to CC-AG-006)
 - [x] Parallel file validation
 - [x] Config-based rule filtering
+- [x] Auto-fix infrastructure (--fix, --dry-run, --fix-safe)
 - [ ] MCP tool validation
 - [ ] LSP server
 - [ ] VS Code extension
-- [ ] Auto-fix mode
 
 ## License
 
