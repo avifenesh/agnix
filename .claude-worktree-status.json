@@ -1,0 +1,25 @@
+{
+  "task": {
+    "id": 6,
+    "source": "github-issues",
+    "title": "Implement HooksValidator: CC-HK-006 to CC-HK-009 command validation"
+  },
+  "git": {
+    "worktreePath": "C:/Users/avife/worktrees/hooks-validator-6",
+    "mainRepoPath": "C:/Users/avife/agnix",
+    "branch": "feature/hooks-validator-cc-hk-006-009",
+    "baseSha": "bdcf219",
+    "originalBranch": "main",
+    "isWorktree": true
+  },
+  "workflow": {
+    "status": "active",
+    "currentPhase": "exploration",
+    "createdAt": "2026-01-31T00:00:00Z",
+    "resumeCapable": true
+  },
+  "resume": {
+    "canResume": true,
+    "resumeFromStep": "exploration"
+  }
+}

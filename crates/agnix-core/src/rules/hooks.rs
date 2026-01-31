@@ -12,7 +12,6 @@ use std::path::Path;
 pub struct HooksValidator;
 
 impl HooksValidator {
-    /// Dangerous command patterns that should trigger warnings
     const DANGEROUS_PATTERNS: &'static [(&'static str, &'static str)] = &[
         (r"rm\s+-rf\s+/", "Recursive delete from root is extremely dangerous"),
         (r"rm\s+-rf\s+\*", "Recursive delete with wildcard could delete unintended files"),
@@ -32,7 +31,6 @@ impl HooksValidator {
         (r"dd\s+if=.*of=/dev/", "dd to device can destroy data"),
     ];
 
-    /// Check if a command contains dangerous patterns (CC-HK-009)
     fn check_dangerous_patterns(&self, command: &str) -> Option<(&'static str, &'static str)> {
         for (pattern, reason) in Self::DANGEROUS_PATTERNS {
             if let Ok(re) = Regex::new(&format!("(?i){}", pattern)) {
@@ -44,15 +42,7 @@ impl HooksValidator {
         None
     }
 
-    /// Extract script path from command string
-    /// Handles patterns like:
-    /// - /path/to/script.sh
-    /// - bash /path/to/script.sh
-    /// - sh scripts/hook.sh
-    /// - $CLAUDE_PROJECT_DIR/scripts/hook.sh
     fn extract_script_path(&self, command: &str) -> Option<String> {
-        // Look for .sh, .bash, .py, .js, .ts script files in the command
-        // Exclude URLs (http://, https://)
         let script_patterns = [
             r"([^\s]+\.sh)\b",
             r"([^\s]+\.bash)\b",
@@ -66,7 +56,6 @@ impl HooksValidator {
                 if let Some(caps) = re.captures(command) {
                     if let Some(m) = caps.get(1) {
                         let path = m.as_str();
-                        // Skip URLs - they're not local scripts
                         if path.contains("://") || path.starts_with("http") {
                             continue;
                         }
@@ -78,7 +67,6 @@ impl HooksValidator {
         None
     }
 
-    /// Resolve script path, replacing environment variables
     fn resolve_script_path(&self, script_path: &str, project_dir: &Path) -> std::path::PathBuf {
         let resolved = script_path
             .replace("$CLAUDE_PROJECT_DIR", &project_dir.display().to_string())
@@ -86,7 +74,6 @@ impl HooksValidator {
 
         let path = std::path::PathBuf::from(&resolved);
 
-        // If path is relative, resolve against project dir
         if path.is_relative() {
             project_dir.join(path)
         } else {
@@ -99,7 +86,6 @@ impl Validator for HooksValidator {
     fn validate(&self, path: &Path, content: &str, _config: &LintConfig) -> Vec<Diagnostic> {
         let mut diagnostics = Vec::new();
 
-        // Try to parse as settings.json (which contains hooks)
         let settings: SettingsSchema = match serde_json::from_str(content) {
             Ok(s) => s,
             Err(e) => {
@@ -114,7 +100,6 @@ impl Validator for HooksValidator {
             }
         };
 
-        // Get project directory (parent of .claude or the file's directory)
         let project_dir = path
             .parent()
             .and_then(|p| {
@@ -126,7 +111,6 @@ impl Validator for HooksValidator {
             })
             .unwrap_or_else(|| Path::new("."));
 
-        // Validate each hook
         for (event, matchers) in &settings.hooks {
             for (matcher_idx, matcher) in matchers.iter().enumerate() {
                 for (hook_idx, hook) in matcher.hooks.iter().enumerate() {
@@ -143,7 +127,6 @@ impl Validator for HooksValidator {
 
                     match hook {
                         Hook::Command { command, .. } => {
-                            // CC-HK-006: Command hooks must have command field
                             if command.is_none() {
                                 diagnostics.push(
                                     Diagnostic::error(
@@ -162,13 +145,10 @@ impl Validator for HooksValidator {
                                     ),
                                 );
                             } else if let Some(cmd) = command {
-                                // CC-HK-008: Check if script file exists
                                 if let Some(script_path) = self.extract_script_path(cmd) {
                                     let resolved =
                                         self.resolve_script_path(&script_path, project_dir);
 
-                                    // Only check for local scripts (not system commands)
-                                    // Skip if path contains env vars we can't resolve
                                     if !script_path.contains('$')
                                         || script_path.contains("CLAUDE_PROJECT_DIR")
                                     {
@@ -193,7 +173,6 @@ impl Validator for HooksValidator {
                                     }
                                 }
 
-                                // CC-HK-009: Check for dangerous command patterns
                                 if let Some((pattern, reason)) =
                                     self.check_dangerous_patterns(cmd)
                                 {
@@ -217,7 +196,6 @@ impl Validator for HooksValidator {
                             }
                         }
                         Hook::Prompt { prompt, .. } => {
-                            // CC-HK-007: Prompt hooks must have prompt field
                             if prompt.is_none() {
                                 diagnostics.push(
                                     Diagnostic::error(
@@ -259,10 +237,6 @@ mod tests {
             &LintConfig::default(),
         )
     }
-
-    // ===========================================
-    // CC-HK-006: Command hooks must have command field
-    // ===========================================
 
     #[test]
     fn test_cc_hk_006_command_hook_missing_command() {
@@ -328,13 +302,8 @@ mod tests {
         let diagnostics = validate(content);
         let cc_hk_006: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CC-HK-006").collect();
 
-        // Two hooks missing command field
         assert_eq!(cc_hk_006.len(), 2);
     }
-
-    // ===========================================
-    // CC-HK-007: Prompt hooks must have prompt field
-    // ===========================================
 
     #[test]
     fn test_cc_hk_007_prompt_hook_missing_prompt() {
@@ -399,10 +368,6 @@ mod tests {
         assert_eq!(cc_hk_007.len(), 1);
     }
 
-    // ===========================================
-    // CC-HK-008: Script files must exist
-    // ===========================================
-
     #[test]
     fn test_cc_hk_008_script_file_not_found() {
         let content = r#"{
@@ -427,7 +392,6 @@ mod tests {
 
     #[test]
     fn test_cc_hk_008_system_command_no_script_ok() {
-        // System commands without script files should not trigger this rule
         let content = r#"{
             "hooks": {
                 "PreToolUse": [
@@ -449,7 +413,6 @@ mod tests {
 
     #[test]
     fn test_cc_hk_008_env_var_with_unresolvable_path_skipped() {
-        // Commands with env vars other than CLAUDE_PROJECT_DIR should be skipped
         let content = r#"{
             "hooks": {
                 "SessionStart": [
@@ -465,7 +428,6 @@ mod tests {
         let diagnostics = validate(content);
         let cc_hk_008: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CC-HK-008").collect();
 
-        // Should be skipped because $HOME cannot be resolved
         assert_eq!(cc_hk_008.len(), 0);
     }
 
@@ -493,7 +455,6 @@ mod tests {
 
     #[test]
     fn test_cc_hk_008_url_not_treated_as_script() {
-        // URLs should not be treated as local scripts
         let content = r#"{
             "hooks": {
                 "Setup": [
@@ -509,13 +470,8 @@ mod tests {
         let diagnostics = validate(content);
         let cc_hk_008: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CC-HK-008").collect();
 
-        // Should NOT report script not found for URLs
         assert_eq!(cc_hk_008.len(), 0);
     }
-
-    // ===========================================
-    // CC-HK-009: Dangerous command patterns
-    // ===========================================
 
     #[test]
     fn test_cc_hk_009_rm_rf_root() {
@@ -669,10 +625,6 @@ mod tests {
         assert_eq!(cc_hk_009.len(), 0);
     }
 
-    // ===========================================
-    // Combined tests / edge cases
-    // ===========================================
-
     #[test]
     fn test_valid_hooks_no_errors() {
         let content = r#"{
@@ -697,7 +649,6 @@ mod tests {
 
         let diagnostics = validate(content);
 
-        // Filter out CC-HK-008 errors (script not found) since echo is a built-in
         let rule_errors: Vec<_> = diagnostics
             .iter()
             .filter(|d| d.rule.starts_with("CC-HK-006") || d.rule.starts_with("CC-HK-007") || d.rule.starts_with("CC-HK-009"))
@@ -717,7 +668,6 @@ mod tests {
 
     #[test]
     fn test_settings_with_other_fields() {
-        // settings.json can have other fields besides hooks
         let content = r#"{
             "permissions": { "allow": ["Read"] },
             "hooks": {
@@ -734,7 +684,6 @@ mod tests {
 
         let diagnostics = validate(content);
 
-        // Should parse without errors
         let parse_errors: Vec<_> = diagnostics.iter().filter(|d| d.rule == "hooks::parse").collect();
         assert_eq!(parse_errors.len(), 0);
     }
@@ -748,10 +697,6 @@ mod tests {
         let parse_errors: Vec<_> = diagnostics.iter().filter(|d| d.rule == "hooks::parse").collect();
         assert_eq!(parse_errors.len(), 1);
     }
-
-    // ===========================================
-    // Helper method tests
-    // ===========================================
 
     #[test]
     fn test_extract_script_path_sh() {
@@ -793,7 +738,6 @@ mod tests {
     fn test_dangerous_pattern_case_insensitive() {
         let validator = HooksValidator;
 
-        // Should match case-insensitively
         assert!(validator.check_dangerous_patterns("RM -RF /").is_some());
         assert!(validator.check_dangerous_patterns("Git Reset --Hard").is_some());
         assert!(validator.check_dangerous_patterns("DROP DATABASE test").is_some());

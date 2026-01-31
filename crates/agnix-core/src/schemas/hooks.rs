@@ -9,7 +9,6 @@ use std::collections::HashMap;
 pub struct SettingsSchema {
     #[serde(default)]
     pub hooks: HashMap<String, Vec<HookMatcher>>,
-    /// Allow other fields in settings.json to be ignored
     #[serde(flatten)]
     pub _extra: HashMap<String, Value>,
 }
@@ -32,7 +31,6 @@ pub struct HookMatcher {
 pub enum Hook {
     #[serde(rename = "command")]
     Command {
-        /// Command to execute (optional to allow validation of missing field)
         #[serde(skip_serializing_if = "Option::is_none")]
         command: Option<String>,
         #[serde(skip_serializing_if = "Option::is_none")]
@@ -40,7 +38,6 @@ pub enum Hook {
     },
     #[serde(rename = "prompt")]
     Prompt {
-        /// Prompt text (optional to allow validation of missing field)
         #[serde(skip_serializing_if = "Option::is_none")]
         prompt: Option<String>,
         #[serde(skip_serializing_if = "Option::is_none")]
@@ -49,12 +46,10 @@ pub enum Hook {
 }
 
 impl SettingsSchema {
-    /// Parse from JSON content
     pub fn from_json(content: &str) -> Result<Self, serde_json::Error> {
         serde_json::from_str(content)
     }
 
-    /// Convert to HooksSchema for validation
     pub fn to_hooks_schema(&self) -> HooksSchema {
         HooksSchema {
             hooks: self.hooks.clone(),
@@ -63,7 +58,6 @@ impl SettingsSchema {
 }
 
 impl Hook {
-    /// Get the command string if this is a command hook
     pub fn command(&self) -> Option<&str> {
         match self {
             Hook::Command { command, .. } => command.as_deref(),
@@ -71,7 +65,6 @@ impl Hook {
         }
     }
 
-    /// Get the prompt string if this is a prompt hook
     pub fn prompt(&self) -> Option<&str> {
         match self {
             Hook::Prompt { prompt, .. } => prompt.as_deref(),
@@ -79,19 +72,16 @@ impl Hook {
         }
     }
 
-    /// Check if this is a command hook
     pub fn is_command(&self) -> bool {
         matches!(self, Hook::Command { .. })
     }
 
-    /// Check if this is a prompt hook
     pub fn is_prompt(&self) -> bool {
         matches!(self, Hook::Prompt { .. })
     }
 }
 
 impl HooksSchema {
-    /// Valid hook events
     const VALID_EVENTS: &'static [&'static str] = &[
         "PreToolUse",
         "PermissionRequest",
@@ -108,12 +98,10 @@ impl HooksSchema {
         "SessionEnd",
     ];
 
-    /// Parse from JSON content
     pub fn from_json(content: &str) -> Result<Self, serde_json::Error> {
         serde_json::from_str(content)
     }
 
-    /// Validate hook events
     pub fn validate_events(&self) -> Vec<String> {
         let mut errors = Vec::new();
 
@@ -126,13 +114,11 @@ impl HooksSchema {
         errors
     }
 
-    /// Validate hook structure
     pub fn validate(&self) -> Vec<String> {
         let mut errors = Vec::new();
 
         errors.extend(self.validate_events());
 
-        // Validate each hook has required fields
         for (event, matchers) in &self.hooks {
             for (i, matcher) in matchers.iter().enumerate() {
                 if matcher.hooks.is_empty() {
