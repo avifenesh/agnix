@@ -1,0 +1,13 @@
+{
+    "name": "my-awesome-plugin",
+    "description": "A helpful plugin that enhances productivity",
+    "version": "1.0.0",
+    "author": {
+        "name": "Test Author",
+        "email": "author@example.com"
+    },
+    "homepage": "https://example.com/plugin",
+    "repository": "https://github.com/user/my-awesome-plugin",
+    "license": "MIT",
+    "keywords": ["productivity", "enhancement", "tools"]
+}

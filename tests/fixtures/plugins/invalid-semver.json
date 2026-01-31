@@ -1,0 +1,5 @@
+{
+    "name": "my-plugin",
+    "description": "A plugin with invalid version format",
+    "version": "v1.0.0-beta"
+}
