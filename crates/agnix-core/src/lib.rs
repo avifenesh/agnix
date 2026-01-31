@@ -129,10 +129,14 @@ pub fn validate_project(path: &Path, config: &LintConfig) -> LintResult<Vec<Diag
     use ignore::WalkBuilder;
 
     // Pre-compile exclude patterns once (avoids N+1 pattern compilation)
+    // Panic on invalid patterns to catch config errors early
     let exclude_patterns: Vec<glob::Pattern> = config
         .exclude
         .iter()
-        .filter_map(|p| glob::Pattern::new(p).ok())
+        .map(|p| {
+            glob::Pattern::new(p)
+                .unwrap_or_else(|_| panic!("Invalid exclude pattern in config: {}", p))
+        })
         .collect();
 
     // Collect all file paths to validate (sequential walk, parallel validation)
@@ -167,8 +171,14 @@ pub fn validate_project(path: &Path, config: &LintConfig) -> LintResult<Vec<Diag
         })
         .collect();
 
-    // Sort by severity (errors first), then by file path for deterministic output
-    diagnostics.sort_by(|a, b| a.level.cmp(&b.level).then_with(|| a.file.cmp(&b.file)));
+    // Sort by severity (errors first), then by file path, then by line/rule for full determinism
+    diagnostics.sort_by(|a, b| {
+        a.level
+            .cmp(&b.level)
+            .then_with(|| a.file.cmp(&b.file))
+            .then_with(|| a.line.cmp(&b.line))
+            .then_with(|| a.rule.cmp(&b.rule))
+    });
 
     Ok(diagnostics)
 }
