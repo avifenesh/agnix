@@ -357,6 +357,46 @@
 
 ---
 
+## AGENTS.MD RULES (CROSS-PLATFORM)
+
+### AGM-001 [HIGH] Valid Markdown Structure
+**Requirement**: AGENTS.md MUST be valid markdown
+**Detection**: Parse as markdown, check for syntax errors
+**Fix**: Fix markdown syntax issues
+**Source**: cursor.com/docs/context/rules
+
+### AGM-002 [MEDIUM] Missing Section Headers
+**Requirement**: AGENTS.md SHOULD have clear section headers (##)
+**Detection**: `!content.contains("## ")` or `!content.contains("# ")`
+**Fix**: Add section headers for organization
+**Source**: cursor.com/docs/context/rules
+
+### AGM-003 [HIGH] Character Limit (Windsurf)
+**Requirement**: Rules files SHOULD be under 12000 characters for Windsurf compatibility
+**Detection**: `content.len() > 12000`
+**Fix**: Split into multiple files or reduce content
+**Source**: docs.windsurf.com/windsurf/cascade/memories
+
+### AGM-004 [MEDIUM] Missing Project Context
+**Requirement**: AGENTS.md SHOULD describe project purpose/stack
+**Detection**: Check for project description section
+**Fix**: Add "# Project" or "## Overview" section
+**Source**: Best practices across platforms
+
+### AGM-005 [HIGH] Platform-Specific Features Without Guard
+**Requirement**: Platform-specific instructions SHOULD be labeled
+**Detection**: Claude-specific (hooks, context: fork) or Cursor-specific features without platform label
+**Fix**: Add platform guard comment (e.g., "## Claude Code Specific")
+**Source**: Multi-platform compatibility
+
+### AGM-006 [MEDIUM] Nested AGENTS.md Hierarchy
+**Requirement**: Nested AGENTS.md files combine hierarchically (Cursor)
+**Detection**: Multiple AGENTS.md files in directory tree
+**Fix**: Document inheritance behavior
+**Source**: cursor.com/docs/context/rules
+
+---
+
 ## CLAUDE CODE RULES (PLUGINS)
 
 ### CC-PL-001 [HIGH] Plugin Manifest Not in .claude-plugin/
@@ -505,11 +545,15 @@
 **Fix**: Move to CLAUDE.md or add platform guard
 **Source**: multi-platform research
 
-### XP-002 [MEDIUM] AGENTS.md Usage
-**Requirement**: Note that AGENTS.md is NOT a standard (no platform uses this)
-**Detection**: Presence of AGENTS.md file
-**Fix**: Document as custom convention
-**Source**: multi-platform research (surprising finding)
+### XP-002 [HIGH] AGENTS.md Platform Compatibility
+**Requirement**: AGENTS.md is a widely-adopted standard used by multiple platforms
+**Supported Platforms**:
+- Cursor (primary support, alternative to .cursor/rules)
+- Cline (alongside .clinerules)
+- Generic AI assistants
+**Detection**: Validate AGENTS.md follows markdown conventions
+**Fix**: Ensure AGENTS.md is valid markdown with clear sections
+**Source**: cursor.com/docs/context/rules, cline/cline repo
 
 ### XP-003 [HIGH] Hard-Coded Platform Paths
 **Requirement**: Paths SHOULD use environment variables
@@ -610,13 +654,14 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | Claude Hooks | 11 | 9 | 2 | 0 | 2 |
 | Claude Agents | 6 | 6 | 0 | 0 | 1 |
 | Claude Memory | 10 | 6 | 4 | 0 | 2 |
+| AGENTS.md | 6 | 3 | 3 | 0 | 2 |
 | Claude Plugins | 5 | 5 | 0 | 0 | 1 |
 | MCP | 6 | 6 | 0 | 0 | 1 |
 | XML | 3 | 3 | 0 | 0 | 1 |
 | References | 2 | 2 | 0 | 0 | 0 |
 | Prompt Eng | 4 | 2 | 2 | 0 | 1 |
 | Cross-Platform | 3 | 2 | 1 | 0 | 0 |
-| **TOTAL** | **74** | **61** | **13** | **0** | **18** |
+| **TOTAL** | **80** | **64** | **16** | **0** | **20** |
 
 ---
 
@@ -626,6 +671,9 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 - agentskills.io (Agent Skills specification)
 - modelcontextprotocol.io (MCP specification)
 - code.claude.com/docs (Claude Code documentation)
+- cursor.com/docs (Cursor AI documentation)
+- docs.windsurf.com (Windsurf/Codeium documentation)
+- github.com/cline/cline (Cline repository)
 
 ### Research Papers
 - Liu et al. (2023) - Lost in the middle (TACL)
@@ -642,7 +690,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 
 ---
 
-**Total Coverage**: 74 validation rules across 11 categories
+**Total Coverage**: 80 validation rules across 12 categories
 **Knowledge Base**: 11,036 lines, 320KB, 75+ sources
-**Certainty**: 61 HIGH, 13 MEDIUM, 0 LOW
-**Auto-Fixable**: 18 rules (24%)
+**Certainty**: 64 HIGH, 16 MEDIUM, 0 LOW
+**Auto-Fixable**: 20 rules (25%)
