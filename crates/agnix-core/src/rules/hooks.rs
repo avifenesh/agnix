@@ -6,13 +6,20 @@ use crate::{
     rules::Validator,
     schemas::hooks::{Hook, SettingsSchema},
 };
+use once_cell::sync::Lazy;
 use regex::Regex;
 use std::path::Path;
 
 pub struct HooksValidator;
 
-impl HooksValidator {
-    const DANGEROUS_PATTERNS: &'static [(&'static str, &'static str)] = &[
+struct DangerousPattern {
+    regex: Regex,
+    pattern: &'static str,
+    reason: &'static str,
+}
+
+static DANGEROUS_PATTERNS: Lazy<Vec<DangerousPattern>> = Lazy::new(|| {
+    let patterns: &[(&str, &str)] = &[
         (r"rm\s+-rf\s+/", "Recursive delete from root is extremely dangerous"),
         (r"rm\s+-rf\s+\*", "Recursive delete with wildcard could delete unintended files"),
         (r"rm\s+-rf\s+\.\.", "Recursive delete of parent directories is dangerous"),
@@ -30,37 +37,52 @@ impl HooksValidator {
         (r"mkfs\.", "Formatting filesystem destroys all data"),
         (r"dd\s+if=.*of=/dev/", "dd to device can destroy data"),
     ];
+    patterns
+        .iter()
+        .filter_map(|(pattern, reason)| {
+            Regex::new(&format!("(?i){}", pattern))
+                .ok()
+                .map(|regex| DangerousPattern {
+                    regex,
+                    pattern,
+                    reason,
+                })
+        })
+        .collect()
+});
 
+static SCRIPT_PATTERNS: Lazy<Vec<Regex>> = Lazy::new(|| {
+    [
+        r"([^\s]+\.sh)\b",
+        r"([^\s]+\.bash)\b",
+        r"([^\s]+\.py)\b",
+        r"([^\s]+\.js)\b",
+        r"([^\s]+\.ts)\b",
+    ]
+    .iter()
+    .filter_map(|p| Regex::new(p).ok())
+    .collect()
+});
+
+impl HooksValidator {
     fn check_dangerous_patterns(&self, command: &str) -> Option<(&'static str, &'static str)> {
-        for (pattern, reason) in Self::DANGEROUS_PATTERNS {
-            if let Ok(re) = Regex::new(&format!("(?i){}", pattern)) {
-                if re.is_match(command) {
-                    return Some((pattern, reason));
-                }
+        for dp in DANGEROUS_PATTERNS.iter() {
+            if dp.regex.is_match(command) {
+                return Some((dp.pattern, dp.reason));
             }
         }
         None
     }
 
     fn extract_script_path(&self, command: &str) -> Option<String> {
-        let script_patterns = [
-            r"([^\s]+\.sh)\b",
-            r"([^\s]+\.bash)\b",
-            r"([^\s]+\.py)\b",
-            r"([^\s]+\.js)\b",
-            r"([^\s]+\.ts)\b",
-        ];
-
-        for pattern in &script_patterns {
-            if let Ok(re) = Regex::new(pattern) {
-                if let Some(caps) = re.captures(command) {
-                    if let Some(m) = caps.get(1) {
-                        let path = m.as_str();
-                        if path.contains("://") || path.starts_with("http") {
-                            continue;
-                        }
-                        return Some(path.to_string());
+        for re in SCRIPT_PATTERNS.iter() {
+            if let Some(caps) = re.captures(command) {
+                if let Some(m) = caps.get(1) {
+                    let path = m.as_str();
+                    if path.contains("://") || path.starts_with("http") {
+                        continue;
                     }
+                    return Some(path.to_string());
                 }
             }
         }

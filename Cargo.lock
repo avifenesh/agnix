@@ -38,6 +38,7 @@ dependencies = [
  "glob",
  "ignore",
  "miette",
+ "once_cell",
  "pulldown-cmark",
  "regex",
  "serde",
