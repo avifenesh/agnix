@@ -51,7 +51,9 @@ fn test_format_sarif_has_all_rules() {
     let stdout = String::from_utf8_lossy(&output.stdout);
     let json: serde_json::Value = serde_json::from_str(&stdout).unwrap();
 
-    let rules = json["runs"][0]["tool"]["driver"]["rules"].as_array().unwrap();
+    let rules = json["runs"][0]["tool"]["driver"]["rules"]
+        .as_array()
+        .unwrap();
     assert_eq!(rules.len(), 80, "Should have all 80 validation rules");
 }
 

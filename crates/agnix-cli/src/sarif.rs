@@ -99,12 +99,13 @@ fn level_to_sarif(level: DiagnosticLevel) -> &'static str {
 }
 
 fn path_to_uri(path: &Path, base_path: &Path) -> String {
-    let relative = path
+    // Convert to relative path if possible, otherwise keep absolute
+    let uri_path = path
         .strip_prefix(base_path)
         .unwrap_or(path)
         .to_string_lossy()
         .replace('\\', "/");
-    relative
+    uri_path
 }
 
 static RULES: LazyLock<Vec<ReportingDescriptor>> = LazyLock::new(|| {
@@ -113,31 +114,55 @@ static RULES: LazyLock<Vec<ReportingDescriptor>> = LazyLock::new(|| {
         ("AS-001", "Missing YAML frontmatter in SKILL.md"),
         ("AS-002", "Missing required field: name"),
         ("AS-003", "Missing required field: description"),
-        ("AS-004", "Invalid name format (must be lowercase letters, numbers, hyphens)"),
+        (
+            "AS-004",
+            "Invalid name format (must be lowercase letters, numbers, hyphens)",
+        ),
         ("AS-005", "Name starts or ends with hyphen"),
         ("AS-006", "Consecutive hyphens in name"),
         ("AS-007", "Reserved name (anthropic, claude, skill)"),
-        ("AS-008", "Description too short or too long (must be 1-1024 chars)"),
+        (
+            "AS-008",
+            "Description too short or too long (must be 1-1024 chars)",
+        ),
         ("AS-009", "Description contains XML tags"),
-        ("AS-010", "Missing trigger phrase (should include 'Use when')"),
+        (
+            "AS-010",
+            "Missing trigger phrase (should include 'Use when')",
+        ),
         ("AS-011", "Compatibility field too long (max 500 chars)"),
         ("AS-012", "Content exceeds 500 lines"),
         ("AS-013", "File reference too deep (must be one level)"),
         ("AS-014", "Windows path separator (use forward slashes)"),
         ("AS-015", "Upload size exceeds 8MB"),
         // Claude Code Skills Rules (CC-SK-001 to CC-SK-009)
-        ("CC-SK-001", "Invalid model value (must be sonnet, opus, haiku, or inherit)"),
-        ("CC-SK-002", "Invalid context value (must be 'fork' or omitted)"),
+        (
+            "CC-SK-001",
+            "Invalid model value (must be sonnet, opus, haiku, or inherit)",
+        ),
+        (
+            "CC-SK-002",
+            "Invalid context value (must be 'fork' or omitted)",
+        ),
         ("CC-SK-003", "Context 'fork' requires agent field"),
         ("CC-SK-004", "Agent field requires context: fork"),
         ("CC-SK-005", "Invalid agent type"),
-        ("CC-SK-006", "Dangerous auto-invocation (side-effect skills need disable-model-invocation)"),
-        ("CC-SK-007", "Unrestricted Bash in allowed-tools (should be scoped)"),
+        (
+            "CC-SK-006",
+            "Dangerous auto-invocation (side-effect skills need disable-model-invocation)",
+        ),
+        (
+            "CC-SK-007",
+            "Unrestricted Bash in allowed-tools (should be scoped)",
+        ),
         ("CC-SK-008", "Unknown tool name"),
         ("CC-SK-009", "Too many dynamic injections (limit 3)"),
         // Claude Code Hooks Rules (CC-HK-001 to CC-HK-011)
         ("CC-HK-001", "Invalid hook event name"),
-        ("CC-HK-002", "Prompt hook on wrong event (only for Stop/SubagentStop)"),
+        (
+            "CC-HK-002",
+            "Prompt hook on wrong event (only for Stop/SubagentStop)",
+        ),
         ("CC-HK-003", "Missing matcher for tool events"),
         ("CC-HK-004", "Matcher on non-tool event"),
         ("CC-HK-005", "Missing type field (command or prompt)"),
@@ -146,10 +171,16 @@ static RULES: LazyLock<Vec<ReportingDescriptor>> = LazyLock::new(|| {
         ("CC-HK-008", "Hook script file not found"),
         ("CC-HK-009", "Dangerous command pattern detected"),
         ("CC-HK-010", "No timeout specified for hook"),
-        ("CC-HK-011", "Invalid timeout value (must be positive integer)"),
+        (
+            "CC-HK-011",
+            "Invalid timeout value (must be positive integer)",
+        ),
         // Claude Code Agents Rules (CC-AG-001 to CC-AG-006)
         ("CC-AG-001", "Missing name field in agent frontmatter"),
-        ("CC-AG-002", "Missing description field in agent frontmatter"),
+        (
+            "CC-AG-002",
+            "Missing description field in agent frontmatter",
+        ),
         ("CC-AG-003", "Invalid model value in agent"),
         ("CC-AG-004", "Invalid permission mode"),
         ("CC-AG-005", "Referenced skill not found"),
@@ -160,20 +191,32 @@ static RULES: LazyLock<Vec<ReportingDescriptor>> = LazyLock::new(|| {
         ("CC-MEM-003", "Import depth exceeds 5"),
         ("CC-MEM-004", "Invalid npm script reference"),
         ("CC-MEM-005", "Generic instruction detected"),
-        ("CC-MEM-006", "Negative instruction without positive alternative"),
+        (
+            "CC-MEM-006",
+            "Negative instruction without positive alternative",
+        ),
         ("CC-MEM-007", "Weak constraint language in critical section"),
         ("CC-MEM-008", "Critical content in middle of document"),
-        ("CC-MEM-009", "Token count exceeded (should be under 1500 tokens)"),
+        (
+            "CC-MEM-009",
+            "Token count exceeded (should be under 1500 tokens)",
+        ),
         ("CC-MEM-010", "README duplication detected"),
         // AGENTS.md Rules (AGM-001 to AGM-006)
         ("AGM-001", "Invalid markdown structure"),
         ("AGM-002", "Missing section headers"),
-        ("AGM-003", "Character limit exceeded for Windsurf compatibility"),
+        (
+            "AGM-003",
+            "Character limit exceeded for Windsurf compatibility",
+        ),
         ("AGM-004", "Missing project context"),
         ("AGM-005", "Platform-specific features without guard"),
         ("AGM-006", "Nested AGENTS.md hierarchy detected"),
         // Claude Code Plugins Rules (CC-PL-001 to CC-PL-005)
-        ("CC-PL-001", "Plugin manifest not in .claude-plugin/ directory"),
+        (
+            "CC-PL-001",
+            "Plugin manifest not in .claude-plugin/ directory",
+        ),
         ("CC-PL-002", "Components inside .claude-plugin/ directory"),
         ("CC-PL-003", "Invalid semver version format"),
         ("CC-PL-004", "Missing required plugin field"),
@@ -193,7 +236,10 @@ static RULES: LazyLock<Vec<ReportingDescriptor>> = LazyLock::new(|| {
         ("REF-001", "Import file not found"),
         ("REF-002", "Broken markdown link"),
         // Prompt Engineering Rules (PE-001 to PE-004)
-        ("PE-001", "Lost in the middle - critical content in middle section"),
+        (
+            "PE-001",
+            "Lost in the middle - critical content in middle section",
+        ),
         ("PE-002", "Chain-of-thought on simple task"),
         ("PE-003", "Weak imperative language in critical rules"),
         ("PE-004", "Ambiguous instructions"),
@@ -355,7 +401,10 @@ mod tests {
         assert_eq!(result.message.text, "Missing frontmatter");
         assert_eq!(result.locations[0].physical_location.region.start_line, 10);
         assert_eq!(result.locations[0].physical_location.region.start_column, 5);
-        assert_eq!(result.locations[0].physical_location.artifact_location.uri, "test.md");
+        assert_eq!(
+            result.locations[0].physical_location.artifact_location.uri,
+            "test.md"
+        );
     }
 
     #[test]
@@ -436,24 +485,21 @@ mod tests {
         let sarif = diagnostics_to_sarif(&diags, Path::new("/p"));
         assert_eq!(sarif.runs[0].results.len(), 3);
         assert_eq!(
-            sarif.runs[0].results[0]
-                .locations[0]
+            sarif.runs[0].results[0].locations[0]
                 .physical_location
                 .artifact_location
                 .uri,
             "a.md"
         );
         assert_eq!(
-            sarif.runs[0].results[1]
-                .locations[0]
+            sarif.runs[0].results[1].locations[0]
                 .physical_location
                 .artifact_location
                 .uri,
             "b.md"
         );
         assert_eq!(
-            sarif.runs[0].results[2]
-                .locations[0]
+            sarif.runs[0].results[2].locations[0]
                 .physical_location
                 .artifact_location
                 .uri,

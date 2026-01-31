@@ -137,7 +137,7 @@ Example SARIF output structure:
   run: agnix --format sarif . > results.sarif
   
 - name: Upload SARIF results
-  uses: github/codeql-action/upload-sarif@v2
+  uses: github/codeql-action/upload-sarif@v3
   with:
     sarif_file: results.sarif
 ```
