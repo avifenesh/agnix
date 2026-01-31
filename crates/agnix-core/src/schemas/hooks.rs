@@ -129,7 +129,11 @@ impl HooksSchema {
 
         for event in self.hooks.keys() {
             if !Self::VALID_EVENTS.contains(&event.as_str()) {
-                errors.push(format!("Unknown hook event '{}', valid events: {:?}", event, Self::VALID_EVENTS));
+                errors.push(format!(
+                    "Unknown hook event '{}', valid events: {:?}",
+                    event,
+                    Self::VALID_EVENTS
+                ));
             }
         }
 
@@ -144,7 +148,10 @@ impl HooksSchema {
         for (event, matchers) in &self.hooks {
             for (i, matcher) in matchers.iter().enumerate() {
                 if matcher.hooks.is_empty() {
-                    errors.push(format!("Hook event '{}' matcher {} has empty hooks array", event, i));
+                    errors.push(format!(
+                        "Hook event '{}' matcher {} has empty hooks array",
+                        event, i
+                    ));
                 }
             }
         }

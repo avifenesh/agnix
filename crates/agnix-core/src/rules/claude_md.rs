@@ -1,9 +1,7 @@
 //! CLAUDE.md validation
 
 use crate::{
-    config::LintConfig,
-    diagnostics::Diagnostic,
-    rules::Validator,
+    config::LintConfig, diagnostics::Diagnostic, rules::Validator,
     schemas::claude_md::find_generic_instructions,
 };
 use std::path::Path;
@@ -51,7 +49,8 @@ mod tests {
     fn test_generic_instruction_detected() {
         let content = "Be helpful and accurate when responding.";
         let validator = ClaudeMdValidator;
-        let diagnostics = validator.validate(Path::new("CLAUDE.md"), content, &LintConfig::default());
+        let diagnostics =
+            validator.validate(Path::new("CLAUDE.md"), content, &LintConfig::default());
 
         assert!(!diagnostics.is_empty());
         // Verify rule ID is CC-MEM-005

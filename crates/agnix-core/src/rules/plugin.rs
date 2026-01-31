@@ -1,10 +1,7 @@
 //! Plugin manifest validation (CC-PL-001 to CC-PL-005)
 
 use crate::{
-    config::LintConfig,
-    diagnostics::Diagnostic,
-    rules::Validator,
-    schemas::plugin::PluginSchema,
+    config::LintConfig, diagnostics::Diagnostic, rules::Validator, schemas::plugin::PluginSchema,
 };
 use regex::Regex;
 use std::path::Path;
@@ -50,10 +47,7 @@ impl Validator for PluginValidator {
                                 1,
                                 0,
                                 "CC-PL-002",
-                                format!(
-                                    "Component '{}' must not be inside .claude-plugin/",
-                                    entry
-                                ),
+                                format!("Component '{}' must not be inside .claude-plugin/", entry),
                             )
                             .with_suggestion(
                                 "Move components to the plugin root directory".to_string(),
@@ -183,7 +177,11 @@ mod tests {
         );
 
         let validator = PluginValidator;
-        let diagnostics = validator.validate(&plugin_path, &fs::read_to_string(&plugin_path).unwrap(), &LintConfig::default());
+        let diagnostics = validator.validate(
+            &plugin_path,
+            &fs::read_to_string(&plugin_path).unwrap(),
+            &LintConfig::default(),
+        );
 
         assert!(diagnostics.iter().any(|d| d.rule == "CC-PL-001"));
     }
@@ -199,7 +197,11 @@ mod tests {
         fs::create_dir_all(temp.path().join(".claude-plugin").join("skills")).unwrap();
 
         let validator = PluginValidator;
-        let diagnostics = validator.validate(&plugin_path, &fs::read_to_string(&plugin_path).unwrap(), &LintConfig::default());
+        let diagnostics = validator.validate(
+            &plugin_path,
+            &fs::read_to_string(&plugin_path).unwrap(),
+            &LintConfig::default(),
+        );
 
         assert!(diagnostics.iter().any(|d| d.rule == "CC-PL-002"));
     }
@@ -214,7 +216,11 @@ mod tests {
         );
 
         let validator = PluginValidator;
-        let diagnostics = validator.validate(&plugin_path, &fs::read_to_string(&plugin_path).unwrap(), &LintConfig::default());
+        let diagnostics = validator.validate(
+            &plugin_path,
+            &fs::read_to_string(&plugin_path).unwrap(),
+            &LintConfig::default(),
+        );
 
         assert!(diagnostics.iter().any(|d| d.rule == "CC-PL-003"));
     }
@@ -229,8 +235,11 @@ mod tests {
         );
 
         let validator = PluginValidator;
-        let diagnostics =
-            validator.validate(&plugin_path, &fs::read_to_string(&plugin_path).unwrap(), &LintConfig::default());
+        let diagnostics = validator.validate(
+            &plugin_path,
+            &fs::read_to_string(&plugin_path).unwrap(),
+            &LintConfig::default(),
+        );
 
         assert!(diagnostics.iter().any(|d| d.rule == "CC-PL-004"));
         assert!(!diagnostics.iter().any(|d| d.rule == "CC-PL-003"));
@@ -243,7 +252,11 @@ mod tests {
         write_plugin(&plugin_path, r#"{"name":"test-plugin"}"#);
 
         let validator = PluginValidator;
-        let diagnostics = validator.validate(&plugin_path, &fs::read_to_string(&plugin_path).unwrap(), &LintConfig::default());
+        let diagnostics = validator.validate(
+            &plugin_path,
+            &fs::read_to_string(&plugin_path).unwrap(),
+            &LintConfig::default(),
+        );
 
         assert!(diagnostics.iter().any(|d| d.rule == "CC-PL-004"));
     }
@@ -258,7 +271,11 @@ mod tests {
         );
 
         let validator = PluginValidator;
-        let diagnostics = validator.validate(&plugin_path, &fs::read_to_string(&plugin_path).unwrap(), &LintConfig::default());
+        let diagnostics = validator.validate(
+            &plugin_path,
+            &fs::read_to_string(&plugin_path).unwrap(),
+            &LintConfig::default(),
+        );
 
         assert!(diagnostics.iter().any(|d| d.rule == "CC-PL-005"));
     }

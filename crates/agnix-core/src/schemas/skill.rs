@@ -34,7 +34,10 @@ pub struct SkillSchema {
     pub argument_hint: Option<String>,
 
     /// Optional: disable model invocation
-    #[serde(skip_serializing_if = "Option::is_none", rename = "disable-model-invocation")]
+    #[serde(
+        skip_serializing_if = "Option::is_none",
+        rename = "disable-model-invocation"
+    )]
     pub disable_model_invocation: Option<bool>,
 
     /// Optional: user invocable
@@ -67,7 +70,10 @@ impl SkillSchema {
         // Character check
         for ch in name.chars() {
             if !ch.is_ascii_lowercase() && !ch.is_ascii_digit() && ch != '-' {
-                return Err(format!("Name must contain only lowercase letters, digits, and hyphens, found '{}'", ch));
+                return Err(format!(
+                    "Name must contain only lowercase letters, digits, and hyphens, found '{}'",
+                    ch
+                ));
             }
         }
 
@@ -88,7 +94,10 @@ impl SkillSchema {
     pub fn validate_description(&self) -> Result<(), String> {
         let len = self.description.len();
         if len == 0 || len > 1024 {
-            return Err(format!("Description must be 1-1024 characters, got {}", len));
+            return Err(format!(
+                "Description must be 1-1024 characters, got {}",
+                len
+            ));
         }
         Ok(())
     }
@@ -98,7 +107,10 @@ impl SkillSchema {
         if let Some(compat) = &self.compatibility {
             let len = compat.len();
             if len == 0 || len > 500 {
-                return Err(format!("Compatibility must be 1-500 characters, got {}", len));
+                return Err(format!(
+                    "Compatibility must be 1-500 characters, got {}",
+                    len
+                ));
             }
         }
         Ok(())
@@ -109,7 +121,10 @@ impl SkillSchema {
         if let Some(model) = &self.model {
             let valid = ["sonnet", "opus", "haiku", "inherit"];
             if !valid.contains(&model.as_str()) {
-                return Err(format!("Model must be one of: {:?}, got '{}'", valid, model));
+                return Err(format!(
+                    "Model must be one of: {:?}, got '{}'",
+                    valid, model
+                ));
             }
         }
         Ok(())

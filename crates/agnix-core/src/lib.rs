@@ -160,18 +160,16 @@ pub fn validate_project(path: &Path, config: &LintConfig) -> LintResult<Vec<Diag
     // Validate files in parallel
     let mut diagnostics: Vec<Diagnostic> = paths
         .par_iter()
-        .flat_map(|file_path| {
-            match validate_file(file_path, config) {
-                Ok(file_diagnostics) => file_diagnostics,
-                Err(e) => {
-                    vec![Diagnostic::error(
-                        file_path.clone(),
-                        0,
-                        0,
-                        "file::read",
-                        format!("Failed to validate file: {}", e),
-                    )]
-                }
+        .flat_map(|file_path| match validate_file(file_path, config) {
+            Ok(file_diagnostics) => file_diagnostics,
+            Err(e) => {
+                vec![Diagnostic::error(
+                    file_path.clone(),
+                    0,
+                    0,
+                    "file::read",
+                    format!("Failed to validate file: {}", e),
+                )]
             }
         })
         .collect();
@@ -194,10 +192,7 @@ mod tests {
 
     #[test]
     fn test_detect_skill_file() {
-        assert_eq!(
-            detect_file_type(Path::new("SKILL.md")),
-            FileType::Skill
-        );
+        assert_eq!(detect_file_type(Path::new("SKILL.md")), FileType::Skill);
         assert_eq!(
             detect_file_type(Path::new(".claude/skills/my-skill/SKILL.md")),
             FileType::Skill
@@ -206,14 +201,8 @@ mod tests {
 
     #[test]
     fn test_detect_claude_md() {
-        assert_eq!(
-            detect_file_type(Path::new("CLAUDE.md")),
-            FileType::ClaudeMd
-        );
-        assert_eq!(
-            detect_file_type(Path::new("AGENTS.md")),
-            FileType::ClaudeMd
-        );
+        assert_eq!(detect_file_type(Path::new("CLAUDE.md")), FileType::ClaudeMd);
+        assert_eq!(detect_file_type(Path::new("AGENTS.md")), FileType::ClaudeMd);
         assert_eq!(
             detect_file_type(Path::new("project/CLAUDE.md")),
             FileType::ClaudeMd
@@ -257,10 +246,7 @@ mod tests {
             detect_file_type(Path::new("some/plugin.json")),
             FileType::Plugin
         );
-        assert_eq!(
-            detect_file_type(Path::new("plugin.json")),
-            FileType::Plugin
-        );
+        assert_eq!(detect_file_type(Path::new("plugin.json")), FileType::Plugin);
     }
 
     #[test]
@@ -277,10 +263,7 @@ mod tests {
 
     #[test]
     fn test_detect_unknown() {
-        assert_eq!(
-            detect_file_type(Path::new("main.rs")),
-            FileType::Unknown
-        );
+        assert_eq!(detect_file_type(Path::new("main.rs")), FileType::Unknown);
         assert_eq!(
             detect_file_type(Path::new("package.json")),
             FileType::Unknown
@@ -558,7 +541,9 @@ mod tests {
             .collect();
 
         assert!(
-            error_diagnostics.iter().all(|d| d.file.to_string_lossy().contains("invalid")),
+            error_diagnostics
+                .iter()
+                .all(|d| d.file.to_string_lossy().contains("invalid")),
             "Errors should only come from the invalid skill"
         );
     }

@@ -9,8 +9,8 @@ use agnix_core::{
 use clap::{Parser, Subcommand};
 use colored::*;
 use similar::{ChangeTag, TextDiff};
-use std::path::PathBuf;
 use std::env;
+use std::path::PathBuf;
 use std::process;
 
 #[derive(Parser)]
@@ -176,7 +176,11 @@ fn validate_command(path: &PathBuf, cli: &Cli) -> anyhow::Result<()> {
         println!(
             "  {} {} automatically fixable",
             fixable,
-            if fixable == 1 { "issue is" } else { "issues are" }
+            if fixable == 1 {
+                "issue is"
+            } else {
+                "issues are"
+            }
         );
     }
 

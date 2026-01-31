@@ -116,9 +116,22 @@ pub struct XmlTag {
 
 #[derive(Debug, Clone)]
 pub enum XmlBalanceError {
-    Unclosed { tag: String, line: usize, column: usize },
-    UnmatchedClosing { tag: String, line: usize, column: usize },
-    Mismatch { expected: String, found: String, line: usize, column: usize },
+    Unclosed {
+        tag: String,
+        line: usize,
+        column: usize,
+    },
+    UnmatchedClosing {
+        tag: String,
+        line: usize,
+        column: usize,
+    },
+    Mismatch {
+        expected: String,
+        found: String,
+        line: usize,
+        column: usize,
+    },
 }
 
 fn compute_line_starts(content: &str) -> Vec<usize> {
@@ -146,7 +159,12 @@ fn line_col_at(offset: usize, line_starts: &[usize]) -> (usize, usize) {
     (low + 1, offset - line_start + 1)
 }
 
-fn scan_imports_in_text(text: &str, range: Range<usize>, line_starts: &[usize], imports: &mut Vec<Import>) {
+fn scan_imports_in_text(
+    text: &str,
+    range: Range<usize>,
+    line_starts: &[usize],
+    imports: &mut Vec<Import>,
+) {
     let bytes = text.as_bytes();
     let mut i = 0usize;
     while i < bytes.len() {
@@ -219,10 +237,13 @@ fn scan_imports_in_text(text: &str, range: Range<usize>, line_starts: &[usize], 
     }
 }
 
-fn scan_xml_tags_in_text(text: &str, range: Range<usize>, line_starts: &[usize], tags: &mut Vec<XmlTag>) {
-    let re = XML_TAG_REGEX.get_or_init(|| {
-        Regex::new(r"<(/?)([a-zA-Z_][a-zA-Z0-9_-]*)>").unwrap()
-    });
+fn scan_xml_tags_in_text(
+    text: &str,
+    range: Range<usize>,
+    line_starts: &[usize],
+    tags: &mut Vec<XmlTag>,
+) {
+    let re = XML_TAG_REGEX.get_or_init(|| Regex::new(r"<(/?)([a-zA-Z_][a-zA-Z0-9_-]*)>").unwrap());
 
     for cap in re.captures_iter(text) {
         let is_closing = cap.get(1).map_or(false, |m| m.as_str() == "/");
@@ -246,7 +267,12 @@ fn scan_xml_tags_in_text(text: &str, range: Range<usize>, line_starts: &[usize],
 }
 
 fn is_probable_import_path(path: &str) -> bool {
-    if path.starts_with('~') || path.contains('/') || path.contains('\\') || path.contains('.') || path.contains(':') {
+    if path.starts_with('~')
+        || path.contains('/')
+        || path.contains('\\')
+        || path.contains('.')
+        || path.contains(':')
+    {
         return true;
     }
     path.chars().any(|c| c.is_ascii_uppercase())

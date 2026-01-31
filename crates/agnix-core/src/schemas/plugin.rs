@@ -50,7 +50,10 @@ impl PluginSchema {
         // Basic semver check (major.minor.patch)
         let parts: Vec<&str> = self.version.split('.').collect();
         if parts.len() != 3 {
-            return Err(format!("Version must be in semver format (e.g., 1.0.0), got '{}'", self.version));
+            return Err(format!(
+                "Version must be in semver format (e.g., 1.0.0), got '{}'",
+                self.version
+            ));
         }
 
         for part in parts {

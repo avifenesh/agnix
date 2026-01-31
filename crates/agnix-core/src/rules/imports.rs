@@ -202,8 +202,8 @@ fn format_cycle(stack: &[PathBuf], target: &Path) -> String {
 mod tests {
     use super::*;
     use crate::config::LintConfig;
-    use tempfile::TempDir;
     use std::fs;
+    use tempfile::TempDir;
 
     #[test]
     fn test_config_disabled_imports_category() {

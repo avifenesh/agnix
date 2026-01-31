@@ -148,8 +148,7 @@ impl LintConfig {
 
     /// Load config or use default
     pub fn load_or_default(path: Option<&PathBuf>) -> Self {
-        path.and_then(|p| Self::load(p).ok())
-            .unwrap_or_default()
+        path.and_then(|p| Self::load(p).ok()).unwrap_or_default()
     }
 
     /// Check if a specific rule is enabled based on config
@@ -412,7 +411,10 @@ disabled_rules = ["CC-AG-002"]
         assert!(config.rules.skills);
         assert!(!config.rules.hooks);
         assert!(config.rules.agents);
-        assert!(config.rules.disabled_rules.contains(&"CC-AG-002".to_string()));
+        assert!(config
+            .rules
+            .disabled_rules
+            .contains(&"CC-AG-002".to_string()));
 
         // Check rule enablement
         assert!(config.is_rule_enabled("CC-AG-001"));
