@@ -116,6 +116,11 @@ impl Validator for HooksValidator {
     fn validate(&self, path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic> {
         let mut diagnostics = Vec::new();
 
+        // Early return if hooks category is entirely disabled
+        if !config.rules.hooks {
+            return diagnostics;
+        }
+
         let raw_value: serde_json::Value = match serde_json::from_str(content) {
             Ok(v) => v,
             Err(e) => {
