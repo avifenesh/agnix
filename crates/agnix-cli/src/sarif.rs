@@ -283,8 +283,9 @@ pub fn diagnostics_to_sarif(diagnostics: &[Diagnostic], base_path: &Path) -> Sar
                         uri: path_to_uri(&diag.file, base_path),
                     },
                     region: Region {
-                        start_line: diag.line,
-                        start_column: diag.column,
+                        // SARIF requires 1-based positions; clamp to 1 for diagnostics without location
+                        start_line: diag.line.max(1),
+                        start_column: diag.column.max(1),
                     },
                 },
             }],
