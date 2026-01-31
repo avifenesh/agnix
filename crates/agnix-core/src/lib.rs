@@ -267,4 +267,114 @@ mod tests {
             FileType::Unknown
         );
     }
+
+    #[test]
+    fn test_validators_for_skill() {
+        let validators = get_validators_for_type(FileType::Skill);
+        assert_eq!(validators.len(), 3);
+    }
+
+    #[test]
+    fn test_validators_for_claude_md() {
+        let validators = get_validators_for_type(FileType::ClaudeMd);
+        assert_eq!(validators.len(), 3);
+    }
+
+    #[test]
+    fn test_validators_for_unknown() {
+        let validators = get_validators_for_type(FileType::Unknown);
+        assert_eq!(validators.len(), 0);
+    }
+
+    #[test]
+    fn test_validate_file_unknown_type() {
+        let temp = tempfile::TempDir::new().unwrap();
+        let unknown_path = temp.path().join("test.rs");
+        std::fs::write(&unknown_path, "fn main() {}").unwrap();
+
+        let config = LintConfig::default();
+        let diagnostics = validate_file(&unknown_path, &config).unwrap();
+
+        assert_eq!(diagnostics.len(), 0);
+    }
+
+    #[test]
+    fn test_validate_file_skill() {
+        let temp = tempfile::TempDir::new().unwrap();
+        let skill_path = temp.path().join("SKILL.md");
+        std::fs::write(
+            &skill_path,
+            "---\nname: test-skill\ndescription: Use when testing\n---\nBody",
+        )
+        .unwrap();
+
+        let config = LintConfig::default();
+        let diagnostics = validate_file(&skill_path, &config).unwrap();
+
+        assert!(diagnostics.is_empty());
+    }
+
+    #[test]
+    fn test_validate_file_invalid_skill() {
+        let temp = tempfile::TempDir::new().unwrap();
+        let skill_path = temp.path().join("SKILL.md");
+        std::fs::write(
+            &skill_path,
+            "---\nname: deploy-prod\ndescription: Deploys\n---\nBody",
+        )
+        .unwrap();
+
+        let config = LintConfig::default();
+        let diagnostics = validate_file(&skill_path, &config).unwrap();
+
+        assert!(!diagnostics.is_empty());
+        assert!(diagnostics.iter().any(|d| d.rule == "CC-SK-006"));
+    }
+
+    #[test]
+    fn test_validate_project_finds_issues() {
+        let temp = tempfile::TempDir::new().unwrap();
+        let skill_dir = temp.path().join("skills").join("deploy");
+        std::fs::create_dir_all(&skill_dir).unwrap();
+        std::fs::write(
+            skill_dir.join("SKILL.md"),
+            "---\nname: deploy-prod\ndescription: Deploys\n---\nBody",
+        )
+        .unwrap();
+
+        let config = LintConfig::default();
+        let diagnostics = validate_project(temp.path(), &config).unwrap();
+
+        assert!(!diagnostics.is_empty());
+    }
+
+    #[test]
+    fn test_validate_project_empty_dir() {
+        let temp = tempfile::TempDir::new().unwrap();
+
+        let config = LintConfig::default();
+        let diagnostics = validate_project(temp.path(), &config).unwrap();
+
+        assert!(diagnostics.is_empty());
+    }
+
+    #[test]
+    fn test_validate_project_sorts_by_severity() {
+        let temp = tempfile::TempDir::new().unwrap();
+
+        let skill_dir = temp.path().join("skill1");
+        std::fs::create_dir_all(&skill_dir).unwrap();
+        std::fs::write(
+            skill_dir.join("SKILL.md"),
+            "---\nname: deploy-prod\ndescription: Deploys\n---\nBody",
+        )
+        .unwrap();
+
+        let config = LintConfig::default();
+        let diagnostics = validate_project(temp.path(), &config).unwrap();
+
+        for i in 1..diagnostics.len() {
+            assert!(diagnostics[i - 1].level <= diagnostics[i].level);
+        }
+    }
 }
