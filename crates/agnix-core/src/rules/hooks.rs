@@ -116,7 +116,6 @@ impl Validator for HooksValidator {
     fn validate(&self, path: &Path, content: &str, _config: &LintConfig) -> Vec<Diagnostic> {
         let mut diagnostics = Vec::new();
 
-        // CC-HK-005: Pre-parse as serde_json::Value to detect missing type field
         let raw_value: serde_json::Value = match serde_json::from_str(content) {
             Ok(v) => v,
             Err(e) => {
@@ -131,7 +130,6 @@ impl Validator for HooksValidator {
             }
         };
 
-        // Check for missing type fields before serde deserialization fails
         if let Some(hooks_obj) = raw_value.get("hooks").and_then(|h| h.as_object()) {
             for (event, matchers) in hooks_obj {
                 if let Some(matchers_arr) = matchers.as_array() {
@@ -166,7 +164,6 @@ impl Validator for HooksValidator {
             }
         }
 
-        // If we found missing type fields, return early as serde will fail
         if diagnostics.iter().any(|d| d.rule == "CC-HK-005") {
             return diagnostics;
         }
@@ -197,7 +194,6 @@ impl Validator for HooksValidator {
             .unwrap_or_else(|| Path::new("."));
 
         for (event, matchers) in &settings.hooks {
-            // CC-HK-001: Check event names against VALID_EVENTS
             if !HooksSchema::VALID_EVENTS.contains(&event.as_str()) {
                 let suggestion = find_closest_event(event);
                 diagnostics.push(
@@ -218,7 +214,6 @@ impl Validator for HooksValidator {
             }
 
             for (matcher_idx, matcher) in matchers.iter().enumerate() {
-                // CC-HK-003: Tool events require a matcher
                 if HooksSchema::is_tool_event(event) && matcher.matcher.is_none() {
                     let hook_location = format!("hooks.{}[{}]", event, matcher_idx);
                     diagnostics.push(
@@ -238,7 +233,6 @@ impl Validator for HooksValidator {
                     );
                 }
 
-                // CC-HK-004: Non-tool events must not have a matcher
                 if !HooksSchema::is_tool_event(event) && matcher.matcher.is_some() {
                     let hook_location = format!("hooks.{}[{}]", event, matcher_idx);
                     diagnostics.push(
@@ -337,7 +331,6 @@ impl Validator for HooksValidator {
                             }
                         }
                         Hook::Prompt { prompt, .. } => {
-                            // CC-HK-002: Prompt hooks only valid for Stop and SubagentStop
                             if !HooksSchema::is_prompt_event(event) {
                                 diagnostics.push(
                                     Diagnostic::error(
@@ -383,7 +376,6 @@ impl Validator for HooksValidator {
     }
 }
 
-/// Find the closest matching valid event name for suggestions
 fn find_closest_event(invalid_event: &str) -> String {
     let lower_event = invalid_event.to_lowercase();
 
