@@ -1,17 +1,29 @@
 //! agnix CLI - The nginx of agent configs
 
+mod sarif;
+
 use agnix_core::{
     apply_fixes,
     config::{LintConfig, TargetTool},
     diagnostics::DiagnosticLevel,
     validate_project,
 };
-use clap::{Parser, Subcommand};
+use clap::{Parser, Subcommand, ValueEnum};
 use colored::*;
 use similar::{ChangeTag, TextDiff};
 use std::env;
 use std::path::{Path, PathBuf};
 use std::process;
+
+/// Output format for validation results
+#[derive(Debug, Clone, Copy, Default, ValueEnum)]
+pub enum OutputFormat {
+    /// Human-readable text output with colors
+    #[default]
+    Text,
+    /// SARIF 2.1.0 JSON format for CI/CD integration
+    Sarif,
+}
 
 #[derive(Parser)]
 #[command(name = "agnix")]
@@ -55,6 +67,10 @@ struct Cli {
     /// Only apply safe (HIGH certainty) fixes (implies --fix)
     #[arg(long)]
     fix_safe: bool,
+
+    /// Output format (text or sarif)
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
+    format: OutputFormat,
 }
 
 #[derive(Subcommand)]
@@ -99,10 +115,34 @@ fn validate_command(path: &Path, cli: &Cli) -> anyhow::Result<()> {
         _ => TargetTool::Generic,
     };
 
-    println!("{} {}", "Validating:".cyan().bold(), path.display());
-    println!();
+    // Resolve absolute path for consistent SARIF output
+    let base_path = std::fs::canonicalize(path).unwrap_or_else(|_| path.to_path_buf());
 
     let diagnostics = validate_project(path, &config)?;
+
+    // Handle SARIF output format
+    if matches!(cli.format, OutputFormat::Sarif) {
+        let sarif = sarif::diagnostics_to_sarif(&diagnostics, &base_path);
+        let json = serde_json::to_string_pretty(&sarif)?;
+        println!("{}", json);
+
+        // Exit with error code if there are errors
+        let has_errors = diagnostics
+            .iter()
+            .any(|d| d.level == DiagnosticLevel::Error);
+        let has_warnings = diagnostics
+            .iter()
+            .any(|d| d.level == DiagnosticLevel::Warning);
+
+        if has_errors || (cli.strict && has_warnings) {
+            process::exit(1);
+        }
+        return Ok(());
+    }
+
+    // Text output format
+    println!("{} {}", "Validating:".cyan().bold(), path.display());
+    println!();
 
     if diagnostics.is_empty() {
         println!("{}", "No issues found".green().bold());
