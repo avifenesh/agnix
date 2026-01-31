@@ -90,15 +90,50 @@ agnix --format json .      # JSON output
 
 ```toml
 severity = "Warning"
-target = "Generic"
+target = "Generic"  # Options: Generic, ClaudeCode, Cursor, Codex
 
 [rules]
-frontmatter_validation = true
+# Category toggles - enable/disable entire rule categories
+skills = true       # AS-*, CC-SK-* rules
+hooks = true        # CC-HK-* rules
+agents = true       # CC-AG-* rules
+memory = true       # CC-MEM-* rules
+plugins = true      # CC-PL-* rules
+xml = true          # XML-* rules
+imports = true      # REF-*, imports::* rules
+
+# Legacy flags (still supported)
 generic_instructions = true
+frontmatter_validation = true
+xml_balance = true
+import_references = true
+
+# Disable specific rules by ID
+disabled_rules = []  # e.g., ["CC-AG-001", "AS-005"]
 
 [[exclude]]
 "node_modules/**"
+".git/**"
+"target/**"
 ```
+
+### Target Tool Filtering
+
+When `target` is set to a specific tool, only relevant rules run:
+- **ClaudeCode** or **Generic**: All rules enabled
+- **Cursor** or **Codex**: CC-* rules disabled (Claude Code specific)
+
+### Rule Categories
+
+| Category | Config Key | Rules | Description |
+|----------|------------|-------|-------------|
+| Skills | `skills` | AS-*, CC-SK-* | Agent skill validation |
+| Hooks | `hooks` | CC-HK-* | Hook configuration validation |
+| Agents | `agents` | CC-AG-* | Subagent validation |
+| Memory | `memory` | CC-MEM-* | Memory/CLAUDE.md validation |
+| Plugins | `plugins` | CC-PL-* | Plugin validation |
+| XML | `xml` | xml::* | XML tag balance |
+| Imports | `imports` | imports::* | Import reference validation |
 
 ## Performance Characteristics
 
