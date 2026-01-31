@@ -14,6 +14,7 @@
 6. **Track work in GitHub issues** - All tasks tracked there
 7. **Task is not done until tests added** - Every feature/fix must have quality tests
 8. **Documentation** - Update README, SPEC.md, RULES.md as needed, dont use CLAUDE.md for docs and tracking
+9. **Always follow the skill/command flow as instructed** - No deviations
 
 ## Architecture
 
