@@ -97,6 +97,14 @@ hint: Run with --fix to apply fixes
 
 agnix validates files in parallel using [rayon](https://github.com/rayon-rs/rayon) for optimal performance on large projects. Results are sorted deterministically (errors first, then by file path) to ensure consistent output across runs.
 
+## Quality Assurance
+
+This project uses comprehensive CI to ensure code quality:
+
+- **CI Pipeline** - Format checks, clippy linting, unused dependency detection, and cross-platform testing (Linux, macOS, Windows with stable and beta Rust)
+- **Security Scanning** - CodeQL static analysis and cargo-audit for vulnerability detection
+- **Changelog Validation** - PRs must update CHANGELOG.md (skip with `[skip changelog]` in PR title)
+
 ## Configuration
 
 Create `.agnix.toml` in your project:

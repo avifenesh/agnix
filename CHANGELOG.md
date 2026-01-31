@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Comprehensive CI workflow with format check, clippy, machete, and test matrix (3 OS x 2 Rust versions)
+- Security scanning workflow with CodeQL analysis and cargo-audit (runs on push, PR, and weekly schedule)
+- Changelog validation workflow to ensure CHANGELOG.md is updated in PRs
 - PluginValidator implementation with 5 validation rules (CC-PL-001 to CC-PL-005)
   - CC-PL-001: Validates plugin.json is in .claude-plugin/ directory
   - CC-PL-002: Detects misplaced components (skills/agents/hooks) inside .claude-plugin/
