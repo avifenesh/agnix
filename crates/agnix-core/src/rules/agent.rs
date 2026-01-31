@@ -1,13 +1,890 @@
-//! Agent file validation (stub)
+//! Agent file validation (CC-AG-001 to CC-AG-006)
+//!
+//! Validates Claude Code subagent definitions in `.claude/agents/*.md`
 
-use crate::{config::LintConfig, diagnostics::Diagnostic, rules::Validator};
+use crate::{
+    config::LintConfig,
+    diagnostics::Diagnostic,
+    parsers::frontmatter::parse_frontmatter,
+    rules::Validator,
+    schemas::agent::AgentSchema,
+};
+use std::collections::HashSet;
 use std::path::Path;
+
+/// Valid model values per CC-AG-003
+const VALID_MODELS: &[&str] = &["sonnet", "opus", "haiku", "inherit"];
+
+/// Valid permission modes per CC-AG-004
+const VALID_PERMISSION_MODES: &[&str] = &[
+    "default",
+    "acceptEdits",
+    "dontAsk",
+    "bypassPermissions",
+    "plan",
+];
 
 pub struct AgentValidator;
 
+impl AgentValidator {
+    /// Find the project root by looking for .claude directory
+    fn find_project_root(path: &Path) -> Option<&Path> {
+        let mut current = path.parent();
+        while let Some(dir) = current {
+            if dir.join(".claude").exists() {
+                return Some(dir);
+            }
+            // Also check if we're inside .claude
+            if dir.file_name().map(|n| n == ".claude").unwrap_or(false) {
+                return dir.parent();
+            }
+            current = dir.parent();
+        }
+        // Fallback: if agent is in `agents/` dir, go up one level
+        path.parent()
+            .and_then(|p| p.parent())
+    }
+
+    /// Check if a skill exists at the expected location
+    fn skill_exists(project_root: &Path, skill_name: &str) -> bool {
+        let skill_path = project_root
+            .join(".claude")
+            .join("skills")
+            .join(skill_name)
+            .join("SKILL.md");
+        skill_path.exists()
+    }
+}
+
 impl Validator for AgentValidator {
-    fn validate(&self, _path: &Path, _content: &str, _config: &LintConfig) -> Vec<Diagnostic> {
-        // TODO: Implement agent validation
-        Vec::new()
+    fn validate(&self, path: &Path, content: &str, _config: &LintConfig) -> Vec<Diagnostic> {
+        let mut diagnostics = Vec::new();
+
+        // Check if content has frontmatter
+        if !content.trim_start().starts_with("---") {
+            diagnostics.push(
+                Diagnostic::error(
+                    path.to_path_buf(),
+                    1,
+                    0,
+                    "agent::parse",
+                    "Agent file must have YAML frontmatter".to_string(),
+                )
+                .with_suggestion("Add frontmatter between --- markers".to_string()),
+            );
+            return diagnostics;
+        }
+
+        // Parse frontmatter
+        let schema: AgentSchema = match parse_frontmatter(content) {
+            Ok((s, _body)) => s,
+            Err(e) => {
+                diagnostics.push(Diagnostic::error(
+                    path.to_path_buf(),
+                    1,
+                    0,
+                    "agent::parse",
+                    format!("Failed to parse agent frontmatter: {}", e),
+                ));
+                return diagnostics;
+            }
+        };
+
+        // CC-AG-001: Missing name field
+        if schema.name.is_none() || schema.name.as_ref().map(|n| n.trim().is_empty()).unwrap_or(true) {
+            diagnostics.push(
+                Diagnostic::error(
+                    path.to_path_buf(),
+                    1,
+                    0,
+                    "CC-AG-001",
+                    "Agent frontmatter is missing required 'name' field".to_string(),
+                )
+                .with_suggestion("Add 'name: your-agent-name' to frontmatter".to_string()),
+            );
+        }
+
+        // CC-AG-002: Missing description field
+        if schema.description.is_none()
+            || schema
+                .description
+                .as_ref()
+                .map(|d| d.trim().is_empty())
+                .unwrap_or(true)
+        {
+            diagnostics.push(
+                Diagnostic::error(
+                    path.to_path_buf(),
+                    1,
+                    0,
+                    "CC-AG-002",
+                    "Agent frontmatter is missing required 'description' field".to_string(),
+                )
+                .with_suggestion(
+                    "Add 'description: Describe what this agent does' to frontmatter".to_string(),
+                ),
+            );
+        }
+
+        // CC-AG-003: Invalid model value
+        if let Some(model) = &schema.model {
+            if !VALID_MODELS.contains(&model.as_str()) {
+                diagnostics.push(
+                    Diagnostic::error(
+                        path.to_path_buf(),
+                        1,
+                        0,
+                        "CC-AG-003",
+                        format!(
+                            "Invalid model '{}'. Valid values: {}",
+                            model,
+                            VALID_MODELS.join(", ")
+                        ),
+                    )
+                    .with_suggestion(format!(
+                        "Change model to one of: {}",
+                        VALID_MODELS.join(", ")
+                    )),
+                );
+            }
+        }
+
+        // CC-AG-004: Invalid permission mode
+        if let Some(mode) = &schema.permission_mode {
+            if !VALID_PERMISSION_MODES.contains(&mode.as_str()) {
+                diagnostics.push(
+                    Diagnostic::error(
+                        path.to_path_buf(),
+                        1,
+                        0,
+                        "CC-AG-004",
+                        format!(
+                            "Invalid permissionMode '{}'. Valid values: {}",
+                            mode,
+                            VALID_PERMISSION_MODES.join(", ")
+                        ),
+                    )
+                    .with_suggestion(format!(
+                        "Change permissionMode to one of: {}",
+                        VALID_PERMISSION_MODES.join(", ")
+                    )),
+                );
+            }
+        }
+
+        // CC-AG-005: Referenced skill not found
+        if let Some(skills) = &schema.skills {
+            if let Some(project_root) = Self::find_project_root(path) {
+                for skill_name in skills {
+                    if !Self::skill_exists(project_root, skill_name) {
+                        diagnostics.push(
+                            Diagnostic::error(
+                                path.to_path_buf(),
+                                1,
+                                0,
+                                "CC-AG-005",
+                                format!(
+                                    "Referenced skill '{}' not found at .claude/skills/{}/SKILL.md",
+                                    skill_name, skill_name
+                                ),
+                            )
+                            .with_suggestion(format!(
+                                "Create the skill at .claude/skills/{}/SKILL.md or remove the reference",
+                                skill_name
+                            )),
+                        );
+                    }
+                }
+            }
+        }
+
+        // CC-AG-006: Tool/disallowed conflict
+        if let (Some(tools), Some(disallowed)) = (&schema.tools, &schema.disallowed_tools) {
+            let tools_set: HashSet<&str> = tools.iter().map(|s| s.as_str()).collect();
+            let disallowed_set: HashSet<&str> = disallowed.iter().map(|s| s.as_str()).collect();
+
+            let conflicts: Vec<&str> = tools_set.intersection(&disallowed_set).copied().collect();
+
+            if !conflicts.is_empty() {
+                diagnostics.push(
+                    Diagnostic::error(
+                        path.to_path_buf(),
+                        1,
+                        0,
+                        "CC-AG-006",
+                        format!(
+                            "Tool(s) appear in both 'tools' and 'disallowedTools': {}",
+                            conflicts.join(", ")
+                        ),
+                    )
+                    .with_suggestion(
+                        "Remove conflicting tool(s) from either 'tools' or 'disallowedTools'"
+                            .to_string(),
+                    ),
+                );
+            }
+        }
+
+        diagnostics
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::config::LintConfig;
+    use crate::diagnostics::DiagnosticLevel;
+    use tempfile::TempDir;
+
+    fn validate(content: &str) -> Vec<Diagnostic> {
+        let validator = AgentValidator;
+        validator.validate(
+            Path::new("agents/test-agent.md"),
+            content,
+            &LintConfig::default(),
+        )
+    }
+
+    fn validate_with_path(path: &Path, content: &str) -> Vec<Diagnostic> {
+        let validator = AgentValidator;
+        validator.validate(path, content, &LintConfig::default())
+    }
+
+    // ===== CC-AG-001 Tests: Missing Name Field =====
+
+    #[test]
+    fn test_cc_ag_001_missing_name() {
+        let content = r#"---
+description: A test agent
+---
+Agent instructions here"#;
+
+        let diagnostics = validate(content);
+        let cc_ag_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CC-AG-001").collect();
+
+        assert_eq!(cc_ag_001.len(), 1);
+        assert_eq!(cc_ag_001[0].level, DiagnosticLevel::Error);
+        assert!(cc_ag_001[0].message.contains("missing required 'name'"));
+    }
+
+    #[test]
+    fn test_cc_ag_001_empty_name() {
+        let content = r#"---
+name: ""
+description: A test agent
+---
+Agent instructions"#;
+
+        let diagnostics = validate(content);
+        let cc_ag_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CC-AG-001").collect();
+
+        assert_eq!(cc_ag_001.len(), 1);
+    }
+
+    #[test]
+    fn test_cc_ag_001_whitespace_name() {
+        let content = r#"---
+name: "   "
+description: A test agent
+---
+Agent instructions"#;
+
+        let diagnostics = validate(content);
+        let cc_ag_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CC-AG-001").collect();
+
+        assert_eq!(cc_ag_001.len(), 1);
+    }
+
+    #[test]
+    fn test_cc_ag_001_valid_name() {
+        let content = r#"---
+name: my-agent
+description: A test agent
+---
+Agent instructions"#;
+
+        let diagnostics = validate(content);
+        let cc_ag_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CC-AG-001").collect();
+
+        assert_eq!(cc_ag_001.len(), 0);
+    }
+
+    // ===== CC-AG-002 Tests: Missing Description Field =====
+
+    #[test]
+    fn test_cc_ag_002_missing_description() {
+        let content = r#"---
+name: my-agent
+---
+Agent instructions"#;
+
+        let diagnostics = validate(content);
+        let cc_ag_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CC-AG-002").collect();
+
+        assert_eq!(cc_ag_002.len(), 1);
+        assert_eq!(cc_ag_002[0].level, DiagnosticLevel::Error);
+        assert!(cc_ag_002[0].message.contains("missing required 'description'"));
+    }
+
+    #[test]
+    fn test_cc_ag_002_empty_description() {
+        let content = r#"---
+name: my-agent
+description: ""
+---
+Agent instructions"#;
+
+        let diagnostics = validate(content);
+        let cc_ag_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CC-AG-002").collect();
+
+        assert_eq!(cc_ag_002.len(), 1);
+    }
+
+    #[test]
+    fn test_cc_ag_002_valid_description() {
+        let content = r#"---
+name: my-agent
+description: This agent helps with testing
+---
+Agent instructions"#;
+
+        let diagnostics = validate(content);
+        let cc_ag_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CC-AG-002").collect();
+
+        assert_eq!(cc_ag_002.len(), 0);
+    }
+
+    // ===== CC-AG-003 Tests: Invalid Model Value =====
+
+    #[test]
+    fn test_cc_ag_003_invalid_model() {
+        let content = r#"---
+name: my-agent
+description: A test agent
+model: gpt-4
+---
+Agent instructions"#;
+
+        let diagnostics = validate(content);
+        let cc_ag_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CC-AG-003").collect();
+
+        assert_eq!(cc_ag_003.len(), 1);
+        assert_eq!(cc_ag_003[0].level, DiagnosticLevel::Error);
+        assert!(cc_ag_003[0].message.contains("Invalid model"));
+        assert!(cc_ag_003[0].message.contains("gpt-4"));
+    }
+
+    #[test]
+    fn test_cc_ag_003_valid_model_sonnet() {
+        let content = r#"---
+name: my-agent
+description: A test agent
+model: sonnet
+---
+Agent instructions"#;
+
+        let diagnostics = validate(content);
+        let cc_ag_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CC-AG-003").collect();
+
+        assert_eq!(cc_ag_003.len(), 0);
+    }
+
+    #[test]
+    fn test_cc_ag_003_valid_model_opus() {
+        let content = r#"---
+name: my-agent
+description: A test agent
+model: opus
+---
+Agent instructions"#;
+
+        let diagnostics = validate(content);
+        let cc_ag_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CC-AG-003").collect();
+
+        assert_eq!(cc_ag_003.len(), 0);
+    }
+
+    #[test]
+    fn test_cc_ag_003_valid_model_haiku() {
+        let content = r#"---
+name: my-agent
+description: A test agent
+model: haiku
+---
+Agent instructions"#;
+
+        let diagnostics = validate(content);
+        let cc_ag_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CC-AG-003").collect();
+
+        assert_eq!(cc_ag_003.len(), 0);
+    }
+
+    #[test]
+    fn test_cc_ag_003_valid_model_inherit() {
+        let content = r#"---
+name: my-agent
+description: A test agent
+model: inherit
+---
+Agent instructions"#;
+
+        let diagnostics = validate(content);
+        let cc_ag_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CC-AG-003").collect();
+
+        assert_eq!(cc_ag_003.len(), 0);
+    }
+
+    #[test]
+    fn test_cc_ag_003_no_model_ok() {
+        let content = r#"---
+name: my-agent
+description: A test agent
+---
+Agent instructions"#;
+
+        let diagnostics = validate(content);
+        let cc_ag_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CC-AG-003").collect();
+
+        assert_eq!(cc_ag_003.len(), 0);
+    }
+
+    // ===== CC-AG-004 Tests: Invalid Permission Mode =====
+
+    #[test]
+    fn test_cc_ag_004_invalid_permission_mode() {
+        let content = r#"---
+name: my-agent
+description: A test agent
+permissionMode: admin
+---
+Agent instructions"#;
+
+        let diagnostics = validate(content);
+        let cc_ag_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CC-AG-004").collect();
+
+        assert_eq!(cc_ag_004.len(), 1);
+        assert_eq!(cc_ag_004[0].level, DiagnosticLevel::Error);
+        assert!(cc_ag_004[0].message.contains("Invalid permissionMode"));
+        assert!(cc_ag_004[0].message.contains("admin"));
+    }
+
+    #[test]
+    fn test_cc_ag_004_valid_permission_mode_default() {
+        let content = r#"---
+name: my-agent
+description: A test agent
+permissionMode: default
+---
+Agent instructions"#;
+
+        let diagnostics = validate(content);
+        let cc_ag_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CC-AG-004").collect();
+
+        assert_eq!(cc_ag_004.len(), 0);
+    }
+
+    #[test]
+    fn test_cc_ag_004_valid_permission_mode_accept_edits() {
+        let content = r#"---
+name: my-agent
+description: A test agent
+permissionMode: acceptEdits
+---
+Agent instructions"#;
+
+        let diagnostics = validate(content);
+        let cc_ag_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CC-AG-004").collect();
+
+        assert_eq!(cc_ag_004.len(), 0);
+    }
+
+    #[test]
+    fn test_cc_ag_004_valid_permission_mode_dont_ask() {
+        let content = r#"---
+name: my-agent
+description: A test agent
+permissionMode: dontAsk
+---
+Agent instructions"#;
+
+        let diagnostics = validate(content);
+        let cc_ag_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CC-AG-004").collect();
+
+        assert_eq!(cc_ag_004.len(), 0);
+    }
+
+    #[test]
+    fn test_cc_ag_004_valid_permission_mode_bypass() {
+        let content = r#"---
+name: my-agent
+description: A test agent
+permissionMode: bypassPermissions
+---
+Agent instructions"#;
+
+        let diagnostics = validate(content);
+        let cc_ag_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CC-AG-004").collect();
+
+        assert_eq!(cc_ag_004.len(), 0);
+    }
+
+    #[test]
+    fn test_cc_ag_004_valid_permission_mode_plan() {
+        let content = r#"---
+name: my-agent
+description: A test agent
+permissionMode: plan
+---
+Agent instructions"#;
+
+        let diagnostics = validate(content);
+        let cc_ag_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CC-AG-004").collect();
+
+        assert_eq!(cc_ag_004.len(), 0);
+    }
+
+    #[test]
+    fn test_cc_ag_004_no_permission_mode_ok() {
+        let content = r#"---
+name: my-agent
+description: A test agent
+---
+Agent instructions"#;
+
+        let diagnostics = validate(content);
+        let cc_ag_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CC-AG-004").collect();
+
+        assert_eq!(cc_ag_004.len(), 0);
+    }
+
+    // ===== CC-AG-005 Tests: Referenced Skill Not Found =====
+
+    #[test]
+    fn test_cc_ag_005_missing_skill() {
+        let temp = TempDir::new().unwrap();
+        let claude_dir = temp.path().join(".claude");
+        let agents_dir = claude_dir.join("agents");
+        std::fs::create_dir_all(&agents_dir).unwrap();
+
+        let agent_path = agents_dir.join("test-agent.md");
+
+        let content = r#"---
+name: my-agent
+description: A test agent
+skills:
+  - nonexistent-skill
+---
+Agent instructions"#;
+
+        let diagnostics = validate_with_path(&agent_path, content);
+        let cc_ag_005: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CC-AG-005").collect();
+
+        assert_eq!(cc_ag_005.len(), 1);
+        assert_eq!(cc_ag_005[0].level, DiagnosticLevel::Error);
+        assert!(cc_ag_005[0].message.contains("nonexistent-skill"));
+        assert!(cc_ag_005[0].message.contains("not found"));
+    }
+
+    #[test]
+    fn test_cc_ag_005_existing_skill() {
+        let temp = TempDir::new().unwrap();
+        let claude_dir = temp.path().join(".claude");
+        let agents_dir = claude_dir.join("agents");
+        let skills_dir = claude_dir.join("skills").join("my-skill");
+        std::fs::create_dir_all(&agents_dir).unwrap();
+        std::fs::create_dir_all(&skills_dir).unwrap();
+        std::fs::write(
+            skills_dir.join("SKILL.md"),
+            "---\nname: my-skill\ndescription: A skill\n---\nBody",
+        )
+        .unwrap();
+
+        let agent_path = agents_dir.join("test-agent.md");
+
+        let content = r#"---
+name: my-agent
+description: A test agent
+skills:
+  - my-skill
+---
+Agent instructions"#;
+
+        let diagnostics = validate_with_path(&agent_path, content);
+        let cc_ag_005: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CC-AG-005").collect();
+
+        assert_eq!(cc_ag_005.len(), 0);
+    }
+
+    #[test]
+    fn test_cc_ag_005_multiple_missing_skills() {
+        let temp = TempDir::new().unwrap();
+        let claude_dir = temp.path().join(".claude");
+        let agents_dir = claude_dir.join("agents");
+        std::fs::create_dir_all(&agents_dir).unwrap();
+
+        let agent_path = agents_dir.join("test-agent.md");
+
+        let content = r#"---
+name: my-agent
+description: A test agent
+skills:
+  - missing-one
+  - missing-two
+  - missing-three
+---
+Agent instructions"#;
+
+        let diagnostics = validate_with_path(&agent_path, content);
+        let cc_ag_005: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CC-AG-005").collect();
+
+        assert_eq!(cc_ag_005.len(), 3);
+    }
+
+    #[test]
+    fn test_cc_ag_005_no_skills_ok() {
+        let content = r#"---
+name: my-agent
+description: A test agent
+---
+Agent instructions"#;
+
+        let diagnostics = validate(content);
+        let cc_ag_005: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CC-AG-005").collect();
+
+        assert_eq!(cc_ag_005.len(), 0);
+    }
+
+    // ===== CC-AG-006 Tests: Tool/Disallowed Conflict =====
+
+    #[test]
+    fn test_cc_ag_006_tool_conflict() {
+        let content = r#"---
+name: my-agent
+description: A test agent
+tools:
+  - Bash
+  - Read
+  - Write
+disallowedTools:
+  - Bash
+  - Edit
+---
+Agent instructions"#;
+
+        let diagnostics = validate(content);
+        let cc_ag_006: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CC-AG-006").collect();
+
+        assert_eq!(cc_ag_006.len(), 1);
+        assert_eq!(cc_ag_006[0].level, DiagnosticLevel::Error);
+        assert!(cc_ag_006[0].message.contains("Bash"));
+        assert!(cc_ag_006[0].message.contains("both"));
+    }
+
+    #[test]
+    fn test_cc_ag_006_multiple_conflicts() {
+        let content = r#"---
+name: my-agent
+description: A test agent
+tools:
+  - Bash
+  - Read
+  - Write
+disallowedTools:
+  - Bash
+  - Read
+---
+Agent instructions"#;
+
+        let diagnostics = validate(content);
+        let cc_ag_006: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CC-AG-006").collect();
+
+        assert_eq!(cc_ag_006.len(), 1);
+        // Should mention both conflicting tools
+        assert!(cc_ag_006[0].message.contains("Bash") || cc_ag_006[0].message.contains("Read"));
+    }
+
+    #[test]
+    fn test_cc_ag_006_no_conflict() {
+        let content = r#"---
+name: my-agent
+description: A test agent
+tools:
+  - Bash
+  - Read
+disallowedTools:
+  - Write
+  - Edit
+---
+Agent instructions"#;
+
+        let diagnostics = validate(content);
+        let cc_ag_006: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CC-AG-006").collect();
+
+        assert_eq!(cc_ag_006.len(), 0);
+    }
+
+    #[test]
+    fn test_cc_ag_006_only_tools_ok() {
+        let content = r#"---
+name: my-agent
+description: A test agent
+tools:
+  - Bash
+  - Read
+---
+Agent instructions"#;
+
+        let diagnostics = validate(content);
+        let cc_ag_006: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CC-AG-006").collect();
+
+        assert_eq!(cc_ag_006.len(), 0);
+    }
+
+    #[test]
+    fn test_cc_ag_006_only_disallowed_ok() {
+        let content = r#"---
+name: my-agent
+description: A test agent
+disallowedTools:
+  - Bash
+  - Read
+---
+Agent instructions"#;
+
+        let diagnostics = validate(content);
+        let cc_ag_006: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CC-AG-006").collect();
+
+        assert_eq!(cc_ag_006.len(), 0);
+    }
+
+    // ===== Parse Error Tests =====
+
+    #[test]
+    fn test_no_frontmatter() {
+        let content = "Just agent instructions without frontmatter";
+
+        let diagnostics = validate(content);
+        let parse_errors: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "agent::parse")
+            .collect();
+
+        assert_eq!(parse_errors.len(), 1);
+        assert!(parse_errors[0].message.contains("must have YAML frontmatter"));
+    }
+
+    #[test]
+    fn test_invalid_yaml() {
+        let content = r#"---
+name: [invalid yaml
+description: test
+---
+Body"#;
+
+        let diagnostics = validate(content);
+        let parse_errors: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "agent::parse")
+            .collect();
+
+        assert_eq!(parse_errors.len(), 1);
+        assert!(parse_errors[0].message.contains("Failed to parse"));
+    }
+
+    // ===== Valid Agent Tests =====
+
+    #[test]
+    fn test_valid_agent_minimal() {
+        let content = r#"---
+name: my-agent
+description: A helpful agent for testing
+---
+Agent instructions here"#;
+
+        let diagnostics = validate(content);
+        let errors: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.level == DiagnosticLevel::Error)
+            .collect();
+
+        assert!(errors.is_empty());
+    }
+
+    #[test]
+    fn test_valid_agent_full() {
+        let content = r#"---
+name: full-agent
+description: A fully configured agent
+model: opus
+permissionMode: acceptEdits
+tools:
+  - Bash
+  - Read
+  - Write
+disallowedTools:
+  - Edit
+---
+Agent instructions with full configuration"#;
+
+        let diagnostics = validate(content);
+        let errors: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.level == DiagnosticLevel::Error)
+            .collect();
+
+        assert!(errors.is_empty());
+    }
+
+    // ===== Fixture Tests =====
+
+    #[test]
+    fn test_fixture_missing_name() {
+        let content = include_str!("../../../../tests/fixtures/agents/missing-name.md");
+        let diagnostics = validate(content);
+        let cc_ag_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CC-AG-001").collect();
+        assert!(!cc_ag_001.is_empty());
+    }
+
+    #[test]
+    fn test_fixture_missing_description() {
+        let content = include_str!("../../../../tests/fixtures/agents/missing-description.md");
+        let diagnostics = validate(content);
+        let cc_ag_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CC-AG-002").collect();
+        assert!(!cc_ag_002.is_empty());
+    }
+
+    #[test]
+    fn test_fixture_invalid_model() {
+        let content = include_str!("../../../../tests/fixtures/agents/invalid-model.md");
+        let diagnostics = validate(content);
+        let cc_ag_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CC-AG-003").collect();
+        assert!(!cc_ag_003.is_empty());
+    }
+
+    #[test]
+    fn test_fixture_invalid_permission() {
+        let content = include_str!("../../../../tests/fixtures/agents/invalid-permission.md");
+        let diagnostics = validate(content);
+        let cc_ag_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CC-AG-004").collect();
+        assert!(!cc_ag_004.is_empty());
+    }
+
+    #[test]
+    fn test_fixture_tool_conflict() {
+        let content = include_str!("../../../../tests/fixtures/agents/tool-conflict.md");
+        let diagnostics = validate(content);
+        let cc_ag_006: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CC-AG-006").collect();
+        assert!(!cc_ag_006.is_empty());
+    }
+
+    #[test]
+    fn test_fixture_valid_agent() {
+        let content = include_str!("../../../../tests/fixtures/agents/valid-agent.md");
+        let diagnostics = validate(content);
+        let errors: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.level == DiagnosticLevel::Error)
+            .collect();
+        assert!(errors.is_empty());
     }
 }
