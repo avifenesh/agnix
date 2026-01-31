@@ -1,0 +1,11 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          { "type": "prompt" }
+        ]
+      }
+    ]
+  }
+}
