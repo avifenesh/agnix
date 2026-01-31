@@ -15,37 +15,35 @@ impl Validator for XmlValidator {
         let mut diagnostics = Vec::new();
 
         // Check both new category flag and legacy flag for backward compatibility
-        if !config.is_rule_enabled("xml::balance") || !config.rules.xml_balance {
-            return diagnostics;
-        }
+        if config.is_rule_enabled("xml::balance") && config.rules.xml_balance {
+            let tags = extract_xml_tags(content);
+            let errors = check_xml_balance(&tags);
 
-        let tags = extract_xml_tags(content);
-        let errors = check_xml_balance(&tags);
+            for error in errors {
+                let (message, line, column) = match error {
+                    XmlBalanceError::Unclosed { tag, line, column } => {
+                        (format!("Unclosed XML tag '<{}>'", tag), line, column)
+                    }
+                    XmlBalanceError::UnmatchedClosing { tag, line, column } => {
+                        (format!("Unmatched closing tag '</{}>'", tag), line, column)
+                    }
+                    XmlBalanceError::Mismatch {
+                        expected,
+                        found,
+                        line,
+                        column,
+                    } => (
+                        format!("Expected '</{}>' but found '</{}>'", expected, found),
+                        line,
+                        column,
+                    ),
+                };
 
-        for error in errors {
-            let (message, line, column) = match error {
-                XmlBalanceError::Unclosed { tag, line, column } => {
-                    (format!("Unclosed XML tag '<{}>'", tag), line, column)
-                }
-                XmlBalanceError::UnmatchedClosing { tag, line, column } => {
-                    (format!("Unmatched closing tag '</{}>'", tag), line, column)
-                }
-                XmlBalanceError::Mismatch {
-                    expected,
-                    found,
-                    line,
-                    column,
-                } => (
-                    format!("Expected '</{}>' but found '</{}>'", expected, found),
-                    line,
-                    column,
-                ),
-            };
-
-            diagnostics.push(
-                Diagnostic::error(path.to_path_buf(), line, column, "xml::balance", message)
-                    .with_suggestion("Ensure all XML tags are properly closed".to_string()),
-            );
+                diagnostics.push(
+                    Diagnostic::error(path.to_path_buf(), line, column, "xml::balance", message)
+                        .with_suggestion("Ensure all XML tags are properly closed".to_string()),
+                );
+            }
         }
 
         diagnostics

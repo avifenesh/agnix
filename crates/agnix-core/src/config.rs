@@ -160,7 +160,7 @@ impl LintConfig {
     /// 3. Its category is enabled
     pub fn is_rule_enabled(&self, rule_id: &str) -> bool {
         // Check if explicitly disabled
-        if self.rules.disabled_rules.contains(&rule_id.to_string()) {
+        if self.rules.disabled_rules.iter().any(|r| r == rule_id) {
             return false;
         }
 
@@ -185,43 +185,17 @@ impl LintConfig {
 
     /// Check if a rule's category is enabled
     fn is_category_enabled(&self, rule_id: &str) -> bool {
-        // Skills: AS-*, CC-SK-*
-        if rule_id.starts_with("AS-") || rule_id.starts_with("CC-SK-") {
-            return self.rules.skills;
+        match rule_id {
+            s if s.starts_with("AS-") || s.starts_with("CC-SK-") => self.rules.skills,
+            s if s.starts_with("CC-HK-") => self.rules.hooks,
+            s if s.starts_with("CC-AG-") => self.rules.agents,
+            s if s.starts_with("CC-MEM-") => self.rules.memory,
+            s if s.starts_with("CC-PL-") => self.rules.plugins,
+            s if s.starts_with("XML-") || s.starts_with("xml::") => self.rules.xml,
+            s if s.starts_with("REF-") || s.starts_with("imports::") => self.rules.imports,
+            // Unknown rules are enabled by default
+            _ => true,
         }
-
-        // Hooks: CC-HK-*
-        if rule_id.starts_with("CC-HK-") {
-            return self.rules.hooks;
-        }
-
-        // Agents: CC-AG-*
-        if rule_id.starts_with("CC-AG-") {
-            return self.rules.agents;
-        }
-
-        // Memory: CC-MEM-*
-        if rule_id.starts_with("CC-MEM-") {
-            return self.rules.memory;
-        }
-
-        // Plugins: CC-PL-*
-        if rule_id.starts_with("CC-PL-") {
-            return self.rules.plugins;
-        }
-
-        // XML: XML-*, xml::*
-        if rule_id.starts_with("XML-") || rule_id.starts_with("xml::") {
-            return self.rules.xml;
-        }
-
-        // Imports: REF-*, imports::*
-        if rule_id.starts_with("REF-") || rule_id.starts_with("imports::") {
-            return self.rules.imports;
-        }
-
-        // Unknown rules are enabled by default
-        true
     }
 }
 
