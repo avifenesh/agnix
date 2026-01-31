@@ -6,6 +6,7 @@
 use agnix_core::diagnostics::{Diagnostic, DiagnosticLevel};
 use serde::Serialize;
 use std::path::Path;
+use std::sync::LazyLock;
 
 const SARIF_SCHEMA: &str =
     "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/main/sarif-2.1/schema/sarif-schema-2.1.0.json";
@@ -41,7 +42,7 @@ pub struct Driver {
     pub rules: Vec<ReportingDescriptor>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ReportingDescriptor {
     pub id: String,
@@ -50,7 +51,7 @@ pub struct ReportingDescriptor {
     pub help_uri: Option<String>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 pub struct Message {
     pub text: String,
 }
@@ -106,7 +107,7 @@ fn path_to_uri(path: &Path, base_path: &Path) -> String {
     relative
 }
 
-fn get_all_rules() -> Vec<ReportingDescriptor> {
+static RULES: LazyLock<Vec<ReportingDescriptor>> = LazyLock::new(|| {
     let rules_data = [
         // Agent Skills Rules (AS-001 to AS-015)
         ("AS-001", "Missing YAML frontmatter in SKILL.md"),
@@ -215,6 +216,10 @@ fn get_all_rules() -> Vec<ReportingDescriptor> {
             )),
         })
         .collect()
+});
+
+fn get_all_rules() -> Vec<ReportingDescriptor> {
+    RULES.clone()
 }
 
 pub fn diagnostics_to_sarif(diagnostics: &[Diagnostic], base_path: &Path) -> SarifLog {
@@ -364,5 +369,105 @@ mod tests {
         assert!(json_str.contains("\"version\":\"2.1.0\""));
         assert!(json_str.contains("\"driver\""));
         assert!(json_str.contains("\"rules\""));
+    }
+
+    #[test]
+    fn test_path_to_uri_fallback_when_not_prefix() {
+        let path = PathBuf::from("/different/absolute/path.md");
+        let base = Path::new("/project");
+        let uri = path_to_uri(&path, base);
+        // Should return full path when base is not a prefix
+        assert!(uri.contains("different/absolute/path.md"));
+    }
+
+    #[test]
+    fn test_diagnostic_single_location() {
+        let diag = Diagnostic::error(
+            PathBuf::from("/project/test.md"),
+            10,
+            5,
+            "AS-001",
+            "Test".to_string(),
+        );
+        let sarif = diagnostics_to_sarif(&[diag], Path::new("/project"));
+        assert_eq!(
+            sarif.runs[0].results[0].locations.len(),
+            1,
+            "Each diagnostic should produce exactly one location"
+        );
+    }
+
+    #[test]
+    fn test_warning_level_conversion() {
+        let diag = Diagnostic::warning(
+            PathBuf::from("/project/test.md"),
+            5,
+            1,
+            "CC-SK-006",
+            "Warning message".to_string(),
+        );
+        let sarif = diagnostics_to_sarif(&[diag], Path::new("/project"));
+        assert_eq!(sarif.runs[0].results[0].level, "warning");
+    }
+
+    #[test]
+    fn test_info_level_conversion() {
+        let diag = Diagnostic {
+            level: DiagnosticLevel::Info,
+            message: "Info message".to_string(),
+            file: PathBuf::from("/project/test.md"),
+            line: 1,
+            column: 1,
+            rule: "info".to_string(),
+            suggestion: None,
+            fixes: vec![],
+        };
+        let sarif = diagnostics_to_sarif(&[diag], Path::new("/project"));
+        assert_eq!(sarif.runs[0].results[0].level, "note");
+    }
+
+    #[test]
+    fn test_multiple_diagnostics_different_files() {
+        let diags = vec![
+            Diagnostic::error(PathBuf::from("/p/a.md"), 1, 1, "AS-001", "A".to_string()),
+            Diagnostic::warning(PathBuf::from("/p/b.md"), 2, 2, "AS-002", "B".to_string()),
+            Diagnostic::error(PathBuf::from("/p/c.md"), 3, 3, "AS-003", "C".to_string()),
+        ];
+        let sarif = diagnostics_to_sarif(&diags, Path::new("/p"));
+        assert_eq!(sarif.runs[0].results.len(), 3);
+        assert_eq!(
+            sarif.runs[0].results[0]
+                .locations[0]
+                .physical_location
+                .artifact_location
+                .uri,
+            "a.md"
+        );
+        assert_eq!(
+            sarif.runs[0].results[1]
+                .locations[0]
+                .physical_location
+                .artifact_location
+                .uri,
+            "b.md"
+        );
+        assert_eq!(
+            sarif.runs[0].results[2]
+                .locations[0]
+                .physical_location
+                .artifact_location
+                .uri,
+            "c.md"
+        );
+    }
+
+    #[test]
+    fn test_no_duplicate_rule_ids() {
+        let rules = get_all_rules();
+        let mut ids: Vec<&str> = rules.iter().map(|r| r.id.as_str()).collect();
+        let original_len = ids.len();
+        ids.sort();
+        ids.dedup();
+        assert_eq!(ids.len(), original_len, "Should have no duplicate rule IDs");
     }
 }
