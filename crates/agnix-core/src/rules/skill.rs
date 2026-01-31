@@ -36,6 +36,56 @@ impl Validator for SkillValidator {
                     ));
                 }
 
+                // AS-005: Name cannot start or end with hyphen
+                if schema.name.starts_with('-') || schema.name.ends_with('-') {
+                    diagnostics.push(
+                        Diagnostic::error(
+                            path.to_path_buf(),
+                            1,
+                            0,
+                            "AS-005",
+                            format!("Name '{}' cannot start or end with hyphen", schema.name),
+                        )
+                        .with_suggestion(
+                            "Remove leading/trailing hyphens from the name".to_string(),
+                        ),
+                    );
+                }
+
+                // AS-006: Name cannot contain consecutive hyphens
+                if schema.name.contains("--") {
+                    diagnostics.push(
+                        Diagnostic::error(
+                            path.to_path_buf(),
+                            1,
+                            0,
+                            "AS-006",
+                            format!(
+                                "Name '{}' cannot contain consecutive hyphens",
+                                schema.name
+                            ),
+                        )
+                        .with_suggestion("Replace '--' with '-' in the name".to_string()),
+                    );
+                }
+
+                // AS-010: Description should include trigger phrase
+                let desc_lower = schema.description.to_lowercase();
+                if !desc_lower.contains("use when") && !desc_lower.contains("use this") {
+                    diagnostics.push(
+                        Diagnostic::warning(
+                            path.to_path_buf(),
+                            1,
+                            0,
+                            "AS-010",
+                            "Description should include a 'Use when...' trigger phrase".to_string(),
+                        )
+                        .with_suggestion(
+                            "Add 'Use when [condition]' to help Claude understand when to invoke this skill".to_string(),
+                        ),
+                    );
+                }
+
                 // CC-SK-006: Dangerous auto-invocation check
                 const DANGEROUS_NAMES: &[&str] = &["deploy", "ship", "publish", "delete", "release", "push"];
                 let name_lower = schema.name.to_lowercase();
@@ -95,7 +145,7 @@ mod tests {
     fn test_valid_skill() {
         let content = r#"---
 name: test-skill
-description: A test skill for validation
+description: Use when testing skill validation
 ---
 Skill body content"#;
 
@@ -290,5 +340,123 @@ Body"#;
             .collect();
 
         assert_eq!(cc_sk_007_warnings.len(), 0);
+    }
+
+    #[test]
+    fn test_as_005_leading_hyphen() {
+        let content = r#"---
+name: -bad-name
+description: Use when testing validation
+---
+Body"#;
+
+        let validator = SkillValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+        let as_005_errors: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "AS-005")
+            .collect();
+
+        assert_eq!(as_005_errors.len(), 1);
+        assert_eq!(as_005_errors[0].level, crate::diagnostics::DiagnosticLevel::Error);
+    }
+
+    #[test]
+    fn test_as_005_trailing_hyphen() {
+        let content = r#"---
+name: bad-name-
+description: Use when testing validation
+---
+Body"#;
+
+        let validator = SkillValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+        let as_005_errors: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "AS-005")
+            .collect();
+
+        assert_eq!(as_005_errors.len(), 1);
+        assert_eq!(as_005_errors[0].level, crate::diagnostics::DiagnosticLevel::Error);
+    }
+
+    #[test]
+    fn test_as_006_consecutive_hyphens() {
+        let content = r#"---
+name: bad--name
+description: Use when testing validation
+---
+Body"#;
+
+        let validator = SkillValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+        let as_006_errors: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "AS-006")
+            .collect();
+
+        assert_eq!(as_006_errors.len(), 1);
+        assert_eq!(as_006_errors[0].level, crate::diagnostics::DiagnosticLevel::Error);
+    }
+
+    #[test]
+    fn test_as_010_missing_trigger() {
+        let content = r#"---
+name: code-review
+description: Reviews code for quality
+---
+Body"#;
+
+        let validator = SkillValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+        let as_010_warnings: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "AS-010")
+            .collect();
+
+        assert_eq!(as_010_warnings.len(), 1);
+        assert_eq!(as_010_warnings[0].level, crate::diagnostics::DiagnosticLevel::Warning);
+    }
+
+    #[test]
+    fn test_as_010_has_use_when_trigger() {
+        let content = r#"---
+name: code-review
+description: Use when user asks for code review
+---
+Body"#;
+
+        let validator = SkillValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+        let as_010_warnings: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "AS-010")
+            .collect();
+
+        assert_eq!(as_010_warnings.len(), 0);
+    }
+
+    #[test]
+    fn test_as_010_has_use_this_trigger() {
+        let content = r#"---
+name: code-review
+description: Use this skill to review code
+---
+Body"#;
+
+        let validator = SkillValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+        let as_010_warnings: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "AS-010")
+            .collect();
+
+        assert_eq!(as_010_warnings.len(), 0);
     }
 }
