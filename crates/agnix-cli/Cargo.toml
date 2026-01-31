@@ -19,3 +19,4 @@ colored.workspace = true
 miette = { workspace = true, features = ["fancy"] }
 anyhow.workspace = true
 toml = "0.8"
+similar = "2"

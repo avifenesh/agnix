@@ -22,7 +22,7 @@ use std::path::{Path, PathBuf};
 use rayon::prelude::*;
 
 pub use config::LintConfig;
-pub use diagnostics::{Diagnostic, DiagnosticLevel, Fix, FixKind, LintError, LintResult};
+pub use diagnostics::{Diagnostic, DiagnosticLevel, Fix, LintError, LintResult};
 pub use fixes::{apply_fixes, FixResult};
 use rules::Validator;
 

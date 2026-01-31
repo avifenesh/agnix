@@ -7,22 +7,9 @@ use thiserror::Error;
 
 pub type LintResult<T> = Result<T, LintError>;
 
-/// Kind of automatic fix
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-pub enum FixKind {
-    /// Replace text in range
-    Replace,
-    /// Insert at position (start_byte == end_byte)
-    Insert,
-    /// Delete range (replacement is empty)
-    Delete,
-}
-
 /// An automatic fix for a diagnostic
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Fix {
-    /// Kind of fix operation
-    pub kind: FixKind,
     /// Byte offset start (inclusive)
     pub start_byte: usize,
     /// Byte offset end (exclusive)
@@ -39,7 +26,6 @@ impl Fix {
     /// Create a replacement fix
     pub fn replace(start: usize, end: usize, replacement: impl Into<String>, description: impl Into<String>, safe: bool) -> Self {
         Self {
-            kind: FixKind::Replace,
             start_byte: start,
             end_byte: end,
             replacement: replacement.into(),
@@ -48,10 +34,9 @@ impl Fix {
         }
     }
 
-    /// Create an insertion fix
+    /// Create an insertion fix (start == end)
     pub fn insert(position: usize, text: impl Into<String>, description: impl Into<String>, safe: bool) -> Self {
         Self {
-            kind: FixKind::Insert,
             start_byte: position,
             end_byte: position,
             replacement: text.into(),
@@ -60,16 +45,25 @@ impl Fix {
         }
     }
 
-    /// Create a deletion fix
+    /// Create a deletion fix (replacement is empty)
     pub fn delete(start: usize, end: usize, description: impl Into<String>, safe: bool) -> Self {
         Self {
-            kind: FixKind::Delete,
             start_byte: start,
             end_byte: end,
             replacement: String::new(),
             description: description.into(),
             safe,
         }
+    }
+
+    /// Check if this is an insertion (start == end)
+    pub fn is_insertion(&self) -> bool {
+        self.start_byte == self.end_byte && !self.replacement.is_empty()
+    }
+
+    /// Check if this is a deletion (empty replacement)
+    pub fn is_deletion(&self) -> bool {
+        self.replacement.is_empty() && self.start_byte < self.end_byte
     }
 }
 

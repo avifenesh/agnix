@@ -8,6 +8,7 @@ use agnix_core::{
 };
 use clap::{Parser, Subcommand};
 use colored::*;
+use similar::{ChangeTag, TextDiff};
 use std::path::PathBuf;
 use std::process;
 
@@ -205,7 +206,7 @@ fn validate_command(path: &PathBuf, cli: &Cli) -> anyhow::Result<()> {
                 if cli.dry_run && cli.verbose {
                     println!();
                     println!("  {}:", "Diff".yellow());
-                    show_simple_diff(&result.original, &result.fixed);
+                    show_diff(&result.original, &result.fixed);
                 }
             }
 
@@ -235,24 +236,13 @@ fn validate_command(path: &PathBuf, cli: &Cli) -> anyhow::Result<()> {
     Ok(())
 }
 
-/// Show a simple line-by-line diff
-fn show_simple_diff(original: &str, fixed: &str) {
-    let orig_lines: Vec<&str> = original.lines().collect();
-    let fixed_lines: Vec<&str> = fixed.lines().collect();
-
-    let max_lines = orig_lines.len().max(fixed_lines.len());
-
-    for i in 0..max_lines {
-        let orig = orig_lines.get(i).copied().unwrap_or("");
-        let fix = fixed_lines.get(i).copied().unwrap_or("");
-
-        if orig != fix {
-            if !orig.is_empty() {
-                println!("    {} {}", "-".red(), orig.red());
-            }
-            if !fix.is_empty() {
-                println!("    {} {}", "+".green(), fix.green());
-            }
+fn show_diff(original: &str, fixed: &str) {
+    let diff = TextDiff::from_lines(original, fixed);
+    for change in diff.iter_all_changes() {
+        match change.tag() {
+            ChangeTag::Delete => print!("    {} {}", "-".red(), change.to_string().red()),
+            ChangeTag::Insert => print!("    {} {}", "+".green(), change.to_string().green()),
+            ChangeTag::Equal => {}
         }
     }
 }
