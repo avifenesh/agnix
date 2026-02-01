@@ -1092,7 +1092,10 @@ allowed-tools: Read Write
 
         // Should not detect AGM-006 for a single AGENTS.md
         let agm_006: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AGM-006").collect();
-        assert!(agm_006.is_empty(), "Single AGENTS.md should not trigger AGM-006");
+        assert!(
+            agm_006.is_empty(),
+            "Single AGENTS.md should not trigger AGM-006"
+        );
     }
 
     #[test]
@@ -1153,7 +1156,10 @@ allowed-tools: Read Write
         let diagnostics = validate_project(temp.path(), &config).unwrap();
 
         let agm_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AGM-003").collect();
-        assert!(!agm_003.is_empty(), "Should detect character limit exceeded");
+        assert!(
+            !agm_003.is_empty(),
+            "Should detect character limit exceeded"
+        );
     }
 
     #[test]
@@ -1170,7 +1176,10 @@ allowed-tools: Read Write
         let diagnostics = validate_project(temp.path(), &config).unwrap();
 
         let agm_005: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AGM-005").collect();
-        assert!(!agm_005.is_empty(), "Should detect unguarded platform features");
+        assert!(
+            !agm_005.is_empty(),
+            "Should detect unguarded platform features"
+        );
     }
 
     #[test]
