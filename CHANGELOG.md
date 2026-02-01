@@ -22,6 +22,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - ValidatorRegistry API for custom validator registration in agnix-core
 - AGENTS.md validation rules (AGM-001 to AGM-006)
+- Explicit HTML anchors in VALIDATION-RULES.md for SARIF help_uri links (#88)
+  - Added 80 anchors (one per rule) to fix GitHub anchor mismatch
+  - Added tests to validate help_uri format and anchor correctness
   - AGM-001: Valid markdown structure
   - AGM-002: Missing section headers
   - AGM-003: Character limit (12000 for Windsurf)

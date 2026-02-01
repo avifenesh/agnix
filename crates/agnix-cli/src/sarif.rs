@@ -519,41 +519,29 @@ mod tests {
     }
 
     #[test]
-    fn test_help_uri_format() {
-        // Verify all rules have help_uri with correct base URL
+    fn test_help_uri_format_and_anchor() {
         let rules = get_all_rules();
+        const BASE_URL: &str =
+            "https://github.com/avifenesh/agnix/blob/main/knowledge-base/VALIDATION-RULES.md#";
+
         for rule in rules {
             let uri = rule.help_uri.expect("All rules should have help_uri");
+
             assert!(
-                uri.starts_with(
-                    "https://github.com/avifenesh/agnix/blob/main/knowledge-base/VALIDATION-RULES.md#"
-                ),
+                uri.starts_with(BASE_URL),
                 "Rule {} has invalid help_uri base: {}",
                 rule.id,
                 uri
             );
-        }
-    }
 
-    #[test]
-    fn test_help_uri_anchor_format() {
-        // Verify anchors use lowercase rule ID
-        let rules = get_all_rules();
-        for rule in rules {
-            let uri = rule.help_uri.expect("All rules should have help_uri");
-            let anchor = uri.split('#').last().expect("Should have anchor");
+            let anchor = uri.strip_prefix(BASE_URL).expect("Anchor should be present");
+
             assert_eq!(
                 anchor,
-                anchor.to_lowercase(),
-                "Anchor should be lowercase for rule {}",
-                rule.id
-            );
-            assert!(
+                rule.id.to_lowercase(),
+                "Anchor for rule {} should be its lowercase ID, but was '{}'",
+                rule.id,
                 anchor
-                    .chars()
-                    .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '-'),
-                "Anchor should only contain lowercase letters, digits, and hyphens for rule {}",
-                rule.id
             );
         }
     }
