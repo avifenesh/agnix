@@ -125,16 +125,14 @@ impl Validator for SkillValidator {
         };
 
         if let Some(frontmatter) = frontmatter {
-            let (name_line, name_col) =
-                frontmatter_key_line_col(&parts, "name", &line_starts);
+            let (name_line, name_col) = frontmatter_key_line_col(&parts, "name", &line_starts);
             let (description_line, description_col) =
                 frontmatter_key_line_col(&parts, "description", &line_starts);
             let (compat_line, compat_col) =
                 frontmatter_key_line_col(&parts, "compatibility", &line_starts);
             let (allowed_tools_line, allowed_tools_col) =
                 frontmatter_key_line_col(&parts, "allowed-tools", &line_starts);
-            let (model_line, model_col) =
-                frontmatter_key_line_col(&parts, "model", &line_starts);
+            let (model_line, model_col) = frontmatter_key_line_col(&parts, "model", &line_starts);
             let (context_line, context_col) =
                 frontmatter_key_line_col(&parts, "context", &line_starts);
             // AS-002: Missing name field
@@ -161,9 +159,7 @@ impl Validator for SkillValidator {
                         "AS-003",
                         "Skill frontmatter is missing required 'description' field".to_string(),
                     )
-                    .with_suggestion(
-                        "Add 'description: Use when...' to frontmatter".to_string(),
-                    ),
+                    .with_suggestion("Add 'description: Use when...' to frontmatter".to_string()),
                 );
             }
 
@@ -203,10 +199,7 @@ impl Validator for SkillValidator {
                             name_line,
                             name_col,
                             "AS-005",
-                            format!(
-                                "Name '{}' cannot start or end with hyphen",
-                                name_trimmed
-                            ),
+                            format!("Name '{}' cannot start or end with hyphen", name_trimmed),
                         )
                         .with_suggestion(
                             "Remove leading/trailing hyphens from the name".to_string(),
@@ -222,10 +215,7 @@ impl Validator for SkillValidator {
                             name_line,
                             name_col,
                             "AS-006",
-                            format!(
-                                "Name '{}' cannot contain consecutive hyphens",
-                                name_trimmed
-                            ),
+                            format!("Name '{}' cannot contain consecutive hyphens", name_trimmed),
                         )
                         .with_suggestion("Replace '--' with '-' in the name".to_string()),
                     );
@@ -273,8 +263,8 @@ impl Validator for SkillValidator {
 
                 // AS-009: Description contains XML tags
                 if config.is_rule_enabled("AS-009") {
-                    let xml_re = DESCRIPTION_XML_REGEX
-                        .get_or_init(|| Regex::new(r"<[^>]+>").unwrap());
+                    let xml_re =
+                        DESCRIPTION_XML_REGEX.get_or_init(|| Regex::new(r"<[^>]+>").unwrap());
                     if xml_re.is_match(description) {
                         diagnostics.push(
                             Diagnostic::error(
@@ -330,12 +320,12 @@ impl Validator for SkillValidator {
                     }
                 }
             }
-            let (agent_line, agent_col) =
-                frontmatter_key_line_col(&parts, "agent", &line_starts);
+            let (agent_line, agent_col) = frontmatter_key_line_col(&parts, "agent", &line_starts);
 
-            if let (Some(name), Some(description)) =
-                (frontmatter.name.as_deref(), frontmatter.description.as_deref())
-            {
+            if let (Some(name), Some(description)) = (
+                frontmatter.name.as_deref(),
+                frontmatter.description.as_deref(),
+            ) {
                 let name_trimmed = name.trim();
                 let description_trimmed = description.trim();
                 if !name_trimmed.is_empty() && !description_trimmed.is_empty() {
@@ -536,10 +526,12 @@ impl Validator for SkillValidator {
                                                 KNOWN_TOOLS.join(", ")
                                             ),
                                         )
-                                        .with_suggestion(format!(
-                                            "Use one of the known Claude Code tools: {}",
-                                            KNOWN_TOOLS.join(", ")
-                                        )),
+                                        .with_suggestion(
+                                            format!(
+                                                "Use one of the known Claude Code tools: {}",
+                                                KNOWN_TOOLS.join(", ")
+                                            ),
+                                        ),
                                     );
                                 }
                             }
@@ -582,10 +574,7 @@ impl Validator for SkillValidator {
                         body_line,
                         body_col,
                         "AS-012",
-                        format!(
-                            "Skill content exceeds 500 lines (got {})",
-                            line_count
-                        ),
+                        format!("Skill content exceeds 500 lines (got {})", line_count),
                     )
                     .with_suggestion("Move extra content into references/".to_string()),
                 );
@@ -597,8 +586,7 @@ impl Validator for SkillValidator {
             let paths = extract_reference_paths(body_raw);
             for ref_path in paths {
                 if reference_path_too_deep(&ref_path.path) {
-                    let (line, col) =
-                        line_col_at(parts.body_start + ref_path.start, &line_starts);
+                    let (line, col) = line_col_at(parts.body_start + ref_path.start, &line_starts);
                     diagnostics.push(
                         Diagnostic::error(
                             path.to_path_buf(),
@@ -620,8 +608,7 @@ impl Validator for SkillValidator {
         if config.is_rule_enabled("AS-014") {
             let paths = extract_windows_paths(body_raw);
             for win_path in paths {
-                let (line, col) =
-                    line_col_at(parts.body_start + win_path.start, &line_starts);
+                let (line, col) = line_col_at(parts.body_start + win_path.start, &line_starts);
                 diagnostics.push(
                     Diagnostic::error(
                         path.to_path_buf(),
@@ -650,14 +637,10 @@ impl Validator for SkillValidator {
                             frontmatter_line,
                             frontmatter_col,
                             "AS-015",
-                            format!(
-                                "Skill directory exceeds 8MB ({} bytes)",
-                                size
-                            ),
+                            format!("Skill directory exceeds 8MB ({} bytes)", size),
                         )
                         .with_suggestion(
-                            "Remove large assets or split the skill into smaller parts"
-                                .to_string(),
+                            "Remove large assets or split the skill into smaller parts".to_string(),
                         ),
                     );
                 }
@@ -676,9 +659,8 @@ fn parse_frontmatter_fields(frontmatter: &str) -> Result<SkillFrontmatter, serde
 }
 
 fn extract_reference_paths(body: &str) -> Vec<PathMatch> {
-    let re = REFERENCE_PATH_REGEX.get_or_init(|| {
-        Regex::new("(?i)\\b(?:references?|refs)[/\\\\][^\\s)\\]}>\"']+").unwrap()
-    });
+    let re = REFERENCE_PATH_REGEX
+        .get_or_init(|| Regex::new("(?i)\\b(?:references?|refs)[/\\\\][^\\s)\\]}>\"']+").unwrap());
     let mut paths = Vec::new();
     let mut seen = HashSet::new();
     for m in re.find_iter(body) {
@@ -695,11 +677,9 @@ fn extract_reference_paths(body: &str) -> Vec<PathMatch> {
 }
 
 fn extract_windows_paths(body: &str) -> Vec<PathMatch> {
-    let re = WINDOWS_PATH_REGEX.get_or_init(|| {
-        Regex::new(r"(?i)\b(?:[a-z]:)?[a-z0-9._-]+(?:\\[a-z0-9._-]+)+\b").unwrap()
-    });
-    let token_re = WINDOWS_PATH_TOKEN_REGEX
-        .get_or_init(|| Regex::new(r"[^\s]+\\[^\s]+").unwrap());
+    let re = WINDOWS_PATH_REGEX
+        .get_or_init(|| Regex::new(r"(?i)\b(?:[a-z]:)?[a-z0-9._-]+(?:\\[a-z0-9._-]+)+\b").unwrap());
+    let token_re = WINDOWS_PATH_TOKEN_REGEX.get_or_init(|| Regex::new(r"[^\s]+\\[^\s]+").unwrap());
     let mut paths = Vec::new();
     let mut seen = HashSet::new();
     for m in re.find_iter(body) {
@@ -728,7 +708,9 @@ fn extract_windows_paths(body: &str) -> Vec<PathMatch> {
 fn reference_path_too_deep(path: &str) -> bool {
     let normalized = path.replace('\\', "/");
     let mut parts = normalized.split('/').filter(|part| !part.is_empty());
-    let Some(prefix) = parts.next() else { return false };
+    let Some(prefix) = parts.next() else {
+        return false;
+    };
     if !prefix.eq_ignore_ascii_case("references")
         && !prefix.eq_ignore_ascii_case("reference")
         && !prefix.eq_ignore_ascii_case("refs")
@@ -741,7 +723,12 @@ fn reference_path_too_deep(path: &str) -> bool {
 fn trim_path_token(token: &str) -> &str {
     token
         .trim_start_matches(|c: char| matches!(c, '(' | '[' | '{' | '<' | '"' | '\''))
-        .trim_end_matches(|c: char| matches!(c, '.' | ',' | ';' | ':' | ')' | ']' | '}' | '>' | '"' | '\''))
+        .trim_end_matches(|c: char| {
+            matches!(
+                c,
+                '.' | ',' | ';' | ':' | ')' | ']' | '}' | '>' | '"' | '\''
+            )
+        })
 }
 
 fn trim_path_token_with_offset(token: &str) -> Option<(String, usize)> {
@@ -817,7 +804,9 @@ fn directory_size(path: &Path) -> u64 {
             Err(_) => continue,
         };
         for entry in entries.flatten() {
-            let Ok(file_type) = entry.file_type() else { continue };
+            let Ok(file_type) = entry.file_type() else {
+                continue;
+            };
             if file_type.is_symlink() {
                 continue;
             }
@@ -874,7 +863,8 @@ Body"#;
         let content = include_str!("../../../../tests/fixtures/skills/missing-frontmatter.md");
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("SKILL.md"), content, &LintConfig::default());
+        let diagnostics =
+            validator.validate(Path::new("SKILL.md"), content, &LintConfig::default());
 
         let as_001_errors: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-001").collect();
         assert_eq!(as_001_errors.len(), 1);
@@ -947,7 +937,8 @@ Body"#;
         );
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), &content, &LintConfig::default());
+        let diagnostics =
+            validator.validate(Path::new("test.md"), &content, &LintConfig::default());
 
         let as_008_errors: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-008").collect();
         assert_eq!(as_008_errors.len(), 1);
@@ -995,7 +986,8 @@ Body"#;
         );
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), &content, &LintConfig::default());
+        let diagnostics =
+            validator.validate(Path::new("test.md"), &content, &LintConfig::default());
 
         let as_011_errors: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-011").collect();
         assert_eq!(as_011_errors.len(), 1);
@@ -1003,17 +995,15 @@ Body"#;
 
     #[test]
     fn test_as_012_content_too_long() {
-        let body = (0..501)
-            .map(|_| "line")
-            .collect::<Vec<_>>()
-            .join("\n");
+        let body = (0..501).map(|_| "line").collect::<Vec<_>>().join("\n");
         let content = format!(
             "---\nname: test-skill\ndescription: Use when validating content length\n---\n{}",
             body
         );
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), &content, &LintConfig::default());
+        let diagnostics =
+            validator.validate(Path::new("test.md"), &content, &LintConfig::default());
 
         let as_012_warnings: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-012").collect();
         assert_eq!(as_012_warnings.len(), 1);
@@ -1024,7 +1014,8 @@ Body"#;
         let content = include_str!("../../../../tests/fixtures/skills/deep-reference.md");
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("SKILL.md"), content, &LintConfig::default());
+        let diagnostics =
+            validator.validate(Path::new("SKILL.md"), content, &LintConfig::default());
 
         let as_013_errors: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-013").collect();
         assert_eq!(as_013_errors.len(), 1);
@@ -1040,7 +1031,8 @@ description: Use when validating deep references
 See reference/deep/guide.md for details."#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("SKILL.md"), content, &LintConfig::default());
+        let diagnostics =
+            validator.validate(Path::new("SKILL.md"), content, &LintConfig::default());
 
         let as_013_errors: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-013").collect();
         assert_eq!(as_013_errors.len(), 1);
@@ -1051,7 +1043,8 @@ See reference/deep/guide.md for details."#;
         let content = include_str!("../../../../tests/fixtures/skills/windows-path.md");
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("SKILL.md"), content, &LintConfig::default());
+        let diagnostics =
+            validator.validate(Path::new("SKILL.md"), content, &LintConfig::default());
 
         let as_014_errors: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-014").collect();
         assert_eq!(as_014_errors.len(), 1);
