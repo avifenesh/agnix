@@ -63,9 +63,9 @@ fn allowed_tools_pattern() -> &'static Regex {
 /// that read AGENTS.md (Codex CLI, OpenCode, GitHub Copilot, Cursor, Cline).
 pub fn find_claude_specific_features(content: &str) -> Vec<ClaudeSpecificFeature> {
     let mut results = Vec::new();
-    let lines: Vec<&str> = content.lines().collect();
 
-    for (line_num, line) in lines.iter().enumerate() {
+    // Iterate directly over lines without collecting to Vec (memory optimization)
+    for (line_num, line) in content.lines().enumerate() {
         // Check for hooks patterns
         if let Some(mat) = claude_hooks_pattern().find(line) {
             results.push(ClaudeSpecificFeature {
@@ -134,11 +134,10 @@ fn markdown_header_pattern() -> &'static Regex {
 /// cross-platform compatibility.
 pub fn check_markdown_structure(content: &str) -> Vec<MarkdownStructureIssue> {
     let mut results = Vec::new();
-    let lines: Vec<&str> = content.lines().collect();
     let pattern = markdown_header_pattern();
 
-    // Check if file has any headers at all
-    let has_headers = lines.iter().any(|line| pattern.is_match(line));
+    // Check if file has any headers at all (single pass)
+    let has_headers = content.lines().any(|line| pattern.is_match(line));
 
     if !has_headers && !content.trim().is_empty() {
         results.push(MarkdownStructureIssue {
@@ -152,7 +151,7 @@ pub fn check_markdown_structure(content: &str) -> Vec<MarkdownStructureIssue> {
 
     // Check for proper header hierarchy (no skipping levels)
     let mut last_level = 0;
-    for (line_num, line) in lines.iter().enumerate() {
+    for (line_num, line) in content.lines().enumerate() {
         if pattern.is_match(line) {
             let current_level = line.chars().take_while(|&c| c == '#').count();
 
@@ -423,5 +422,61 @@ Check the project root for settings.
         let content = "Config at .CLAUDE/Settings.json";
         let results = find_hard_coded_paths(content);
         assert_eq!(results.len(), 1);
+    }
+
+    // ===== Additional edge case tests from review =====
+
+    #[test]
+    fn test_detect_hooks_event_variant() {
+        // Tests event: variant in addition to type:
+        let content = r#"hooks:
+  - event: Notification
+    command: notify-send
+  - event: SubagentStop
+    command: cleanup
+"#;
+        let results = find_claude_specific_features(content);
+        assert_eq!(results.len(), 2);
+        assert!(results.iter().all(|r| r.feature == "hooks"));
+    }
+
+    #[test]
+    fn test_detect_cline_path() {
+        let content = "Cline config is in .cline/settings.json";
+        let results = find_hard_coded_paths(content);
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0].platform, "Cline");
+    }
+
+    #[test]
+    fn test_detect_github_copilot_path() {
+        let content = "GitHub Copilot config at .github/copilot/config.json";
+        let results = find_hard_coded_paths(content);
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0].platform, "GitHub Copilot");
+    }
+
+    #[test]
+    fn test_extreme_header_skip_h1_to_h6() {
+        let content = r#"# Title
+
+###### Deep header
+"#;
+        let results = check_markdown_structure(content);
+        assert_eq!(results.len(), 1);
+        assert!(results[0].issue.contains("skipped from 1 to 6"));
+    }
+
+    #[test]
+    fn test_no_false_positive_relative_paths() {
+        let content = r#"# Project
+
+Files are at:
+- ./src/config.js
+- ../parent/file.ts
+- src/helpers/utils.rs
+"#;
+        let results = find_hard_coded_paths(content);
+        assert!(results.is_empty());
     }
 }
