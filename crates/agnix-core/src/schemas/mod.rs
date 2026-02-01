@@ -1,11 +1,13 @@
 //! Schema definitions for agent config files
 
 pub mod agent;
+pub mod agents_md;
 pub mod claude_md;
 pub mod cross_platform;
 pub mod hooks;
 pub mod mcp;
 pub mod plugin;
+pub mod prompt;
 pub mod skill;
 
 pub use agent::AgentSchema;

@@ -12,6 +12,10 @@ use std::path::Path;
 
 pub struct HooksValidator;
 
+/// Default timeout thresholds per hook type (from official Claude Code docs)
+const COMMAND_HOOK_DEFAULT_TIMEOUT: u64 = 600; // 10 minutes
+const PROMPT_HOOK_DEFAULT_TIMEOUT: u64 = 30; // 30 seconds
+
 struct DangerousPattern {
     regex: Regex,
     pattern: &'static str,
@@ -377,24 +381,45 @@ impl Validator for HooksValidator {
                         Hook::Command {
                             command, timeout, ..
                         } => {
-                            // CC-HK-010: No timeout specified
-                            if config.is_rule_enabled("CC-HK-010") && timeout.is_none() {
-                                diagnostics.push(
-                                    Diagnostic::warning(
-                                        path.to_path_buf(),
-                                        1,
-                                        0,
-                                        "CC-HK-010",
-                                        format!(
-                                            "Command hook at {} has no timeout specified",
-                                            hook_location
+                            // CC-HK-010: Timeout policy for command hooks (600s default)
+                            if config.is_rule_enabled("CC-HK-010") {
+                                if timeout.is_none() {
+                                    diagnostics.push(
+                                        Diagnostic::warning(
+                                            path.to_path_buf(),
+                                            1,
+                                            0,
+                                            "CC-HK-010",
+                                            format!(
+                                                "Command hook at {} has no timeout specified",
+                                                hook_location
+                                            ),
+                                        )
+                                        .with_suggestion(
+                                            "Add a \"timeout\" field (e.g., 600 for command hooks)"
+                                                .to_string(),
                                         ),
-                                    )
-                                    .with_suggestion(
-                                        "Add \"timeout\": 30 to prevent long-running hooks"
-                                            .to_string(),
-                                    ),
-                                );
+                                    );
+                                }
+                                if let Some(t) = timeout {
+                                    if *t > COMMAND_HOOK_DEFAULT_TIMEOUT {
+                                        diagnostics.push(
+                                            Diagnostic::warning(
+                                                path.to_path_buf(),
+                                                1,
+                                                0,
+                                                "CC-HK-010",
+                                                format!(
+                                                    "Command hook at {} has timeout {}s exceeding {}s default",
+                                                    hook_location, t, COMMAND_HOOK_DEFAULT_TIMEOUT
+                                                ),
+                                            )
+                                            .with_suggestion(
+                                                format!("Consider timeout <= {}s (10-minute default limit)", COMMAND_HOOK_DEFAULT_TIMEOUT),
+                                            ),
+                                        );
+                                    }
+                                }
                             }
 
                             // CC-HK-006: Missing command field
@@ -475,24 +500,45 @@ impl Validator for HooksValidator {
                         Hook::Prompt {
                             prompt, timeout, ..
                         } => {
-                            // CC-HK-010: No timeout specified
-                            if config.is_rule_enabled("CC-HK-010") && timeout.is_none() {
-                                diagnostics.push(
-                                    Diagnostic::warning(
-                                        path.to_path_buf(),
-                                        1,
-                                        0,
-                                        "CC-HK-010",
-                                        format!(
-                                            "Prompt hook at {} has no timeout specified",
-                                            hook_location
+                            // CC-HK-010: Timeout policy for prompt hooks (30s default)
+                            if config.is_rule_enabled("CC-HK-010") {
+                                if timeout.is_none() {
+                                    diagnostics.push(
+                                        Diagnostic::warning(
+                                            path.to_path_buf(),
+                                            1,
+                                            0,
+                                            "CC-HK-010",
+                                            format!(
+                                                "Prompt hook at {} has no timeout specified",
+                                                hook_location
+                                            ),
+                                        )
+                                        .with_suggestion(
+                                            "Add a \"timeout\" field (e.g., 30 for prompt hooks)"
+                                                .to_string(),
                                         ),
-                                    )
-                                    .with_suggestion(
-                                        "Add \"timeout\": 30 to prevent long-running hooks"
-                                            .to_string(),
-                                    ),
-                                );
+                                    );
+                                }
+                                if let Some(t) = timeout {
+                                    if *t > PROMPT_HOOK_DEFAULT_TIMEOUT {
+                                        diagnostics.push(
+                                            Diagnostic::warning(
+                                                path.to_path_buf(),
+                                                1,
+                                                0,
+                                                "CC-HK-010",
+                                                format!(
+                                                    "Prompt hook at {} has timeout {}s exceeding {}s default",
+                                                    hook_location, t, PROMPT_HOOK_DEFAULT_TIMEOUT
+                                                ),
+                                            )
+                                            .with_suggestion(
+                                                format!("Consider timeout <= {}s (30-second default limit)", PROMPT_HOOK_DEFAULT_TIMEOUT),
+                                            ),
+                                        );
+                                    }
+                                }
                             }
 
                             // CC-HK-002: Prompt on wrong event
@@ -1172,7 +1218,7 @@ mod tests {
 
     #[test]
     fn test_fixture_valid_settings() {
-        let content = include_str!("../../../../tests/fixtures/hooks/valid-settings.json");
+        let content = include_str!("../../../../tests/fixtures/valid/hooks/settings.json");
         let diagnostics = validate(content);
         let errors: Vec<_> = diagnostics
             .iter()
@@ -1183,7 +1229,9 @@ mod tests {
 
     #[test]
     fn test_fixture_missing_command() {
-        let content = include_str!("../../../../tests/fixtures/hooks/missing-command-field.json");
+        let content = include_str!(
+            "../../../../tests/fixtures/invalid/hooks/missing-command-field/settings.json"
+        );
         let diagnostics = validate(content);
         let cc_hk_006: Vec<_> = diagnostics
             .iter()
@@ -1194,7 +1242,9 @@ mod tests {
 
     #[test]
     fn test_fixture_missing_prompt() {
-        let content = include_str!("../../../../tests/fixtures/hooks/missing-prompt-field.json");
+        let content = include_str!(
+            "../../../../tests/fixtures/invalid/hooks/missing-prompt-field/settings.json"
+        );
         let diagnostics = validate(content);
         let cc_hk_007: Vec<_> = diagnostics
             .iter()
@@ -1205,7 +1255,9 @@ mod tests {
 
     #[test]
     fn test_fixture_dangerous_commands() {
-        let content = include_str!("../../../../tests/fixtures/hooks/dangerous-commands.json");
+        let content = include_str!(
+            "../../../../tests/fixtures/invalid/hooks/dangerous-commands/settings.json"
+        );
         let diagnostics = validate(content);
         let cc_hk_009: Vec<_> = diagnostics
             .iter()
@@ -1333,7 +1385,8 @@ mod tests {
 
     #[test]
     fn test_fixture_invalid_event() {
-        let content = include_str!("../../../../tests/fixtures/hooks/invalid-event.json");
+        let content =
+            include_str!("../../../../tests/fixtures/invalid/hooks/invalid-event/settings.json");
         let diagnostics = validate(content);
         let cc_hk_001: Vec<_> = diagnostics
             .iter()
@@ -1444,7 +1497,9 @@ mod tests {
 
     #[test]
     fn test_fixture_prompt_on_wrong_event() {
-        let content = include_str!("../../../../tests/fixtures/hooks/prompt-on-wrong-event.json");
+        let content = include_str!(
+            "../../../../tests/fixtures/invalid/hooks/prompt-on-wrong-event/settings.json"
+        );
         let diagnostics = validate(content);
         let cc_hk_002: Vec<_> = diagnostics
             .iter()
@@ -1553,7 +1608,8 @@ mod tests {
 
     #[test]
     fn test_fixture_missing_matcher() {
-        let content = include_str!("../../../../tests/fixtures/hooks/missing-matcher.json");
+        let content =
+            include_str!("../../../../tests/fixtures/invalid/hooks/missing-matcher/settings.json");
         let diagnostics = validate(content);
         let cc_hk_003: Vec<_> = diagnostics
             .iter()
@@ -1640,7 +1696,9 @@ mod tests {
 
     #[test]
     fn test_fixture_matcher_on_wrong_event() {
-        let content = include_str!("../../../../tests/fixtures/hooks/matcher-on-wrong-event.json");
+        let content = include_str!(
+            "../../../../tests/fixtures/invalid/hooks/matcher-on-wrong-event/settings.json"
+        );
         let diagnostics = validate(content);
         let cc_hk_004: Vec<_> = diagnostics
             .iter()
@@ -1728,7 +1786,9 @@ mod tests {
 
     #[test]
     fn test_fixture_missing_type_field() {
-        let content = include_str!("../../../../tests/fixtures/hooks/missing-type-field.json");
+        let content = include_str!(
+            "../../../../tests/fixtures/invalid/hooks/missing-type-field/settings.json"
+        );
         let diagnostics = validate(content);
         let cc_hk_005: Vec<_> = diagnostics
             .iter()
@@ -1837,6 +1897,108 @@ mod tests {
     }
 
     #[test]
+    fn test_cc_hk_010_command_timeout_exceeds_default() {
+        // Command hooks have 600s default - 700 should warn
+        let content = r#"{
+            "hooks": {
+                "PreToolUse": [
+                    {
+                        "matcher": "Bash",
+                        "hooks": [
+                            { "type": "command", "command": "echo test", "timeout": 700 }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+        let diagnostics = validate(content);
+        let cc_hk_010: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-HK-010")
+            .collect();
+
+        assert_eq!(cc_hk_010.len(), 1);
+        assert_eq!(cc_hk_010[0].level, DiagnosticLevel::Warning);
+        assert!(cc_hk_010[0].message.contains("exceeding 600s default"));
+    }
+
+    #[test]
+    fn test_cc_hk_010_command_timeout_at_default_ok() {
+        // Command hooks have 600s default - 600 should NOT warn
+        let content = r#"{
+            "hooks": {
+                "PreToolUse": [
+                    {
+                        "matcher": "Bash",
+                        "hooks": [
+                            { "type": "command", "command": "echo test", "timeout": 600 }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+        let diagnostics = validate(content);
+        let cc_hk_010: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-HK-010")
+            .collect();
+
+        assert_eq!(cc_hk_010.len(), 0);
+    }
+
+    #[test]
+    fn test_cc_hk_010_prompt_timeout_exceeds_default() {
+        // Prompt hooks have 30s default - 45 should warn
+        let content = r#"{
+            "hooks": {
+                "Stop": [
+                    {
+                        "hooks": [
+                            { "type": "prompt", "prompt": "test prompt", "timeout": 45 }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+        let diagnostics = validate(content);
+        let cc_hk_010: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-HK-010")
+            .collect();
+
+        assert_eq!(cc_hk_010.len(), 1);
+        assert_eq!(cc_hk_010[0].level, DiagnosticLevel::Warning);
+        assert!(cc_hk_010[0].message.contains("exceeding 30s default"));
+    }
+
+    #[test]
+    fn test_cc_hk_010_prompt_timeout_at_default_ok() {
+        // Prompt hooks have 30s default - 30 should NOT warn
+        let content = r#"{
+            "hooks": {
+                "Stop": [
+                    {
+                        "hooks": [
+                            { "type": "prompt", "prompt": "test prompt", "timeout": 30 }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+        let diagnostics = validate(content);
+        let cc_hk_010: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-HK-010")
+            .collect();
+
+        assert_eq!(cc_hk_010.len(), 0);
+    }
+
+    #[test]
     fn test_cc_hk_010_multiple_hooks_mixed() {
         let content = r#"{
             "hooks": {
@@ -1864,7 +2026,8 @@ mod tests {
 
     #[test]
     fn test_fixture_no_timeout() {
-        let content = include_str!("../../../../tests/fixtures/hooks/no-timeout.json");
+        let content =
+            include_str!("../../../../tests/fixtures/invalid/hooks/no-timeout/settings.json");
         let diagnostics = validate(content);
         let cc_hk_010: Vec<_> = diagnostics
             .iter()
@@ -2131,14 +2294,15 @@ mod tests {
 
     #[test]
     fn test_fixture_invalid_timeout() {
-        let content = include_str!("../../../../tests/fixtures/hooks/invalid-timeout.json");
+        let content =
+            include_str!("../../../../tests/fixtures/invalid/hooks/invalid-timeout/settings.json");
         let diagnostics = validate(content);
         let cc_hk_011: Vec<_> = diagnostics
             .iter()
             .filter(|d| d.rule == "CC-HK-011")
             .collect();
-        // negative (-5), zero (0), string ("thirty"), null - 4 invalid timeouts
-        assert_eq!(cc_hk_011.len(), 4);
+        // zero (0) appears twice - 2 invalid timeouts
+        assert_eq!(cc_hk_011.len(), 2);
     }
 
     // ===== Config Wiring Tests =====

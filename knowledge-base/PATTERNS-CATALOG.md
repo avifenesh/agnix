@@ -236,13 +236,20 @@ if !script_path.exists() {
 }
 ```
 
-### 6. No Timeout [MEDIUM]
+### 6. Timeout Policy [MEDIUM]
 
-**Pattern**: Long-running hook without timeout
+**Pattern**: Missing timeout or timeout exceeds type-specific defaults
 **Detection**:
 ```rust
-if hook.timeout.is_none() || hook.timeout.unwrap() > 60 {
-    warning!("Consider adding timeout (default 60s)");
+// Missing timeout
+if hook.timeout.is_none() {
+    warning!("Consider adding explicit timeout");
+}
+// Per-type threshold checks (only supported hook types)
+match hook.r#type.as_str() {
+    "command" => if timeout > 600 { warning!("Exceeds 10-min default"); }
+    "prompt" => if timeout > 30 { warning!("Exceeds 30s default"); }
+    _ => { /* timeout policy not defined for other hook types */ }
 }
 ```
 
