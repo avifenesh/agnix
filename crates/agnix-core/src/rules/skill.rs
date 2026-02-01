@@ -49,8 +49,8 @@ static WINDOWS_PATH_TOKEN_REGEX: OnceLock<Regex> = OnceLock::new();
 /// Valid model values for CC-SK-001
 const VALID_MODELS: &[&str] = &["sonnet", "opus", "haiku", "inherit"];
 
-/// Valid agent types for CC-SK-005
-const VALID_AGENTS: &[&str] = &["Explore", "Plan", "general-purpose"];
+/// Built-in agent types for CC-SK-005
+const BUILTIN_AGENTS: &[&str] = &["Explore", "Plan", "general-purpose"];
 
 /// Known Claude Code tools for CC-SK-008
 const KNOWN_TOOLS: &[&str] = &[
@@ -70,6 +70,26 @@ const KNOWN_TOOLS: &[&str] = &[
 
 /// Maximum dynamic injections for CC-SK-009
 const MAX_INJECTIONS: usize = 3;
+
+/// Check if an agent name is valid for CC-SK-005.
+/// Valid agents are:
+/// - Built-in agents: Explore, Plan, general-purpose
+/// - Custom agents: kebab-case format, 1-64 characters
+fn is_valid_agent(agent: &str) -> bool {
+    // Built-in agents are always valid
+    if BUILTIN_AGENTS.contains(&agent) {
+        return true;
+    }
+
+    // Custom agents must follow kebab-case format
+    if agent.is_empty() || agent.len() > 64 {
+        return false;
+    }
+
+    // Reuse the same kebab-case regex used for skill names
+    let re = NAME_FORMAT_REGEX.get_or_init(|| Regex::new(r"^[a-z0-9]+(-[a-z0-9]+)*$").unwrap());
+    re.is_match(agent)
+}
 
 pub struct SkillValidator;
 
@@ -486,7 +506,7 @@ impl Validator for SkillValidator {
                     // CC-SK-005: Invalid agent type
                     if config.is_rule_enabled("CC-SK-005") {
                         if let Some(agent) = &schema.agent {
-                            if !VALID_AGENTS.contains(&agent.as_str()) {
+                            if !is_valid_agent(agent) {
                                 diagnostics.push(
                                     Diagnostic::error(
                                         path.to_path_buf(),
@@ -494,15 +514,13 @@ impl Validator for SkillValidator {
                                         agent_col,
                                         "CC-SK-005",
                                         format!(
-                                            "Invalid agent type '{}'. Must be one of: {}",
-                                            agent,
-                                            VALID_AGENTS.join(", ")
+                                            "Invalid agent type '{}'. Must be Explore, Plan, general-purpose, or a custom kebab-case name (1-64 chars)",
+                                            agent
                                         ),
                                     )
-                                    .with_suggestion(format!(
-                                        "Use one of the valid agent types: {}",
-                                        VALID_AGENTS.join(", ")
-                                    )),
+                                    .with_suggestion(
+                                        "Use a built-in agent (Explore, Plan, general-purpose) or a custom kebab-case name".to_string()
+                                    ),
                                 );
                             }
                         }
@@ -1634,6 +1652,157 @@ Body"#,
                 .collect();
 
             assert_eq!(cc_sk_005.len(), 0, "Agent '{}' should be valid", agent);
+        }
+    }
+
+    #[test]
+    fn test_cc_sk_005_valid_custom_agents() {
+        // Custom agents in kebab-case should be valid
+        for agent in &["my-custom-agent", "code-review", "deploy-helper", "a", "agent123", "my-agent-v2"] {
+            let content = format!(
+                r#"---
+name: test-skill
+description: Use when testing
+context: fork
+agent: {}
+---
+Body"#,
+                agent
+            );
+
+            let validator = SkillValidator;
+            let diagnostics =
+                validator.validate(Path::new("test.md"), &content, &LintConfig::default());
+
+            let cc_sk_005: Vec<_> = diagnostics
+                .iter()
+                .filter(|d| d.rule == "CC-SK-005")
+                .collect();
+
+            assert_eq!(cc_sk_005.len(), 0, "Custom agent '{}' should be valid", agent);
+        }
+    }
+
+    #[test]
+    fn test_cc_sk_005_rejects_uppercase_agent() {
+        let content = r#"---
+name: test-skill
+description: Use when testing
+context: fork
+agent: MyAgent
+---
+Body"#;
+
+        let validator = SkillValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+        let cc_sk_005: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-SK-005")
+            .collect();
+
+        assert_eq!(cc_sk_005.len(), 1, "Uppercase agent should be rejected");
+        assert!(cc_sk_005[0].message.contains("MyAgent"));
+    }
+
+    #[test]
+    fn test_cc_sk_005_rejects_underscore_agent() {
+        let content = r#"---
+name: test-skill
+description: Use when testing
+context: fork
+agent: my_custom_agent
+---
+Body"#;
+
+        let validator = SkillValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+        let cc_sk_005: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-SK-005")
+            .collect();
+
+        assert_eq!(cc_sk_005.len(), 1, "Underscore agent should be rejected");
+        assert!(cc_sk_005[0].message.contains("my_custom_agent"));
+    }
+
+    #[test]
+    fn test_cc_sk_005_rejects_too_long_agent() {
+        let long_agent = "a".repeat(65);
+        let content = format!(
+            r#"---
+name: test-skill
+description: Use when testing
+context: fork
+agent: {}
+---
+Body"#,
+            long_agent
+        );
+
+        let validator = SkillValidator;
+        let diagnostics =
+            validator.validate(Path::new("test.md"), &content, &LintConfig::default());
+
+        let cc_sk_005: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-SK-005")
+            .collect();
+
+        assert_eq!(cc_sk_005.len(), 1, "Agent over 64 chars should be rejected");
+    }
+
+    #[test]
+    fn test_cc_sk_005_accepts_max_length_agent() {
+        let max_agent = "a".repeat(64);
+        let content = format!(
+            r#"---
+name: test-skill
+description: Use when testing
+context: fork
+agent: {}
+---
+Body"#,
+            max_agent
+        );
+
+        let validator = SkillValidator;
+        let diagnostics =
+            validator.validate(Path::new("test.md"), &content, &LintConfig::default());
+
+        let cc_sk_005: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-SK-005")
+            .collect();
+
+        assert_eq!(cc_sk_005.len(), 0, "Agent at 64 chars should be accepted");
+    }
+
+    #[test]
+    fn test_cc_sk_005_rejects_agent_with_special_chars() {
+        for agent in &["my@agent", "agent!", "test.agent", "agent/name"] {
+            let content = format!(
+                r#"---
+name: test-skill
+description: Use when testing
+context: fork
+agent: {}
+---
+Body"#,
+                agent
+            );
+
+            let validator = SkillValidator;
+            let diagnostics =
+                validator.validate(Path::new("test.md"), &content, &LintConfig::default());
+
+            let cc_sk_005: Vec<_> = diagnostics
+                .iter()
+                .filter(|d| d.rule == "CC-SK-005")
+                .collect();
+
+            assert_eq!(cc_sk_005.len(), 1, "Agent '{}' with special chars should be rejected", agent);
         }
     }
 
