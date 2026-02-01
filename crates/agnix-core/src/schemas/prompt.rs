@@ -274,18 +274,20 @@ pub fn find_ambiguous_instructions(content: &str) -> Vec<AmbiguousInstruction> {
         }
 
         for mat in pattern.find_iter(line) {
-            // Extract context using UTF-8 safe slicing to avoid panics
+            // Extract context using UTF-8 safe slicing to avoid panics on multi-byte chars
+            let target_start = mat.start().saturating_sub(20);
+            let target_end = (mat.end() + 20).min(line.len());
+
             let start = line
                 .char_indices()
                 .map(|(i, _)| i)
-                .filter(|&i| i <= mat.start().saturating_sub(20))
+                .take_while(|&i| i <= target_start)
                 .last()
                 .unwrap_or(0);
             let end = line
                 .char_indices()
                 .map(|(i, _)| i)
-                .filter(|&i| i >= (mat.end() + 20).min(line.len()))
-                .next()
+                .find(|&i| i >= target_end)
                 .unwrap_or(line.len());
             let context = line[start..end].to_string();
 
