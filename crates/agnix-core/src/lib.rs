@@ -1004,4 +1004,117 @@ allowed-tools: Read Write
             "CLAUDE.md should be allowed to have Claude-specific features"
         );
     }
+
+    // ===== Fixture Directory Regression Tests =====
+
+    #[test]
+    fn test_validate_fixtures_directory() {
+        // Run validate_project() over tests/fixtures/ to verify detect_file_type() works
+        // This is a regression guard for fixture layout (issue #74)
+        let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
+        let fixtures_dir = manifest_dir
+            .ancestors()
+            .nth(2)
+            .expect("Failed to locate repo root")
+            .join("tests")
+            .join("fixtures");
+
+        let config = LintConfig::default();
+        let diagnostics = validate_project(&fixtures_dir, &config).unwrap();
+
+        // Verify skill fixtures trigger expected AS-* rules
+        let skill_diagnostics: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule.starts_with("AS-"))
+            .collect();
+
+        // deep-reference/SKILL.md should trigger AS-013 (reference too deep)
+        assert!(
+            skill_diagnostics.iter().any(|d| d.rule == "AS-013"),
+            "Expected AS-013 from deep-reference/SKILL.md fixture"
+        );
+
+        // missing-frontmatter/SKILL.md should trigger AS-001 (missing frontmatter)
+        assert!(
+            skill_diagnostics.iter().any(|d| d.rule == "AS-001"),
+            "Expected AS-001 from missing-frontmatter/SKILL.md fixture"
+        );
+
+        // windows-path/SKILL.md should trigger AS-014 (windows path separator)
+        assert!(
+            skill_diagnostics.iter().any(|d| d.rule == "AS-014"),
+            "Expected AS-014 from windows-path/SKILL.md fixture"
+        );
+
+        // Verify MCP fixtures trigger expected MCP-* rules
+        let mcp_diagnostics: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule.starts_with("MCP-"))
+            .collect();
+
+        // At least some MCP diagnostics should be present
+        assert!(
+            !mcp_diagnostics.is_empty(),
+            "Expected MCP diagnostics from tests/fixtures/mcp/*.mcp.json files"
+        );
+
+        // empty-description.mcp.json should trigger MCP-002 (empty/missing description)
+        assert!(
+            mcp_diagnostics.iter().any(|d| d.rule == "MCP-002"),
+            "Expected MCP-002 from MCP fixtures"
+        );
+
+        // invalid-input-schema.mcp.json should trigger MCP-003 (invalid schema)
+        assert!(
+            mcp_diagnostics.iter().any(|d| d.rule == "MCP-003"),
+            "Expected MCP-003 from invalid-input-schema.mcp.json fixture"
+        );
+
+        // missing-consent.mcp.json should trigger MCP-005 (missing consent)
+        assert!(
+            mcp_diagnostics.iter().any(|d| d.rule == "MCP-005"),
+            "Expected MCP-005 from missing-consent.mcp.json fixture"
+        );
+    }
+
+    #[test]
+    fn test_fixture_file_type_detection() {
+        // Verify that fixture files are detected as correct FileType
+        let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
+        let fixtures_dir = manifest_dir
+            .ancestors()
+            .nth(2)
+            .expect("Failed to locate repo root")
+            .join("tests")
+            .join("fixtures");
+
+        // Skill fixtures should be detected as FileType::Skill
+        assert_eq!(
+            detect_file_type(&fixtures_dir.join("skills/deep-reference/SKILL.md")),
+            FileType::Skill,
+            "deep-reference/SKILL.md should be detected as Skill"
+        );
+        assert_eq!(
+            detect_file_type(&fixtures_dir.join("skills/missing-frontmatter/SKILL.md")),
+            FileType::Skill,
+            "missing-frontmatter/SKILL.md should be detected as Skill"
+        );
+        assert_eq!(
+            detect_file_type(&fixtures_dir.join("skills/windows-path/SKILL.md")),
+            FileType::Skill,
+            "windows-path/SKILL.md should be detected as Skill"
+        );
+
+        // MCP fixtures should be detected as FileType::Mcp
+        assert_eq!(
+            detect_file_type(&fixtures_dir.join("mcp/valid-tool.mcp.json")),
+            FileType::Mcp,
+            "valid-tool.mcp.json should be detected as Mcp"
+        );
+        assert_eq!(
+            detect_file_type(&fixtures_dir.join("mcp/empty-description.mcp.json")),
+            FileType::Mcp,
+            "empty-description.mcp.json should be detected as Mcp"
+        );
+    }
 }
