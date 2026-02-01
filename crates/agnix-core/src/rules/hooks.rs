@@ -221,15 +221,13 @@ impl Validator for HooksValidator {
                                     if let Some(timeout_val) = hook.get("timeout") {
                                         let is_invalid = match timeout_val {
                                             serde_json::Value::Number(n) => {
-                                                // Check if it's negative or zero (via i64)
-                                                // or if it's a float (not a valid integer)
-                                                if let Some(i) = n.as_i64() {
-                                                    i <= 0
-                                                } else if n.is_f64() && n.as_u64().is_none() {
-                                                    // It's a float that's not representable as u64
-                                                    true
+                                                // A valid timeout must be a positive integer.
+                                                // as_u64() handles integers and whole floats (e.g., 30.0),
+                                                // returning None for negatives, non-integer floats, etc.
+                                                if let Some(val) = n.as_u64() {
+                                                    val == 0 // Zero is invalid
                                                 } else {
-                                                    false
+                                                    true // Negative, float, or out of range
                                                 }
                                             }
                                             _ => true, // String, bool, null, object, array are invalid
@@ -1919,6 +1917,85 @@ mod tests {
             .filter(|d| d.rule == "CC-HK-011")
             .collect();
 
+        assert_eq!(cc_hk_011.len(), 1);
+        assert_eq!(cc_hk_011[0].level, DiagnosticLevel::Error);
+    }
+
+    #[test]
+    fn test_cc_hk_011_float_zero_timeout() {
+        // Edge case: 0.0 should be treated as invalid (zero is not positive)
+        let content = r#"{
+            "hooks": {
+                "PreToolUse": [
+                    {
+                        "matcher": "Bash",
+                        "hooks": [
+                            { "type": "command", "command": "echo test", "timeout": 0.0 }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+        let diagnostics = validate(content);
+        let cc_hk_011: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-HK-011")
+            .collect();
+
+        assert_eq!(cc_hk_011.len(), 1);
+        assert_eq!(cc_hk_011[0].level, DiagnosticLevel::Error);
+    }
+
+    #[test]
+    fn test_cc_hk_011_float_timeout() {
+        // Non-integer floats like 30.5 should be invalid
+        let content = r#"{
+            "hooks": {
+                "PreToolUse": [
+                    {
+                        "matcher": "Bash",
+                        "hooks": [
+                            { "type": "command", "command": "echo test", "timeout": 30.5 }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+        let diagnostics = validate(content);
+        let cc_hk_011: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-HK-011")
+            .collect();
+
+        assert_eq!(cc_hk_011.len(), 1);
+        assert_eq!(cc_hk_011[0].level, DiagnosticLevel::Error);
+    }
+
+    #[test]
+    fn test_cc_hk_011_whole_float_invalid() {
+        // Even whole floats like 30.0 are invalid - must be integer, not float
+        let content = r#"{
+            "hooks": {
+                "PreToolUse": [
+                    {
+                        "matcher": "Bash",
+                        "hooks": [
+                            { "type": "command", "command": "echo test", "timeout": 30.0 }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+        let diagnostics = validate(content);
+        let cc_hk_011: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-HK-011")
+            .collect();
+
+        // 30.0 is a float, not an integer - rule requires positive INTEGER
         assert_eq!(cc_hk_011.len(), 1);
         assert_eq!(cc_hk_011[0].level, DiagnosticLevel::Error);
     }
