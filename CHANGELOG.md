@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Individual XML rules can now be disabled via `disabled_rules` config
 
 ### Added
+- ValidatorRegistry API for custom validator registration in agnix-core
 - AGENTS.md validation rules (AGM-001 to AGM-006)
   - AGM-001: Valid markdown structure
   - AGM-002: Missing section headers
