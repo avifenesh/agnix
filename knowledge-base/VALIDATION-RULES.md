@@ -239,10 +239,11 @@
 **Source**: awesome-slash/enhance-hooks
 
 ### CC-HK-010 [MEDIUM] No Timeout Specified
-**Requirement**: Long-running hooks SHOULD have timeout
-**Detection**: `hook.timeout.is_none() || hook.timeout > 60`
-**Fix**: Add `"timeout": 30`
-**Source**: code.claude.com/docs/en/hooks
+**Requirement**: Timeout is optional, but long-running hooks SHOULD set one
+**Detection**: `hook.timeout.is_none()`
+**Policy**: Soft warning if `hook.timeout > 60` (exceeds default limit; may be intentional)
+**Fix**: Add `"timeout": 30` (or reduce to <= 60 if unintentionally long)
+**Source**: docs.claude.com/en/docs/claude-code/hooks
 
 ### CC-HK-011 [HIGH] Invalid Timeout Value
 **Requirement**: timeout MUST be positive integer
