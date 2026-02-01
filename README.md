@@ -19,7 +19,7 @@ agnix .
 - ✅ **Generic Instructions** - Detects redundant "be helpful" patterns
 - ✅ **XML Balance** - Ensures tags are properly closed
 - ✅ **@imports** - Validates file references exist
-- ✅ **Hooks** - Event and config validation (CC-HK-006 to CC-HK-009)
+- ✅ **Hooks** - Event and config validation (CC-HK-001 to CC-HK-011)
 - ✅ **Parallel Validation** - Fast processing of large projects using rayon
 - ✅ **MCP Tools** - Schema and tool validation (MCP-001 to MCP-006)
 - 🚧 **LSP Server** - Real-time diagnostics (coming soon)
@@ -310,7 +310,7 @@ agnix/
 - [x] CLAUDE.md rules
 - [x] XML balance checking
 - [x] @import resolution
-- [x] Hooks validation (CC-HK-001 to CC-HK-009)
+- [x] Hooks validation (CC-HK-001 to CC-HK-011)
 - [x] Agent validation (CC-AG-001 to CC-AG-006)
 - [x] Parallel file validation
 - [x] Config-based rule filtering

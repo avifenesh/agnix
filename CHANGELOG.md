@@ -19,6 +19,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Config-based MCP category toggle (rules.mcp)
 - 8 test fixtures in tests/fixtures/mcp/ directory
 - 48 comprehensive unit tests for MCP validation
+- Hook timeout validation rules CC-HK-010 and CC-HK-011
+  - CC-HK-010: Warns when hooks lack timeout specification (MEDIUM)
+  - CC-HK-011: Errors when timeout value is invalid (negative, zero, or non-integer) (HIGH)
+  - Two new test fixtures: no-timeout.json, invalid-timeout.json
 - Claude Memory validation rules CC-MEM-004, CC-MEM-006 through CC-MEM-010
   - CC-MEM-004: Validates npm scripts referenced in CLAUDE.md exist in package.json
   - CC-MEM-006: Detects negative instructions ("don't", "never") without positive alternatives
