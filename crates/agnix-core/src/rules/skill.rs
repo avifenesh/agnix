@@ -131,13 +131,17 @@ impl Validator for SkillValidator {
                     }
                 }
 
+                // Parse allowed_tools once for CC-SK-007 and CC-SK-008
+                let tool_list: Option<Vec<&str>> = schema
+                    .allowed_tools
+                    .as_ref()
+                    .map(|tools| tools.split_whitespace().collect());
+
                 // CC-SK-007: Unrestricted Bash warning
                 if config.is_rule_enabled("CC-SK-007") {
-                    if let Some(tools) = &schema.allowed_tools {
-                        // Parse space-delimited tool list
-                        let tool_list: Vec<&str> = tools.split_whitespace().collect();
-                        for tool in tool_list {
-                            if tool == "Bash" {
+                    if let Some(ref tools) = tool_list {
+                        for tool in tools {
+                            if *tool == "Bash" {
                                 diagnostics.push(Diagnostic::warning(
                                     path.to_path_buf(),
                                     1,
@@ -262,9 +266,8 @@ impl Validator for SkillValidator {
 
                 // CC-SK-008: Unknown tool name
                 if config.is_rule_enabled("CC-SK-008") {
-                    if let Some(tools) = &schema.allowed_tools {
-                        let tool_list: Vec<&str> = tools.split_whitespace().collect();
-                        for tool in tool_list {
+                    if let Some(ref tools) = tool_list {
+                        for tool in tools {
                             // Extract base tool name (before parentheses for scoped tools)
                             let base_name = tool.split('(').next().unwrap_or(tool);
                             if !KNOWN_TOOLS.contains(&base_name) {
@@ -1107,6 +1110,132 @@ Body"#;
             .collect();
 
         assert_eq!(cc_sk_009.len(), 0);
+    }
+
+    // ===== Edge Case Tests =====
+
+    #[test]
+    fn test_cc_sk_006_explicit_false_still_triggers() {
+        let content = r#"---
+name: deploy-prod
+description: Use when deploying
+disable-model-invocation: false
+---
+Body"#;
+
+        let validator = SkillValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+        let cc_sk_006: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-SK-006")
+            .collect();
+
+        assert_eq!(cc_sk_006.len(), 1, "Explicit false should still trigger CC-SK-006");
+    }
+
+    #[test]
+    fn test_cc_sk_007_duplicate_bash_single_warning() {
+        let content = r#"---
+name: test-skill
+description: Use when testing
+allowed-tools: Bash Read Bash
+---
+Body"#;
+
+        let validator = SkillValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+        let cc_sk_007: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-SK-007")
+            .collect();
+
+        // Each plain "Bash" triggers warning (2 occurrences = 2 warnings)
+        assert_eq!(cc_sk_007.len(), 2, "Each Bash occurrence triggers a warning");
+    }
+
+    #[test]
+    fn test_cc_sk_008_malformed_scope_no_panic() {
+        let content = r#"---
+name: test-skill
+description: Use when testing
+allowed-tools: Bash( Read Bash() Write
+---
+Body"#;
+
+        let validator = SkillValidator;
+        // Should not panic on malformed scope syntax
+        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+        // Bash( extracts "Bash", which is known
+        // Bash() extracts "Bash", which is known
+        let cc_sk_008: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-SK-008")
+            .collect();
+
+        assert_eq!(cc_sk_008.len(), 0, "Malformed scopes should extract base name correctly");
+    }
+
+    #[test]
+    fn test_cc_sk_008_lowercase_tool_unknown() {
+        let content = r#"---
+name: test-skill
+description: Use when testing
+allowed-tools: bash read
+---
+Body"#;
+
+        let validator = SkillValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+        let cc_sk_008: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-SK-008")
+            .collect();
+
+        // Tool names are case-sensitive: bash != Bash
+        assert_eq!(cc_sk_008.len(), 2, "lowercase tool names are unknown");
+    }
+
+    #[test]
+    fn test_as_010_case_insensitive() {
+        let content = r#"---
+name: test-skill
+description: USE WHEN testing
+---
+Body"#;
+
+        let validator = SkillValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+        let as_010: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "AS-010")
+            .collect();
+
+        assert_eq!(as_010.len(), 0, "'USE WHEN' should match case-insensitively");
+    }
+
+    #[test]
+    fn test_parse_error_handling() {
+        let content = r#"---
+name: test
+description
+invalid yaml
+---
+Body"#;
+
+        let validator = SkillValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+        let parse_errors: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "skill::parse")
+            .collect();
+
+        assert_eq!(parse_errors.len(), 1, "Invalid YAML should produce parse error");
     }
 
     // ===== Config Wiring Tests =====
