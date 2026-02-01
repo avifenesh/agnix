@@ -225,10 +225,7 @@ fn test_format_json_exit_code_on_error() {
     use std::io::Write;
 
     // Use unique temp directory name to avoid parallel test conflicts
-    let temp_dir = std::env::temp_dir().join(format!(
-        "agnix_test_error_{}",
-        std::process::id()
-    ));
+    let temp_dir = std::env::temp_dir().join(format!("agnix_test_error_{}", std::process::id()));
 
     // Ensure cleanup happens even if test panics
     struct Cleanup(std::path::PathBuf);
@@ -376,7 +373,10 @@ fn test_format_json_files_checked_count() {
 
     // files_checked should be a valid number
     let files_checked = json["files_checked"].as_u64();
-    assert!(files_checked.is_some(), "files_checked should be a valid number");
+    assert!(
+        files_checked.is_some(),
+        "files_checked should be a valid number"
+    );
 }
 
 #[test]
