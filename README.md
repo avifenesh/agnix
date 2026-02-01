@@ -265,7 +265,7 @@ When `target` is set to a specific tool, only relevant rules run:
 | plugins | CC-PL-* | Plugin validation |
 | mcp | MCP-* | MCP tool validation |
 | prompt_engineering | PE-* | Prompt engineering best practices |
-| xml | xml::* | XML tag balance |
+| xml | XML-* | XML tag balance |
 | imports | imports::* | Import reference validation |
 
 ## Supported Standards

@@ -210,7 +210,7 @@ impl LintConfig {
             s if s.starts_with("CC-AG-") => self.rules.agents,
             s if s.starts_with("CC-MEM-") => self.rules.memory,
             s if s.starts_with("CC-PL-") => self.rules.plugins,
-            s if s.starts_with("XML-") || s.starts_with("xml::") => self.rules.xml,
+            s if s.starts_with("XML-") => self.rules.xml,
             s if s.starts_with("MCP-") => self.rules.mcp,
             s if s.starts_with("REF-") || s.starts_with("imports::") => self.rules.imports,
             s if s.starts_with("XP-") => self.rules.cross_platform,
@@ -321,7 +321,8 @@ mod tests {
         config.rules.xml = false;
 
         assert!(!config.is_rule_enabled("XML-001"));
-        assert!(!config.is_rule_enabled("xml::balance"));
+        assert!(!config.is_rule_enabled("XML-002"));
+        assert!(!config.is_rule_enabled("XML-003"));
 
         // Other categories still enabled
         assert!(config.is_rule_enabled("CC-AG-001"));

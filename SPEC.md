@@ -158,8 +158,8 @@ When `target` is set to a specific tool, only relevant rules run:
 | Plugins | `plugins` | CC-PL-* | Plugin validation |
 | MCP | `mcp` | MCP-* | MCP tool validation |
 | Prompt Engineering | `prompt_engineering` | PE-* | Prompt engineering best practices |
-| XML | `xml` | xml::* | XML tag balance |
-| Imports | `imports` | imports::* | Import reference validation |
+| XML | `xml` | XML-* | XML tag balance |
+| Imports | `imports` | REF-* | Import reference validation |
 
 ## Performance Characteristics
 
