@@ -1,24 +1,42 @@
 {
+  "version": "1.0.0",
   "task": {
-    "id": "40",
-    "title": "Implement prompt-engineering validator PE-001 to PE-004",
-    "source": "github-issue"
+    "id": 88,
+    "source": "github-issue",
+    "title": "Fix SARIF rule help_uri anchors"
   },
   "workflow": {
-    "id": "prompt-validator-40",
-    "status": "active",
-    "currentPhase": "exploration"
+    "id": "implementation-complete",
+    "status": "complete",
+    "currentPhase": "implementation-complete"
   },
   "git": {
-    "branch": "feature/prompt-validator-40",
-    "baseSha": "942c78b",
-    "baseRef": "main",
-    "mainRepoPath": "C:\Users\avife\agnix",
+    "originalBranch": "feat/validator-registry",
+    "workingBranch": "fix/sarif-anchors-88",
+    "baseSha": "dc09918",
+    "currentSha": "cc12ff5",
+    "worktreePath": "C:\\Users\\avife\\agnix\\worktrees\\fix-sarif-anchors-88",
+    "mainRepoPath": "C:\\Users\\avife\\agnix",
     "isWorktree": true
+  },
+  "implementation": {
+    "implementationComplete": true,
+    "stepsCompleted": 2,
+    "totalSteps": 2,
+    "filesModified": 2,
+    "testsAdded": 2,
+    "commitsCreated": 2,
+    "verificationPassed": true,
+    "completedAt": "2026-02-01T00:00:00Z"
+  },
+  "metrics": {
+    "filesModified": 2,
+    "linesAdded": 200,
+    "linesRemoved": 0
   },
   "resume": {
     "canResume": true,
-    "resumeFromStep": "exploration",
-    "createdAt": "2026-02-01T00:00:00Z"
+    "resumeFromStep": "review",
+    "lastActivityAt": "2026-02-01T00:00:00Z"
   }
 }
