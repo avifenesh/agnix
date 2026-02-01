@@ -111,4 +111,80 @@ mod tests {
 
         assert!(diagnostics.is_empty());
     }
+
+    // XML-001: Unclosed tag produces XML-001 rule ID
+    #[test]
+    fn test_xml_001_rule_id() {
+        let content = "<example>test";
+        let validator = XmlValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+        assert_eq!(diagnostics.len(), 1);
+        assert_eq!(diagnostics[0].rule, "XML-001");
+        assert!(diagnostics[0].message.contains("Unclosed XML tag"));
+    }
+
+    // XML-002: Tag mismatch produces XML-002 rule ID
+    #[test]
+    fn test_xml_002_rule_id() {
+        // <a><b></a></b> produces a mismatch: expected </b> but found </a>
+        let content = "<outer><inner></outer></inner>";
+        let validator = XmlValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+        // Find the XML-002 diagnostic
+        let xml_002 = diagnostics.iter().find(|d| d.rule == "XML-002");
+        assert!(xml_002.is_some(), "Expected XML-002 diagnostic");
+        assert!(xml_002.unwrap().message.contains("Expected '</inner>' but found '</outer>'"));
+    }
+
+    // XML-003: Unmatched closing tag produces XML-003 rule ID
+    #[test]
+    fn test_xml_003_rule_id() {
+        let content = "</orphan>";
+        let validator = XmlValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+        assert_eq!(diagnostics.len(), 1);
+        assert_eq!(diagnostics[0].rule, "XML-003");
+        assert!(diagnostics[0].message.contains("Unmatched closing tag"));
+    }
+
+    // Test that individual rules can be disabled
+    #[test]
+    fn test_xml_001_can_be_disabled() {
+        let mut config = LintConfig::default();
+        config.rules.disabled_rules = vec!["XML-001".to_string()];
+
+        let content = "<example>test";
+        let validator = XmlValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &config);
+
+        assert!(diagnostics.is_empty());
+    }
+
+    #[test]
+    fn test_xml_002_can_be_disabled() {
+        let mut config = LintConfig::default();
+        config.rules.disabled_rules = vec!["XML-002".to_string()];
+
+        let content = "<outer><inner></outer></inner>";
+        let validator = XmlValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &config);
+
+        // XML-002 should be filtered out, but other errors may remain
+        assert!(!diagnostics.iter().any(|d| d.rule == "XML-002"));
+    }
+
+    #[test]
+    fn test_xml_003_can_be_disabled() {
+        let mut config = LintConfig::default();
+        config.rules.disabled_rules = vec!["XML-003".to_string()];
+
+        let content = "</orphan>";
+        let validator = XmlValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &config);
+
+        assert!(diagnostics.is_empty());
+    }
 }
