@@ -221,10 +221,56 @@ fn test_format_json_diagnostic_fields() {
 
 #[test]
 fn test_format_json_exit_code_on_error() {
+    use std::fs;
+    use std::io::Write;
+
+    // Create a temporary directory with an invalid skill file
+    let temp_dir = std::env::temp_dir().join("agnix_test_error");
+    let skills_dir = temp_dir.join("skills").join("bad-skill");
+    fs::create_dir_all(&skills_dir).unwrap();
+
+    let skill_path = skills_dir.join("SKILL.md");
+    let mut file = fs::File::create(&skill_path).unwrap();
+    // Create a skill with invalid name (uppercase) to trigger error
+    writeln!(
+        file,
+        "---\nname: Bad-Skill\ndescription: test\n---\nContent"
+    )
+    .unwrap();
+
     let mut cmd = agnix();
-    // Use fixtures directory which contains invalid files
     let output = cmd
-        .arg("tests/fixtures/invalid")
+        .arg(temp_dir.to_str().unwrap())
+        .arg("--format")
+        .arg("json")
+        .output()
+        .unwrap();
+
+    // Cleanup
+    let _ = fs::remove_dir_all(&temp_dir);
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let json: serde_json::Value = serde_json::from_str(&stdout).unwrap();
+
+    let errors = json["summary"]["errors"].as_u64().unwrap();
+    // Invalid skill name should produce an error
+    assert!(
+        errors > 0,
+        "Invalid skill name should produce at least one error, got: {}",
+        stdout
+    );
+    assert!(
+        !output.status.success(),
+        "Should exit with error code when errors present"
+    );
+}
+
+#[test]
+fn test_format_json_strict_mode_with_warnings() {
+    // First, find a fixture that produces warnings but no errors
+    let mut cmd = agnix();
+    let output = cmd
+        .arg("tests/fixtures/valid")
         .arg("--format")
         .arg("json")
         .output()
@@ -232,12 +278,56 @@ fn test_format_json_exit_code_on_error() {
 
     let stdout = String::from_utf8_lossy(&output.stdout);
     let json: serde_json::Value = serde_json::from_str(&stdout).unwrap();
+    let warnings = json["summary"]["warnings"].as_u64().unwrap();
+
+    // Without --strict, warnings should not cause failure
+    if warnings > 0 {
+        assert!(
+            output.status.success(),
+            "Without --strict, warnings should not cause failure"
+        );
+
+        // With --strict, warnings should cause exit code 1
+        let mut cmd_strict = agnix();
+        let output_strict = cmd_strict
+            .arg("tests/fixtures/valid")
+            .arg("--format")
+            .arg("json")
+            .arg("--strict")
+            .output()
+            .unwrap();
+
+        assert!(
+            !output_strict.status.success(),
+            "With --strict, warnings should cause exit code 1"
+        );
+    }
+}
+
+#[test]
+fn test_format_json_strict_mode_no_warnings() {
+    // With --strict but no warnings or errors, should succeed
+    // Use a path that produces clean output
+    let mut cmd = agnix();
+    let output = cmd
+        .arg("tests/fixtures/valid/skills")
+        .arg("--format")
+        .arg("json")
+        .arg("--strict")
+        .output()
+        .unwrap();
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let json: serde_json::Value = serde_json::from_str(&stdout).unwrap();
 
     let errors = json["summary"]["errors"].as_u64().unwrap();
-    if errors > 0 {
+    let warnings = json["summary"]["warnings"].as_u64().unwrap();
+
+    // If there are no errors and no warnings, strict mode should still succeed
+    if errors == 0 && warnings == 0 {
         assert!(
-            !output.status.success(),
-            "Should exit with error code when errors present"
+            output.status.success(),
+            "With --strict and no issues, should succeed"
         );
     }
 }
