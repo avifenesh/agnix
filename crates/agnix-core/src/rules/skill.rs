@@ -51,7 +51,7 @@ impl Validator for SkillValidator {
                 for error in errors {
                     diagnostics.push(Diagnostic::error(
                         path.to_path_buf(),
-                        1, // TODO: Get actual line from error
+                        1,
                         0,
                         "skill::schema",
                         error,
