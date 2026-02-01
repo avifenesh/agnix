@@ -1131,7 +1131,11 @@ Body"#;
             .filter(|d| d.rule == "CC-SK-006")
             .collect();
 
-        assert_eq!(cc_sk_006.len(), 1, "Explicit false should still trigger CC-SK-006");
+        assert_eq!(
+            cc_sk_006.len(),
+            1,
+            "Explicit false should still trigger CC-SK-006"
+        );
     }
 
     #[test]
@@ -1152,7 +1156,11 @@ Body"#;
             .collect();
 
         // Each plain "Bash" triggers warning (2 occurrences = 2 warnings)
-        assert_eq!(cc_sk_007.len(), 2, "Each Bash occurrence triggers a warning");
+        assert_eq!(
+            cc_sk_007.len(),
+            2,
+            "Each Bash occurrence triggers a warning"
+        );
     }
 
     #[test]
@@ -1175,7 +1183,11 @@ Body"#;
             .filter(|d| d.rule == "CC-SK-008")
             .collect();
 
-        assert_eq!(cc_sk_008.len(), 0, "Malformed scopes should extract base name correctly");
+        assert_eq!(
+            cc_sk_008.len(),
+            0,
+            "Malformed scopes should extract base name correctly"
+        );
     }
 
     #[test]
@@ -1210,12 +1222,13 @@ Body"#;
         let validator = SkillValidator;
         let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
 
-        let as_010: Vec<_> = diagnostics
-            .iter()
-            .filter(|d| d.rule == "AS-010")
-            .collect();
+        let as_010: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-010").collect();
 
-        assert_eq!(as_010.len(), 0, "'USE WHEN' should match case-insensitively");
+        assert_eq!(
+            as_010.len(),
+            0,
+            "'USE WHEN' should match case-insensitively"
+        );
     }
 
     #[test]
@@ -1235,7 +1248,11 @@ Body"#;
             .filter(|d| d.rule == "skill::parse")
             .collect();
 
-        assert_eq!(parse_errors.len(), 1, "Invalid YAML should produce parse error");
+        assert_eq!(
+            parse_errors.len(),
+            1,
+            "Invalid YAML should produce parse error"
+        );
     }
 
     // ===== Config Wiring Tests =====
