@@ -1,0 +1,496 @@
+//! Prompt engineering validation schema helpers
+//!
+//! Provides detection functions for:
+//! - PE-001: Critical content in middle ("lost in the middle")
+//! - PE-002: Chain-of-thought phrases on simple tasks
+//! - PE-003: Weak imperative language in critical sections
+//! - PE-004: Ambiguous instructions
+
+use regex::Regex;
+use std::sync::OnceLock;
+
+// Static patterns initialized once
+static CRITICAL_KEYWORD_PATTERN: OnceLock<Regex> = OnceLock::new();
+static COT_PHRASE_PATTERN: OnceLock<Regex> = OnceLock::new();
+static SIMPLE_TASK_INDICATOR_PATTERN: OnceLock<Regex> = OnceLock::new();
+static WEAK_LANGUAGE_PATTERN: OnceLock<Regex> = OnceLock::new();
+static CRITICAL_SECTION_PATTERN: OnceLock<Regex> = OnceLock::new();
+static AMBIGUOUS_TERM_PATTERN: OnceLock<Regex> = OnceLock::new();
+
+// ============================================================================
+// PE-001: Critical Content in Middle ("Lost in the Middle")
+// ============================================================================
+
+/// Critical content found in the middle zone of document
+#[derive(Debug, Clone)]
+pub struct CriticalInMiddle {
+    pub line: usize,
+    pub column: usize,
+    pub keyword: String,
+    pub position_percent: f64,
+}
+
+fn critical_keyword_pattern() -> &'static Regex {
+    CRITICAL_KEYWORD_PATTERN.get_or_init(|| {
+        Regex::new(r"(?i)\b(critical|important|must|required|essential|mandatory|crucial|never|always)\b")
+            .unwrap()
+    })
+}
+
+/// Find critical content positioned in the middle of the document (40-60%)
+///
+/// Based on "Lost in the Middle" research (Liu et al., 2023, TACL):
+/// LLMs have lower recall for content in the middle of documents, but better
+/// recall for content at the START and END. The 40-60% range is specifically
+/// the "lost in the middle" zone.
+pub fn find_critical_in_middle_pe(content: &str) -> Vec<CriticalInMiddle> {
+    let mut results = Vec::new();
+    let pattern = critical_keyword_pattern();
+    let lines: Vec<&str> = content.lines().collect();
+    let total_lines = lines.len();
+
+    if total_lines < 10 {
+        // Too short to meaningfully apply this rule
+        return results;
+    }
+
+    for (line_num, line) in lines.iter().enumerate() {
+        if let Some(mat) = pattern.find(line) {
+            let position_percent = (line_num as f64 / total_lines as f64) * 100.0;
+
+            // Flag if in the middle 40-60% of the document (lost in the middle zone)
+            if (40.0..60.0).contains(&position_percent) {
+                results.push(CriticalInMiddle {
+                    line: line_num + 1,
+                    column: mat.start(),
+                    keyword: mat.as_str().to_string(),
+                    position_percent,
+                });
+            }
+        }
+    }
+
+    results
+}
+
+// ============================================================================
+// PE-002: Chain-of-Thought on Simple Tasks
+// ============================================================================
+
+/// Chain-of-thought phrase found on a simple task
+#[derive(Debug, Clone)]
+pub struct CotOnSimpleTask {
+    pub line: usize,
+    pub column: usize,
+    pub phrase: String,
+    pub task_indicator: String,
+}
+
+fn cot_phrase_pattern() -> &'static Regex {
+    COT_PHRASE_PATTERN.get_or_init(|| {
+        Regex::new(r"(?i)\b(think\s+step\s+by\s+step|let'?s\s+think|reason\s+through|break\s+(?:it\s+)?down\s+into\s+steps|work\s+through\s+this\s+(?:step\s+by\s+step|systematically))\b")
+            .unwrap()
+    })
+}
+
+fn simple_task_indicator_pattern() -> &'static Regex {
+    SIMPLE_TASK_INDICATOR_PATTERN.get_or_init(|| {
+        // Patterns indicating simple/direct tasks that don't need CoT
+        Regex::new(r"(?i)\b(read\s+(?:the\s+)?file|write\s+(?:the\s+)?file|copy\s+(?:the\s+)?file|move\s+(?:the\s+)?file|delete\s+(?:the\s+)?file|list\s+files|run\s+(?:the\s+)?(?:command|script)|execute\s+(?:the\s+)?(?:command|script)|format\s+(?:the\s+)?(?:code|output)|rename\s+(?:the\s+)?file|create\s+(?:a\s+)?(?:file|directory|folder)|check\s+(?:if|whether)\s+(?:file|directory)\s+exists)\b")
+            .unwrap()
+    })
+}
+
+/// Find chain-of-thought phrases used on simple tasks
+///
+/// Research shows that CoT can actually hurt performance on simple, direct tasks
+/// that don't require multi-step reasoning (Wei et al., 2022).
+pub fn find_cot_on_simple_tasks(content: &str) -> Vec<CotOnSimpleTask> {
+    let mut results = Vec::new();
+    let cot_pattern = cot_phrase_pattern();
+    let simple_pattern = simple_task_indicator_pattern();
+
+    // Check if this content describes a simple task
+    let simple_tasks: Vec<_> = content
+        .lines()
+        .enumerate()
+        .filter_map(|(line_num, line)| {
+            simple_pattern
+                .find(line)
+                .map(|mat| (line_num, mat.as_str().to_string()))
+        })
+        .collect();
+
+    if simple_tasks.is_empty() {
+        return results;
+    }
+
+    // Find CoT phrases in the same document
+    for (line_num, line) in content.lines().enumerate() {
+        if let Some(mat) = cot_pattern.find(line) {
+            // Report CoT found in a simple-task context
+            if let Some((_, task)) = simple_tasks.first() {
+                results.push(CotOnSimpleTask {
+                    line: line_num + 1,
+                    column: mat.start(),
+                    phrase: mat.as_str().to_string(),
+                    task_indicator: task.clone(),
+                });
+            }
+        }
+    }
+
+    results
+}
+
+// ============================================================================
+// PE-003: Weak Imperative Language in Critical Sections
+// ============================================================================
+
+/// Weak language found in critical section
+#[derive(Debug, Clone)]
+pub struct WeakLanguageInCritical {
+    pub line: usize,
+    pub column: usize,
+    pub weak_term: String,
+    pub section_name: String,
+}
+
+fn weak_language_pattern() -> &'static Regex {
+    WEAK_LANGUAGE_PATTERN.get_or_init(|| {
+        Regex::new(r"(?i)\b(should|try\s+to|consider|maybe|might|could|possibly|preferably|ideally|optionally)\b")
+            .unwrap()
+    })
+}
+
+fn critical_section_pattern() -> &'static Regex {
+    CRITICAL_SECTION_PATTERN.get_or_init(|| {
+        Regex::new(r"(?i)^#+\s*.*(critical|important|required|mandatory|rules|must|essential|security|danger)")
+            .unwrap()
+    })
+}
+
+/// Find weak imperative language in critical sections
+///
+/// Critical sections should use strong language (must/always/never) rather than
+/// weak language (should/try/consider) to ensure compliance.
+pub fn find_weak_imperative_language(content: &str) -> Vec<WeakLanguageInCritical> {
+    let mut results = Vec::new();
+    let weak_pattern = weak_language_pattern();
+    let section_pattern = critical_section_pattern();
+
+    let mut current_section: Option<String> = None;
+
+    for (line_num, line) in content.lines().enumerate() {
+        // Check if this is a header line
+        if line.starts_with('#') {
+            if section_pattern.is_match(line) {
+                current_section = Some(line.trim_start_matches('#').trim().to_string());
+            } else {
+                // New non-critical header ends the critical section
+                current_section = None;
+            }
+        }
+
+        // Check for weak language in critical sections
+        if let Some(section_name) = &current_section {
+            if let Some(mat) = weak_pattern.find(line) {
+                results.push(WeakLanguageInCritical {
+                    line: line_num + 1,
+                    column: mat.start(),
+                    weak_term: mat.as_str().to_string(),
+                    section_name: section_name.clone(),
+                });
+            }
+        }
+    }
+
+    results
+}
+
+// ============================================================================
+// PE-004: Ambiguous Instructions
+// ============================================================================
+
+/// Ambiguous instruction found
+#[derive(Debug, Clone)]
+pub struct AmbiguousInstruction {
+    pub line: usize,
+    pub column: usize,
+    pub term: String,
+    pub context: String,
+}
+
+fn ambiguous_term_pattern() -> &'static Regex {
+    AMBIGUOUS_TERM_PATTERN.get_or_init(|| {
+        // Terms that create ambiguity without specific criteria
+        Regex::new(r"(?i)\b(usually|sometimes|if\s+possible|when\s+appropriate|as\s+needed|often|occasionally|generally|typically|normally|frequently|regularly|commonly)\b")
+            .unwrap()
+    })
+}
+
+/// Find ambiguous terms in instructions
+///
+/// Instructions should be specific and measurable. Terms like "usually" or
+/// "if possible" create ambiguity about when the instruction applies.
+pub fn find_ambiguous_instructions(content: &str) -> Vec<AmbiguousInstruction> {
+    let mut results = Vec::new();
+    let pattern = ambiguous_term_pattern();
+
+    for (line_num, line) in content.lines().enumerate() {
+        // Skip lines that are clearly code blocks or examples
+        if line.trim_start().starts_with("```")
+            || line.trim_start().starts_with("//")
+            || line.trim_start().starts_with("#!")
+        {
+            continue;
+        }
+
+        for mat in pattern.find_iter(line) {
+            // Extract some context around the match
+            let start = mat.start().saturating_sub(20);
+            let end = (mat.end() + 20).min(line.len());
+            let context = line[start..end].to_string();
+
+            results.push(AmbiguousInstruction {
+                line: line_num + 1,
+                column: mat.start(),
+                term: mat.as_str().to_string(),
+                context,
+            });
+        }
+    }
+
+    results
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ===== PE-001: Critical Content in Middle =====
+
+    #[test]
+    fn test_find_critical_in_middle() {
+        // Create 20 lines with "critical" at line 10 (50%)
+        let mut lines: Vec<String> = (0..20).map(|i| format!("Line {}", i)).collect();
+        lines[10] = "This is critical information.".to_string();
+        let content = lines.join("\n");
+
+        let results = find_critical_in_middle_pe(&content);
+        assert_eq!(results.len(), 1);
+        assert!(results[0].position_percent > 40.0);
+        assert!(results[0].position_percent < 60.0);
+        assert_eq!(results[0].keyword.to_lowercase(), "critical");
+    }
+
+    #[test]
+    fn test_critical_at_top_no_issue() {
+        let mut lines: Vec<String> = (0..20).map(|i| format!("Line {}", i)).collect();
+        lines[1] = "This is critical information.".to_string();
+        let content = lines.join("\n");
+
+        let results = find_critical_in_middle_pe(&content);
+        assert!(results.is_empty());
+    }
+
+    #[test]
+    fn test_critical_at_bottom_no_issue() {
+        let mut lines: Vec<String> = (0..20).map(|i| format!("Line {}", i)).collect();
+        lines[18] = "This is critical information.".to_string();
+        let content = lines.join("\n");
+
+        let results = find_critical_in_middle_pe(&content);
+        assert!(results.is_empty());
+    }
+
+    #[test]
+    fn test_short_document_skipped() {
+        let content = "Critical info here.\nAnother line.";
+        let results = find_critical_in_middle_pe(content);
+        // Document too short (< 10 lines)
+        assert!(results.is_empty());
+    }
+
+    #[test]
+    fn test_multiple_keywords_in_middle() {
+        let mut lines: Vec<String> = (0..20).map(|i| format!("Line {}", i)).collect();
+        lines[9] = "This is important and essential.".to_string();
+        lines[10] = "This is critical and mandatory.".to_string();
+        let content = lines.join("\n");
+
+        let results = find_critical_in_middle_pe(&content);
+        // Should find multiple keywords in the middle zone
+        assert!(results.len() >= 2);
+    }
+
+    // ===== PE-002: Chain-of-Thought on Simple Tasks =====
+
+    #[test]
+    fn test_cot_on_simple_read_file() {
+        let content = r#"# Read File Skill
+
+When the user asks to read the file, think step by step:
+1. First check if file exists
+2. Then read contents
+"#;
+        let results = find_cot_on_simple_tasks(content);
+        assert_eq!(results.len(), 1);
+        assert!(results[0].phrase.to_lowercase().contains("think step by step"));
+    }
+
+    #[test]
+    fn test_cot_on_simple_copy_file() {
+        let content = r#"# Copy File Utility
+
+Let's think through copying the file:
+- Source path
+- Destination path
+"#;
+        let results = find_cot_on_simple_tasks(content);
+        assert_eq!(results.len(), 1);
+    }
+
+    #[test]
+    fn test_no_cot_on_complex_task() {
+        let content = r#"# Code Review Skill
+
+When reviewing code, think step by step:
+1. Check for security issues
+2. Verify logic correctness
+3. Assess performance
+"#;
+        // This has CoT but is not a simple task, so no matches
+        let results = find_cot_on_simple_tasks(content);
+        assert!(results.is_empty());
+    }
+
+    #[test]
+    fn test_simple_task_without_cot() {
+        let content = r#"# Read File Skill
+
+Read the file and return its contents.
+"#;
+        // Simple task but no CoT, so no issue
+        let results = find_cot_on_simple_tasks(content);
+        assert!(results.is_empty());
+    }
+
+    // ===== PE-003: Weak Imperative Language =====
+
+    #[test]
+    fn test_weak_language_in_critical_section() {
+        let content = r#"# Critical Rules
+
+You should follow the coding style.
+Code could be formatted better.
+"#;
+        let results = find_weak_imperative_language(content);
+        assert_eq!(results.len(), 2);
+        assert!(results.iter().any(|r| r.weak_term.to_lowercase() == "should"));
+        assert!(results.iter().any(|r| r.weak_term.to_lowercase() == "could"));
+    }
+
+    #[test]
+    fn test_weak_language_outside_critical_section() {
+        let content = r#"# General Guidelines
+
+You should follow the coding style.
+"#;
+        // Not in a critical section
+        let results = find_weak_imperative_language(content);
+        assert!(results.is_empty());
+    }
+
+    #[test]
+    fn test_weak_language_section_boundary() {
+        let content = r#"# Important Security Rules
+
+You should sanitize inputs.
+
+# Other Info
+
+You could do this too.
+"#;
+        let results = find_weak_imperative_language(content);
+        // Only "should" in critical section should be flagged
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0].weak_term.to_lowercase(), "should");
+    }
+
+    #[test]
+    fn test_multiple_critical_sections() {
+        let content = r#"# Critical Rules
+
+You should do A.
+
+# General Section
+
+Normal content.
+
+# Mandatory Requirements
+
+You might want to consider B.
+"#;
+        let results = find_weak_imperative_language(content);
+        assert_eq!(results.len(), 2);
+    }
+
+    // ===== PE-004: Ambiguous Instructions =====
+
+    #[test]
+    fn test_find_ambiguous_usually() {
+        let content = "Usually format the output as JSON.";
+        let results = find_ambiguous_instructions(content);
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0].term.to_lowercase(), "usually");
+    }
+
+    #[test]
+    fn test_find_ambiguous_if_possible() {
+        let content = "Include tests if possible.";
+        let results = find_ambiguous_instructions(content);
+        assert_eq!(results.len(), 1);
+        assert!(results[0].term.to_lowercase().contains("if possible"));
+    }
+
+    #[test]
+    fn test_find_multiple_ambiguous() {
+        let content = r#"Usually do X.
+Sometimes do Y.
+When appropriate, do Z.
+"#;
+        let results = find_ambiguous_instructions(content);
+        assert_eq!(results.len(), 3);
+    }
+
+    #[test]
+    fn test_skip_code_blocks() {
+        let content = r#"```rust
+// Usually this is fine in comments
+fn main() {}
+```"#;
+        let results = find_ambiguous_instructions(content);
+        // Should skip code blocks and comments
+        assert!(results.is_empty());
+    }
+
+    #[test]
+    fn test_no_ambiguous_in_clear_instructions() {
+        let content = r#"# Rules
+
+Always format output as JSON.
+Never include sensitive data.
+"#;
+        let results = find_ambiguous_instructions(content);
+        assert!(results.is_empty());
+    }
+
+    #[test]
+    fn test_ambiguous_context_captured() {
+        let content = "This rule is generally applicable to all files.";
+        let results = find_ambiguous_instructions(content);
+        assert_eq!(results.len(), 1);
+        assert!(results[0].context.contains("generally"));
+    }
+}

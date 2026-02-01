@@ -6,6 +6,7 @@ pub mod cross_platform;
 pub mod hooks;
 pub mod mcp;
 pub mod plugin;
+pub mod prompt;
 pub mod skill;
 
 pub use agent::AgentSchema;
