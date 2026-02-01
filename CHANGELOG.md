@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- XML validator now emits specific rule IDs for each error type:
+  - XML-001: Unclosed XML tag
+  - XML-002: Mismatched closing tag
+  - XML-003: Unmatched closing tag
+- Individual XML rules can now be disabled via `disabled_rules` config
+
 ### Added
 - AGENTS.md validation rules (AGM-001 to AGM-006)
   - AGM-001: Valid markdown structure

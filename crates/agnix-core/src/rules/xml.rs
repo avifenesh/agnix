@@ -48,7 +48,10 @@ impl Validator for XmlValidator {
                     format!("Unmatched closing tag '</{}>'", tag),
                     line,
                     column,
-                    format!("Remove '</{}>' or add matching opening tag '<{}>'", tag, tag),
+                    format!(
+                        "Remove '</{}>' or add matching opening tag '<{}>'",
+                        tag, tag
+                    ),
                 ),
             };
 
@@ -135,7 +138,10 @@ mod tests {
         // Find the XML-002 diagnostic
         let xml_002 = diagnostics.iter().find(|d| d.rule == "XML-002");
         assert!(xml_002.is_some(), "Expected XML-002 diagnostic");
-        assert!(xml_002.unwrap().message.contains("Expected '</inner>' but found '</outer>'"));
+        assert!(xml_002
+            .unwrap()
+            .message
+            .contains("Expected '</inner>' but found '</outer>'"));
     }
 
     // XML-003: Unmatched closing tag produces XML-003 rule ID
