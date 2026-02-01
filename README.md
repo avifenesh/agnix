@@ -262,7 +262,7 @@ When `target` is set to a specific tool, only relevant rules run:
 | memory | CC-MEM-* | Memory/CLAUDE.md validation |
 | plugins | CC-PL-* | Plugin validation |
 | mcp | MCP-* | MCP tool validation |
-| xml | xml::* | XML tag balance |
+| xml | XML-* | XML tag balance |
 | imports | imports::* | Import reference validation |
 
 ## Supported Standards
