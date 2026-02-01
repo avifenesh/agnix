@@ -9,6 +9,7 @@
 //! - AGM-006: Nested AGENTS.md Hierarchy
 
 use regex::Regex;
+use std::collections::HashSet;
 use std::path::Path;
 use std::sync::OnceLock;
 
@@ -409,7 +410,8 @@ pub fn find_nested_agents_md(paths: &[std::path::PathBuf]) -> Vec<NestedAgentsMd
         .collect();
     sorted.sort_by_key(|(_, depth)| *depth);
 
-    // Check for nesting relationships
+    // Check for nesting relationships, using HashSet to deduplicate
+    let mut seen = HashSet::new();
     let mut results = Vec::new();
 
     for i in 0..sorted.len() {
@@ -422,10 +424,13 @@ pub fn find_nested_agents_md(paths: &[std::path::PathBuf]) -> Vec<NestedAgentsMd
                 let path_j_buf = path_j.as_path();
                 let path_i_buf = path_i.as_path();
                 if path_j_buf.starts_with(parent) && path_j_buf != path_i_buf {
-                    results.push(NestedAgentsMd {
-                        path: path_j.to_path_buf(),
-                        depth: *depth_j,
-                    });
+                    // Only add if we haven't seen this path before
+                    if seen.insert(path_j_buf.to_path_buf()) {
+                        results.push(NestedAgentsMd {
+                            path: path_j.to_path_buf(),
+                            depth: *depth_j,
+                        });
+                    }
                 }
             }
         }
@@ -735,6 +740,43 @@ agent: something
         let results = find_nested_agents_md(&paths);
         // Should detect both nested files
         assert!(results.len() >= 2);
+    }
+
+    #[test]
+    fn test_nested_agents_md_no_duplicates() {
+        // Test case for AGM-006: Ensure each nested file is only reported once
+        // In hierarchy project/AGENTS.md -> project/a/AGENTS.md -> project/a/b/AGENTS.md
+        // the deepest file should only appear once in results, not multiple times
+        let paths = vec![
+            PathBuf::from("project/AGENTS.md"),
+            PathBuf::from("project/a/AGENTS.md"),
+            PathBuf::from("project/a/b/AGENTS.md"),
+        ];
+        let results = find_nested_agents_md(&paths);
+
+        // Should detect exactly 2 nested files: project/a/AGENTS.md and project/a/b/AGENTS.md
+        assert_eq!(results.len(), 2);
+
+        // Verify no duplicates by checking each path appears only once
+        let mut seen_paths = HashSet::new();
+        for result in &results {
+            let path_str = result.path.to_string_lossy().to_string();
+            assert!(
+                seen_paths.insert(path_str.clone()),
+                "Duplicate path found: {}",
+                path_str
+            );
+        }
+
+        // Verify the correct files are reported
+        let result_paths: Vec<String> = results
+            .iter()
+            .map(|r| r.path.to_string_lossy().to_string())
+            .collect();
+        assert!(result_paths.iter().any(|p| p.contains("project/a/AGENTS.md")));
+        assert!(result_paths
+            .iter()
+            .any(|p| p.contains("project/a/b/AGENTS.md")));
     }
 
     #[test]
