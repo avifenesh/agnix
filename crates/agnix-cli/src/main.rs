@@ -1,5 +1,6 @@
 //! agnix CLI - The nginx of agent configs
 
+mod json;
 mod sarif;
 
 use agnix_core::{
@@ -19,6 +20,7 @@ use std::process;
 pub enum OutputFormat {
     #[default]
     Text,
+    Json,
     Sarif,
 }
 
@@ -65,7 +67,7 @@ struct Cli {
     #[arg(long)]
     fix_safe: bool,
 
-    /// Output format (text or sarif)
+    /// Output format (text, json, or sarif)
     #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
     format: OutputFormat,
 }
@@ -116,6 +118,26 @@ fn validate_command(path: &Path, cli: &Cli) -> anyhow::Result<()> {
     let base_path = std::fs::canonicalize(path).unwrap_or_else(|_| path.to_path_buf());
 
     let diagnostics = validate_project(path, &config)?;
+
+    // Handle JSON output format
+    if matches!(cli.format, OutputFormat::Json) {
+        let json_output = json::diagnostics_to_json(&diagnostics, &base_path);
+        let json_str = serde_json::to_string_pretty(&json_output)?;
+        println!("{}", json_str);
+
+        // Exit with error code if there are errors
+        let has_errors = diagnostics
+            .iter()
+            .any(|d| d.level == DiagnosticLevel::Error);
+        let has_warnings = diagnostics
+            .iter()
+            .any(|d| d.level == DiagnosticLevel::Warning);
+
+        if has_errors || (cli.strict && has_warnings) {
+            process::exit(1);
+        }
+        return Ok(());
+    }
 
     // Handle SARIF output format
     if matches!(cli.format, OutputFormat::Sarif) {
