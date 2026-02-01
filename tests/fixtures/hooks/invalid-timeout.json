@@ -1,0 +1,22 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          { "type": "command", "command": "echo 'negative'", "timeout": -5 },
+          { "type": "command", "command": "echo 'zero'", "timeout": 0 },
+          { "type": "command", "command": "echo 'valid'", "timeout": 30 }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          { "type": "command", "command": "echo 'string timeout'", "timeout": "thirty" },
+          { "type": "command", "command": "echo 'null timeout'", "timeout": null }
+        ]
+      }
+    ]
+  }
+}
