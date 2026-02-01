@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- AGENTS.md validation rules (AGM-001 to AGM-006)
+  - AGM-001: Valid markdown structure
+  - AGM-002: Missing section headers
+  - AGM-003: Character limit (12000 for Windsurf)
+  - AGM-004: Missing project context
+  - AGM-005: Unguarded platform features
+  - AGM-006: Nested AGENTS.md hierarchy
 - Prompt Engineering validation with 4 rules (PE-001 to PE-004)
   - PE-001: Detects critical content in middle of document (lost in the middle effect)
   - PE-002: Warns when chain-of-thought markers used on simple tasks

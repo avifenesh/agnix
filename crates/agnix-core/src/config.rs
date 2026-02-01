@@ -84,6 +84,10 @@ pub struct RuleConfig {
     #[serde(default = "default_true")]
     pub cross_platform: bool,
 
+    /// Enable AGENTS.md validation (AGM-*)
+    #[serde(default = "default_true")]
+    pub agents_md: bool,
+
     /// Enable prompt engineering validation (PE-*)
     #[serde(default = "default_true")]
     pub prompt_engineering: bool,
@@ -129,6 +133,7 @@ impl Default for RuleConfig {
             mcp: true,
             imports: true,
             cross_platform: true,
+            agents_md: true,
             prompt_engineering: true,
             generic_instructions: true,
             frontmatter_validation: true,
@@ -209,6 +214,7 @@ impl LintConfig {
             s if s.starts_with("MCP-") => self.rules.mcp,
             s if s.starts_with("REF-") || s.starts_with("imports::") => self.rules.imports,
             s if s.starts_with("XP-") => self.rules.cross_platform,
+            s if s.starts_with("AGM-") => self.rules.agents_md,
             s if s.starts_with("PE-") => self.rules.prompt_engineering,
             // Unknown rules are enabled by default
             _ => true,
@@ -583,6 +589,97 @@ cross_platform = false
         assert!(!config.is_rule_enabled("XP-001"));
         assert!(!config.is_rule_enabled("XP-002"));
         assert!(!config.is_rule_enabled("XP-003"));
+    }
+
+    // ===== AGENTS.md Category Tests =====
+
+    #[test]
+    fn test_default_config_enables_agm_rules() {
+        let config = LintConfig::default();
+
+        assert!(config.is_rule_enabled("AGM-001"));
+        assert!(config.is_rule_enabled("AGM-002"));
+        assert!(config.is_rule_enabled("AGM-003"));
+        assert!(config.is_rule_enabled("AGM-004"));
+        assert!(config.is_rule_enabled("AGM-005"));
+        assert!(config.is_rule_enabled("AGM-006"));
+    }
+
+    #[test]
+    fn test_category_disabled_agents_md() {
+        let mut config = LintConfig::default();
+        config.rules.agents_md = false;
+
+        assert!(!config.is_rule_enabled("AGM-001"));
+        assert!(!config.is_rule_enabled("AGM-002"));
+        assert!(!config.is_rule_enabled("AGM-003"));
+        assert!(!config.is_rule_enabled("AGM-004"));
+        assert!(!config.is_rule_enabled("AGM-005"));
+        assert!(!config.is_rule_enabled("AGM-006"));
+
+        // Other categories still enabled
+        assert!(config.is_rule_enabled("CC-AG-001"));
+        assert!(config.is_rule_enabled("AS-005"));
+        assert!(config.is_rule_enabled("XP-001"));
+    }
+
+    #[test]
+    fn test_agm_rules_work_with_all_targets() {
+        // AGM-* rules are NOT target-specific (unlike CC-* rules)
+        // They should work with Cursor, Codex, and all targets
+        let targets = [
+            TargetTool::Generic,
+            TargetTool::ClaudeCode,
+            TargetTool::Cursor,
+            TargetTool::Codex,
+        ];
+
+        for target in targets {
+            let mut config = LintConfig::default();
+            config.target = target;
+
+            assert!(
+                config.is_rule_enabled("AGM-001"),
+                "AGM-001 should be enabled for {:?}",
+                target
+            );
+            assert!(
+                config.is_rule_enabled("AGM-006"),
+                "AGM-006 should be enabled for {:?}",
+                target
+            );
+        }
+    }
+
+    #[test]
+    fn test_disabled_specific_agm_rule() {
+        let mut config = LintConfig::default();
+        config.rules.disabled_rules = vec!["AGM-001".to_string()];
+
+        assert!(!config.is_rule_enabled("AGM-001"));
+        assert!(config.is_rule_enabled("AGM-002"));
+        assert!(config.is_rule_enabled("AGM-003"));
+        assert!(config.is_rule_enabled("AGM-004"));
+        assert!(config.is_rule_enabled("AGM-005"));
+        assert!(config.is_rule_enabled("AGM-006"));
+    }
+
+    #[test]
+    fn test_toml_deserialization_agents_md() {
+        let toml_str = r#"
+severity = "Warning"
+target = "Generic"
+exclude = []
+
+[rules]
+agents_md = false
+"#;
+
+        let config: LintConfig = toml::from_str(toml_str).unwrap();
+
+        assert!(!config.rules.agents_md);
+        assert!(!config.is_rule_enabled("AGM-001"));
+        assert!(!config.is_rule_enabled("AGM-006"));
     }
 
     // ===== Prompt Engineering Category Tests =====

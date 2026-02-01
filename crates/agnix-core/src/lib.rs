@@ -94,6 +94,7 @@ fn get_validators_for_type(file_type: FileType) -> Vec<Box<dyn Validator>> {
             Box::new(rules::claude_md::ClaudeMdValidator),
             Box::new(rules::prompt::PromptValidator),
             Box::new(rules::cross_platform::CrossPlatformValidator),
+            Box::new(rules::agents_md::AgentsMdValidator),
             Box::new(rules::xml::XmlValidator),
             Box::new(rules::imports::ImportsValidator),
         ],
@@ -185,6 +186,36 @@ pub fn validate_project(path: &Path, config: &LintConfig) -> LintResult<Vec<Diag
             }
         })
         .collect();
+
+    // AGM-006: Check for nested AGENTS.md hierarchy (project-level check)
+    if config.is_rule_enabled("AGM-006") {
+        let nested = schemas::agents_md::find_nested_agents_md(&paths);
+        for nested_file in nested {
+            let parent_files =
+                schemas::agents_md::check_agents_md_hierarchy(&nested_file.path, &paths);
+            if !parent_files.is_empty() {
+                let parent_paths: Vec<String> = parent_files
+                    .iter()
+                    .map(|p| p.to_string_lossy().to_string())
+                    .collect();
+                diagnostics.push(
+                    Diagnostic::warning(
+                        nested_file.path.clone(),
+                        1,
+                        0,
+                        "AGM-006",
+                        format!(
+                            "Nested AGENTS.md detected - parent AGENTS.md files exist at: {}",
+                            parent_paths.join(", ")
+                        ),
+                    )
+                    .with_suggestion(
+                        "Some tools load AGENTS.md hierarchically. Document inheritance behavior or consolidate files.".to_string(),
+                    ),
+                );
+            }
+        }
+    }
 
     // Sort by severity (errors first), then by file path, then by line/rule for full determinism
     diagnostics.sort_by(|a, b| {
@@ -324,7 +355,7 @@ mod tests {
     #[test]
     fn test_validators_for_claude_md() {
         let validators = get_validators_for_type(FileType::ClaudeMd);
-        assert_eq!(validators.len(), 5); // claude_md + prompt + cross_platform + xml + imports
+        assert_eq!(validators.len(), 6); // ClaudeMdValidator, PromptValidator, CrossPlatformValidator, AgentsMdValidator, XmlValidator, ImportsValidator
     }
 
     #[test]
@@ -860,6 +891,184 @@ allowed-tools: Read Write
         assert!(
             xp_001.is_empty(),
             "CLAUDE.md should be allowed to have Claude-specific features"
+        );
+    }
+
+    // ===== AGM-006: Nested AGENTS.md Hierarchy Tests =====
+
+    #[test]
+    fn test_agm_006_nested_agents_md() {
+        let temp = tempfile::TempDir::new().unwrap();
+
+        // Create nested AGENTS.md files
+        std::fs::write(
+            temp.path().join("AGENTS.md"),
+            "# Project\n\nThis project does something.",
+        )
+        .unwrap();
+
+        let subdir = temp.path().join("subdir");
+        std::fs::create_dir_all(&subdir).unwrap();
+        std::fs::write(
+            subdir.join("AGENTS.md"),
+            "# Subproject\n\nThis is a nested AGENTS.md.",
+        )
+        .unwrap();
+
+        let config = LintConfig::default();
+        let diagnostics = validate_project(temp.path(), &config).unwrap();
+
+        // Should detect AGM-006 for the nested AGENTS.md
+        let agm_006: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AGM-006").collect();
+        assert_eq!(
+            agm_006.len(),
+            1,
+            "Should detect one nested AGENTS.md, got {:?}",
+            agm_006
+        );
+        assert!(agm_006[0].file.to_string_lossy().contains("subdir"));
+        assert!(agm_006[0].message.contains("Nested AGENTS.md"));
+    }
+
+    #[test]
+    fn test_agm_006_no_nesting() {
+        let temp = tempfile::TempDir::new().unwrap();
+
+        // Create single AGENTS.md file
+        std::fs::write(
+            temp.path().join("AGENTS.md"),
+            "# Project\n\nThis project does something.",
+        )
+        .unwrap();
+
+        let config = LintConfig::default();
+        let diagnostics = validate_project(temp.path(), &config).unwrap();
+
+        // Should not detect AGM-006 for a single AGENTS.md
+        let agm_006: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AGM-006").collect();
+        assert!(
+            agm_006.is_empty(),
+            "Single AGENTS.md should not trigger AGM-006"
+        );
+    }
+
+    #[test]
+    fn test_agm_006_disabled() {
+        let temp = tempfile::TempDir::new().unwrap();
+
+        // Create nested AGENTS.md files
+        std::fs::write(
+            temp.path().join("AGENTS.md"),
+            "# Project\n\nThis project does something.",
+        )
+        .unwrap();
+
+        let subdir = temp.path().join("subdir");
+        std::fs::create_dir_all(&subdir).unwrap();
+        std::fs::write(
+            subdir.join("AGENTS.md"),
+            "# Subproject\n\nThis is a nested AGENTS.md.",
+        )
+        .unwrap();
+
+        let mut config = LintConfig::default();
+        config.rules.disabled_rules = vec!["AGM-006".to_string()];
+        let diagnostics = validate_project(temp.path(), &config).unwrap();
+
+        // Should not detect AGM-006 when disabled
+        let agm_006: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AGM-006").collect();
+        assert!(agm_006.is_empty(), "AGM-006 should not fire when disabled");
+    }
+
+    // ===== AGM Validation Integration Tests =====
+
+    #[test]
+    fn test_agm_001_unclosed_code_block() {
+        let temp = tempfile::TempDir::new().unwrap();
+
+        std::fs::write(
+            temp.path().join("AGENTS.md"),
+            "# Project\n\n```rust\nfn main() {}",
+        )
+        .unwrap();
+
+        let config = LintConfig::default();
+        let diagnostics = validate_project(temp.path(), &config).unwrap();
+
+        let agm_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AGM-001").collect();
+        assert!(!agm_001.is_empty(), "Should detect unclosed code block");
+    }
+
+    #[test]
+    fn test_agm_003_over_char_limit() {
+        let temp = tempfile::TempDir::new().unwrap();
+
+        let content = format!("# Project\n\n{}", "x".repeat(13000));
+        std::fs::write(temp.path().join("AGENTS.md"), content).unwrap();
+
+        let config = LintConfig::default();
+        let diagnostics = validate_project(temp.path(), &config).unwrap();
+
+        let agm_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AGM-003").collect();
+        assert!(
+            !agm_003.is_empty(),
+            "Should detect character limit exceeded"
+        );
+    }
+
+    #[test]
+    fn test_agm_005_unguarded_platform_features() {
+        let temp = tempfile::TempDir::new().unwrap();
+
+        std::fs::write(
+            temp.path().join("AGENTS.md"),
+            "# Project\n\n- type: PreToolExecution\n  command: echo test",
+        )
+        .unwrap();
+
+        let config = LintConfig::default();
+        let diagnostics = validate_project(temp.path(), &config).unwrap();
+
+        let agm_005: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AGM-005").collect();
+        assert!(
+            !agm_005.is_empty(),
+            "Should detect unguarded platform features"
+        );
+    }
+
+    #[test]
+    fn test_valid_agents_md_no_agm_errors() {
+        let temp = tempfile::TempDir::new().unwrap();
+
+        std::fs::write(
+            temp.path().join("AGENTS.md"),
+            r#"# Project
+
+This project is a linter for agent configurations.
+
+## Build Commands
+
+Run npm install and npm build.
+
+## Claude Code Specific
+
+- type: PreToolExecution
+  command: echo "test"
+"#,
+        )
+        .unwrap();
+
+        let config = LintConfig::default();
+        let diagnostics = validate_project(temp.path(), &config).unwrap();
+
+        let agm_errors: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule.starts_with("AGM-") && d.level == DiagnosticLevel::Error)
+            .collect();
+        assert!(
+            agm_errors.is_empty(),
+            "Valid AGENTS.md should have no AGM-* errors, got: {:?}",
+            agm_errors
         );
     }
 
