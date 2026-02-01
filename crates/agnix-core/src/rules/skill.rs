@@ -81,8 +81,8 @@ fn is_valid_agent(agent: &str) -> bool {
         return true;
     }
 
-    // Custom agents must follow kebab-case format
-    if agent.is_empty() || agent.len() > 64 {
+    // Custom agents must follow kebab-case format (1-64 chars)
+    if !(1..=64).contains(&agent.len()) {
         return false;
     }
 
@@ -1696,47 +1696,50 @@ Body"#,
     }
 
     #[test]
-    fn test_cc_sk_005_rejects_uppercase_agent() {
-        let content = r#"---
+    fn test_cc_sk_005_rejects_invalid_agent_formats() {
+        // Consolidated test for all invalid agent formats
+        let invalid_agents = [
+            ("MyAgent", "uppercase"),
+            ("my_custom_agent", "underscore"),
+            ("\"\"", "empty"),
+            ("-custom-agent", "leading hyphen"),
+            ("custom-agent-", "trailing hyphen"),
+            ("custom--agent", "consecutive hyphens"),
+            ("my@agent", "special char @"),
+            ("agent!", "special char !"),
+            ("test.agent", "special char ."),
+            ("agent/name", "special char /"),
+        ];
+
+        for (agent, reason) in invalid_agents {
+            let content = format!(
+                r#"---
 name: test-skill
 description: Use when testing
 context: fork
-agent: MyAgent
+agent: {}
 ---
-Body"#;
+Body"#,
+                agent
+            );
 
-        let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+            let validator = SkillValidator;
+            let diagnostics =
+                validator.validate(Path::new("test.md"), &content, &LintConfig::default());
 
-        let cc_sk_005: Vec<_> = diagnostics
-            .iter()
-            .filter(|d| d.rule == "CC-SK-005")
-            .collect();
+            let cc_sk_005: Vec<_> = diagnostics
+                .iter()
+                .filter(|d| d.rule == "CC-SK-005")
+                .collect();
 
-        assert_eq!(cc_sk_005.len(), 1, "Uppercase agent should be rejected");
-        assert!(cc_sk_005[0].message.contains("MyAgent"));
-    }
-
-    #[test]
-    fn test_cc_sk_005_rejects_underscore_agent() {
-        let content = r#"---
-name: test-skill
-description: Use when testing
-context: fork
-agent: my_custom_agent
----
-Body"#;
-
-        let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
-
-        let cc_sk_005: Vec<_> = diagnostics
-            .iter()
-            .filter(|d| d.rule == "CC-SK-005")
-            .collect();
-
-        assert_eq!(cc_sk_005.len(), 1, "Underscore agent should be rejected");
-        assert!(cc_sk_005[0].message.contains("my_custom_agent"));
+            assert_eq!(
+                cc_sk_005.len(),
+                1,
+                "Agent '{}' ({}) should be rejected",
+                agent,
+                reason
+            );
+        }
     }
 
     #[test]
@@ -1789,134 +1792,6 @@ Body"#,
             .collect();
 
         assert_eq!(cc_sk_005.len(), 0, "Agent at 64 chars should be accepted");
-    }
-
-    #[test]
-    fn test_cc_sk_005_rejects_agent_with_special_chars() {
-        for agent in &["my@agent", "agent!", "test.agent", "agent/name"] {
-            let content = format!(
-                r#"---
-name: test-skill
-description: Use when testing
-context: fork
-agent: {}
----
-Body"#,
-                agent
-            );
-
-            let validator = SkillValidator;
-            let diagnostics =
-                validator.validate(Path::new("test.md"), &content, &LintConfig::default());
-
-            let cc_sk_005: Vec<_> = diagnostics
-                .iter()
-                .filter(|d| d.rule == "CC-SK-005")
-                .collect();
-
-            assert_eq!(
-                cc_sk_005.len(),
-                1,
-                "Agent '{}' with special chars should be rejected",
-                agent
-            );
-        }
-    }
-
-    #[test]
-    fn test_cc_sk_005_rejects_empty_agent() {
-        let content = r#"---
-name: test-skill
-description: Use when testing
-context: fork
-agent: ""
----
-Body"#;
-
-        let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
-
-        let cc_sk_005: Vec<_> = diagnostics
-            .iter()
-            .filter(|d| d.rule == "CC-SK-005")
-            .collect();
-
-        assert_eq!(cc_sk_005.len(), 1, "Empty agent should be rejected");
-    }
-
-    #[test]
-    fn test_cc_sk_005_rejects_leading_hyphen_agent() {
-        let content = r#"---
-name: test-skill
-description: Use when testing
-context: fork
-agent: -custom-agent
----
-Body"#;
-
-        let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
-
-        let cc_sk_005: Vec<_> = diagnostics
-            .iter()
-            .filter(|d| d.rule == "CC-SK-005")
-            .collect();
-
-        assert_eq!(
-            cc_sk_005.len(),
-            1,
-            "Agent with leading hyphen should be rejected"
-        );
-    }
-
-    #[test]
-    fn test_cc_sk_005_rejects_trailing_hyphen_agent() {
-        let content = r#"---
-name: test-skill
-description: Use when testing
-context: fork
-agent: custom-agent-
----
-Body"#;
-
-        let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
-
-        let cc_sk_005: Vec<_> = diagnostics
-            .iter()
-            .filter(|d| d.rule == "CC-SK-005")
-            .collect();
-
-        assert_eq!(
-            cc_sk_005.len(),
-            1,
-            "Agent with trailing hyphen should be rejected"
-        );
-    }
-
-    #[test]
-    fn test_cc_sk_005_rejects_consecutive_hyphens_agent() {
-        let content = r#"---
-name: test-skill
-description: Use when testing
-context: fork
-agent: custom--agent
----
-Body"#;
-
-        let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
-
-        let cc_sk_005: Vec<_> = diagnostics
-            .iter()
-            .filter(|d| d.rule == "CC-SK-005")
-            .collect();
-
-        assert_eq!(
-            cc_sk_005.len(),
-            1,
-            "Agent with consecutive hyphens should be rejected"
-        );
     }
 
     #[test]
