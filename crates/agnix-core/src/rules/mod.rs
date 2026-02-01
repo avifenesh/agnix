@@ -1,6 +1,7 @@
 //! Validation rules
 
 pub mod agent;
+pub mod agents_md;
 pub mod claude_md;
 pub mod cross_platform;
 pub mod hooks;
