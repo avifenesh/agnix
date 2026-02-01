@@ -222,8 +222,10 @@ impl Validator for HooksValidator {
                                         let is_invalid = match timeout_val {
                                             serde_json::Value::Number(n) => {
                                                 // A valid timeout must be a positive integer.
-                                                // as_u64() handles integers and whole floats (e.g., 30.0),
-                                                // returning None for negatives, non-integer floats, etc.
+                                                // as_u64() returns Some only for non-negative integer
+                                                // JSON numbers within the u64 range; it returns None
+                                                // for negatives, any floats (including 30.0), or
+                                                // out-of-range values.
                                                 if let Some(val) = n.as_u64() {
                                                     val == 0 // Zero is invalid
                                                 } else {
@@ -372,7 +374,9 @@ impl Validator for HooksValidator {
                     );
 
                     match hook {
-                        Hook::Command { command, timeout } => {
+                        Hook::Command {
+                            command, timeout, ..
+                        } => {
                             // CC-HK-010: No timeout specified
                             if config.is_rule_enabled("CC-HK-010") && timeout.is_none() {
                                 diagnostics.push(
@@ -468,7 +472,9 @@ impl Validator for HooksValidator {
                                 }
                             }
                         }
-                        Hook::Prompt { prompt, timeout } => {
+                        Hook::Prompt {
+                            prompt, timeout, ..
+                        } => {
                             // CC-HK-010: No timeout specified
                             if config.is_rule_enabled("CC-HK-010") && timeout.is_none() {
                                 diagnostics.push(
