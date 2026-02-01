@@ -228,6 +228,7 @@ agents = true       # CC-AG-* rules
 memory = true       # CC-MEM-* rules
 plugins = true      # CC-PL-* rules
 mcp = true          # MCP-* rules
+prompt_engineering = true  # PE-* rules
 xml = true          # XML-* rules
 imports = true      # REF-*, imports::* rules
 
@@ -262,6 +263,7 @@ When `target` is set to a specific tool, only relevant rules run:
 | memory | CC-MEM-* | Memory/CLAUDE.md validation |
 | plugins | CC-PL-* | Plugin validation |
 | mcp | MCP-* | MCP tool validation |
+| prompt_engineering | PE-* | Prompt engineering best practices |
 | xml | xml::* | XML tag balance |
 | imports | imports::* | Import reference validation |
 

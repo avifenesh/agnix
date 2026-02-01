@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Prompt Engineering validation with 4 rules (PE-001 to PE-004)
+  - PE-001: Detects critical content in middle of document (lost in the middle effect)
+  - PE-002: Warns when chain-of-thought markers used on simple tasks
+  - PE-003: Detects weak imperative language (should, try, consider) in critical sections
+  - PE-004: Flags ambiguous instructions (e.g., "be helpful", "as needed")
+- PromptValidator implementation in agnix-core
+- Config-based prompt_engineering category toggle (rules.prompt_engineering)
+- 8 test fixtures in tests/fixtures/prompt/ directory
+- 48 comprehensive unit tests for prompt engineering validation
 - MCP (Model Context Protocol) validation with 6 rules (MCP-001 to MCP-006)
   - MCP-001: Validates JSON-RPC version is "2.0"
   - MCP-002: Validates required tool fields (name, description, inputSchema)

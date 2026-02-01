@@ -1,6 +1,6 @@
 # agnix Technical Reference
 
-> Linter for agent configs. 80 rules across 12 categories.
+> Linter for agent configs. 86 rules across 12 categories.
 
 ## What agnix Validates
 
@@ -28,7 +28,7 @@ agnix/
 │   │   ├── schemas/    # Type definitions
 │   │   └── rules/      # Validators
 │   └── agnix-cli/      # CLI binary
-├── knowledge-base/     # 80 rules documented
+├── knowledge-base/     # 86 rules documented
 └── tests/fixtures/     # Test cases
 ```
 
@@ -121,6 +121,8 @@ hooks = true        # CC-HK-* rules
 agents = true       # CC-AG-* rules
 memory = true       # CC-MEM-* rules
 plugins = true      # CC-PL-* rules
+mcp = true          # MCP-* rules
+prompt_engineering = true  # PE-* rules
 xml = true          # XML-* rules
 imports = true      # REF-*, imports::* rules
 
@@ -154,6 +156,8 @@ When `target` is set to a specific tool, only relevant rules run:
 | Agents | `agents` | CC-AG-* | Subagent validation |
 | Memory | `memory` | CC-MEM-* | Memory/CLAUDE.md validation |
 | Plugins | `plugins` | CC-PL-* | Plugin validation |
+| MCP | `mcp` | MCP-* | MCP tool validation |
+| Prompt Engineering | `prompt_engineering` | PE-* | Prompt engineering best practices |
 | XML | `xml` | xml::* | XML tag balance |
 | Imports | `imports` | imports::* | Import reference validation |
 
