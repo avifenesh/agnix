@@ -13,30 +13,65 @@ use serde::de::DeserializeOwned;
 /// body content
 /// ```
 pub fn parse_frontmatter<T: DeserializeOwned>(content: &str) -> LintResult<(T, String)> {
-    let (frontmatter, body) = extract_frontmatter(content).map_err(LintError::Other)?;
-    let parsed: T = serde_yaml::from_str(&frontmatter).map_err(|e| LintError::Other(e.into()))?;
-    Ok((parsed, body))
+    let parts = split_frontmatter(content);
+    let parsed: T =
+        serde_yaml::from_str(&parts.frontmatter).map_err(|e| LintError::Other(e.into()))?;
+    Ok((parsed, parts.body.trim_start().to_string()))
 }
 
-/// Extract frontmatter and body from content
-fn extract_frontmatter(content: &str) -> anyhow::Result<(String, String)> {
-    let content = content.trim_start();
+/// Extract frontmatter and body from content with offsets.
+#[derive(Debug, Clone)]
+pub struct FrontmatterParts {
+    pub has_frontmatter: bool,
+    pub has_closing: bool,
+    pub frontmatter: String,
+    pub body: String,
+    pub frontmatter_start: usize,
+    pub body_start: usize,
+}
+
+/// Split frontmatter and body from content.
+pub fn split_frontmatter(content: &str) -> FrontmatterParts {
+    let trimmed = content.trim_start();
+    let trim_offset = content.len() - trimmed.len();
 
     // Check for opening ---
-    if !content.starts_with("---") {
-        return Ok((String::new(), content.to_string()));
+    if !trimmed.starts_with("---") {
+        return FrontmatterParts {
+            has_frontmatter: false,
+            has_closing: false,
+            frontmatter: String::new(),
+            body: trimmed.to_string(),
+            frontmatter_start: trim_offset,
+            body_start: trim_offset,
+        };
     }
 
-    let content = &content[3..];
+    let rest = &trimmed[3..];
+    let frontmatter_start = trim_offset + 3;
 
     // Find closing ---
-    if let Some(end_pos) = content.find("\n---") {
-        let frontmatter = &content[..end_pos];
-        let body = &content[end_pos + 4..]; // Skip \n---
-        Ok((frontmatter.to_string(), body.trim_start().to_string()))
+    if let Some(end_pos) = rest.find("\n---") {
+        let frontmatter = &rest[..end_pos];
+        let body = &rest[end_pos + 4..]; // Skip \n---
+        FrontmatterParts {
+            has_frontmatter: true,
+            has_closing: true,
+            frontmatter: frontmatter.to_string(),
+            body: body.to_string(),
+            frontmatter_start,
+            body_start: frontmatter_start + end_pos + 4,
+        }
     } else {
         // No closing marker - treat entire file as body
-        Ok((String::new(), content.to_string()))
+        FrontmatterParts {
+            has_frontmatter: true,
+            has_closing: false,
+            frontmatter: String::new(),
+            body: rest.to_string(),
+            frontmatter_start,
+            body_start: frontmatter_start,
+        }
     }
 }
 
