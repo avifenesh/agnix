@@ -224,8 +224,21 @@ fn test_format_json_exit_code_on_error() {
     use std::fs;
     use std::io::Write;
 
-    // Create a temporary directory with an invalid skill file
-    let temp_dir = std::env::temp_dir().join("agnix_test_error");
+    // Use unique temp directory name to avoid parallel test conflicts
+    let temp_dir = std::env::temp_dir().join(format!(
+        "agnix_test_error_{}",
+        std::process::id()
+    ));
+
+    // Ensure cleanup happens even if test panics
+    struct Cleanup(std::path::PathBuf);
+    impl Drop for Cleanup {
+        fn drop(&mut self) {
+            let _ = fs::remove_dir_all(&self.0);
+        }
+    }
+    let _cleanup = Cleanup(temp_dir.clone());
+
     let skills_dir = temp_dir.join("skills").join("bad-skill");
     fs::create_dir_all(&skills_dir).unwrap();
 
@@ -245,9 +258,6 @@ fn test_format_json_exit_code_on_error() {
         .arg("json")
         .output()
         .unwrap();
-
-    // Cleanup
-    let _ = fs::remove_dir_all(&temp_dir);
 
     let stdout = String::from_utf8_lossy(&output.stdout);
     let json: serde_json::Value = serde_json::from_str(&stdout).unwrap();

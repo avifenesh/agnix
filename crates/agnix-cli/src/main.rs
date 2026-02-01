@@ -125,15 +125,8 @@ fn validate_command(path: &Path, cli: &Cli) -> anyhow::Result<()> {
         let json_str = serde_json::to_string_pretty(&json_output)?;
         println!("{}", json_str);
 
-        // Exit with error code if there are errors
-        let has_errors = diagnostics
-            .iter()
-            .any(|d| d.level == DiagnosticLevel::Error);
-        let has_warnings = diagnostics
-            .iter()
-            .any(|d| d.level == DiagnosticLevel::Warning);
-
-        if has_errors || (cli.strict && has_warnings) {
+        // Exit with error code if there are errors (use summary to avoid re-iterating)
+        if json_output.summary.errors > 0 || (cli.strict && json_output.summary.warnings > 0) {
             process::exit(1);
         }
         return Ok(());

@@ -69,40 +69,36 @@ fn path_to_string(path: &Path, base_path: &Path) -> String {
 
 /// Convert diagnostics to JSON output format.
 pub fn diagnostics_to_json(diagnostics: &[Diagnostic], base_path: &Path) -> JsonOutput {
-    // Count unique files
-    let files_checked: HashSet<_> = diagnostics.iter().map(|d| &d.file).collect();
+    // Single pass: count unique files and levels, map diagnostics
+    let mut files: HashSet<&std::path::PathBuf> = HashSet::new();
+    let mut errors = 0;
+    let mut warnings = 0;
+    let mut info = 0;
 
-    // Count by level
-    let errors = diagnostics
-        .iter()
-        .filter(|d| d.level == DiagnosticLevel::Error)
-        .count();
-    let warnings = diagnostics
-        .iter()
-        .filter(|d| d.level == DiagnosticLevel::Warning)
-        .count();
-    let info = diagnostics
-        .iter()
-        .filter(|d| d.level == DiagnosticLevel::Info)
-        .count();
-
-    // Map diagnostics
     let json_diagnostics: Vec<JsonDiagnostic> = diagnostics
         .iter()
-        .map(|diag| JsonDiagnostic {
-            level: level_to_string(diag.level).to_string(),
-            rule: diag.rule.clone(),
-            file: path_to_string(&diag.file, base_path),
-            line: diag.line.max(1),
-            column: diag.column.max(1),
-            message: diag.message.clone(),
-            suggestion: diag.suggestion.clone(),
+        .map(|diag| {
+            files.insert(&diag.file);
+            match diag.level {
+                DiagnosticLevel::Error => errors += 1,
+                DiagnosticLevel::Warning => warnings += 1,
+                DiagnosticLevel::Info => info += 1,
+            }
+            JsonDiagnostic {
+                level: level_to_string(diag.level).to_string(),
+                rule: diag.rule.clone(),
+                file: path_to_string(&diag.file, base_path),
+                line: diag.line.max(1),
+                column: diag.column.max(1),
+                message: diag.message.clone(),
+                suggestion: diag.suggestion.clone(),
+            }
         })
         .collect();
 
     JsonOutput {
         version: env!("CARGO_PKG_VERSION").to_string(),
-        files_checked: files_checked.len(),
+        files_checked: files.len(),
         diagnostics: json_diagnostics,
         summary: JsonSummary {
             errors,
