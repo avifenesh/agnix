@@ -15,6 +15,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Proper exit codes for CI workflows (errors exit 1)
   - Path normalization for cross-platform compatibility
   - 8 comprehensive integration tests for SARIF output
+- JSON output format with `--format json` CLI option for programmatic consumption
+  - Simple, human-readable structure for easy parsing and integration
+  - Includes version, files_checked, diagnostics array, and summary counts
+  - Cross-platform path normalization (forward slashes)
+  - Proper exit codes for CI workflows (errors exit 1)
+  - 14 comprehensive unit tests for JSON output
 - Comprehensive CI workflow with format check, clippy, machete, and test matrix (3 OS x 2 Rust versions)
 - Security scanning workflow with CodeQL analysis and cargo-audit (runs on push, PR, and weekly schedule)
 - Changelog validation workflow to ensure CHANGELOG.md is updated in PRs

@@ -91,6 +91,7 @@ agnix --target claude-code # Claude-specific rules
 agnix --fix .              # Apply automatic fixes
 agnix --dry-run .          # Preview fixes without modifying files
 agnix --fix-safe .         # Only apply safe (HIGH certainty) fixes
+agnix --format json .      # JSON output for programmatic consumption
 agnix --format sarif .     # SARIF 2.1.0 output for CI/CD
 ```
 

@@ -62,6 +62,9 @@ agnix --dry-run .
 # Apply only safe (HIGH certainty) fixes
 agnix --fix-safe .
 
+# JSON output format (for programmatic consumption)
+agnix --format json .
+
 # SARIF output format (for CI/CD and GitHub Code Scanning)
 agnix --format sarif .
 
@@ -96,7 +99,49 @@ Found 4 errors, 1 warning
 hint: Run with --fix to apply fixes
 ```
 
-## SARIF Output Format
+## Output Formats
+
+### JSON Output Format
+
+For programmatic consumption and CI/CD integration, use the `--format json` option:
+
+```bash
+agnix --format json . > results.json
+```
+
+Features:
+- **Simple, human-readable structure** - Easy to parse and integrate with custom tooling
+- **Version tracking** - Includes agnix version for compatibility checks
+- **Summary statistics** - Quick counts of errors, warnings, and info messages
+- **Cross-platform paths** - Automatically normalizes Windows backslashes to forward slashes
+- **Relative paths** - File paths are relative to the validation base directory
+- **Proper exit codes** - Returns exit code 1 if errors are found (0 for success)
+
+Example JSON output structure:
+```json
+{
+  "version": "0.x.x",
+  "files_checked": 5,
+  "diagnostics": [
+    {
+      "level": "error",
+      "rule": "AS-004",
+      "file": "SKILL.md",
+      "line": 3,
+      "column": 1,
+      "message": "Invalid name 'Review-Code'",
+      "suggestion": "Use lowercase letters and hyphens only (e.g., 'code-review')"
+    }
+  ],
+  "summary": {
+    "errors": 1,
+    "warnings": 0,
+    "info": 0
+  }
+}
+```
+
+### SARIF Output Format
 
 For CI/CD integration and GitHub Code Scanning, use the `--format sarif` option:
 
@@ -130,7 +175,19 @@ Example SARIF output structure:
 }
 ```
 
-### GitHub Actions Integration
+
+
+### CI/CD Integration Examples
+
+```bash
+# JSON format - Parse with jq for custom processing
+agnix --format json . | jq '.summary.errors'
+
+# SARIF format - GitHub Actions integration
+agnix --format sarif . > results.sarif
+```
+
+**GitHub Actions with SARIF:**
 
 ```yaml
 - name: Validate agent configs
