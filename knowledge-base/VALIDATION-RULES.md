@@ -148,9 +148,9 @@
 **Source**: code.claude.com/docs/en/skills
 
 ### CC-SK-005 [HIGH] Invalid Agent Type
-**Requirement**: agent MUST be: Explore, Plan, general-purpose, or custom agent name
-**Detection**: Check against known agent types
-**Fix**: Suggest valid agent
+**Requirement**: agent MUST be: Explore, Plan, general-purpose, or custom kebab-case name (1-64 chars, pattern: `^[a-z0-9]+(-[a-z0-9]+)*$`)
+**Detection**: Check against built-in agents or validate kebab-case format
+**Fix**: Suggest valid agent or correct format
 **Source**: code.claude.com/docs/en/sub-agents
 
 ### CC-SK-006 [HIGH] Dangerous Auto-Invocation
@@ -238,10 +238,13 @@
 **Fix**: Warn, suggest safer alternative
 **Source**: awesome-slash/enhance-hooks
 
-### CC-HK-010 [MEDIUM] No Timeout Specified
-**Requirement**: Long-running hooks SHOULD have timeout
-**Detection**: `hook.timeout.is_none() || hook.timeout > 60`
-**Fix**: Add `"timeout": 30`
+### CC-HK-010 [MEDIUM] Timeout Policy
+**Requirement**: Hooks SHOULD have explicit timeout; excessive timeouts warn
+**Detection**:
+  - `hook.timeout.is_none()` - missing timeout
+  - Command: `timeout > 600` exceeds 10-min default
+  - Prompt: `timeout > 30` exceeds 30s default
+**Fix**: Add explicit timeout within default limits (600s for commands, 30s for prompts)
 **Source**: code.claude.com/docs/en/hooks
 
 ### CC-HK-011 [HIGH] Invalid Timeout Value

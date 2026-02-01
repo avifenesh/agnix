@@ -964,7 +964,7 @@ Agent instructions with full configuration"#;
 
     #[test]
     fn test_fixture_missing_name() {
-        let content = include_str!("../../../../tests/fixtures/agents/missing-name.md");
+        let content = include_str!("../../../../tests/fixtures/invalid/agents/missing-name.md");
         let diagnostics = validate(content);
         let cc_ag_001: Vec<_> = diagnostics
             .iter()
@@ -975,7 +975,8 @@ Agent instructions with full configuration"#;
 
     #[test]
     fn test_fixture_missing_description() {
-        let content = include_str!("../../../../tests/fixtures/agents/missing-description.md");
+        let content =
+            include_str!("../../../../tests/fixtures/invalid/agents/missing-description.md");
         let diagnostics = validate(content);
         let cc_ag_002: Vec<_> = diagnostics
             .iter()
@@ -986,7 +987,7 @@ Agent instructions with full configuration"#;
 
     #[test]
     fn test_fixture_invalid_model() {
-        let content = include_str!("../../../../tests/fixtures/agents/invalid-model.md");
+        let content = include_str!("../../../../tests/fixtures/invalid/agents/invalid-model.md");
         let diagnostics = validate(content);
         let cc_ag_003: Vec<_> = diagnostics
             .iter()
@@ -997,7 +998,8 @@ Agent instructions with full configuration"#;
 
     #[test]
     fn test_fixture_invalid_permission() {
-        let content = include_str!("../../../../tests/fixtures/agents/invalid-permission.md");
+        let content =
+            include_str!("../../../../tests/fixtures/invalid/agents/invalid-permission.md");
         let diagnostics = validate(content);
         let cc_ag_004: Vec<_> = diagnostics
             .iter()
@@ -1008,7 +1010,7 @@ Agent instructions with full configuration"#;
 
     #[test]
     fn test_fixture_tool_conflict() {
-        let content = include_str!("../../../../tests/fixtures/agents/tool-conflict.md");
+        let content = include_str!("../../../../tests/fixtures/invalid/agents/tool-conflict.md");
         let diagnostics = validate(content);
         let cc_ag_006: Vec<_> = diagnostics
             .iter()
@@ -1019,7 +1021,7 @@ Agent instructions with full configuration"#;
 
     #[test]
     fn test_fixture_valid_agent() {
-        let content = include_str!("../../../../tests/fixtures/agents/valid-agent.md");
+        let content = include_str!("../../../../tests/fixtures/valid/agents/valid-agent.md");
         let diagnostics = validate(content);
         let errors: Vec<_> = diagnostics
             .iter()
