@@ -12,7 +12,9 @@ use std::path::Path;
 
 pub struct HooksValidator;
 
-const DEFAULT_HOOK_TIMEOUT_SECONDS: u64 = 60;
+/// Default timeout thresholds per hook type (from official Claude Code docs)
+const COMMAND_HOOK_DEFAULT_TIMEOUT: u64 = 600; // 10 minutes
+const PROMPT_HOOK_DEFAULT_TIMEOUT: u64 = 30; // 30 seconds
 
 struct DangerousPattern {
     regex: Regex,
@@ -379,30 +381,9 @@ impl Validator for HooksValidator {
                         Hook::Command {
                             command, timeout, ..
                         } => {
-                            // CC-HK-010: No timeout specified / policy warning for >60s
+                            // CC-HK-010: Timeout policy for command hooks (600s default)
                             if config.is_rule_enabled("CC-HK-010") {
-                                if let Some(timeout_value) = timeout {
-                                    if *timeout_value > DEFAULT_HOOK_TIMEOUT_SECONDS {
-                                        diagnostics.push(
-                                            Diagnostic::warning(
-                                                path.to_path_buf(),
-                                                1,
-                                                0,
-                                                "CC-HK-010",
-                                                format!(
-                                                    "Command hook at {} has timeout {}s which exceeds the default {}s limit",
-                                                    hook_location,
-                                                    timeout_value,
-                                                    DEFAULT_HOOK_TIMEOUT_SECONDS
-                                                ),
-                                            )
-                                            .with_suggestion(
-                                                "Consider reducing the timeout to 60 seconds or documenting why a longer timeout is required"
-                                                    .to_string(),
-                                            ),
-                                        );
-                                    }
-                                } else {
+                                if timeout.is_none() {
                                     diagnostics.push(
                                         Diagnostic::warning(
                                             path.to_path_buf(),
@@ -415,10 +396,29 @@ impl Validator for HooksValidator {
                                             ),
                                         )
                                         .with_suggestion(
-                                            "Add \"timeout\": 30 to prevent long-running hooks"
+                                            "Add a \"timeout\" field (e.g., 600 for command hooks)"
                                                 .to_string(),
                                         ),
                                     );
+                                }
+                                if let Some(t) = timeout {
+                                    if *t > COMMAND_HOOK_DEFAULT_TIMEOUT {
+                                        diagnostics.push(
+                                            Diagnostic::warning(
+                                                path.to_path_buf(),
+                                                1,
+                                                0,
+                                                "CC-HK-010",
+                                                format!(
+                                                    "Command hook at {} has timeout {}s exceeding {}s default",
+                                                    hook_location, t, COMMAND_HOOK_DEFAULT_TIMEOUT
+                                                ),
+                                            )
+                                            .with_suggestion(
+                                                format!("Consider timeout <= {}s (10-minute default limit)", COMMAND_HOOK_DEFAULT_TIMEOUT),
+                                            ),
+                                        );
+                                    }
                                 }
                             }
 
@@ -500,30 +500,9 @@ impl Validator for HooksValidator {
                         Hook::Prompt {
                             prompt, timeout, ..
                         } => {
-                            // CC-HK-010: No timeout specified / policy warning for >60s
+                            // CC-HK-010: Timeout policy for prompt hooks (30s default)
                             if config.is_rule_enabled("CC-HK-010") {
-                                if let Some(timeout_value) = timeout {
-                                    if *timeout_value > DEFAULT_HOOK_TIMEOUT_SECONDS {
-                                        diagnostics.push(
-                                            Diagnostic::warning(
-                                                path.to_path_buf(),
-                                                1,
-                                                0,
-                                                "CC-HK-010",
-                                                format!(
-                                                    "Prompt hook at {} has timeout {}s which exceeds the default {}s limit",
-                                                    hook_location,
-                                                    timeout_value,
-                                                    DEFAULT_HOOK_TIMEOUT_SECONDS
-                                                ),
-                                            )
-                                            .with_suggestion(
-                                                "Consider reducing the timeout to 60 seconds or documenting why a longer timeout is required"
-                                                    .to_string(),
-                                            ),
-                                        );
-                                    }
-                                } else {
+                                if timeout.is_none() {
                                     diagnostics.push(
                                         Diagnostic::warning(
                                             path.to_path_buf(),
@@ -536,10 +515,29 @@ impl Validator for HooksValidator {
                                             ),
                                         )
                                         .with_suggestion(
-                                            "Add \"timeout\": 30 to prevent long-running hooks"
+                                            "Add a \"timeout\" field (e.g., 30 for prompt hooks)"
                                                 .to_string(),
                                         ),
                                     );
+                                }
+                                if let Some(t) = timeout {
+                                    if *t > PROMPT_HOOK_DEFAULT_TIMEOUT {
+                                        diagnostics.push(
+                                            Diagnostic::warning(
+                                                path.to_path_buf(),
+                                                1,
+                                                0,
+                                                "CC-HK-010",
+                                                format!(
+                                                    "Prompt hook at {} has timeout {}s exceeding {}s default",
+                                                    hook_location, t, PROMPT_HOOK_DEFAULT_TIMEOUT
+                                                ),
+                                            )
+                                            .with_suggestion(
+                                                format!("Consider timeout <= {}s (30-second default limit)", PROMPT_HOOK_DEFAULT_TIMEOUT),
+                                            ),
+                                        );
+                                    }
                                 }
                             }
 
@@ -1899,14 +1897,15 @@ mod tests {
     }
 
     #[test]
-    fn test_cc_hk_010_timeout_exceeds_default_warns() {
+    fn test_cc_hk_010_command_timeout_exceeds_default() {
+        // Command hooks have 600s default - 700 should warn
         let content = r#"{
             "hooks": {
                 "PreToolUse": [
                     {
                         "matcher": "Bash",
                         "hooks": [
-                            { "type": "command", "command": "echo test", "timeout": 120 }
+                            { "type": "command", "command": "echo test", "timeout": 700 }
                         ]
                     }
                 ]
@@ -1921,7 +1920,82 @@ mod tests {
 
         assert_eq!(cc_hk_010.len(), 1);
         assert_eq!(cc_hk_010[0].level, DiagnosticLevel::Warning);
-        assert!(cc_hk_010[0].message.contains("exceeds the default"));
+        assert!(cc_hk_010[0].message.contains("exceeding 600s default"));
+    }
+
+    #[test]
+    fn test_cc_hk_010_command_timeout_at_default_ok() {
+        // Command hooks have 600s default - 600 should NOT warn
+        let content = r#"{
+            "hooks": {
+                "PreToolUse": [
+                    {
+                        "matcher": "Bash",
+                        "hooks": [
+                            { "type": "command", "command": "echo test", "timeout": 600 }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+        let diagnostics = validate(content);
+        let cc_hk_010: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-HK-010")
+            .collect();
+
+        assert_eq!(cc_hk_010.len(), 0);
+    }
+
+    #[test]
+    fn test_cc_hk_010_prompt_timeout_exceeds_default() {
+        // Prompt hooks have 30s default - 45 should warn
+        let content = r#"{
+            "hooks": {
+                "Stop": [
+                    {
+                        "hooks": [
+                            { "type": "prompt", "prompt": "test prompt", "timeout": 45 }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+        let diagnostics = validate(content);
+        let cc_hk_010: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-HK-010")
+            .collect();
+
+        assert_eq!(cc_hk_010.len(), 1);
+        assert_eq!(cc_hk_010[0].level, DiagnosticLevel::Warning);
+        assert!(cc_hk_010[0].message.contains("exceeding 30s default"));
+    }
+
+    #[test]
+    fn test_cc_hk_010_prompt_timeout_at_default_ok() {
+        // Prompt hooks have 30s default - 30 should NOT warn
+        let content = r#"{
+            "hooks": {
+                "Stop": [
+                    {
+                        "hooks": [
+                            { "type": "prompt", "prompt": "test prompt", "timeout": 30 }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+        let diagnostics = validate(content);
+        let cc_hk_010: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-HK-010")
+            .collect();
+
+        assert_eq!(cc_hk_010.len(), 0);
     }
 
     #[test]

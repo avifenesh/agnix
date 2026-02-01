@@ -238,12 +238,14 @@
 **Fix**: Warn, suggest safer alternative
 **Source**: awesome-slash/enhance-hooks
 
-### CC-HK-010 [MEDIUM] No Timeout Specified
-**Requirement**: Timeout is optional, but long-running hooks SHOULD set one
-**Detection**: `hook.timeout.is_none()`
-**Policy**: Soft warning if `hook.timeout > 60` (exceeds default limit; may be intentional)
-**Fix**: Add `"timeout": 30` (or reduce to <= 60 if unintentionally long)
-**Source**: docs.claude.com/en/docs/claude-code/hooks
+### CC-HK-010 [MEDIUM] Timeout Policy
+**Requirement**: Hooks SHOULD have explicit timeout; excessive timeouts warn
+**Detection**:
+  - `hook.timeout.is_none()` - missing timeout
+  - Command: `timeout > 600` exceeds 10-min default
+  - Prompt: `timeout > 30` exceeds 30s default
+**Fix**: Add explicit timeout within default limits (600s for commands, 30s for prompts)
+**Source**: code.claude.com/docs/en/hooks
 
 ### CC-HK-011 [HIGH] Invalid Timeout Value
 **Requirement**: timeout MUST be positive integer

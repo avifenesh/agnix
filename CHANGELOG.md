@@ -131,7 +131,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Config structure enhanced with category-based toggles (legacy flags still supported)
 - Knowledge base docs refreshed (rule counts, AGENTS.md support tiers, Cursor rules)
 - Fixture layout aligned with detector paths to ensure validators exercise fixtures directly
-- CC-HK-010 now treats timeouts above the default limit as a soft warning
+- CC-HK-010 timeout thresholds now align with official Claude Code documentation
+  - Command hooks: warn when timeout > 600s (10-minute default)
+  - Prompt hooks: warn when timeout > 30s (30-second default)
 
 ### Performance
 - Significant speed improvements on projects with many files
