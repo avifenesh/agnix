@@ -93,23 +93,24 @@ pub fn check_markdown_validity(content: &str) -> Vec<MarkdownValidityIssue> {
                     let after_match = &line[mat.end()..];
                     if !after_match.starts_with(')') && !matched_str.ends_with(')') {
                         // Check if this is actually incomplete
-                        let has_close_paren = matched_str.matches('(').count()
-                            == matched_str.matches(')').count();
+                        let has_close_paren =
+                            matched_str.matches('(').count() == matched_str.matches(')').count();
                         if !has_close_paren {
                             results.push(MarkdownValidityIssue {
                                 line: line_num + 1,
                                 column: mat.start(),
                                 issue_type: MarkdownIssueType::MalformedLink,
-                                description: "Malformed markdown link (missing closing parenthesis)"
-                                    .to_string(),
+                                description:
+                                    "Malformed markdown link (missing closing parenthesis)"
+                                        .to_string(),
                             });
                         }
                     }
                 }
                 // Check for [text][ without closing bracket
                 if matched_str.contains("][") && !matched_str.ends_with(']') {
-                    let has_close_bracket = matched_str.matches('[').count()
-                        == matched_str.matches(']').count();
+                    let has_close_bracket =
+                        matched_str.matches('[').count() == matched_str.matches(']').count();
                     if !has_close_bracket {
                         results.push(MarkdownValidityIssue {
                             line: line_num + 1,
@@ -613,7 +614,10 @@ Run npm install and npm build.
 "#;
         let result = check_project_context(content);
         assert!(result.is_some());
-        assert!(result.unwrap().description.contains("Missing project context"));
+        assert!(result
+            .unwrap()
+            .description
+            .contains("Missing project context"));
     }
 
     #[test]
@@ -773,7 +777,9 @@ agent: something
             .iter()
             .map(|r| r.path.to_string_lossy().to_string())
             .collect();
-        assert!(result_paths.iter().any(|p| p.contains("project/a/AGENTS.md")));
+        assert!(result_paths
+            .iter()
+            .any(|p| p.contains("project/a/AGENTS.md")));
         assert!(result_paths
             .iter()
             .any(|p| p.contains("project/a/b/AGENTS.md")));
