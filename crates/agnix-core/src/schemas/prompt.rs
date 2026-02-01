@@ -107,12 +107,15 @@ fn simple_task_indicator_pattern() -> &'static Regex {
 ///
 /// Research shows that CoT can actually hurt performance on simple, direct tasks
 /// that don't require multi-step reasoning (Wei et al., 2022).
+///
+/// Only flags CoT phrases that are within proximity (5 lines) of a simple task indicator
+/// to avoid false positives when complex and simple tasks are in the same document.
 pub fn find_cot_on_simple_tasks(content: &str) -> Vec<CotOnSimpleTask> {
     let mut results = Vec::new();
     let cot_pattern = cot_phrase_pattern();
     let simple_pattern = simple_task_indicator_pattern();
 
-    // Check if this content describes a simple task
+    // Collect all simple task indicators with their line numbers
     let simple_tasks: Vec<_> = content
         .lines()
         .enumerate()
@@ -127,17 +130,27 @@ pub fn find_cot_on_simple_tasks(content: &str) -> Vec<CotOnSimpleTask> {
         return results;
     }
 
-    // Find CoT phrases in the same document
+    // Find CoT phrases and check proximity to simple task indicators
     for (line_num, line) in content.lines().enumerate() {
         if let Some(mat) = cot_pattern.find(line) {
-            // Report CoT found in a simple-task context
-            if let Some((_, task)) = simple_tasks.first() {
-                results.push(CotOnSimpleTask {
-                    line: line_num + 1,
-                    column: mat.start(),
-                    phrase: mat.as_str().to_string(),
-                    task_indicator: task.clone(),
-                });
+            // Only flag if CoT is within 5 lines of a simple task indicator
+            for (task_line, task) in &simple_tasks {
+                let distance = if line_num > *task_line {
+                    line_num - task_line
+                } else {
+                    task_line - line_num
+                };
+
+                // Proximity threshold: 5 lines
+                if distance <= 5 {
+                    results.push(CotOnSimpleTask {
+                        line: line_num + 1,
+                        column: mat.start(),
+                        phrase: mat.as_str().to_string(),
+                        task_indicator: task.clone(),
+                    });
+                    break; // Only report once per CoT phrase
+                }
             }
         }
     }
@@ -167,7 +180,8 @@ fn weak_language_pattern() -> &'static Regex {
 
 fn critical_section_pattern() -> &'static Regex {
     CRITICAL_SECTION_PATTERN.get_or_init(|| {
-        Regex::new(r"(?i)^#+\s*.*(critical|important|required|mandatory|rules|must|essential|security|danger)")
+        // Use word boundaries to avoid matching substrings like "Hypercritical"
+        Regex::new(r"(?i)^#+\s*.*\b(critical|important|required|mandatory|rules|must|essential|security|danger)\b")
             .unwrap()
     })
 }
@@ -238,20 +252,41 @@ fn ambiguous_term_pattern() -> &'static Regex {
 pub fn find_ambiguous_instructions(content: &str) -> Vec<AmbiguousInstruction> {
     let mut results = Vec::new();
     let pattern = ambiguous_term_pattern();
+    let mut in_code_block = false;
 
     for (line_num, line) in content.lines().enumerate() {
-        // Skip lines that are clearly code blocks or examples
-        if line.trim_start().starts_with("```")
-            || line.trim_start().starts_with("//")
-            || line.trim_start().starts_with("#!")
-        {
+        let trimmed = line.trim_start();
+
+        // Track fenced code block state
+        if trimmed.starts_with("```") {
+            in_code_block = !in_code_block;
+            continue;
+        }
+
+        // Skip content inside code blocks
+        if in_code_block {
+            continue;
+        }
+
+        // Skip comment lines and shebang
+        if trimmed.starts_with("//") || trimmed.starts_with("#!") {
             continue;
         }
 
         for mat in pattern.find_iter(line) {
-            // Extract some context around the match
-            let start = mat.start().saturating_sub(20);
-            let end = (mat.end() + 20).min(line.len());
+            // Extract context using UTF-8 safe slicing to avoid panics
+            let start = line
+                .char_indices()
+                .map(|(i, _)| i)
+                .filter(|&i| i <= mat.start().saturating_sub(20))
+                .last()
+                .unwrap_or(0);
+            let end = line
+                .char_indices()
+                .map(|(i, _)| i)
+                .filter(|&i| i >= (mat.end() + 20).min(line.len()))
+                .next()
+                .unwrap_or(line.len());
             let context = line[start..end].to_string();
 
             results.push(AmbiguousInstruction {
@@ -477,10 +512,26 @@ When appropriate, do Z.
     fn test_skip_code_blocks() {
         let content = r#"```rust
 // Usually this is fine in comments
-fn main() {}
+fn usually_called() {}
 ```"#;
         let results = find_ambiguous_instructions(content);
-        // Should skip code blocks and comments
+        // Should skip entire fenced code block contents
+        assert!(results.is_empty());
+    }
+
+    #[test]
+    fn test_skip_multiline_code_blocks() {
+        let content = r#"Some text here.
+
+```
+function usually_runs() {
+  // usually in code
+}
+```
+
+More text after."#;
+        let results = find_ambiguous_instructions(content);
+        // Should skip all lines inside the fenced code block
         assert!(results.is_empty());
     }
 
@@ -544,14 +595,12 @@ Never include sensitive data.
 You should do X.
 "#;
         let results = find_weak_imperative_language(content);
-        // Current behavior: "Hypercritical" contains "critical" so it matches
-        // The regex pattern uses .* before the keyword, so substrings are matched
-        assert_eq!(
-            results.len(),
-            1,
-            "Hypercritical currently matches critical pattern"
+        // With word boundaries, "Hypercritical" should NOT match "critical"
+        // so this should not be detected as a critical section
+        assert!(
+            results.is_empty(),
+            "Hypercritical should not match critical with word boundaries"
         );
-        assert_eq!(results[0].weak_term.to_lowercase(), "should");
     }
 
     #[test]

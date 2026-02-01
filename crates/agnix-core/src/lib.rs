@@ -1058,7 +1058,7 @@ Never include sensitive data.
 
         // Create a README.md with PE-* issues
         // Need exactly 20 lines with critical at line 10 (50%)
-        let mut lines = vec![
+        let lines = vec![
             "# Project Documentation",
             "",
             "Line 1",
@@ -1114,7 +1114,7 @@ Never include sensitive data.
         let skill_path = temp.path().join("SKILL.md");
 
         // Build content with exactly 20 lines total, critical at line 10 (50%)
-        let mut lines = vec![
+        let lines = vec![
             "---",
             "name: analyze-code",
             "description: Use when analyzing code",
