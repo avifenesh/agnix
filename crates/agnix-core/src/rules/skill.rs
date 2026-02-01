@@ -31,6 +31,17 @@ const KNOWN_TOOLS: &[&str] = &[
 /// Maximum dynamic injections for CC-SK-009
 const MAX_INJECTIONS: usize = 3;
 
+/// Find line number of a field in YAML frontmatter
+fn find_field_line(content: &str, field: &str) -> usize {
+    content
+        .lines()
+        .position(|line| {
+            let trimmed = line.trim();
+            trimmed.starts_with(field) && trimmed[field.len()..].starts_with(':')
+        })
+        .map_or(1, |i| i + 1)
+}
+
 pub struct SkillValidator;
 
 impl Validator for SkillValidator {
@@ -158,10 +169,11 @@ impl Validator for SkillValidator {
                 if config.is_rule_enabled("CC-SK-001") {
                     if let Some(model) = &schema.model {
                         if !VALID_MODELS.contains(&model.as_str()) {
+                            let line = find_field_line(content, "model");
                             diagnostics.push(
                                 Diagnostic::error(
                                     path.to_path_buf(),
-                                    1,
+                                    line,
                                     0,
                                     "CC-SK-001",
                                     format!(
@@ -183,10 +195,11 @@ impl Validator for SkillValidator {
                 if config.is_rule_enabled("CC-SK-002") {
                     if let Some(context) = &schema.context {
                         if context != "fork" {
+                            let line = find_field_line(content, "context");
                             diagnostics.push(
                                 Diagnostic::error(
                                     path.to_path_buf(),
-                                    1,
+                                    line,
                                     0,
                                     "CC-SK-002",
                                     format!(
@@ -208,10 +221,11 @@ impl Validator for SkillValidator {
                     && schema.context.as_deref() == Some("fork")
                     && schema.agent.is_none()
                 {
+                    let line = find_field_line(content, "context");
                     diagnostics.push(
                         Diagnostic::error(
                             path.to_path_buf(),
-                            1,
+                            line,
                             0,
                             "CC-SK-003",
                             "Context 'fork' requires an 'agent' field".to_string(),
@@ -227,10 +241,11 @@ impl Validator for SkillValidator {
                     && schema.agent.is_some()
                     && schema.context.as_deref() != Some("fork")
                 {
+                    let line = find_field_line(content, "agent");
                     diagnostics.push(
                         Diagnostic::error(
                             path.to_path_buf(),
-                            1,
+                            line,
                             0,
                             "CC-SK-004",
                             "Agent field requires 'context: fork'".to_string(),
@@ -243,10 +258,11 @@ impl Validator for SkillValidator {
                 if config.is_rule_enabled("CC-SK-005") {
                     if let Some(agent) = &schema.agent {
                         if !VALID_AGENTS.contains(&agent.as_str()) {
+                            let line = find_field_line(content, "agent");
                             diagnostics.push(
                                 Diagnostic::error(
                                     path.to_path_buf(),
-                                    1,
+                                    line,
                                     0,
                                     "CC-SK-005",
                                     format!(
@@ -267,6 +283,7 @@ impl Validator for SkillValidator {
                 // CC-SK-008: Unknown tool name
                 if config.is_rule_enabled("CC-SK-008") {
                     if let Some(ref tools) = tool_list {
+                        let tools_line = find_field_line(content, "allowed-tools");
                         for tool in tools {
                             // Extract base tool name (before parentheses for scoped tools)
                             let base_name = tool.split('(').next().unwrap_or(tool);
@@ -274,7 +291,7 @@ impl Validator for SkillValidator {
                                 diagnostics.push(
                                     Diagnostic::error(
                                         path.to_path_buf(),
-                                        1,
+                                        tools_line,
                                         0,
                                         "CC-SK-008",
                                         format!(
@@ -294,8 +311,9 @@ impl Validator for SkillValidator {
                 }
 
                 // CC-SK-009: Too many injections (warning)
+                // Count across full content (frontmatter + body) per VALIDATION-RULES.md
                 if config.is_rule_enabled("CC-SK-009") {
-                    let injection_count = body.matches("!`").count();
+                    let injection_count = content.matches("!`").count();
                     if injection_count > MAX_INJECTIONS {
                         diagnostics.push(
                             Diagnostic::warning(
@@ -1139,7 +1157,7 @@ Body"#;
     }
 
     #[test]
-    fn test_cc_sk_007_duplicate_bash_single_warning() {
+    fn test_cc_sk_007_duplicate_bash_multiple_warnings() {
         let content = r#"---
 name: test-skill
 description: Use when testing
