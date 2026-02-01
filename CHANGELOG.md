@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Claude Memory validation rules CC-MEM-004, CC-MEM-006 through CC-MEM-010
+  - CC-MEM-004: Validates npm scripts referenced in CLAUDE.md exist in package.json
+  - CC-MEM-006: Detects negative instructions ("don't", "never") without positive alternatives
+  - CC-MEM-007: Warns about weak constraint language ("should", "try") in critical sections
+  - CC-MEM-008: Detects critical content in middle of document (lost in the middle effect)
+  - CC-MEM-009: Warns when file exceeds ~1500 tokens, suggests using @imports
+  - CC-MEM-010: Detects significant overlap (>40%) between CLAUDE.md and README.md
 - SARIF 2.1.0 output format with `--format sarif` CLI option for CI/CD integration
   - Full SARIF 2.1.0 specification compliance with JSON schema validation
   - Includes all 80 validation rules in driver.rules with help URIs
