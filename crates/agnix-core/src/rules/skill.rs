@@ -191,7 +191,8 @@ impl Validator for SkillValidator {
                                     ),
                                 )
                                 .with_suggestion(
-                                    "Set context to 'fork' or remove the field entirely".to_string(),
+                                    "Set context to 'fork' or remove the field entirely"
+                                        .to_string(),
                                 ),
                             );
                         }
