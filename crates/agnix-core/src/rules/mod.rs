@@ -7,6 +7,7 @@ pub mod hooks;
 pub mod imports;
 pub mod mcp;
 pub mod plugin;
+pub mod prompt;
 pub mod skill;
 pub mod xml;
 
