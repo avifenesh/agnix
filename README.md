@@ -22,6 +22,7 @@ agnix .
 - ✅ **Hooks** - Event and config validation (CC-HK-001 to CC-HK-011)
 - ✅ **Parallel Validation** - Fast processing of large projects using rayon
 - ✅ **MCP Tools** - Schema and tool validation (MCP-001 to MCP-006)
+- ✅ **Cross-Platform** - AGENTS.md validation, platform-specific feature detection (XP-001 to XP-003)
 - 🚧 **LSP Server** - Real-time diagnostics (coming soon)
 
 ## Installation
