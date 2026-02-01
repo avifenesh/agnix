@@ -22,29 +22,15 @@ const MAX_IMPORT_DEPTH: usize = 5;
 
 /// Check if a URL is a local file link (not external or anchor-only)
 fn is_local_file_link(url: &str) -> bool {
-    // Skip external URLs
-    if url.starts_with("http://")
-        || url.starts_with("https://")
-        || url.starts_with("mailto:")
-        || url.starts_with("tel:")
-        || url.starts_with("data:")
-        || url.starts_with("ftp://")
-        || url.starts_with("//")
-    {
+    const EXTERNAL_PREFIXES: &[&str] = &[
+        "http://", "https://", "mailto:", "tel:", "data:", "ftp://", "file://", "//",
+    ];
+
+    if EXTERNAL_PREFIXES.iter().any(|p| url.starts_with(p)) {
         return false;
     }
 
-    // Skip pure anchor links
-    if url.starts_with('#') {
-        return false;
-    }
-
-    // Skip empty URLs
-    if url.is_empty() {
-        return false;
-    }
-
-    true
+    !url.is_empty() && !url.starts_with('#')
 }
 
 /// Strip URL fragment (e.g., "file.md#section" -> "file.md")
@@ -285,13 +271,19 @@ fn validate_markdown_links(
         // Strip fragment to get the file path
         let file_path = strip_fragment(&link.url);
 
-        // Skip if only fragment was left (e.g., "#section")
-        if file_path.is_empty() {
-            continue;
-        }
-
         // Resolve the path relative to the file's directory
         let resolved = resolve_import_path(file_path, base_dir);
+
+        // Security: Verify resolved path stays within project root
+        // Normalize the resolved path to detect path traversal attempts
+        if let Ok(canonical_resolved) = std::fs::canonicalize(&resolved) {
+            if let Ok(canonical_base) = std::fs::canonicalize(base_dir) {
+                if !canonical_resolved.starts_with(&canonical_base) {
+                    // Path traversal attempt detected - skip this link
+                    continue;
+                }
+            }
+        }
 
         // Check if file exists
         if !resolved.exists() {
