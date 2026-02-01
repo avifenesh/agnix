@@ -1658,7 +1658,14 @@ Body"#,
     #[test]
     fn test_cc_sk_005_valid_custom_agents() {
         // Custom agents in kebab-case should be valid
-        for agent in &["my-custom-agent", "code-review", "deploy-helper", "a", "agent123", "my-agent-v2"] {
+        for agent in &[
+            "my-custom-agent",
+            "code-review",
+            "deploy-helper",
+            "a",
+            "agent123",
+            "my-agent-v2",
+        ] {
             let content = format!(
                 r#"---
 name: test-skill
@@ -1679,7 +1686,12 @@ Body"#,
                 .filter(|d| d.rule == "CC-SK-005")
                 .collect();
 
-            assert_eq!(cc_sk_005.len(), 0, "Custom agent '{}' should be valid", agent);
+            assert_eq!(
+                cc_sk_005.len(),
+                0,
+                "Custom agent '{}' should be valid",
+                agent
+            );
         }
     }
 
@@ -1802,7 +1814,12 @@ Body"#,
                 .filter(|d| d.rule == "CC-SK-005")
                 .collect();
 
-            assert_eq!(cc_sk_005.len(), 1, "Agent '{}' with special chars should be rejected", agent);
+            assert_eq!(
+                cc_sk_005.len(),
+                1,
+                "Agent '{}' with special chars should be rejected",
+                agent
+            );
         }
     }
 
@@ -1845,7 +1862,11 @@ Body"#;
             .filter(|d| d.rule == "CC-SK-005")
             .collect();
 
-        assert_eq!(cc_sk_005.len(), 1, "Agent with leading hyphen should be rejected");
+        assert_eq!(
+            cc_sk_005.len(),
+            1,
+            "Agent with leading hyphen should be rejected"
+        );
     }
 
     #[test]
@@ -1866,7 +1887,11 @@ Body"#;
             .filter(|d| d.rule == "CC-SK-005")
             .collect();
 
-        assert_eq!(cc_sk_005.len(), 1, "Agent with trailing hyphen should be rejected");
+        assert_eq!(
+            cc_sk_005.len(),
+            1,
+            "Agent with trailing hyphen should be rejected"
+        );
     }
 
     #[test]
@@ -1887,37 +1912,53 @@ Body"#;
             .filter(|d| d.rule == "CC-SK-005")
             .collect();
 
-        assert_eq!(cc_sk_005.len(), 1, "Agent with consecutive hyphens should be rejected");
+        assert_eq!(
+            cc_sk_005.len(),
+            1,
+            "Agent with consecutive hyphens should be rejected"
+        );
     }
 
     #[test]
     fn test_cc_sk_005_fixture_invalid_agent() {
-        let content = include_str!("../../../../tests/fixtures/invalid/skills/invalid-agent/SKILL.md");
+        let content =
+            include_str!("../../../../tests/fixtures/invalid/skills/invalid-agent/SKILL.md");
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("SKILL.md"), content, &LintConfig::default());
+        let diagnostics =
+            validator.validate(Path::new("SKILL.md"), content, &LintConfig::default());
 
         let cc_sk_005: Vec<_> = diagnostics
             .iter()
             .filter(|d| d.rule == "CC-SK-005")
             .collect();
 
-        assert_eq!(cc_sk_005.len(), 1, "Invalid agent fixture should trigger CC-SK-005");
+        assert_eq!(
+            cc_sk_005.len(),
+            1,
+            "Invalid agent fixture should trigger CC-SK-005"
+        );
     }
 
     #[test]
     fn test_cc_sk_005_fixture_valid_custom_agent() {
-        let content = include_str!("../../../../tests/fixtures/valid/skills/with-custom-agent/SKILL.md");
+        let content =
+            include_str!("../../../../tests/fixtures/valid/skills/with-custom-agent/SKILL.md");
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("SKILL.md"), content, &LintConfig::default());
+        let diagnostics =
+            validator.validate(Path::new("SKILL.md"), content, &LintConfig::default());
 
         let cc_sk_005: Vec<_> = diagnostics
             .iter()
             .filter(|d| d.rule == "CC-SK-005")
             .collect();
 
-        assert_eq!(cc_sk_005.len(), 0, "Valid custom agent fixture should pass CC-SK-005");
+        assert_eq!(
+            cc_sk_005.len(),
+            0,
+            "Valid custom agent fixture should pass CC-SK-005"
+        );
     }
 
     // ===== CC-SK-008: Unknown Tool Name =====
