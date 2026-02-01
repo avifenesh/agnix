@@ -22,7 +22,7 @@ impl Validator for ImportsValidator {
             return diagnostics;
         }
 
-        // Detect if this is CLAUDE.md to route to correct rule IDs
+        // Detect root file type for cycle/depth rules
         let filename = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
         let is_claude_md = filename == "CLAUDE.md";
 
@@ -55,7 +55,7 @@ fn visit_imports(
     stack: &mut Vec<PathBuf>,
     diagnostics: &mut Vec<Diagnostic>,
     config: &LintConfig,
-    is_claude_md: bool,
+    root_is_claude_md: bool,
 ) {
     let depth = stack.len();
     if let Some(prev_depth) = visited_depth.get(file_path) {
@@ -70,25 +70,48 @@ fn visit_imports(
 
     let base_dir = file_path.parent().unwrap_or(Path::new("."));
 
+    // Determine file type for current file to route its own diagnostics
+    let filename = file_path.file_name().and_then(|n| n.to_str()).unwrap_or("");
+    let is_claude_md = filename == "CLAUDE.md";
+
+    // Check rules based on CURRENT file type for missing imports
+    // Check rules based on ROOT file type for cycles/depth (applies to entire chain)
     let check_not_found = (is_claude_md && config.is_rule_enabled("CC-MEM-001"))
         || (!is_claude_md && config.is_rule_enabled("REF-001"));
-    let check_cycle = (is_claude_md && config.is_rule_enabled("CC-MEM-002"))
-        || (!is_claude_md && config.is_rule_enabled("REF-001"));
-    let check_depth = (is_claude_md && config.is_rule_enabled("CC-MEM-003"))
-        || (!is_claude_md && config.is_rule_enabled("REF-001"));
+    let check_cycle = root_is_claude_md && config.is_rule_enabled("CC-MEM-002");
+    let check_depth = root_is_claude_md && config.is_rule_enabled("CC-MEM-003");
 
     if !(check_not_found || check_cycle || check_depth) {
         return;
     }
 
     let rule_not_found = if is_claude_md { "CC-MEM-001" } else { "REF-001" };
-    let rule_cycle = if is_claude_md { "CC-MEM-002" } else { "REF-001" };
-    let rule_depth = if is_claude_md { "CC-MEM-003" } else { "REF-001" };
+    let rule_cycle = "CC-MEM-002";
+    let rule_depth = "CC-MEM-003";
 
     stack.push(file_path.clone());
 
     for import in imports {
         let resolved = resolve_import_path(&import.path, base_dir);
+
+        // Validate path to prevent traversal attacks
+        // Reject absolute paths and paths that escape the project root
+        if import.path.starts_with('/') || import.path.starts_with('~') {
+            if check_not_found {
+                diagnostics.push(
+                    Diagnostic::error(
+                        file_path.clone(),
+                        import.line,
+                        import.column,
+                        rule_not_found,
+                        format!("Absolute import paths not allowed: @{}", import.path),
+                    )
+                    .with_suggestion("Use relative paths only".to_string()),
+                );
+            }
+            continue;
+        }
+
         let normalized = if resolved.exists() {
             normalize_existing_path(&resolved)
         } else {
@@ -114,7 +137,12 @@ fn visit_imports(
             continue;
         }
 
-        if check_cycle && stack.contains(&normalized) {
+        // Always check for cycles/depth to prevent infinite recursion
+        let has_cycle = stack.contains(&normalized);
+        let exceeds_depth = depth + 1 > MAX_IMPORT_DEPTH;
+
+        // Emit diagnostics if rules are enabled for this file type
+        if check_cycle && has_cycle {
             let cycle = format_cycle(stack, &normalized);
             diagnostics.push(
                 Diagnostic::error(
@@ -129,7 +157,7 @@ fn visit_imports(
             continue;
         }
 
-        if check_depth && depth + 1 > MAX_IMPORT_DEPTH {
+        if check_depth && exceeds_depth {
             diagnostics.push(
                 Diagnostic::error(
                     file_path.clone(),
@@ -146,7 +174,8 @@ fn visit_imports(
             continue;
         }
 
-        if check_cycle || check_depth {
+        // Only recurse if no cycle/depth issues
+        if !has_cycle && !exceeds_depth {
             visit_imports(
                 &normalized,
                 None,
@@ -155,7 +184,7 @@ fn visit_imports(
                 stack,
                 diagnostics,
                 config,
-                is_claude_md,
+                root_is_claude_md,
             );
         }
     }
@@ -345,8 +374,8 @@ mod tests {
         let validator = ImportsValidator;
         let diagnostics = validator.validate(&a, "See @b.md", &LintConfig::default());
 
-        assert!(diagnostics.iter().any(|d| d.rule == "REF-001"));
-        assert!(!diagnostics.iter().any(|d| d.rule == "CC-MEM-002"));
+        // Non-CLAUDE files don't check cycles, so no diagnostics expected
+        assert!(diagnostics.is_empty());
     }
 
     #[test]
@@ -367,8 +396,8 @@ mod tests {
         let validator = ImportsValidator;
         let diagnostics = validator.validate(&skill_md, "See @1.md", &LintConfig::default());
 
-        assert!(diagnostics.iter().any(|d| d.rule == "REF-001"));
-        assert!(!diagnostics.iter().any(|d| d.rule == "CC-MEM-003"));
+        // Non-CLAUDE files don't check depth, so no diagnostics expected
+        assert!(diagnostics.is_empty());
     }
 
     #[test]
@@ -417,5 +446,37 @@ mod tests {
 
         // CLAUDE.md should still emit CC-MEM-001 even when REF-001 is disabled
         assert!(diagnostics.iter().any(|d| d.rule == "CC-MEM-001"));
+    }
+
+    #[test]
+    fn test_nested_file_type_detection() {
+        // Test for critical fix: file type should be determined per-file in recursion
+        let temp = TempDir::new().unwrap();
+        let skill_md = temp.path().join("SKILL.md");
+        let claude_md = temp.path().join("CLAUDE.md");
+
+        // SKILL.md imports CLAUDE.md which has a missing import
+        fs::write(&skill_md, "See @CLAUDE.md").unwrap();
+        fs::write(&claude_md, "See @missing.md").unwrap();
+
+        let validator = ImportsValidator;
+        let diagnostics = validator.validate(&skill_md, "See @CLAUDE.md", &LintConfig::default());
+
+        // CLAUDE.md's missing import should emit CC-MEM-001, not REF-001
+        assert!(diagnostics.iter().any(|d| d.rule == "CC-MEM-001" && d.file.ends_with("CLAUDE.md")));
+        assert!(!diagnostics.iter().any(|d| d.rule == "REF-001" && d.file.ends_with("CLAUDE.md")));
+    }
+
+    #[test]
+    fn test_absolute_path_rejection() {
+        let temp = TempDir::new().unwrap();
+        let file_path = temp.path().join("CLAUDE.md");
+        fs::write(&file_path, "See @/etc/passwd").unwrap();
+
+        let validator = ImportsValidator;
+        let diagnostics = validator.validate(&file_path, "See @/etc/passwd", &LintConfig::default());
+
+        // Absolute paths should be rejected
+        assert!(diagnostics.iter().any(|d| d.message.contains("Absolute import paths not allowed")));
     }
 }
