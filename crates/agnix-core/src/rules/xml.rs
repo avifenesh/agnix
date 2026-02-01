@@ -14,34 +14,49 @@ impl Validator for XmlValidator {
     fn validate(&self, path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic> {
         let mut diagnostics = Vec::new();
 
-        // Check both new category flag and legacy flag for backward compatibility
-        if config.is_rule_enabled("xml::balance") && config.rules.xml_balance {
-            let tags = extract_xml_tags(content);
-            let errors = check_xml_balance(&tags);
+        // Early return if XML category is disabled or legacy flag is disabled
+        if !config.rules.xml || !config.rules.xml_balance {
+            return diagnostics;
+        }
 
-            for error in errors {
-                let (message, line, column) = match error {
-                    XmlBalanceError::Unclosed { tag, line, column } => {
-                        (format!("Unclosed XML tag '<{}>'", tag), line, column)
-                    }
-                    XmlBalanceError::UnmatchedClosing { tag, line, column } => {
-                        (format!("Unmatched closing tag '</{}>'", tag), line, column)
-                    }
-                    XmlBalanceError::Mismatch {
-                        expected,
-                        found,
-                        line,
-                        column,
-                    } => (
-                        format!("Expected '</{}>' but found '</{}>'", expected, found),
-                        line,
-                        column,
-                    ),
-                };
+        let tags = extract_xml_tags(content);
+        let errors = check_xml_balance(&tags);
 
+        for error in errors {
+            let (rule_id, message, line, column, suggestion) = match error {
+                XmlBalanceError::Unclosed { tag, line, column } => (
+                    "XML-001",
+                    format!("Unclosed XML tag '<{}>'", tag),
+                    line,
+                    column,
+                    format!("Add closing tag '</{}>", tag),
+                ),
+                XmlBalanceError::Mismatch {
+                    expected,
+                    found,
+                    line,
+                    column,
+                } => (
+                    "XML-002",
+                    format!("Expected '</{}>' but found '</{}>'", expected, found),
+                    line,
+                    column,
+                    format!("Replace '</{}>' with '</{}>'", found, expected),
+                ),
+                XmlBalanceError::UnmatchedClosing { tag, line, column } => (
+                    "XML-003",
+                    format!("Unmatched closing tag '</{}>'", tag),
+                    line,
+                    column,
+                    format!("Remove '</{}>' or add matching opening tag '<{}>'", tag, tag),
+                ),
+            };
+
+            // Check if specific rule is enabled before adding diagnostic
+            if config.is_rule_enabled(rule_id) {
                 diagnostics.push(
-                    Diagnostic::error(path.to_path_buf(), line, column, "xml::balance", message)
-                        .with_suggestion("Ensure all XML tags are properly closed".to_string()),
+                    Diagnostic::error(path.to_path_buf(), line, column, rule_id, message)
+                        .with_suggestion(suggestion),
                 );
             }
         }
