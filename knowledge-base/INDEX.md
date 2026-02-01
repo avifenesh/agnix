@@ -1,6 +1,6 @@
 # agnix Knowledge Base - Master Index
 
-> 565KB knowledge, 75+ sources, 5 research agents, 80 validation rules
+> 492KB knowledge, 75+ sources, 5 research agents, 80 validation rules
 
 ---
 
@@ -26,7 +26,7 @@ knowledge-base/
 ├── VALIDATION-RULES.md             # ⭐ Master validation reference (80 rules)
 ├── PATTERNS-CATALOG.md             # 70 production-tested patterns
 │
-├── standards/                      # 12 files, 9,934 lines, 267KB
+├── standards/                      # 12 files, 9,884 lines, 266KB
 │   ├── README.md                   # Standards navigation
 │   ├── RESEARCH-SUMMARY.md         # Research methodology
 │   │
@@ -45,14 +45,12 @@ knowledge-base/
 │   ├── prompt-engineering-HARD-RULES.md  # 16KB - Research-backed
 │   └── prompt-engineering-OPINIONS.md    # 21KB - Best practices
 │
-└── agent-docs/                     # 12 reference docs (mixed sources)
-    ├── AI-AGENT-ARCHITECTURE-RESEARCH.md
+└── agent-docs/                     # 10 reference docs (mixed sources)
     ├── CLAUDE-CODE-REFERENCE.md
     ├── CODEX-REFERENCE.md
     ├── OPENCODE-REFERENCE.md
     ├── PROMPT-ENGINEERING-REFERENCE.md
     ├── FUNCTION-CALLING-TOOL-USE-REFERENCE.md
-    ├── MULTI-AGENT-SYSTEMS-REFERENCE.md
     ├── LLM-INSTRUCTION-FOLLOWING-RELIABILITY.md
     ├── CONTEXT-OPTIMIZATION-REFERENCE.md
     └── KNOWLEDGE-LIBRARY.md
@@ -154,9 +152,7 @@ knowledge-base/
 
 ### For Context
 
-**Architecture**: [agent-docs/AI-AGENT-ARCHITECTURE-RESEARCH.md](./agent-docs/AI-AGENT-ARCHITECTURE-RESEARCH.md)
 **Prompt Engineering**: [prompt-engineering-HARD-RULES.md](./standards/prompt-engineering-HARD-RULES.md)
-**Multi-Agent Systems**: [agent-docs/MULTI-AGENT-SYSTEMS-REFERENCE.md](./agent-docs/MULTI-AGENT-SYSTEMS-REFERENCE.md)
 
 ---
 
@@ -246,9 +242,9 @@ Update knowledge base when:
 ## Statistics
 
 ```
-Total Documents:       28 files
-Total Lines:          19,953 lines
-Total Size:           565KB
+Total Documents:       26 files
+Total Lines:          17,654 lines
+Total Size:           492KB
 Standards Covered:     5 (Agent Skills, MCP, Claude Code, Multi-Platform, Prompt Eng)
 Sources Consulted:    75+ (specs, docs, research papers, repos)
 Research Agents:       5 (10+ sources each)

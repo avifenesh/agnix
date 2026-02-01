@@ -1173,49 +1173,6 @@ def set_location(location):
 
 ---
 
-### Error Recovery
-
-**RECOMMENDED Strategy**:
-
-```python
-from tenacity import retry, stop_after_attempt, wait_exponential
-
-@retry(
-    stop=stop_after_attempt(3),
-    wait=wait_exponential(multiplier=1, min=2, max=10)
-)
-async def call_external_api(url):
-    """Retry with exponential backoff"""
-    async with httpx.AsyncClient() as client:
-        response = await client.get(url, timeout=30.0)
-        response.raise_for_status()
-        return response.json()
-
-async def handle_tool_call(tool_name, args):
-    try:
-        result = await call_external_api(args["url"])
-        return success_response(result)
-    except httpx.HTTPStatusError as e:
-        logger.error(f"API error: {e.response.status_code}")
-        return error_response(f"API returned error: {e.response.status_code}")
-    except httpx.TimeoutException:
-        logger.error("API timeout")
-        return error_response("Request timed out after 30 seconds")
-    except Exception as e:
-        logger.exception("Unexpected error")
-        return error_response("Internal server error")
-```
-
-**Best Practices**:
-
-1. **Implement retries** → With exponential backoff for transient failures
-2. **Set timeouts** → Don't wait forever for external services
-3. **Distinguish error types** → Network vs. logic vs. data errors
-4. **Provide fallbacks** → Cached data, default values, graceful degradation
-5. **Log comprehensive context** → For post-mortem debugging
-
----
-
 ## Summary of Key Recommendations
 
 ### Naming (SHOULD)
@@ -1262,13 +1219,6 @@ async def handle_tool_call(tool_name, args):
 - ✅ Provide progress indicators
 - ✅ Enable cancellation
 - ✅ Make prompts discoverable via slash commands
-
-### Architecture (SHOULD)
-- ✅ Separate servers by domain
-- ✅ Keep tools single-purpose
-- ✅ Use composition for complex workflows
-- ✅ Isolate session state
-- ✅ Implement retry logic with exponential backoff
 
 ---
 

@@ -24,22 +24,12 @@
 - [OpenCode Reference](./OPENCODE-REFERENCE.md)
 - [Prompt Engineering Reference](./PROMPT-ENGINEERING-REFERENCE.md)
 - [Function Calling & Tool Use Reference](./FUNCTION-CALLING-TOOL-USE-REFERENCE.md)
-- [Multi-Agent Systems Reference](./MULTI-AGENT-SYSTEMS-REFERENCE.md)
 - [Instruction Following Reliability](./LLM-INSTRUCTION-FOLLOWING-RELIABILITY.md)
 - [Context Optimization Reference](./CONTEXT-OPTIMIZATION-REFERENCE.md)
 
 ---
 
 ## External Sources (Authoritative)
-
-### Agent Architecture & Design
-
-- Anthropic: Building Effective Agents  
-  https://www.anthropic.com/research/building-effective-agents
-- ReAct (Reasoning + Acting)  
-  https://arxiv.org/abs/2210.03629
-- Plan-and-Execute (Task Decomposition)  
-  https://arxiv.org/abs/2305.04091
 
 ### Prompt Engineering
 
@@ -63,13 +53,6 @@
   https://arxiv.org/abs/2307.03172
 - Anthropic: Prompting Best Practices  
   https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering
-
-### Multi-Agent Systems
-
-- Anthropic: Building Effective Agents (multi-agent section)  
-  https://www.anthropic.com/research/building-effective-agents
-- OpenAI: Agents SDK (design patterns)  
-  https://platform.openai.com/docs/guides/agents
 
 ### Platform-Specific Instruction Files
 

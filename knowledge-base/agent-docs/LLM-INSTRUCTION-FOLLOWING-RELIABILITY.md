@@ -703,9 +703,8 @@ Research distinguishes:
 
 1. **Keep schemas simple**: Complex nested structures require more retries
 2. **Validate inputs and outputs**: Don't trust tool calls blindly
-3. **Implement retries**: With exponential backoff
-4. **Log and monitor**: Track tool call success rates and failure patterns
-5. **Test multilingual scenarios**: If relevant to your use case
+3. **Log and monitor**: Track tool call success rates and failure patterns
+4. **Test multilingual scenarios**: If relevant to your use case
 
 ---
 
