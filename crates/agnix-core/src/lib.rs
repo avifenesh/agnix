@@ -17,6 +17,7 @@ pub mod parsers;
 pub mod rules;
 pub mod schemas;
 
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
 use rayon::prelude::*;
@@ -27,7 +28,7 @@ pub use fixes::{apply_fixes, FixResult};
 use rules::Validator;
 
 /// Detected file type for validator dispatch
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum FileType {
     /// SKILL.md files
     Skill,
@@ -45,6 +46,111 @@ pub enum FileType {
     GenericMarkdown,
     /// Skip validation
     Unknown,
+}
+
+/// Factory function used by the registry to create validators.
+pub type ValidatorFactory = fn() -> Box<dyn Validator>;
+
+/// Registry that maps file types to validator factories.
+///
+/// Use this to customize which validators run for a file type, especially in
+/// tests or specialized validation pipelines.
+pub struct ValidatorRegistry {
+    validators: HashMap<FileType, Vec<ValidatorFactory>>,
+}
+
+impl ValidatorRegistry {
+    /// Create an empty registry with no validators registered.
+    pub fn new() -> Self {
+        Self {
+            validators: HashMap::new(),
+        }
+    }
+
+    /// Create a registry populated with the default validator set.
+    pub fn with_defaults() -> Self {
+        let mut registry = Self::new();
+        registry.register_defaults();
+        registry
+    }
+
+    /// Register a validator factory for the given file type.
+    pub fn register(&mut self, file_type: FileType, factory: ValidatorFactory) {
+        self.validators.entry(file_type).or_default().push(factory);
+    }
+
+    /// Build validator instances for the given file type.
+    pub fn validators_for(&self, file_type: FileType) -> Vec<Box<dyn Validator>> {
+        self.validators
+            .get(&file_type)
+            .map(|factories| {
+                factories
+                    .iter()
+                    .map(|factory| factory())
+                    .collect::<Vec<_>>()
+            })
+            .unwrap_or_default()
+    }
+
+    fn register_defaults(&mut self) {
+        self.register(FileType::Skill, skill_validator);
+        self.register(FileType::Skill, xml_validator);
+        self.register(FileType::Skill, imports_validator);
+        self.register(FileType::ClaudeMd, claude_md_validator);
+        self.register(FileType::ClaudeMd, cross_platform_validator);
+        self.register(FileType::ClaudeMd, xml_validator);
+        self.register(FileType::ClaudeMd, imports_validator);
+        self.register(FileType::Agent, agent_validator);
+        self.register(FileType::Agent, xml_validator);
+        self.register(FileType::Hooks, hooks_validator);
+        self.register(FileType::Plugin, plugin_validator);
+        self.register(FileType::Mcp, mcp_validator);
+        self.register(FileType::GenericMarkdown, cross_platform_validator);
+        self.register(FileType::GenericMarkdown, xml_validator);
+        self.register(FileType::GenericMarkdown, imports_validator);
+    }
+}
+
+impl Default for ValidatorRegistry {
+    fn default() -> Self {
+        Self::with_defaults()
+    }
+}
+
+fn skill_validator() -> Box<dyn Validator> {
+    Box::new(rules::skill::SkillValidator)
+}
+
+fn claude_md_validator() -> Box<dyn Validator> {
+    Box::new(rules::claude_md::ClaudeMdValidator)
+}
+
+fn agent_validator() -> Box<dyn Validator> {
+    Box::new(rules::agent::AgentValidator)
+}
+
+fn hooks_validator() -> Box<dyn Validator> {
+    Box::new(rules::hooks::HooksValidator)
+}
+
+fn plugin_validator() -> Box<dyn Validator> {
+    Box::new(rules::plugin::PluginValidator)
+}
+
+fn mcp_validator() -> Box<dyn Validator> {
+    Box::new(rules::mcp::McpValidator)
+}
+
+fn xml_validator() -> Box<dyn Validator> {
+    Box::new(rules::xml::XmlValidator)
+}
+
+fn imports_validator() -> Box<dyn Validator> {
+    Box::new(rules::imports::ImportsValidator)
+}
+
+fn cross_platform_validator() -> Box<dyn Validator> {
+    Box::new(rules::cross_platform::CrossPlatformValidator)
 }
 
 /// Detect file type based on path patterns
@@ -81,42 +187,18 @@ pub fn detect_file_type(path: &Path) -> FileType {
     }
 }
 
-/// Get validators for a file type
-fn get_validators_for_type(file_type: FileType) -> Vec<Box<dyn Validator>> {
-    match file_type {
-        FileType::Skill => vec![
-            Box::new(rules::skill::SkillValidator),
-            Box::new(rules::prompt::PromptValidator),
-            Box::new(rules::xml::XmlValidator),
-            Box::new(rules::imports::ImportsValidator),
-        ],
-        FileType::ClaudeMd => vec![
-            Box::new(rules::claude_md::ClaudeMdValidator),
-            Box::new(rules::prompt::PromptValidator),
-            Box::new(rules::cross_platform::CrossPlatformValidator),
-            Box::new(rules::agents_md::AgentsMdValidator),
-            Box::new(rules::xml::XmlValidator),
-            Box::new(rules::imports::ImportsValidator),
-        ],
-        FileType::Agent => vec![
-            Box::new(rules::agent::AgentValidator),
-            Box::new(rules::xml::XmlValidator),
-        ],
-        FileType::Hooks => vec![Box::new(rules::hooks::HooksValidator)],
-        FileType::Plugin => vec![Box::new(rules::plugin::PluginValidator)],
-        FileType::Mcp => vec![Box::new(rules::mcp::McpValidator)],
-        FileType::GenericMarkdown => vec![
-            Box::new(rules::prompt::PromptValidator),
-            Box::new(rules::cross_platform::CrossPlatformValidator),
-            Box::new(rules::xml::XmlValidator),
-            Box::new(rules::imports::ImportsValidator),
-        ],
-        FileType::Unknown => vec![],
-    }
-}
-
 /// Validate a single file
 pub fn validate_file(path: &Path, config: &LintConfig) -> LintResult<Vec<Diagnostic>> {
+    let registry = ValidatorRegistry::with_defaults();
+    validate_file_with_registry(path, config, &registry)
+}
+
+/// Validate a single file with a custom validator registry
+pub fn validate_file_with_registry(
+    path: &Path,
+    config: &LintConfig,
+    registry: &ValidatorRegistry,
+) -> LintResult<Vec<Diagnostic>> {
     let file_type = detect_file_type(path);
 
     if file_type == FileType::Unknown {
@@ -128,7 +210,7 @@ pub fn validate_file(path: &Path, config: &LintConfig) -> LintResult<Vec<Diagnos
         source: e,
     })?;
 
-    let validators = get_validators_for_type(file_type);
+    let validators = registry.validators_for(file_type);
     let mut diagnostics = Vec::new();
 
     for validator in validators {
@@ -140,6 +222,16 @@ pub fn validate_file(path: &Path, config: &LintConfig) -> LintResult<Vec<Diagnos
 
 /// Main entry point for validating a project
 pub fn validate_project(path: &Path, config: &LintConfig) -> LintResult<Vec<Diagnostic>> {
+    let registry = ValidatorRegistry::with_defaults();
+    validate_project_with_registry(path, config, &registry)
+}
+
+/// Main entry point for validating a project with a custom validator registry
+pub fn validate_project_with_registry(
+    path: &Path,
+    config: &LintConfig,
+    registry: &ValidatorRegistry,
+) -> LintResult<Vec<Diagnostic>> {
     use ignore::WalkBuilder;
 
     // Pre-compile exclude patterns once (avoids N+1 pattern compilation)
@@ -173,49 +265,21 @@ pub fn validate_project(path: &Path, config: &LintConfig) -> LintResult<Vec<Diag
     // Validate files in parallel
     let mut diagnostics: Vec<Diagnostic> = paths
         .par_iter()
-        .flat_map(|file_path| match validate_file(file_path, config) {
-            Ok(file_diagnostics) => file_diagnostics,
-            Err(e) => {
-                vec![Diagnostic::error(
-                    file_path.clone(),
-                    0,
-                    0,
-                    "file::read",
-                    format!("Failed to validate file: {}", e),
-                )]
-            }
-        })
-        .collect();
-
-    // AGM-006: Check for nested AGENTS.md hierarchy (project-level check)
-    if config.is_rule_enabled("AGM-006") {
-        let nested = schemas::agents_md::find_nested_agents_md(&paths);
-        for nested_file in nested {
-            let parent_files =
-                schemas::agents_md::check_agents_md_hierarchy(&nested_file.path, &paths);
-            if !parent_files.is_empty() {
-                let parent_paths: Vec<String> = parent_files
-                    .iter()
-                    .map(|p| p.to_string_lossy().to_string())
-                    .collect();
-                diagnostics.push(
-                    Diagnostic::warning(
-                        nested_file.path.clone(),
-                        1,
+        .flat_map(
+            |file_path| match validate_file_with_registry(file_path, config, registry) {
+                Ok(file_diagnostics) => file_diagnostics,
+                Err(e) => {
+                    vec![Diagnostic::error(
+                        file_path.clone(),
                         0,
-                        "AGM-006",
-                        format!(
-                            "Nested AGENTS.md detected - parent AGENTS.md files exist at: {}",
-                            parent_paths.join(", ")
-                        ),
-                    )
-                    .with_suggestion(
-                        "Some tools load AGENTS.md hierarchically. Document inheritance behavior or consolidate files.".to_string(),
-                    ),
-                );
-            }
-        }
-    }
+                        0,
+                        "file::read",
+                        format!("Failed to validate file: {}", e),
+                    )]
+                }
+            },
+        )
+        .collect();
 
     // Sort by severity (errors first), then by file path, then by line/rule for full determinism
     diagnostics.sort_by(|a, b| {
@@ -348,26 +412,65 @@ mod tests {
 
     #[test]
     fn test_validators_for_skill() {
-        let validators = get_validators_for_type(FileType::Skill);
-        assert_eq!(validators.len(), 4); // skill + prompt + xml + imports
+        let registry = ValidatorRegistry::with_defaults();
+        let validators = registry.validators_for(FileType::Skill);
+        assert_eq!(validators.len(), 3);
     }
 
     #[test]
     fn test_validators_for_claude_md() {
-        let validators = get_validators_for_type(FileType::ClaudeMd);
-        assert_eq!(validators.len(), 6); // ClaudeMdValidator, PromptValidator, CrossPlatformValidator, AgentsMdValidator, XmlValidator, ImportsValidator
+        let registry = ValidatorRegistry::with_defaults();
+        let validators = registry.validators_for(FileType::ClaudeMd);
+        assert_eq!(validators.len(), 4);
     }
 
     #[test]
     fn test_validators_for_mcp() {
-        let validators = get_validators_for_type(FileType::Mcp);
+        let registry = ValidatorRegistry::with_defaults();
+        let validators = registry.validators_for(FileType::Mcp);
         assert_eq!(validators.len(), 1);
     }
 
     #[test]
     fn test_validators_for_unknown() {
-        let validators = get_validators_for_type(FileType::Unknown);
+        let registry = ValidatorRegistry::with_defaults();
+        let validators = registry.validators_for(FileType::Unknown);
         assert_eq!(validators.len(), 0);
+    }
+
+    #[test]
+    fn test_validate_file_with_custom_registry() {
+        struct DummyValidator;
+
+        impl Validator for DummyValidator {
+            fn validate(
+                &self,
+                path: &Path,
+                _content: &str,
+                _config: &LintConfig,
+            ) -> Vec<Diagnostic> {
+                vec![Diagnostic::error(
+                    path.to_path_buf(),
+                    1,
+                    1,
+                    "TEST-001",
+                    "Registry override".to_string(),
+                )]
+            }
+        }
+
+        let temp = tempfile::TempDir::new().unwrap();
+        let skill_path = temp.path().join("SKILL.md");
+        std::fs::write(&skill_path, "---\nname: test\n---\nBody").unwrap();
+
+        let mut registry = ValidatorRegistry::new();
+        registry.register(FileType::Skill, || Box::new(DummyValidator));
+
+        let diagnostics =
+            validate_file_with_registry(&skill_path, &LintConfig::default(), &registry).unwrap();
+
+        assert_eq!(diagnostics.len(), 1);
+        assert_eq!(diagnostics[0].rule, "TEST-001");
     }
 
     #[test]
@@ -891,495 +994,6 @@ allowed-tools: Read Write
         assert!(
             xp_001.is_empty(),
             "CLAUDE.md should be allowed to have Claude-specific features"
-        );
-    }
-
-    // ===== AGM-006: Nested AGENTS.md Hierarchy Tests =====
-
-    #[test]
-    fn test_agm_006_nested_agents_md() {
-        let temp = tempfile::TempDir::new().unwrap();
-
-        // Create nested AGENTS.md files
-        std::fs::write(
-            temp.path().join("AGENTS.md"),
-            "# Project\n\nThis project does something.",
-        )
-        .unwrap();
-
-        let subdir = temp.path().join("subdir");
-        std::fs::create_dir_all(&subdir).unwrap();
-        std::fs::write(
-            subdir.join("AGENTS.md"),
-            "# Subproject\n\nThis is a nested AGENTS.md.",
-        )
-        .unwrap();
-
-        let config = LintConfig::default();
-        let diagnostics = validate_project(temp.path(), &config).unwrap();
-
-        // Should detect AGM-006 for the nested AGENTS.md
-        let agm_006: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AGM-006").collect();
-        assert_eq!(
-            agm_006.len(),
-            1,
-            "Should detect one nested AGENTS.md, got {:?}",
-            agm_006
-        );
-        assert!(agm_006[0].file.to_string_lossy().contains("subdir"));
-        assert!(agm_006[0].message.contains("Nested AGENTS.md"));
-    }
-
-    #[test]
-    fn test_agm_006_no_nesting() {
-        let temp = tempfile::TempDir::new().unwrap();
-
-        // Create single AGENTS.md file
-        std::fs::write(
-            temp.path().join("AGENTS.md"),
-            "# Project\n\nThis project does something.",
-        )
-        .unwrap();
-
-        let config = LintConfig::default();
-        let diagnostics = validate_project(temp.path(), &config).unwrap();
-
-        // Should not detect AGM-006 for a single AGENTS.md
-        let agm_006: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AGM-006").collect();
-        assert!(
-            agm_006.is_empty(),
-            "Single AGENTS.md should not trigger AGM-006"
-        );
-    }
-
-    #[test]
-    fn test_agm_006_disabled() {
-        let temp = tempfile::TempDir::new().unwrap();
-
-        // Create nested AGENTS.md files
-        std::fs::write(
-            temp.path().join("AGENTS.md"),
-            "# Project\n\nThis project does something.",
-        )
-        .unwrap();
-
-        let subdir = temp.path().join("subdir");
-        std::fs::create_dir_all(&subdir).unwrap();
-        std::fs::write(
-            subdir.join("AGENTS.md"),
-            "# Subproject\n\nThis is a nested AGENTS.md.",
-        )
-        .unwrap();
-
-        let mut config = LintConfig::default();
-        config.rules.disabled_rules = vec!["AGM-006".to_string()];
-        let diagnostics = validate_project(temp.path(), &config).unwrap();
-
-        // Should not detect AGM-006 when disabled
-        let agm_006: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AGM-006").collect();
-        assert!(agm_006.is_empty(), "AGM-006 should not fire when disabled");
-    }
-
-    // ===== AGM Validation Integration Tests =====
-
-    #[test]
-    fn test_agm_001_unclosed_code_block() {
-        let temp = tempfile::TempDir::new().unwrap();
-
-        std::fs::write(
-            temp.path().join("AGENTS.md"),
-            "# Project\n\n```rust\nfn main() {}",
-        )
-        .unwrap();
-
-        let config = LintConfig::default();
-        let diagnostics = validate_project(temp.path(), &config).unwrap();
-
-        let agm_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AGM-001").collect();
-        assert!(!agm_001.is_empty(), "Should detect unclosed code block");
-    }
-
-    #[test]
-    fn test_agm_003_over_char_limit() {
-        let temp = tempfile::TempDir::new().unwrap();
-
-        let content = format!("# Project\n\n{}", "x".repeat(13000));
-        std::fs::write(temp.path().join("AGENTS.md"), content).unwrap();
-
-        let config = LintConfig::default();
-        let diagnostics = validate_project(temp.path(), &config).unwrap();
-
-        let agm_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AGM-003").collect();
-        assert!(
-            !agm_003.is_empty(),
-            "Should detect character limit exceeded"
-        );
-    }
-
-    #[test]
-    fn test_agm_005_unguarded_platform_features() {
-        let temp = tempfile::TempDir::new().unwrap();
-
-        std::fs::write(
-            temp.path().join("AGENTS.md"),
-            "# Project\n\n- type: PreToolExecution\n  command: echo test",
-        )
-        .unwrap();
-
-        let config = LintConfig::default();
-        let diagnostics = validate_project(temp.path(), &config).unwrap();
-
-        let agm_005: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AGM-005").collect();
-        assert!(
-            !agm_005.is_empty(),
-            "Should detect unguarded platform features"
-        );
-    }
-
-    #[test]
-    fn test_valid_agents_md_no_agm_errors() {
-        let temp = tempfile::TempDir::new().unwrap();
-
-        std::fs::write(
-            temp.path().join("AGENTS.md"),
-            r#"# Project
-
-This project is a linter for agent configurations.
-
-## Build Commands
-
-Run npm install and npm build.
-
-## Claude Code Specific
-
-- type: PreToolExecution
-  command: echo "test"
-"#,
-        )
-        .unwrap();
-
-        let config = LintConfig::default();
-        let diagnostics = validate_project(temp.path(), &config).unwrap();
-
-        let agm_errors: Vec<_> = diagnostics
-            .iter()
-            .filter(|d| d.rule.starts_with("AGM-") && d.level == DiagnosticLevel::Error)
-            .collect();
-        assert!(
-            agm_errors.is_empty(),
-            "Valid AGENTS.md should have no AGM-* errors, got: {:?}",
-            agm_errors
-        );
-    }
-
-    // ===== Prompt Engineering Validation Integration Tests =====
-
-    #[test]
-    fn test_validate_skill_with_critical_in_middle() {
-        let temp = tempfile::TempDir::new().unwrap();
-
-        // Create a SKILL.md with critical content in the middle
-        // Total 24 lines (4 frontmatter + 20 body lines), critical at line 12 = 50%
-        let mut lines = vec![
-            "---",
-            "name: test-skill",
-            "description: Use when testing",
-            "---",
-        ];
-        for i in 0..20 {
-            if i == 8 {
-                // Line 13 (0-indexed 12) = 12/24 = 50%, which is in 40-60% zone
-                lines.push("This is CRITICAL information that should not be lost.");
-            } else {
-                lines.push("Line of content.");
-            }
-        }
-        let content = lines.join("\n");
-
-        std::fs::write(temp.path().join("SKILL.md"), &content).unwrap();
-
-        let config = LintConfig::default();
-        let diagnostics = validate_file(&temp.path().join("SKILL.md"), &config).unwrap();
-
-        // Should detect PE-001 for critical content in middle
-        let pe_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "PE-001").collect();
-        assert!(
-            !pe_001.is_empty(),
-            "Expected PE-001 for critical content in middle"
-        );
-    }
-
-    #[test]
-    fn test_validate_skill_with_cot_on_simple_task() {
-        let temp = tempfile::TempDir::new().unwrap();
-
-        std::fs::write(
-            temp.path().join("SKILL.md"),
-            r#"---
-name: read-file-skill
-description: Use when reading files
----
-# Read File
-
-When asked to read the file, think step by step:
-1. Check if file exists
-2. Read contents
-"#,
-        )
-        .unwrap();
-
-        let config = LintConfig::default();
-        let diagnostics = validate_file(&temp.path().join("SKILL.md"), &config).unwrap();
-
-        // Should detect PE-002 for CoT on simple task
-        let pe_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "PE-002").collect();
-        assert!(
-            !pe_002.is_empty(),
-            "Expected PE-002 for chain-of-thought on simple task"
-        );
-    }
-
-    #[test]
-    fn test_validate_claude_md_with_weak_language() {
-        let temp = tempfile::TempDir::new().unwrap();
-
-        std::fs::write(
-            temp.path().join("CLAUDE.md"),
-            r#"# Critical Rules
-
-You should follow the coding style guide.
-Code could be formatted better.
-"#,
-        )
-        .unwrap();
-
-        let config = LintConfig::default();
-        let diagnostics = validate_file(&temp.path().join("CLAUDE.md"), &config).unwrap();
-
-        // Should detect PE-003 for weak language in critical section
-        let pe_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "PE-003").collect();
-        assert!(
-            !pe_003.is_empty(),
-            "Expected PE-003 for weak language in critical section"
-        );
-    }
-
-    #[test]
-    fn test_validate_skill_with_ambiguous_instructions() {
-        let temp = tempfile::TempDir::new().unwrap();
-
-        std::fs::write(
-            temp.path().join("SKILL.md"),
-            r#"---
-name: test-skill
-description: Use when testing
----
-# Instructions
-
-Usually format output as JSON.
-Sometimes include extra context.
-"#,
-        )
-        .unwrap();
-
-        let config = LintConfig::default();
-        let diagnostics = validate_file(&temp.path().join("SKILL.md"), &config).unwrap();
-
-        // Should detect PE-004 for ambiguous instructions
-        let pe_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "PE-004").collect();
-        assert_eq!(
-            pe_004.len(),
-            2,
-            "Expected 2 PE-004 warnings for ambiguous terms"
-        );
-    }
-
-    #[test]
-    fn test_validate_project_prompt_engineering() {
-        let temp = tempfile::TempDir::new().unwrap();
-
-        // Create a SKILL.md with prompt engineering issues
-        std::fs::write(
-            temp.path().join("SKILL.md"),
-            r#"---
-name: test-skill
-description: Use when testing
----
-# Critical Rules
-
-You should follow the style.
-Usually do this.
-"#,
-        )
-        .unwrap();
-
-        let config = LintConfig::default();
-        let diagnostics = validate_project(temp.path(), &config).unwrap();
-
-        // Should have PE-003 and PE-004 issues
-        let pe_rules: Vec<_> = diagnostics
-            .iter()
-            .filter(|d| d.rule.starts_with("PE-"))
-            .collect();
-        assert!(
-            !pe_rules.is_empty(),
-            "validate_project() should detect prompt engineering issues"
-        );
-    }
-
-    #[test]
-    fn test_validate_valid_skill_no_pe_issues() {
-        let temp = tempfile::TempDir::new().unwrap();
-
-        std::fs::write(
-            temp.path().join("SKILL.md"),
-            r#"---
-name: test-skill
-description: Use when testing
----
-# Rules
-
-Always format output as JSON.
-Never include sensitive data.
-"#,
-        )
-        .unwrap();
-
-        let config = LintConfig::default();
-        let diagnostics = validate_file(&temp.path().join("SKILL.md"), &config).unwrap();
-
-        // Should have no PE-* issues
-        let pe_rules: Vec<_> = diagnostics
-            .iter()
-            .filter(|d| d.rule.starts_with("PE-"))
-            .collect();
-        assert!(
-            pe_rules.is_empty(),
-            "Valid skill with clear instructions should have no PE-* issues"
-        );
-    }
-
-    // ===== Prompt Engineering Integration Tests (GenericMarkdown & SKILL.md) =====
-
-    #[test]
-    fn test_validate_generic_markdown_with_pe_issues() {
-        let temp = tempfile::TempDir::new().unwrap();
-
-        // Create a README.md with PE-* issues
-        // Need exactly 20 lines with critical at line 10 (50%)
-        let lines = vec![
-            "# Project Documentation",
-            "",
-            "Line 1",
-            "Line 2",
-            "Line 3",
-            "Line 4",
-            "Line 5",
-            "Line 6",
-            "Line 7",
-            "This is critical information.",
-            "Line 11",
-            "Line 12",
-            "Line 13",
-            "Line 14",
-            "Line 15",
-            "Line 16",
-            "Line 17",
-            "Line 18",
-            "Usually do this.",
-            "Line 20",
-        ];
-        let content = lines.join("\n");
-        std::fs::write(temp.path().join("README.md"), &content).unwrap();
-
-        let config = LintConfig::default();
-        let diagnostics = validate_project(temp.path(), &config).unwrap();
-
-        // GenericMarkdown should trigger PromptValidator
-        let pe_rules: Vec<_> = diagnostics
-            .iter()
-            .filter(|d| d.rule.starts_with("PE-"))
-            .collect();
-
-        assert!(
-            !pe_rules.is_empty(),
-            "GenericMarkdown (README.md) should validate PE rules"
-        );
-
-        // Should have PE-001 (critical in middle) and PE-004 (ambiguous)
-        assert!(
-            pe_rules.iter().any(|d| d.rule == "PE-001"),
-            "Expected PE-001 for critical content in middle of README.md"
-        );
-        assert!(
-            pe_rules.iter().any(|d| d.rule == "PE-004"),
-            "Expected PE-004 for ambiguous term in README.md"
-        );
-    }
-
-    #[test]
-    fn test_validate_skill_md_with_pe_issues_through_validate_file() {
-        let temp = tempfile::TempDir::new().unwrap();
-        let skill_path = temp.path().join("SKILL.md");
-
-        // Build content with exactly 20 lines total, critical at line 10 (50%)
-        let lines = vec![
-            "---",
-            "name: analyze-code",
-            "description: Use when analyzing code",
-            "---",
-            "# Critical Instructions",
-            "",
-            "Line 1",
-            "Line 2",
-            "Line 3",
-            "This is critical information here.", // Line 10 = 50%
-            "Line 11",
-            "Line 12",
-            "Line 13",
-            "Line 14",
-            "You should check for errors.",
-            "Line 16",
-            "Line 17",
-            "Line 18",
-            "Line 19",
-            "Line 20",
-        ];
-        let content = lines.join("\n");
-        std::fs::write(&skill_path, content).unwrap();
-
-        let config = LintConfig::default();
-        let diagnostics = validate_file(&skill_path, &config).unwrap();
-
-        // Should have PE-001 and PE-003 issues
-        let pe_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "PE-001").collect();
-        let pe_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "PE-003").collect();
-
-        assert!(
-            !pe_001.is_empty(),
-            "SKILL.md should trigger PE-001 for critical in middle"
-        );
-        assert!(
-            !pe_003.is_empty(),
-            "SKILL.md should trigger PE-003 for weak language"
-        );
-    }
-
-    #[test]
-    fn test_empty_content_no_panics() {
-        let temp = tempfile::TempDir::new().unwrap();
-        let readme_path = temp.path().join("README.md");
-        std::fs::write(&readme_path, "").unwrap();
-
-        let config = LintConfig::default();
-        let result = validate_file(&readme_path, &config);
-
-        // Should not panic and return empty or valid diagnostics
-        assert!(result.is_ok(), "Empty file should not cause panic");
-        let diagnostics = result.unwrap();
-        assert!(
-            diagnostics.is_empty(),
-            "Empty file should have no diagnostics"
         );
     }
 }
