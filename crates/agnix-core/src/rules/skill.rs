@@ -245,7 +245,7 @@ impl Validator for SkillValidator {
                 // AS-008: Description length
                 if config.is_rule_enabled("AS-008") {
                     let len = description_trimmed.len();
-                    if len < 1 || len > 1024 {
+                    if !(1..=1024).contains(&len) {
                         diagnostics.push(
                             Diagnostic::error(
                                 path.to_path_buf(),
@@ -722,13 +722,8 @@ fn reference_path_too_deep(path: &str) -> bool {
 
 fn trim_path_token(token: &str) -> &str {
     token
-        .trim_start_matches(|c: char| matches!(c, '(' | '[' | '{' | '<' | '"' | '\''))
-        .trim_end_matches(|c: char| {
-            matches!(
-                c,
-                '.' | ',' | ';' | ':' | ')' | ']' | '}' | '>' | '"' | '\''
-            )
-        })
+        .trim_start_matches(['(', '[', '{', '<', '"', '\''])
+        .trim_end_matches(['.', ',', ';', ':', ')', ']', '}', '>', '"', '\''])
 }
 
 fn trim_path_token_with_offset(token: &str) -> Option<(String, usize)> {
