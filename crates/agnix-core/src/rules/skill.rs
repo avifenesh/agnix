@@ -526,7 +526,10 @@ fn reference_path_too_deep(path: &str) -> bool {
     let normalized = path.replace('\\', "/");
     let mut parts = normalized.split('/').filter(|part| !part.is_empty());
     let Some(prefix) = parts.next() else { return false };
-    if !prefix.eq_ignore_ascii_case("references") && !prefix.eq_ignore_ascii_case("refs") {
+    if !prefix.eq_ignore_ascii_case("references")
+        && !prefix.eq_ignore_ascii_case("reference")
+        && !prefix.eq_ignore_ascii_case("refs")
+    {
         return false;
     }
     parts.count() > 1
@@ -752,6 +755,22 @@ Body"#;
     #[test]
     fn test_as_013_reference_too_deep() {
         let content = include_str!("../../../../tests/fixtures/skills/deep-reference.md");
+
+        let validator = SkillValidator;
+        let diagnostics = validator.validate(Path::new("SKILL.md"), content, &LintConfig::default());
+
+        let as_013_errors: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-013").collect();
+        assert_eq!(as_013_errors.len(), 1);
+    }
+
+    #[test]
+    fn test_as_013_reference_single_name_too_deep() {
+        let content = r#"---
+name: deep-reference
+description: Use when validating deep references
+---
+
+See reference/deep/guide.md for details."#;
 
         let validator = SkillValidator;
         let diagnostics = validator.validate(Path::new("SKILL.md"), content, &LintConfig::default());
