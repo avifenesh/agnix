@@ -873,7 +873,7 @@ Body"#;
 
     #[test]
     fn test_as_001_missing_frontmatter() {
-        let content = include_str!("../../../../tests/fixtures/skills/missing-frontmatter.md");
+        let content = include_str!("../../../../tests/fixtures/skills/missing-frontmatter/SKILL.md");
 
         let validator = SkillValidator;
         let diagnostics =
@@ -1024,7 +1024,7 @@ Body"#;
 
     #[test]
     fn test_as_013_reference_too_deep() {
-        let content = include_str!("../../../../tests/fixtures/skills/deep-reference.md");
+        let content = include_str!("../../../../tests/fixtures/skills/deep-reference/SKILL.md");
 
         let validator = SkillValidator;
         let diagnostics =
@@ -1053,7 +1053,7 @@ See reference/deep/guide.md for details."#;
 
     #[test]
     fn test_as_014_windows_path_separator() {
-        let content = include_str!("../../../../tests/fixtures/skills/windows-path.md");
+        let content = include_str!("../../../../tests/fixtures/skills/windows-path/SKILL.md");
 
         let validator = SkillValidator;
         let diagnostics =
