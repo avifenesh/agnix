@@ -86,11 +86,13 @@ fn get_validators_for_type(file_type: FileType) -> Vec<Box<dyn Validator>> {
     match file_type {
         FileType::Skill => vec![
             Box::new(rules::skill::SkillValidator),
+            Box::new(rules::prompt::PromptValidator),
             Box::new(rules::xml::XmlValidator),
             Box::new(rules::imports::ImportsValidator),
         ],
         FileType::ClaudeMd => vec![
             Box::new(rules::claude_md::ClaudeMdValidator),
+            Box::new(rules::prompt::PromptValidator),
             Box::new(rules::cross_platform::CrossPlatformValidator),
             Box::new(rules::agents_md::AgentsMdValidator),
             Box::new(rules::xml::XmlValidator),
@@ -104,6 +106,7 @@ fn get_validators_for_type(file_type: FileType) -> Vec<Box<dyn Validator>> {
         FileType::Plugin => vec![Box::new(rules::plugin::PluginValidator)],
         FileType::Mcp => vec![Box::new(rules::mcp::McpValidator)],
         FileType::GenericMarkdown => vec![
+            Box::new(rules::prompt::PromptValidator),
             Box::new(rules::cross_platform::CrossPlatformValidator),
             Box::new(rules::xml::XmlValidator),
             Box::new(rules::imports::ImportsValidator),
@@ -345,13 +348,13 @@ mod tests {
     #[test]
     fn test_validators_for_skill() {
         let validators = get_validators_for_type(FileType::Skill);
-        assert_eq!(validators.len(), 3);
+        assert_eq!(validators.len(), 4); // skill + prompt + xml + imports
     }
 
     #[test]
     fn test_validators_for_claude_md() {
         let validators = get_validators_for_type(FileType::ClaudeMd);
-        assert_eq!(validators.len(), 5); // ClaudeMdValidator, CrossPlatformValidator, AgentsMdValidator, XmlValidator, ImportsValidator
+        assert_eq!(validators.len(), 6); // ClaudeMdValidator, PromptValidator, CrossPlatformValidator, AgentsMdValidator, XmlValidator, ImportsValidator
     }
 
     #[test]
@@ -1056,6 +1059,317 @@ Run npm install and npm build.
             agm_errors.is_empty(),
             "Valid AGENTS.md should have no AGM-* errors, got: {:?}",
             agm_errors
+        );
+    }
+
+    // ===== Prompt Engineering Validation Integration Tests =====
+
+    #[test]
+    fn test_validate_skill_with_critical_in_middle() {
+        let temp = tempfile::TempDir::new().unwrap();
+
+        // Create a SKILL.md with critical content in the middle
+        // Total 24 lines (4 frontmatter + 20 body lines), critical at line 12 = 50%
+        let mut lines = vec![
+            "---",
+            "name: test-skill",
+            "description: Use when testing",
+            "---",
+        ];
+        for i in 0..20 {
+            if i == 8 {
+                // Line 13 (0-indexed 12) = 12/24 = 50%, which is in 40-60% zone
+                lines.push("This is CRITICAL information that should not be lost.");
+            } else {
+                lines.push("Line of content.");
+            }
+        }
+        let content = lines.join("\n");
+
+        std::fs::write(temp.path().join("SKILL.md"), &content).unwrap();
+
+        let config = LintConfig::default();
+        let diagnostics = validate_file(&temp.path().join("SKILL.md"), &config).unwrap();
+
+        // Should detect PE-001 for critical content in middle
+        let pe_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "PE-001").collect();
+        assert!(
+            !pe_001.is_empty(),
+            "Expected PE-001 for critical content in middle"
+        );
+    }
+
+    #[test]
+    fn test_validate_skill_with_cot_on_simple_task() {
+        let temp = tempfile::TempDir::new().unwrap();
+
+        std::fs::write(
+            temp.path().join("SKILL.md"),
+            r#"---
+name: read-file-skill
+description: Use when reading files
+---
+# Read File
+
+When asked to read the file, think step by step:
+1. Check if file exists
+2. Read contents
+"#,
+        )
+        .unwrap();
+
+        let config = LintConfig::default();
+        let diagnostics = validate_file(&temp.path().join("SKILL.md"), &config).unwrap();
+
+        // Should detect PE-002 for CoT on simple task
+        let pe_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "PE-002").collect();
+        assert!(
+            !pe_002.is_empty(),
+            "Expected PE-002 for chain-of-thought on simple task"
+        );
+    }
+
+    #[test]
+    fn test_validate_claude_md_with_weak_language() {
+        let temp = tempfile::TempDir::new().unwrap();
+
+        std::fs::write(
+            temp.path().join("CLAUDE.md"),
+            r#"# Critical Rules
+
+You should follow the coding style guide.
+Code could be formatted better.
+"#,
+        )
+        .unwrap();
+
+        let config = LintConfig::default();
+        let diagnostics = validate_file(&temp.path().join("CLAUDE.md"), &config).unwrap();
+
+        // Should detect PE-003 for weak language in critical section
+        let pe_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "PE-003").collect();
+        assert!(
+            !pe_003.is_empty(),
+            "Expected PE-003 for weak language in critical section"
+        );
+    }
+
+    #[test]
+    fn test_validate_skill_with_ambiguous_instructions() {
+        let temp = tempfile::TempDir::new().unwrap();
+
+        std::fs::write(
+            temp.path().join("SKILL.md"),
+            r#"---
+name: test-skill
+description: Use when testing
+---
+# Instructions
+
+Usually format output as JSON.
+Sometimes include extra context.
+"#,
+        )
+        .unwrap();
+
+        let config = LintConfig::default();
+        let diagnostics = validate_file(&temp.path().join("SKILL.md"), &config).unwrap();
+
+        // Should detect PE-004 for ambiguous instructions
+        let pe_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "PE-004").collect();
+        assert_eq!(
+            pe_004.len(),
+            2,
+            "Expected 2 PE-004 warnings for ambiguous terms"
+        );
+    }
+
+    #[test]
+    fn test_validate_project_prompt_engineering() {
+        let temp = tempfile::TempDir::new().unwrap();
+
+        // Create a SKILL.md with prompt engineering issues
+        std::fs::write(
+            temp.path().join("SKILL.md"),
+            r#"---
+name: test-skill
+description: Use when testing
+---
+# Critical Rules
+
+You should follow the style.
+Usually do this.
+"#,
+        )
+        .unwrap();
+
+        let config = LintConfig::default();
+        let diagnostics = validate_project(temp.path(), &config).unwrap();
+
+        // Should have PE-003 and PE-004 issues
+        let pe_rules: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule.starts_with("PE-"))
+            .collect();
+        assert!(
+            !pe_rules.is_empty(),
+            "validate_project() should detect prompt engineering issues"
+        );
+    }
+
+    #[test]
+    fn test_validate_valid_skill_no_pe_issues() {
+        let temp = tempfile::TempDir::new().unwrap();
+
+        std::fs::write(
+            temp.path().join("SKILL.md"),
+            r#"---
+name: test-skill
+description: Use when testing
+---
+# Rules
+
+Always format output as JSON.
+Never include sensitive data.
+"#,
+        )
+        .unwrap();
+
+        let config = LintConfig::default();
+        let diagnostics = validate_file(&temp.path().join("SKILL.md"), &config).unwrap();
+
+        // Should have no PE-* issues
+        let pe_rules: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule.starts_with("PE-"))
+            .collect();
+        assert!(
+            pe_rules.is_empty(),
+            "Valid skill with clear instructions should have no PE-* issues"
+        );
+    }
+
+    // ===== Prompt Engineering Integration Tests (GenericMarkdown & SKILL.md) =====
+
+    #[test]
+    fn test_validate_generic_markdown_with_pe_issues() {
+        let temp = tempfile::TempDir::new().unwrap();
+
+        // Create a README.md with PE-* issues
+        // Need exactly 20 lines with critical at line 10 (50%)
+        let lines = vec![
+            "# Project Documentation",
+            "",
+            "Line 1",
+            "Line 2",
+            "Line 3",
+            "Line 4",
+            "Line 5",
+            "Line 6",
+            "Line 7",
+            "This is critical information.",
+            "Line 11",
+            "Line 12",
+            "Line 13",
+            "Line 14",
+            "Line 15",
+            "Line 16",
+            "Line 17",
+            "Line 18",
+            "Usually do this.",
+            "Line 20",
+        ];
+        let content = lines.join("\n");
+        std::fs::write(temp.path().join("README.md"), &content).unwrap();
+
+        let config = LintConfig::default();
+        let diagnostics = validate_project(temp.path(), &config).unwrap();
+
+        // GenericMarkdown should trigger PromptValidator
+        let pe_rules: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule.starts_with("PE-"))
+            .collect();
+
+        assert!(
+            !pe_rules.is_empty(),
+            "GenericMarkdown (README.md) should validate PE rules"
+        );
+
+        // Should have PE-001 (critical in middle) and PE-004 (ambiguous)
+        assert!(
+            pe_rules.iter().any(|d| d.rule == "PE-001"),
+            "Expected PE-001 for critical content in middle of README.md"
+        );
+        assert!(
+            pe_rules.iter().any(|d| d.rule == "PE-004"),
+            "Expected PE-004 for ambiguous term in README.md"
+        );
+    }
+
+    #[test]
+    fn test_validate_skill_md_with_pe_issues_through_validate_file() {
+        let temp = tempfile::TempDir::new().unwrap();
+        let skill_path = temp.path().join("SKILL.md");
+
+        // Build content with exactly 20 lines total, critical at line 10 (50%)
+        let lines = vec![
+            "---",
+            "name: analyze-code",
+            "description: Use when analyzing code",
+            "---",
+            "# Critical Instructions",
+            "",
+            "Line 1",
+            "Line 2",
+            "Line 3",
+            "This is critical information here.", // Line 10 = 50%
+            "Line 11",
+            "Line 12",
+            "Line 13",
+            "Line 14",
+            "You should check for errors.",
+            "Line 16",
+            "Line 17",
+            "Line 18",
+            "Line 19",
+            "Line 20",
+        ];
+        let content = lines.join("\n");
+        std::fs::write(&skill_path, content).unwrap();
+
+        let config = LintConfig::default();
+        let diagnostics = validate_file(&skill_path, &config).unwrap();
+
+        // Should have PE-001 and PE-003 issues
+        let pe_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "PE-001").collect();
+        let pe_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "PE-003").collect();
+
+        assert!(
+            !pe_001.is_empty(),
+            "SKILL.md should trigger PE-001 for critical in middle"
+        );
+        assert!(
+            !pe_003.is_empty(),
+            "SKILL.md should trigger PE-003 for weak language"
+        );
+    }
+
+    #[test]
+    fn test_empty_content_no_panics() {
+        let temp = tempfile::TempDir::new().unwrap();
+        let readme_path = temp.path().join("README.md");
+        std::fs::write(&readme_path, "").unwrap();
+
+        let config = LintConfig::default();
+        let result = validate_file(&readme_path, &config);
+
+        // Should not panic and return empty or valid diagnostics
+        assert!(result.is_ok(), "Empty file should not cause panic");
+        let diagnostics = result.unwrap();
+        assert!(
+            diagnostics.is_empty(),
+            "Empty file should have no diagnostics"
         );
     }
 }

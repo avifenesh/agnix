@@ -15,6 +15,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - AGM-004: Missing project context
   - AGM-005: Unguarded platform features
   - AGM-006: Nested AGENTS.md hierarchy
+- Prompt Engineering validation with 4 rules (PE-001 to PE-004)
+  - PE-001: Detects critical content in middle of document (lost in the middle effect)
+  - PE-002: Warns when chain-of-thought markers used on simple tasks
+  - PE-003: Detects weak imperative language (should, try, consider) in critical sections
+  - PE-004: Flags ambiguous instructions (e.g., "be helpful", "as needed")
+- PromptValidator implementation in agnix-core
+- Config-based prompt_engineering category toggle (rules.prompt_engineering)
+- 8 test fixtures in tests/fixtures/prompt/ directory
+- 48 comprehensive unit tests for prompt engineering validation
 - MCP (Model Context Protocol) validation with 6 rules (MCP-001 to MCP-006)
   - MCP-001: Validates JSON-RPC version is "2.0"
   - MCP-002: Validates required tool fields (name, description, inputSchema)
@@ -56,7 +65,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - CC-SK-002: Validates context field must be 'fork' or omitted
   - CC-SK-003: Requires 'agent' field when context is 'fork'
   - CC-SK-004: Requires 'context: fork' when agent field is present
-  - CC-SK-005: Validates agent type values (Explore, Plan, general-purpose)
+  - CC-SK-005: Validates agent type values (Explore, Plan, general-purpose, or custom kebab-case names 1-64 chars)
   - CC-SK-006: Dangerous skills must set 'disable-model-invocation: true'
   - CC-SK-007: Warns on unrestricted Bash access (suggests scoped versions)
   - CC-SK-008: Validates tool names in allowed-tools against known Claude Code tools
@@ -106,6 +115,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Parallel file validation using rayon for improved performance on large projects
 - Deterministic diagnostic output with sorting by severity and file path
 - Comprehensive tests for parallel validation edge cases
+- Reference validator rules REF-001 and REF-002
+  - REF-001: @import references must point to existing files (error)
+  - REF-002: Markdown links [text](path) should point to existing files (error)
+  - Both rules are in the "imports" category
+  - Supports fragment stripping (file.md#section validates file.md)
+  - Skips external URLs (http://, https://, mailto:, etc.)
+  - 4 test fixtures in tests/fixtures/refs/ directory
+  - 31 comprehensive unit tests for reference validation
 
 ### Changed
 - `validate_project()` now processes files in parallel while maintaining deterministic output
@@ -113,6 +130,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - All validators now respect config-based category toggles and disabled rules
 - Config structure enhanced with category-based toggles (legacy flags still supported)
 - Knowledge base docs refreshed (rule counts, AGENTS.md support tiers, Cursor rules)
+- Fixture layout aligned with detector paths to ensure validators exercise fixtures directly
+- CC-HK-010 now treats timeouts above the default limit as a soft warning
 
 ### Performance
 - Significant speed improvements on projects with many files

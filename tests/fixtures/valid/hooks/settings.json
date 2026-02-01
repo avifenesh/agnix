@@ -10,21 +10,21 @@
       {
         "matcher": "Write",
         "hooks": [
-          { "type": "command", "command": "echo 'logging file write'" }
+          { "type": "command", "command": "echo 'logging file write'", "timeout": 30 }
         ]
       }
     ],
     "Stop": [
       {
         "hooks": [
-          { "type": "prompt", "prompt": "Summarize the work done in this session" }
+          { "type": "prompt", "prompt": "Summarize the work done in this session", "timeout": 30 }
         ]
       }
     ],
     "SessionStart": [
       {
         "hooks": [
-          { "type": "command", "command": "echo 'session started'" }
+          { "type": "command", "command": "echo 'session started'", "timeout": 30 }
         ]
       }
     ]

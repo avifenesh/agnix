@@ -1,6 +1,6 @@
 ---
 name: deploy-prod
-description: Deploys to production environment
+description: Use when deploying to production environment
 disable-model-invocation: true
 allowed-tools: Bash(git:*) Bash(npm:*) Read
 ---

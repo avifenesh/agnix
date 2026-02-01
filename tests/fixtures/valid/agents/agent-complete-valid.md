@@ -1,7 +1,11 @@
 ---
 name: complete-agent
 description: A fully complete and valid agent
-tools: Read, Grep, Glob, Bash(git:*)
+tools:
+  - Read
+  - Grep
+  - Glob
+  - Bash(git:*)
 model: sonnet
 ---
 
