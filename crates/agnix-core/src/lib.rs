@@ -88,31 +88,34 @@ impl ValidatorRegistry {
     pub fn validators_for(&self, file_type: FileType) -> Vec<Box<dyn Validator>> {
         self.validators
             .get(&file_type)
-            .map(|factories| {
-                factories
-                    .iter()
-                    .map(|factory| factory())
-                    .collect::<Vec<_>>()
-            })
-            .unwrap_or_default()
+            .into_iter()
+            .flatten()
+            .map(|factory| factory())
+            .collect()
     }
 
     fn register_defaults(&mut self) {
-        self.register(FileType::Skill, skill_validator);
-        self.register(FileType::Skill, xml_validator);
-        self.register(FileType::Skill, imports_validator);
-        self.register(FileType::ClaudeMd, claude_md_validator);
-        self.register(FileType::ClaudeMd, cross_platform_validator);
-        self.register(FileType::ClaudeMd, xml_validator);
-        self.register(FileType::ClaudeMd, imports_validator);
-        self.register(FileType::Agent, agent_validator);
-        self.register(FileType::Agent, xml_validator);
-        self.register(FileType::Hooks, hooks_validator);
-        self.register(FileType::Plugin, plugin_validator);
-        self.register(FileType::Mcp, mcp_validator);
-        self.register(FileType::GenericMarkdown, cross_platform_validator);
-        self.register(FileType::GenericMarkdown, xml_validator);
-        self.register(FileType::GenericMarkdown, imports_validator);
+        const DEFAULTS: &[(FileType, ValidatorFactory)] = &[
+            (FileType::Skill, skill_validator),
+            (FileType::Skill, xml_validator),
+            (FileType::Skill, imports_validator),
+            (FileType::ClaudeMd, claude_md_validator),
+            (FileType::ClaudeMd, cross_platform_validator),
+            (FileType::ClaudeMd, xml_validator),
+            (FileType::ClaudeMd, imports_validator),
+            (FileType::Agent, agent_validator),
+            (FileType::Agent, xml_validator),
+            (FileType::Hooks, hooks_validator),
+            (FileType::Plugin, plugin_validator),
+            (FileType::Mcp, mcp_validator),
+            (FileType::GenericMarkdown, cross_platform_validator),
+            (FileType::GenericMarkdown, xml_validator),
+            (FileType::GenericMarkdown, imports_validator),
+        ];
+
+        for &(file_type, factory) in DEFAULTS {
+            self.register(file_type, factory);
+        }
     }
 }
 
