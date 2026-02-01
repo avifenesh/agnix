@@ -1011,6 +1011,31 @@ Body"#;
         assert_eq!(cc_sk_008.len(), 2);
     }
 
+    #[test]
+    fn test_cc_sk_008_scoped_unknown_tool() {
+        let content = r#"---
+name: test-skill
+description: Use when testing
+allowed-tools: FakeTool(scope:*) Read
+---
+Body"#;
+
+        let validator = SkillValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+        let cc_sk_008: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-SK-008")
+            .collect();
+
+        assert_eq!(
+            cc_sk_008.len(),
+            1,
+            "Should detect FakeTool as unknown even when scoped"
+        );
+        assert!(cc_sk_008[0].message.contains("FakeTool"));
+    }
+
     // ===== CC-SK-009: Too Many Injections =====
 
     #[test]
