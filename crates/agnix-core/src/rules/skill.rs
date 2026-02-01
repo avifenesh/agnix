@@ -56,7 +56,7 @@ impl Validator for SkillValidator {
         let result: Result<(SkillSchema, String), _> = parse_frontmatter(content);
 
         match result {
-            Ok((schema, body)) => {
+            Ok((schema, _body)) => {
                 // Run schema validations
                 let errors = schema.validate();
                 for error in errors {
