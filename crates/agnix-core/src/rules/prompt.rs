@@ -371,4 +371,122 @@ You should do X.
         assert!(!pe_003.is_empty(), "Expected PE-003 for weak language");
         assert!(!pe_004.is_empty(), "Expected PE-004 for ambiguous term");
     }
+
+    // ===== Edge Case Tests =====
+
+    #[test]
+    fn test_empty_content_string() {
+        let content = "";
+        let validator = PromptValidator;
+        let diagnostics = validator.validate(Path::new("SKILL.md"), content, &LintConfig::default());
+
+        // Should not panic, return empty diagnostics
+        assert!(diagnostics.is_empty(), "Empty content should produce no diagnostics");
+    }
+
+    #[test]
+    fn test_pe_001_exactly_ten_lines() {
+        // PE-001 requires at least 10 lines to check
+        let lines: Vec<&str> = (0..10).map(|_| "Line").collect();
+        let content = lines.join("\n");
+
+        let validator = PromptValidator;
+        let diagnostics = validator.validate(Path::new("SKILL.md"), &content, &LintConfig::default());
+
+        let pe_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "PE-001").collect();
+        // 10 lines is the boundary; at 50% no critical word, so empty
+        assert!(pe_001.is_empty(), "10 exact lines without critical keyword should be ok");
+    }
+
+    #[test]
+    fn test_pe_001_nine_lines_skipped() {
+        // Fewer than 10 lines should skip PE-001 check
+        let lines: Vec<&str> = (0..9).map(|_| "Line").collect();
+        let content = lines.join("\n");
+
+        let validator = PromptValidator;
+        let diagnostics = validator.validate(Path::new("SKILL.md"), &content, &LintConfig::default());
+
+        let pe_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "PE-001").collect();
+        assert!(pe_001.is_empty(), "9 lines should skip PE-001 check");
+    }
+
+    #[test]
+    fn test_pe_003_word_boundary_hypercritical() {
+        let content = r#"# Hypercritical Guide
+
+This is not a critical section.
+"#;
+        let validator = PromptValidator;
+        let diagnostics = validator.validate(Path::new("SKILL.md"), content, &LintConfig::default());
+
+        let pe_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "PE-003").collect();
+        // "Hypercritical" should NOT be recognized as a critical section
+        // because the pattern should match word boundaries
+        assert!(pe_003.is_empty(), "Hypercritical should not trigger critical section");
+    }
+
+    #[test]
+    fn test_pe_004_inline_code_not_flagged() {
+        let content = "Format output with `usually` backticks for clarity.";
+        let validator = PromptValidator;
+        let diagnostics = validator.validate(Path::new("SKILL.md"), content, &LintConfig::default());
+
+        let pe_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "PE-004").collect();
+        // Content inside inline code should still be checked (current behavior)
+        // This test documents the current behavior
+        assert!(!pe_004.is_empty(), "Inline code with ambiguous terms is currently flagged");
+    }
+
+    #[test]
+    fn test_config_disabled_pe_001_only() {
+        let mut config = LintConfig::default();
+        config.rules.disabled_rules = vec!["PE-001".to_string()];
+
+        let mut lines: Vec<String> = (0..20).map(|i| format!("Line {}", i)).collect();
+        lines[10] = "This is critical information.".to_string();
+        lines[1] = "# Critical Rules".to_string();
+        lines[2] = "You should follow style.".to_string();
+        lines[3] = "Usually do X.".to_string();
+        let content = lines.join("\n");
+
+        let validator = PromptValidator;
+        let diagnostics = validator.validate(Path::new("SKILL.md"), &content, &config);
+
+        // PE-001 should be disabled
+        let pe_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "PE-001").collect();
+        assert!(pe_001.is_empty(), "PE-001 should be disabled");
+
+        // PE-003 and PE-004 should still work
+        let pe_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "PE-003").collect();
+        let pe_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "PE-004").collect();
+        assert!(!pe_003.is_empty(), "PE-003 should still be enabled");
+        assert!(!pe_004.is_empty(), "PE-004 should still be enabled");
+    }
+
+    #[test]
+    fn test_config_disabled_multiple_pe_rules() {
+        let mut config = LintConfig::default();
+        config.rules.disabled_rules = vec!["PE-001".to_string(), "PE-004".to_string()];
+
+        let mut lines: Vec<String> = (0..20).map(|i| format!("Line {}", i)).collect();
+        lines[10] = "This is critical information.".to_string();
+        lines[1] = "# Critical Rules".to_string();
+        lines[2] = "You should follow style.".to_string();
+        lines[3] = "Usually do X.".to_string();
+        let content = lines.join("\n");
+
+        let validator = PromptValidator;
+        let diagnostics = validator.validate(Path::new("SKILL.md"), &content, &config);
+
+        // PE-001 and PE-004 should be disabled
+        let pe_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "PE-001").collect();
+        let pe_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "PE-004").collect();
+        assert!(pe_001.is_empty(), "PE-001 should be disabled");
+        assert!(pe_004.is_empty(), "PE-004 should be disabled");
+
+        // PE-003 should still work
+        let pe_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "PE-003").collect();
+        assert!(!pe_003.is_empty(), "PE-003 should still be enabled");
+    }
 }

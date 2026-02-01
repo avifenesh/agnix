@@ -493,4 +493,146 @@ Never include sensitive data.
         assert_eq!(results.len(), 1);
         assert!(results[0].context.contains("generally"));
     }
+
+    // ===== Boundary Condition Tests =====
+
+    #[test]
+    fn test_pe_001_exactly_ten_lines_boundary() {
+        let lines: Vec<String> = (0..10).map(|i| format!("Line {}", i)).collect();
+        let content = lines.join("\n");
+
+        let results = find_critical_in_middle_pe(&content);
+        // No critical keyword in this content, so should be empty
+        assert!(results.is_empty());
+    }
+
+    #[test]
+    fn test_pe_001_nine_lines_under_minimum() {
+        let lines: Vec<String> = (0..9).map(|i| format!("Line {}", i)).collect();
+        let content = lines.join("\n");
+
+        let results = find_critical_in_middle_pe(&content);
+        // Should be empty because content is shorter than 10 lines
+        assert!(results.is_empty());
+    }
+
+    #[test]
+    fn test_pe_001_eleven_lines_just_above_minimum() {
+        let mut lines: Vec<String> = (0..11).map(|i| format!("Line {}", i)).collect();
+        lines[5] = "This is critical information at 45%.".to_string();
+        let content = lines.join("\n");
+
+        let results = find_critical_in_middle_pe(&content);
+        // Line 5 out of 11 = 45%, which is in the 40-60% zone
+        assert_eq!(results.len(), 1);
+        assert!(results[0].position_percent >= 40.0 && results[0].position_percent <= 60.0);
+    }
+
+    #[test]
+    fn test_pe_003_word_boundary_hypercritical() {
+        let content = r#"# Hypercritical Information
+
+You should do X.
+"#;
+        let results = find_weak_imperative_language(content);
+        // Current behavior: "Hypercritical" contains "critical" so it matches
+        // The regex pattern uses .* before the keyword, so substrings are matched
+        assert_eq!(results.len(), 1, "Hypercritical currently matches critical pattern");
+        assert_eq!(results[0].weak_term.to_lowercase(), "should");
+    }
+
+    #[test]
+    fn test_pe_003_critical_case_insensitive() {
+        let content = r#"# CRITICAL INFORMATION
+
+You should do X.
+"#;
+        let results = find_weak_imperative_language(content);
+        // Should match despite case difference
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0].weak_term.to_lowercase(), "should");
+    }
+
+    #[test]
+    fn test_pe_003_important_header_detected() {
+        let content = r#"# Important Configuration
+
+You should enable this.
+"#;
+        let results = find_weak_imperative_language(content);
+        // "Important" should trigger critical section recognition
+        assert_eq!(results.len(), 1);
+        assert!(results[0].section_name.to_lowercase().contains("important"));
+    }
+
+    #[test]
+    fn test_pe_003_required_header_detected() {
+        let content = r#"# Required Fields
+
+Code could be cleaner.
+"#;
+        let results = find_weak_imperative_language(content);
+        // "Required" should trigger critical section
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0].weak_term.to_lowercase(), "could");
+    }
+
+    #[test]
+    fn test_pe_004_inline_code_backticks_still_flagged() {
+        let content = "Format with `usually` for clarity.";
+        let results = find_ambiguous_instructions(content);
+        // Current behavior: inline code is still flagged
+        // This documents the behavior; could be improved in future
+        assert!(!results.is_empty());
+    }
+
+    #[test]
+    fn test_pe_004_comment_line_skipped() {
+        let content = "// Usually this is in a comment";
+        let results = find_ambiguous_instructions(content);
+        // Comment lines should be skipped
+        assert!(results.is_empty());
+    }
+
+    #[test]
+    fn test_pe_004_shebang_skipped() {
+        let content = "#!/usr/bin/env usually";
+        let results = find_ambiguous_instructions(content);
+        // Shebang lines should be skipped
+        assert!(results.is_empty());
+    }
+
+    #[test]
+    fn test_empty_string_all_validators() {
+        let empty = "";
+
+        let critical = find_critical_in_middle_pe(empty);
+        let cot = find_cot_on_simple_tasks(empty);
+        let weak = find_weak_imperative_language(empty);
+        let ambiguous = find_ambiguous_instructions(empty);
+
+        assert!(critical.is_empty(), "Empty content should have no critical in middle");
+        assert!(cot.is_empty(), "Empty content should have no CoT issues");
+        assert!(weak.is_empty(), "Empty content should have no weak language");
+        assert!(ambiguous.is_empty(), "Empty content should have no ambiguous terms");
+    }
+
+    #[test]
+    fn test_single_line_all_validators() {
+        let single = "This is critical.";
+
+        let critical = find_critical_in_middle_pe(single);
+        let cot = find_cot_on_simple_tasks(single);
+        let weak = find_weak_imperative_language(single);
+        let ambiguous = find_ambiguous_instructions(single);
+
+        // Single line is too short for PE-001 (< 10 lines)
+        assert!(critical.is_empty());
+        // No simple task or CoT phrase
+        assert!(cot.is_empty());
+        // No critical section header
+        assert!(weak.is_empty());
+        // No ambiguous terms in this specific line
+        assert!(ambiguous.is_empty());
+    }
 }

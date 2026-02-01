@@ -1040,4 +1040,125 @@ Never include sensitive data.
             "Valid skill with clear instructions should have no PE-* issues"
         );
     }
+
+    // ===== Prompt Engineering Integration Tests (GenericMarkdown & SKILL.md) =====
+
+    #[test]
+    fn test_validate_generic_markdown_with_pe_issues() {
+        let temp = tempfile::TempDir::new().unwrap();
+
+        // Create a README.md with PE-* issues
+        // Need exactly 20 lines with critical at line 10 (50%)
+        let mut lines = vec![
+            "# Project Documentation",
+            "",
+            "Line 1",
+            "Line 2",
+            "Line 3",
+            "Line 4",
+            "Line 5",
+            "Line 6",
+            "Line 7",
+            "This is critical information.",
+            "Line 11",
+            "Line 12",
+            "Line 13",
+            "Line 14",
+            "Line 15",
+            "Line 16",
+            "Line 17",
+            "Line 18",
+            "Usually do this.",
+            "Line 20",
+        ];
+        let content = lines.join("\n");
+        std::fs::write(temp.path().join("README.md"), &content).unwrap();
+
+        let config = LintConfig::default();
+        let diagnostics = validate_project(temp.path(), &config).unwrap();
+
+        // GenericMarkdown should trigger PromptValidator
+        let pe_rules: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule.starts_with("PE-"))
+            .collect();
+
+        assert!(
+            !pe_rules.is_empty(),
+            "GenericMarkdown (README.md) should validate PE rules"
+        );
+
+        // Should have PE-001 (critical in middle) and PE-004 (ambiguous)
+        assert!(
+            pe_rules.iter().any(|d| d.rule == "PE-001"),
+            "Expected PE-001 for critical content in middle of README.md"
+        );
+        assert!(
+            pe_rules.iter().any(|d| d.rule == "PE-004"),
+            "Expected PE-004 for ambiguous term in README.md"
+        );
+    }
+
+    #[test]
+    fn test_validate_skill_md_with_pe_issues_through_validate_file() {
+        let temp = tempfile::TempDir::new().unwrap();
+        let skill_path = temp.path().join("SKILL.md");
+
+        // Build content with exactly 20 lines total, critical at line 10 (50%)
+        let mut lines = vec![
+            "---",
+            "name: analyze-code",
+            "description: Use when analyzing code",
+            "---",
+            "# Critical Instructions",
+            "",
+            "Line 1",
+            "Line 2",
+            "Line 3",
+            "This is critical information here.",  // Line 10 = 50%
+            "Line 11",
+            "Line 12",
+            "Line 13",
+            "Line 14",
+            "You should check for errors.",
+            "Line 16",
+            "Line 17",
+            "Line 18",
+            "Line 19",
+            "Line 20",
+        ];
+        let content = lines.join("\n");
+        std::fs::write(&skill_path, content).unwrap();
+
+        let config = LintConfig::default();
+        let diagnostics = validate_file(&skill_path, &config).unwrap();
+
+        // Should have PE-001 and PE-003 issues
+        let pe_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "PE-001").collect();
+        let pe_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "PE-003").collect();
+
+        assert!(
+            !pe_001.is_empty(),
+            "SKILL.md should trigger PE-001 for critical in middle"
+        );
+        assert!(
+            !pe_003.is_empty(),
+            "SKILL.md should trigger PE-003 for weak language"
+        );
+    }
+
+    #[test]
+    fn test_empty_content_no_panics() {
+        let temp = tempfile::TempDir::new().unwrap();
+        let readme_path = temp.path().join("README.md");
+        std::fs::write(&readme_path, "").unwrap();
+
+        let config = LintConfig::default();
+        let result = validate_file(&readme_path, &config);
+
+        // Should not panic and return empty or valid diagnostics
+        assert!(result.is_ok(), "Empty file should not cause panic");
+        let diagnostics = result.unwrap();
+        assert!(diagnostics.is_empty(), "Empty file should have no diagnostics");
+    }
 }
