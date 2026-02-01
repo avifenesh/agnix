@@ -48,38 +48,43 @@ pub enum FileType {
     Unknown,
 }
 
-/// Factory function used by the registry to create validators.
+/// Factory function type that creates validator instances.
 pub type ValidatorFactory = fn() -> Box<dyn Validator>;
 
-/// Registry that maps file types to validator factories.
+/// Registry that maps [`FileType`] values to validator factories.
 ///
-/// Use this to customize which validators run for a file type, especially in
-/// tests or specialized validation pipelines.
+/// This is the extension point for the validation engine. A
+/// `ValidatorRegistry` owns a set of [`ValidatorFactory`] functions for each
+/// supported [`FileType`], and constructs concrete [`Validator`] instances on
+/// demand.
+///
+/// Most callers should use [`ValidatorRegistry::with_defaults`] to obtain a
+/// registry pre-populated with all built-in validators.
 pub struct ValidatorRegistry {
     validators: HashMap<FileType, Vec<ValidatorFactory>>,
 }
 
 impl ValidatorRegistry {
-    /// Create an empty registry with no validators registered.
+    /// Create an empty registry with no registered validators.
     pub fn new() -> Self {
         Self {
             validators: HashMap::new(),
         }
     }
 
-    /// Create a registry populated with the default validator set.
+    /// Create a registry pre-populated with built-in validators.
     pub fn with_defaults() -> Self {
         let mut registry = Self::new();
         registry.register_defaults();
         registry
     }
 
-    /// Register a validator factory for the given file type.
+    /// Register a validator factory for a given file type.
     pub fn register(&mut self, file_type: FileType, factory: ValidatorFactory) {
         self.validators.entry(file_type).or_default().push(factory);
     }
 
-    /// Build validator instances for the given file type.
+    /// Build a fresh validator instance list for the given file type.
     pub fn validators_for(&self, file_type: FileType) -> Vec<Box<dyn Validator>> {
         self.validators
             .get(&file_type)
