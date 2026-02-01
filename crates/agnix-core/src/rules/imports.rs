@@ -70,7 +70,6 @@ fn visit_imports(
 
     let base_dir = file_path.parent().unwrap_or(Path::new("."));
 
-    // Route to CC-MEM-* for CLAUDE.md, REF-001 for other markdown files
     let check_not_found = (is_claude_md && config.is_rule_enabled("CC-MEM-001"))
         || (!is_claude_md && config.is_rule_enabled("REF-001"));
     let check_cycle = (is_claude_md && config.is_rule_enabled("CC-MEM-002"))
@@ -82,7 +81,6 @@ fn visit_imports(
         return;
     }
 
-    // Determine rule IDs based on file type
     let rule_not_found = if is_claude_md { "CC-MEM-001" } else { "REF-001" };
     let rule_cycle = if is_claude_md { "CC-MEM-002" } else { "REF-001" };
     let rule_depth = if is_claude_md { "CC-MEM-003" } else { "REF-001" };
@@ -246,8 +244,6 @@ mod tests {
         assert!(diagnostics.is_empty());
     }
 
-    // Tests for CLAUDE.md -> CC-MEM-* rules
-
     #[test]
     fn test_missing_import_in_claude_md() {
         let temp = TempDir::new().unwrap();
@@ -295,8 +291,6 @@ mod tests {
 
         assert!(diagnostics.iter().any(|d| d.rule == "CC-MEM-003"));
     }
-
-    // Tests for non-CLAUDE.md files -> REF-001 rule
 
     #[test]
     fn test_missing_import_in_skill_md() {
@@ -377,8 +371,6 @@ mod tests {
         assert!(!diagnostics.iter().any(|d| d.rule == "CC-MEM-003"));
     }
 
-    // Tests for rule enablement configuration
-
     #[test]
     fn test_ref_001_disabled_suppresses_skill_md_errors() {
         let temp = TempDir::new().unwrap();
@@ -408,7 +400,6 @@ mod tests {
         let validator = ImportsValidator;
         let diagnostics = validator.validate(&file_path, "See @missing.md", &config);
 
-        // SKILL.md should still emit REF-001 even when CC-MEM rules are disabled
         assert!(diagnostics.iter().any(|d| d.rule == "REF-001"));
     }
 
