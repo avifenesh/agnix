@@ -534,7 +534,9 @@ mod tests {
                 uri
             );
 
-            let anchor = uri.strip_prefix(BASE_URL).expect("Anchor should be present");
+            let anchor = uri
+                .strip_prefix(BASE_URL)
+                .expect("Anchor should be present");
 
             assert_eq!(
                 anchor,
