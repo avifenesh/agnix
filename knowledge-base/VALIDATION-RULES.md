@@ -25,11 +25,15 @@
 
 ## AGENT SKILLS RULES
 
+<a id="as-001"></a>
+
 ### AS-001 [HIGH] Missing Frontmatter
 **Requirement**: SKILL.md MUST have YAML frontmatter between `---` delimiters
 **Detection**: `!content.starts_with("---")` or no closing `---`
 **Fix**: Add template frontmatter
 **Source**: agentskills.io/specification
+
+<a id="as-002"></a>
 
 ### AS-002 [HIGH] Missing Required Field: name
 **Requirement**: `name` field REQUIRED in frontmatter
@@ -37,11 +41,15 @@
 **Fix**: Add `name: directory-name`
 **Source**: agentskills.io/specification
 
+<a id="as-003"></a>
+
 ### AS-003 [HIGH] Missing Required Field: description
 **Requirement**: `description` field REQUIRED in frontmatter
 **Detection**: Parse YAML, check for `description` key
 **Fix**: Add `description: "Use when..."`
 **Source**: agentskills.io/specification
+
+<a id="as-004"></a>
 
 ### AS-004 [HIGH] Invalid Name Format
 **Requirement**: name MUST be 1-64 chars, lowercase letters/numbers/hyphens only
@@ -53,11 +61,15 @@
 **Fix**: Lowercase + replace `_` with `-` + remove invalid chars
 **Source**: agentskills.io/specification
 
+<a id="as-005"></a>
+
 ### AS-005 [HIGH] Name Starts/Ends with Hyphen
 **Requirement**: name MUST NOT start or end with `-`
 **Detection**: `name.starts_with('-') || name.ends_with('-')`
 **Fix**: Remove leading/trailing hyphens
 **Source**: agentskills.io/specification
+
+<a id="as-006"></a>
 
 ### AS-006 [HIGH] Consecutive Hyphens in Name
 **Requirement**: name MUST NOT contain `--`
@@ -65,11 +77,15 @@
 **Fix**: Replace `--` with `-`
 **Source**: agentskills.io/specification
 
+<a id="as-007"></a>
+
 ### AS-007 [HIGH] Reserved Name
 **Requirement**: name MUST NOT be reserved word (anthropic, claude)
 **Detection**: `["anthropic", "claude", "skill"].contains(name.as_str())`
 **Fix**: Suggest alternative name
 **Source**: platform.claude.com/docs
+
+<a id="as-008"></a>
 
 ### AS-008 [HIGH] Description Too Short
 **Requirement**: description MUST be 1-1024 characters
@@ -77,11 +93,15 @@
 **Fix**: Add minimal description or truncate
 **Source**: agentskills.io/specification
 
+<a id="as-009"></a>
+
 ### AS-009 [HIGH] Description Contains XML
 **Requirement**: description MUST NOT contain XML tags
 **Detection**: `Regex::new(r"<[^>]+>").is_match(description)`
 **Fix**: Remove XML tags
 **Source**: platform.claude.com/docs
+
+<a id="as-010"></a>
 
 ### AS-010 [MEDIUM] Missing Trigger Phrase
 **Requirement**: description SHOULD include "Use when" trigger
@@ -89,11 +109,15 @@
 **Fix**: Prepend "Use when user asks to..."
 **Source**: awesome-slash/enhance-skills, platform.claude.com/docs
 
+<a id="as-011"></a>
+
 ### AS-011 [HIGH] Compatibility Too Long
 **Requirement**: compatibility field MUST be 1-500 chars if present
 **Detection**: `compatibility.len() > 500`
 **Fix**: Truncate to 500 chars
 **Source**: agentskills.io/specification
+
+<a id="as-012"></a>
 
 ### AS-012 [MEDIUM] Content Exceeds 500 Lines
 **Requirement**: SKILL.md SHOULD be under 500 lines
@@ -101,17 +125,23 @@
 **Fix**: Suggest moving to references/
 **Source**: platform.claude.com/docs, agentskills.io
 
+<a id="as-013"></a>
+
 ### AS-013 [HIGH] File Reference Too Deep
 **Requirement**: File references MUST be one level deep
 **Detection**: Check references like `references/guide.md` vs `refs/deep/nested/file.md`
 **Fix**: Flatten directory structure
 **Source**: agentskills.io/specification
 
+<a id="as-014"></a>
+
 ### AS-014 [HIGH] Windows Path Separator
 **Requirement**: Paths MUST use forward slashes, even on Windows
 **Detection**: `path.contains("\\")`
 **Fix**: Replace `\\` with `/`
 **Source**: agentskills.io/specification
+
+<a id="as-015"></a>
 
 ### AS-015 [HIGH] Upload Size Exceeds 8MB
 **Requirement**: Skill directory MUST be under 8MB total
@@ -123,11 +153,15 @@
 
 ## CLAUDE CODE RULES (SKILLS)
 
+<a id="cc-sk-001"></a>
+
 ### CC-SK-001 [HIGH] Invalid Model Value
 **Requirement**: model MUST be one of: sonnet, opus, haiku, inherit
 **Detection**: `!["sonnet", "opus", "haiku", "inherit"].contains(model)`
 **Fix**: Replace with closest valid option
 **Source**: code.claude.com/docs/en/skills
+
+<a id="cc-sk-002"></a>
 
 ### CC-SK-002 [HIGH] Invalid Context Value
 **Requirement**: context MUST be "fork" or omitted
@@ -135,11 +169,15 @@
 **Fix**: Change to "fork" or remove
 **Source**: code.claude.com/docs/en/skills
 
+<a id="cc-sk-003"></a>
+
 ### CC-SK-003 [HIGH] Context Without Agent
 **Requirement**: `context: fork` REQUIRES `agent` field
 **Detection**: `context == "fork" && agent.is_none()`
 **Fix**: Add `agent: general-purpose`
 **Source**: code.claude.com/docs/en/skills
+
+<a id="cc-sk-004"></a>
 
 ### CC-SK-004 [HIGH] Agent Without Context
 **Requirement**: `agent` field REQUIRES `context: fork`
@@ -147,11 +185,15 @@
 **Fix**: Add `context: fork`
 **Source**: code.claude.com/docs/en/skills
 
+<a id="cc-sk-005"></a>
+
 ### CC-SK-005 [HIGH] Invalid Agent Type
 **Requirement**: agent MUST be: Explore, Plan, general-purpose, or custom kebab-case name (1-64 chars, pattern: `^[a-z0-9]+(-[a-z0-9]+)*$`)
 **Detection**: Check against built-in agents or validate kebab-case format
 **Fix**: Suggest valid agent or correct format
 **Source**: code.claude.com/docs/en/sub-agents
+
+<a id="cc-sk-006"></a>
 
 ### CC-SK-006 [HIGH] Dangerous Auto-Invocation
 **Requirement**: Side-effect skills MUST have `disable-model-invocation: true`
@@ -159,11 +201,15 @@
 **Fix**: Add `disable-model-invocation: true`
 **Source**: code.claude.com/docs/en/skills
 
+<a id="cc-sk-007"></a>
+
 ### CC-SK-007 [HIGH] Unrestricted Bash
 **Requirement**: Bash in allowed-tools SHOULD be scoped
 **Detection**: `allowed_tools.contains("Bash") && !allowed_tools.contains("Bash(")`
 **Fix**: Suggest `Bash(git:*)` based on skill name
 **Source**: awesome-slash/enhance-skills
+
+<a id="cc-sk-008"></a>
 
 ### CC-SK-008 [HIGH] Unknown Tool Name
 **Requirement**: Tool names MUST match Claude Code tools
@@ -171,6 +217,8 @@
 **Detection**: Check against tool list
 **Fix**: Suggest closest match
 **Source**: code.claude.com/docs/en/settings
+
+<a id="cc-sk-009"></a>
 
 ### CC-SK-009 [MEDIUM] Too Many Injections
 **Requirement**: Limit dynamic injections (!`cmd`) to 3
@@ -182,6 +230,8 @@
 
 ## CLAUDE CODE RULES (HOOKS)
 
+<a id="cc-hk-001"></a>
+
 ### CC-HK-001 [HIGH] Invalid Hook Event
 **Requirement**: Event MUST be one of 12 valid names (case-sensitive)
 **Valid**: SessionStart, UserPromptSubmit, PreToolUse, PermissionRequest, PostToolUse, PostToolUseFailure, SubagentStart, SubagentStop, Stop, PreCompact, Setup, SessionEnd, Notification
@@ -189,11 +239,15 @@
 **Fix**: Suggest closest match (did you mean PreToolUse?)
 **Source**: code.claude.com/docs/en/hooks
 
+<a id="cc-hk-002"></a>
+
 ### CC-HK-002 [HIGH] Prompt Hook on Wrong Event
 **Requirement**: `type: "prompt"` ONLY for Stop and SubagentStop
 **Detection**: `hook.type == "prompt" && !["Stop", "SubagentStop"].contains(event)`
 **Fix**: Change to `type: "command"` or use Stop/SubagentStop
 **Source**: code.claude.com/docs/en/hooks
+
+<a id="cc-hk-003"></a>
 
 ### CC-HK-003 [HIGH] Missing Matcher for Tool Events
 **Requirement**: PreToolUse/PermissionRequest/PostToolUse REQUIRE matcher
@@ -201,11 +255,15 @@
 **Fix**: Add `"matcher": "*"` or specific tool
 **Source**: code.claude.com/docs/en/hooks
 
+<a id="cc-hk-004"></a>
+
 ### CC-HK-004 [HIGH] Matcher on Non-Tool Event
 **Requirement**: Stop/SubagentStop/UserPromptSubmit MUST NOT have matcher
 **Detection**: `["Stop", "SubagentStop", "UserPromptSubmit"].contains(event) && matcher.is_some()`
 **Fix**: Remove matcher field
 **Source**: code.claude.com/docs/en/hooks
+
+<a id="cc-hk-005"></a>
 
 ### CC-HK-005 [HIGH] Missing Type Field
 **Requirement**: Hook MUST have `type: "command"` or `type: "prompt"`
@@ -213,11 +271,15 @@
 **Fix**: Add `"type": "command"`
 **Source**: code.claude.com/docs/en/hooks
 
+<a id="cc-hk-006"></a>
+
 ### CC-HK-006 [HIGH] Missing Command Field
 **Requirement**: `type: "command"` REQUIRES `command` field
 **Detection**: `hook.type == "command" && hook.command.is_none()`
 **Fix**: Add command field
 **Source**: code.claude.com/docs/en/hooks
+
+<a id="cc-hk-007"></a>
 
 ### CC-HK-007 [HIGH] Missing Prompt Field
 **Requirement**: `type: "prompt"` REQUIRES `prompt` field
@@ -225,11 +287,15 @@
 **Fix**: Add prompt field
 **Source**: code.claude.com/docs/en/hooks
 
+<a id="cc-hk-008"></a>
+
 ### CC-HK-008 [HIGH] Script File Not Found
 **Requirement**: Hook command script MUST exist on filesystem
 **Detection**: Check if script path exists (resolve $CLAUDE_PROJECT_DIR)
 **Fix**: Show error with correct path
 **Source**: code.claude.com/docs/en/hooks
+
+<a id="cc-hk-009"></a>
 
 ### CC-HK-009 [HIGH] Dangerous Command Pattern
 **Requirement**: Hooks SHOULD NOT contain destructive commands
@@ -237,6 +303,8 @@
 **Detection**: Regex match against dangerous patterns
 **Fix**: Warn, suggest safer alternative
 **Source**: awesome-slash/enhance-hooks
+
+<a id="cc-hk-010"></a>
 
 ### CC-HK-010 [MEDIUM] Timeout Policy
 **Requirement**: Hooks SHOULD have explicit timeout; excessive timeouts warn
@@ -246,6 +314,8 @@
   - Prompt: `timeout > 30` exceeds 30s default
 **Fix**: Add explicit timeout within default limits (600s for commands, 30s for prompts)
 **Source**: code.claude.com/docs/en/hooks
+
+<a id="cc-hk-011"></a>
 
 ### CC-HK-011 [HIGH] Invalid Timeout Value
 **Requirement**: timeout MUST be positive integer
@@ -257,11 +327,15 @@
 
 ## CLAUDE CODE RULES (SUBAGENTS)
 
+<a id="cc-ag-001"></a>
+
 ### CC-AG-001 [HIGH] Missing Name Field
 **Requirement**: Agent frontmatter REQUIRES `name` field
 **Detection**: Parse frontmatter, check for `name`
 **Fix**: Add `name: agent-name`
 **Source**: code.claude.com/docs/en/sub-agents
+
+<a id="cc-ag-002"></a>
 
 ### CC-AG-002 [HIGH] Missing Description Field
 **Requirement**: Agent frontmatter REQUIRES `description` field
@@ -269,11 +343,15 @@
 **Fix**: Add description
 **Source**: code.claude.com/docs/en/sub-agents
 
+<a id="cc-ag-003"></a>
+
 ### CC-AG-003 [HIGH] Invalid Model Value
 **Requirement**: model MUST be: sonnet, opus, haiku, inherit
 **Detection**: `!["sonnet", "opus", "haiku", "inherit"].contains(model)`
 **Fix**: Replace with valid value
 **Source**: code.claude.com/docs/en/sub-agents
+
+<a id="cc-ag-004"></a>
 
 ### CC-AG-004 [HIGH] Invalid Permission Mode
 **Requirement**: permissionMode MUST be: default, acceptEdits, dontAsk, bypassPermissions, plan
@@ -281,11 +359,15 @@
 **Fix**: Replace with valid value
 **Source**: code.claude.com/docs/en/sub-agents
 
+<a id="cc-ag-005"></a>
+
 ### CC-AG-005 [HIGH] Referenced Skill Not Found
 **Requirement**: Skills in `skills` array MUST exist
 **Detection**: Check `.claude/skills/{name}/SKILL.md` exists
 **Fix**: Remove reference or create skill
 **Source**: code.claude.com/docs/en/sub-agents
+
+<a id="cc-ag-006"></a>
 
 ### CC-AG-006 [HIGH] Tool/Disallowed Conflict
 **Requirement**: Tool cannot be in both `tools` and `disallowedTools`
@@ -297,11 +379,15 @@
 
 ## CLAUDE CODE RULES (MEMORY)
 
+<a id="cc-mem-001"></a>
+
 ### CC-MEM-001 [HIGH] Invalid Import Path
 **Requirement**: @import paths MUST exist on filesystem
 **Detection**: Extract `@path` references, check existence
 **Fix**: Show error with resolved path
 **Source**: code.claude.com/docs/en/memory
+
+<a id="cc-mem-002"></a>
 
 ### CC-MEM-002 [HIGH] Circular Import
 **Requirement**: @imports MUST NOT create circular references
@@ -309,17 +395,23 @@
 **Fix**: Show cycle path
 **Source**: code.claude.com/docs/en/memory
 
+<a id="cc-mem-003"></a>
+
 ### CC-MEM-003 [HIGH] Import Depth Exceeds 5
 **Requirement**: @import chain MUST NOT exceed 5 hops
 **Detection**: Track import depth during resolution
 **Fix**: Flatten import hierarchy
 **Source**: code.claude.com/docs/en/memory
 
+<a id="cc-mem-004"></a>
+
 ### CC-MEM-004 [HIGH] Invalid Command Reference
 **Requirement**: npm scripts referenced MUST exist in package.json
 **Detection**: Extract `npm run <script>`, check package.json
 **Fix**: Show available scripts
 **Source**: awesome-slash/enhance-claude-memory
+
+<a id="cc-mem-005"></a>
 
 ### CC-MEM-005 [HIGH] Generic Instruction
 **Requirement**: Avoid redundant "be helpful" instructions
@@ -328,11 +420,15 @@
 **Fix**: Remove line
 **Source**: awesome-slash/enhance-claude-memory, research papers
 
+<a id="cc-mem-006"></a>
+
 ### CC-MEM-006 [HIGH] Negative Without Positive
 **Requirement**: Negative instructions ("don't") SHOULD include positive alternative
 **Detection**: Line contains `don't|never|avoid` without follow-up positive
 **Fix**: Suggest "Instead, do..."
 **Source**: research: positive framing improves compliance
+
+<a id="cc-mem-007"></a>
 
 ### CC-MEM-007 [HIGH] Weak Constraint Language
 **Requirement**: Critical rules MUST use strong language (must/always/never)
@@ -340,17 +436,23 @@
 **Fix**: Replace with `must|always|required`
 **Source**: research: constraint strength affects compliance
 
+<a id="cc-mem-008"></a>
+
 ### CC-MEM-008 [HIGH] Critical Content in Middle
 **Requirement**: Important rules SHOULD be at START or END (lost in the middle)
 **Detection**: "critical" appears after 40% of content
 **Fix**: Move to top
 **Source**: Liu et al. (2023), TACL
 
+<a id="cc-mem-009"></a>
+
 ### CC-MEM-009 [MEDIUM] Token Count Exceeded
 **Requirement**: File SHOULD be under 1500 tokens (~6000 chars)
 **Detection**: `content.len() / 4 > 1500`
 **Fix**: Suggest using @imports
 **Source**: code.claude.com/docs/en/memory
+
+<a id="cc-mem-010"></a>
 
 ### CC-MEM-010 [MEDIUM] README Duplication
 **Requirement**: CLAUDE.md SHOULD complement README, not duplicate
@@ -362,11 +464,15 @@
 
 ## AGENTS.MD RULES (CROSS-PLATFORM)
 
+<a id="agm-001"></a>
+
 ### AGM-001 [HIGH] Valid Markdown Structure
 **Requirement**: AGENTS.md MUST be valid markdown
 **Detection**: Parse as markdown, check for syntax errors
 **Fix**: Fix markdown syntax issues
 **Source**: developers.openai.com/codex/guides/agents-md, docs.cursor.com/en/context, docs.cline.bot/features/custom-instructions
+
+<a id="agm-002"></a>
 
 ### AGM-002 [MEDIUM] Missing Section Headers
 **Requirement**: AGENTS.md SHOULD have clear section headers (##)
@@ -374,11 +480,15 @@
 **Fix**: Add section headers for organization
 **Source**: docs.cursor.com/en/context, docs.cline.bot/features/custom-instructions
 
+<a id="agm-003"></a>
+
 ### AGM-003 [HIGH] Character Limit (Windsurf)
 **Requirement**: Rules files SHOULD be under 12000 characters for Windsurf compatibility
 **Detection**: `content.len() > 12000`
 **Fix**: Split into multiple files or reduce content
 **Source**: docs.windsurf.com/windsurf/cascade/memories
+
+<a id="agm-004"></a>
 
 ### AGM-004 [MEDIUM] Missing Project Context
 **Requirement**: AGENTS.md SHOULD describe project purpose/stack
@@ -386,11 +496,15 @@
 **Fix**: Add "# Project" or "## Overview" section
 **Source**: Best practices across platforms
 
+<a id="agm-005"></a>
+
 ### AGM-005 [HIGH] Platform-Specific Features Without Guard
 **Requirement**: Platform-specific instructions SHOULD be labeled
 **Detection**: Claude-specific (hooks, context: fork) or Cursor-specific features without platform label
 **Fix**: Add platform guard comment (e.g., "## Claude Code Specific")
 **Source**: Multi-platform compatibility
+
+<a id="agm-006"></a>
 
 ### AGM-006 [MEDIUM] Nested AGENTS.md Hierarchy
 **Requirement**: Some tools load AGENTS.md hierarchically (multiple files may apply)
@@ -402,11 +516,15 @@
 
 ## CLAUDE CODE RULES (PLUGINS)
 
+<a id="cc-pl-001"></a>
+
 ### CC-PL-001 [HIGH] Plugin Manifest Not in .claude-plugin/
 **Requirement**: plugin.json MUST be in `.claude-plugin/` directory
 **Detection**: Check `!.claude-plugin/plugin.json` exists
 **Fix**: Move to correct location
 **Source**: code.claude.com/docs/en/plugins
+
+<a id="cc-pl-002"></a>
 
 ### CC-PL-002 [HIGH] Components in .claude-plugin/
 **Requirement**: skills/agents/hooks MUST NOT be inside .claude-plugin/
@@ -414,17 +532,23 @@
 **Fix**: Move to plugin root
 **Source**: code.claude.com/docs/en/plugins-reference
 
+<a id="cc-pl-003"></a>
+
 ### CC-PL-003 [HIGH] Invalid Semver
 **Requirement**: version MUST be semver format (major.minor.patch)
 **Detection**: `!Regex::new(r"^\d+\.\d+\.\d+$").matches(version)`
 **Fix**: Suggest valid semver
 **Source**: code.claude.com/docs/en/plugins-reference
 
+<a id="cc-pl-004"></a>
+
 ### CC-PL-004 [HIGH] Missing Required Plugin Field
 **Requirement**: plugin.json REQUIRES name, description, version
 **Detection**: Parse JSON, check required fields
 **Fix**: Add missing fields
 **Source**: code.claude.com/docs/en/plugins-reference
+
+<a id="cc-pl-005"></a>
 
 ### CC-PL-005 [HIGH] Empty Plugin Name
 **Requirement**: name field MUST NOT be empty
@@ -436,11 +560,15 @@
 
 ## MCP RULES
 
+<a id="mcp-001"></a>
+
 ### MCP-001 [HIGH] Invalid JSON-RPC Version
 **Requirement**: MUST use JSON-RPC 2.0
 **Detection**: `message.jsonrpc != "2.0"`
 **Fix**: Set `"jsonrpc": "2.0"`
 **Source**: modelcontextprotocol.io/specification
+
+<a id="mcp-002"></a>
 
 ### MCP-002 [HIGH] Missing Required Tool Field
 **Requirement**: Tool MUST have `name`, `description`, `inputSchema`
@@ -448,11 +576,15 @@
 **Fix**: Add missing fields
 **Source**: modelcontextprotocol.io/docs/concepts/tools
 
+<a id="mcp-003"></a>
+
 ### MCP-003 [HIGH] Invalid JSON Schema
 **Requirement**: inputSchema MUST be valid JSON Schema
 **Detection**: Validate against JSON Schema spec
 **Fix**: Show schema errors
 **Source**: modelcontextprotocol.io/specification
+
+<a id="mcp-004"></a>
 
 ### MCP-004 [HIGH] Missing Tool Description
 **Requirement**: Tool SHOULD have clear description
@@ -460,11 +592,15 @@
 **Fix**: Add description
 **Source**: modelcontextprotocol.io/docs/concepts/tools
 
+<a id="mcp-005"></a>
+
 ### MCP-005 [HIGH] Tool Without User Consent
 **Requirement**: Tools MUST have user consent before invocation
 **Detection**: Check for permission flow
 **Fix**: Document consent requirement
 **Source**: modelcontextprotocol.io/specification (Security)
+
+<a id="mcp-006"></a>
 
 ### MCP-006 [HIGH] Untrusted Annotations
 **Requirement**: Tool annotations MUST be considered untrusted unless from trusted server
@@ -476,17 +612,23 @@
 
 ## UNIVERSAL RULES (XML)
 
+<a id="xml-001"></a>
+
 ### XML-001 [HIGH] Unclosed XML Tag
 **Requirement**: All XML tags MUST be properly closed
 **Detection**: Parse tags, check balance with stack
 **Fix**: Add closing tag
 **Source**: platform.claude.com/docs prompt engineering
 
+<a id="xml-002"></a>
+
 ### XML-002 [HIGH] Mismatched Closing Tag
 **Requirement**: Closing tag MUST match opening tag
 **Detection**: `stack.last().name != closing_tag.name`
 **Fix**: Replace with correct closing tag
 **Source**: XML parsing standard
+
+<a id="xml-003"></a>
 
 ### XML-003 [HIGH] Unmatched Closing Tag
 **Requirement**: Closing tag MUST have corresponding opening tag
@@ -498,11 +640,15 @@
 
 ## UNIVERSAL RULES (REFERENCES)
 
+<a id="ref-001"></a>
+
 ### REF-001 [HIGH] Import File Not Found
 **Requirement**: @import references MUST point to existing files
 **Detection**: Resolve path, check existence
 **Fix**: Show resolved path, suggest alternatives
 **Source**: code.claude.com/docs/en/memory
+
+<a id="ref-002"></a>
 
 ### REF-002 [HIGH] Broken Markdown Link
 **Requirement**: Markdown links SHOULD point to existing files
@@ -514,11 +660,15 @@
 
 ## PROMPT ENGINEERING RULES
 
+<a id="pe-001"></a>
+
 ### PE-001 [HIGH] Lost in the Middle
 **Requirement**: Critical content MUST NOT be in middle 40-60%
 **Detection**: Find "critical|important|must" positions, check if in middle
 **Fix**: Move to start or end
 **Source**: Liu et al. (2023), "Lost in the Middle: How Language Models Use Long Contexts", TACL
+
+<a id="pe-002"></a>
 
 ### PE-002 [HIGH] Chain-of-Thought on Simple Task
 **Requirement**: Don't use "think step by step" for simple operations
@@ -526,11 +676,15 @@
 **Fix**: Remove CoT instructions
 **Source**: Wei et al. (2022), research shows CoT hurts simple tasks
 
+<a id="pe-003"></a>
+
 ### PE-003 [MEDIUM] Weak Imperative Language
 **Requirement**: Use strong language (must/always/never) for critical rules
 **Detection**: Critical section with `should|could|try|consider|maybe`
 **Fix**: Replace with must/always/required
 **Source**: Multiple prompt engineering studies
+
+<a id="pe-004"></a>
 
 ### PE-004 [MEDIUM] Ambiguous Instructions
 **Requirement**: Instructions SHOULD be specific and measurable
@@ -542,11 +696,15 @@
 
 ## CROSS-PLATFORM RULES
 
+<a id="xp-001"></a>
+
 ### XP-001 [HIGH] Platform-Specific Feature in Generic Config
 **Requirement**: Generic configs MUST NOT use platform-specific features
 **Detection**: Check for Claude-only features (hooks, context: fork) in AGENTS.md
 **Fix**: Move to CLAUDE.md or add platform guard
 **Source**: multi-platform research
+
+<a id="xp-002"></a>
 
 ### XP-002 [HIGH] AGENTS.md Platform Compatibility
 **Requirement**: AGENTS.md is a widely-adopted standard used by multiple platforms
@@ -560,6 +718,8 @@
 **Detection**: Validate AGENTS.md follows markdown conventions
 **Fix**: Ensure AGENTS.md is valid markdown with clear sections
 **Source**: developers.openai.com/codex/guides/agents-md, opencode.ai/docs/guides/project-docs, docs.cursor.com/en/context, docs.cline.bot/features/custom-instructions, github.com/github/docs/changelog/2025-06-17-github-copilot-coding-agent-now-supports-agents-md-custom-instructions
+
+<a id="xp-003"></a>
 
 ### XP-003 [HIGH] Hard-Coded Platform Paths
 **Requirement**: Paths SHOULD use environment variables
