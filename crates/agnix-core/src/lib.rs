@@ -85,6 +85,7 @@ fn get_validators_for_type(file_type: FileType) -> Vec<Box<dyn Validator>> {
         ],
         FileType::ClaudeMd => vec![
             Box::new(rules::claude_md::ClaudeMdValidator),
+            Box::new(rules::cross_platform::CrossPlatformValidator),
             Box::new(rules::xml::XmlValidator),
             Box::new(rules::imports::ImportsValidator),
         ],
@@ -95,6 +96,7 @@ fn get_validators_for_type(file_type: FileType) -> Vec<Box<dyn Validator>> {
         FileType::Hooks => vec![Box::new(rules::hooks::HooksValidator)],
         FileType::Plugin => vec![Box::new(rules::plugin::PluginValidator)],
         FileType::GenericMarkdown => vec![
+            Box::new(rules::cross_platform::CrossPlatformValidator),
             Box::new(rules::xml::XmlValidator),
             Box::new(rules::imports::ImportsValidator),
         ],
@@ -293,7 +295,7 @@ mod tests {
     #[test]
     fn test_validators_for_claude_md() {
         let validators = get_validators_for_type(FileType::ClaudeMd);
-        assert_eq!(validators.len(), 3);
+        assert_eq!(validators.len(), 4);
     }
 
     #[test]
@@ -592,6 +594,169 @@ mod tests {
         assert!(
             plugin_diagnostics.iter().any(|d| d.rule == "CC-PL-004"),
             "Should report CC-PL-004 for missing description field"
+        );
+    }
+
+    // ===== Cross-Platform Validation Integration Tests =====
+
+    #[test]
+    fn test_validate_agents_md_with_claude_features() {
+        let temp = tempfile::TempDir::new().unwrap();
+
+        // Create AGENTS.md with Claude-specific features
+        std::fs::write(
+            temp.path().join("AGENTS.md"),
+            r#"# Agent Config
+- type: PreToolExecution
+  command: echo "test"
+"#,
+        )
+        .unwrap();
+
+        let config = LintConfig::default();
+        let diagnostics = validate_project(temp.path(), &config).unwrap();
+
+        // Should detect XP-001 error for Claude-specific hooks in AGENTS.md
+        let xp_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XP-001").collect();
+        assert!(
+            !xp_001.is_empty(),
+            "Expected XP-001 error for hooks in AGENTS.md"
+        );
+    }
+
+    #[test]
+    fn test_validate_agents_md_with_context_fork() {
+        let temp = tempfile::TempDir::new().unwrap();
+
+        // Create AGENTS.md with context: fork
+        std::fs::write(
+            temp.path().join("AGENTS.md"),
+            r#"---
+name: test
+context: fork
+agent: Explore
+---
+# Test Agent
+"#,
+        )
+        .unwrap();
+
+        let config = LintConfig::default();
+        let diagnostics = validate_project(temp.path(), &config).unwrap();
+
+        // Should detect XP-001 errors for Claude-specific features
+        let xp_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XP-001").collect();
+        assert!(
+            !xp_001.is_empty(),
+            "Expected XP-001 errors for context:fork and agent in AGENTS.md"
+        );
+    }
+
+    #[test]
+    fn test_validate_agents_md_no_headers() {
+        let temp = tempfile::TempDir::new().unwrap();
+
+        // Create AGENTS.md with no headers
+        std::fs::write(
+            temp.path().join("AGENTS.md"),
+            "Just plain text without any markdown headers.",
+        )
+        .unwrap();
+
+        let config = LintConfig::default();
+        let diagnostics = validate_project(temp.path(), &config).unwrap();
+
+        // Should detect XP-002 warning for missing headers
+        let xp_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XP-002").collect();
+        assert!(
+            !xp_002.is_empty(),
+            "Expected XP-002 warning for missing headers in AGENTS.md"
+        );
+    }
+
+    #[test]
+    fn test_validate_agents_md_hard_coded_paths() {
+        let temp = tempfile::TempDir::new().unwrap();
+
+        // Create AGENTS.md with hard-coded platform paths
+        std::fs::write(
+            temp.path().join("AGENTS.md"),
+            r#"# Config
+Check .claude/settings.json and .cursor/rules/ for configuration.
+"#,
+        )
+        .unwrap();
+
+        let config = LintConfig::default();
+        let diagnostics = validate_project(temp.path(), &config).unwrap();
+
+        // Should detect XP-003 warnings for hard-coded paths
+        let xp_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XP-003").collect();
+        assert_eq!(
+            xp_003.len(),
+            2,
+            "Expected 2 XP-003 warnings for hard-coded paths"
+        );
+    }
+
+    #[test]
+    fn test_validate_valid_agents_md() {
+        let temp = tempfile::TempDir::new().unwrap();
+
+        // Create valid AGENTS.md without any issues
+        std::fs::write(
+            temp.path().join("AGENTS.md"),
+            r#"# Project Guidelines
+
+Follow the coding style guide.
+
+## Commands
+- npm run build
+- npm run test
+"#,
+        )
+        .unwrap();
+
+        let config = LintConfig::default();
+        let diagnostics = validate_project(temp.path(), &config).unwrap();
+
+        // Should have no XP-* diagnostics
+        let xp_rules: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule.starts_with("XP-"))
+            .collect();
+        assert!(
+            xp_rules.is_empty(),
+            "Valid AGENTS.md should have no XP-* diagnostics"
+        );
+    }
+
+    #[test]
+    fn test_validate_claude_md_allows_claude_features() {
+        let temp = tempfile::TempDir::new().unwrap();
+
+        // Create CLAUDE.md with Claude-specific features (allowed)
+        std::fs::write(
+            temp.path().join("CLAUDE.md"),
+            r#"---
+name: test
+context: fork
+agent: Explore
+allowed-tools: Read Write
+---
+# Claude Agent
+"#,
+        )
+        .unwrap();
+
+        let config = LintConfig::default();
+        let diagnostics = validate_project(temp.path(), &config).unwrap();
+
+        // XP-001 should NOT fire for CLAUDE.md (Claude features are allowed there)
+        let xp_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XP-001").collect();
+        assert!(
+            xp_001.is_empty(),
+            "CLAUDE.md should be allowed to have Claude-specific features"
         );
     }
 }
