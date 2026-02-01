@@ -84,6 +84,10 @@ pub struct RuleConfig {
     #[serde(default = "default_true")]
     pub cross_platform: bool,
 
+    /// Enable prompt engineering validation (PE-*)
+    #[serde(default = "default_true")]
+    pub prompt_engineering: bool,
+
     /// Detect generic instructions in CLAUDE.md
     #[serde(default = "default_true")]
     pub generic_instructions: bool,
@@ -125,6 +129,7 @@ impl Default for RuleConfig {
             mcp: true,
             imports: true,
             cross_platform: true,
+            prompt_engineering: true,
             generic_instructions: true,
             frontmatter_validation: true,
             xml_balance: true,
@@ -204,6 +209,7 @@ impl LintConfig {
             s if s.starts_with("MCP-") => self.rules.mcp,
             s if s.starts_with("REF-") || s.starts_with("imports::") => self.rules.imports,
             s if s.starts_with("XP-") => self.rules.cross_platform,
+            s if s.starts_with("PE-") => self.rules.prompt_engineering,
             // Unknown rules are enabled by default
             _ => true,
         }
@@ -457,6 +463,7 @@ exclude = []
         assert!(config.rules.mcp);
         assert!(config.rules.imports);
         assert!(config.rules.cross_platform);
+        assert!(config.rules.prompt_engineering);
         assert!(config.rules.disabled_rules.is_empty());
     }
 
@@ -576,5 +583,101 @@ cross_platform = false
         assert!(!config.is_rule_enabled("XP-001"));
         assert!(!config.is_rule_enabled("XP-002"));
         assert!(!config.is_rule_enabled("XP-003"));
+    }
+
+    // ===== Prompt Engineering Category Tests =====
+
+    #[test]
+    fn test_default_config_enables_pe_rules() {
+        let config = LintConfig::default();
+
+        assert!(config.is_rule_enabled("PE-001"));
+        assert!(config.is_rule_enabled("PE-002"));
+        assert!(config.is_rule_enabled("PE-003"));
+        assert!(config.is_rule_enabled("PE-004"));
+    }
+
+    #[test]
+    fn test_category_disabled_prompt_engineering() {
+        let mut config = LintConfig::default();
+        config.rules.prompt_engineering = false;
+
+        assert!(!config.is_rule_enabled("PE-001"));
+        assert!(!config.is_rule_enabled("PE-002"));
+        assert!(!config.is_rule_enabled("PE-003"));
+        assert!(!config.is_rule_enabled("PE-004"));
+
+        // Other categories still enabled
+        assert!(config.is_rule_enabled("CC-AG-001"));
+        assert!(config.is_rule_enabled("AS-005"));
+        assert!(config.is_rule_enabled("XP-001"));
+    }
+
+    #[test]
+    fn test_pe_rules_work_with_all_targets() {
+        // PE-* rules are NOT target-specific
+        let targets = [
+            TargetTool::Generic,
+            TargetTool::ClaudeCode,
+            TargetTool::Cursor,
+            TargetTool::Codex,
+        ];
+
+        for target in targets {
+            let mut config = LintConfig::default();
+            config.target = target;
+
+            assert!(
+                config.is_rule_enabled("PE-001"),
+                "PE-001 should be enabled for {:?}",
+                target
+            );
+            assert!(
+                config.is_rule_enabled("PE-002"),
+                "PE-002 should be enabled for {:?}",
+                target
+            );
+            assert!(
+                config.is_rule_enabled("PE-003"),
+                "PE-003 should be enabled for {:?}",
+                target
+            );
+            assert!(
+                config.is_rule_enabled("PE-004"),
+                "PE-004 should be enabled for {:?}",
+                target
+            );
+        }
+    }
+
+    #[test]
+    fn test_disabled_specific_pe_rule() {
+        let mut config = LintConfig::default();
+        config.rules.disabled_rules = vec!["PE-001".to_string()];
+
+        assert!(!config.is_rule_enabled("PE-001"));
+        assert!(config.is_rule_enabled("PE-002"));
+        assert!(config.is_rule_enabled("PE-003"));
+        assert!(config.is_rule_enabled("PE-004"));
+    }
+
+    #[test]
+    fn test_toml_deserialization_prompt_engineering() {
+        let toml_str = r#"
+severity = "Warning"
+target = "Generic"
+exclude = []
+
+[rules]
+prompt_engineering = false
+"#;
+
+        let config: LintConfig = toml::from_str(toml_str).unwrap();
+
+        assert!(!config.rules.prompt_engineering);
+        assert!(!config.is_rule_enabled("PE-001"));
+        assert!(!config.is_rule_enabled("PE-002"));
+        assert!(!config.is_rule_enabled("PE-003"));
+        assert!(!config.is_rule_enabled("PE-004"));
     }
 }

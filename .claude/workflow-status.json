@@ -1,30 +1,24 @@
 {
-  "version": "1.0.0",
   "task": {
-    "id": "41",
-    "title": "Implement cross-platform validator (XP-001 to XP-003)",
+    "id": "40",
+    "title": "Implement prompt-engineering validator PE-001 to PE-004",
     "source": "github-issue"
   },
   "workflow": {
-    "id": "worktree-manager",
-    "status": "in-progress",
-    "currentPhase": "worktree-created",
-    "createdAt": "2026-02-01T00:00:00Z"
+    "id": "prompt-validator-40",
+    "status": "active",
+    "currentPhase": "exploration"
   },
   "git": {
-    "originalBranch": "main",
-    "workingBranch": "feature/xp-validator-41",
-    "baseSha": "57bf39f",
-    "baseMessage": "feat(rules): implement CC-SK validation rules 001-005, 008-009 (#59)",
-    "isWorktree": true,
-    "mainRepoPath": "/c/Users/avife/agnix"
-  },
-  "paths": {
-    "worktreePath": "/c/Users/avife/agnix-worktrees/xp-validator-41",
-    "mainRepoPath": "/c/Users/avife/agnix"
+    "branch": "feature/prompt-validator-40",
+    "baseSha": "942c78b",
+    "baseRef": "main",
+    "mainRepoPath": "C:\Users\avife\agnix",
+    "isWorktree": true
   },
   "resume": {
     "canResume": true,
-    "resumeFromStep": "task-setup"
+    "resumeFromStep": "exploration",
+    "createdAt": "2026-02-01T00:00:00Z"
   }
 }
