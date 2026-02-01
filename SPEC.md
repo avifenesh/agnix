@@ -154,8 +154,8 @@ When `target` is set to a specific tool, only relevant rules run:
 | Agents | `agents` | CC-AG-* | Subagent validation |
 | Memory | `memory` | CC-MEM-* | Memory/CLAUDE.md validation |
 | Plugins | `plugins` | CC-PL-* | Plugin validation |
-| XML | `xml` | xml::* | XML tag balance |
-| Imports | `imports` | imports::* | Import reference validation |
+| XML | `xml` | XML-* | XML tag balance |
+| Imports | `imports` | REF-* | Import reference validation |
 
 ## Performance Characteristics
 
