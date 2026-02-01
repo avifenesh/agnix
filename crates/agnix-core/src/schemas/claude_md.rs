@@ -175,29 +175,26 @@ pub fn find_weak_constraints(content: &str) -> Vec<WeakConstraint> {
     let section_pattern = critical_section_pattern();
 
     let mut current_section: Option<String> = None;
-    let mut in_critical_section = false;
 
     for (line_num, line) in content.lines().enumerate() {
         // Check if this is a header line
         if line.starts_with('#') {
             if section_pattern.is_match(line) {
-                in_critical_section = true;
                 current_section = Some(line.trim_start_matches('#').trim().to_string());
             } else {
                 // New non-critical header ends the critical section
-                in_critical_section = false;
                 current_section = None;
             }
         }
 
         // Check for weak language in critical sections
-        if in_critical_section {
+        if let Some(section_name) = &current_section {
             if let Some(mat) = weak_pattern.find(line) {
                 results.push(WeakConstraint {
                     line: line_num + 1,
                     column: mat.start(),
                     text: mat.as_str().to_string(),
-                    section: current_section.clone().unwrap_or_default(),
+                    section: section_name.clone(),
                 });
             }
         }
@@ -226,6 +223,12 @@ fn critical_keyword_pattern() -> &'static Regex {
 }
 
 /// Find critical content positioned in the middle of the document (40-60%)
+///
+/// Based on "Lost in the Middle" research (Liu et al., 2023, TACL):
+/// LLMs have lower recall for content in the middle of documents, but better
+/// recall for content at the START and END. The 40-60% range is specifically
+/// the "lost in the middle" zone. Content at 70%+ (near the end) is actually
+/// well-recalled, so we intentionally only flag the middle zone.
 pub fn find_critical_in_middle(content: &str) -> Vec<CriticalInMiddle> {
     let mut results = Vec::new();
     let pattern = critical_keyword_pattern();
@@ -241,7 +244,7 @@ pub fn find_critical_in_middle(content: &str) -> Vec<CriticalInMiddle> {
         if let Some(mat) = pattern.find(line) {
             let position_percent = (line_num as f64 / total_lines as f64) * 100.0;
 
-            // Flag if in the middle 40-60% of the document
+            // Flag if in the middle 40-60% of the document (lost in the middle zone)
             if position_percent > 40.0 && position_percent < 60.0 {
                 results.push(CriticalInMiddle {
                     line: line_num + 1,
