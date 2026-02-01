@@ -148,9 +148,9 @@
 **Source**: code.claude.com/docs/en/skills
 
 ### CC-SK-005 [HIGH] Invalid Agent Type
-**Requirement**: agent MUST be: Explore, Plan, general-purpose, or custom agent name
-**Detection**: Check against known agent types
-**Fix**: Suggest valid agent
+**Requirement**: agent MUST be: Explore, Plan, general-purpose, or custom kebab-case name (1-64 chars, pattern: `^[a-z0-9]+(-[a-z0-9]+)*$`)
+**Detection**: Check against built-in agents or validate kebab-case format
+**Fix**: Suggest valid agent or correct format
 **Source**: code.claude.com/docs/en/sub-agents
 
 ### CC-SK-006 [HIGH] Dangerous Auto-Invocation

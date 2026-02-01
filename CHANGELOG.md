@@ -49,7 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - CC-SK-002: Validates context field must be 'fork' or omitted
   - CC-SK-003: Requires 'agent' field when context is 'fork'
   - CC-SK-004: Requires 'context: fork' when agent field is present
-  - CC-SK-005: Validates agent type values (Explore, Plan, general-purpose)
+  - CC-SK-005: Validates agent type values (Explore, Plan, general-purpose, or custom kebab-case names 1-64 chars)
   - CC-SK-006: Dangerous skills must set 'disable-model-invocation: true'
   - CC-SK-007: Warns on unrestricted Bash access (suggests scoped versions)
   - CC-SK-008: Validates tool names in allowed-tools against known Claude Code tools
