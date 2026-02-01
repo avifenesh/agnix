@@ -45,8 +45,9 @@ fn context_fork_pattern() -> &'static Regex {
 
 fn agent_field_pattern() -> &'static Regex {
     AGENT_FIELD_PATTERN.get_or_init(|| {
-        // Match agent: field in YAML frontmatter
-        Regex::new(r"(?im)^\s*agent:\s*(?:Explore|Plan|general-purpose)\b").unwrap()
+        // Match any agent: field in YAML frontmatter (Claude Code specific)
+        // The agent: field is used to spawn subagents, which is Claude Code exclusive
+        Regex::new(r"(?im)^\s*agent:\s*\S+").unwrap()
     })
 }
 
@@ -313,6 +314,18 @@ Body"#;
         let results = find_claude_specific_features(content);
         // Should detect context:fork, agent, and allowed-tools
         assert!(results.len() >= 3);
+    }
+
+    #[test]
+    fn test_detect_custom_agent_name() {
+        // Custom agent names should also be flagged (not just Explore/Plan/general-purpose)
+        let content = r#"---
+name: test
+agent: security-reviewer
+---
+Body"#;
+        let results = find_claude_specific_features(content);
+        assert!(results.iter().any(|r| r.feature == "agent"));
     }
 
     // ===== XP-002: Markdown Structure =====
