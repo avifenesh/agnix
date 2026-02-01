@@ -8,6 +8,63 @@ use crate::{
 };
 use std::path::Path;
 
+/// Find the line number (1-based) of a JSON field in the raw content
+/// Returns (line, column) or (1, 0) if not found
+fn find_json_field_location(content: &str, field_name: &str) -> (usize, usize) {
+    // Search for "field_name": pattern
+    let pattern = format!("\"{}\"", field_name);
+    if let Some(pos) = content.find(&pattern) {
+        let line = content[..pos].matches('\n').count() + 1;
+        let last_newline = content[..pos].rfind('\n').map(|p| p + 1).unwrap_or(0);
+        let col = pos - last_newline;
+        return (line, col);
+    }
+    (1, 0)
+}
+
+/// Find the line number of a tool in a tools array (0-indexed)
+fn find_tool_location(content: &str, tool_index: usize) -> (usize, usize) {
+    // Find "tools" first, then count opening braces
+    if let Some(tools_pos) = content.find("\"tools\"") {
+        let after_tools = &content[tools_pos..];
+        // Find the opening bracket of the array
+        if let Some(bracket_pos) = after_tools.find('[') {
+            let after_bracket = &after_tools[bracket_pos + 1..];
+            let mut brace_count = 0;
+            let mut tool_count = 0;
+            let mut in_string = false;
+            let mut prev_char = ' ';
+
+            for (i, c) in after_bracket.char_indices() {
+                if c == '"' && prev_char != '\\' {
+                    in_string = !in_string;
+                }
+                if !in_string {
+                    if c == '{' {
+                        if brace_count == 0 {
+                            if tool_count == tool_index {
+                                // Found our tool - calculate line/col
+                                let abs_pos = tools_pos + bracket_pos + 1 + i;
+                                let line = content[..abs_pos].matches('\n').count() + 1;
+                                let last_newline =
+                                    content[..abs_pos].rfind('\n').map(|p| p + 1).unwrap_or(0);
+                                let col = abs_pos - last_newline;
+                                return (line, col);
+                            }
+                            tool_count += 1;
+                        }
+                        brace_count += 1;
+                    } else if c == '}' {
+                        brace_count -= 1;
+                    }
+                }
+                prev_char = c;
+            }
+        }
+    }
+    (1, 0)
+}
+
 pub struct McpValidator;
 
 impl Validator for McpValidator {
@@ -36,7 +93,7 @@ impl Validator for McpValidator {
 
         // Check for JSON-RPC version (MCP-001)
         if config.is_rule_enabled("MCP-001") {
-            validate_jsonrpc_version(&raw_value, path, &mut diagnostics);
+            validate_jsonrpc_version(&raw_value, path, content, &mut diagnostics);
         }
 
         // Try to parse as MCP config schema
@@ -54,11 +111,11 @@ impl Validator for McpValidator {
         };
 
         // Get tools array from various locations (also reports parse errors for invalid entries)
-        let tools = extract_tools(&raw_value, &mcp_config, path, &mut diagnostics);
+        let tools = extract_tools(&raw_value, &mcp_config, path, content, &mut diagnostics);
 
         // Validate each successfully parsed tool
         for (idx, tool) in tools.iter().enumerate() {
-            validate_tool(tool, path, config, &mut diagnostics, idx);
+            validate_tool(tool, path, content, config, &mut diagnostics, idx);
         }
 
         diagnostics
@@ -70,6 +127,7 @@ fn extract_tools(
     raw_value: &serde_json::Value,
     config: &McpConfigSchema,
     path: &Path,
+    content: &str,
     diagnostics: &mut Vec<Diagnostic>,
 ) -> Vec<McpToolSchema> {
     let mut tools = Vec::new();
@@ -87,11 +145,12 @@ fn extract_tools(
                 Ok(tool) => tools.push(tool),
                 Err(e) => {
                     // Report invalid tool entries instead of silently skipping
+                    let (line, col) = find_tool_location(content, idx);
                     diagnostics.push(
                         Diagnostic::error(
                             path.to_path_buf(),
-                            1,
-                            0,
+                            line,
+                            col,
                             "mcp::invalid_tool",
                             format!("Tool #{}: Invalid tool definition: {}", idx + 1, e),
                         )
@@ -140,17 +199,19 @@ fn extract_tools(
 fn validate_jsonrpc_version(
     value: &serde_json::Value,
     path: &Path,
+    content: &str,
     diagnostics: &mut Vec<Diagnostic>,
 ) {
     // Check if jsonrpc field exists
     if let Some(jsonrpc) = value.get("jsonrpc") {
+        let (line, col) = find_json_field_location(content, "jsonrpc");
         if let Some(version) = jsonrpc.as_str() {
             if version != "2.0" {
                 diagnostics.push(
                     Diagnostic::error(
                         path.to_path_buf(),
-                        1,
-                        0,
+                        line,
+                        col,
                         "MCP-001",
                         format!("Invalid JSON-RPC version '{}', must be '2.0'", version),
                     )
@@ -161,8 +222,8 @@ fn validate_jsonrpc_version(
             diagnostics.push(
                 Diagnostic::error(
                     path.to_path_buf(),
-                    1,
-                    0,
+                    line,
+                    col,
                     "MCP-001",
                     "JSON-RPC version must be a string".to_string(),
                 )
@@ -178,14 +239,24 @@ fn validate_jsonrpc_version(
 fn validate_tool(
     tool: &McpToolSchema,
     path: &Path,
+    content: &str,
     config: &LintConfig,
     diagnostics: &mut Vec<Diagnostic>,
     tool_index: usize,
 ) {
-    let tool_prefix = if tool_index > 0 {
-        format!("Tool #{}: ", tool_index + 1)
-    } else {
-        String::new()
+    // Always include tool index for clarity, even for first tool
+    let tool_prefix = format!("Tool #{}: ", tool_index + 1);
+
+    // Get base location for this tool
+    let tool_loc = find_tool_location(content, tool_index);
+    // Helper to find field within tool context (searches from beginning for single tools)
+    let find_field = |field: &str| -> (usize, usize) {
+        let (line, col) = find_json_field_location(content, field);
+        if line > 1 || col > 0 {
+            (line, col)
+        } else {
+            tool_loc
+        }
     };
 
     let (has_name, has_desc, has_schema) = tool.has_required_fields();
@@ -193,11 +264,16 @@ fn validate_tool(
     // MCP-002: Missing required tool fields
     if config.is_rule_enabled("MCP-002") {
         if !has_name {
+            let (line, col) = if tool.name.is_some() {
+                find_field("name")
+            } else {
+                tool_loc
+            };
             diagnostics.push(
                 Diagnostic::error(
                     path.to_path_buf(),
-                    1,
-                    0,
+                    line,
+                    col,
                     "MCP-002",
                     format!("{}Missing required field 'name'", tool_prefix),
                 )
@@ -205,11 +281,16 @@ fn validate_tool(
             );
         }
         if !has_desc {
+            let (line, col) = if tool.description.is_some() {
+                find_field("description")
+            } else {
+                tool_loc
+            };
             diagnostics.push(
                 Diagnostic::error(
                     path.to_path_buf(),
-                    1,
-                    0,
+                    line,
+                    col,
                     "MCP-002",
                     format!("{}Missing required field 'description'", tool_prefix),
                 )
@@ -220,8 +301,8 @@ fn validate_tool(
             diagnostics.push(
                 Diagnostic::error(
                     path.to_path_buf(),
-                    1,
-                    0,
+                    tool_loc.0,
+                    tool_loc.1,
                     "MCP-002",
                     format!("{}Missing required field 'inputSchema'", tool_prefix),
                 )
@@ -233,13 +314,14 @@ fn validate_tool(
     // MCP-003: Invalid JSON Schema
     if config.is_rule_enabled("MCP-003") {
         if let Some(schema) = &tool.input_schema {
+            let (line, col) = find_field("inputSchema");
             let schema_errors = validate_json_schema_structure(schema);
             for error in schema_errors {
                 diagnostics.push(
                     Diagnostic::error(
                         path.to_path_buf(),
-                        1,
-                        0,
+                        line,
+                        col,
                         "MCP-003",
                         format!("{}Invalid inputSchema: {}", tool_prefix, error),
                     )
@@ -251,12 +333,13 @@ fn validate_tool(
 
     // MCP-004: Missing or short tool description
     if config.is_rule_enabled("MCP-004") && has_desc && !tool.has_meaningful_description() {
+        let (line, col) = find_field("description");
         let desc_len = tool.description.as_ref().map(|d| d.len()).unwrap_or(0);
         diagnostics.push(
             Diagnostic::warning(
                 path.to_path_buf(),
-                1,
-                0,
+                line,
+                col,
                 "MCP-004",
                 format!(
                     "{}Tool description is too short ({} chars), should be at least 10 characters",
@@ -274,8 +357,8 @@ fn validate_tool(
         diagnostics.push(
             Diagnostic::warning(
                 path.to_path_buf(),
-                1,
-                0,
+                tool_loc.0,
+                tool_loc.1,
                 "MCP-005",
                 format!(
                     "{}Tool lacks consent mechanism (no 'requiresApproval' or 'confirmation' field)",
@@ -290,11 +373,12 @@ fn validate_tool(
 
     // MCP-006: Untrusted annotations
     if config.is_rule_enabled("MCP-006") && tool.has_annotations() {
+        let (line, col) = find_field("annotations");
         diagnostics.push(
             Diagnostic::warning(
                 path.to_path_buf(),
-                1,
-                0,
+                line,
+                col,
                 "MCP-006",
                 format!(
                     "{}Tool has annotations that should be validated before trusting",
@@ -382,6 +466,7 @@ mod tests {
             .filter(|d| d.rule == "MCP-002")
             .collect::<Vec<_>>();
         assert_eq!(mcp_002.len(), 1);
+        assert!(mcp_002[0].message.contains("Tool #1"));
         assert!(mcp_002[0].message.contains("'name'"));
     }
 
@@ -580,6 +665,32 @@ mod tests {
         assert!(diagnostics
             .iter()
             .any(|d| d.message.contains("consent mechanism")));
+    }
+
+    #[test]
+    fn test_mcp_005_requires_approval_false_triggers_warning() {
+        // requiresApproval: false should still trigger MCP-005 warning
+        let content = r#"{
+            "name": "test-tool",
+            "description": "A test tool for testing",
+            "inputSchema": {"type": "object"},
+            "requiresApproval": false
+        }"#;
+        let diagnostics = validate(content);
+        assert!(diagnostics.iter().any(|d| d.rule == "MCP-005"));
+    }
+
+    #[test]
+    fn test_mcp_005_empty_confirmation_triggers_warning() {
+        // Empty confirmation should still trigger MCP-005 warning
+        let content = r#"{
+            "name": "test-tool",
+            "description": "A test tool for testing",
+            "inputSchema": {"type": "object"},
+            "confirmation": ""
+        }"#;
+        let diagnostics = validate(content);
+        assert!(diagnostics.iter().any(|d| d.rule == "MCP-005"));
     }
 
     // MCP-006 Tests

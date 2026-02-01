@@ -101,9 +101,15 @@ impl McpToolSchema {
             .is_some_and(|desc| !desc.trim().is_empty() && desc.len() >= 10)
     }
 
-    /// Check if tool has consent-related fields
+    /// Check if tool has consent-related fields with meaningful values
+    /// - requiresApproval must be true (false doesn't indicate consent mechanism)
+    /// - confirmation must be a non-empty string
     pub fn has_consent_fields(&self) -> bool {
-        self.requires_approval.is_some() || self.confirmation.is_some()
+        self.requires_approval == Some(true)
+            || self
+                .confirmation
+                .as_deref()
+                .is_some_and(|c| !c.trim().is_empty())
     }
 
     /// Check if tool has annotations (which should be validated)
@@ -154,8 +160,14 @@ pub fn validate_json_schema_structure(schema: &serde_json::Value) -> Vec<String>
                             t_str
                         ));
                     }
+                } else {
+                    // Non-string element in type array
+                    errors.push("'type' array elements must be strings".to_string());
                 }
             }
+        } else {
+            // type field is neither string nor array (e.g., number, object, boolean)
+            errors.push("'type' field must be a string or array of strings".to_string());
         }
     }
 
@@ -254,7 +266,7 @@ mod tests {
     }
 
     #[test]
-    fn test_consent_fields() {
+    fn test_consent_fields_requires_approval_true() {
         let tool = McpToolSchema {
             name: Some("test".to_string()),
             description: None,
@@ -264,6 +276,61 @@ mod tests {
             confirmation: None,
         };
         assert!(tool.has_consent_fields());
+    }
+
+    #[test]
+    fn test_consent_fields_requires_approval_false() {
+        // requiresApproval: false should NOT count as having consent mechanism
+        let tool = McpToolSchema {
+            name: Some("test".to_string()),
+            description: None,
+            input_schema: None,
+            annotations: None,
+            requires_approval: Some(false),
+            confirmation: None,
+        };
+        assert!(!tool.has_consent_fields());
+    }
+
+    #[test]
+    fn test_consent_fields_confirmation_non_empty() {
+        let tool = McpToolSchema {
+            name: Some("test".to_string()),
+            description: None,
+            input_schema: None,
+            annotations: None,
+            requires_approval: None,
+            confirmation: Some("Are you sure?".to_string()),
+        };
+        assert!(tool.has_consent_fields());
+    }
+
+    #[test]
+    fn test_consent_fields_confirmation_empty() {
+        // Empty confirmation should NOT count as having consent mechanism
+        let tool = McpToolSchema {
+            name: Some("test".to_string()),
+            description: None,
+            input_schema: None,
+            annotations: None,
+            requires_approval: None,
+            confirmation: Some("".to_string()),
+        };
+        assert!(!tool.has_consent_fields());
+    }
+
+    #[test]
+    fn test_consent_fields_confirmation_whitespace() {
+        // Whitespace-only confirmation should NOT count as having consent mechanism
+        let tool = McpToolSchema {
+            name: Some("test".to_string()),
+            description: None,
+            input_schema: None,
+            annotations: None,
+            requires_approval: None,
+            confirmation: Some("   ".to_string()),
+        };
+        assert!(!tool.has_consent_fields());
     }
 
     #[test]
@@ -321,5 +388,32 @@ mod tests {
         let errors = validate_json_schema_structure(&schema);
         assert_eq!(errors.len(), 1);
         assert!(errors[0].contains("must be an object"));
+    }
+
+    #[test]
+    fn test_validate_schema_type_not_string_or_array() {
+        // type field is a number - should error
+        let schema = json!({"type": 123});
+        let errors = validate_json_schema_structure(&schema);
+        assert_eq!(errors.len(), 1);
+        assert!(errors[0].contains("must be a string or array"));
+    }
+
+    #[test]
+    fn test_validate_schema_type_array_with_non_string() {
+        // type array contains non-string elements
+        let schema = json!({"type": ["string", 123]});
+        let errors = validate_json_schema_structure(&schema);
+        assert_eq!(errors.len(), 1);
+        assert!(errors[0].contains("must be strings"));
+    }
+
+    #[test]
+    fn test_validate_schema_type_object_value() {
+        // type field is an object - should error
+        let schema = json!({"type": {"nested": "object"}});
+        let errors = validate_json_schema_structure(&schema);
+        assert_eq!(errors.len(), 1);
+        assert!(errors[0].contains("must be a string or array"));
     }
 }
