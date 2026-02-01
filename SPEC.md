@@ -68,8 +68,15 @@ All rules in `knowledge-base/VALIDATION-RULES.md`
 | AS-001 | ERROR | YAML frontmatter required |
 | AS-004 | ERROR | Name must be kebab-case |
 | AS-010 | WARN | Missing trigger phrase |
+| CC-SK-001 | ERROR | Invalid model value |
+| CC-SK-002 | ERROR | Invalid context value |
+| CC-SK-003 | ERROR | Context 'fork' requires agent field |
+| CC-SK-004 | ERROR | Agent field requires context: fork |
+| CC-SK-005 | ERROR | Invalid agent type |
 | CC-SK-006 | ERROR | Dangerous skill without safety flag |
 | CC-SK-007 | WARN | Unrestricted Bash access |
+| CC-SK-008 | ERROR | Unknown tool name |
+| CC-SK-009 | WARN | Too many dynamic injections |
 | CC-HK-001 | ERROR | Invalid hook event |
 | CC-HK-006 | ERROR | Missing command field |
 | CC-HK-007 | ERROR | Missing prompt field |
@@ -88,7 +95,6 @@ All rules in `knowledge-base/VALIDATION-RULES.md`
 | CC-PL-004 | ERROR | Missing required plugin field |
 | CC-PL-005 | ERROR | Empty plugin name |
 | XML-001 | ERROR | Unclosed XML tag |
-
 ## CLI
 
 ```bash

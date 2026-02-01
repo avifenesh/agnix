@@ -6,6 +6,42 @@ use crate::{
 };
 use std::path::Path;
 
+/// Valid model values for CC-SK-001
+const VALID_MODELS: &[&str] = &["sonnet", "opus", "haiku", "inherit"];
+
+/// Valid agent types for CC-SK-005
+const VALID_AGENTS: &[&str] = &["Explore", "Plan", "general-purpose"];
+
+/// Known Claude Code tools for CC-SK-008
+const KNOWN_TOOLS: &[&str] = &[
+    "Bash",
+    "Read",
+    "Write",
+    "Edit",
+    "Grep",
+    "Glob",
+    "Task",
+    "WebFetch",
+    "AskUserQuestion",
+    "TodoRead",
+    "TodoWrite",
+    "MultiTool",
+];
+
+/// Maximum dynamic injections for CC-SK-009
+const MAX_INJECTIONS: usize = 3;
+
+/// Find line number of a field in YAML frontmatter
+fn find_field_line(content: &str, field: &str) -> usize {
+    content
+        .lines()
+        .position(|line| {
+            let trimmed = line.trim();
+            trimmed.starts_with(field) && trimmed[field.len()..].starts_with(':')
+        })
+        .map_or(1, |i| i + 1)
+}
+
 pub struct SkillValidator;
 
 impl Validator for SkillValidator {
@@ -26,7 +62,7 @@ impl Validator for SkillValidator {
                 for error in errors {
                     diagnostics.push(Diagnostic::error(
                         path.to_path_buf(),
-                        1, // TODO: Get actual line from error
+                        1,
                         0,
                         "skill::schema",
                         error,
@@ -106,13 +142,17 @@ impl Validator for SkillValidator {
                     }
                 }
 
+                // Parse allowed_tools once for CC-SK-007 and CC-SK-008
+                let tool_list: Option<Vec<&str>> = schema
+                    .allowed_tools
+                    .as_ref()
+                    .map(|tools| tools.split_whitespace().collect());
+
                 // CC-SK-007: Unrestricted Bash warning
                 if config.is_rule_enabled("CC-SK-007") {
-                    if let Some(tools) = &schema.allowed_tools {
-                        // Parse space-delimited tool list
-                        let tool_list: Vec<&str> = tools.split_whitespace().collect();
-                        for tool in tool_list {
-                            if tool == "Bash" {
+                    if let Some(ref tools) = tool_list {
+                        for tool in tools {
+                            if *tool == "Bash" {
                                 diagnostics.push(Diagnostic::warning(
                                     path.to_path_buf(),
                                     1,
@@ -122,6 +162,174 @@ impl Validator for SkillValidator {
                                 ).with_suggestion("Use scoped Bash like 'Bash(git:*)' or 'Bash(npm:*)' instead of plain 'Bash'".to_string()));
                             }
                         }
+                    }
+                }
+
+                // CC-SK-001: Invalid model value
+                if config.is_rule_enabled("CC-SK-001") {
+                    if let Some(model) = &schema.model {
+                        if !VALID_MODELS.contains(&model.as_str()) {
+                            let line = find_field_line(content, "model");
+                            diagnostics.push(
+                                Diagnostic::error(
+                                    path.to_path_buf(),
+                                    line,
+                                    0,
+                                    "CC-SK-001",
+                                    format!(
+                                        "Invalid model '{}'. Must be one of: {}",
+                                        model,
+                                        VALID_MODELS.join(", ")
+                                    ),
+                                )
+                                .with_suggestion(format!(
+                                    "Use one of the valid model values: {}",
+                                    VALID_MODELS.join(", ")
+                                )),
+                            );
+                        }
+                    }
+                }
+
+                // CC-SK-002: Invalid context value
+                if config.is_rule_enabled("CC-SK-002") {
+                    if let Some(context) = &schema.context {
+                        if context != "fork" {
+                            let line = find_field_line(content, "context");
+                            diagnostics.push(
+                                Diagnostic::error(
+                                    path.to_path_buf(),
+                                    line,
+                                    0,
+                                    "CC-SK-002",
+                                    format!(
+                                        "Invalid context '{}'. Must be 'fork' or omitted",
+                                        context
+                                    ),
+                                )
+                                .with_suggestion(
+                                    "Set context to 'fork' or remove the field entirely"
+                                        .to_string(),
+                                ),
+                            );
+                        }
+                    }
+                }
+
+                // CC-SK-003: Context without agent
+                if config.is_rule_enabled("CC-SK-003")
+                    && schema.context.as_deref() == Some("fork")
+                    && schema.agent.is_none()
+                {
+                    let line = find_field_line(content, "context");
+                    diagnostics.push(
+                        Diagnostic::error(
+                            path.to_path_buf(),
+                            line,
+                            0,
+                            "CC-SK-003",
+                            "Context 'fork' requires an 'agent' field".to_string(),
+                        )
+                        .with_suggestion(
+                            "Add 'agent: general-purpose' or another valid agent type".to_string(),
+                        ),
+                    );
+                }
+
+                // CC-SK-004: Agent without context
+                if config.is_rule_enabled("CC-SK-004")
+                    && schema.agent.is_some()
+                    && schema.context.as_deref() != Some("fork")
+                {
+                    let line = find_field_line(content, "agent");
+                    diagnostics.push(
+                        Diagnostic::error(
+                            path.to_path_buf(),
+                            line,
+                            0,
+                            "CC-SK-004",
+                            "Agent field requires 'context: fork'".to_string(),
+                        )
+                        .with_suggestion("Add 'context: fork' to the frontmatter".to_string()),
+                    );
+                }
+
+                // CC-SK-005: Invalid agent type
+                if config.is_rule_enabled("CC-SK-005") {
+                    if let Some(agent) = &schema.agent {
+                        if !VALID_AGENTS.contains(&agent.as_str()) {
+                            let line = find_field_line(content, "agent");
+                            diagnostics.push(
+                                Diagnostic::error(
+                                    path.to_path_buf(),
+                                    line,
+                                    0,
+                                    "CC-SK-005",
+                                    format!(
+                                        "Invalid agent type '{}'. Must be one of: {}",
+                                        agent,
+                                        VALID_AGENTS.join(", ")
+                                    ),
+                                )
+                                .with_suggestion(format!(
+                                    "Use one of the valid agent types: {}",
+                                    VALID_AGENTS.join(", ")
+                                )),
+                            );
+                        }
+                    }
+                }
+
+                // CC-SK-008: Unknown tool name
+                if config.is_rule_enabled("CC-SK-008") {
+                    if let Some(ref tools) = tool_list {
+                        let tools_line = find_field_line(content, "allowed-tools");
+                        for tool in tools {
+                            // Extract base tool name (before parentheses for scoped tools)
+                            let base_name = tool.split('(').next().unwrap_or(tool);
+                            if !KNOWN_TOOLS.contains(&base_name) {
+                                diagnostics.push(
+                                    Diagnostic::error(
+                                        path.to_path_buf(),
+                                        tools_line,
+                                        0,
+                                        "CC-SK-008",
+                                        format!(
+                                            "Unknown tool '{}'. Known tools: {}",
+                                            base_name,
+                                            KNOWN_TOOLS.join(", ")
+                                        ),
+                                    )
+                                    .with_suggestion(format!(
+                                        "Use one of the known Claude Code tools: {}",
+                                        KNOWN_TOOLS.join(", ")
+                                    )),
+                                );
+                            }
+                        }
+                    }
+                }
+
+                // CC-SK-009: Too many injections (warning)
+                // Count across full content (frontmatter + body) per VALIDATION-RULES.md
+                if config.is_rule_enabled("CC-SK-009") {
+                    let injection_count = content.matches("!`").count();
+                    if injection_count > MAX_INJECTIONS {
+                        diagnostics.push(
+                            Diagnostic::warning(
+                                path.to_path_buf(),
+                                1,
+                                0,
+                                "CC-SK-009",
+                                format!(
+                                    "Too many dynamic injections ({}). Limit to {} for better performance",
+                                    injection_count, MAX_INJECTIONS
+                                ),
+                            )
+                            .with_suggestion(
+                                "Consider moving complex logic to a scripts/ directory or reducing injections".to_string(),
+                            ),
+                        );
                     }
                 }
             }
@@ -428,6 +636,641 @@ Body"#;
         let as_010_warnings: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-010").collect();
 
         assert_eq!(as_010_warnings.len(), 0);
+    }
+
+    // ===== CC-SK-001: Invalid Model Value =====
+
+    #[test]
+    fn test_cc_sk_001_invalid_model() {
+        let content = r#"---
+name: test-skill
+description: Use when testing
+model: gpt-4
+---
+Body"#;
+
+        let validator = SkillValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+        let cc_sk_001: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-SK-001")
+            .collect();
+
+        assert_eq!(cc_sk_001.len(), 1);
+        assert_eq!(
+            cc_sk_001[0].level,
+            crate::diagnostics::DiagnosticLevel::Error
+        );
+        assert!(cc_sk_001[0].message.contains("gpt-4"));
+    }
+
+    #[test]
+    fn test_cc_sk_001_valid_models() {
+        for model in &["sonnet", "opus", "haiku", "inherit"] {
+            let content = format!(
+                r#"---
+name: test-skill
+description: Use when testing
+model: {}
+---
+Body"#,
+                model
+            );
+
+            let validator = SkillValidator;
+            let diagnostics =
+                validator.validate(Path::new("test.md"), &content, &LintConfig::default());
+
+            let cc_sk_001: Vec<_> = diagnostics
+                .iter()
+                .filter(|d| d.rule == "CC-SK-001")
+                .collect();
+
+            assert_eq!(cc_sk_001.len(), 0, "Model '{}' should be valid", model);
+        }
+    }
+
+    #[test]
+    fn test_cc_sk_001_no_model_ok() {
+        let content = r#"---
+name: test-skill
+description: Use when testing
+---
+Body"#;
+
+        let validator = SkillValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+        let cc_sk_001: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-SK-001")
+            .collect();
+
+        assert_eq!(cc_sk_001.len(), 0);
+    }
+
+    // ===== CC-SK-002: Invalid Context Value =====
+
+    #[test]
+    fn test_cc_sk_002_invalid_context() {
+        let content = r#"---
+name: test-skill
+description: Use when testing
+context: split
+---
+Body"#;
+
+        let validator = SkillValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+        let cc_sk_002: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-SK-002")
+            .collect();
+
+        assert_eq!(cc_sk_002.len(), 1);
+        assert_eq!(
+            cc_sk_002[0].level,
+            crate::diagnostics::DiagnosticLevel::Error
+        );
+        assert!(cc_sk_002[0].message.contains("split"));
+    }
+
+    #[test]
+    fn test_cc_sk_002_valid_context_fork() {
+        let content = r#"---
+name: test-skill
+description: Use when testing
+context: fork
+agent: general-purpose
+---
+Body"#;
+
+        let validator = SkillValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+        let cc_sk_002: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-SK-002")
+            .collect();
+
+        assert_eq!(cc_sk_002.len(), 0);
+    }
+
+    #[test]
+    fn test_cc_sk_002_no_context_ok() {
+        let content = r#"---
+name: test-skill
+description: Use when testing
+---
+Body"#;
+
+        let validator = SkillValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+        let cc_sk_002: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-SK-002")
+            .collect();
+
+        assert_eq!(cc_sk_002.len(), 0);
+    }
+
+    // ===== CC-SK-003: Context Without Agent =====
+
+    #[test]
+    fn test_cc_sk_003_context_fork_without_agent() {
+        let content = r#"---
+name: test-skill
+description: Use when testing
+context: fork
+---
+Body"#;
+
+        let validator = SkillValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+        let cc_sk_003: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-SK-003")
+            .collect();
+
+        assert_eq!(cc_sk_003.len(), 1);
+        assert_eq!(
+            cc_sk_003[0].level,
+            crate::diagnostics::DiagnosticLevel::Error
+        );
+    }
+
+    #[test]
+    fn test_cc_sk_003_context_fork_with_agent_ok() {
+        let content = r#"---
+name: test-skill
+description: Use when testing
+context: fork
+agent: Explore
+---
+Body"#;
+
+        let validator = SkillValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+        let cc_sk_003: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-SK-003")
+            .collect();
+
+        assert_eq!(cc_sk_003.len(), 0);
+    }
+
+    // ===== CC-SK-004: Agent Without Context =====
+
+    #[test]
+    fn test_cc_sk_004_agent_without_context() {
+        let content = r#"---
+name: test-skill
+description: Use when testing
+agent: Explore
+---
+Body"#;
+
+        let validator = SkillValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+        let cc_sk_004: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-SK-004")
+            .collect();
+
+        assert_eq!(cc_sk_004.len(), 1);
+        assert_eq!(
+            cc_sk_004[0].level,
+            crate::diagnostics::DiagnosticLevel::Error
+        );
+    }
+
+    #[test]
+    fn test_cc_sk_004_agent_with_context_ok() {
+        let content = r#"---
+name: test-skill
+description: Use when testing
+context: fork
+agent: Explore
+---
+Body"#;
+
+        let validator = SkillValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+        let cc_sk_004: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-SK-004")
+            .collect();
+
+        assert_eq!(cc_sk_004.len(), 0);
+    }
+
+    #[test]
+    fn test_cc_sk_004_no_agent_no_context_ok() {
+        let content = r#"---
+name: test-skill
+description: Use when testing
+---
+Body"#;
+
+        let validator = SkillValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+        let cc_sk_004: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-SK-004")
+            .collect();
+
+        assert_eq!(cc_sk_004.len(), 0);
+    }
+
+    // ===== CC-SK-005: Invalid Agent Type =====
+
+    #[test]
+    fn test_cc_sk_005_invalid_agent() {
+        let content = r#"---
+name: test-skill
+description: Use when testing
+context: fork
+agent: CustomAgent
+---
+Body"#;
+
+        let validator = SkillValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+        let cc_sk_005: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-SK-005")
+            .collect();
+
+        assert_eq!(cc_sk_005.len(), 1);
+        assert_eq!(
+            cc_sk_005[0].level,
+            crate::diagnostics::DiagnosticLevel::Error
+        );
+        assert!(cc_sk_005[0].message.contains("CustomAgent"));
+    }
+
+    #[test]
+    fn test_cc_sk_005_valid_agents() {
+        for agent in &["Explore", "Plan", "general-purpose"] {
+            let content = format!(
+                r#"---
+name: test-skill
+description: Use when testing
+context: fork
+agent: {}
+---
+Body"#,
+                agent
+            );
+
+            let validator = SkillValidator;
+            let diagnostics =
+                validator.validate(Path::new("test.md"), &content, &LintConfig::default());
+
+            let cc_sk_005: Vec<_> = diagnostics
+                .iter()
+                .filter(|d| d.rule == "CC-SK-005")
+                .collect();
+
+            assert_eq!(cc_sk_005.len(), 0, "Agent '{}' should be valid", agent);
+        }
+    }
+
+    // ===== CC-SK-008: Unknown Tool Name =====
+
+    #[test]
+    fn test_cc_sk_008_unknown_tool() {
+        let content = r#"---
+name: test-skill
+description: Use when testing
+allowed-tools: Read Write UnknownTool
+---
+Body"#;
+
+        let validator = SkillValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+        let cc_sk_008: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-SK-008")
+            .collect();
+
+        assert_eq!(cc_sk_008.len(), 1);
+        assert_eq!(
+            cc_sk_008[0].level,
+            crate::diagnostics::DiagnosticLevel::Error
+        );
+        assert!(cc_sk_008[0].message.contains("UnknownTool"));
+    }
+
+    #[test]
+    fn test_cc_sk_008_all_known_tools_ok() {
+        let content = r#"---
+name: test-skill
+description: Use when testing
+allowed-tools: Bash Read Write Edit Grep Glob Task
+---
+Body"#;
+
+        let validator = SkillValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+        let cc_sk_008: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-SK-008")
+            .collect();
+
+        assert_eq!(cc_sk_008.len(), 0);
+    }
+
+    #[test]
+    fn test_cc_sk_008_scoped_tool_extracts_base_name() {
+        let content = r#"---
+name: test-skill
+description: Use when testing
+allowed-tools: Bash(git:*) Read Write
+---
+Body"#;
+
+        let validator = SkillValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+        let cc_sk_008: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-SK-008")
+            .collect();
+
+        assert_eq!(cc_sk_008.len(), 0);
+    }
+
+    #[test]
+    fn test_cc_sk_008_multiple_unknown_tools() {
+        let content = r#"---
+name: test-skill
+description: Use when testing
+allowed-tools: FakeTool1 Read FakeTool2
+---
+Body"#;
+
+        let validator = SkillValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+        let cc_sk_008: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-SK-008")
+            .collect();
+
+        assert_eq!(cc_sk_008.len(), 2);
+    }
+
+    #[test]
+    fn test_cc_sk_008_scoped_unknown_tool() {
+        let content = r#"---
+name: test-skill
+description: Use when testing
+allowed-tools: FakeTool(scope:*) Read
+---
+Body"#;
+
+        let validator = SkillValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+        let cc_sk_008: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-SK-008")
+            .collect();
+
+        assert_eq!(
+            cc_sk_008.len(),
+            1,
+            "Should detect FakeTool as unknown even when scoped"
+        );
+        assert!(cc_sk_008[0].message.contains("FakeTool"));
+    }
+
+    // ===== CC-SK-009: Too Many Injections =====
+
+    #[test]
+    fn test_cc_sk_009_too_many_injections() {
+        let content = r#"---
+name: test-skill
+description: Use when testing
+---
+Current date: !`date`
+Git status: !`git status`
+Branch: !`git branch`
+User: !`whoami`
+---
+Body"#;
+
+        let validator = SkillValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+        let cc_sk_009: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-SK-009")
+            .collect();
+
+        assert_eq!(cc_sk_009.len(), 1);
+        assert_eq!(
+            cc_sk_009[0].level,
+            crate::diagnostics::DiagnosticLevel::Warning
+        );
+        assert!(cc_sk_009[0].message.contains("4"));
+    }
+
+    #[test]
+    fn test_cc_sk_009_exactly_three_injections_ok() {
+        let content = r#"---
+name: test-skill
+description: Use when testing
+---
+Date: !`date`
+Status: !`git status`
+Branch: !`git branch`
+Body"#;
+
+        let validator = SkillValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+        let cc_sk_009: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-SK-009")
+            .collect();
+
+        assert_eq!(cc_sk_009.len(), 0);
+    }
+
+    #[test]
+    fn test_cc_sk_009_no_injections_ok() {
+        let content = r#"---
+name: test-skill
+description: Use when testing
+---
+No dynamic injections here.
+Body"#;
+
+        let validator = SkillValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+        let cc_sk_009: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-SK-009")
+            .collect();
+
+        assert_eq!(cc_sk_009.len(), 0);
+    }
+
+    // ===== Edge Case Tests =====
+
+    #[test]
+    fn test_cc_sk_006_explicit_false_still_triggers() {
+        let content = r#"---
+name: deploy-prod
+description: Use when deploying
+disable-model-invocation: false
+---
+Body"#;
+
+        let validator = SkillValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+        let cc_sk_006: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-SK-006")
+            .collect();
+
+        assert_eq!(
+            cc_sk_006.len(),
+            1,
+            "Explicit false should still trigger CC-SK-006"
+        );
+    }
+
+    #[test]
+    fn test_cc_sk_007_duplicate_bash_multiple_warnings() {
+        let content = r#"---
+name: test-skill
+description: Use when testing
+allowed-tools: Bash Read Bash
+---
+Body"#;
+
+        let validator = SkillValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+        let cc_sk_007: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-SK-007")
+            .collect();
+
+        // Each plain "Bash" triggers warning (2 occurrences = 2 warnings)
+        assert_eq!(
+            cc_sk_007.len(),
+            2,
+            "Each Bash occurrence triggers a warning"
+        );
+    }
+
+    #[test]
+    fn test_cc_sk_008_malformed_scope_no_panic() {
+        let content = r#"---
+name: test-skill
+description: Use when testing
+allowed-tools: Bash( Read Bash() Write
+---
+Body"#;
+
+        let validator = SkillValidator;
+        // Should not panic on malformed scope syntax
+        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+        // Bash( extracts "Bash", which is known
+        // Bash() extracts "Bash", which is known
+        let cc_sk_008: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-SK-008")
+            .collect();
+
+        assert_eq!(
+            cc_sk_008.len(),
+            0,
+            "Malformed scopes should extract base name correctly"
+        );
+    }
+
+    #[test]
+    fn test_cc_sk_008_lowercase_tool_unknown() {
+        let content = r#"---
+name: test-skill
+description: Use when testing
+allowed-tools: bash read
+---
+Body"#;
+
+        let validator = SkillValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+        let cc_sk_008: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-SK-008")
+            .collect();
+
+        // Tool names are case-sensitive: bash != Bash
+        assert_eq!(cc_sk_008.len(), 2, "lowercase tool names are unknown");
+    }
+
+    #[test]
+    fn test_as_010_case_insensitive() {
+        let content = r#"---
+name: test-skill
+description: USE WHEN testing
+---
+Body"#;
+
+        let validator = SkillValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+        let as_010: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-010").collect();
+
+        assert_eq!(
+            as_010.len(),
+            0,
+            "'USE WHEN' should match case-insensitively"
+        );
+    }
+
+    #[test]
+    fn test_parse_error_handling() {
+        let content = r#"---
+name: test
+description
+invalid yaml
+---
+Body"#;
+
+        let validator = SkillValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+        let parse_errors: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "skill::parse")
+            .collect();
+
+        assert_eq!(
+            parse_errors.len(),
+            1,
+            "Invalid YAML should produce parse error"
+        );
     }
 
     // ===== Config Wiring Tests =====
