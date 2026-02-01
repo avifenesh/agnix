@@ -2,7 +2,7 @@ use assert_cmd::Command;
 use predicates::prelude::*;
 
 fn agnix() -> Command {
-    assert_cmd::cargo::cargo_bin_cmd!("agnix").into()
+    assert_cmd::cargo::cargo_bin_cmd!("agnix")
 }
 
 #[test]
