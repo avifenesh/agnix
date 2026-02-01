@@ -32,8 +32,10 @@ pub struct CriticalInMiddle {
 
 fn critical_keyword_pattern() -> &'static Regex {
     CRITICAL_KEYWORD_PATTERN.get_or_init(|| {
-        Regex::new(r"(?i)\b(critical|important|must|required|essential|mandatory|crucial|never|always)\b")
-            .unwrap()
+        Regex::new(
+            r"(?i)\b(critical|important|must|required|essential|mandatory|crucial|never|always)\b",
+        )
+        .unwrap()
     })
 }
 
@@ -336,7 +338,10 @@ When the user asks to read the file, think step by step:
 "#;
         let results = find_cot_on_simple_tasks(content);
         assert_eq!(results.len(), 1);
-        assert!(results[0].phrase.to_lowercase().contains("think step by step"));
+        assert!(results[0]
+            .phrase
+            .to_lowercase()
+            .contains("think step by step"));
     }
 
     #[test]
@@ -387,8 +392,12 @@ Code could be formatted better.
 "#;
         let results = find_weak_imperative_language(content);
         assert_eq!(results.len(), 2);
-        assert!(results.iter().any(|r| r.weak_term.to_lowercase() == "should"));
-        assert!(results.iter().any(|r| r.weak_term.to_lowercase() == "could"));
+        assert!(results
+            .iter()
+            .any(|r| r.weak_term.to_lowercase() == "should"));
+        assert!(results
+            .iter()
+            .any(|r| r.weak_term.to_lowercase() == "could"));
     }
 
     #[test]
@@ -537,7 +546,11 @@ You should do X.
         let results = find_weak_imperative_language(content);
         // Current behavior: "Hypercritical" contains "critical" so it matches
         // The regex pattern uses .* before the keyword, so substrings are matched
-        assert_eq!(results.len(), 1, "Hypercritical currently matches critical pattern");
+        assert_eq!(
+            results.len(),
+            1,
+            "Hypercritical currently matches critical pattern"
+        );
         assert_eq!(results[0].weak_term.to_lowercase(), "should");
     }
 
@@ -611,10 +624,19 @@ Code could be cleaner.
         let weak = find_weak_imperative_language(empty);
         let ambiguous = find_ambiguous_instructions(empty);
 
-        assert!(critical.is_empty(), "Empty content should have no critical in middle");
+        assert!(
+            critical.is_empty(),
+            "Empty content should have no critical in middle"
+        );
         assert!(cot.is_empty(), "Empty content should have no CoT issues");
-        assert!(weak.is_empty(), "Empty content should have no weak language");
-        assert!(ambiguous.is_empty(), "Empty content should have no ambiguous terms");
+        assert!(
+            weak.is_empty(),
+            "Empty content should have no weak language"
+        );
+        assert!(
+            ambiguous.is_empty(),
+            "Empty content should have no ambiguous terms"
+        );
     }
 
     #[test]

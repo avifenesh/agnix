@@ -871,7 +871,12 @@ allowed-tools: Read Write
 
         // Create a SKILL.md with critical content in the middle
         // Total 24 lines (4 frontmatter + 20 body lines), critical at line 12 = 50%
-        let mut lines = vec!["---", "name: test-skill", "description: Use when testing", "---"];
+        let mut lines = vec![
+            "---",
+            "name: test-skill",
+            "description: Use when testing",
+            "---",
+        ];
         for i in 0..20 {
             if i == 8 {
                 // Line 13 (0-indexed 12) = 12/24 = 50%, which is in 40-60% zone
@@ -973,7 +978,11 @@ Sometimes include extra context.
 
         // Should detect PE-004 for ambiguous instructions
         let pe_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "PE-004").collect();
-        assert_eq!(pe_004.len(), 2, "Expected 2 PE-004 warnings for ambiguous terms");
+        assert_eq!(
+            pe_004.len(),
+            2,
+            "Expected 2 PE-004 warnings for ambiguous terms"
+        );
     }
 
     #[test]
@@ -1115,7 +1124,7 @@ Never include sensitive data.
             "Line 1",
             "Line 2",
             "Line 3",
-            "This is critical information here.",  // Line 10 = 50%
+            "This is critical information here.", // Line 10 = 50%
             "Line 11",
             "Line 12",
             "Line 13",
@@ -1159,6 +1168,9 @@ Never include sensitive data.
         // Should not panic and return empty or valid diagnostics
         assert!(result.is_ok(), "Empty file should not cause panic");
         let diagnostics = result.unwrap();
-        assert!(diagnostics.is_empty(), "Empty file should have no diagnostics");
+        assert!(
+            diagnostics.is_empty(),
+            "Empty file should have no diagnostics"
+        );
     }
 }
