@@ -53,10 +53,10 @@ impl Validator for McpValidator {
             }
         };
 
-        // Get tools array from various locations
-        let tools = extract_tools(&raw_value, &mcp_config);
+        // Get tools array from various locations (also reports parse errors for invalid entries)
+        let tools = extract_tools(&raw_value, &mcp_config, path, &mut diagnostics);
 
-        // Validate each tool
+        // Validate each successfully parsed tool
         for (idx, tool) in tools.iter().enumerate() {
             validate_tool(tool, path, config, &mut diagnostics, idx);
         }
@@ -65,8 +65,13 @@ impl Validator for McpValidator {
     }
 }
 
-/// Extract tools from various MCP config formats
-fn extract_tools(raw_value: &serde_json::Value, config: &McpConfigSchema) -> Vec<McpToolSchema> {
+/// Extract tools from various MCP config formats, reporting parse errors for invalid entries
+fn extract_tools(
+    raw_value: &serde_json::Value,
+    config: &McpConfigSchema,
+    path: &Path,
+    diagnostics: &mut Vec<Diagnostic>,
+) -> Vec<McpToolSchema> {
     let mut tools = Vec::new();
 
     // Check for tools array in config (preferred source as it's already parsed)
@@ -77,13 +82,28 @@ fn extract_tools(raw_value: &serde_json::Value, config: &McpConfigSchema) -> Vec
 
     // Check for tools array at root level (fallback if config parsing didn't get them)
     if let Some(arr) = raw_value.get("tools").and_then(|v| v.as_array()) {
-        for tool_val in arr {
-            if let Ok(tool) = serde_json::from_value::<McpToolSchema>(tool_val.clone()) {
-                tools.push(tool);
+        for (idx, tool_val) in arr.iter().enumerate() {
+            match serde_json::from_value::<McpToolSchema>(tool_val.clone()) {
+                Ok(tool) => tools.push(tool),
+                Err(e) => {
+                    // Report invalid tool entries instead of silently skipping
+                    diagnostics.push(
+                        Diagnostic::error(
+                            path.to_path_buf(),
+                            1,
+                            0,
+                            "mcp::invalid_tool",
+                            format!("Tool #{}: Invalid tool definition: {}", idx + 1, e),
+                        )
+                        .with_suggestion(
+                            "Ensure tool has valid field types (name: string, description: string, inputSchema: object)".to_string(),
+                        ),
+                    );
+                }
             }
         }
-        if !tools.is_empty() {
-            return tools; // Return early to avoid treating root as a single tool
+        if !tools.is_empty() || !arr.is_empty() {
+            return tools; // Return early (even if some failed to parse)
         }
     }
 
@@ -94,9 +114,22 @@ fn extract_tools(raw_value: &serde_json::Value, config: &McpConfigSchema) -> Vec
         || raw_value.get("description").is_some();
 
     if has_tool_fields {
-        // Only add as a single tool if we haven't already found tools via other methods
-        if let Ok(tool) = serde_json::from_value::<McpToolSchema>(raw_value.clone()) {
-            tools.push(tool);
+        match serde_json::from_value::<McpToolSchema>(raw_value.clone()) {
+            Ok(tool) => tools.push(tool),
+            Err(e) => {
+                diagnostics.push(
+                    Diagnostic::error(
+                        path.to_path_buf(),
+                        1,
+                        0,
+                        "mcp::invalid_tool",
+                        format!("Invalid tool definition: {}", e),
+                    )
+                    .with_suggestion(
+                        "Ensure tool has valid field types (name: string, description: string, inputSchema: object)".to_string(),
+                    ),
+                );
+            }
         }
     }
 

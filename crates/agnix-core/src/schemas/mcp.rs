@@ -88,18 +88,17 @@ impl McpToolSchema {
     /// Check if all required fields are present
     pub fn has_required_fields(&self) -> (bool, bool, bool) {
         (
-            self.name.is_some() && !self.name.as_ref().unwrap().is_empty(),
-            self.description.is_some() && !self.description.as_ref().unwrap().is_empty(),
+            !self.name.as_deref().unwrap_or("").trim().is_empty(),
+            !self.description.as_deref().unwrap_or("").trim().is_empty(),
             self.input_schema.is_some(),
         )
     }
 
     /// Check if description is meaningful (not empty, reasonably long)
     pub fn has_meaningful_description(&self) -> bool {
-        match &self.description {
-            Some(desc) => !desc.trim().is_empty() && desc.len() >= 10,
-            None => false,
-        }
+        self.description
+            .as_deref()
+            .is_some_and(|desc| !desc.trim().is_empty() && desc.len() >= 10)
     }
 
     /// Check if tool has consent-related fields
@@ -109,7 +108,7 @@ impl McpToolSchema {
 
     /// Check if tool has annotations (which should be validated)
     pub fn has_annotations(&self) -> bool {
-        self.annotations.is_some() && !self.annotations.as_ref().unwrap().is_empty()
+        self.annotations.as_ref().is_some_and(|a| !a.is_empty())
     }
 }
 
