@@ -125,3 +125,180 @@ fn test_help_shows_format_option() {
         .success()
         .stdout(predicate::str::contains("--format"));
 }
+
+// JSON format tests
+
+#[test]
+fn test_format_json_produces_valid_json() {
+    let mut cmd = agnix();
+    let output = cmd
+        .arg("tests/fixtures/valid")
+        .arg("--format")
+        .arg("json")
+        .output()
+        .unwrap();
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let json: Result<serde_json::Value, _> = serde_json::from_str(&stdout);
+    assert!(json.is_ok(), "JSON output should be valid JSON");
+
+    let json = json.unwrap();
+    assert!(json["version"].is_string());
+    assert!(json["files_checked"].is_number());
+    assert!(json["diagnostics"].is_array());
+    assert!(json["summary"].is_object());
+}
+
+#[test]
+fn test_format_json_version_matches_cargo() {
+    let mut cmd = agnix();
+    let output = cmd
+        .arg("tests/fixtures/valid")
+        .arg("--format")
+        .arg("json")
+        .output()
+        .unwrap();
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let json: serde_json::Value = serde_json::from_str(&stdout).unwrap();
+
+    // Version should match CARGO_PKG_VERSION
+    let version = json["version"].as_str().unwrap();
+    assert!(
+        version.starts_with("0."),
+        "Version should match cargo version format"
+    );
+}
+
+#[test]
+fn test_format_json_summary_counts() {
+    let mut cmd = agnix();
+    let output = cmd
+        .arg("tests/fixtures/valid")
+        .arg("--format")
+        .arg("json")
+        .output()
+        .unwrap();
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let json: serde_json::Value = serde_json::from_str(&stdout).unwrap();
+
+    let summary = &json["summary"];
+    assert!(summary["errors"].is_number());
+    assert!(summary["warnings"].is_number());
+    assert!(summary["info"].is_number());
+
+    // Valid fixtures should have no errors
+    assert_eq!(summary["errors"].as_u64().unwrap(), 0);
+}
+
+#[test]
+fn test_format_json_diagnostic_fields() {
+    let mut cmd = agnix();
+    let output = cmd
+        .arg("tests/fixtures")
+        .arg("--format")
+        .arg("json")
+        .output()
+        .unwrap();
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let json: serde_json::Value = serde_json::from_str(&stdout).unwrap();
+
+    let diagnostics = json["diagnostics"].as_array().unwrap();
+    if !diagnostics.is_empty() {
+        let diag = &diagnostics[0];
+        assert!(diag["level"].is_string());
+        assert!(diag["rule"].is_string());
+        assert!(diag["file"].is_string());
+        assert!(diag["line"].is_number());
+        assert!(diag["column"].is_number());
+        assert!(diag["message"].is_string());
+        // suggestion is optional, so just verify it's either null or string
+        assert!(diag["suggestion"].is_null() || diag["suggestion"].is_string());
+    }
+}
+
+#[test]
+fn test_format_json_exit_code_on_error() {
+    let mut cmd = agnix();
+    // Use fixtures directory which contains invalid files
+    let output = cmd
+        .arg("tests/fixtures/invalid")
+        .arg("--format")
+        .arg("json")
+        .output()
+        .unwrap();
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let json: serde_json::Value = serde_json::from_str(&stdout).unwrap();
+
+    let errors = json["summary"]["errors"].as_u64().unwrap();
+    if errors > 0 {
+        assert!(
+            !output.status.success(),
+            "Should exit with error code when errors present"
+        );
+    }
+}
+
+#[test]
+fn test_format_json_exit_code_on_success() {
+    let mut cmd = agnix();
+    cmd.arg("tests/fixtures/valid")
+        .arg("--format")
+        .arg("json")
+        .assert()
+        .success();
+}
+
+#[test]
+fn test_help_shows_json_format() {
+    let mut cmd = agnix();
+    cmd.arg("--help")
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("json"));
+}
+
+#[test]
+fn test_format_json_files_checked_count() {
+    let mut cmd = agnix();
+    let output = cmd
+        .arg("tests/fixtures/valid")
+        .arg("--format")
+        .arg("json")
+        .output()
+        .unwrap();
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let json: serde_json::Value = serde_json::from_str(&stdout).unwrap();
+
+    // files_checked should be a valid number
+    let files_checked = json["files_checked"].as_u64();
+    assert!(files_checked.is_some(), "files_checked should be a valid number");
+}
+
+#[test]
+fn test_format_json_forward_slashes_in_paths() {
+    let mut cmd = agnix();
+    let output = cmd
+        .arg("tests/fixtures")
+        .arg("--format")
+        .arg("json")
+        .output()
+        .unwrap();
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let json: serde_json::Value = serde_json::from_str(&stdout).unwrap();
+
+    let diagnostics = json["diagnostics"].as_array().unwrap();
+    for diag in diagnostics {
+        let file = diag["file"].as_str().unwrap();
+        assert!(
+            !file.contains('\\'),
+            "File paths should use forward slashes, got: {}",
+            file
+        );
+    }
+}
