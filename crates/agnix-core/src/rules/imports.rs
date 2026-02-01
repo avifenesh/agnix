@@ -479,8 +479,11 @@ mod tests {
         fs::write(&file_path, "See [guide](missing.md) for more.").unwrap();
 
         let validator = ImportsValidator;
-        let diagnostics =
-            validator.validate(&file_path, "See [guide](missing.md) for more.", &LintConfig::default());
+        let diagnostics = validator.validate(
+            &file_path,
+            "See [guide](missing.md) for more.",
+            &LintConfig::default(),
+        );
 
         assert!(diagnostics.iter().any(|d| d.rule == "REF-002"));
         let ref_002 = diagnostics.iter().find(|d| d.rule == "REF-002").unwrap();
@@ -496,8 +499,11 @@ mod tests {
         fs::write(&file_path, "See [guide](exists.md) for more.").unwrap();
 
         let validator = ImportsValidator;
-        let diagnostics =
-            validator.validate(&file_path, "See [guide](exists.md) for more.", &LintConfig::default());
+        let diagnostics = validator.validate(
+            &file_path,
+            "See [guide](exists.md) for more.",
+            &LintConfig::default(),
+        );
 
         assert!(!diagnostics.iter().any(|d| d.rule == "REF-002"));
     }
@@ -573,8 +579,11 @@ mod tests {
         fs::write(&file_path, "![logo](images/logo.png)").unwrap();
 
         let validator = ImportsValidator;
-        let diagnostics =
-            validator.validate(&file_path, "![logo](images/logo.png)", &LintConfig::default());
+        let diagnostics = validator.validate(
+            &file_path,
+            "![logo](images/logo.png)",
+            &LintConfig::default(),
+        );
 
         assert!(diagnostics.iter().any(|d| d.rule == "REF-002"));
         let ref_002 = diagnostics.iter().find(|d| d.rule == "REF-002").unwrap();
@@ -591,11 +600,8 @@ mod tests {
         config.rules.disabled_rules = vec!["REF-002".to_string()];
 
         let validator = ImportsValidator;
-        let diagnostics = validator.validate(
-            &file_path,
-            "See [guide](missing.md) for more.",
-            &config,
-        );
+        let diagnostics =
+            validator.validate(&file_path, "See [guide](missing.md) for more.", &config);
 
         assert!(!diagnostics.iter().any(|d| d.rule == "REF-002"));
     }
@@ -610,11 +616,8 @@ mod tests {
         config.rules.imports = false;
 
         let validator = ImportsValidator;
-        let diagnostics = validator.validate(
-            &file_path,
-            "See [guide](missing.md) for more.",
-            &config,
-        );
+        let diagnostics =
+            validator.validate(&file_path, "See [guide](missing.md) for more.", &config);
 
         // When imports category is disabled, no validation happens
         assert!(diagnostics.is_empty());
