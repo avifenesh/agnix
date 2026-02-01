@@ -78,6 +78,7 @@ impl Validator for ImportsValidator {
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn visit_imports(
     file_path: &PathBuf,
     content_override: Option<&str>,
@@ -400,9 +401,9 @@ mod tests {
             .collect();
 
         fs::write(&claude_md, "See @1.md").unwrap();
-        for i in 0..5 {
+        for (i, path) in paths.iter().enumerate().take(5) {
             let content = format!("See @{}.md", i + 2);
-            fs::write(&paths[i], content).unwrap();
+            fs::write(path, content).unwrap();
         }
         fs::write(&paths[5], "End").unwrap();
 
@@ -475,9 +476,9 @@ mod tests {
             .collect();
 
         fs::write(&skill_md, "See @1.md").unwrap();
-        for i in 0..5 {
+        for (i, path) in paths.iter().enumerate().take(5) {
             let content = format!("See @{}.md", i + 2);
-            fs::write(&paths[i], content).unwrap();
+            fs::write(path, content).unwrap();
         }
         fs::write(&paths[5], "End").unwrap();
 
