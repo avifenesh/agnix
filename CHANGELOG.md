@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Cross-platform validation rules XP-001, XP-002, XP-003
+  - XP-001: Detects Claude-specific features (hooks, context:fork, agent, allowed-tools) in AGENTS.md (error)
+  - XP-002: Validates AGENTS.md markdown structure for cross-platform compatibility (warning)
+  - XP-003: Detects hard-coded platform paths (.claude/, .opencode/, .cursor/, etc.) in configs (warning)
+- New `cross_platform` config category toggle for XP-* rules
+- 5 test fixtures in tests/fixtures/cross_platform/ directory
+- 30 comprehensive unit tests for cross-platform validation
 - Hook timeout validation rules CC-HK-010 and CC-HK-011
   - CC-HK-010: Warns when hooks lack timeout specification (MEDIUM)
   - CC-HK-011: Errors when timeout value is invalid (negative, zero, or non-integer) (HIGH)

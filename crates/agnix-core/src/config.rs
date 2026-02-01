@@ -76,6 +76,10 @@ pub struct RuleConfig {
     #[serde(default = "default_true")]
     pub imports: bool,
 
+    /// Enable cross-platform validation (XP-*)
+    #[serde(default = "default_true")]
+    pub cross_platform: bool,
+
     /// Detect generic instructions in CLAUDE.md
     #[serde(default = "default_true")]
     pub generic_instructions: bool,
@@ -115,6 +119,7 @@ impl Default for RuleConfig {
             plugins: true,
             xml: true,
             imports: true,
+            cross_platform: true,
             generic_instructions: true,
             frontmatter_validation: true,
             xml_balance: true,
@@ -192,6 +197,7 @@ impl LintConfig {
             s if s.starts_with("CC-PL-") => self.rules.plugins,
             s if s.starts_with("XML-") || s.starts_with("xml::") => self.rules.xml,
             s if s.starts_with("REF-") || s.starts_with("imports::") => self.rules.imports,
+            s if s.starts_with("XP-") => self.rules.cross_platform,
             // Unknown rules are enabled by default
             _ => true,
         }
@@ -443,6 +449,94 @@ exclude = []
         assert!(config.rules.plugins);
         assert!(config.rules.xml);
         assert!(config.rules.imports);
+        assert!(config.rules.cross_platform);
         assert!(config.rules.disabled_rules.is_empty());
+    }
+
+    // ===== Cross-Platform Category Tests =====
+
+    #[test]
+    fn test_default_config_enables_xp_rules() {
+        let config = LintConfig::default();
+
+        assert!(config.is_rule_enabled("XP-001"));
+        assert!(config.is_rule_enabled("XP-002"));
+        assert!(config.is_rule_enabled("XP-003"));
+    }
+
+    #[test]
+    fn test_category_disabled_cross_platform() {
+        let mut config = LintConfig::default();
+        config.rules.cross_platform = false;
+
+        assert!(!config.is_rule_enabled("XP-001"));
+        assert!(!config.is_rule_enabled("XP-002"));
+        assert!(!config.is_rule_enabled("XP-003"));
+
+        // Other categories still enabled
+        assert!(config.is_rule_enabled("CC-AG-001"));
+        assert!(config.is_rule_enabled("AS-005"));
+    }
+
+    #[test]
+    fn test_xp_rules_work_with_all_targets() {
+        // XP-* rules are NOT target-specific (unlike CC-* rules)
+        // They should work with Cursor, Codex, and all targets
+        let targets = [
+            TargetTool::Generic,
+            TargetTool::ClaudeCode,
+            TargetTool::Cursor,
+            TargetTool::Codex,
+        ];
+
+        for target in targets {
+            let mut config = LintConfig::default();
+            config.target = target;
+
+            assert!(
+                config.is_rule_enabled("XP-001"),
+                "XP-001 should be enabled for {:?}",
+                target
+            );
+            assert!(
+                config.is_rule_enabled("XP-002"),
+                "XP-002 should be enabled for {:?}",
+                target
+            );
+            assert!(
+                config.is_rule_enabled("XP-003"),
+                "XP-003 should be enabled for {:?}",
+                target
+            );
+        }
+    }
+
+    #[test]
+    fn test_disabled_specific_xp_rule() {
+        let mut config = LintConfig::default();
+        config.rules.disabled_rules = vec!["XP-001".to_string()];
+
+        assert!(!config.is_rule_enabled("XP-001"));
+        assert!(config.is_rule_enabled("XP-002"));
+        assert!(config.is_rule_enabled("XP-003"));
+    }
+
+    #[test]
+    fn test_toml_deserialization_cross_platform() {
+        let toml_str = r#"
+severity = "Warning"
+target = "Generic"
+exclude = []
+
+[rules]
+cross_platform = false
+"#;
+
+        let config: LintConfig = toml::from_str(toml_str).unwrap();
+
+        assert!(!config.rules.cross_platform);
+        assert!(!config.is_rule_enabled("XP-001"));
+        assert!(!config.is_rule_enabled("XP-002"));
+        assert!(!config.is_rule_enabled("XP-003"));
     }
 }

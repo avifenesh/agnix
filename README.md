@@ -21,6 +21,7 @@ agnix .
 - ✅ **@imports** - Validates file references exist
 - ✅ **Hooks** - Event and config validation (CC-HK-001 to CC-HK-011)
 - ✅ **Parallel Validation** - Fast processing of large projects using rayon
+- ✅ **Cross-Platform** - AGENTS.md validation, platform-specific feature detection (XP-001 to XP-003)
 - 🚧 **MCP Tools** - Schema validation (coming soon)
 - 🚧 **LSP Server** - Real-time diagnostics (coming soon)
 
