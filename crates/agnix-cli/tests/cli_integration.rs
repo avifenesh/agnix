@@ -224,19 +224,10 @@ fn test_format_json_exit_code_on_error() {
     use std::fs;
     use std::io::Write;
 
-    // Use unique temp directory name to avoid parallel test conflicts
-    let temp_dir = std::env::temp_dir().join(format!("agnix_test_error_{}", std::process::id()));
+    // Use tempfile for automatic cleanup even on panic
+    let temp_dir = tempfile::tempdir().unwrap();
 
-    // Ensure cleanup happens even if test panics
-    struct Cleanup(std::path::PathBuf);
-    impl Drop for Cleanup {
-        fn drop(&mut self) {
-            let _ = fs::remove_dir_all(&self.0);
-        }
-    }
-    let _cleanup = Cleanup(temp_dir.clone());
-
-    let skills_dir = temp_dir.join("skills").join("bad-skill");
+    let skills_dir = temp_dir.path().join("skills").join("bad-skill");
     fs::create_dir_all(&skills_dir).unwrap();
 
     let skill_path = skills_dir.join("SKILL.md");
@@ -250,7 +241,7 @@ fn test_format_json_exit_code_on_error() {
 
     let mut cmd = agnix();
     let output = cmd
-        .arg(temp_dir.to_str().unwrap())
+        .arg(temp_dir.path().to_str().unwrap())
         .arg("--format")
         .arg("json")
         .output()
@@ -274,10 +265,28 @@ fn test_format_json_exit_code_on_error() {
 
 #[test]
 fn test_format_json_strict_mode_with_warnings() {
-    // First, find a fixture that produces warnings but no errors
+    use std::fs;
+    use std::io::Write;
+
+    // Create a dedicated fixture that guarantees warnings but no errors
+    let temp_dir = tempfile::tempdir().unwrap();
+
+    let skills_dir = temp_dir.path().join("skills").join("test-skill");
+    fs::create_dir_all(&skills_dir).unwrap();
+
+    let skill_path = skills_dir.join("SKILL.md");
+    let mut file = fs::File::create(&skill_path).unwrap();
+    // Valid skill name but missing trigger phrase (AS-010 warning)
+    writeln!(
+        file,
+        "---\nname: test-skill\ndescription: A test skill for validation\n---\nThis skill does something."
+    )
+    .unwrap();
+
+    // Without --strict, warnings should not cause failure
     let mut cmd = agnix();
     let output = cmd
-        .arg("tests/fixtures/valid")
+        .arg(temp_dir.path().to_str().unwrap())
         .arg("--format")
         .arg("json")
         .output()
@@ -286,29 +295,29 @@ fn test_format_json_strict_mode_with_warnings() {
     let stdout = String::from_utf8_lossy(&output.stdout);
     let json: serde_json::Value = serde_json::from_str(&stdout).unwrap();
     let warnings = json["summary"]["warnings"].as_u64().unwrap();
+    let errors = json["summary"]["errors"].as_u64().unwrap();
 
-    // Without --strict, warnings should not cause failure
-    if warnings > 0 {
-        assert!(
-            output.status.success(),
-            "Without --strict, warnings should not cause failure"
-        );
+    assert_eq!(errors, 0, "Should have no errors");
+    assert!(warnings > 0, "Should have at least one warning (AS-010)");
+    assert!(
+        output.status.success(),
+        "Without --strict, warnings should not cause failure"
+    );
 
-        // With --strict, warnings should cause exit code 1
-        let mut cmd_strict = agnix();
-        let output_strict = cmd_strict
-            .arg("tests/fixtures/valid")
-            .arg("--format")
-            .arg("json")
-            .arg("--strict")
-            .output()
-            .unwrap();
+    // With --strict, warnings should cause exit code 1
+    let mut cmd_strict = agnix();
+    let output_strict = cmd_strict
+        .arg(temp_dir.path().to_str().unwrap())
+        .arg("--format")
+        .arg("json")
+        .arg("--strict")
+        .output()
+        .unwrap();
 
-        assert!(
-            !output_strict.status.success(),
-            "With --strict, warnings should cause exit code 1"
-        );
-    }
+    assert!(
+        !output_strict.status.success(),
+        "With --strict, warnings should cause exit code 1"
+    );
 }
 
 #[test]
