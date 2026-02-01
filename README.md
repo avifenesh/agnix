@@ -12,14 +12,14 @@ agnix .
 
 ## Features
 
-- ✅ **Agent Skills** - Validates SKILL.md format (agentskills.io spec)
+- ✅ **Agent Skills** - Validates SKILL.md format (agentskills.io spec + CC-SK-001 to CC-SK-009)
 - ✅ **Claude Code** - CLAUDE.md, hooks, subagents, plugins
 - ✅ **Subagents** - Agent frontmatter validation (CC-AG-001 to CC-AG-006)
 - ✅ **Plugins** - Plugin manifest validation (CC-PL-001 to CC-PL-005)
 - ✅ **Generic Instructions** - Detects redundant "be helpful" patterns
 - ✅ **XML Balance** - Ensures tags are properly closed
 - ✅ **@imports** - Validates file references exist
-- ✅ **Hooks** - Event and config validation (CC-HK-006 to CC-HK-009)
+- ✅ **Hooks** - Event and config validation (CC-HK-001 to CC-HK-011)
 - ✅ **Parallel Validation** - Fast processing of large projects using rayon
 - 🚧 **MCP Tools** - Schema validation (coming soon)
 - 🚧 **LSP Server** - Real-time diagnostics (coming soon)
@@ -304,11 +304,11 @@ agnix/
 
 - [x] Core validation engine
 - [x] CLI with miette errors
-- [x] Agent Skills validation
+- [x] Agent Skills validation (AS-* + CC-SK-001 to CC-SK-009)
 - [x] CLAUDE.md rules
 - [x] XML balance checking
 - [x] @import resolution
-- [x] Hooks validation (CC-HK-001 to CC-HK-009)
+- [x] Hooks validation (CC-HK-001 to CC-HK-011)
 - [x] Agent validation (CC-AG-001 to CC-AG-006)
 - [x] Parallel file validation
 - [x] Config-based rule filtering

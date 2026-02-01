@@ -1,4 +1,4 @@
-//! Hooks validation rules (CC-HK-001 to CC-HK-009)
+//! Hooks validation rules (CC-HK-001 to CC-HK-011)
 
 use crate::{
     config::LintConfig,
@@ -208,6 +208,63 @@ impl Validator for HooksValidator {
             return diagnostics;
         }
 
+        // CC-HK-011: Invalid timeout value (pre-parse check for negative/zero/non-integer values)
+        // Must check raw JSON before serde deserializes to Option<u64> which can't represent negatives
+        if config.is_rule_enabled("CC-HK-011") {
+            if let Some(hooks_obj) = raw_value.get("hooks").and_then(|h| h.as_object()) {
+                for (event, matchers) in hooks_obj {
+                    if let Some(matchers_arr) = matchers.as_array() {
+                        for (matcher_idx, matcher) in matchers_arr.iter().enumerate() {
+                            if let Some(hooks_arr) = matcher.get("hooks").and_then(|h| h.as_array())
+                            {
+                                for (hook_idx, hook) in hooks_arr.iter().enumerate() {
+                                    if let Some(timeout_val) = hook.get("timeout") {
+                                        let is_invalid = match timeout_val {
+                                            serde_json::Value::Number(n) => {
+                                                // A valid timeout must be a positive integer.
+                                                // as_u64() returns Some only for non-negative integer
+                                                // JSON numbers within the u64 range; it returns None
+                                                // for negatives, any floats (including 30.0), or
+                                                // out-of-range values.
+                                                if let Some(val) = n.as_u64() {
+                                                    val == 0 // Zero is invalid
+                                                } else {
+                                                    true // Negative, float, or out of range
+                                                }
+                                            }
+                                            _ => true, // String, bool, null, object, array are invalid
+                                        };
+                                        if is_invalid {
+                                            let hook_location = format!(
+                                                "hooks.{}[{}].hooks[{}]",
+                                                event, matcher_idx, hook_idx
+                                            );
+                                            diagnostics.push(
+                                                Diagnostic::error(
+                                                    path.to_path_buf(),
+                                                    1,
+                                                    0,
+                                                    "CC-HK-011",
+                                                    format!(
+                                                        "Invalid timeout value at {}: must be a positive integer",
+                                                        hook_location
+                                                    ),
+                                                )
+                                                .with_suggestion(
+                                                    "Set timeout to a positive integer like 30"
+                                                        .to_string(),
+                                                ),
+                                            );
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         let settings: SettingsSchema = match serde_json::from_str(content) {
             Ok(s) => s,
             Err(e) => {
@@ -317,7 +374,29 @@ impl Validator for HooksValidator {
                     );
 
                     match hook {
-                        Hook::Command { command, .. } => {
+                        Hook::Command {
+                            command, timeout, ..
+                        } => {
+                            // CC-HK-010: No timeout specified
+                            if config.is_rule_enabled("CC-HK-010") && timeout.is_none() {
+                                diagnostics.push(
+                                    Diagnostic::warning(
+                                        path.to_path_buf(),
+                                        1,
+                                        0,
+                                        "CC-HK-010",
+                                        format!(
+                                            "Command hook at {} has no timeout specified",
+                                            hook_location
+                                        ),
+                                    )
+                                    .with_suggestion(
+                                        "Add \"timeout\": 30 to prevent long-running hooks"
+                                            .to_string(),
+                                    ),
+                                );
+                            }
+
                             // CC-HK-006: Missing command field
                             if config.is_rule_enabled("CC-HK-006") && command.is_none() {
                                 diagnostics.push(
@@ -393,7 +472,29 @@ impl Validator for HooksValidator {
                                 }
                             }
                         }
-                        Hook::Prompt { prompt, .. } => {
+                        Hook::Prompt {
+                            prompt, timeout, ..
+                        } => {
+                            // CC-HK-010: No timeout specified
+                            if config.is_rule_enabled("CC-HK-010") && timeout.is_none() {
+                                diagnostics.push(
+                                    Diagnostic::warning(
+                                        path.to_path_buf(),
+                                        1,
+                                        0,
+                                        "CC-HK-010",
+                                        format!(
+                                            "Prompt hook at {} has no timeout specified",
+                                            hook_location
+                                        ),
+                                    )
+                                    .with_suggestion(
+                                        "Add \"timeout\": 30 to prevent long-running hooks"
+                                            .to_string(),
+                                    ),
+                                );
+                            }
+
                             // CC-HK-002: Prompt on wrong event
                             if config.is_rule_enabled("CC-HK-002")
                                 && !HooksSchema::is_prompt_event(event)
@@ -1656,6 +1757,388 @@ mod tests {
     fn test_find_closest_event_no_match() {
         let suggestion = find_closest_event("CompletelyInvalid");
         assert!(suggestion.contains("Valid events are"));
+    }
+
+    // ===== CC-HK-010 Tests: No Timeout Specified =====
+
+    #[test]
+    fn test_cc_hk_010_command_hook_no_timeout() {
+        let content = r#"{
+            "hooks": {
+                "PreToolUse": [
+                    {
+                        "matcher": "Bash",
+                        "hooks": [
+                            { "type": "command", "command": "echo test" }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+        let diagnostics = validate(content);
+        let cc_hk_010: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-HK-010")
+            .collect();
+
+        assert_eq!(cc_hk_010.len(), 1);
+        assert_eq!(cc_hk_010[0].level, DiagnosticLevel::Warning);
+        assert!(cc_hk_010[0].message.contains("no timeout specified"));
+    }
+
+    #[test]
+    fn test_cc_hk_010_prompt_hook_no_timeout() {
+        let content = r#"{
+            "hooks": {
+                "Stop": [
+                    {
+                        "hooks": [
+                            { "type": "prompt", "prompt": "Summarize session" }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+        let diagnostics = validate(content);
+        let cc_hk_010: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-HK-010")
+            .collect();
+
+        assert_eq!(cc_hk_010.len(), 1);
+        assert_eq!(cc_hk_010[0].level, DiagnosticLevel::Warning);
+        assert!(cc_hk_010[0].message.contains("Prompt hook"));
+    }
+
+    #[test]
+    fn test_cc_hk_010_with_timeout_ok() {
+        let content = r#"{
+            "hooks": {
+                "PreToolUse": [
+                    {
+                        "matcher": "Bash",
+                        "hooks": [
+                            { "type": "command", "command": "echo test", "timeout": 30 }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+        let diagnostics = validate(content);
+        let cc_hk_010: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-HK-010")
+            .collect();
+
+        assert_eq!(cc_hk_010.len(), 0);
+    }
+
+    #[test]
+    fn test_cc_hk_010_multiple_hooks_mixed() {
+        let content = r#"{
+            "hooks": {
+                "PreToolUse": [
+                    {
+                        "matcher": "*",
+                        "hooks": [
+                            { "type": "command", "command": "echo 'no timeout'" },
+                            { "type": "command", "command": "echo 'with timeout'", "timeout": 30 },
+                            { "type": "command", "command": "echo 'also no timeout'" }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+        let diagnostics = validate(content);
+        let cc_hk_010: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-HK-010")
+            .collect();
+
+        assert_eq!(cc_hk_010.len(), 2);
+    }
+
+    #[test]
+    fn test_fixture_no_timeout() {
+        let content = include_str!("../../../../tests/fixtures/hooks/no-timeout.json");
+        let diagnostics = validate(content);
+        let cc_hk_010: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-HK-010")
+            .collect();
+        // PreToolUse command and Stop prompt are missing timeout
+        assert_eq!(cc_hk_010.len(), 2);
+    }
+
+    // ===== CC-HK-011 Tests: Invalid Timeout Value =====
+
+    #[test]
+    fn test_cc_hk_011_negative_timeout() {
+        let content = r#"{
+            "hooks": {
+                "PreToolUse": [
+                    {
+                        "matcher": "Bash",
+                        "hooks": [
+                            { "type": "command", "command": "echo test", "timeout": -5 }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+        let diagnostics = validate(content);
+        let cc_hk_011: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-HK-011")
+            .collect();
+
+        assert_eq!(cc_hk_011.len(), 1);
+        assert_eq!(cc_hk_011[0].level, DiagnosticLevel::Error);
+        assert!(cc_hk_011[0].message.contains("Invalid timeout"));
+    }
+
+    #[test]
+    fn test_cc_hk_011_zero_timeout() {
+        let content = r#"{
+            "hooks": {
+                "PreToolUse": [
+                    {
+                        "matcher": "Bash",
+                        "hooks": [
+                            { "type": "command", "command": "echo test", "timeout": 0 }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+        let diagnostics = validate(content);
+        let cc_hk_011: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-HK-011")
+            .collect();
+
+        assert_eq!(cc_hk_011.len(), 1);
+        assert_eq!(cc_hk_011[0].level, DiagnosticLevel::Error);
+    }
+
+    #[test]
+    fn test_cc_hk_011_float_zero_timeout() {
+        // Edge case: 0.0 should be treated as invalid (zero is not positive)
+        let content = r#"{
+            "hooks": {
+                "PreToolUse": [
+                    {
+                        "matcher": "Bash",
+                        "hooks": [
+                            { "type": "command", "command": "echo test", "timeout": 0.0 }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+        let diagnostics = validate(content);
+        let cc_hk_011: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-HK-011")
+            .collect();
+
+        assert_eq!(cc_hk_011.len(), 1);
+        assert_eq!(cc_hk_011[0].level, DiagnosticLevel::Error);
+    }
+
+    #[test]
+    fn test_cc_hk_011_float_timeout() {
+        // Non-integer floats like 30.5 should be invalid
+        let content = r#"{
+            "hooks": {
+                "PreToolUse": [
+                    {
+                        "matcher": "Bash",
+                        "hooks": [
+                            { "type": "command", "command": "echo test", "timeout": 30.5 }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+        let diagnostics = validate(content);
+        let cc_hk_011: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-HK-011")
+            .collect();
+
+        assert_eq!(cc_hk_011.len(), 1);
+        assert_eq!(cc_hk_011[0].level, DiagnosticLevel::Error);
+    }
+
+    #[test]
+    fn test_cc_hk_011_whole_float_invalid() {
+        // Even whole floats like 30.0 are invalid - must be integer, not float
+        let content = r#"{
+            "hooks": {
+                "PreToolUse": [
+                    {
+                        "matcher": "Bash",
+                        "hooks": [
+                            { "type": "command", "command": "echo test", "timeout": 30.0 }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+        let diagnostics = validate(content);
+        let cc_hk_011: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-HK-011")
+            .collect();
+
+        // 30.0 is a float, not an integer - rule requires positive INTEGER
+        assert_eq!(cc_hk_011.len(), 1);
+        assert_eq!(cc_hk_011[0].level, DiagnosticLevel::Error);
+    }
+
+    #[test]
+    fn test_cc_hk_011_string_timeout() {
+        let content = r#"{
+            "hooks": {
+                "Stop": [
+                    {
+                        "hooks": [
+                            { "type": "command", "command": "echo test", "timeout": "thirty" }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+        let diagnostics = validate(content);
+        let cc_hk_011: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-HK-011")
+            .collect();
+
+        assert_eq!(cc_hk_011.len(), 1);
+        assert_eq!(cc_hk_011[0].level, DiagnosticLevel::Error);
+    }
+
+    #[test]
+    fn test_cc_hk_011_null_timeout() {
+        let content = r#"{
+            "hooks": {
+                "Stop": [
+                    {
+                        "hooks": [
+                            { "type": "command", "command": "echo test", "timeout": null }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+        let diagnostics = validate(content);
+        let cc_hk_011: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-HK-011")
+            .collect();
+
+        assert_eq!(cc_hk_011.len(), 1);
+        assert_eq!(cc_hk_011[0].level, DiagnosticLevel::Error);
+    }
+
+    #[test]
+    fn test_cc_hk_011_positive_timeout_ok() {
+        let content = r#"{
+            "hooks": {
+                "PreToolUse": [
+                    {
+                        "matcher": "Bash",
+                        "hooks": [
+                            { "type": "command", "command": "echo test", "timeout": 30 }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+        let diagnostics = validate(content);
+        let cc_hk_011: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-HK-011")
+            .collect();
+
+        assert_eq!(cc_hk_011.len(), 0);
+    }
+
+    #[test]
+    fn test_cc_hk_011_multiple_invalid_timeouts() {
+        let content = r#"{
+            "hooks": {
+                "PreToolUse": [
+                    {
+                        "matcher": "*",
+                        "hooks": [
+                            { "type": "command", "command": "echo 'negative'", "timeout": -5 },
+                            { "type": "command", "command": "echo 'zero'", "timeout": 0 },
+                            { "type": "command", "command": "echo 'valid'", "timeout": 30 }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+        let diagnostics = validate(content);
+        let cc_hk_011: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-HK-011")
+            .collect();
+
+        assert_eq!(cc_hk_011.len(), 2);
+    }
+
+    #[test]
+    fn test_cc_hk_011_missing_timeout_not_triggered() {
+        // CC-HK-011 should NOT trigger when timeout is missing (that's CC-HK-010's job)
+        let content = r#"{
+            "hooks": {
+                "PreToolUse": [
+                    {
+                        "matcher": "Bash",
+                        "hooks": [
+                            { "type": "command", "command": "echo test" }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+        let diagnostics = validate(content);
+        let cc_hk_011: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-HK-011")
+            .collect();
+
+        assert_eq!(cc_hk_011.len(), 0);
+    }
+
+    #[test]
+    fn test_fixture_invalid_timeout() {
+        let content = include_str!("../../../../tests/fixtures/hooks/invalid-timeout.json");
+        let diagnostics = validate(content);
+        let cc_hk_011: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-HK-011")
+            .collect();
+        // negative (-5), zero (0), string ("thirty"), null - 4 invalid timeouts
+        assert_eq!(cc_hk_011.len(), 4);
     }
 
     // ===== Config Wiring Tests =====
