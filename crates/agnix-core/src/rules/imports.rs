@@ -116,7 +116,11 @@ fn visit_imports(
         return;
     }
 
-    let rule_not_found = if is_claude_md { "CC-MEM-001" } else { "REF-001" };
+    let rule_not_found = if is_claude_md {
+        "CC-MEM-001"
+    } else {
+        "REF-001"
+    };
     let rule_cycle = "CC-MEM-002";
     let rule_depth = "CC-MEM-003";
 
@@ -368,8 +372,7 @@ mod tests {
         fs::write(&file_path, "See @missing.md").unwrap();
 
         let validator = ImportsValidator;
-        let diagnostics =
-            validator.validate(&file_path, "See @missing.md", &LintConfig::default());
+        let diagnostics = validator.validate(&file_path, "See @missing.md", &LintConfig::default());
 
         assert!(diagnostics.iter().any(|d| d.rule == "CC-MEM-001"));
     }
@@ -416,8 +419,7 @@ mod tests {
         fs::write(&file_path, "See @missing.md").unwrap();
 
         let validator = ImportsValidator;
-        let diagnostics =
-            validator.validate(&file_path, "See @missing.md", &LintConfig::default());
+        let diagnostics = validator.validate(&file_path, "See @missing.md", &LintConfig::default());
 
         assert!(diagnostics.iter().any(|d| d.rule == "REF-001"));
         assert!(!diagnostics.iter().any(|d| d.rule == "CC-MEM-001"));
@@ -430,8 +432,7 @@ mod tests {
         fs::write(&file_path, "See @missing.md").unwrap();
 
         let validator = ImportsValidator;
-        let diagnostics =
-            validator.validate(&file_path, "See @missing.md", &LintConfig::default());
+        let diagnostics = validator.validate(&file_path, "See @missing.md", &LintConfig::default());
 
         assert!(diagnostics.iter().any(|d| d.rule == "REF-001"));
         assert!(!diagnostics.iter().any(|d| d.rule == "CC-MEM-001"));
@@ -444,8 +445,7 @@ mod tests {
         fs::write(&file_path, "See @missing.md").unwrap();
 
         let validator = ImportsValidator;
-        let diagnostics =
-            validator.validate(&file_path, "See @missing.md", &LintConfig::default());
+        let diagnostics = validator.validate(&file_path, "See @missing.md", &LintConfig::default());
 
         assert!(diagnostics.iter().any(|d| d.rule == "REF-001"));
         assert!(!diagnostics.iter().any(|d| d.rule == "CC-MEM-001"));
@@ -551,8 +551,12 @@ mod tests {
         let diagnostics = validator.validate(&skill_md, "See @CLAUDE.md", &LintConfig::default());
 
         // CLAUDE.md's missing import should emit CC-MEM-001, not REF-001
-        assert!(diagnostics.iter().any(|d| d.rule == "CC-MEM-001" && d.file.ends_with("CLAUDE.md")));
-        assert!(!diagnostics.iter().any(|d| d.rule == "REF-001" && d.file.ends_with("CLAUDE.md")));
+        assert!(diagnostics
+            .iter()
+            .any(|d| d.rule == "CC-MEM-001" && d.file.ends_with("CLAUDE.md")));
+        assert!(!diagnostics
+            .iter()
+            .any(|d| d.rule == "REF-001" && d.file.ends_with("CLAUDE.md")));
     }
 
     #[test]
@@ -562,10 +566,13 @@ mod tests {
         fs::write(&file_path, "See @/etc/passwd").unwrap();
 
         let validator = ImportsValidator;
-        let diagnostics = validator.validate(&file_path, "See @/etc/passwd", &LintConfig::default());
+        let diagnostics =
+            validator.validate(&file_path, "See @/etc/passwd", &LintConfig::default());
 
         // Absolute paths should be rejected
-        assert!(diagnostics.iter().any(|d| d.message.contains("Absolute import paths not allowed")));
+        assert!(diagnostics
+            .iter()
+            .any(|d| d.message.contains("Absolute import paths not allowed")));
     }
 
     // ===== Helper Function Tests =====

@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- Imports validator now routes diagnostics by file type:
+  - CLAUDE.md files emit CC-MEM-001/002/003 (Claude Code memory rules)
+  - Non-CLAUDE markdown files emit REF-001 (generic reference validation)
+  - Improved security with path traversal protection (rejects absolute paths)
+  - Fixed critical bug: file type now determined per-file during recursion
 - XML validator now emits specific rule IDs for each error type:
   - XML-001: Unclosed XML tag
   - XML-002: Mismatched closing tag
