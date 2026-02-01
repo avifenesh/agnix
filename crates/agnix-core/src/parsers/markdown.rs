@@ -1,4 +1,4 @@
-//! Markdown parser for extracting @imports and checking XML tags
+//! Markdown parser for extracting @imports, links, and checking XML tags
 
 use pulldown_cmark::{Event, Options, Parser, Tag, TagEnd};
 use regex::Regex;
@@ -53,6 +53,62 @@ pub fn extract_xml_tags(content: &str) -> Vec<XmlTag> {
     tags
 }
 
+/// Extract markdown links from content (excluding code blocks/spans)
+///
+/// This extracts both regular links `[text](url)` and image links `![alt](url)`.
+pub fn extract_markdown_links(content: &str) -> Vec<MarkdownLink> {
+    let line_starts = compute_line_starts(content);
+    let mut links = Vec::new();
+
+    let parser = Parser::new_ext(content, Options::all()).into_offset_iter();
+    let mut in_code_block = false;
+
+    // Track current link being built
+    let mut current_link: Option<(String, bool, Range<usize>)> = None; // (url, is_image, range)
+    let mut link_text = String::new();
+
+    for (event, range) in parser {
+        match event {
+            Event::Start(Tag::CodeBlock(_)) => in_code_block = true,
+            Event::End(TagEnd::CodeBlock) => in_code_block = false,
+            Event::Code(_) => {}
+
+            Event::Start(Tag::Link { dest_url, .. }) if !in_code_block => {
+                current_link = Some((dest_url.to_string(), false, range));
+                link_text.clear();
+            }
+
+            Event::Start(Tag::Image { dest_url, .. }) if !in_code_block => {
+                current_link = Some((dest_url.to_string(), true, range));
+                link_text.clear();
+            }
+
+            Event::Text(text) if current_link.is_some() && !in_code_block => {
+                link_text.push_str(&text);
+            }
+
+            Event::End(TagEnd::Link) | Event::End(TagEnd::Image) if !in_code_block => {
+                if let Some((url, is_image, link_range)) = current_link.take() {
+                    let (line, column) = line_col_at(link_range.start, &line_starts);
+                    links.push(MarkdownLink {
+                        url,
+                        text: std::mem::take(&mut link_text),
+                        is_image,
+                        line,
+                        column,
+                        start_byte: link_range.start,
+                        end_byte: link_range.end,
+                    });
+                }
+            }
+
+            _ => {}
+        }
+    }
+
+    links
+}
+
 /// Check if XML tags are balanced
 pub fn check_xml_balance(tags: &[XmlTag]) -> Vec<XmlBalanceError> {
     let mut stack: Vec<&XmlTag> = Vec::new();
@@ -101,6 +157,25 @@ pub struct Import {
     pub line: usize,
     pub column: usize,
     pub start_byte: usize,
+    pub end_byte: usize,
+}
+
+/// A markdown link extracted from content
+#[derive(Debug, Clone)]
+pub struct MarkdownLink {
+    /// The URL/path of the link
+    pub url: String,
+    /// The link text (alt text for images)
+    pub text: String,
+    /// Whether this is an image link (![alt](url))
+    pub is_image: bool,
+    /// Line number (1-indexed)
+    pub line: usize,
+    /// Column number (1-indexed)
+    pub column: usize,
+    /// Byte offset of link start
+    pub start_byte: usize,
+    /// Byte offset of link end
     pub end_byte: usize,
 }
 
@@ -336,5 +411,85 @@ mod tests {
         let errors = check_xml_balance(&tags);
         assert_eq!(errors.len(), 1);
         assert!(matches!(errors[0], XmlBalanceError::Unclosed { .. }));
+    }
+
+    // ===== Markdown Link Extraction Tests =====
+
+    #[test]
+    fn test_extract_markdown_links_basic() {
+        let content = "See [guide](docs/guide.md) for more info.";
+        let links = extract_markdown_links(content);
+        assert_eq!(links.len(), 1);
+        assert_eq!(links[0].url, "docs/guide.md");
+        assert_eq!(links[0].text, "guide");
+        assert!(!links[0].is_image);
+    }
+
+    #[test]
+    fn test_extract_markdown_links_multiple() {
+        let content = "See [one](a.md) and [two](b.md) files.";
+        let links = extract_markdown_links(content);
+        assert_eq!(links.len(), 2);
+        assert_eq!(links[0].url, "a.md");
+        assert_eq!(links[1].url, "b.md");
+    }
+
+    #[test]
+    fn test_extract_markdown_links_image() {
+        let content = "Here is ![logo](images/logo.png) image.";
+        let links = extract_markdown_links(content);
+        assert_eq!(links.len(), 1);
+        assert_eq!(links[0].url, "images/logo.png");
+        assert_eq!(links[0].text, "logo");
+        assert!(links[0].is_image);
+    }
+
+    #[test]
+    fn test_extract_markdown_links_ignores_code_block() {
+        let content = "```\n[link](skip.md)\n```\n[real](keep.md)";
+        let links = extract_markdown_links(content);
+        assert_eq!(links.len(), 1);
+        assert_eq!(links[0].url, "keep.md");
+    }
+
+    #[test]
+    fn test_extract_markdown_links_ignores_inline_code() {
+        let content = "Use `[not](skip.md)` but see [real](keep.md)";
+        let links = extract_markdown_links(content);
+        assert_eq!(links.len(), 1);
+        assert_eq!(links[0].url, "keep.md");
+    }
+
+    #[test]
+    fn test_extract_markdown_links_with_fragment() {
+        let content = "See [section](docs/guide.md#section) for details.";
+        let links = extract_markdown_links(content);
+        assert_eq!(links.len(), 1);
+        assert_eq!(links[0].url, "docs/guide.md#section");
+    }
+
+    #[test]
+    fn test_extract_markdown_links_external() {
+        let content = "Visit [GitHub](https://github.com) site.";
+        let links = extract_markdown_links(content);
+        assert_eq!(links.len(), 1);
+        assert_eq!(links[0].url, "https://github.com");
+    }
+
+    #[test]
+    fn test_extract_markdown_links_anchor_only() {
+        let content = "Jump to [section](#section-name).";
+        let links = extract_markdown_links(content);
+        assert_eq!(links.len(), 1);
+        assert_eq!(links[0].url, "#section-name");
+    }
+
+    #[test]
+    fn test_extract_markdown_links_line_column() {
+        let content = "Line one\n[link](file.md)\nLine three";
+        let links = extract_markdown_links(content);
+        assert_eq!(links.len(), 1);
+        assert_eq!(links[0].line, 2);
+        assert_eq!(links[0].column, 1);
     }
 }

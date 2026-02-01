@@ -99,6 +99,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Parallel file validation using rayon for improved performance on large projects
 - Deterministic diagnostic output with sorting by severity and file path
 - Comprehensive tests for parallel validation edge cases
+- Reference validator rules REF-001 and REF-002
+  - REF-001: @import references must point to existing files (error)
+  - REF-002: Markdown links [text](path) should point to existing files (error)
+  - Both rules are in the "imports" category
+  - Supports fragment stripping (file.md#section validates file.md)
+  - Skips external URLs (http://, https://, mailto:, etc.)
+  - 4 test fixtures in tests/fixtures/refs/ directory
+  - 31 comprehensive unit tests for reference validation
 
 ### Changed
 - `validate_project()` now processes files in parallel while maintaining deterministic output
