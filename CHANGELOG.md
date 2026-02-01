@@ -15,6 +15,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Proper exit codes for CI workflows (errors exit 1)
   - Path normalization for cross-platform compatibility
   - 8 comprehensive integration tests for SARIF output
+- SkillValidator Claude Code rules (CC-SK-001 to CC-SK-005, CC-SK-008 to CC-SK-009)
+  - CC-SK-001: Validates model field values (sonnet, opus, haiku, inherit)
+  - CC-SK-002: Validates context field must be 'fork' or omitted
+  - CC-SK-003: Requires 'agent' field when context is 'fork'
+  - CC-SK-004: Requires 'context: fork' when agent field is present
+  - CC-SK-005: Validates agent type values (Explore, Plan, general-purpose)
+  - CC-SK-006: Dangerous skills must set 'disable-model-invocation: true'
+  - CC-SK-007: Warns on unrestricted Bash access (suggests scoped versions)
+  - CC-SK-008: Validates tool names in allowed-tools against known Claude Code tools
+  - CC-SK-009: Warns when too many dynamic injections (!`) detected (>3)
+- 27 comprehensive unit tests for skill validation (244 total tests)
+- 9 test fixtures in tests/fixtures/skills/ directory for CC-SK rules
 - JSON output format with `--format json` CLI option for programmatic consumption
   - Simple, human-readable structure for easy parsing and integration
   - Includes version, files_checked, diagnostics array, and summary counts

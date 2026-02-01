@@ -12,7 +12,7 @@ agnix .
 
 ## Features
 
-- ✅ **Agent Skills** - Validates SKILL.md format (agentskills.io spec)
+- ✅ **Agent Skills** - Validates SKILL.md format (agentskills.io spec + CC-SK-001 to CC-SK-009)
 - ✅ **Claude Code** - CLAUDE.md, hooks, subagents, plugins
 - ✅ **Subagents** - Agent frontmatter validation (CC-AG-001 to CC-AG-006)
 - ✅ **Plugins** - Plugin manifest validation (CC-PL-001 to CC-PL-005)
@@ -304,7 +304,7 @@ agnix/
 
 - [x] Core validation engine
 - [x] CLI with miette errors
-- [x] Agent Skills validation
+- [x] Agent Skills validation (AS-* + CC-SK-001 to CC-SK-009)
 - [x] CLAUDE.md rules
 - [x] XML balance checking
 - [x] @import resolution
