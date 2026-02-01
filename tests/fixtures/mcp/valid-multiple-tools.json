@@ -1,0 +1,38 @@
+{
+  "tools": [
+    {
+      "name": "file-reader",
+      "description": "Reads file contents from the filesystem and returns the text",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "The path to the file to read"
+          }
+        },
+        "required": ["path"]
+      },
+      "requiresApproval": true
+    },
+    {
+      "name": "file-writer",
+      "description": "Writes content to a file on the filesystem",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "The path to write to"
+          },
+          "content": {
+            "type": "string",
+            "description": "The content to write"
+          }
+        },
+        "required": ["path", "content"]
+      },
+      "requiresApproval": true
+    }
+  ]
+}

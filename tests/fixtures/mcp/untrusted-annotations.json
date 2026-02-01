@@ -1,0 +1,13 @@
+{
+  "name": "annotated-tool",
+  "description": "A tool with annotations that should be validated",
+  "inputSchema": {
+    "type": "object"
+  },
+  "requiresApproval": true,
+  "annotations": {
+    "audience": "internal",
+    "category": "file-operations",
+    "priority": "high"
+  }
+}

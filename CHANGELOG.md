@@ -8,6 +8,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- MCP (Model Context Protocol) validation with 6 rules (MCP-001 to MCP-006)
+  - MCP-001: Validates JSON-RPC version is "2.0"
+  - MCP-002: Validates required tool fields (name, description, inputSchema)
+  - MCP-003: Validates inputSchema is valid JSON Schema
+  - MCP-004: Warns when tool description is too short (<10 chars)
+  - MCP-005: Warns when tool lacks consent mechanism (requiresApproval/confirmation)
+  - MCP-006: Warns about untrusted annotations that should be validated
+- McpValidator and McpToolSchema in agnix-core
+- Config-based MCP category toggle (rules.mcp)
+- 8 test fixtures in tests/fixtures/mcp/ directory
+- 48 comprehensive unit tests for MCP validation
 - Claude Memory validation rules CC-MEM-004, CC-MEM-006 through CC-MEM-010
   - CC-MEM-004: Validates npm scripts referenced in CLAUDE.md exist in package.json
   - CC-MEM-006: Detects negative instructions ("don't", "never") without positive alternatives

@@ -1,0 +1,9 @@
+{
+  "name": "bad-schema-tool",
+  "description": "A tool with invalid input schema structure",
+  "inputSchema": {
+    "type": "invalid_type",
+    "properties": "should be an object",
+    "required": "should be an array"
+  }
+}

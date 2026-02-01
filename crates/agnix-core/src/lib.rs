@@ -39,6 +39,8 @@ pub enum FileType {
     Hooks,
     /// plugin.json (validator checks .claude-plugin/ location)
     Plugin,
+    /// MCP configuration files (*.mcp.json, mcp.json, mcp-*.json)
+    Mcp,
     /// Other .md files (for XML/import checks)
     GenericMarkdown,
     /// Skip validation
@@ -64,6 +66,10 @@ pub fn detect_file_type(path: &Path) -> FileType {
         "settings.json" | "settings.local.json" => FileType::Hooks,
         // Classify any plugin.json as Plugin - validator checks location constraint (CC-PL-001)
         "plugin.json" => FileType::Plugin,
+        // MCP configuration files
+        "mcp.json" => FileType::Mcp,
+        name if name.ends_with(".mcp.json") => FileType::Mcp,
+        name if name.starts_with("mcp-") && name.ends_with(".json") => FileType::Mcp,
         name if name.ends_with(".md") => {
             if parent == Some("agents") || grandparent == Some("agents") {
                 FileType::Agent
@@ -94,6 +100,7 @@ fn get_validators_for_type(file_type: FileType) -> Vec<Box<dyn Validator>> {
         ],
         FileType::Hooks => vec![Box::new(rules::hooks::HooksValidator)],
         FileType::Plugin => vec![Box::new(rules::plugin::PluginValidator)],
+        FileType::Mcp => vec![Box::new(rules::mcp::McpValidator)],
         FileType::GenericMarkdown => vec![
             Box::new(rules::xml::XmlValidator),
             Box::new(rules::imports::ImportsValidator),
@@ -276,6 +283,25 @@ mod tests {
     }
 
     #[test]
+    fn test_detect_mcp() {
+        assert_eq!(detect_file_type(Path::new("mcp.json")), FileType::Mcp);
+        assert_eq!(detect_file_type(Path::new("tools.mcp.json")), FileType::Mcp);
+        assert_eq!(
+            detect_file_type(Path::new("my-server.mcp.json")),
+            FileType::Mcp
+        );
+        assert_eq!(detect_file_type(Path::new("mcp-tools.json")), FileType::Mcp);
+        assert_eq!(
+            detect_file_type(Path::new("mcp-servers.json")),
+            FileType::Mcp
+        );
+        assert_eq!(
+            detect_file_type(Path::new(".claude/mcp.json")),
+            FileType::Mcp
+        );
+    }
+
+    #[test]
     fn test_detect_unknown() {
         assert_eq!(detect_file_type(Path::new("main.rs")), FileType::Unknown);
         assert_eq!(
@@ -294,6 +320,12 @@ mod tests {
     fn test_validators_for_claude_md() {
         let validators = get_validators_for_type(FileType::ClaudeMd);
         assert_eq!(validators.len(), 3);
+    }
+
+    #[test]
+    fn test_validators_for_mcp() {
+        let validators = get_validators_for_type(FileType::Mcp);
+        assert_eq!(validators.len(), 1);
     }
 
     #[test]
@@ -592,6 +624,72 @@ mod tests {
         assert!(
             plugin_diagnostics.iter().any(|d| d.rule == "CC-PL-004"),
             "Should report CC-PL-004 for missing description field"
+        );
+    }
+
+    #[test]
+    fn test_validate_file_mcp() {
+        let temp = tempfile::TempDir::new().unwrap();
+        let mcp_path = temp.path().join("tools.mcp.json");
+        std::fs::write(
+            &mcp_path,
+            r#"{"name": "test-tool", "description": "A test tool for testing purposes", "inputSchema": {"type": "object"}}"#,
+        )
+        .unwrap();
+
+        let config = LintConfig::default();
+        let diagnostics = validate_file(&mcp_path, &config).unwrap();
+
+        // Tool without consent field should trigger MCP-005 warning
+        assert!(diagnostics.iter().any(|d| d.rule == "MCP-005"));
+    }
+
+    #[test]
+    fn test_validate_file_mcp_invalid_schema() {
+        let temp = tempfile::TempDir::new().unwrap();
+        let mcp_path = temp.path().join("mcp.json");
+        std::fs::write(
+            &mcp_path,
+            r#"{"name": "test-tool", "description": "A test tool for testing purposes", "inputSchema": "not an object"}"#,
+        )
+        .unwrap();
+
+        let config = LintConfig::default();
+        let diagnostics = validate_file(&mcp_path, &config).unwrap();
+
+        // Invalid schema should trigger MCP-003
+        assert!(diagnostics.iter().any(|d| d.rule == "MCP-003"));
+    }
+
+    #[test]
+    fn test_validate_project_mcp_detection() {
+        let temp = tempfile::TempDir::new().unwrap();
+
+        // Create an MCP file with issues
+        std::fs::write(
+            temp.path().join("tools.mcp.json"),
+            r#"{"name": "", "description": "Short", "inputSchema": {"type": "object"}}"#,
+        )
+        .unwrap();
+
+        let config = LintConfig::default();
+        let diagnostics = validate_project(temp.path(), &config).unwrap();
+
+        // Should detect the MCP file and report issues
+        let mcp_diagnostics: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule.starts_with("MCP-"))
+            .collect();
+
+        assert!(
+            !mcp_diagnostics.is_empty(),
+            "validate_project() should detect and validate MCP files"
+        );
+
+        // Empty name should trigger MCP-002
+        assert!(
+            mcp_diagnostics.iter().any(|d| d.rule == "MCP-002"),
+            "Should report MCP-002 for empty name"
         );
     }
 }

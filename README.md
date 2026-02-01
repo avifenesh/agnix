@@ -21,7 +21,7 @@ agnix .
 - ✅ **@imports** - Validates file references exist
 - ✅ **Hooks** - Event and config validation (CC-HK-006 to CC-HK-009)
 - ✅ **Parallel Validation** - Fast processing of large projects using rayon
-- 🚧 **MCP Tools** - Schema validation (coming soon)
+- ✅ **MCP Tools** - Schema and tool validation (MCP-001 to MCP-006)
 - 🚧 **LSP Server** - Real-time diagnostics (coming soon)
 
 ## Installation
@@ -226,6 +226,7 @@ hooks = true        # CC-HK-* rules
 agents = true       # CC-AG-* rules
 memory = true       # CC-MEM-* rules
 plugins = true      # CC-PL-* rules
+mcp = true          # MCP-* rules
 xml = true          # XML-* rules
 imports = true      # REF-*, imports::* rules
 
@@ -259,6 +260,7 @@ When `target` is set to a specific tool, only relevant rules run:
 | agents | CC-AG-* | Subagent validation |
 | memory | CC-MEM-* | Memory/CLAUDE.md validation |
 | plugins | CC-PL-* | Plugin validation |
+| mcp | MCP-* | MCP tool validation |
 | xml | xml::* | XML tag balance |
 | imports | imports::* | Import reference validation |
 
@@ -314,7 +316,7 @@ agnix/
 - [x] Config-based rule filtering
 - [x] Auto-fix infrastructure (--fix, --dry-run, --fix-safe)
 - [x] Plugin validation (CC-PL-001 to CC-PL-005)
-- [ ] MCP tool validation
+- [x] MCP tool validation (MCP-001 to MCP-006)
 - [ ] LSP server
 - [ ] VS Code extension
 

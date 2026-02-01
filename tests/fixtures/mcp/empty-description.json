@@ -1,0 +1,7 @@
+{
+  "name": "short-desc-tool",
+  "description": "Short",
+  "inputSchema": {
+    "type": "object"
+  }
+}

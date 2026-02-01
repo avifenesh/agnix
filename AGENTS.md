@@ -31,7 +31,7 @@
 crates/
 ├── agnix-core/     # Parsers, schemas, rules, diagnostics
 └── agnix-cli/      # CLI with clap
-knowledge-base/     # 80 rules, 75+ sources
+knowledge-base/     # 86 rules, 75+ sources
 tests/fixtures/     # Test cases
 ```
 
@@ -46,7 +46,7 @@ cargo run --bin agnix -- .  # Run CLI
 
 ## Rules Reference
 
-80 rules in `knowledge-base/VALIDATION-RULES.md`
+86 rules in `knowledge-base/VALIDATION-RULES.md`
 
 Format: `[CATEGORY]-[NUMBER]` (AS-004, CC-HK-001, etc.)
 

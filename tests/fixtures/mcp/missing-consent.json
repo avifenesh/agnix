@@ -1,0 +1,12 @@
+{
+  "name": "no-consent-tool",
+  "description": "A tool that doesn't specify consent requirements",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "action": {
+        "type": "string"
+      }
+    }
+  }
+}
