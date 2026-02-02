@@ -120,15 +120,16 @@ fn find_unknown_keys(yaml: &str, start_line: usize) -> Vec<UnknownKey> {
         if let Some(colon_idx) = trimmed.find(':') {
             let key = &trimmed[..colon_idx];
             // Skip if empty or starts with special characters
-            if !key.is_empty() && key.chars().next().map_or(false, |c| c.is_alphabetic()) {
-                if !known.contains(key) {
-                    let column = line.len() - trimmed.len();
-                    unknown.push(UnknownKey {
-                        key: key.to_string(),
-                        line: start_line + i,
-                        column,
-                    });
-                }
+            if !key.is_empty()
+                && key.chars().next().is_some_and(|c| c.is_alphabetic())
+                && !known.contains(key)
+            {
+                let column = line.len() - trimmed.len();
+                unknown.push(UnknownKey {
+                    key: key.to_string(),
+                    line: start_line + i,
+                    column,
+                });
             }
         }
     }
