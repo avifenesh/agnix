@@ -1007,17 +1007,22 @@ allowed-tools: Read Write
 
     // ===== Fixture Directory Regression Tests =====
 
-    #[test]
-    fn test_validate_fixtures_directory() {
-        // Run validate_project() over tests/fixtures/ to verify detect_file_type() works
-        // This is a regression guard for fixture layout (issue #74)
+    /// Helper to locate the fixtures directory for testing
+    fn get_fixtures_dir() -> PathBuf {
         let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
-        let fixtures_dir = manifest_dir
+        manifest_dir
             .ancestors()
             .nth(2)
             .expect("Failed to locate repo root")
             .join("tests")
-            .join("fixtures");
+            .join("fixtures")
+    }
+
+    #[test]
+    fn test_validate_fixtures_directory() {
+        // Run validate_project() over tests/fixtures/ to verify detect_file_type() works
+        // This is a regression guard for fixture layout (issue #74)
+        let fixtures_dir = get_fixtures_dir();
 
         let config = LintConfig::default();
         let diagnostics = validate_project(&fixtures_dir, &config).unwrap();
@@ -1030,19 +1035,26 @@ allowed-tools: Read Write
 
         // deep-reference/SKILL.md should trigger AS-013 (reference too deep)
         assert!(
-            skill_diagnostics.iter().any(|d| d.rule == "AS-013"),
+            skill_diagnostics
+                .iter()
+                .any(|d| d.rule == "AS-013" && d.file.to_string_lossy().contains("deep-reference")),
             "Expected AS-013 from deep-reference/SKILL.md fixture"
         );
 
         // missing-frontmatter/SKILL.md should trigger AS-001 (missing frontmatter)
         assert!(
-            skill_diagnostics.iter().any(|d| d.rule == "AS-001"),
+            skill_diagnostics
+                .iter()
+                .any(|d| d.rule == "AS-001"
+                    && d.file.to_string_lossy().contains("missing-frontmatter")),
             "Expected AS-001 from missing-frontmatter/SKILL.md fixture"
         );
 
         // windows-path/SKILL.md should trigger AS-014 (windows path separator)
         assert!(
-            skill_diagnostics.iter().any(|d| d.rule == "AS-014"),
+            skill_diagnostics
+                .iter()
+                .any(|d| d.rule == "AS-014" && d.file.to_string_lossy().contains("windows-path")),
             "Expected AS-014 from windows-path/SKILL.md fixture"
         );
 
@@ -1058,21 +1070,34 @@ allowed-tools: Read Write
             "Expected MCP diagnostics from tests/fixtures/mcp/*.mcp.json files"
         );
 
-        // empty-description.mcp.json should trigger MCP-002 (empty/missing description)
+        // missing-required-fields.mcp.json should trigger MCP-002 (missing description)
         assert!(
-            mcp_diagnostics.iter().any(|d| d.rule == "MCP-002"),
-            "Expected MCP-002 from MCP fixtures"
+            mcp_diagnostics.iter().any(|d| d.rule == "MCP-002"
+                && d.file.to_string_lossy().contains("missing-required-fields")),
+            "Expected MCP-002 from missing-required-fields.mcp.json fixture"
+        );
+
+        // empty-description.mcp.json should trigger MCP-004 (short description)
+        assert!(
+            mcp_diagnostics
+                .iter()
+                .any(|d| d.rule == "MCP-004"
+                    && d.file.to_string_lossy().contains("empty-description")),
+            "Expected MCP-004 from empty-description.mcp.json fixture"
         );
 
         // invalid-input-schema.mcp.json should trigger MCP-003 (invalid schema)
         assert!(
-            mcp_diagnostics.iter().any(|d| d.rule == "MCP-003"),
+            mcp_diagnostics.iter().any(|d| d.rule == "MCP-003"
+                && d.file.to_string_lossy().contains("invalid-input-schema")),
             "Expected MCP-003 from invalid-input-schema.mcp.json fixture"
         );
 
         // missing-consent.mcp.json should trigger MCP-005 (missing consent)
         assert!(
-            mcp_diagnostics.iter().any(|d| d.rule == "MCP-005"),
+            mcp_diagnostics.iter().any(
+                |d| d.rule == "MCP-005" && d.file.to_string_lossy().contains("missing-consent")
+            ),
             "Expected MCP-005 from missing-consent.mcp.json fixture"
         );
     }
@@ -1080,13 +1105,7 @@ allowed-tools: Read Write
     #[test]
     fn test_fixture_file_type_detection() {
         // Verify that fixture files are detected as correct FileType
-        let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
-        let fixtures_dir = manifest_dir
-            .ancestors()
-            .nth(2)
-            .expect("Failed to locate repo root")
-            .join("tests")
-            .join("fixtures");
+        let fixtures_dir = get_fixtures_dir();
 
         // Skill fixtures should be detected as FileType::Skill
         assert_eq!(
