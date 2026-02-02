@@ -382,10 +382,10 @@ pub struct NestedAgentsMd {
     pub depth: usize,
 }
 
-/// Find AGENTS.md files when multiple exist in the directory tree (for AGM-006)
+/// Find AGENTS.md files when multiple exist in the directory tree (for AGM-006).
 ///
-/// Some tools load AGENTS.md hierarchically, so multiple files may apply.
-pub fn find_nested_agents_md(paths: &[std::path::PathBuf]) -> Vec<NestedAgentsMd> {
+/// Returns all AGENTS.md files when more than one exists, including siblings.
+pub fn find_multiple_agents_md(paths: &[std::path::PathBuf]) -> Vec<NestedAgentsMd> {
     // Filter to only AGENTS.md files
     let agents_files: Vec<_> = paths
         .iter()
@@ -418,6 +418,11 @@ pub fn find_nested_agents_md(paths: &[std::path::PathBuf]) -> Vec<NestedAgentsMd
     results.sort_by_key(|item| item.depth);
 
     results
+}
+
+#[deprecated(note = "Use find_multiple_agents_md; this returns all AGENTS.md files when >1 exist.")]
+pub fn find_nested_agents_md(paths: &[std::path::PathBuf]) -> Vec<NestedAgentsMd> {
+    find_multiple_agents_md(paths)
 }
 
 /// Check if an AGENTS.md file has parent AGENTS.md files in its ancestry
@@ -697,19 +702,19 @@ agent: something
     // ===== AGM-006: Nested AGENTS.md Hierarchy =====
 
     #[test]
-    fn test_single_agents_md_no_nesting() {
+    fn test_single_agents_md_no_multiple() {
         let paths = vec![PathBuf::from("project/AGENTS.md")];
-        let results = find_nested_agents_md(&paths);
+        let results = find_multiple_agents_md(&paths);
         assert!(results.is_empty());
     }
 
     #[test]
-    fn test_nested_agents_md() {
+    fn test_multiple_agents_md_with_parent() {
         let paths = vec![
             PathBuf::from("project/AGENTS.md"),
             PathBuf::from("project/subdir/AGENTS.md"),
         ];
-        let results = find_nested_agents_md(&paths);
+        let results = find_multiple_agents_md(&paths);
         assert_eq!(results.len(), 2);
         assert!(results
             .iter()
@@ -720,30 +725,28 @@ agent: something
     }
 
     #[test]
-    fn test_multiple_nested_agents_md() {
+    fn test_multiple_agents_md_with_hierarchy() {
         let paths = vec![
             PathBuf::from("project/AGENTS.md"),
             PathBuf::from("project/a/AGENTS.md"),
             PathBuf::from("project/a/b/AGENTS.md"),
         ];
-        let results = find_nested_agents_md(&paths);
+        let results = find_multiple_agents_md(&paths);
         // Should detect all AGENTS.md files
         assert_eq!(results.len(), 3);
     }
 
     #[test]
-    fn test_nested_agents_md_no_duplicates() {
-        // Test case for AGM-006: Ensure each nested file is only reported once
-        // In hierarchy project/AGENTS.md -> project/a/AGENTS.md -> project/a/b/AGENTS.md
-        // the deepest file should only appear once in results, not multiple times
+    fn test_multiple_agents_md_no_duplicates() {
+        // Test case for AGM-006: Ensure each AGENTS.md file is only reported once
         let paths = vec![
             PathBuf::from("project/AGENTS.md"),
             PathBuf::from("project/a/AGENTS.md"),
             PathBuf::from("project/a/b/AGENTS.md"),
         ];
-        let results = find_nested_agents_md(&paths);
+        let results = find_multiple_agents_md(&paths);
 
-        // Should detect all 3 AGENTS.md files
+        // Should detect all AGENTS.md files
         assert_eq!(results.len(), 3);
 
         // Verify no duplicates by checking each path appears only once
@@ -772,12 +775,12 @@ agent: something
     }
 
     #[test]
-    fn test_sibling_agents_md_no_nesting() {
+    fn test_sibling_agents_md_multiple() {
         let paths = vec![
             PathBuf::from("project-a/AGENTS.md"),
             PathBuf::from("project-b/AGENTS.md"),
         ];
-        let results = find_nested_agents_md(&paths);
+        let results = find_multiple_agents_md(&paths);
         assert_eq!(results.len(), 2);
     }
 
