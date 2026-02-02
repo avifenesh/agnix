@@ -382,9 +382,9 @@ pub struct NestedAgentsMd {
     pub depth: usize,
 }
 
-/// Find nested AGENTS.md files in directory tree (for AGM-006)
+/// Find AGENTS.md files when multiple exist in the directory tree (for AGM-006)
 ///
-/// Some tools load AGENTS.md hierarchically, which may cause unexpected behavior
+/// Some tools load AGENTS.md hierarchically, so multiple files may apply.
 pub fn find_nested_agents_md(paths: &[std::path::PathBuf]) -> Vec<NestedAgentsMd> {
     // Filter to only AGENTS.md files
     let agents_files: Vec<_> = paths
@@ -401,41 +401,18 @@ pub fn find_nested_agents_md(paths: &[std::path::PathBuf]) -> Vec<NestedAgentsMd
         return Vec::new();
     }
 
-    // Sort by path depth (component count)
-    let mut sorted: Vec<_> = agents_files
-        .iter()
-        .map(|p| {
-            let depth = p.components().count();
-            (p, depth)
-        })
-        .collect();
-    sorted.sort_by_key(|(_, depth)| *depth);
-
-    // Check for nesting relationships, using HashSet to deduplicate
-    let mut seen = HashSet::new();
     let mut results = Vec::new();
+    let mut seen = HashSet::new();
 
-    for i in 0..sorted.len() {
-        let (path_i, _) = sorted[i];
-        let parent_i = path_i.parent();
-
-        for (path_j, depth_j) in sorted.iter().skip(i + 1) {
-            // Check if path_j is nested under path_i's directory
-            if let Some(parent) = parent_i {
-                let path_j_buf = path_j.as_path();
-                let path_i_buf = path_i.as_path();
-                if path_j_buf.starts_with(parent) && path_j_buf != path_i_buf {
-                    // Only add if we haven't seen this path before
-                    if seen.insert(path_j_buf.to_path_buf()) {
-                        results.push(NestedAgentsMd {
-                            path: path_j.to_path_buf(),
-                            depth: *depth_j,
-                        });
-                    }
-                }
-            }
+    for path in agents_files {
+        let depth = path.components().count();
+        let path_buf = path.to_path_buf();
+        if seen.insert(path_buf.clone()) {
+            results.push(NestedAgentsMd { path: path_buf, depth });
         }
     }
+
+    results.sort_by_key(|item| item.depth);
 
     results
 }
@@ -730,8 +707,9 @@ agent: something
             PathBuf::from("project/subdir/AGENTS.md"),
         ];
         let results = find_nested_agents_md(&paths);
-        assert_eq!(results.len(), 1);
-        assert!(results[0].path.to_string_lossy().contains("subdir"));
+        assert_eq!(results.len(), 2);
+        assert!(results.iter().any(|r| r.path.to_string_lossy().contains("project/AGENTS.md")));
+        assert!(results.iter().any(|r| r.path.to_string_lossy().contains("subdir")));
     }
 
     #[test]
@@ -742,8 +720,8 @@ agent: something
             PathBuf::from("project/a/b/AGENTS.md"),
         ];
         let results = find_nested_agents_md(&paths);
-        // Should detect both nested files
-        assert!(results.len() >= 2);
+        // Should detect all AGENTS.md files
+        assert_eq!(results.len(), 3);
     }
 
     #[test]
@@ -758,8 +736,8 @@ agent: something
         ];
         let results = find_nested_agents_md(&paths);
 
-        // Should detect exactly 2 nested files: project/a/AGENTS.md and project/a/b/AGENTS.md
-        assert_eq!(results.len(), 2);
+        // Should detect all 3 AGENTS.md files
+        assert_eq!(results.len(), 3);
 
         // Verify no duplicates by checking each path appears only once
         let mut seen_paths = HashSet::new();
@@ -777,12 +755,9 @@ agent: something
             .iter()
             .map(|r| r.path.to_string_lossy().to_string())
             .collect();
-        assert!(result_paths
-            .iter()
-            .any(|p| p.contains("project/a/AGENTS.md")));
-        assert!(result_paths
-            .iter()
-            .any(|p| p.contains("project/a/b/AGENTS.md")));
+        assert!(result_paths.iter().any(|p| p.contains("project/AGENTS.md")));
+        assert!(result_paths.iter().any(|p| p.contains("project/a/AGENTS.md")));
+        assert!(result_paths.iter().any(|p| p.contains("project/a/b/AGENTS.md")));
     }
 
     #[test]
@@ -792,8 +767,7 @@ agent: something
             PathBuf::from("project-b/AGENTS.md"),
         ];
         let results = find_nested_agents_md(&paths);
-        // Siblings are not nested
-        assert!(results.is_empty());
+        assert_eq!(results.len(), 2);
     }
 
     #[test]

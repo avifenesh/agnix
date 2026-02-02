@@ -294,27 +294,49 @@ pub fn validate_project_with_registry(
         )
         .collect();
 
-    // AGM-006: Check for nested AGENTS.md hierarchy (project-level check)
+    // AGM-006: Check for multiple AGENTS.md files in the directory tree (project-level check)
     if config.is_rule_enabled("AGM-006") {
-        let nested = schemas::agents_md::find_nested_agents_md(&paths);
-        for nested_file in nested {
-            let parent_files =
-                schemas::agents_md::check_agents_md_hierarchy(&nested_file.path, &paths);
-            if !parent_files.is_empty() {
-                let parent_paths: Vec<String> = parent_files
-                    .iter()
-                    .map(|p| p.to_string_lossy().to_string())
-                    .collect();
+        let agents_files: Vec<_> = paths
+            .iter()
+            .filter(|p| {
+                p.file_name()
+                    .and_then(|n| n.to_str())
+                    .is_some_and(|name| name == "AGENTS.md")
+            })
+            .collect();
+
+        if agents_files.len() > 1 {
+            for agents_file in &agents_files {
+                let parent_files =
+                    schemas::agents_md::check_agents_md_hierarchy(agents_file, &paths);
+                let description = if !parent_files.is_empty() {
+                    let parent_paths: Vec<String> = parent_files
+                        .iter()
+                        .map(|p| p.to_string_lossy().to_string())
+                        .collect();
+                    format!(
+                        "Nested AGENTS.md detected - parent AGENTS.md files exist at: {}",
+                        parent_paths.join(", ")
+                    )
+                } else {
+                    let other_paths: Vec<String> = agents_files
+                        .iter()
+                        .filter(|p| *p != agents_file)
+                        .map(|p| p.to_string_lossy().to_string())
+                        .collect();
+                    format!(
+                        "Multiple AGENTS.md files detected - other AGENTS.md files exist at: {}",
+                        other_paths.join(", ")
+                    )
+                };
+
                 diagnostics.push(
                     Diagnostic::warning(
-                        nested_file.path.clone(),
+                        (*agents_file).clone(),
                         1,
                         0,
                         "AGM-006",
-                        format!(
-                            "Nested AGENTS.md detected - parent AGENTS.md files exist at: {}",
-                            parent_paths.join(", ")
-                        ),
+                        description,
                     )
                     .with_suggestion(
                         "Some tools load AGENTS.md hierarchically. Document inheritance behavior or consolidate files.".to_string(),
@@ -1040,7 +1062,7 @@ allowed-tools: Read Write
         );
     }
 
-    // ===== AGM-006: Nested AGENTS.md Hierarchy Tests =====
+    // ===== AGM-006: Multiple AGENTS.md Tests =====
 
     #[test]
     fn test_agm_006_nested_agents_md() {
@@ -1064,16 +1086,19 @@ allowed-tools: Read Write
         let config = LintConfig::default();
         let diagnostics = validate_project(temp.path(), &config).unwrap();
 
-        // Should detect AGM-006 for the nested AGENTS.md
+        // Should detect AGM-006 for both AGENTS.md files
         let agm_006: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AGM-006").collect();
         assert_eq!(
             agm_006.len(),
-            1,
-            "Should detect one nested AGENTS.md, got {:?}",
+            2,
+            "Should detect both AGENTS.md files, got {:?}",
             agm_006
         );
-        assert!(agm_006[0].file.to_string_lossy().contains("subdir"));
-        assert!(agm_006[0].message.contains("Nested AGENTS.md"));
+        assert!(agm_006.iter().any(|d| d.file.to_string_lossy().contains("subdir")));
+        assert!(agm_006.iter().any(|d| d.message.contains("Nested AGENTS.md")));
+        assert!(agm_006
+            .iter()
+            .any(|d| d.message.contains("Multiple AGENTS.md files")));
     }
 
     #[test]
@@ -1096,6 +1121,41 @@ allowed-tools: Read Write
             agm_006.is_empty(),
             "Single AGENTS.md should not trigger AGM-006"
         );
+    }
+
+    #[test]
+    fn test_agm_006_multiple_agents_md() {
+        let temp = tempfile::TempDir::new().unwrap();
+
+        let app_a = temp.path().join("app-a");
+        let app_b = temp.path().join("app-b");
+        std::fs::create_dir_all(&app_a).unwrap();
+        std::fs::create_dir_all(&app_b).unwrap();
+
+        std::fs::write(
+            app_a.join("AGENTS.md"),
+            "# App A\n\nThis project does something.",
+        )
+        .unwrap();
+        std::fs::write(
+            app_b.join("AGENTS.md"),
+            "# App B\n\nThis project does something.",
+        )
+        .unwrap();
+
+        let config = LintConfig::default();
+        let diagnostics = validate_project(temp.path(), &config).unwrap();
+
+        let agm_006: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AGM-006").collect();
+        assert_eq!(
+            agm_006.len(),
+            2,
+            "Should detect both AGENTS.md files, got {:?}",
+            agm_006
+        );
+        assert!(agm_006
+            .iter()
+            .all(|d| d.message.contains("Multiple AGENTS.md files")));
     }
 
     #[test]
