@@ -69,11 +69,11 @@ impl Validator for AgentsMdValidator {
             }
         }
 
-        // AGM-003: Character Limit (ERROR)
+        // AGM-003: Character Limit (WARNING)
         if config.is_rule_enabled("AGM-003") {
             if let Some(exceeded) = check_character_limit(content, WINDSURF_CHAR_LIMIT) {
                 diagnostics.push(
-                    Diagnostic::error(
+                    Diagnostic::warning(
                         path.to_path_buf(),
                         1,
                         0,
@@ -106,12 +106,12 @@ impl Validator for AgentsMdValidator {
             }
         }
 
-        // AGM-005: Platform-Specific Features Without Guard (ERROR)
+        // AGM-005: Platform-Specific Features Without Guard (WARNING)
         if config.is_rule_enabled("AGM-005") {
             let unguarded = find_unguarded_platform_features(content);
             for feature in unguarded {
                 diagnostics.push(
-                    Diagnostic::error(
+                    Diagnostic::warning(
                         path.to_path_buf(),
                         feature.line,
                         feature.column,
@@ -232,7 +232,7 @@ More content.
         let diagnostics = validate(&content);
         let agm_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AGM-003").collect();
         assert_eq!(agm_003.len(), 1);
-        assert_eq!(agm_003[0].level, DiagnosticLevel::Error);
+        assert_eq!(agm_003[0].level, DiagnosticLevel::Warning);
         assert!(agm_003[0].message.contains("exceeds character limit"));
     }
 
@@ -307,7 +307,7 @@ This project uses hooks.
         let diagnostics = validate(content);
         let agm_005: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AGM-005").collect();
         assert_eq!(agm_005.len(), 1);
-        assert_eq!(agm_005[0].level, DiagnosticLevel::Error);
+        assert_eq!(agm_005[0].level, DiagnosticLevel::Warning);
         assert!(agm_005[0].message.contains("hooks"));
     }
 

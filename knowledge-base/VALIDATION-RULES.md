@@ -360,7 +360,7 @@
 **Source**: code.claude.com/docs/en/memory
 
 <a id="cc-mem-004"></a>
-### CC-MEM-004 [HIGH] Invalid Command Reference
+### CC-MEM-004 [MEDIUM] Invalid Command Reference
 **Requirement**: npm scripts referenced MUST exist in package.json
 **Detection**: Extract `npm run <script>`, check package.json
 **Fix**: Show available scripts
@@ -428,7 +428,7 @@
 **Source**: docs.cursor.com/en/context, docs.cline.bot/features/custom-instructions
 
 <a id="agm-003"></a>
-### AGM-003 [HIGH] Character Limit (Windsurf)
+### AGM-003 [MEDIUM] Character Limit (Windsurf)
 **Requirement**: Rules files SHOULD be under 12000 characters for Windsurf compatibility
 **Detection**: `content.len() > 12000`
 **Fix**: Split into multiple files or reduce content
@@ -442,7 +442,7 @@
 **Source**: Best practices across platforms
 
 <a id="agm-005"></a>
-### AGM-005 [HIGH] Platform-Specific Features Without Guard
+### AGM-005 [MEDIUM] Platform-Specific Features Without Guard
 **Requirement**: Platform-specific instructions SHOULD be labeled
 **Detection**: Claude-specific (hooks, context: fork) or Cursor-specific features without platform label
 **Fix**: Add platform guard comment (e.g., "## Claude Code Specific")
@@ -620,14 +620,14 @@
 ## PROMPT ENGINEERING RULES
 
 <a id="pe-001"></a>
-### PE-001 [HIGH] Lost in the Middle
+### PE-001 [MEDIUM] Lost in the Middle
 **Requirement**: Critical content MUST NOT be in middle 40-60%
 **Detection**: Find "critical|important|must" positions, check if in middle
 **Fix**: Move to start or end
 **Source**: Liu et al. (2023), "Lost in the Middle: How Language Models Use Long Contexts", TACL
 
 <a id="pe-002"></a>
-### PE-002 [HIGH] Chain-of-Thought on Simple Task
+### PE-002 [MEDIUM] Chain-of-Thought on Simple Task
 **Requirement**: Don't use "think step by step" for simple operations
 **Detection**: Check for CoT phrases in simple skills (file reads, basic commands)
 **Fix**: Remove CoT instructions
@@ -771,16 +771,16 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | Claude Skills | 9 | 7 | 2 | 0 | 3 |
 | Claude Hooks | 11 | 9 | 2 | 0 | 2 |
 | Claude Agents | 6 | 6 | 0 | 0 | 1 |
-| Claude Memory | 10 | 6 | 4 | 0 | 2 |
-| AGENTS.md | 6 | 3 | 3 | 0 | 2 |
+| Claude Memory | 10 | 5 | 5 | 0 | 2 |
+| AGENTS.md | 6 | 1 | 5 | 0 | 2 |
 | Claude Plugins | 5 | 5 | 0 | 0 | 1 |
 | GitHub Copilot | 4 | 3 | 1 | 0 | 1 |
 | MCP | 6 | 6 | 0 | 0 | 1 |
 | XML | 3 | 3 | 0 | 0 | 1 |
 | References | 2 | 2 | 0 | 0 | 0 |
-| Prompt Eng | 4 | 2 | 2 | 0 | 1 |
+| Prompt Eng | 4 | 0 | 4 | 0 | 1 |
 | Cross-Platform | 3 | 2 | 1 | 0 | 0 |
-| **TOTAL** | **84** | **67** | **17** | **0** | **21** |
+| **TOTAL** | **84** | **62** | **22** | **0** | **21** |
 
 ---
 
@@ -811,5 +811,5 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 
 **Total Coverage**: 84 validation rules across 13 categories
 **Knowledge Base**: 11,036 lines, 320KB, 75+ sources
-**Certainty**: 67 HIGH, 17 MEDIUM, 0 LOW
+**Certainty**: 62 HIGH, 22 MEDIUM, 0 LOW
 **Auto-Fixable**: 21 rules (25%)

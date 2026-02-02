@@ -28,7 +28,7 @@ impl Validator for PromptValidator {
             let critical_in_middle = find_critical_in_middle_pe(content);
             for issue in critical_in_middle {
                 diagnostics.push(
-                    Diagnostic::error(
+                    Diagnostic::warning(
                         path.to_path_buf(),
                         issue.line,
                         issue.column,
@@ -50,7 +50,7 @@ impl Validator for PromptValidator {
             let cot_issues = find_cot_on_simple_tasks(content);
             for issue in cot_issues {
                 diagnostics.push(
-                    Diagnostic::error(
+                    Diagnostic::warning(
                         path.to_path_buf(),
                         issue.line,
                         issue.column,
@@ -136,7 +136,7 @@ mod tests {
 
         let pe_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "PE-001").collect();
         assert_eq!(pe_001.len(), 1);
-        assert_eq!(pe_001[0].level, DiagnosticLevel::Error);
+        assert_eq!(pe_001[0].level, DiagnosticLevel::Warning);
         assert!(pe_001[0].message.contains("critical"));
     }
 
@@ -193,7 +193,7 @@ When asked to read the file, think step by step.
 
         let pe_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "PE-002").collect();
         assert_eq!(pe_002.len(), 1);
-        assert_eq!(pe_002[0].level, DiagnosticLevel::Error);
+        assert_eq!(pe_002[0].level, DiagnosticLevel::Warning);
     }
 
     #[test]

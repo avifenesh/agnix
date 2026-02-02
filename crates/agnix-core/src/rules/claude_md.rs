@@ -185,7 +185,7 @@ impl Validator for ClaudeMdValidator {
                                     };
 
                                     diagnostics.push(
-                                        Diagnostic::error(
+                                        Diagnostic::warning(
                                             path.to_path_buf(),
                                             npm_ref.line,
                                             npm_ref.column,
