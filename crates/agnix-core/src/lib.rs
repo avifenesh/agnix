@@ -198,7 +198,7 @@ pub fn detect_file_type(path: &Path) -> FileType {
 
     match filename {
         "SKILL.md" => FileType::Skill,
-        "CLAUDE.md" | "AGENTS.md" => FileType::ClaudeMd,
+        "CLAUDE.md" | "CLAUDE.local.md" | "AGENTS.md" | "AGENTS.local.md" | "AGENTS.override.md" => FileType::ClaudeMd,
         "settings.json" | "settings.local.json" => FileType::Hooks,
         // Classify any plugin.json as Plugin - validator checks location constraint (CC-PL-001)
         "plugin.json" => FileType::Plugin,
@@ -402,6 +402,39 @@ mod tests {
         assert_eq!(detect_file_type(Path::new("AGENTS.md")), FileType::ClaudeMd);
         assert_eq!(
             detect_file_type(Path::new("project/CLAUDE.md")),
+            FileType::ClaudeMd
+        );
+    }
+
+    #[test]
+    fn test_detect_instruction_variants() {
+        // CLAUDE.local.md variant
+        assert_eq!(
+            detect_file_type(Path::new("CLAUDE.local.md")),
+            FileType::ClaudeMd
+        );
+        assert_eq!(
+            detect_file_type(Path::new("project/CLAUDE.local.md")),
+            FileType::ClaudeMd
+        );
+
+        // AGENTS.local.md variant
+        assert_eq!(
+            detect_file_type(Path::new("AGENTS.local.md")),
+            FileType::ClaudeMd
+        );
+        assert_eq!(
+            detect_file_type(Path::new("subdir/AGENTS.local.md")),
+            FileType::ClaudeMd
+        );
+
+        // AGENTS.override.md variant
+        assert_eq!(
+            detect_file_type(Path::new("AGENTS.override.md")),
+            FileType::ClaudeMd
+        );
+        assert_eq!(
+            detect_file_type(Path::new("deep/nested/AGENTS.override.md")),
             FileType::ClaudeMd
         );
     }

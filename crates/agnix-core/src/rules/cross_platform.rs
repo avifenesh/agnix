@@ -22,7 +22,7 @@ impl Validator for CrossPlatformValidator {
         let mut diagnostics = Vec::new();
 
         let filename = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
-        let is_agents_md = filename == "AGENTS.md";
+        let is_agents_md = matches!(filename, "AGENTS.md" | "AGENTS.local.md" | "AGENTS.override.md");
 
         // XP-001: Claude-specific features in AGENTS.md (ERROR)
         // Only check AGENTS.md files - CLAUDE.md is allowed to have these features
@@ -153,6 +153,88 @@ Body"#;
             xp_001.is_empty(),
             "XP-001 should not fire for CLAUDE.md files"
         );
+    }
+
+    #[test]
+    fn test_xp_001_allowed_in_claude_local_md() {
+        // CLAUDE.local.md should NOT trigger XP-001 (it's a Claude-specific file)
+        let content = r#"---
+name: test
+context: fork
+agent: Explore
+---
+Body"#;
+        let validator = CrossPlatformValidator;
+        let diagnostics =
+            validator.validate(Path::new("CLAUDE.local.md"), content, &LintConfig::default());
+
+        let xp_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XP-001").collect();
+        assert!(
+            xp_001.is_empty(),
+            "XP-001 should not fire for CLAUDE.local.md files"
+        );
+    }
+
+    #[test]
+    fn test_xp_001_agents_local_md() {
+        // AGENTS.local.md SHOULD trigger XP-001 for Claude-specific features
+        let content = r#"---
+name: test
+context: fork
+agent: Explore
+---
+Body"#;
+        let validator = CrossPlatformValidator;
+        let diagnostics =
+            validator.validate(Path::new("AGENTS.local.md"), content, &LintConfig::default());
+
+        let xp_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XP-001").collect();
+        assert!(
+            !xp_001.is_empty(),
+            "XP-001 should fire for Claude-specific features in AGENTS.local.md"
+        );
+    }
+
+    #[test]
+    fn test_xp_001_agents_override_md() {
+        // AGENTS.override.md SHOULD trigger XP-001 for Claude-specific features
+        let content = r#"# Config
+- type: PreToolExecution
+  command: echo "test"
+"#;
+        let validator = CrossPlatformValidator;
+        let diagnostics =
+            validator.validate(Path::new("AGENTS.override.md"), content, &LintConfig::default());
+
+        let xp_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XP-001").collect();
+        assert!(
+            !xp_001.is_empty(),
+            "XP-001 should fire for hooks in AGENTS.override.md"
+        );
+    }
+
+    #[test]
+    fn test_xp_002_agents_local_md() {
+        // AGENTS.local.md should get XP-002 for structure issues
+        let content = "Just plain text without any markdown headers.";
+        let validator = CrossPlatformValidator;
+        let diagnostics =
+            validator.validate(Path::new("AGENTS.local.md"), content, &LintConfig::default());
+
+        let xp_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XP-002").collect();
+        assert_eq!(xp_002.len(), 1, "XP-002 should fire for AGENTS.local.md without headers");
+    }
+
+    #[test]
+    fn test_xp_002_agents_override_md() {
+        // AGENTS.override.md should get XP-002 for structure issues
+        let content = "Plain text only, no headers.";
+        let validator = CrossPlatformValidator;
+        let diagnostics =
+            validator.validate(Path::new("AGENTS.override.md"), content, &LintConfig::default());
+
+        let xp_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XP-002").collect();
+        assert_eq!(xp_002.len(), 1, "XP-002 should fire for AGENTS.override.md without headers");
     }
 
     #[test]
