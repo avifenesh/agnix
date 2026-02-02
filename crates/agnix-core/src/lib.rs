@@ -1426,53 +1426,39 @@ Run npm install and npm build.
         // Per SPEC.md, PE rules apply to CLAUDE.md and AGENTS.md only (not SKILL.md).
         let fixtures_dir = get_fixtures_dir().join("prompt");
         let config = LintConfig::default();
+        let registry = ValidatorRegistry::with_defaults();
         let temp = tempfile::TempDir::new().unwrap();
         let claude_path = temp.path().join("CLAUDE.md");
 
-        // Test PE-001: Critical content in middle
-        let pe_001_content =
-            std::fs::read_to_string(fixtures_dir.join("pe-001-critical-in-middle.md")).unwrap();
-        std::fs::write(&claude_path, &pe_001_content).unwrap();
-        let diagnostics = validate_file(&claude_path, &config).unwrap();
-        assert!(
-            diagnostics.iter().any(|d| d.rule == "PE-001"),
-            "Expected PE-001 from pe-001-critical-in-middle.md content"
-        );
+        // Test cases: (fixture_file, expected_rule)
+        let test_cases = [
+            ("pe-001-critical-in-middle.md", "PE-001"),
+            ("pe-002-cot-on-simple.md", "PE-002"),
+            ("pe-003-weak-language.md", "PE-003"),
+            ("pe-004-ambiguous.md", "PE-004"),
+        ];
 
-        // Test PE-002: Chain-of-thought on simple task
-        let pe_002_content =
-            std::fs::read_to_string(fixtures_dir.join("pe-002-cot-on-simple.md")).unwrap();
-        std::fs::write(&claude_path, &pe_002_content).unwrap();
-        let diagnostics = validate_file(&claude_path, &config).unwrap();
-        assert!(
-            diagnostics.iter().any(|d| d.rule == "PE-002"),
-            "Expected PE-002 from pe-002-cot-on-simple.md content"
-        );
-
-        // Test PE-003: Weak language in critical section
-        let pe_003_content =
-            std::fs::read_to_string(fixtures_dir.join("pe-003-weak-language.md")).unwrap();
-        std::fs::write(&claude_path, &pe_003_content).unwrap();
-        let diagnostics = validate_file(&claude_path, &config).unwrap();
-        assert!(
-            diagnostics.iter().any(|d| d.rule == "PE-003"),
-            "Expected PE-003 from pe-003-weak-language.md content"
-        );
-
-        // Test PE-004: Ambiguous instructions
-        let pe_004_content =
-            std::fs::read_to_string(fixtures_dir.join("pe-004-ambiguous.md")).unwrap();
-        std::fs::write(&claude_path, &pe_004_content).unwrap();
-        let diagnostics = validate_file(&claude_path, &config).unwrap();
-        assert!(
-            diagnostics.iter().any(|d| d.rule == "PE-004"),
-            "Expected PE-004 from pe-004-ambiguous.md content"
-        );
+        for (fixture, expected_rule) in test_cases {
+            let content = std::fs::read_to_string(fixtures_dir.join(fixture))
+                .expect(&format!("Failed to read fixture: {}", fixture));
+            std::fs::write(&claude_path, &content).unwrap();
+            let diagnostics =
+                validate_file_with_registry(&claude_path, &config, &registry).unwrap();
+            assert!(
+                diagnostics.iter().any(|d| d.rule == expected_rule),
+                "Expected {} from {} content",
+                expected_rule,
+                fixture
+            );
+        }
 
         // Also verify PE rules dispatch on AGENTS.md file type
         let agents_path = temp.path().join("AGENTS.md");
+        let pe_003_content =
+            std::fs::read_to_string(fixtures_dir.join("pe-003-weak-language.md")).unwrap();
         std::fs::write(&agents_path, &pe_003_content).unwrap();
-        let diagnostics = validate_file(&agents_path, &config).unwrap();
+        let diagnostics =
+            validate_file_with_registry(&agents_path, &config, &registry).unwrap();
         assert!(
             diagnostics.iter().any(|d| d.rule == "PE-003"),
             "Expected PE-003 from AGENTS.md with weak language content"
