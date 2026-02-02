@@ -97,7 +97,7 @@ Cline checks for `.clinerules` (file or directory) and also supports `AGENTS.md`
 
 - Claude Code memory: https://docs.anthropic.com/en/docs/claude-code/memory
 - Codex CLI AGENTS.md: https://developers.openai.com/codex/guides/agents-md/
-- OpenCode project docs: https://opencode.ai/docs/guides/project-docs/
+- OpenCode project docs: https://opencode.ai/docs/rules/
 - Cursor rules and AGENTS.md:
   - https://docs.cursor.com/en/context/rules
   - https://docs.cursor.com/en/context
