@@ -13,41 +13,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - AGENTS.local.md - Codex CLI/OpenCode local instructions
   - AGENTS.override.md - Codex CLI override file for workspace-specific rules
   - All variants are validated with the same rules as their base files
-
-### Security
-- Hardened file reading with symlink rejection and size limits:
-  - Added `FileSymlink` error to reject symlinks (prevents path traversal)
-  - Added `FileTooBig` error for files exceeding 1 MiB (prevents DoS)
-  - New `file_utils` module with `safe_read_file()` using `symlink_metadata()`
-  - Applied to validation, imports, fixes, and config loading
-  - Cross-platform tests for Unix and Windows symlink handling
-
-### Fixed
-- PE-001 through PE-004 rules now properly dispatch on CLAUDE.md and AGENTS.md files (PromptValidator was implemented but not registered in ValidatorRegistry)
-
-### Changed
-- Downgraded 5 rules from ERROR to WARNING severity based on RFC 2119 audit:
-  - PE-001 (Lost in the middle): Research-based recommendation, not spec violation
-  - PE-002 (Chain-of-thought on simple task): Best practice advice, not requirement
-  - CC-MEM-004 (Invalid command reference): Helpful validation, not breaking error
-  - AGM-003 (Character limit): Uses SHOULD in documentation (Windsurf-specific)
-  - AGM-005 (Platform-specific features): Uses SHOULD in documentation
-- Imports validator now routes diagnostics by file type:
-  - CLAUDE.md files emit CC-MEM-001/002/003 (Claude Code memory rules)
-  - Non-CLAUDE markdown files emit REF-001 (generic reference validation)
-  - Improved security with path traversal protection (rejects absolute paths)
-  - Fixed critical bug: file type now determined per-file during recursion
-- XML validator now emits specific rule IDs for each error type:
-  - XML-001: Unclosed XML tag
-  - XML-002: Mismatched closing tag
-  - XML-003: Unmatched closing tag
-- Individual XML rules can now be disabled via `disabled_rules` config
-- Test fixtures restructured for improved validator integration:
-  - Skills: Moved to subdirectory pattern (deep-reference/SKILL.md, missing-frontmatter/SKILL.md, windows-path/SKILL.md)
-  - MCP: Renamed with .mcp.json suffix for proper FileType detection
-  - Ensures validate_project() correctly identifies fixture types during integration tests
-
-### Added
 - GitHub Copilot instruction files validation with 4 rules (COP-001 to COP-004)
   - COP-001: Empty/missing global copilot-instructions.md
   - COP-002: Invalid YAML frontmatter in scoped instruction files
@@ -58,18 +23,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Config-based copilot category toggle (rules.copilot)
 - ValidatorRegistry API for custom validator registration in agnix-core
 - AGENTS.md validation rules (AGM-001 to AGM-006)
-- AGENTS.md validator now runs via the default registry, with project-level AGM-006 detection
-- Fixture-family test coverage for AGM/XP/REF/XML/MCP across core and CLI
-- Fixture conventions documented in tests/fixtures/README.md
-- Explicit HTML anchors in VALIDATION-RULES.md for SARIF help_uri links (#88)
-  - Added 80 anchors (one per rule) to fix GitHub anchor mismatch
-  - Added tests to validate help_uri format and anchor correctness
   - AGM-001: Valid markdown structure
   - AGM-002: Missing section headers
   - AGM-003: Character limit (12000 for Windsurf)
   - AGM-004: Missing project context
   - AGM-005: Unguarded platform features
   - AGM-006: Nested AGENTS.md hierarchy
+- AGENTS.md validator now runs via the default registry, with project-level AGM-006 detection
+- Explicit HTML anchors in VALIDATION-RULES.md for SARIF help_uri links (#88)
+  - Added 80 anchors (one per rule) to fix GitHub anchor mismatch
+  - Added tests to validate help_uri format and anchor correctness
 - Prompt Engineering validation with 4 rules (PE-001 to PE-004)
   - PE-001: Detects critical content in middle of document (lost in the middle effect)
   - PE-002: Warns when chain-of-thought markers used on simple tasks
@@ -179,7 +142,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - 4 test fixtures in tests/fixtures/refs/ directory
   - 31 comprehensive unit tests for reference validation
 
+### Fixed
+- PE-001 through PE-004 rules now properly dispatch on CLAUDE.md and AGENTS.md files (PromptValidator was implemented but not registered in ValidatorRegistry)
+
 ### Changed
+- Downgraded 5 rules from ERROR to WARNING severity based on RFC 2119 audit:
+  - PE-001 (Lost in the middle): Research-based recommendation, not spec violation
+  - PE-002 (Chain-of-thought on simple task): Best practice advice, not requirement
+  - CC-MEM-004 (Invalid command reference): Helpful validation, not breaking error
+  - AGM-003 (Character limit): Uses SHOULD in documentation (Windsurf-specific)
+  - AGM-005 (Platform-specific features): Uses SHOULD in documentation
+- Imports validator now routes diagnostics by file type:
+  - CLAUDE.md files emit CC-MEM-001/002/003 (Claude Code memory rules)
+  - Non-CLAUDE markdown files emit REF-001 (generic reference validation)
+  - Improved security with path traversal protection (rejects absolute paths)
+  - Fixed critical bug: file type now determined per-file during recursion
+- XML validator now emits specific rule IDs for each error type:
+  - XML-001: Unclosed XML tag
+  - XML-002: Mismatched closing tag
+  - XML-003: Unmatched closing tag
+- Individual XML rules can now be disabled via `disabled_rules` config
+- Test fixtures restructured for improved validator integration:
+  - Skills: Moved to subdirectory pattern (deep-reference/SKILL.md, missing-frontmatter/SKILL.md, windows-path/SKILL.md)
+  - MCP: Renamed with .mcp.json suffix for proper FileType detection
+  - Ensures validate_project() correctly identifies fixture types during integration tests
 - `validate_project()` now processes files in parallel while maintaining deterministic output
 - Directory walking remains sequential, only validation is parallelized
 - All validators now respect config-based category toggles and disabled rules

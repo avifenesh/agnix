@@ -26,7 +26,7 @@ impl Validator for AgentsMdValidator {
     fn validate(&self, path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic> {
         let mut diagnostics = Vec::new();
 
-        // Only validate AGENTS.md files (not CLAUDE.md)
+        // Only validate AGENTS.md variants (not CLAUDE.md files)
         let filename = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
         if !matches!(
             filename,
@@ -82,8 +82,8 @@ impl Validator for AgentsMdValidator {
                         0,
                         "AGM-003",
                         format!(
-                            "AGENTS.md exceeds character limit ({} chars, max {} for Windsurf compatibility)",
-                            exceeded.char_count, exceeded.limit
+                            "{} exceeds character limit ({} chars, max {} for Windsurf compatibility)",
+                            filename, exceeded.char_count, exceeded.limit
                         ),
                     )
                     .with_suggestion(

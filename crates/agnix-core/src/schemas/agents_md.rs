@@ -174,7 +174,7 @@ pub fn check_section_headers(content: &str) -> Option<SectionHeaderIssue> {
         Some(SectionHeaderIssue {
             line: 1,
             column: 0,
-            description: "No markdown headers found in AGENTS.md".to_string(),
+            description: "No markdown headers found in AGENTS instruction file".to_string(),
             suggestion: "Add section headers (# Title, ## Section) for better organization"
                 .to_string(),
         })
@@ -256,7 +256,7 @@ pub fn check_project_context(content: &str) -> Option<MissingProjectContext> {
         Some(MissingProjectContext {
             line: 1,
             column: 0,
-            description: "Missing project context section in AGENTS.md".to_string(),
+            description: "Missing project context section in AGENTS instruction file".to_string(),
             suggestion:
                 "Add a '# Project' or '## Overview' section describing the project purpose and tech stack"
                     .to_string(),

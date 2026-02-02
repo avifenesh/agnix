@@ -39,8 +39,8 @@ impl Validator for CrossPlatformValidator {
                         feature.column,
                         "XP-001",
                         format!(
-                            "Claude-specific feature '{}' in AGENTS.md: {}",
-                            feature.feature, feature.description
+                            "Claude-specific feature '{}' in {}: {}",
+                            feature.feature, filename, feature.description
                         ),
                     )
                     .with_suggestion(
@@ -62,7 +62,7 @@ impl Validator for CrossPlatformValidator {
                         issue.line,
                         issue.column,
                         "XP-002",
-                        format!("AGENTS.md structure issue: {}", issue.issue),
+                        format!("{} structure issue: {}", filename, issue.issue),
                     )
                     .with_suggestion(issue.suggestion),
                 );
