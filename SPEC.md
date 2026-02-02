@@ -1,6 +1,6 @@
 # agnix Technical Reference
 
-> Linter for agent configs. 86 rules across 12 categories.
+> Linter for agent configs. 84 rules across 12 categories.
 
 ## What agnix Validates
 
@@ -17,6 +17,7 @@
 | MCP | tool definitions | 6 |
 | XML | all .md files | 3 |
 | References | @imports | 2 |
+| GitHub Copilot | .github/copilot-instructions.md, .github/instructions/*.instructions.md | 4 |
 
 ## Architecture
 
@@ -28,7 +29,7 @@ agnix/
 │   │   ├── schemas/    # Type definitions
 │   │   └── rules/      # Validators
 │   └── agnix-cli/      # CLI binary
-├── knowledge-base/     # 86 rules documented
+├── knowledge-base/     # 84 rules documented
 └── tests/fixtures/     # Test cases
 ```
 
@@ -54,6 +55,7 @@ All rules in `knowledge-base/VALIDATION-RULES.md`
 - `CC-MEM-nnn`: Claude Code Memory
 - `AGM-nnn`: AGENTS.md (cross-tool instructions)
 - `CC-AG-nnn`: Claude Code Agents
+- `COP-nnn`: GitHub Copilot Instructions
 - `CC-PL-nnn`: Claude Code Plugins
 - `MCP-nnn`: MCP protocol
 - `XML-nnn`: XML validation
@@ -154,6 +156,7 @@ When `target` is set to a specific tool, only relevant rules run:
 | Skills | `skills` | AS-*, CC-SK-* | Agent skill validation |
 | Hooks | `hooks` | CC-HK-* | Hook configuration validation |
 | Agents | `agents` | CC-AG-* | Subagent validation |
+| GitHub Copilot | `copilot` | COP-* | Copilot instruction validation |
 | Memory | `memory` | CC-MEM-* | Memory/CLAUDE.md validation |
 | Plugins | `plugins` | CC-PL-* | Plugin validation |
 | MCP | `mcp` | MCP-* | MCP tool validation |
