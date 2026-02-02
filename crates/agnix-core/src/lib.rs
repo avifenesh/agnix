@@ -276,8 +276,13 @@ pub fn validate_project_with_registry(
         .collect();
 
     // Collect all file paths to validate (sequential walk, parallel validation)
+    // Note: hidden(false) includes .github directory for Copilot instruction files
+    // Disable git ignore processing to allow .github directory walking
     let paths: Vec<PathBuf> = WalkBuilder::new(path)
-        .standard_filters(true)
+        .hidden(false)
+        .git_ignore(false)
+        .git_global(false)
+        .git_exclude(false)
         .build()
         .filter_map(|entry| entry.ok())
         .filter(|entry| entry.path().is_file())
@@ -1369,6 +1374,52 @@ Use idiomatic Rust patterns.
         assert!(
             cop_errors.is_empty(),
             "Valid scoped file should have no COP errors"
+        );
+    }
+
+    #[test]
+    fn test_validate_project_finds_github_hidden_dir() {
+        // Test validate_project walks .github directory (not just validate_file)
+        let temp = tempfile::TempDir::new().unwrap();
+        let github_dir = temp.path().join(".github");
+        std::fs::create_dir_all(&github_dir).unwrap();
+
+        // Create an empty copilot-instructions.md file (should trigger COP-001)
+        let file_path = github_dir.join("copilot-instructions.md");
+        std::fs::write(&file_path, "").unwrap();
+
+        let config = LintConfig::default();
+        // Use validate_project (directory walk) instead of validate_file
+        let diagnostics = validate_project(temp.path(), &config).unwrap();
+
+        assert!(
+            diagnostics.iter().any(|d| d.rule == "COP-001"),
+            "validate_project should find .github/copilot-instructions.md and report COP-001. Found: {:?}",
+            diagnostics.iter().map(|d| &d.rule).collect::<Vec<_>>()
+        );
+    }
+
+    #[test]
+    fn test_validate_project_finds_copilot_invalid_fixtures() {
+        // Test validate_project on the actual fixture directory
+        let fixtures_dir = get_fixtures_dir();
+        let copilot_invalid_dir = fixtures_dir.join("copilot-invalid");
+
+        let config = LintConfig::default();
+        let diagnostics = validate_project(&copilot_invalid_dir, &config).unwrap();
+
+        // Should find COP-001 from empty copilot-instructions.md
+        assert!(
+            diagnostics.iter().any(|d| d.rule == "COP-001"),
+            "validate_project should find COP-001 in copilot-invalid fixtures. Found rules: {:?}",
+            diagnostics.iter().map(|d| &d.rule).collect::<Vec<_>>()
+        );
+
+        // Should find COP-002 from bad-frontmatter.instructions.md
+        assert!(
+            diagnostics.iter().any(|d| d.rule == "COP-002"),
+            "validate_project should find COP-002 in copilot-invalid fixtures. Found rules: {:?}",
+            diagnostics.iter().map(|d| &d.rule).collect::<Vec<_>>()
         );
     }
 }
