@@ -42,6 +42,10 @@ pub enum FileType {
     Plugin,
     /// MCP configuration files (*.mcp.json, mcp.json, mcp-*.json)
     Mcp,
+    /// GitHub Copilot global instructions (.github/copilot-instructions.md)
+    Copilot,
+    /// GitHub Copilot scoped instructions (.github/instructions/*.instructions.md)
+    CopilotScoped,
     /// Other .md files (for XML/import checks)
     GenericMarkdown,
     /// Skip validation
@@ -108,6 +112,10 @@ impl ValidatorRegistry {
             (FileType::Hooks, hooks_validator),
             (FileType::Plugin, plugin_validator),
             (FileType::Mcp, mcp_validator),
+            (FileType::Copilot, copilot_validator),
+            (FileType::Copilot, xml_validator),
+            (FileType::CopilotScoped, copilot_validator),
+            (FileType::CopilotScoped, xml_validator),
             (FileType::GenericMarkdown, cross_platform_validator),
             (FileType::GenericMarkdown, xml_validator),
             (FileType::GenericMarkdown, imports_validator),
@@ -161,6 +169,10 @@ fn cross_platform_validator() -> Box<dyn Validator> {
     Box::new(rules::cross_platform::CrossPlatformValidator)
 }
 
+fn copilot_validator() -> Box<dyn Validator> {
+    Box::new(rules::copilot::CopilotValidator)
+}
+
 /// Detect file type based on path patterns
 pub fn detect_file_type(path: &Path) -> FileType {
     let filename = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
@@ -184,6 +196,15 @@ pub fn detect_file_type(path: &Path) -> FileType {
         "mcp.json" => FileType::Mcp,
         name if name.ends_with(".mcp.json") => FileType::Mcp,
         name if name.starts_with("mcp-") && name.ends_with(".json") => FileType::Mcp,
+        // GitHub Copilot global instructions (.github/copilot-instructions.md)
+        "copilot-instructions.md" if parent == Some(".github") => FileType::Copilot,
+        // GitHub Copilot scoped instructions (.github/instructions/*.instructions.md)
+        name if name.ends_with(".instructions.md")
+            && parent == Some("instructions")
+            && grandparent == Some(".github") =>
+        {
+            FileType::CopilotScoped
+        }
         name if name.ends_with(".md") => {
             if parent == Some("agents") || grandparent == Some("agents") {
                 FileType::Agent
@@ -1134,6 +1155,220 @@ allowed-tools: Read Write
             detect_file_type(&fixtures_dir.join("mcp/empty-description.mcp.json")),
             FileType::Mcp,
             "empty-description.mcp.json should be detected as Mcp"
+        );
+
+        // Copilot fixtures should be detected as FileType::Copilot or CopilotScoped
+        assert_eq!(
+            detect_file_type(&fixtures_dir.join("copilot/.github/copilot-instructions.md")),
+            FileType::Copilot,
+            "copilot-instructions.md should be detected as Copilot"
+        );
+        assert_eq!(
+            detect_file_type(
+                &fixtures_dir.join("copilot/.github/instructions/typescript.instructions.md")
+            ),
+            FileType::CopilotScoped,
+            "typescript.instructions.md should be detected as CopilotScoped"
+        );
+    }
+
+    // ===== GitHub Copilot Validation Integration Tests =====
+
+    #[test]
+    fn test_detect_copilot_global() {
+        assert_eq!(
+            detect_file_type(Path::new(".github/copilot-instructions.md")),
+            FileType::Copilot
+        );
+        assert_eq!(
+            detect_file_type(Path::new("project/.github/copilot-instructions.md")),
+            FileType::Copilot
+        );
+    }
+
+    #[test]
+    fn test_detect_copilot_scoped() {
+        assert_eq!(
+            detect_file_type(Path::new(".github/instructions/typescript.instructions.md")),
+            FileType::CopilotScoped
+        );
+        assert_eq!(
+            detect_file_type(Path::new(
+                "project/.github/instructions/rust.instructions.md"
+            )),
+            FileType::CopilotScoped
+        );
+    }
+
+    #[test]
+    fn test_copilot_not_detected_outside_github() {
+        // Files outside .github/ should not be detected as Copilot
+        assert_ne!(
+            detect_file_type(Path::new("copilot-instructions.md")),
+            FileType::Copilot
+        );
+        assert_ne!(
+            detect_file_type(Path::new("instructions/typescript.instructions.md")),
+            FileType::CopilotScoped
+        );
+    }
+
+    #[test]
+    fn test_validators_for_copilot() {
+        let registry = ValidatorRegistry::with_defaults();
+
+        let copilot_validators = registry.validators_for(FileType::Copilot);
+        assert_eq!(copilot_validators.len(), 2); // copilot + xml
+
+        let scoped_validators = registry.validators_for(FileType::CopilotScoped);
+        assert_eq!(scoped_validators.len(), 2); // copilot + xml
+    }
+
+    #[test]
+    fn test_validate_copilot_fixtures() {
+        // Use validate_file directly since .github is a hidden directory
+        // that ignore::WalkBuilder skips by default
+        let fixtures_dir = get_fixtures_dir();
+        let copilot_dir = fixtures_dir.join("copilot");
+
+        let config = LintConfig::default();
+
+        // Validate global instructions
+        let global_path = copilot_dir.join(".github/copilot-instructions.md");
+        let diagnostics = validate_file(&global_path, &config).unwrap();
+        let cop_errors: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule.starts_with("COP-") && d.level == DiagnosticLevel::Error)
+            .collect();
+        assert!(
+            cop_errors.is_empty(),
+            "Valid global file should have no COP errors, got: {:?}",
+            cop_errors
+        );
+
+        // Validate scoped instructions
+        let scoped_path =
+            copilot_dir.join(".github/instructions/typescript.instructions.md");
+        let diagnostics = validate_file(&scoped_path, &config).unwrap();
+        let cop_errors: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule.starts_with("COP-") && d.level == DiagnosticLevel::Error)
+            .collect();
+        assert!(
+            cop_errors.is_empty(),
+            "Valid scoped file should have no COP errors, got: {:?}",
+            cop_errors
+        );
+    }
+
+    #[test]
+    fn test_validate_copilot_invalid_fixtures() {
+        // Use validate_file directly since .github is a hidden directory
+        let fixtures_dir = get_fixtures_dir();
+        let copilot_invalid_dir = fixtures_dir.join("copilot-invalid");
+        let config = LintConfig::default();
+
+        // COP-001: Empty global file
+        let empty_global = copilot_invalid_dir.join(".github/copilot-instructions.md");
+        let diagnostics = validate_file(&empty_global, &config).unwrap();
+        assert!(
+            diagnostics.iter().any(|d| d.rule == "COP-001"),
+            "Expected COP-001 from empty copilot-instructions.md fixture"
+        );
+
+        // COP-002: Invalid YAML in bad-frontmatter
+        let bad_frontmatter = copilot_invalid_dir
+            .join(".github/instructions/bad-frontmatter.instructions.md");
+        let diagnostics = validate_file(&bad_frontmatter, &config).unwrap();
+        assert!(
+            diagnostics.iter().any(|d| d.rule == "COP-002"),
+            "Expected COP-002 from bad-frontmatter.instructions.md fixture"
+        );
+
+        // COP-003: Invalid glob in bad-glob
+        let bad_glob =
+            copilot_invalid_dir.join(".github/instructions/bad-glob.instructions.md");
+        let diagnostics = validate_file(&bad_glob, &config).unwrap();
+        assert!(
+            diagnostics.iter().any(|d| d.rule == "COP-003"),
+            "Expected COP-003 from bad-glob.instructions.md fixture"
+        );
+
+        // COP-004: Unknown keys in unknown-keys
+        let unknown_keys = copilot_invalid_dir
+            .join(".github/instructions/unknown-keys.instructions.md");
+        let diagnostics = validate_file(&unknown_keys, &config).unwrap();
+        assert!(
+            diagnostics.iter().any(|d| d.rule == "COP-004"),
+            "Expected COP-004 from unknown-keys.instructions.md fixture"
+        );
+    }
+
+    #[test]
+    fn test_validate_copilot_file_empty() {
+        // Test validate_file directly (not validate_project which skips hidden dirs)
+        let temp = tempfile::TempDir::new().unwrap();
+        let github_dir = temp.path().join(".github");
+        std::fs::create_dir_all(&github_dir).unwrap();
+        let file_path = github_dir.join("copilot-instructions.md");
+        std::fs::write(&file_path, "").unwrap();
+
+        let config = LintConfig::default();
+        let diagnostics = validate_file(&file_path, &config).unwrap();
+
+        let cop_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "COP-001").collect();
+        assert_eq!(cop_001.len(), 1, "Expected COP-001 for empty file");
+    }
+
+    #[test]
+    fn test_validate_copilot_scoped_missing_frontmatter() {
+        // Test validate_file directly
+        let temp = tempfile::TempDir::new().unwrap();
+        let instructions_dir = temp.path().join(".github").join("instructions");
+        std::fs::create_dir_all(&instructions_dir).unwrap();
+        let file_path = instructions_dir.join("test.instructions.md");
+        std::fs::write(&file_path, "# Instructions without frontmatter").unwrap();
+
+        let config = LintConfig::default();
+        let diagnostics = validate_file(&file_path, &config).unwrap();
+
+        let cop_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "COP-002").collect();
+        assert_eq!(
+            cop_002.len(),
+            1,
+            "Expected COP-002 for missing frontmatter"
+        );
+    }
+
+    #[test]
+    fn test_validate_copilot_valid_scoped() {
+        // Test validate_file directly
+        let temp = tempfile::TempDir::new().unwrap();
+        let instructions_dir = temp.path().join(".github").join("instructions");
+        std::fs::create_dir_all(&instructions_dir).unwrap();
+        let file_path = instructions_dir.join("rust.instructions.md");
+        std::fs::write(
+            &file_path,
+            r#"---
+applyTo: "**/*.rs"
+---
+# Rust Instructions
+
+Use idiomatic Rust patterns.
+"#,
+        )
+        .unwrap();
+
+        let config = LintConfig::default();
+        let diagnostics = validate_file(&file_path, &config).unwrap();
+
+        let cop_errors: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule.starts_with("COP-") && d.level == DiagnosticLevel::Error)
+            .collect();
+        assert!(
+            cop_errors.is_empty(),
+            "Valid scoped file should have no COP errors"
         );
     }
 }
