@@ -1,6 +1,7 @@
 //! Fix application engine for automatic corrections
 
 use crate::diagnostics::{Diagnostic, Fix, LintError, LintResult};
+use crate::file_utils::safe_read_file;
 use std::collections::HashMap;
 use std::path::PathBuf;
 
@@ -49,10 +50,7 @@ pub fn apply_fixes(
     let mut results = Vec::new();
 
     for (path, file_diagnostics) in by_file {
-        let original = std::fs::read_to_string(&path).map_err(|e| LintError::FileRead {
-            path: path.clone(),
-            source: e,
-        })?;
+        let original = safe_read_file(&path)?;
 
         let mut fixes: Vec<&Fix> = file_diagnostics
             .iter()

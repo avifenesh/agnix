@@ -10,6 +10,7 @@
 use crate::{
     config::LintConfig,
     diagnostics::Diagnostic,
+    file_utils::safe_read_file,
     parsers::markdown::{extract_imports, extract_markdown_links, Import},
     rules::Validator,
 };
@@ -236,7 +237,7 @@ fn get_imports_for_file(
     if !cache.contains_key(file_path) {
         let content = match content_override {
             Some(content) => content.to_string(),
-            None => std::fs::read_to_string(file_path).ok()?,
+            None => safe_read_file(file_path).ok()?,
         };
         let imports = extract_imports(&content);
         cache.insert(file_path.to_path_buf(), imports);

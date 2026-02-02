@@ -3,36 +3,14 @@
 use crate::{
     config::LintConfig,
     diagnostics::Diagnostic,
+    file_utils::safe_read_file,
     rules::Validator,
     schemas::claude_md::{
         check_readme_duplication, check_token_count, extract_npm_scripts, find_critical_in_middle,
         find_generic_instructions, find_negative_without_positive, find_weak_constraints,
     },
 };
-use std::fs;
 use std::path::Path;
-
-/// Maximum file size to read for validation (1MB)
-const MAX_FILE_SIZE: u64 = 1_048_576;
-
-/// Safely read a file with size limits to prevent DoS attacks.
-/// Returns None if file doesn't exist, is too large, or can't be read.
-fn safe_read_file(path: &Path) -> Option<String> {
-    // Check file metadata first to avoid reading huge files
-    let metadata = fs::metadata(path).ok()?;
-
-    // Reject files larger than MAX_FILE_SIZE
-    if metadata.len() > MAX_FILE_SIZE {
-        return None;
-    }
-
-    // Reject non-regular files (symlinks, devices, etc.)
-    if !metadata.is_file() {
-        return None;
-    }
-
-    fs::read_to_string(path).ok()
-}
 
 pub struct ClaudeMdValidator;
 
@@ -162,7 +140,7 @@ impl Validator for ClaudeMdValidator {
                 if let Some(parent) = path.parent() {
                     let package_json_path = parent.join("package.json");
                     // Use safe_read_file to prevent DoS and limit file size
-                    if let Some(pkg_content) = safe_read_file(&package_json_path) {
+                    if let Ok(pkg_content) = safe_read_file(&package_json_path) {
                         // Parse package.json and extract script names
                         if let Ok(pkg_json) =
                             serde_json::from_str::<serde_json::Value>(&pkg_content)
@@ -210,7 +188,7 @@ impl Validator for ClaudeMdValidator {
             if let Some(parent) = path.parent() {
                 let readme_path = parent.join("README.md");
                 // Use safe_read_file to prevent DoS and limit file size
-                if let Some(readme_content) = safe_read_file(&readme_path) {
+                if let Ok(readme_content) = safe_read_file(&readme_path) {
                     if let Some(dup) = check_readme_duplication(content, &readme_content) {
                         diagnostics.push(
                             Diagnostic::warning(
@@ -241,6 +219,7 @@ impl Validator for ClaudeMdValidator {
 mod tests {
     use super::*;
     use crate::config::LintConfig;
+    use std::fs;
 
     #[test]
     fn test_generic_instruction_detected() {

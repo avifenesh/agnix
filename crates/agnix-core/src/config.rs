@@ -1,7 +1,8 @@
 //! Linter configuration
 
+use crate::file_utils::safe_read_file;
 use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 /// Configuration for the linter
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -165,8 +166,8 @@ pub enum TargetTool {
 
 impl LintConfig {
     /// Load config from file
-    pub fn load(path: &PathBuf) -> anyhow::Result<Self> {
-        let content = std::fs::read_to_string(path)?;
+    pub fn load(path: &Path) -> anyhow::Result<Self> {
+        let content = safe_read_file(path)?;
         let config = toml::from_str(&content)?;
         Ok(config)
     }

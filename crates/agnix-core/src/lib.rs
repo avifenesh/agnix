@@ -12,6 +12,7 @@
 
 pub mod config;
 pub mod diagnostics;
+pub mod file_utils;
 pub mod fixes;
 pub mod parsers;
 pub mod rules;
@@ -243,10 +244,7 @@ pub fn validate_file_with_registry(
         return Ok(vec![]);
     }
 
-    let content = std::fs::read_to_string(path).map_err(|e| LintError::FileRead {
-        path: path.to_path_buf(),
-        source: e,
-    })?;
+    let content = file_utils::safe_read_file(path)?;
 
     let validators = registry.validators_for(file_type);
     let mut diagnostics = Vec::new();
