@@ -1733,8 +1733,7 @@ Use idiomatic Rust patterns.
         let pe_003_content =
             std::fs::read_to_string(fixtures_dir.join("pe-003-weak-language.md")).unwrap();
         std::fs::write(&agents_path, &pe_003_content).unwrap();
-        let diagnostics =
-            validate_file_with_registry(&agents_path, &config, &registry).unwrap();
+        let diagnostics = validate_file_with_registry(&agents_path, &config, &registry).unwrap();
         assert!(
             diagnostics.iter().any(|d| d.rule == "PE-003"),
             "Expected PE-003 from AGENTS.md with weak language content"
