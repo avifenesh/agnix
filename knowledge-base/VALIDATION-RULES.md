@@ -542,6 +542,38 @@
 
 ---
 
+## GITHUB COPILOT RULES
+
+<a id="cop-001"></a>
+### COP-001 [HIGH] Empty Instruction File
+**Requirement**: Copilot instruction files MUST have non-empty content
+**Detection**: `content.trim().is_empty()` after stripping frontmatter
+**Fix**: Add meaningful instructions
+**Source**: docs.github.com/en/copilot/customizing-copilot
+
+<a id="cop-002"></a>
+### COP-002 [HIGH] Invalid Frontmatter
+**Requirement**: Scoped instruction files (.github/instructions/*.instructions.md) MUST have valid YAML frontmatter with `applyTo` field
+**Detection**: Parse YAML between `---` markers, check for `applyTo` key
+**Fix**: Add valid frontmatter with `applyTo` glob pattern
+**Source**: docs.github.com/en/copilot/customizing-copilot
+
+<a id="cop-003"></a>
+### COP-003 [HIGH] Invalid Glob Pattern
+**Requirement**: `applyTo` field MUST contain valid glob patterns
+**Detection**: Attempt to parse as glob pattern
+**Fix**: Correct the glob syntax
+**Source**: docs.github.com/en/copilot/customizing-copilot
+
+<a id="cop-004"></a>
+### COP-004 [MEDIUM] Unknown Frontmatter Keys
+**Requirement**: Scoped instruction frontmatter SHOULD only contain known keys (applyTo)
+**Detection**: Check for keys other than `applyTo` in frontmatter
+**Fix**: Remove unknown keys
+**Source**: docs.github.com/en/copilot/customizing-copilot
+
+---
+
 ## UNIVERSAL RULES (XML)
 
 <a id="xml-001"></a>
@@ -742,12 +774,13 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | Claude Memory | 10 | 6 | 4 | 0 | 2 |
 | AGENTS.md | 6 | 3 | 3 | 0 | 2 |
 | Claude Plugins | 5 | 5 | 0 | 0 | 1 |
+| GitHub Copilot | 4 | 3 | 1 | 0 | 1 |
 | MCP | 6 | 6 | 0 | 0 | 1 |
 | XML | 3 | 3 | 0 | 0 | 1 |
 | References | 2 | 2 | 0 | 0 | 0 |
 | Prompt Eng | 4 | 2 | 2 | 0 | 1 |
 | Cross-Platform | 3 | 2 | 1 | 0 | 0 |
-| **TOTAL** | **80** | **64** | **16** | **0** | **20** |
+| **TOTAL** | **84** | **67** | **17** | **0** | **21** |
 
 ---
 
@@ -776,7 +809,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 
 ---
 
-**Total Coverage**: 80 validation rules across 12 categories
+**Total Coverage**: 84 validation rules across 13 categories
 **Knowledge Base**: 11,036 lines, 320KB, 75+ sources
-**Certainty**: 64 HIGH, 16 MEDIUM, 0 LOW
-**Auto-Fixable**: 20 rules (25%)
+**Certainty**: 67 HIGH, 17 MEDIUM, 0 LOW
+**Auto-Fixable**: 21 rules (25%)
