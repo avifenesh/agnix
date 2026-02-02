@@ -277,12 +277,9 @@ pub fn validate_project_with_registry(
 
     // Collect all file paths to validate (sequential walk, parallel validation)
     // Note: hidden(false) includes .github directory for Copilot instruction files
-    // Disable git ignore processing to allow .github directory walking
     let paths: Vec<PathBuf> = WalkBuilder::new(path)
         .hidden(false)
-        .git_ignore(false)
-        .git_global(false)
-        .git_exclude(false)
+        .git_ignore(true)
         .build()
         .filter_map(|entry| entry.ok())
         .filter(|entry| entry.path().is_file())

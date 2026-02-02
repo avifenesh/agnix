@@ -115,20 +115,22 @@ fn find_unknown_keys(yaml: &str, start_line: usize) -> Vec<UnknownKey> {
     let mut unknown = Vec::new();
 
     for (i, line) in yaml.lines().enumerate() {
-        // Simple YAML key detection: line starts with word followed by colon
-        let trimmed = line.trim_start();
-        if let Some(colon_idx) = trimmed.find(':') {
-            let key = &trimmed[..colon_idx];
-            // Skip if empty or starts with special characters
-            if !key.is_empty()
-                && key.chars().next().is_some_and(|c| c.is_alphabetic())
-                && !known.contains(key)
-            {
-                let column = line.len() - trimmed.len();
+        // Heuristic: top-level keys in YAML frontmatter are not indented.
+        // This helps avoid parsing content from multi-line strings.
+        if line.starts_with(' ') || line.starts_with('\t') {
+            continue;
+        }
+
+        if let Some(colon_idx) = line.find(':') {
+            let key_raw = &line[..colon_idx];
+            // Trim whitespace and quotes to get the actual key.
+            let key = key_raw.trim().trim_matches(|c| c == '\'' || c == '\"');
+
+            if !key.is_empty() && !known.contains(key) {
                 unknown.push(UnknownKey {
                     key: key.to_string(),
                     line: start_line + i,
-                    column,
+                    column: key_raw.len() - key_raw.trim_start().len(),
                 });
             }
         }
