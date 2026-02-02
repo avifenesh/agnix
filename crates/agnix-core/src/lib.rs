@@ -1716,7 +1716,7 @@ Use idiomatic Rust patterns.
 
         for (fixture, expected_rule) in test_cases {
             let content = std::fs::read_to_string(fixtures_dir.join(fixture))
-                .expect(&format!("Failed to read fixture: {}", fixture));
+                .unwrap_or_else(|_| panic!("Failed to read fixture: {}", fixture));
             std::fs::write(&claude_path, &content).unwrap();
             let diagnostics =
                 validate_file_with_registry(&claude_path, &config, &registry).unwrap();

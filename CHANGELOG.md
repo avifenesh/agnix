@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
-- PE-001 through PE-004 rules now properly dispatch on SKILL.md and CLAUDE.md files (PromptValidator was implemented but not registered in ValidatorRegistry)
+- PE-001 through PE-004 rules now properly dispatch on CLAUDE.md and AGENTS.md files (PromptValidator was implemented but not registered in ValidatorRegistry)
 
 ### Changed
 - Imports validator now routes diagnostics by file type:
