@@ -17,16 +17,16 @@ OpenCode has significant features Claude Code doesn't have:
 
 ## Quick Facts
 
-| Aspect | OpenCode | Claude Code |
-|--------|----------|-------------|
-| Config file | `opencode.json` (JSONC supported) | `settings.json` |
-| State directory | `.opencode/` | `.claude/` |
-| Commands location | `~/.config/opencode/commands/` | Plugin commands |
-| Skills location | `.opencode/skills/` | `.claude/skills/` |
-| Agent definitions | `.opencode/agents/*.md` | Plugin agents |
-| Model selection | Any provider (75+) | Anthropic only |
-| User questions | Numbered list | Checkboxes |
-| Project instructions | `AGENTS.md` (reads `CLAUDE.md` too) | `CLAUDE.md` |
+| Aspect | Claude Code | OpenCode |
+|--------|-------------|----------|
+| Config file | `settings.json` | `opencode.json` (JSONC supported) |
+| State directory | `.claude/` | `.opencode/` |
+| Commands location | Plugin commands | `~/.config/opencode/commands/` |
+| Skills location | `.claude/skills/` | `.opencode/skills/` |
+| Agent definitions | Plugin agents | `.opencode/agents/*.md` |
+| Model selection | Anthropic only | Any provider (75+) |
+| User questions | Checkboxes | Numbered list |
+| Project instructions | `CLAUDE.md` | `AGENTS.md` (reads `CLAUDE.md` too) |
 
 ---
 
@@ -308,7 +308,8 @@ All 8 tools work identically in OpenCode:
 OpenCode scans (in order):
 1. `.opencode/skills/<name>/SKILL.md`
 2. `.claude/skills/<name>/SKILL.md` (Claude Code compatibility)
-3. `~/.config/opencode/skills/`
+3. `~/.claude/skills/` (Global Claude compatibility)
+4. `~/.config/opencode/skills/`
 
 ### Skill Format
 
