@@ -79,7 +79,27 @@ pub fn parse_frontmatter(content: &str) -> Option<ParsedFrontmatter> {
         }
     }
 
-    let end_idx = end_idx?;
+    // If we have an opening --- but no closing ---,
+    // treat this as invalid frontmatter rather than missing frontmatter.
+    if end_idx.is_none() {
+        let frontmatter_lines: Vec<&str> = lines[1..].to_vec();
+        let raw = frontmatter_lines.join(
+            "
+",
+        );
+
+        return Some(ParsedFrontmatter {
+            schema: None,
+            raw,
+            start_line: 1,
+            end_line: lines.len(),
+            body: String::new(),
+            unknown_keys: Vec::new(),
+            parse_error: Some("missing closing ---".to_string()),
+        });
+    }
+
+    let end_idx = end_idx.unwrap();
 
     // Extract frontmatter content (between --- markers)
     let frontmatter_lines: Vec<&str> = lines[1..end_idx].to_vec();
@@ -216,8 +236,10 @@ Use strict mode.
 applyTo: "**/*.ts"
 # Missing closing ---
 "#;
-        let result = parse_frontmatter(content);
-        assert!(result.is_none());
+        let result = parse_frontmatter(content).unwrap();
+        // Unclosed frontmatter should be treated as invalid, not missing
+        assert!(result.parse_error.is_some());
+        assert_eq!(result.parse_error.as_ref().unwrap(), "missing closing ---");
     }
 
     #[test]
