@@ -38,7 +38,7 @@ fn fixtures_config() -> tempfile::NamedTempFile {
 
     let mut file = tempfile::NamedTempFile::new().unwrap();
     file.write_all(
-        br#"severity = "Warning"
+        br#"severity = "Error"
 target = "Generic"
 exclude = [
   "node_modules/**",
@@ -487,8 +487,10 @@ fn test_cli_covers_hook_fixtures_via_cli_validation() {
     let diagnostics = json["diagnostics"].as_array().unwrap();
     let has_cchk006 = diagnostics.iter().any(|d| {
         d["rule"].as_str() == Some("CC-HK-006")
-            && d["file"].as_str()
-                == Some("tests/fixtures/invalid/hooks/missing-command-field/settings.json")
+            && d["file"]
+                .as_str()
+                .map(|file| file.ends_with("missing-command-field/settings.json"))
+                .unwrap_or(false)
     });
     assert!(
         has_cchk006,
