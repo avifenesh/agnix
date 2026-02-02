@@ -521,9 +521,8 @@ fn test_fixtures_have_no_empty_placeholder_dirs() {
         });
 
         for entry in entries {
-            let entry = entry.unwrap_or_else(|e| {
-                panic!("Failed to read entry under {}: {}", dir.display(), e)
-            });
+            let entry = entry
+                .unwrap_or_else(|e| panic!("Failed to read entry under {}: {}", dir.display(), e));
             let path = entry.path();
             if path.is_file() {
                 has_file = true;
@@ -542,7 +541,11 @@ fn test_fixtures_have_no_empty_placeholder_dirs() {
     }
 
     let root = workspace_path("tests/fixtures");
-    assert!(root.is_dir(), "Expected fixtures directory at {}", root.display());
+    assert!(
+        root.is_dir(),
+        "Expected fixtures directory at {}",
+        root.display()
+    );
 
     let mut empty_dirs = Vec::new();
     check_dir(&root, &mut empty_dirs);
