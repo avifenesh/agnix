@@ -27,6 +27,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Ensures validate_project() correctly identifies fixture types during integration tests
 
 ### Added
+- GitHub Copilot instruction files validation with 4 rules (COP-001 to COP-004)
+  - COP-001: Empty/missing global copilot-instructions.md
+  - COP-002: Invalid YAML frontmatter in scoped instruction files
+  - COP-003: Invalid applyTo glob pattern
+  - COP-004: Unknown frontmatter keys
+  - Supports .github/copilot-instructions.md (global instructions)
+  - Supports .github/instructions/*.instructions.md (path-scoped instructions)
+  - Config-based copilot category toggle (rules.copilot)
 - ValidatorRegistry API for custom validator registration in agnix-core
 - AGENTS.md validation rules (AGM-001 to AGM-006)
 - AGENTS.md validator now runs via the default registry, with project-level AGM-006 detection

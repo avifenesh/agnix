@@ -88,6 +88,10 @@ pub struct RuleConfig {
     #[serde(default = "default_true")]
     pub agents_md: bool,
 
+    /// Enable GitHub Copilot validation (COP-*)
+    #[serde(default = "default_true")]
+    pub copilot: bool,
+
     /// Enable prompt engineering validation (PE-*)
     #[serde(default = "default_true")]
     pub prompt_engineering: bool,
@@ -134,6 +138,7 @@ impl Default for RuleConfig {
             imports: true,
             cross_platform: true,
             agents_md: true,
+            copilot: true,
             prompt_engineering: true,
             generic_instructions: true,
             frontmatter_validation: true,
@@ -215,6 +220,7 @@ impl LintConfig {
             s if s.starts_with("REF-") || s.starts_with("imports::") => self.rules.imports,
             s if s.starts_with("XP-") => self.rules.cross_platform,
             s if s.starts_with("AGM-") => self.rules.agents_md,
+            s if s.starts_with("COP-") => self.rules.copilot,
             s if s.starts_with("PE-") => self.rules.prompt_engineering,
             // Unknown rules are enabled by default
             _ => true,
@@ -777,5 +783,101 @@ prompt_engineering = false
         assert!(!config.is_rule_enabled("PE-002"));
         assert!(!config.is_rule_enabled("PE-003"));
         assert!(!config.is_rule_enabled("PE-004"));
+    }
+
+    // ===== GitHub Copilot Category Tests =====
+
+    #[test]
+    fn test_default_config_enables_cop_rules() {
+        let config = LintConfig::default();
+
+        assert!(config.is_rule_enabled("COP-001"));
+        assert!(config.is_rule_enabled("COP-002"));
+        assert!(config.is_rule_enabled("COP-003"));
+        assert!(config.is_rule_enabled("COP-004"));
+    }
+
+    #[test]
+    fn test_category_disabled_copilot() {
+        let mut config = LintConfig::default();
+        config.rules.copilot = false;
+
+        assert!(!config.is_rule_enabled("COP-001"));
+        assert!(!config.is_rule_enabled("COP-002"));
+        assert!(!config.is_rule_enabled("COP-003"));
+        assert!(!config.is_rule_enabled("COP-004"));
+
+        // Other categories still enabled
+        assert!(config.is_rule_enabled("CC-AG-001"));
+        assert!(config.is_rule_enabled("AS-005"));
+        assert!(config.is_rule_enabled("XP-001"));
+    }
+
+    #[test]
+    fn test_cop_rules_work_with_all_targets() {
+        // COP-* rules are NOT target-specific
+        let targets = [
+            TargetTool::Generic,
+            TargetTool::ClaudeCode,
+            TargetTool::Cursor,
+            TargetTool::Codex,
+        ];
+
+        for target in targets {
+            let mut config = LintConfig::default();
+            config.target = target;
+
+            assert!(
+                config.is_rule_enabled("COP-001"),
+                "COP-001 should be enabled for {:?}",
+                target
+            );
+            assert!(
+                config.is_rule_enabled("COP-002"),
+                "COP-002 should be enabled for {:?}",
+                target
+            );
+            assert!(
+                config.is_rule_enabled("COP-003"),
+                "COP-003 should be enabled for {:?}",
+                target
+            );
+            assert!(
+                config.is_rule_enabled("COP-004"),
+                "COP-004 should be enabled for {:?}",
+                target
+            );
+        }
+    }
+
+    #[test]
+    fn test_disabled_specific_cop_rule() {
+        let mut config = LintConfig::default();
+        config.rules.disabled_rules = vec!["COP-001".to_string()];
+
+        assert!(!config.is_rule_enabled("COP-001"));
+        assert!(config.is_rule_enabled("COP-002"));
+        assert!(config.is_rule_enabled("COP-003"));
+        assert!(config.is_rule_enabled("COP-004"));
+    }
+
+    #[test]
+    fn test_toml_deserialization_copilot() {
+        let toml_str = r#"
+severity = "Warning"
+target = "Generic"
+exclude = []
+
+[rules]
+copilot = false
+"#;
+
+        let config: LintConfig = toml::from_str(toml_str).unwrap();
+
+        assert!(!config.rules.copilot);
+        assert!(!config.is_rule_enabled("COP-001"));
+        assert!(!config.is_rule_enabled("COP-002"));
+        assert!(!config.is_rule_enabled("COP-003"));
+        assert!(!config.is_rule_enabled("COP-004"));
     }
 }
