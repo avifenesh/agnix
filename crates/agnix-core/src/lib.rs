@@ -99,7 +99,6 @@ impl ValidatorRegistry {
             (FileType::Skill, skill_validator),
             (FileType::Skill, xml_validator),
             (FileType::Skill, imports_validator),
-            (FileType::Skill, prompt_validator),
             (FileType::ClaudeMd, claude_md_validator),
             (FileType::ClaudeMd, cross_platform_validator),
             (FileType::ClaudeMd, agents_md_validator),
@@ -485,7 +484,7 @@ mod tests {
     fn test_validators_for_skill() {
         let registry = ValidatorRegistry::with_defaults();
         let validators = registry.validators_for(FileType::Skill);
-        assert_eq!(validators.len(), 4);
+        assert_eq!(validators.len(), 3);
     }
 
     #[test]
@@ -1423,18 +1422,18 @@ Run npm install and npm build.
 
     #[test]
     fn test_pe_rules_dispatched() {
-        // Verify PE-* rules are dispatched when validating Skill and ClaudeMd file types.
-        // We copy fixture content to temp SKILL.md files to test the dispatch path.
+        // Verify PE-* rules are dispatched when validating ClaudeMd file type.
+        // Per SPEC.md, PE rules apply to CLAUDE.md and AGENTS.md only (not SKILL.md).
         let fixtures_dir = get_fixtures_dir().join("prompt");
         let config = LintConfig::default();
+        let temp = tempfile::TempDir::new().unwrap();
+        let claude_path = temp.path().join("CLAUDE.md");
 
         // Test PE-001: Critical content in middle
         let pe_001_content =
             std::fs::read_to_string(fixtures_dir.join("pe-001-critical-in-middle.md")).unwrap();
-        let temp = tempfile::TempDir::new().unwrap();
-        let skill_path = temp.path().join("SKILL.md");
-        std::fs::write(&skill_path, &pe_001_content).unwrap();
-        let diagnostics = validate_file(&skill_path, &config).unwrap();
+        std::fs::write(&claude_path, &pe_001_content).unwrap();
+        let diagnostics = validate_file(&claude_path, &config).unwrap();
         assert!(
             diagnostics.iter().any(|d| d.rule == "PE-001"),
             "Expected PE-001 from pe-001-critical-in-middle.md content"
@@ -1443,8 +1442,8 @@ Run npm install and npm build.
         // Test PE-002: Chain-of-thought on simple task
         let pe_002_content =
             std::fs::read_to_string(fixtures_dir.join("pe-002-cot-on-simple.md")).unwrap();
-        std::fs::write(&skill_path, &pe_002_content).unwrap();
-        let diagnostics = validate_file(&skill_path, &config).unwrap();
+        std::fs::write(&claude_path, &pe_002_content).unwrap();
+        let diagnostics = validate_file(&claude_path, &config).unwrap();
         assert!(
             diagnostics.iter().any(|d| d.rule == "PE-002"),
             "Expected PE-002 from pe-002-cot-on-simple.md content"
@@ -1453,8 +1452,8 @@ Run npm install and npm build.
         // Test PE-003: Weak language in critical section
         let pe_003_content =
             std::fs::read_to_string(fixtures_dir.join("pe-003-weak-language.md")).unwrap();
-        std::fs::write(&skill_path, &pe_003_content).unwrap();
-        let diagnostics = validate_file(&skill_path, &config).unwrap();
+        std::fs::write(&claude_path, &pe_003_content).unwrap();
+        let diagnostics = validate_file(&claude_path, &config).unwrap();
         assert!(
             diagnostics.iter().any(|d| d.rule == "PE-003"),
             "Expected PE-003 from pe-003-weak-language.md content"
@@ -1463,20 +1462,20 @@ Run npm install and npm build.
         // Test PE-004: Ambiguous instructions
         let pe_004_content =
             std::fs::read_to_string(fixtures_dir.join("pe-004-ambiguous.md")).unwrap();
-        std::fs::write(&skill_path, &pe_004_content).unwrap();
-        let diagnostics = validate_file(&skill_path, &config).unwrap();
+        std::fs::write(&claude_path, &pe_004_content).unwrap();
+        let diagnostics = validate_file(&claude_path, &config).unwrap();
         assert!(
             diagnostics.iter().any(|d| d.rule == "PE-004"),
             "Expected PE-004 from pe-004-ambiguous.md content"
         );
 
-        // Also verify PE rules dispatch on CLAUDE.md file type
-        let claude_path = temp.path().join("CLAUDE.md");
-        std::fs::write(&claude_path, &pe_003_content).unwrap();
-        let diagnostics = validate_file(&claude_path, &config).unwrap();
+        // Also verify PE rules dispatch on AGENTS.md file type
+        let agents_path = temp.path().join("AGENTS.md");
+        std::fs::write(&agents_path, &pe_003_content).unwrap();
+        let diagnostics = validate_file(&agents_path, &config).unwrap();
         assert!(
             diagnostics.iter().any(|d| d.rule == "PE-003"),
-            "Expected PE-003 from CLAUDE.md with weak language content"
+            "Expected PE-003 from AGENTS.md with weak language content"
         );
     }
 }
