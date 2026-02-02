@@ -60,8 +60,8 @@
   https://docs.anthropic.com/en/docs/claude-code/memory
 - Codex CLI `AGENTS.md`  
   https://developers.openai.com/codex/guides/agents-md/
-- OpenCode `AGENTS.md`  
-  https://opencode.ai/docs/guides/project-docs/
+- OpenCode `AGENTS.md`
+  https://opencode.ai/docs/rules/
 - Cursor rules (`.cursor/rules/*.mdc`)  
   https://docs.cursor.com/en/context/rules
 - Cline instructions  

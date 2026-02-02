@@ -1,6 +1,6 @@
 # OpenCode Integration Reference
 
-> **SST OpenCode** (opencode.ai, github.com/sst/opencode) - 85k+ stars
+> **OpenCode** (opencode.ai, github.com/anomalyco/opencode)
 > Not to be confused with the archived opencode-ai/opencode (now "Crush")
 
 ## Executive Summary
@@ -17,16 +17,16 @@ OpenCode has significant features Claude Code doesn't have:
 
 ## Quick Facts
 
-| Aspect | OpenCode | Claude Code |
-|--------|----------|-------------|
-| Config file | `opencode.json` (JSONC supported) | `settings.json` |
-| State directory | `.opencode/` | `.claude/` |
-| Commands location | `~/.opencode/commands/` | Plugin commands |
-| Skills location | `.opencode/skill/` | `.claude/skills/` |
-| Agent definitions | `.opencode/agent/*.md` | Plugin agents |
-| Model selection | Any provider (75+) | Anthropic only |
-| User questions | Numbered list | Checkboxes |
-| Project instructions | `AGENTS.md` (reads `CLAUDE.md` too) | `CLAUDE.md` |
+| Aspect | Claude Code | OpenCode |
+|--------|-------------|----------|
+| Config file | `settings.json` | `opencode.json` (JSONC supported) |
+| State directory | `.claude/` | `.opencode/` |
+| Commands location | Plugin commands | `~/.config/opencode/commands/` |
+| Skills location | `.claude/skills/` | `.opencode/skills/` |
+| Agent definitions | Plugin agents | `.opencode/agents/*.md` |
+| Model selection | Anthropic only | Any provider (75+) |
+| User questions | Checkboxes | Numbered list |
+| Project instructions | `CLAUDE.md` | `AGENTS.md` (reads `CLAUDE.md` too) |
 
 ---
 
@@ -36,7 +36,7 @@ When user runs `awesome-slash` and selects OpenCode:
 
 ```
 ~/.awesome-slash/           # Full package copy
-~/.opencode/commands/awesome-slash/
+~/.config/opencode/commands/awesome-slash/
 ├── deslop.md        # From plugins/deslop/commands/
 ├── enhance.md              # From plugins/enhance/commands/
 ├── next-task.md            # From plugins/next-task/commands/
@@ -98,7 +98,7 @@ subtask: true
 ### Specifying Model in Agents
 
 ```yaml
-# .opencode/agent/my-agent.md
+# .opencode/agents/my-agent.md
 ---
 description: Deep analysis agent
 mode: subagent
@@ -237,7 +237,7 @@ Instructions with $1, $2, $ARGUMENTS placeholders...
 ### Custom Agent Definition
 
 ```yaml
-# .opencode/agent/opus-reviewer.md
+# .opencode/agents/opus-reviewer.md
 ---
 description: Deep code review with Opus
 mode: subagent
@@ -306,14 +306,15 @@ All 8 tools work identically in OpenCode:
 ### Skill Location
 
 OpenCode scans (in order):
-1. `.opencode/skill/<name>/SKILL.md`
+1. `.opencode/skills/<name>/SKILL.md`
 2. `.claude/skills/<name>/SKILL.md` (Claude Code compatibility)
-3. `~/.config/opencode/skills/`
+3. `~/.claude/skills/` (Global Claude compatibility)
+4. `~/.config/opencode/skills/`
 
 ### Skill Format
 
 ```yaml
-# .opencode/skill/my-skill/SKILL.md
+# .opencode/skills/my-skill/SKILL.md
 ---
 name: my-skill
 description: When to use this skill
@@ -397,9 +398,7 @@ permission:
 OpenCode automatically reads:
 1. `AGENTS.md` (preferred)
 2. `CLAUDE.md` (fallback - compatibility)
-3. `.github/copilot-instructions.md`
-4. `.cursor/rules/*.mdc`
-5. `opencode.md`
+3. `opencode.md`
 
 ### Generating AGENTS.md
 
@@ -474,7 +473,7 @@ ls .opencode/
 
 ### Medium Term
 
-1. Create native OpenCode agent definitions (`.opencode/agent/`)
+1. Create native OpenCode agent definitions (`.opencode/agents/`)
 2. Add OpenCode plugin with hooks for workflow enforcement
 3. Test with different model providers
 
@@ -917,7 +916,7 @@ Add to user's `opencode.json`:
 ## Resources
 
 - **Docs**: https://opencode.ai/docs
-- **GitHub**: https://github.com/sst/opencode
+- **GitHub**: https://github.com/anomalyco/opencode
 - **Config Schema**: https://opencode.ai/config.json
 - **SDK**: `npm install @opencode-ai/sdk`
 - **Plugin SDK**: `npm install @opencode-ai/plugin`

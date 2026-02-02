@@ -638,7 +638,7 @@
 **Note**: Claude Code uses `CLAUDE.md` (not AGENTS.md)
 **Detection**: Validate AGENTS.md follows markdown conventions
 **Fix**: Ensure AGENTS.md is valid markdown with clear sections
-**Source**: developers.openai.com/codex/guides/agents-md, opencode.ai/docs/guides/project-docs, docs.cursor.com/en/context, docs.cline.bot/features/custom-instructions, github.com/github/docs/changelog/2025-06-17-github-copilot-coding-agent-now-supports-agents-md-custom-instructions
+**Source**: developers.openai.com/codex/guides/agents-md, opencode.ai/docs/rules, docs.cursor.com/en/context, docs.cline.bot/features/custom-instructions, github.com/github/docs/changelog/2025-06-17-github-copilot-coding-agent-now-supports-agents-md-custom-instructions
 
 <a id="xp-003"></a>
 ### XP-003 [HIGH] Hard-Coded Platform Paths
