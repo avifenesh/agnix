@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Support for instruction filename variants:
+  - CLAUDE.local.md - Claude Code local instructions (not synced to cloud)
+  - AGENTS.local.md - Codex CLI/OpenCode local instructions
+  - AGENTS.override.md - Codex CLI override file for workspace-specific rules
+  - All variants are validated with the same rules as their base files
+
 ### Security
 - Hardened file reading with symlink rejection and size limits:
   - Added `FileSymlink` error to reject symlinks (prevents path traversal)

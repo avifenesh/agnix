@@ -13,7 +13,7 @@ agnix .
 ## Features
 
 - ✅ **Agent Skills** - Validates SKILL.md format (agentskills.io spec + CC-SK-001 to CC-SK-009)
-- ✅ **Claude Code** - CLAUDE.md, hooks, subagents, plugins
+- ✅ **Claude Code** - CLAUDE.md (and variants: CLAUDE.local.md), hooks, subagents, plugins
 - ✅ **Subagents** - Agent frontmatter validation (CC-AG-001 to CC-AG-006)
 - ✅ **GitHub Copilot** - Copilot instruction file validation (COP-001 to COP-004)
 - ✅ **Plugins** - Plugin manifest validation (CC-PL-001 to CC-PL-005)
