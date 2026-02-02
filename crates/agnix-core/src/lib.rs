@@ -1252,8 +1252,7 @@ allowed-tools: Read Write
         );
 
         // Validate scoped instructions
-        let scoped_path =
-            copilot_dir.join(".github/instructions/typescript.instructions.md");
+        let scoped_path = copilot_dir.join(".github/instructions/typescript.instructions.md");
         let diagnostics = validate_file(&scoped_path, &config).unwrap();
         let cop_errors: Vec<_> = diagnostics
             .iter()
@@ -1282,8 +1281,8 @@ allowed-tools: Read Write
         );
 
         // COP-002: Invalid YAML in bad-frontmatter
-        let bad_frontmatter = copilot_invalid_dir
-            .join(".github/instructions/bad-frontmatter.instructions.md");
+        let bad_frontmatter =
+            copilot_invalid_dir.join(".github/instructions/bad-frontmatter.instructions.md");
         let diagnostics = validate_file(&bad_frontmatter, &config).unwrap();
         assert!(
             diagnostics.iter().any(|d| d.rule == "COP-002"),
@@ -1291,8 +1290,7 @@ allowed-tools: Read Write
         );
 
         // COP-003: Invalid glob in bad-glob
-        let bad_glob =
-            copilot_invalid_dir.join(".github/instructions/bad-glob.instructions.md");
+        let bad_glob = copilot_invalid_dir.join(".github/instructions/bad-glob.instructions.md");
         let diagnostics = validate_file(&bad_glob, &config).unwrap();
         assert!(
             diagnostics.iter().any(|d| d.rule == "COP-003"),
@@ -1300,8 +1298,8 @@ allowed-tools: Read Write
         );
 
         // COP-004: Unknown keys in unknown-keys
-        let unknown_keys = copilot_invalid_dir
-            .join(".github/instructions/unknown-keys.instructions.md");
+        let unknown_keys =
+            copilot_invalid_dir.join(".github/instructions/unknown-keys.instructions.md");
         let diagnostics = validate_file(&unknown_keys, &config).unwrap();
         assert!(
             diagnostics.iter().any(|d| d.rule == "COP-004"),
@@ -1338,11 +1336,7 @@ allowed-tools: Read Write
         let diagnostics = validate_file(&file_path, &config).unwrap();
 
         let cop_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "COP-002").collect();
-        assert_eq!(
-            cop_002.len(),
-            1,
-            "Expected COP-002 for missing frontmatter"
-        );
+        assert_eq!(cop_002.len(), 1, "Expected COP-002 for missing frontmatter");
     }
 
     #[test]

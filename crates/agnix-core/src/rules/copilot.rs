@@ -10,9 +10,7 @@ use crate::{
     config::LintConfig,
     diagnostics::Diagnostic,
     rules::Validator,
-    schemas::copilot::{
-        is_body_empty, is_content_empty, parse_frontmatter, validate_glob_pattern,
-    },
+    schemas::copilot::{is_body_empty, is_content_empty, parse_frontmatter, validate_glob_pattern},
     FileType,
 };
 use std::path::Path;
@@ -350,12 +348,7 @@ applyTo: "[unclosed"
 
     #[test]
     fn test_cop_003_valid_glob_patterns() {
-        let patterns = vec![
-            "**/*.ts",
-            "*.rs",
-            "src/**/*.js",
-            "tests/**/*.test.ts",
-        ];
+        let patterns = vec!["**/*.ts", "*.rs", "src/**/*.js", "tests/**/*.test.ts"];
 
         for pattern in patterns {
             let content = format!(
@@ -368,11 +361,7 @@ applyTo: "{}"
             );
             let diagnostics = validate_scoped(&content);
             let cop_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "COP-003").collect();
-            assert!(
-                cop_003.is_empty(),
-                "Pattern '{}' should be valid",
-                pattern
-            );
+            assert!(cop_003.is_empty(), "Pattern '{}' should be valid", pattern);
         }
     }
 
