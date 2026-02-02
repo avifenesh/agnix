@@ -184,7 +184,7 @@ pub enum LintError {
     #[error("File too large: {path} ({size} bytes, limit {limit} bytes)")]
     #[diagnostic(
         code(agnix::file_too_big),
-        help("Files larger than 1 MiB are not supported")
+        help("Files larger than the configured size limit are not supported")
     )]
     FileTooBig { path: PathBuf, size: u64, limit: u64 },
 
