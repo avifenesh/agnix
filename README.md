@@ -15,6 +15,7 @@ agnix .
 - ✅ **Agent Skills** - Validates SKILL.md format (agentskills.io spec + CC-SK-001 to CC-SK-009)
 - ✅ **Claude Code** - CLAUDE.md, hooks, subagents, plugins
 - ✅ **Subagents** - Agent frontmatter validation (CC-AG-001 to CC-AG-006)
+- ✅ **GitHub Copilot** - Copilot instruction file validation (COP-001 to COP-004)
 - ✅ **Plugins** - Plugin manifest validation (CC-PL-001 to CC-PL-005)
 - ✅ **Generic Instructions** - Detects redundant "be helpful" patterns
 - ✅ **XML Balance** - Ensures tags are properly closed
@@ -226,6 +227,7 @@ target = "Generic"  # Options: Generic, ClaudeCode, Cursor, Codex
 skills = true       # AS-*, CC-SK-* rules
 hooks = true        # CC-HK-* rules
 agents = true       # CC-AG-* rules
+copilot = true        # COP-* rules
 memory = true       # CC-MEM-* rules
 plugins = true      # CC-PL-* rules
 mcp = true          # MCP-* rules
@@ -261,6 +263,7 @@ When `target` is set to a specific tool, only relevant rules run:
 | skills | AS-*, CC-SK-* | Agent skill validation |
 | hooks | CC-HK-* | Hook configuration validation |
 | agents | CC-AG-* | Subagent validation |
+| copilot | COP-* | GitHub Copilot instruction validation |
 | memory | CC-MEM-* | Memory/CLAUDE.md validation |
 | plugins | CC-PL-* | Plugin validation |
 | mcp | MCP-* | MCP tool validation |

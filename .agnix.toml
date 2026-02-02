@@ -4,7 +4,17 @@ exclude = [
   "node_modules/**",
   ".git/**",
   "target/**",
-  "tests/fixtures/**",
+  # Exclude fixtures except copilot tests (which contain .github dirs)
+  "tests/fixtures/agents-md/**",
+  "tests/fixtures/cross-platform/**",
+  "tests/fixtures/hooks/**",
+  "tests/fixtures/import-references/**",
+  "tests/fixtures/instructions/**",
+  "tests/fixtures/mcp/**",
+  "tests/fixtures/plugin/**",
+  "tests/fixtures/prompt-engineering/**",
+  "tests/fixtures/skill/**",
+  "tests/fixtures/xml/**",
 ]
 
 [rules]
