@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+- Hardened file reading with symlink rejection and size limits:
+  - Added `FileSymlink` error to reject symlinks (prevents path traversal)
+  - Added `FileTooBig` error for files exceeding 1 MiB (prevents DoS)
+  - New `file_utils` module with `safe_read_file()` using `symlink_metadata()`
+  - Applied to validation, imports, fixes, and config loading
+  - Cross-platform tests for Unix and Windows symlink handling
+
 ### Fixed
 - PE-001 through PE-004 rules now properly dispatch on CLAUDE.md and AGENTS.md files (PromptValidator was implemented but not registered in ValidatorRegistry)
 
