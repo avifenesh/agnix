@@ -188,6 +188,13 @@ pub enum LintError {
     )]
     FileTooBig { path: PathBuf, size: u64, limit: u64 },
 
+    #[error("Not a regular file: {path}")]
+    #[diagnostic(
+        code(agnix::file_not_regular),
+        help("Only regular files are supported (not directories, FIFOs, or device nodes)")
+    )]
+    FileNotRegular { path: PathBuf },
+
     #[error("Failed to parse YAML frontmatter")]
     #[diagnostic(code(agnix::yaml_parse), help("Check YAML syntax between --- markers"))]
     YamlParse {
