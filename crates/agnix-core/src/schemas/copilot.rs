@@ -73,7 +73,7 @@ pub fn parse_frontmatter(content: &str) -> Option<ParsedFrontmatter> {
     // Find closing ---
     let mut end_idx = None;
     for (i, line) in lines.iter().enumerate().skip(1) {
-        if *line == "---" {
+        if line.trim() == "---" {
             end_idx = Some(i);
             break;
         }
