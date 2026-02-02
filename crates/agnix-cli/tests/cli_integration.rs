@@ -105,11 +105,17 @@ fn test_format_sarif_has_all_rules() {
         .as_array()
         .unwrap();
 
-    // Use minimum threshold to avoid brittleness when rules are added/removed.
-    // As of writing, there are 84 rules; 70 is a reasonable floor.
+    // Use threshold range to avoid brittleness when rules are added/removed,
+    // while still catching major regressions (missing rules) or explosions.
+    // As of writing, there are 84 rules documented in VALIDATION-RULES.md.
     assert!(
         rules.len() >= 70,
-        "Expected at least 70 validation rules, found {}",
+        "Expected at least 70 validation rules, found {} (possible rule registration bug)",
+        rules.len()
+    );
+    assert!(
+        rules.len() <= 120,
+        "Expected at most 120 validation rules, found {} (unexpected rule explosion)",
         rules.len()
     );
 
@@ -117,13 +123,15 @@ fn test_format_sarif_has_all_rules() {
     for (i, rule) in rules.iter().enumerate() {
         assert!(
             rule["id"].is_string(),
-            "Rule at index {} should have an 'id' field",
-            i
+            "Rule at index {} should have an 'id' field. Rule: {}",
+            i,
+            rule
         );
         assert!(
             rule["shortDescription"]["text"].is_string(),
-            "Rule at index {} should have a 'shortDescription.text' field",
-            i
+            "Rule at index {} should have a 'shortDescription.text' field. Rule: {}",
+            i,
+            rule
         );
     }
 }
