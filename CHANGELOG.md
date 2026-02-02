@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - PE-001 through PE-004 rules now properly dispatch on CLAUDE.md and AGENTS.md files (PromptValidator was implemented but not registered in ValidatorRegistry)
 
 ### Changed
+- Downgraded 5 rules from ERROR to WARNING severity based on RFC 2119 audit:
+  - PE-001 (Lost in the middle): Research-based recommendation, not spec violation
+  - PE-002 (Chain-of-thought on simple task): Best practice advice, not requirement
+  - CC-MEM-004 (Invalid command reference): Helpful validation, not breaking error
+  - AGM-003 (Character limit): Uses SHOULD in documentation (Windsurf-specific)
+  - AGM-005 (Platform-specific features): Uses SHOULD in documentation
 - Imports validator now routes diagnostics by file type:
   - CLAUDE.md files emit CC-MEM-001/002/003 (Claude Code memory rules)
   - Non-CLAUDE markdown files emit REF-001 (generic reference validation)

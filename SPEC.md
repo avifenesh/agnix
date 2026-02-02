@@ -84,7 +84,12 @@ All rules in `knowledge-base/VALIDATION-RULES.md`
 | CC-HK-007 | ERROR | Missing prompt field |
 | CC-HK-008 | ERROR | Script file not found |
 | CC-HK-009 | WARN | Dangerous command pattern |
+| CC-MEM-004 | WARN | Invalid command reference |
 | CC-MEM-005 | WARN | Generic instruction detected |
+| AGM-003 | WARN | Character limit exceeded (12000 chars) |
+| AGM-005 | WARN | Platform features without guard |
+| PE-001 | WARN | Critical content in middle |
+| PE-002 | WARN | Chain-of-thought on simple task |
 | CC-AG-001 | ERROR | Missing agent name field |
 | CC-AG-002 | ERROR | Missing agent description field |
 | CC-AG-003 | ERROR | Invalid model value |
