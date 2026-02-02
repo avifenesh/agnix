@@ -5,11 +5,58 @@ fn agnix() -> Command {
     assert_cmd::cargo::cargo_bin_cmd!("agnix")
 }
 
+fn workspace_root() -> &'static std::path::Path {
+    use std::sync::OnceLock;
+
+    static ROOT: OnceLock<std::path::PathBuf> = OnceLock::new();
+    ROOT.get_or_init(|| {
+        let manifest_dir = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        for ancestor in manifest_dir.ancestors() {
+            let cargo_toml = ancestor.join("Cargo.toml");
+            if let Ok(content) = std::fs::read_to_string(&cargo_toml) {
+                if content.contains("[workspace]") {
+                    return ancestor.to_path_buf();
+                }
+            }
+        }
+        panic!(
+            "Failed to locate workspace root from CARGO_MANIFEST_DIR={}",
+            manifest_dir.display()
+        );
+    })
+    .as_path()
+}
+
+fn workspace_path(relative: &str) -> std::path::PathBuf {
+    workspace_root().join(relative)
+}
+
+fn fixtures_config() -> tempfile::NamedTempFile {
+    use std::io::Write;
+
+    let mut file = tempfile::NamedTempFile::new().unwrap();
+    file.write_all(
+        br#"severity = "Warning"
+target = "Generic"
+exclude = [
+  "node_modules/**",
+  ".git/**",
+  "target/**",
+]
+
+[rules]
+"#,
+    )
+    .unwrap();
+
+    file
+}
+
 #[test]
 fn test_format_sarif_produces_valid_json() {
     let mut cmd = agnix();
     let assert = cmd
-        .arg("tests/fixtures/valid")
+        .arg(workspace_path("tests/fixtures/valid"))
         .arg("--format")
         .arg("sarif")
         .assert();
@@ -25,7 +72,7 @@ fn test_format_sarif_produces_valid_json() {
 fn test_format_sarif_contains_tool_info() {
     let mut cmd = agnix();
     let output = cmd
-        .arg("tests/fixtures/valid")
+        .arg(workspace_path("tests/fixtures/valid"))
         .arg("--format")
         .arg("sarif")
         .output()
@@ -42,7 +89,7 @@ fn test_format_sarif_contains_tool_info() {
 fn test_format_sarif_has_all_rules() {
     let mut cmd = agnix();
     let output = cmd
-        .arg("tests/fixtures/valid")
+        .arg(workspace_path("tests/fixtures/valid"))
         .arg("--format")
         .arg("sarif")
         .output()
@@ -60,7 +107,7 @@ fn test_format_sarif_has_all_rules() {
 #[test]
 fn test_format_sarif_exit_code_on_success() {
     let mut cmd = agnix();
-    cmd.arg("tests/fixtures/valid")
+    cmd.arg(workspace_path("tests/fixtures/valid"))
         .arg("--format")
         .arg("sarif")
         .assert()
@@ -70,7 +117,7 @@ fn test_format_sarif_exit_code_on_success() {
 #[test]
 fn test_format_text_is_default() {
     let mut cmd = agnix();
-    cmd.arg("tests/fixtures/valid")
+    cmd.arg(workspace_path("tests/fixtures/valid"))
         .assert()
         .success()
         .stdout(predicate::str::contains("\"version\"").not());
@@ -80,7 +127,7 @@ fn test_format_text_is_default() {
 fn test_format_sarif_results_array_exists() {
     let mut cmd = agnix();
     let output = cmd
-        .arg("tests/fixtures")
+        .arg(workspace_path("tests/fixtures"))
         .arg("--format")
         .arg("sarif")
         .output()
@@ -99,7 +146,7 @@ fn test_format_sarif_results_array_exists() {
 fn test_format_sarif_schema_url() {
     let mut cmd = agnix();
     let output = cmd
-        .arg("tests/fixtures/valid")
+        .arg(workspace_path("tests/fixtures/valid"))
         .arg("--format")
         .arg("sarif")
         .output()
@@ -132,7 +179,7 @@ fn test_help_shows_format_option() {
 fn test_format_json_produces_valid_json() {
     let mut cmd = agnix();
     let output = cmd
-        .arg("tests/fixtures/valid")
+        .arg(workspace_path("tests/fixtures/valid"))
         .arg("--format")
         .arg("json")
         .output()
@@ -153,7 +200,7 @@ fn test_format_json_produces_valid_json() {
 fn test_format_json_version_matches_cargo() {
     let mut cmd = agnix();
     let output = cmd
-        .arg("tests/fixtures/valid")
+        .arg(workspace_path("tests/fixtures/valid"))
         .arg("--format")
         .arg("json")
         .output()
@@ -174,7 +221,7 @@ fn test_format_json_version_matches_cargo() {
 fn test_format_json_summary_counts() {
     let mut cmd = agnix();
     let output = cmd
-        .arg("tests/fixtures/valid")
+        .arg(workspace_path("tests/fixtures/valid"))
         .arg("--format")
         .arg("json")
         .output()
@@ -196,7 +243,7 @@ fn test_format_json_summary_counts() {
 fn test_format_json_diagnostic_fields() {
     let mut cmd = agnix();
     let output = cmd
-        .arg("tests/fixtures")
+        .arg(workspace_path("tests/fixtures"))
         .arg("--format")
         .arg("json")
         .output()
@@ -326,7 +373,7 @@ fn test_format_json_strict_mode_no_warnings() {
     // Use a path that produces clean output
     let mut cmd = agnix();
     let output = cmd
-        .arg("tests/fixtures/valid/skills")
+        .arg(workspace_path("tests/fixtures/valid/skills"))
         .arg("--format")
         .arg("json")
         .arg("--strict")
@@ -351,7 +398,7 @@ fn test_format_json_strict_mode_no_warnings() {
 #[test]
 fn test_format_json_exit_code_on_success() {
     let mut cmd = agnix();
-    cmd.arg("tests/fixtures/valid")
+    cmd.arg(workspace_path("tests/fixtures/valid"))
         .arg("--format")
         .arg("json")
         .assert()
@@ -371,7 +418,7 @@ fn test_help_shows_json_format() {
 fn test_format_json_files_checked_count() {
     let mut cmd = agnix();
     let output = cmd
-        .arg("tests/fixtures/valid")
+        .arg(workspace_path("tests/fixtures/valid"))
         .arg("--format")
         .arg("json")
         .output()
@@ -392,7 +439,7 @@ fn test_format_json_files_checked_count() {
 fn test_format_json_forward_slashes_in_paths() {
     let mut cmd = agnix();
     let output = cmd
-        .arg("tests/fixtures")
+        .arg(workspace_path("tests/fixtures"))
         .arg("--format")
         .arg("json")
         .output()
@@ -410,4 +457,102 @@ fn test_format_json_forward_slashes_in_paths() {
             file
         );
     }
+}
+
+#[test]
+fn test_cli_covers_hook_fixtures_via_cli_validation() {
+    let config = fixtures_config();
+
+    let mut cmd = agnix();
+    let output = cmd
+        .arg(workspace_path(
+            "tests/fixtures/invalid/hooks/missing-command-field",
+        ))
+        .arg("--format")
+        .arg("json")
+        .arg("--config")
+        .arg(config.path())
+        .output()
+        .unwrap();
+
+    assert!(
+        !output.status.success(),
+        "Invalid hooks fixture should exit non-zero"
+    );
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let json: serde_json::Value = serde_json::from_str(&stdout).unwrap();
+
+    let diagnostics = json["diagnostics"].as_array().unwrap();
+    assert!(
+        diagnostics
+            .iter()
+            .any(|d| d["rule"].as_str() == Some("CC-HK-006")),
+        "Expected CC-HK-006 in diagnostics, got: {}",
+        stdout
+    );
+
+    assert!(
+        diagnostics.iter().any(|d| {
+            d["rule"].as_str() == Some("CC-HK-006")
+                && d["file"]
+                    .as_str()
+                    .map(|file| {
+                        file == "settings.json"
+                            || file.ends_with("missing-command-field/settings.json")
+                    })
+                    .unwrap_or(false)
+        }),
+        "Expected CC-HK-006 for missing-command-field fixture, got: {}",
+        stdout
+    );
+}
+
+#[test]
+fn test_fixtures_have_no_empty_placeholder_dirs() {
+    use std::fs;
+    use std::path::{Path, PathBuf};
+
+    fn check_dir(dir: &Path, empty_dirs: &mut Vec<PathBuf>) -> bool {
+        let mut has_file = false;
+        let entries = fs::read_dir(dir).unwrap_or_else(|e| {
+            panic!("Failed to read fixture directory {}: {}", dir.display(), e)
+        });
+
+        for entry in entries {
+            let entry = entry.unwrap_or_else(|e| {
+                panic!("Failed to read entry under {}: {}", dir.display(), e)
+            });
+            let path = entry.path();
+            if path.is_file() {
+                has_file = true;
+                continue;
+            }
+            if path.is_dir() && check_dir(&path, empty_dirs) {
+                has_file = true;
+            }
+        }
+
+        if !has_file {
+            empty_dirs.push(dir.to_path_buf());
+        }
+
+        has_file
+    }
+
+    let root = workspace_path("tests/fixtures");
+    assert!(root.is_dir(), "Expected fixtures directory at {}", root.display());
+
+    let mut empty_dirs = Vec::new();
+    check_dir(&root, &mut empty_dirs);
+
+    assert!(
+        empty_dirs.is_empty(),
+        "Empty fixture directories found:\n{}",
+        empty_dirs
+            .iter()
+            .map(|p| p.display().to_string())
+            .collect::<Vec<_>>()
+            .join("\n")
+    );
 }
