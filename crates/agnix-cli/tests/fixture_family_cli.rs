@@ -52,44 +52,38 @@ fn assert_has_rule(json: &serde_json::Value, rule: &str) {
     assert!(found, "Expected {} in diagnostics", rule);
 }
 
-#[test]
-fn test_cli_reports_xml_fixtures() {
-    let path = workspace_root().join("tests/fixtures/xml");
-    let json = run_json(&path);
-    assert_has_rule(&json, "XML-001");
-    assert_has_rule(&json, "XML-002");
-    assert_has_rule(&json, "XML-003");
+macro_rules! make_cli_test {
+    ($name:ident, $path:expr, [$($rule:expr),+ $(,)?]) => {
+        #[test]
+        fn $name() {
+            let path = workspace_root().join("tests/fixtures").join($path);
+            let json = run_json(&path);
+            $(assert_has_rule(&json, $rule);)+
+        }
+    };
 }
 
-#[test]
-fn test_cli_reports_ref_fixtures() {
-    let path = workspace_root().join("tests/fixtures/refs");
-    let json = run_json(&path);
-    assert_has_rule(&json, "REF-001");
-    assert_has_rule(&json, "REF-002");
-}
-
-#[test]
-fn test_cli_reports_mcp_fixtures() {
-    let path = workspace_root().join("tests/fixtures/mcp");
-    let json = run_json(&path);
-    assert_has_rule(&json, "MCP-001");
-    assert_has_rule(&json, "MCP-006");
-}
-
-#[test]
-fn test_cli_reports_agm_fixtures() {
-    let path = workspace_root().join("tests/fixtures/agents_md/no-headers");
-    let json = run_json(&path);
-    assert_has_rule(&json, "AGM-002");
-}
-
-#[test]
-fn test_cli_reports_xp_fixtures() {
-    let path = workspace_root().join("tests/fixtures/cross_platform/hard-coded");
-    let json = run_json(&path);
-    assert_has_rule(&json, "XP-003");
-}
+make_cli_test!(
+    test_cli_reports_xml_fixtures,
+    "xml",
+    ["XML-001", "XML-002", "XML-003"]
+);
+make_cli_test!(
+    test_cli_reports_ref_fixtures,
+    "refs",
+    ["REF-001", "REF-002"]
+);
+make_cli_test!(
+    test_cli_reports_mcp_fixtures,
+    "mcp",
+    ["MCP-001", "MCP-006"]
+);
+make_cli_test!(test_cli_reports_agm_fixtures, "agents_md/no-headers", ["AGM-002"]);
+make_cli_test!(
+    test_cli_reports_xp_fixtures,
+    "cross_platform/hard-coded",
+    ["XP-003"]
+);
 
 #[test]
 fn test_cli_reports_pe_fixtures() {

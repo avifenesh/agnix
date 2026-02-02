@@ -1418,75 +1418,54 @@ Run npm install and npm build.
             "Expected MCP-006 from untrusted-annotations.mcp.json fixture"
         );
 
-        // Verify AGM fixtures trigger expected AGM-* rules
-        let agm_diagnostics: Vec<_> = diagnostics
-            .iter()
-            .filter(|d| d.rule.starts_with("AGM-"))
-            .collect();
+        // Verify AGM, XP, REF, and XML fixtures trigger expected rules
+        let expectations = [
+            (
+                "AGM-002",
+                "no-headers",
+                "Expected AGM-002 from agents_md/no-headers/AGENTS.md fixture",
+            ),
+            (
+                "XP-003",
+                "hard-coded",
+                "Expected XP-003 from cross_platform/hard-coded/AGENTS.md fixture",
+            ),
+            (
+                "REF-001",
+                "missing-import",
+                "Expected REF-001 from refs/missing-import.md fixture",
+            ),
+            (
+                "REF-002",
+                "broken-link",
+                "Expected REF-002 from refs/broken-link.md fixture",
+            ),
+            (
+                "XML-001",
+                "xml-001-unclosed",
+                "Expected XML-001 from xml/xml-001-unclosed.md fixture",
+            ),
+            (
+                "XML-002",
+                "xml-002-mismatch",
+                "Expected XML-002 from xml/xml-002-mismatch.md fixture",
+            ),
+            (
+                "XML-003",
+                "xml-003-unmatched",
+                "Expected XML-003 from xml/xml-003-unmatched.md fixture",
+            ),
+        ];
 
-        assert!(
-            agm_diagnostics
-                .iter()
-                .any(|d| d.rule == "AGM-002" && d.file.to_string_lossy().contains("no-headers")),
-            "Expected AGM-002 from agents_md/no-headers/AGENTS.md fixture"
-        );
-
-        // Verify XP fixtures trigger expected XP-* rules
-        let xp_diagnostics: Vec<_> = diagnostics
-            .iter()
-            .filter(|d| d.rule.starts_with("XP-"))
-            .collect();
-
-        assert!(
-            xp_diagnostics
-                .iter()
-                .any(|d| d.rule == "XP-003" && d.file.to_string_lossy().contains("hard-coded")),
-            "Expected XP-003 from cross_platform/hard-coded/AGENTS.md fixture"
-        );
-
-        // Verify REF fixtures trigger expected REF-* rules
-        let ref_diagnostics: Vec<_> = diagnostics
-            .iter()
-            .filter(|d| d.rule.starts_with("REF-"))
-            .collect();
-
-        assert!(
-            ref_diagnostics
-                .iter()
-                .any(|d| d.rule == "REF-001" && d.file.to_string_lossy().contains("missing-import")),
-            "Expected REF-001 from refs/missing-import.md fixture"
-        );
-
-        assert!(
-            ref_diagnostics
-                .iter()
-                .any(|d| d.rule == "REF-002" && d.file.to_string_lossy().contains("broken-link")),
-            "Expected REF-002 from refs/broken-link.md fixture"
-        );
-
-        // Verify XML fixtures trigger expected XML-* rules
-        let xml_diagnostics: Vec<_> = diagnostics
-            .iter()
-            .filter(|d| d.rule.starts_with("XML-"))
-            .collect();
-
-        assert!(
-            xml_diagnostics.iter().any(|d| d.rule == "XML-001"
-                && d.file.to_string_lossy().contains("xml-001-unclosed")),
-            "Expected XML-001 from xml/xml-001-unclosed.md fixture"
-        );
-
-        assert!(
-            xml_diagnostics.iter().any(|d| d.rule == "XML-002"
-                && d.file.to_string_lossy().contains("xml-002-mismatch")),
-            "Expected XML-002 from xml/xml-002-mismatch.md fixture"
-        );
-
-        assert!(
-            xml_diagnostics.iter().any(|d| d.rule == "XML-003"
-                && d.file.to_string_lossy().contains("xml-003-unmatched")),
-            "Expected XML-003 from xml/xml-003-unmatched.md fixture"
-        );
+        for (rule, file_part, message) in expectations {
+            assert!(
+                diagnostics.iter().any(|d| {
+                    d.rule == rule && d.file.to_string_lossy().contains(file_part)
+                }),
+                "{}",
+                message
+            );
+        }
     }
 
     #[test]
