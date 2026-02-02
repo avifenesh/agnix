@@ -873,7 +873,8 @@ Body"#;
 
     #[test]
     fn test_as_001_missing_frontmatter() {
-        let content = include_str!("../../../../tests/fixtures/skills/missing-frontmatter/SKILL.md");
+        let content =
+            include_str!("../../../../tests/fixtures/skills/missing-frontmatter/SKILL.md");
 
         let validator = SkillValidator;
         let diagnostics =
