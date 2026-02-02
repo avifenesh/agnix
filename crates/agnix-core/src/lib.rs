@@ -198,7 +198,8 @@ pub fn detect_file_type(path: &Path) -> FileType {
 
     match filename {
         "SKILL.md" => FileType::Skill,
-        "CLAUDE.md" | "CLAUDE.local.md" | "AGENTS.md" | "AGENTS.local.md" | "AGENTS.override.md" => FileType::ClaudeMd,
+        "CLAUDE.md" | "CLAUDE.local.md" | "AGENTS.md" | "AGENTS.local.md"
+        | "AGENTS.override.md" => FileType::ClaudeMd,
         "settings.json" | "settings.local.json" => FileType::Hooks,
         // Classify any plugin.json as Plugin - validator checks location constraint (CC-PL-001)
         "plugin.json" => FileType::Plugin,

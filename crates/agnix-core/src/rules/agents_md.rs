@@ -28,7 +28,10 @@ impl Validator for AgentsMdValidator {
 
         // Only validate AGENTS.md files (not CLAUDE.md)
         let filename = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
-        if !matches!(filename, "AGENTS.md" | "AGENTS.local.md" | "AGENTS.override.md") {
+        if !matches!(
+            filename,
+            "AGENTS.md" | "AGENTS.local.md" | "AGENTS.override.md"
+        ) {
             return diagnostics;
         }
 
@@ -174,9 +177,15 @@ Some content"#;
         let content = r#"```unclosed
 Some content"#;
         let validator = AgentsMdValidator;
-        let diagnostics =
-            validator.validate(Path::new("CLAUDE.local.md"), content, &LintConfig::default());
-        assert!(diagnostics.is_empty(), "CLAUDE.local.md should not get AGM rules");
+        let diagnostics = validator.validate(
+            Path::new("CLAUDE.local.md"),
+            content,
+            &LintConfig::default(),
+        );
+        assert!(
+            diagnostics.is_empty(),
+            "CLAUDE.local.md should not get AGM rules"
+        );
     }
 
     // ===== AGENTS.* Variant Files =====
@@ -186,10 +195,17 @@ Some content"#;
         let content = r#"```unclosed
 Some content"#;
         let validator = AgentsMdValidator;
-        let diagnostics =
-            validator.validate(Path::new("AGENTS.local.md"), content, &LintConfig::default());
+        let diagnostics = validator.validate(
+            Path::new("AGENTS.local.md"),
+            content,
+            &LintConfig::default(),
+        );
         let agm_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AGM-001").collect();
-        assert_eq!(agm_001.len(), 1, "AGENTS.local.md should get AGM-001 for unclosed code block");
+        assert_eq!(
+            agm_001.len(),
+            1,
+            "AGENTS.local.md should get AGM-001 for unclosed code block"
+        );
     }
 
     #[test]
@@ -197,20 +213,34 @@ Some content"#;
         let content = r#"```unclosed
 Some content"#;
         let validator = AgentsMdValidator;
-        let diagnostics =
-            validator.validate(Path::new("AGENTS.override.md"), content, &LintConfig::default());
+        let diagnostics = validator.validate(
+            Path::new("AGENTS.override.md"),
+            content,
+            &LintConfig::default(),
+        );
         let agm_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AGM-001").collect();
-        assert_eq!(agm_001.len(), 1, "AGENTS.override.md should get AGM-001 for unclosed code block");
+        assert_eq!(
+            agm_001.len(),
+            1,
+            "AGENTS.override.md should get AGM-001 for unclosed code block"
+        );
     }
 
     #[test]
     fn test_agents_local_md_char_limit() {
         let content = format!("# Project\n\n{}", "x".repeat(13000));
         let validator = AgentsMdValidator;
-        let diagnostics =
-            validator.validate(Path::new("AGENTS.local.md"), &content, &LintConfig::default());
+        let diagnostics = validator.validate(
+            Path::new("AGENTS.local.md"),
+            &content,
+            &LintConfig::default(),
+        );
         let agm_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AGM-003").collect();
-        assert_eq!(agm_003.len(), 1, "AGENTS.local.md should get AGM-003 for char limit");
+        assert_eq!(
+            agm_003.len(),
+            1,
+            "AGENTS.local.md should get AGM-003 for char limit"
+        );
     }
 
     #[test]
@@ -221,10 +251,17 @@ Some content"#;
   command: echo "test"
 "#;
         let validator = AgentsMdValidator;
-        let diagnostics =
-            validator.validate(Path::new("AGENTS.override.md"), content, &LintConfig::default());
+        let diagnostics = validator.validate(
+            Path::new("AGENTS.override.md"),
+            content,
+            &LintConfig::default(),
+        );
         let agm_005: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AGM-005").collect();
-        assert_eq!(agm_005.len(), 1, "AGENTS.override.md should get AGM-005 for unguarded hooks");
+        assert_eq!(
+            agm_005.len(),
+            1,
+            "AGENTS.override.md should get AGM-005 for unguarded hooks"
+        );
     }
 
     // ===== AGM-001: Valid Markdown Structure =====

@@ -22,7 +22,10 @@ impl Validator for CrossPlatformValidator {
         let mut diagnostics = Vec::new();
 
         let filename = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
-        let is_agents_md = matches!(filename, "AGENTS.md" | "AGENTS.local.md" | "AGENTS.override.md");
+        let is_agents_md = matches!(
+            filename,
+            "AGENTS.md" | "AGENTS.local.md" | "AGENTS.override.md"
+        );
 
         // XP-001: Claude-specific features in AGENTS.md (ERROR)
         // Only check AGENTS.md files - CLAUDE.md is allowed to have these features
@@ -165,8 +168,11 @@ agent: Explore
 ---
 Body"#;
         let validator = CrossPlatformValidator;
-        let diagnostics =
-            validator.validate(Path::new("CLAUDE.local.md"), content, &LintConfig::default());
+        let diagnostics = validator.validate(
+            Path::new("CLAUDE.local.md"),
+            content,
+            &LintConfig::default(),
+        );
 
         let xp_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XP-001").collect();
         assert!(
@@ -185,8 +191,11 @@ agent: Explore
 ---
 Body"#;
         let validator = CrossPlatformValidator;
-        let diagnostics =
-            validator.validate(Path::new("AGENTS.local.md"), content, &LintConfig::default());
+        let diagnostics = validator.validate(
+            Path::new("AGENTS.local.md"),
+            content,
+            &LintConfig::default(),
+        );
 
         let xp_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XP-001").collect();
         assert!(
@@ -203,8 +212,11 @@ Body"#;
   command: echo "test"
 "#;
         let validator = CrossPlatformValidator;
-        let diagnostics =
-            validator.validate(Path::new("AGENTS.override.md"), content, &LintConfig::default());
+        let diagnostics = validator.validate(
+            Path::new("AGENTS.override.md"),
+            content,
+            &LintConfig::default(),
+        );
 
         let xp_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XP-001").collect();
         assert!(
@@ -218,11 +230,18 @@ Body"#;
         // AGENTS.local.md should get XP-002 for structure issues
         let content = "Just plain text without any markdown headers.";
         let validator = CrossPlatformValidator;
-        let diagnostics =
-            validator.validate(Path::new("AGENTS.local.md"), content, &LintConfig::default());
+        let diagnostics = validator.validate(
+            Path::new("AGENTS.local.md"),
+            content,
+            &LintConfig::default(),
+        );
 
         let xp_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XP-002").collect();
-        assert_eq!(xp_002.len(), 1, "XP-002 should fire for AGENTS.local.md without headers");
+        assert_eq!(
+            xp_002.len(),
+            1,
+            "XP-002 should fire for AGENTS.local.md without headers"
+        );
     }
 
     #[test]
@@ -230,11 +249,18 @@ Body"#;
         // AGENTS.override.md should get XP-002 for structure issues
         let content = "Plain text only, no headers.";
         let validator = CrossPlatformValidator;
-        let diagnostics =
-            validator.validate(Path::new("AGENTS.override.md"), content, &LintConfig::default());
+        let diagnostics = validator.validate(
+            Path::new("AGENTS.override.md"),
+            content,
+            &LintConfig::default(),
+        );
 
         let xp_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XP-002").collect();
-        assert_eq!(xp_002.len(), 1, "XP-002 should fire for AGENTS.override.md without headers");
+        assert_eq!(
+            xp_002.len(),
+            1,
+            "XP-002 should fire for AGENTS.override.md without headers"
+        );
     }
 
     #[test]
