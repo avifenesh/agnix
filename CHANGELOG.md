@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - XML-002: Mismatched closing tag
   - XML-003: Unmatched closing tag
 - Individual XML rules can now be disabled via `disabled_rules` config
+- Test fixtures restructured for improved validator integration:
+  - Skills: Moved to subdirectory pattern (deep-reference/SKILL.md, missing-frontmatter/SKILL.md, windows-path/SKILL.md)
+  - MCP: Renamed with .mcp.json suffix for proper FileType detection
+  - Ensures validate_project() correctly identifies fixture types during integration tests
 
 ### Added
 - ValidatorRegistry API for custom validator registration in agnix-core
