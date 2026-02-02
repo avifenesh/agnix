@@ -2,7 +2,9 @@ use assert_cmd::Command;
 use predicates::prelude::*;
 
 fn agnix() -> Command {
-    assert_cmd::cargo::cargo_bin_cmd!("agnix")
+    let mut cmd = assert_cmd::cargo::cargo_bin_cmd!("agnix");
+    cmd.current_dir(workspace_root());
+    cmd
 }
 
 fn workspace_root() -> &'static std::path::Path {
@@ -57,7 +59,7 @@ exclude = [
 fn test_format_sarif_produces_valid_json() {
     let mut cmd = agnix();
     let assert = cmd
-        .arg(workspace_path("tests/fixtures/valid"))
+        .arg("tests/fixtures/valid")
         .arg("--format")
         .arg("sarif")
         .assert();
@@ -73,7 +75,7 @@ fn test_format_sarif_produces_valid_json() {
 fn test_format_sarif_contains_tool_info() {
     let mut cmd = agnix();
     let output = cmd
-        .arg(workspace_path("tests/fixtures/valid"))
+        .arg("tests/fixtures/valid")
         .arg("--format")
         .arg("sarif")
         .output()
@@ -90,7 +92,7 @@ fn test_format_sarif_contains_tool_info() {
 fn test_format_sarif_has_all_rules() {
     let mut cmd = agnix();
     let output = cmd
-        .arg(workspace_path("tests/fixtures/valid"))
+        .arg("tests/fixtures/valid")
         .arg("--format")
         .arg("sarif")
         .output()
@@ -108,7 +110,7 @@ fn test_format_sarif_has_all_rules() {
 #[test]
 fn test_format_sarif_exit_code_on_success() {
     let mut cmd = agnix();
-    cmd.arg(workspace_path("tests/fixtures/valid"))
+    cmd.arg("tests/fixtures/valid")
         .arg("--format")
         .arg("sarif")
         .assert()
@@ -118,7 +120,7 @@ fn test_format_sarif_exit_code_on_success() {
 #[test]
 fn test_format_text_is_default() {
     let mut cmd = agnix();
-    cmd.arg(workspace_path("tests/fixtures/valid"))
+    cmd.arg("tests/fixtures/valid")
         .assert()
         .success()
         .stdout(predicate::str::contains("\"version\"").not());
@@ -128,7 +130,7 @@ fn test_format_text_is_default() {
 fn test_format_sarif_results_array_exists() {
     let mut cmd = agnix();
     let output = cmd
-        .arg(workspace_path("tests/fixtures"))
+        .arg("tests/fixtures")
         .arg("--format")
         .arg("sarif")
         .output()
@@ -147,7 +149,7 @@ fn test_format_sarif_results_array_exists() {
 fn test_format_sarif_schema_url() {
     let mut cmd = agnix();
     let output = cmd
-        .arg(workspace_path("tests/fixtures/valid"))
+        .arg("tests/fixtures/valid")
         .arg("--format")
         .arg("sarif")
         .output()
@@ -180,7 +182,7 @@ fn test_help_shows_format_option() {
 fn test_format_json_produces_valid_json() {
     let mut cmd = agnix();
     let output = cmd
-        .arg(workspace_path("tests/fixtures/valid"))
+        .arg("tests/fixtures/valid")
         .arg("--format")
         .arg("json")
         .output()
@@ -201,7 +203,7 @@ fn test_format_json_produces_valid_json() {
 fn test_format_json_version_matches_cargo() {
     let mut cmd = agnix();
     let output = cmd
-        .arg(workspace_path("tests/fixtures/valid"))
+        .arg("tests/fixtures/valid")
         .arg("--format")
         .arg("json")
         .output()
@@ -222,7 +224,7 @@ fn test_format_json_version_matches_cargo() {
 fn test_format_json_summary_counts() {
     let mut cmd = agnix();
     let output = cmd
-        .arg(workspace_path("tests/fixtures/valid"))
+        .arg("tests/fixtures/valid")
         .arg("--format")
         .arg("json")
         .output()
@@ -244,7 +246,7 @@ fn test_format_json_summary_counts() {
 fn test_format_json_diagnostic_fields() {
     let mut cmd = agnix();
     let output = cmd
-        .arg(workspace_path("tests/fixtures"))
+        .arg("tests/fixtures")
         .arg("--format")
         .arg("json")
         .output()
@@ -374,7 +376,7 @@ fn test_format_json_strict_mode_no_warnings() {
     // Use a path that produces clean output
     let mut cmd = agnix();
     let output = cmd
-        .arg(workspace_path("tests/fixtures/valid/skills"))
+        .arg("tests/fixtures/valid/skills")
         .arg("--format")
         .arg("json")
         .arg("--strict")
@@ -399,7 +401,7 @@ fn test_format_json_strict_mode_no_warnings() {
 #[test]
 fn test_format_json_exit_code_on_success() {
     let mut cmd = agnix();
-    cmd.arg(workspace_path("tests/fixtures/valid"))
+    cmd.arg("tests/fixtures/valid")
         .arg("--format")
         .arg("json")
         .assert()
@@ -419,7 +421,7 @@ fn test_help_shows_json_format() {
 fn test_format_json_files_checked_count() {
     let mut cmd = agnix();
     let output = cmd
-        .arg(workspace_path("tests/fixtures/valid"))
+        .arg("tests/fixtures/valid")
         .arg("--format")
         .arg("json")
         .output()
@@ -440,7 +442,7 @@ fn test_format_json_files_checked_count() {
 fn test_format_json_forward_slashes_in_paths() {
     let mut cmd = agnix();
     let output = cmd
-        .arg(workspace_path("tests/fixtures"))
+        .arg("tests/fixtures")
         .arg("--format")
         .arg("json")
         .output()
@@ -466,9 +468,7 @@ fn test_cli_covers_hook_fixtures_via_cli_validation() {
 
     let mut cmd = agnix();
     let output = cmd
-        .arg(workspace_path(
-            "tests/fixtures/invalid/hooks/missing-command-field",
-        ))
+        .arg("tests/fixtures/invalid/hooks/missing-command-field")
         .arg("--format")
         .arg("json")
         .arg("--config")
@@ -485,26 +485,14 @@ fn test_cli_covers_hook_fixtures_via_cli_validation() {
     let json: serde_json::Value = serde_json::from_str(&stdout).unwrap();
 
     let diagnostics = json["diagnostics"].as_array().unwrap();
+    let has_cchk006 = diagnostics.iter().any(|d| {
+        d["rule"].as_str() == Some("CC-HK-006")
+            && d["file"].as_str()
+                == Some("tests/fixtures/invalid/hooks/missing-command-field/settings.json")
+    });
     assert!(
-        diagnostics
-            .iter()
-            .any(|d| d["rule"].as_str() == Some("CC-HK-006")),
-        "Expected CC-HK-006 in diagnostics, got: {}",
-        stdout
-    );
-
-    assert!(
-        diagnostics.iter().any(|d| {
-            d["rule"].as_str() == Some("CC-HK-006")
-                && d["file"]
-                    .as_str()
-                    .map(|file| {
-                        file == "settings.json"
-                            || file.ends_with("missing-command-field/settings.json")
-                    })
-                    .unwrap_or(false)
-        }),
-        "Expected CC-HK-006 for missing-command-field fixture, got: {}",
+        has_cchk006,
+        "Expected CC-HK-006 for missing-command-field settings.json, got: {}",
         stdout
     );
 }
