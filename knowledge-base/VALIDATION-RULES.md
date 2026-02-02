@@ -361,7 +361,7 @@
 
 <a id="cc-mem-004"></a>
 ### CC-MEM-004 [MEDIUM] Invalid Command Reference
-**Requirement**: npm scripts referenced MUST exist in package.json
+**Requirement**: npm scripts referenced SHOULD exist in package.json
 **Detection**: Extract `npm run <script>`, check package.json
 **Fix**: Show available scripts
 **Source**: awesome-slash/enhance-claude-memory
@@ -621,14 +621,14 @@
 
 <a id="pe-001"></a>
 ### PE-001 [MEDIUM] Lost in the Middle
-**Requirement**: Critical content MUST NOT be in middle 40-60%
+**Requirement**: Critical content SHOULD NOT be in middle 40-60%
 **Detection**: Find "critical|important|must" positions, check if in middle
 **Fix**: Move to start or end
 **Source**: Liu et al. (2023), "Lost in the Middle: How Language Models Use Long Contexts", TACL
 
 <a id="pe-002"></a>
 ### PE-002 [MEDIUM] Chain-of-Thought on Simple Task
-**Requirement**: Don't use "think step by step" for simple operations
+**Requirement**: SHOULD NOT use "think step by step" for simple operations
 **Detection**: Check for CoT phrases in simple skills (file reads, basic commands)
 **Fix**: Remove CoT instructions
 **Source**: Wei et al. (2022), research shows CoT hurts simple tasks
