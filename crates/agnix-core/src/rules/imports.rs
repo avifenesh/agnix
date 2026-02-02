@@ -237,6 +237,9 @@ fn get_imports_for_file(
     if !cache.contains_key(file_path) {
         let content = match content_override {
             Some(content) => content.to_string(),
+            // Silently skip files that can't be read (symlinks, too large, missing).
+            // This is intentional: import chains often reference optional/external files,
+            // and failing noisily on each would overwhelm the user.
             None => safe_read_file(file_path).ok()?,
         };
         let imports = extract_imports(&content);
