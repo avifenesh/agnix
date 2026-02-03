@@ -152,6 +152,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - 31 comprehensive unit tests for reference validation
 
 ### Fixed
+- Exclude glob patterns now match correctly when validate_project() is called with absolute paths (#67)
+  - Patterns like `target/**` previously failed to match when walker yielded absolute paths
+  - Added path normalization by stripping base path prefix before glob matching
 - PE-001 through PE-004 rules now properly dispatch on CLAUDE.md and AGENTS.md files (PromptValidator was implemented but not registered in ValidatorRegistry)
 
 ### Changed
