@@ -106,7 +106,13 @@ fn main() {
 
 fn validate_command(path: &Path, cli: &Cli) -> anyhow::Result<()> {
     let config_path = resolve_config_path(path, cli);
-    let mut config = LintConfig::load_or_default(config_path.as_ref());
+    let (mut config, config_warning) = LintConfig::load_or_default(config_path.as_ref());
+
+    // Display config warning before validation output
+    if let Some(warning) = config_warning {
+        eprintln!("{} {}", "Warning:".yellow().bold(), warning);
+        eprintln!();
+    }
     config.target = match cli.target.as_str() {
         "claude-code" => TargetTool::ClaudeCode,
         "cursor" => TargetTool::Cursor,

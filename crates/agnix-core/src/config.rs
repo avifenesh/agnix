@@ -177,9 +177,26 @@ impl LintConfig {
         Ok(config)
     }
 
-    /// Load config or use default
-    pub fn load_or_default(path: Option<&PathBuf>) -> Self {
-        path.and_then(|p| Self::load(p).ok()).unwrap_or_default()
+    /// Load config or use default, returning any parse warning
+    ///
+    /// Returns a tuple of (config, optional_warning). If the config file exists but
+    /// fails to parse, returns the default config with a warning message describing
+    /// the error. This prevents silent fallback to defaults on config typos.
+    pub fn load_or_default(path: Option<&PathBuf>) -> (Self, Option<String>) {
+        match path {
+            Some(p) => match Self::load(p) {
+                Ok(config) => (config, None),
+                Err(e) => {
+                    let warning = format!(
+                        "Failed to parse config '{}': {}. Using defaults.",
+                        p.display(),
+                        e
+                    );
+                    (Self::default(), Some(warning))
+                }
+            },
+            None => (Self::default(), None),
+        }
     }
 
     /// Set the runtime validation root directory (not persisted)
@@ -890,5 +907,72 @@ copilot = false
         assert!(!config.is_rule_enabled("COP-002"));
         assert!(!config.is_rule_enabled("COP-003"));
         assert!(!config.is_rule_enabled("COP-004"));
+    }
+
+    // ===== Config Load Warning Tests =====
+
+    #[test]
+    fn test_invalid_toml_returns_warning() {
+        let dir = tempfile::tempdir().unwrap();
+        let config_path = dir.path().join(".agnix.toml");
+        std::fs::write(&config_path, "this is not valid toml [[[").unwrap();
+
+        let (config, warning) = LintConfig::load_or_default(Some(&config_path));
+
+        // Should return default config
+        assert_eq!(config.target, TargetTool::Generic);
+        assert!(config.rules.skills);
+
+        // Should have a warning message
+        assert!(warning.is_some());
+        let msg = warning.unwrap();
+        assert!(msg.contains("Failed to parse config"));
+        assert!(msg.contains("Using defaults"));
+    }
+
+    #[test]
+    fn test_missing_config_no_warning() {
+        let (config, warning) = LintConfig::load_or_default(None);
+
+        assert_eq!(config.target, TargetTool::Generic);
+        assert!(warning.is_none());
+    }
+
+    #[test]
+    fn test_valid_config_no_warning() {
+        let dir = tempfile::tempdir().unwrap();
+        let config_path = dir.path().join(".agnix.toml");
+        std::fs::write(
+            &config_path,
+            r#"
+severity = "Warning"
+target = "ClaudeCode"
+exclude = []
+
+[rules]
+skills = false
+"#,
+        )
+        .unwrap();
+
+        let (config, warning) = LintConfig::load_or_default(Some(&config_path));
+
+        assert_eq!(config.target, TargetTool::ClaudeCode);
+        assert!(!config.rules.skills);
+        assert!(warning.is_none());
+    }
+
+    #[test]
+    fn test_nonexistent_config_file_returns_warning() {
+        let nonexistent = PathBuf::from("/nonexistent/path/.agnix.toml");
+        let (config, warning) = LintConfig::load_or_default(Some(&nonexistent));
+
+        // Should return default config
+        assert_eq!(config.target, TargetTool::Generic);
+
+        // Should have a warning about the missing file
+        assert!(warning.is_some());
+        let msg = warning.unwrap();
+        assert!(msg.contains("Failed to parse config"));
     }
 }
