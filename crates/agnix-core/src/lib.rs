@@ -1396,6 +1396,13 @@ Run npm install and npm build.
             "Expected MCP-003 from invalid-input-schema.mcp.json fixture"
         );
 
+        // invalid-jsonrpc-version.mcp.json should trigger MCP-001 (invalid jsonrpc)
+        assert!(
+            mcp_diagnostics.iter().any(|d| d.rule == "MCP-001"
+                && d.file.to_string_lossy().contains("invalid-jsonrpc-version")),
+            "Expected MCP-001 from invalid-jsonrpc-version.mcp.json fixture"
+        );
+
         // missing-consent.mcp.json should trigger MCP-005 (missing consent)
         assert!(
             mcp_diagnostics.iter().any(
@@ -1403,6 +1410,99 @@ Run npm install and npm build.
             ),
             "Expected MCP-005 from missing-consent.mcp.json fixture"
         );
+
+        // untrusted-annotations.mcp.json should trigger MCP-006 (untrusted annotations)
+        assert!(
+            mcp_diagnostics.iter().any(|d| d.rule == "MCP-006"
+                && d.file.to_string_lossy().contains("untrusted-annotations")),
+            "Expected MCP-006 from untrusted-annotations.mcp.json fixture"
+        );
+
+        // Verify AGM, XP, REF, and XML fixtures trigger expected rules
+        let expectations = [
+            (
+                "AGM-002",
+                "no-headers",
+                "Expected AGM-002 from agents_md/no-headers/AGENTS.md fixture",
+            ),
+            (
+                "XP-003",
+                "hard-coded",
+                "Expected XP-003 from cross_platform/hard-coded/AGENTS.md fixture",
+            ),
+            (
+                "REF-001",
+                "missing-import",
+                "Expected REF-001 from refs/missing-import.md fixture",
+            ),
+            (
+                "REF-002",
+                "broken-link",
+                "Expected REF-002 from refs/broken-link.md fixture",
+            ),
+            (
+                "XML-001",
+                "xml-001-unclosed",
+                "Expected XML-001 from xml/xml-001-unclosed.md fixture",
+            ),
+            (
+                "XML-002",
+                "xml-002-mismatch",
+                "Expected XML-002 from xml/xml-002-mismatch.md fixture",
+            ),
+            (
+                "XML-003",
+                "xml-003-unmatched",
+                "Expected XML-003 from xml/xml-003-unmatched.md fixture",
+            ),
+        ];
+
+        for (rule, file_part, message) in expectations {
+            assert!(
+                diagnostics
+                    .iter()
+                    .any(|d| { d.rule == rule && d.file.to_string_lossy().contains(file_part) }),
+                "{}",
+                message
+            );
+        }
+    }
+
+    #[test]
+    fn test_fixture_positive_cases_by_family() {
+        let fixtures_dir = get_fixtures_dir();
+        let config = LintConfig::default();
+
+        let temp = tempfile::TempDir::new().unwrap();
+        let pe_source = fixtures_dir.join("valid/pe/prompt-complete-valid.md");
+        let pe_content = std::fs::read_to_string(&pe_source)
+            .unwrap_or_else(|_| panic!("Failed to read {}", pe_source.display()));
+        let pe_path = temp.path().join("CLAUDE.md");
+        std::fs::write(&pe_path, pe_content).unwrap();
+
+        let mut cases = vec![
+            ("AGM-", fixtures_dir.join("agents_md/valid/AGENTS.md")),
+            ("XP-", fixtures_dir.join("cross_platform/valid/AGENTS.md")),
+            ("MCP-", fixtures_dir.join("mcp/valid-tool.mcp.json")),
+            ("REF-", fixtures_dir.join("refs/valid-links.md")),
+            ("XML-", fixtures_dir.join("xml/xml-valid.md")),
+        ];
+        cases.push(("PE-", pe_path));
+
+        for (prefix, path) in cases {
+            let diagnostics = validate_file(&path, &config).unwrap();
+            let family_diagnostics: Vec<_> = diagnostics
+                .iter()
+                .filter(|d| d.rule.starts_with(prefix))
+                .collect();
+
+            assert!(
+                family_diagnostics.is_empty(),
+                "Expected no {} diagnostics for fixture {}",
+                prefix,
+                path.display()
+            );
+        }
     }
 
     #[test]
