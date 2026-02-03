@@ -216,6 +216,9 @@ Use the official agnix GitHub Action for seamless CI/CD integration:
 | `verbose` | Verbose output | `false` |
 | `version` | agnix version to use | `latest` |
 | `build-from-source` | Build from source instead of downloading (requires Rust) | `false` |
+| `fail-on-error` | Fail if validation errors found (set false to check result output) | `true` |
+
+**Note:** The action requires `jq` for JSON parsing (pre-installed on GitHub-hosted runners).
 
 ### Action Outputs
 
@@ -266,7 +269,8 @@ Use the official agnix GitHub Action for seamless CI/CD integration:
 - name: Validate agent configs
   id: validate
   uses: avifenesh/agnix@v0.1.0
-  continue-on-error: true
+  with:
+    fail-on-error: 'false'
 
 - name: Check results
   if: steps.validate.outputs.errors > 0

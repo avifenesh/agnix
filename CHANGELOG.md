@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CLI `--target` flag now validates values instead of silently falling back to "generic"
   - Invalid values rejected with helpful error message showing valid options
   - Prevents configuration typos from going unnoticed
+- GitHub Action: Windows binary extension handling (.exe)
+- GitHub Action: Missing verbose flag in SARIF output re-run
+- GitHub Action: Document jq dependency and fail-on-error input in README
 - Config parse errors now display a warning instead of silently falling back to defaults
   - Invalid `.agnix.toml` files show clear error message with parse location
   - Validation continues with default config after displaying warning
@@ -46,6 +49,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Reject `--fix`, `--dry-run`, and `--fix-safe` when using JSON or SARIF output formats
 
 ### Security
+- GitHub Action: Validate version input format to prevent path traversal attacks
+- GitHub Action: Sanitize diagnostic messages in workflow commands to prevent injection
+- GitHub Action: Use authenticated GitHub API requests when token available (avoids rate limits)
 - Blocked @import paths that resolve outside the project root to prevent traversal
 - Hardened file reading with symlink rejection and size limits:
   - Added `FileSymlink` error to reject symlinks (prevents path traversal)

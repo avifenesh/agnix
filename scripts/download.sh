@@ -5,10 +5,21 @@ set -euo pipefail
 # Environment variables:
 #   AGNIX_VERSION - Version to download (default: latest)
 #   BUILD_FROM_SOURCE - Set to "true" to build from source instead of downloading
+#   GITHUB_TOKEN - Optional token for authenticated API requests (avoids rate limits)
 
 REPO="avifenesh/agnix"
 VERSION="${AGNIX_VERSION:-latest}"
 BUILD_FROM_SOURCE="${BUILD_FROM_SOURCE:-false}"
+
+# Validate version format to prevent path traversal attacks
+# Accepts: "latest" or semver like "v0.1.0" or "v0.1.0-beta"
+if [ "${VERSION}" != "latest" ]; then
+    if ! echo "${VERSION}" | grep -qE '^v[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$'; then
+        echo "Error: Invalid version format: ${VERSION}" >&2
+        echo "Expected: 'latest' or semver like 'v0.1.0'" >&2
+        exit 1
+    fi
+fi
 
 # Create bin directory
 BIN_DIR="${GITHUB_WORKSPACE:-$(pwd)}/.agnix-bin"
@@ -27,17 +38,17 @@ if [ "${BUILD_FROM_SOURCE}" = "true" ]; then
     # Build release binary
     cargo build --release --bin agnix
 
-    # Copy to bin directory
-    if [ -f "target/release/agnix" ]; then
-        cp "target/release/agnix" "${BIN_DIR}/"
-    elif [ -f "target/release/agnix.exe" ]; then
+    # Copy to bin directory (handle both Unix and Windows binaries)
+    if [ -f "target/release/agnix.exe" ]; then
         cp "target/release/agnix.exe" "${BIN_DIR}/"
+        chmod +x "${BIN_DIR}/agnix.exe" 2>/dev/null || true
+    elif [ -f "target/release/agnix" ]; then
+        cp "target/release/agnix" "${BIN_DIR}/"
+        chmod +x "${BIN_DIR}/agnix" 2>/dev/null || true
     else
         echo "Error: Could not find built binary" >&2
         exit 1
     fi
-
-    chmod +x "${BIN_DIR}/agnix" 2>/dev/null || true
     echo "${BIN_DIR}" >> "${GITHUB_PATH:-/dev/null}"
     echo "agnix built from source and installed to ${BIN_DIR}"
     exit 0
@@ -80,6 +91,7 @@ case "${OS}" in
     MINGW*|MSYS*|CYGWIN*|Windows_NT)
         TARGET="x86_64-pc-windows-msvc"
         EXT="zip"
+        BINARY_NAME="agnix.exe"
         ;;
     *)
         echo "Error: Unsupported OS: ${OS}" >&2
@@ -87,12 +99,19 @@ case "${OS}" in
         ;;
 esac
 
+# Set binary name (Windows uses .exe extension)
+BINARY_NAME="${BINARY_NAME:-agnix}"
 ARTIFACT_NAME="agnix-${TARGET}.${EXT}"
 
 # Resolve version
 if [ "${VERSION}" = "latest" ]; then
     echo "Fetching latest release version..."
-    VERSION=$(curl -sL "https://api.github.com/repos/${REPO}/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+    # Use GITHUB_TOKEN if available to avoid rate limits
+    CURL_OPTS=(-sL)
+    if [ -n "${GITHUB_TOKEN:-}" ]; then
+        CURL_OPTS+=(-H "Authorization: Bearer ${GITHUB_TOKEN}")
+    fi
+    VERSION=$(curl "${CURL_OPTS[@]}" "https://api.github.com/repos/${REPO}/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
     if [ -z "${VERSION}" ]; then
         echo "Error: Could not determine latest version. No releases found." >&2
         echo "Please ensure a release exists at https://github.com/${REPO}/releases" >&2
@@ -129,8 +148,8 @@ case "${EXT}" in
         ;;
 esac
 
-# Make executable
-chmod +x "${BIN_DIR}/agnix" 2>/dev/null || true
+# Make executable (use correct binary name for platform)
+chmod +x "${BIN_DIR}/${BINARY_NAME}" 2>/dev/null || true
 
 # Add to PATH for subsequent steps
 echo "${BIN_DIR}" >> "${GITHUB_PATH:-/dev/null}"

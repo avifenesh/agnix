@@ -9,6 +9,14 @@ set -euo pipefail
 #   INPUT_CONFIG  - Config file path
 #   INPUT_FORMAT  - Output format
 #   INPUT_VERBOSE - Verbose output
+#
+# Dependencies: jq (for JSON parsing)
+
+# Sanitize string for GitHub workflow commands
+# Escapes special characters that could be used for command injection
+sanitize_workflow_value() {
+    printf '%s' "$1" | sed 's/%/%25/g; s/\r/%0D/g; s/\n/%0A/g; s/:/%3A/g'
+}
 
 BIN_DIR="${GITHUB_WORKSPACE:-$(pwd)}/.agnix-bin"
 AGNIX="${BIN_DIR}/agnix"
@@ -74,17 +82,19 @@ fi
 
 # Generate GitHub annotations from diagnostics
 # Use tab delimiter to handle Windows paths that contain colons (e.g., C:/path)
+# Sanitize message content to prevent workflow command injection
 if echo "${OUTPUT}" | jq -e '.diagnostics' > /dev/null 2>&1; then
     echo "${OUTPUT}" | jq -r '.diagnostics[] | "\(.level)\t\(.file)\t\(.line)\t\(.column)\t\(.message) [\(.rule)]"' | while IFS=$'\t' read -r level file line col msg; do
+        safe_msg=$(sanitize_workflow_value "${msg}")
         case "${level}" in
             error)
-                echo "::error file=${file},line=${line},col=${col}::${msg}"
+                echo "::error file=${file},line=${line},col=${col}::${safe_msg}"
                 ;;
             warning)
-                echo "::warning file=${file},line=${line},col=${col}::${msg}"
+                echo "::warning file=${file},line=${line},col=${col}::${safe_msg}"
                 ;;
             info)
-                echo "::notice file=${file},line=${line},col=${col}::${msg}"
+                echo "::notice file=${file},line=${line},col=${col}::${safe_msg}"
                 ;;
         esac
     done
@@ -104,6 +114,9 @@ if [ "${ORIGINAL_FORMAT}" = "sarif" ]; then
     fi
     if [ -n "${INPUT_CONFIG:-}" ]; then
         SARIF_ARGS+=("--config" "${INPUT_CONFIG}")
+    fi
+    if [ "${INPUT_VERBOSE:-false}" = "true" ]; then
+        SARIF_ARGS+=("--verbose")
     fi
     SARIF_ARGS+=("--format" "sarif")
 

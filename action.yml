@@ -67,6 +67,7 @@ runs:
         ACTION_PATH: ${{ github.action_path }}
         AGNIX_VERSION: ${{ inputs.version }}
         BUILD_FROM_SOURCE: ${{ inputs.build-from-source }}
+        GITHUB_TOKEN: ${{ github.token }}
 
     - name: Run agnix
       id: agnix
