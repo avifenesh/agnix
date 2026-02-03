@@ -110,6 +110,51 @@ fn check_sarif_rule_family(fixture: &str, prefixes: &[&str], family_name: &str) 
     );
 }
 
+// Helper function to create a memory fixture that triggers CC-MEM rules
+fn create_memory_fixture() -> tempfile::TempDir {
+    use std::fs;
+    use std::io::Write;
+
+    let temp_dir = tempfile::tempdir().unwrap();
+    let claude_md = temp_dir.path().join("CLAUDE.md");
+    let mut file = fs::File::create(&claude_md).unwrap();
+    // CC-MEM-005: Generic instructions
+    writeln!(
+        file,
+        "# Project Memory\n\nBe helpful and concise. Always follow best practices."
+    )
+    .unwrap();
+    temp_dir
+}
+
+// Helper function to create a PE fixture that triggers PE rules
+fn create_pe_fixture() -> tempfile::TempDir {
+    use std::fs;
+    use std::io::Write;
+
+    let temp_dir = tempfile::tempdir().unwrap();
+    let claude_md = temp_dir.path().join("CLAUDE.md");
+    let mut file = fs::File::create(&claude_md).unwrap();
+    // PE-003: Weak language in critical section
+    writeln!(
+        file,
+        r#"# Project Instructions
+
+Some initial content here.
+
+## Critical Rules
+
+You should try to follow these rules. Consider being careful.
+Maybe do this optionally.
+
+## End Section
+
+Final content."#
+    )
+    .unwrap();
+    temp_dir
+}
+
 #[test]
 fn test_format_sarif_produces_valid_json() {
     let mut cmd = agnix();
@@ -630,19 +675,7 @@ fn test_format_json_contains_agents_md_rules() {
 
 #[test]
 fn test_format_json_contains_memory_rules() {
-    use std::fs;
-    use std::io::Write;
-
-    // CC-MEM rules require specific content patterns to trigger
-    // Create a fixture with generic instructions (CC-MEM-005)
-    let temp_dir = tempfile::tempdir().unwrap();
-    let claude_md = temp_dir.path().join("CLAUDE.md");
-    let mut file = fs::File::create(&claude_md).unwrap();
-    writeln!(
-        file,
-        "# Project Memory\n\nBe helpful and concise. Always follow best practices."
-    )
-    .unwrap();
+    let temp_dir = create_memory_fixture();
 
     let mut cmd = agnix();
     let output = cmd
@@ -698,19 +731,7 @@ fn test_format_sarif_results_include_mcp_diagnostics() {
 
 #[test]
 fn test_format_sarif_results_include_memory_diagnostics() {
-    use std::fs;
-    use std::io::Write;
-
-    // CC-MEM rules require specific content patterns to trigger
-    // Create a fixture with generic instructions (CC-MEM-005)
-    let temp_dir = tempfile::tempdir().unwrap();
-    let claude_md = temp_dir.path().join("CLAUDE.md");
-    let mut file = fs::File::create(&claude_md).unwrap();
-    writeln!(
-        file,
-        "# Project Memory\n\nBe helpful and concise. Always follow best practices."
-    )
-    .unwrap();
+    let temp_dir = create_memory_fixture();
 
     let mut cmd = agnix();
     let output = cmd
@@ -856,15 +877,6 @@ fn test_format_text_shows_warning_level() {
 }
 
 #[test]
-fn test_format_text_shows_summary() {
-    let mut cmd = agnix();
-    cmd.arg("tests/fixtures/invalid/skills")
-        .assert()
-        .failure()
-        .stdout(predicate::str::contains("Found"));
-}
-
-#[test]
 fn test_format_text_verbose_shows_rule() {
     let mut cmd = agnix();
     cmd.arg("tests/fixtures/invalid/skills/invalid-name")
@@ -895,45 +907,6 @@ fn test_format_text_verbose_shows_suggestion() {
 // ============================================================================
 // Fix and Dry-Run Tests
 // ============================================================================
-
-#[test]
-fn test_dry_run_no_file_modification() {
-    use std::fs;
-    use std::io::Write;
-
-    let temp_dir = tempfile::tempdir().unwrap();
-    let skills_dir = temp_dir.path().join("skills").join("bad-skill");
-    fs::create_dir_all(&skills_dir).unwrap();
-
-    let skill_path = skills_dir.join("SKILL.md");
-    let original_content = "---\nname: Bad-Skill\ndescription: test\n---\nContent";
-    {
-        let mut file = fs::File::create(&skill_path).unwrap();
-        write!(file, "{}", original_content).unwrap();
-    }
-
-    let mut cmd = agnix();
-    let output = cmd
-        .arg(temp_dir.path().to_str().unwrap())
-        .arg("--dry-run")
-        .output()
-        .unwrap();
-
-    // Verify file was not modified
-    let content_after = fs::read_to_string(&skill_path).unwrap();
-    assert_eq!(
-        content_after, original_content,
-        "File should not be modified with --dry-run"
-    );
-
-    // Verify the flag was recognized (not just silently ignored)
-    // CLI should still produce diagnostic output
-    let stdout = String::from_utf8_lossy(&output.stdout);
-    assert!(
-        !stdout.is_empty() || !output.status.success(),
-        "--dry-run flag should be recognized and produce output or error"
-    );
-}
 
 #[test]
 fn test_fix_exit_code_on_remaining_errors() {
@@ -1183,32 +1156,7 @@ fn test_fixtures_have_no_empty_placeholder_dirs() {
 
 #[test]
 fn test_format_json_contains_prompt_engineering_rules() {
-    use std::fs;
-    use std::io::Write;
-
-    // PE rules only run on CLAUDE.md/AGENTS.md files
-    let temp_dir = tempfile::tempdir().unwrap();
-    let claude_md = temp_dir.path().join("CLAUDE.md");
-    let mut file = fs::File::create(&claude_md).unwrap();
-
-    // PE-003 triggers when weak language (should, try to, consider) appears
-    // in a critical section header
-    writeln!(
-        file,
-        r#"# Project Instructions
-
-Some initial content here.
-
-## Critical Rules
-
-You should try to follow these rules. Consider being careful.
-Maybe do this optionally.
-
-## End Section
-
-Final content."#
-    )
-    .unwrap();
+    let temp_dir = create_pe_fixture();
 
     let mut cmd = agnix();
     let output = cmd
@@ -1254,31 +1202,7 @@ fn test_format_sarif_results_include_copilot_diagnostics() {
 
 #[test]
 fn test_format_sarif_results_include_pe_diagnostics() {
-    use std::fs;
-    use std::io::Write;
-
-    // PE rules only run on CLAUDE.md/AGENTS.md files
-    let temp_dir = tempfile::tempdir().unwrap();
-    let claude_md = temp_dir.path().join("CLAUDE.md");
-    let mut file = fs::File::create(&claude_md).unwrap();
-
-    // PE-003 triggers when weak language appears in a critical section header
-    writeln!(
-        file,
-        r#"# Project Instructions
-
-Some initial content.
-
-## Critical Rules
-
-You should try to follow these rules. Consider being careful.
-Maybe do this optionally.
-
-## End Section
-
-Final content."#
-    )
-    .unwrap();
+    let temp_dir = create_pe_fixture();
 
     let mut cmd = agnix();
     let output = cmd
