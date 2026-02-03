@@ -367,8 +367,8 @@ fn init_command(output: &PathBuf) -> anyhow::Result<()> {
     std::fs::write(output, toml_content)?;
 
     println!(
-        "{} Created config file: {}",
-        "✓".green().bold(),
+        "{} {}",
+        "Created:".green().bold(),
         output.display()
     );
 
