@@ -1,0 +1,578 @@
+{
+  "version": "1.0.0",
+  "total_rules": 84,
+  "last_updated": "2026-01-31",
+  "rules": [
+    {
+      "id": "AS-001",
+      "name": "Missing Frontmatter",
+      "severity": "HIGH",
+      "category": "agent-skills"
+    },
+    {
+      "id": "AS-002",
+      "name": "Missing Required Field: name",
+      "severity": "HIGH",
+      "category": "agent-skills"
+    },
+    {
+      "id": "AS-003",
+      "name": "Missing Required Field: description",
+      "severity": "HIGH",
+      "category": "agent-skills"
+    },
+    {
+      "id": "AS-004",
+      "name": "Invalid Name Format",
+      "severity": "HIGH",
+      "category": "agent-skills"
+    },
+    {
+      "id": "AS-005",
+      "name": "Name Starts/Ends with Hyphen",
+      "severity": "HIGH",
+      "category": "agent-skills"
+    },
+    {
+      "id": "AS-006",
+      "name": "Consecutive Hyphens in Name",
+      "severity": "HIGH",
+      "category": "agent-skills"
+    },
+    {
+      "id": "AS-007",
+      "name": "Reserved Name",
+      "severity": "HIGH",
+      "category": "agent-skills"
+    },
+    {
+      "id": "AS-008",
+      "name": "Description Too Short",
+      "severity": "HIGH",
+      "category": "agent-skills"
+    },
+    {
+      "id": "AS-009",
+      "name": "Description Contains XML",
+      "severity": "HIGH",
+      "category": "agent-skills"
+    },
+    {
+      "id": "AS-010",
+      "name": "Missing Trigger Phrase",
+      "severity": "MEDIUM",
+      "category": "agent-skills"
+    },
+    {
+      "id": "AS-011",
+      "name": "Compatibility Too Long",
+      "severity": "HIGH",
+      "category": "agent-skills"
+    },
+    {
+      "id": "AS-012",
+      "name": "Content Exceeds 500 Lines",
+      "severity": "MEDIUM",
+      "category": "agent-skills"
+    },
+    {
+      "id": "AS-013",
+      "name": "File Reference Too Deep",
+      "severity": "HIGH",
+      "category": "agent-skills"
+    },
+    {
+      "id": "AS-014",
+      "name": "Windows Path Separator",
+      "severity": "HIGH",
+      "category": "agent-skills"
+    },
+    {
+      "id": "AS-015",
+      "name": "Upload Size Exceeds 8MB",
+      "severity": "HIGH",
+      "category": "agent-skills"
+    },
+    {
+      "id": "CC-SK-001",
+      "name": "Invalid Model Value",
+      "severity": "HIGH",
+      "category": "claude-skills"
+    },
+    {
+      "id": "CC-SK-002",
+      "name": "Invalid Context Value",
+      "severity": "HIGH",
+      "category": "claude-skills"
+    },
+    {
+      "id": "CC-SK-003",
+      "name": "Context Without Agent",
+      "severity": "HIGH",
+      "category": "claude-skills"
+    },
+    {
+      "id": "CC-SK-004",
+      "name": "Agent Without Context",
+      "severity": "HIGH",
+      "category": "claude-skills"
+    },
+    {
+      "id": "CC-SK-005",
+      "name": "Invalid Agent Type",
+      "severity": "HIGH",
+      "category": "claude-skills"
+    },
+    {
+      "id": "CC-SK-006",
+      "name": "Dangerous Auto-Invocation",
+      "severity": "HIGH",
+      "category": "claude-skills"
+    },
+    {
+      "id": "CC-SK-007",
+      "name": "Unrestricted Bash",
+      "severity": "HIGH",
+      "category": "claude-skills"
+    },
+    {
+      "id": "CC-SK-008",
+      "name": "Unknown Tool Name",
+      "severity": "HIGH",
+      "category": "claude-skills"
+    },
+    {
+      "id": "CC-SK-009",
+      "name": "Too Many Injections",
+      "severity": "MEDIUM",
+      "category": "claude-skills"
+    },
+    {
+      "id": "CC-HK-001",
+      "name": "Invalid Hook Event",
+      "severity": "HIGH",
+      "category": "claude-hooks"
+    },
+    {
+      "id": "CC-HK-002",
+      "name": "Prompt Hook on Wrong Event",
+      "severity": "HIGH",
+      "category": "claude-hooks"
+    },
+    {
+      "id": "CC-HK-003",
+      "name": "Missing Matcher for Tool Events",
+      "severity": "HIGH",
+      "category": "claude-hooks"
+    },
+    {
+      "id": "CC-HK-004",
+      "name": "Matcher on Non-Tool Event",
+      "severity": "HIGH",
+      "category": "claude-hooks"
+    },
+    {
+      "id": "CC-HK-005",
+      "name": "Missing Type Field",
+      "severity": "HIGH",
+      "category": "claude-hooks"
+    },
+    {
+      "id": "CC-HK-006",
+      "name": "Missing Command Field",
+      "severity": "HIGH",
+      "category": "claude-hooks"
+    },
+    {
+      "id": "CC-HK-007",
+      "name": "Missing Prompt Field",
+      "severity": "HIGH",
+      "category": "claude-hooks"
+    },
+    {
+      "id": "CC-HK-008",
+      "name": "Script File Not Found",
+      "severity": "HIGH",
+      "category": "claude-hooks"
+    },
+    {
+      "id": "CC-HK-009",
+      "name": "Dangerous Command Pattern",
+      "severity": "HIGH",
+      "category": "claude-hooks"
+    },
+    {
+      "id": "CC-HK-010",
+      "name": "Timeout Policy",
+      "severity": "MEDIUM",
+      "category": "claude-hooks"
+    },
+    {
+      "id": "CC-HK-011",
+      "name": "Invalid Timeout Value",
+      "severity": "HIGH",
+      "category": "claude-hooks"
+    },
+    {
+      "id": "CC-AG-001",
+      "name": "Missing Name Field",
+      "severity": "HIGH",
+      "category": "claude-agents"
+    },
+    {
+      "id": "CC-AG-002",
+      "name": "Missing Description Field",
+      "severity": "HIGH",
+      "category": "claude-agents"
+    },
+    {
+      "id": "CC-AG-003",
+      "name": "Invalid Model Value",
+      "severity": "HIGH",
+      "category": "claude-agents"
+    },
+    {
+      "id": "CC-AG-004",
+      "name": "Invalid Permission Mode",
+      "severity": "HIGH",
+      "category": "claude-agents"
+    },
+    {
+      "id": "CC-AG-005",
+      "name": "Referenced Skill Not Found",
+      "severity": "HIGH",
+      "category": "claude-agents"
+    },
+    {
+      "id": "CC-AG-006",
+      "name": "Tool/Disallowed Conflict",
+      "severity": "HIGH",
+      "category": "claude-agents"
+    },
+    {
+      "id": "CC-MEM-001",
+      "name": "Invalid Import Path",
+      "severity": "HIGH",
+      "category": "claude-memory"
+    },
+    {
+      "id": "CC-MEM-002",
+      "name": "Circular Import",
+      "severity": "HIGH",
+      "category": "claude-memory"
+    },
+    {
+      "id": "CC-MEM-003",
+      "name": "Import Depth Exceeds 5",
+      "severity": "HIGH",
+      "category": "claude-memory"
+    },
+    {
+      "id": "CC-MEM-004",
+      "name": "Invalid Command Reference",
+      "severity": "MEDIUM",
+      "category": "claude-memory"
+    },
+    {
+      "id": "CC-MEM-005",
+      "name": "Generic Instruction",
+      "severity": "HIGH",
+      "category": "claude-memory"
+    },
+    {
+      "id": "CC-MEM-006",
+      "name": "Negative Without Positive",
+      "severity": "HIGH",
+      "category": "claude-memory"
+    },
+    {
+      "id": "CC-MEM-007",
+      "name": "Weak Constraint Language",
+      "severity": "HIGH",
+      "category": "claude-memory"
+    },
+    {
+      "id": "CC-MEM-008",
+      "name": "Critical Content in Middle",
+      "severity": "HIGH",
+      "category": "claude-memory"
+    },
+    {
+      "id": "CC-MEM-009",
+      "name": "Token Count Exceeded",
+      "severity": "MEDIUM",
+      "category": "claude-memory"
+    },
+    {
+      "id": "CC-MEM-010",
+      "name": "README Duplication",
+      "severity": "MEDIUM",
+      "category": "claude-memory"
+    },
+    {
+      "id": "AGM-001",
+      "name": "Valid Markdown Structure",
+      "severity": "HIGH",
+      "category": "agents-md"
+    },
+    {
+      "id": "AGM-002",
+      "name": "Missing Section Headers",
+      "severity": "MEDIUM",
+      "category": "agents-md"
+    },
+    {
+      "id": "AGM-003",
+      "name": "Character Limit (Windsurf)",
+      "severity": "MEDIUM",
+      "category": "agents-md"
+    },
+    {
+      "id": "AGM-004",
+      "name": "Missing Project Context",
+      "severity": "MEDIUM",
+      "category": "agents-md"
+    },
+    {
+      "id": "AGM-005",
+      "name": "Platform-Specific Features Without Guard",
+      "severity": "MEDIUM",
+      "category": "agents-md"
+    },
+    {
+      "id": "AGM-006",
+      "name": "Nested AGENTS.md Hierarchy",
+      "severity": "MEDIUM",
+      "category": "agents-md"
+    },
+    {
+      "id": "CC-PL-001",
+      "name": "Plugin Manifest Not in .claude-plugin/",
+      "severity": "HIGH",
+      "category": "claude-plugins"
+    },
+    {
+      "id": "CC-PL-002",
+      "name": "Components in .claude-plugin/",
+      "severity": "HIGH",
+      "category": "claude-plugins"
+    },
+    {
+      "id": "CC-PL-003",
+      "name": "Invalid Semver",
+      "severity": "HIGH",
+      "category": "claude-plugins"
+    },
+    {
+      "id": "CC-PL-004",
+      "name": "Missing Required Plugin Field",
+      "severity": "HIGH",
+      "category": "claude-plugins"
+    },
+    {
+      "id": "CC-PL-005",
+      "name": "Empty Plugin Name",
+      "severity": "HIGH",
+      "category": "claude-plugins"
+    },
+    {
+      "id": "MCP-001",
+      "name": "Invalid JSON-RPC Version",
+      "severity": "HIGH",
+      "category": "mcp"
+    },
+    {
+      "id": "MCP-002",
+      "name": "Missing Required Tool Field",
+      "severity": "HIGH",
+      "category": "mcp"
+    },
+    {
+      "id": "MCP-003",
+      "name": "Invalid JSON Schema",
+      "severity": "HIGH",
+      "category": "mcp"
+    },
+    {
+      "id": "MCP-004",
+      "name": "Missing Tool Description",
+      "severity": "HIGH",
+      "category": "mcp"
+    },
+    {
+      "id": "MCP-005",
+      "name": "Tool Without User Consent",
+      "severity": "HIGH",
+      "category": "mcp"
+    },
+    {
+      "id": "MCP-006",
+      "name": "Untrusted Annotations",
+      "severity": "HIGH",
+      "category": "mcp"
+    },
+    {
+      "id": "COP-001",
+      "name": "Empty Copilot Instruction File",
+      "severity": "HIGH",
+      "category": "copilot"
+    },
+    {
+      "id": "COP-002",
+      "name": "Invalid Frontmatter in Scoped Instructions",
+      "severity": "HIGH",
+      "category": "copilot"
+    },
+    {
+      "id": "COP-003",
+      "name": "Invalid Glob Pattern in applyTo",
+      "severity": "HIGH",
+      "category": "copilot"
+    },
+    {
+      "id": "COP-004",
+      "name": "Unknown Frontmatter Keys",
+      "severity": "MEDIUM",
+      "category": "copilot"
+    },
+    {
+      "id": "XML-001",
+      "name": "Unclosed XML Tag",
+      "severity": "HIGH",
+      "category": "xml"
+    },
+    {
+      "id": "XML-002",
+      "name": "Mismatched Closing Tag",
+      "severity": "HIGH",
+      "category": "xml"
+    },
+    {
+      "id": "XML-003",
+      "name": "Unmatched Closing Tag",
+      "severity": "HIGH",
+      "category": "xml"
+    },
+    {
+      "id": "REF-001",
+      "name": "Import File Not Found",
+      "severity": "HIGH",
+      "category": "references"
+    },
+    {
+      "id": "REF-002",
+      "name": "Broken Markdown Link",
+      "severity": "HIGH",
+      "category": "references"
+    },
+    {
+      "id": "PE-001",
+      "name": "Lost in the Middle",
+      "severity": "MEDIUM",
+      "category": "prompt-engineering"
+    },
+    {
+      "id": "PE-002",
+      "name": "Chain-of-Thought on Simple Task",
+      "severity": "MEDIUM",
+      "category": "prompt-engineering"
+    },
+    {
+      "id": "PE-003",
+      "name": "Weak Imperative Language",
+      "severity": "MEDIUM",
+      "category": "prompt-engineering"
+    },
+    {
+      "id": "PE-004",
+      "name": "Ambiguous Instructions",
+      "severity": "MEDIUM",
+      "category": "prompt-engineering"
+    },
+    {
+      "id": "XP-001",
+      "name": "Platform-Specific Feature in Generic Config",
+      "severity": "HIGH",
+      "category": "cross-platform"
+    },
+    {
+      "id": "XP-002",
+      "name": "AGENTS.md Platform Compatibility",
+      "severity": "HIGH",
+      "category": "cross-platform"
+    },
+    {
+      "id": "XP-003",
+      "name": "Hard-Coded Platform Paths",
+      "severity": "HIGH",
+      "category": "cross-platform"
+    }
+  ],
+  "categories": {
+    "agent-skills": {
+      "prefix": "AS",
+      "count": 15,
+      "description": "Agent Skills specification rules"
+    },
+    "claude-skills": {
+      "prefix": "CC-SK",
+      "count": 9,
+      "description": "Claude Code Skills rules"
+    },
+    "claude-hooks": {
+      "prefix": "CC-HK",
+      "count": 11,
+      "description": "Claude Code Hooks rules"
+    },
+    "claude-agents": {
+      "prefix": "CC-AG",
+      "count": 6,
+      "description": "Claude Code Subagents rules"
+    },
+    "claude-memory": {
+      "prefix": "CC-MEM",
+      "count": 10,
+      "description": "Claude Code Memory rules"
+    },
+    "agents-md": {
+      "prefix": "AGM",
+      "count": 6,
+      "description": "AGENTS.md cross-platform rules"
+    },
+    "claude-plugins": {
+      "prefix": "CC-PL",
+      "count": 5,
+      "description": "Claude Code Plugins rules"
+    },
+    "mcp": {
+      "prefix": "MCP",
+      "count": 6,
+      "description": "Model Context Protocol rules"
+    },
+    "copilot": {
+      "prefix": "COP",
+      "count": 4,
+      "description": "GitHub Copilot rules"
+    },
+    "xml": {
+      "prefix": "XML",
+      "count": 3,
+      "description": "XML validation rules"
+    },
+    "references": {
+      "prefix": "REF",
+      "count": 2,
+      "description": "Reference/import validation rules"
+    },
+    "prompt-engineering": {
+      "prefix": "PE",
+      "count": 4,
+      "description": "Prompt engineering rules"
+    },
+    "cross-platform": {
+      "prefix": "XP",
+      "count": 3,
+      "description": "Cross-platform compatibility rules"
+    }
+  }
+}
