@@ -169,9 +169,6 @@ fn scan_fixtures_for_coverage() -> HashMap<String, Vec<String>> {
             let path = entry.path();
 
             if path.is_dir() {
-                // Check directory name for rule references
-                let dir_name = path.file_name().unwrap().to_string_lossy();
-
                 scan_dir_recursive(&path, re, coverage, dir_to_rules);
             } else if path.is_file() {
                 // Check file content for explicit rule references
