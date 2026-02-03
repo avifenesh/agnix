@@ -1,4 +1,5 @@
 {
+  "description": "Machine-readable source of truth for all validation rules. When adding a new rule, add it here AND in VALIDATION-RULES.md. CI parity tests enforce sync.",
   "version": "1.0.0",
   "total_rules": 84,
   "last_updated": "2026-01-31",

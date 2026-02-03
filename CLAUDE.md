@@ -13,7 +13,7 @@
 ## Critical Rules
 
 1. **Rust workspace** - agnix-core (lib) + agnix-cli (binary)
-2. **Knowledge base is source of truth** - Rules in `knowledge-base/VALIDATION-RULES.md`
+2. **rules.json is source of truth** - `knowledge-base/rules.json` is the machine-readable source of truth. When adding a new rule, add it to BOTH `rules.json` AND `VALIDATION-RULES.md`. CI parity tests enforce this.
 3. **Plain text output** - No emojis, no ASCII art
 4. **Certainty filtering** - HIGH (>95%), MEDIUM (75-95%), LOW (<75%)
 5. **Single binary** - Compile with LTO, strip symbols,
@@ -46,9 +46,13 @@ cargo run --bin agnix -- .  # Run CLI
 
 ## Rules Reference
 
-84 rules in `knowledge-base/VALIDATION-RULES.md`
+84 rules defined in `knowledge-base/rules.json` (source of truth)
+
+Human-readable docs: `knowledge-base/VALIDATION-RULES.md`
 
 Format: `[CATEGORY]-[NUMBER]` (AS-004, CC-HK-001, etc.)
+
+**Adding a new rule**: Add to BOTH `rules.json` AND `VALIDATION-RULES.md`. CI parity tests will fail if they drift.
 
 ## Current State
 
