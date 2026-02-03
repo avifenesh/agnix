@@ -18,7 +18,6 @@ pulldown-cmark.workspace = true
 regex.workspace = true
 ignore.workspace = true
 glob.workspace = true
-miette.workspace = true
 rayon.workspace = true
 dirs = "5"
 toml = "0.8"

@@ -1,8 +1,5 @@
 //! Diagnostic types and error reporting
 
-#![allow(unused_assignments)] // LintError fields used by miette derive macros
-
-use miette::{Diagnostic as MietteDiagnostic, SourceSpan};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use thiserror::Error;
@@ -158,7 +155,7 @@ impl Diagnostic {
 }
 
 /// Linter errors
-#[derive(Error, Debug, MietteDiagnostic)]
+#[derive(Error, Debug)]
 pub enum LintError {
     #[error("Failed to read file: {path}")]
     FileRead {
@@ -175,17 +172,9 @@ pub enum LintError {
     },
 
     #[error("Refusing to read symlink: {path}")]
-    #[diagnostic(
-        code(agnix::file_symlink),
-        help("Symlinks are not supported for security reasons")
-    )]
     FileSymlink { path: PathBuf },
 
     #[error("File too large: {path} ({size} bytes, limit {limit} bytes)")]
-    #[diagnostic(
-        code(agnix::file_too_big),
-        help("Files larger than the configured size limit are not supported")
-    )]
     FileTooBig {
         path: PathBuf,
         size: u64,
@@ -193,104 +182,7 @@ pub enum LintError {
     },
 
     #[error("Not a regular file: {path}")]
-    #[diagnostic(
-        code(agnix::file_not_regular),
-        help("Only regular files are supported (not directories, FIFOs, or device nodes)")
-    )]
     FileNotRegular { path: PathBuf },
-
-    #[error("Failed to parse YAML frontmatter")]
-    #[diagnostic(code(agnix::yaml_parse), help("Check YAML syntax between --- markers"))]
-    YamlParse {
-        #[source_code]
-        src: String,
-        #[label("Parse error here")]
-        span: SourceSpan,
-        #[source]
-        source: serde_yaml::Error,
-    },
-
-    #[error("Failed to parse JSON")]
-    #[diagnostic(code(agnix::json_parse), help("Check JSON syntax"))]
-    JsonParse {
-        #[source_code]
-        src: String,
-        #[label("Parse error here")]
-        span: SourceSpan,
-        #[source]
-        source: serde_json::Error,
-    },
-
-    #[error("Generic instruction detected")]
-    #[diagnostic(
-        code(agnix::generic_instruction),
-        help("Remove generic instructions. Claude already knows to be helpful.")
-    )]
-    GenericInstruction {
-        #[source_code]
-        src: String,
-        #[label("This instruction is redundant")]
-        span: SourceSpan,
-    },
-
-    #[error("Invalid skill name: {name}")]
-    #[diagnostic(
-        code(agnix::invalid_name),
-        help("Use lowercase letters and hyphens only (e.g., 'code-review')")
-    )]
-    InvalidName {
-        name: String,
-        #[source_code]
-        src: String,
-        #[label("Must be lowercase with hyphens")]
-        span: SourceSpan,
-    },
-
-    #[error("Missing required field: {field}")]
-    #[diagnostic(code(agnix::missing_field))]
-    MissingField {
-        field: String,
-        #[source_code]
-        src: String,
-        #[label("Add '{field}' field here")]
-        span: SourceSpan,
-    },
-
-    #[error("XML tag mismatch")]
-    #[diagnostic(
-        code(agnix::xml_mismatch),
-        help("Ensure all XML tags are properly closed")
-    )]
-    XmlMismatch {
-        #[source_code]
-        src: String,
-        #[label("Unclosed or mismatched tag")]
-        span: SourceSpan,
-        open_tag: String,
-    },
-
-    #[error("Import not found: {path}")]
-    #[diagnostic(code(agnix::import_not_found), help("Check the file path exists"))]
-    ImportNotFound {
-        path: String,
-        #[source_code]
-        src: String,
-        #[label("File not found")]
-        span: SourceSpan,
-    },
-
-    #[error("Unknown tool: {tool}")]
-    #[diagnostic(
-        code(agnix::unknown_tool),
-        help("Check valid tool names for your target")
-    )]
-    UnknownTool {
-        tool: String,
-        #[source_code]
-        src: String,
-        #[label("Unknown tool")]
-        span: SourceSpan,
-    },
 
     #[error(transparent)]
     Other(anyhow::Error),
