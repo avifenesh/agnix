@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - All variants are validated with the same rules as their base files
 
 ### Security
+- Blocked @import paths that resolve outside the project root to prevent traversal
 - Hardened file reading with symlink rejection and size limits:
   - Added `FileSymlink` error to reject symlinks (prevents path traversal)
   - Added `FileTooBig` error for files exceeding 1 MiB (prevents DoS)

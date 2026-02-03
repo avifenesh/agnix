@@ -661,9 +661,9 @@ mod tests {
         let validator = ImportsValidator;
         let diagnostics = validator.validate(&file_path, "See @../../outside.md", &config);
 
-        assert!(diagnostics.iter().any(|d| {
-            d.rule == "CC-MEM-001" && d.message.contains("escapes project root")
-        }));
+        assert!(diagnostics
+            .iter()
+            .any(|d| { d.rule == "CC-MEM-001" && d.message.contains("escapes project root") }));
     }
 
     // ===== Helper Function Tests =====
