@@ -735,6 +735,95 @@ fn test_format_json_contains_agents_md_rules() {
     );
 }
 
+#[test]
+fn test_format_json_contains_memory_rules() {
+    use std::fs;
+    use std::io::Write;
+
+    // CC-MEM rules require specific content patterns to trigger
+    // Create a fixture with generic instructions (CC-MEM-005)
+    let temp_dir = tempfile::tempdir().unwrap();
+    let claude_md = temp_dir.path().join("CLAUDE.md");
+    let mut file = fs::File::create(&claude_md).unwrap();
+    writeln!(
+        file,
+        "# Project Memory\n\nBe helpful and concise. Always follow best practices."
+    )
+    .unwrap();
+
+    let mut cmd = agnix();
+    let output = cmd
+        .arg(temp_dir.path().to_str().unwrap())
+        .arg("--format")
+        .arg("json")
+        .output()
+        .unwrap();
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let json: serde_json::Value = serde_json::from_str(&stdout).unwrap();
+    let diagnostics = json["diagnostics"].as_array().unwrap();
+
+    let has_memory_rule = diagnostics
+        .iter()
+        .any(|d| d["rule"].as_str().unwrap_or("").starts_with("CC-MEM-"));
+
+    assert!(
+        has_memory_rule,
+        "Expected at least one memory rule (CC-MEM-*) in diagnostics, got: {}",
+        stdout
+    );
+}
+
+#[test]
+fn test_format_json_contains_ref_rules() {
+    let mut cmd = agnix();
+    let output = cmd
+        .arg("tests/fixtures/refs")
+        .arg("--format")
+        .arg("json")
+        .output()
+        .unwrap();
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let json: serde_json::Value = serde_json::from_str(&stdout).unwrap();
+    let diagnostics = json["diagnostics"].as_array().unwrap();
+
+    let has_ref_rule = diagnostics
+        .iter()
+        .any(|d| d["rule"].as_str().unwrap_or("").starts_with("REF-"));
+
+    assert!(
+        has_ref_rule,
+        "Expected at least one reference rule (REF-*) in diagnostics, got: {}",
+        stdout
+    );
+}
+
+#[test]
+fn test_format_json_contains_cross_platform_rules() {
+    let mut cmd = agnix();
+    let output = cmd
+        .arg("tests/fixtures/cross_platform")
+        .arg("--format")
+        .arg("json")
+        .output()
+        .unwrap();
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let json: serde_json::Value = serde_json::from_str(&stdout).unwrap();
+    let diagnostics = json["diagnostics"].as_array().unwrap();
+
+    let has_xp_rule = diagnostics
+        .iter()
+        .any(|d| d["rule"].as_str().unwrap_or("").starts_with("XP-"));
+
+    assert!(
+        has_xp_rule,
+        "Expected at least one cross-platform rule (XP-*) in diagnostics, got: {}",
+        stdout
+    );
+}
+
 // ============================================================================
 // SARIF Output Completeness Tests
 // ============================================================================
@@ -813,6 +902,44 @@ fn test_format_sarif_results_include_mcp_diagnostics() {
 }
 
 #[test]
+fn test_format_sarif_results_include_memory_diagnostics() {
+    use std::fs;
+    use std::io::Write;
+
+    // CC-MEM rules require specific content patterns to trigger
+    // Create a fixture with generic instructions (CC-MEM-005)
+    let temp_dir = tempfile::tempdir().unwrap();
+    let claude_md = temp_dir.path().join("CLAUDE.md");
+    let mut file = fs::File::create(&claude_md).unwrap();
+    writeln!(
+        file,
+        "# Project Memory\n\nBe helpful and concise. Always follow best practices."
+    )
+    .unwrap();
+
+    let mut cmd = agnix();
+    let output = cmd
+        .arg(temp_dir.path().to_str().unwrap())
+        .arg("--format")
+        .arg("sarif")
+        .output()
+        .unwrap();
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let json: serde_json::Value = serde_json::from_str(&stdout).unwrap();
+    let results = json["runs"][0]["results"].as_array().unwrap();
+
+    let has_memory_result = results
+        .iter()
+        .any(|r| r["ruleId"].as_str().unwrap_or("").starts_with("CC-MEM-"));
+
+    assert!(
+        has_memory_result,
+        "SARIF results should include memory diagnostics (CC-MEM-*)"
+    );
+}
+
+#[test]
 fn test_format_sarif_location_fields() {
     let mut cmd = agnix();
     let output = cmd
@@ -836,21 +963,23 @@ fn test_format_sarif_location_fields() {
         );
 
         if let Some(locs) = locations {
-            if !locs.is_empty() {
-                let physical = &locs[0]["physicalLocation"];
-                assert!(
-                    physical["artifactLocation"]["uri"].is_string(),
-                    "Should have artifactLocation.uri"
-                );
-                assert!(
-                    physical["region"]["startLine"].is_number(),
-                    "Should have region.startLine"
-                );
-                assert!(
-                    physical["region"]["startColumn"].is_number(),
-                    "Should have region.startColumn"
-                );
-            }
+            assert!(
+                !locs.is_empty(),
+                "Result should have at least one location"
+            );
+            let physical = &locs[0]["physicalLocation"];
+            assert!(
+                physical["artifactLocation"]["uri"].is_string(),
+                "Should have artifactLocation.uri"
+            );
+            assert!(
+                physical["region"]["startLine"].is_number(),
+                "Should have region.startLine"
+            );
+            assert!(
+                physical["region"]["startColumn"].is_number(),
+                "Should have region.startColumn"
+            );
         }
     }
 }
