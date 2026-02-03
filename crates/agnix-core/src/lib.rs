@@ -266,6 +266,7 @@ pub fn validate_project(path: &Path, config: &LintConfig) -> LintResult<Vec<Diag
 struct ExcludePattern {
     pattern: glob::Pattern,
     dir_only_prefix: Option<String>,
+    allow_probe: bool,
 }
 
 fn normalize_rel_path(entry_path: &Path, root: &Path) -> String {
@@ -282,22 +283,17 @@ fn compile_exclude_patterns(excludes: &[String]) -> Vec<ExcludePattern> {
         .iter()
         .map(|pattern| {
             let normalized = pattern.replace('\\', "/");
-            if normalized.ends_with('/') {
-                let prefix = normalized.trim_end_matches('/').to_string();
-                let glob_pattern = format!("{}/**", prefix);
-                ExcludePattern {
-                    pattern: glob::Pattern::new(&glob_pattern).unwrap_or_else(|_| {
-                        panic!("Invalid exclude pattern in config: {}", pattern)
-                    }),
-                    dir_only_prefix: Some(prefix),
-                }
+            let (glob_str, dir_only_prefix) = if let Some(prefix) = normalized.strip_suffix('/') {
+                (format!("{}/**", prefix), Some(prefix.to_string()))
             } else {
-                ExcludePattern {
-                    pattern: glob::Pattern::new(&normalized).unwrap_or_else(|_| {
-                        panic!("Invalid exclude pattern in config: {}", pattern)
-                    }),
-                    dir_only_prefix: None,
-                }
+                (normalized.clone(), None)
+            };
+            let allow_probe = dir_only_prefix.is_some() || glob_str.contains("**");
+            ExcludePattern {
+                pattern: glob::Pattern::new(&glob_str)
+                    .unwrap_or_else(|_| panic!("Invalid exclude pattern in config: {}", pattern)),
+                dir_only_prefix,
+                allow_probe,
             }
         })
         .collect()
@@ -307,24 +303,18 @@ fn should_prune_dir(rel_dir: &str, exclude_patterns: &[ExcludePattern]) -> bool 
     if rel_dir.is_empty() {
         return false;
     }
+    // Probe path used to detect patterns that match files inside a directory.
+    // Only apply it for recursive patterns (e.g. ** or dir-only prefix).
     let probe = format!("{}/__agnix_probe__", rel_dir.trim_end_matches('/'));
     exclude_patterns
         .iter()
-        .any(|p| p.pattern.matches(rel_dir) || p.pattern.matches(&probe))
+        .any(|p| p.pattern.matches(rel_dir) || (p.allow_probe && p.pattern.matches(&probe)))
 }
 
 fn is_excluded_file(path_str: &str, exclude_patterns: &[ExcludePattern]) -> bool {
-    exclude_patterns.iter().any(|p| {
-        if !p.pattern.matches(path_str) {
-            return false;
-        }
-        if let Some(prefix) = &p.dir_only_prefix {
-            if path_str == prefix {
-                return false;
-            }
-        }
-        true
-    })
+    exclude_patterns
+        .iter()
+        .any(|p| p.pattern.matches(path_str) && p.dir_only_prefix.as_deref() != Some(path_str))
 }
 
 /// Main entry point for validating a project with a custom validator registry
@@ -338,17 +328,19 @@ pub fn validate_project_with_registry(
 
     let root_dir = resolve_validation_root(path);
     let mut config = config.clone();
-    config.set_root_dir(root_dir);
+    config.set_root_dir(root_dir.clone());
 
     // Pre-compile exclude patterns once (avoids N+1 pattern compilation)
     // Panic on invalid patterns to catch config errors early
     let exclude_patterns = compile_exclude_patterns(&config.exclude);
     let exclude_patterns = Arc::new(exclude_patterns);
-    let root_path = path.to_path_buf();
+    let root_path = root_dir.clone();
+
+    let walk_root = std::fs::canonicalize(path).unwrap_or_else(|_| path.to_path_buf());
 
     // Collect all file paths to validate (sequential walk, parallel validation)
     // Note: hidden(false) includes .github directory for Copilot instruction files
-    let paths: Vec<PathBuf> = WalkBuilder::new(path)
+    let paths: Vec<PathBuf> = WalkBuilder::new(&walk_root)
         .hidden(false)
         .git_ignore(true)
         .filter_entry({
@@ -2107,6 +2099,15 @@ Use idiomatic Rust patterns.
         assert!(
             !should_prune_dir("", &patterns),
             "Root directory should never be pruned"
+        );
+    }
+
+    #[test]
+    fn test_should_not_prune_dir_for_single_level_glob() {
+        let patterns = compile_exclude_patterns(&vec!["target/*".to_string()]);
+        assert!(
+            !should_prune_dir("target", &patterns),
+            "Single-level glob should not prune directory"
         );
     }
 

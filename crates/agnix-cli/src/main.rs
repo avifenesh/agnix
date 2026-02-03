@@ -145,8 +145,8 @@ fn validate_command(path: &Path, cli: &Cli) -> anyhow::Result<()> {
         ));
     }
 
-    // Resolve absolute path for consistent SARIF output
-    let base_path = std::fs::canonicalize(path).unwrap_or_else(|_| path.to_path_buf());
+    // Resolve absolute path for consistent relative output (prefer repo root)
+    let base_path = std::fs::canonicalize(".").unwrap_or_else(|_| PathBuf::from("."));
 
     let diagnostics = validate_project(path, &config)?;
 
