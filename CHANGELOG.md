@@ -62,6 +62,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Applied to validation, imports, fixes, and config loading
   - Cross-platform tests for Unix and Windows symlink handling
 
+### Added
+- Rule parity CI check to ensure documented rules stay in sync with implementation:
+  - Added `knowledge-base/rules.json` as machine-readable source of truth for all 84 rules
+  - Added `crates/agnix-cli/tests/rule_parity.rs` integration test suite
+  - CI fails if rules drift between documentation, SARIF registry, and implementation
+  - CLAUDE.md/AGENTS.md updated to document rules.json workflow
 - GitHub Copilot instruction files validation with 4 rules (COP-001 to COP-004)
   - COP-001: Empty/missing global copilot-instructions.md
   - COP-002: Invalid YAML frontmatter in scoped instruction files

@@ -213,28 +213,19 @@ fn infer_fixture_coverage(rules: &[RuleEntry]) -> HashMap<String, Vec<String>> {
             "claude-skills",
             vec!["skills", "invalid/skills", "valid/skills"],
         ),
-        (
-            "claude-hooks",
-            vec!["valid/hooks", "invalid/hooks"],
-        ),
-        (
-            "claude-agents",
-            vec!["valid/agents", "invalid/agents"],
-        ),
-        (
-            "claude-memory",
-            vec!["valid/memory", "invalid/memory"],
-        ),
-        (
-            "claude-plugins",
-            vec!["valid/plugins", "invalid/plugins"],
-        ),
+        ("claude-hooks", vec!["valid/hooks", "invalid/hooks"]),
+        ("claude-agents", vec!["valid/agents", "invalid/agents"]),
+        ("claude-memory", vec!["valid/memory", "invalid/memory"]),
+        ("claude-plugins", vec!["valid/plugins", "invalid/plugins"]),
         ("agents-md", vec!["agents_md"]),
         ("mcp", vec!["mcp"]),
         ("copilot", vec!["copilot", "copilot-invalid"]),
         ("xml", vec!["xml"]),
         ("references", vec!["refs"]),
-        ("prompt-engineering", vec!["prompt", "invalid/pe", "valid/pe"]),
+        (
+            "prompt-engineering",
+            vec!["prompt", "invalid/pe", "valid/pe"],
+        ),
         ("cross-platform", vec!["cross_platform"]),
     ]
     .into_iter()
@@ -262,15 +253,12 @@ fn test_all_rules_registered_in_sarif() {
     let rules_index = load_rules_json();
     let sarif_rules = extract_sarif_rule_ids();
 
-    let documented_rules: BTreeSet<String> = rules_index.rules.iter().map(|r| r.id.clone()).collect();
+    let documented_rules: BTreeSet<String> =
+        rules_index.rules.iter().map(|r| r.id.clone()).collect();
 
-    let missing_from_sarif: Vec<&String> = documented_rules
-        .difference(&sarif_rules)
-        .collect();
+    let missing_from_sarif: Vec<&String> = documented_rules.difference(&sarif_rules).collect();
 
-    let extra_in_sarif: Vec<&String> = sarif_rules
-        .difference(&documented_rules)
-        .collect();
+    let extra_in_sarif: Vec<&String> = sarif_rules.difference(&documented_rules).collect();
 
     let mut report = String::new();
 
@@ -308,11 +296,10 @@ fn test_all_rules_implemented() {
     let rules_index = load_rules_json();
     let implemented_rules = extract_implemented_rule_ids();
 
-    let documented_rules: BTreeSet<String> = rules_index.rules.iter().map(|r| r.id.clone()).collect();
+    let documented_rules: BTreeSet<String> =
+        rules_index.rules.iter().map(|r| r.id.clone()).collect();
 
-    let not_implemented: Vec<&String> = documented_rules
-        .difference(&implemented_rules)
-        .collect();
+    let not_implemented: Vec<&String> = documented_rules.difference(&implemented_rules).collect();
 
     if !not_implemented.is_empty() {
         let mut report = format!(
@@ -352,13 +339,12 @@ fn test_fixture_coverage_exists() {
         all_coverage.entry(rule).or_default().extend(fixtures);
     }
 
-    let documented_rules: BTreeSet<String> = rules_index.rules.iter().map(|r| r.id.clone()).collect();
+    let documented_rules: BTreeSet<String> =
+        rules_index.rules.iter().map(|r| r.id.clone()).collect();
 
     let covered_rules: BTreeSet<String> = all_coverage.keys().cloned().collect();
 
-    let not_covered: Vec<&String> = documented_rules
-        .difference(&covered_rules)
-        .collect();
+    let not_covered: Vec<&String> = documented_rules.difference(&covered_rules).collect();
 
     if !not_covered.is_empty() {
         let mut report = format!(
@@ -447,13 +433,8 @@ fn test_rules_json_matches_validation_rules_md() {
     // Verify rules.json IDs exist in VALIDATION-RULES.md
     let rules_index = load_rules_json();
     let validation_rules_path = workspace_root().join("knowledge-base/VALIDATION-RULES.md");
-    let content = fs::read_to_string(&validation_rules_path).unwrap_or_else(|e| {
-        panic!(
-            "Failed to read {}: {}",
-            validation_rules_path.display(),
-            e
-        )
-    });
+    let content = fs::read_to_string(&validation_rules_path)
+        .unwrap_or_else(|e| panic!("Failed to read {}: {}", validation_rules_path.display(), e));
 
     let mut missing_in_md: Vec<String> = Vec::new();
 
