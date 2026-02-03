@@ -58,16 +58,18 @@ runs:
   steps:
     - name: Download agnix
       shell: bash
-      run: ${{ github.action_path }}/scripts/download.sh
+      run: bash "${ACTION_PATH}/scripts/download.sh"
       env:
+        ACTION_PATH: ${{ github.action_path }}
         AGNIX_VERSION: ${{ inputs.version }}
         BUILD_FROM_SOURCE: ${{ inputs.build-from-source }}
 
     - name: Run agnix
       id: agnix
       shell: bash
-      run: ${{ github.action_path }}/scripts/run.sh
+      run: bash "${ACTION_PATH}/scripts/run.sh"
       env:
+        ACTION_PATH: ${{ github.action_path }}
         INPUT_PATH: ${{ inputs.path }}
         INPUT_STRICT: ${{ inputs.strict }}
         INPUT_TARGET: ${{ inputs.target }}
