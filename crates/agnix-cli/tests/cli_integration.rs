@@ -1375,10 +1375,6 @@ fn test_help_shows_target_possible_values() {
     );
 }
 
-// ============================================================================
-// Init Command Tests (Issue #130)
-// ============================================================================
-
 #[test]
 fn test_init_creates_config_file_with_plain_text_output() {
     let temp_dir = tempfile::tempdir().unwrap();
