@@ -11,16 +11,6 @@ REPO="avifenesh/agnix"
 VERSION="${AGNIX_VERSION:-latest}"
 BUILD_FROM_SOURCE="${BUILD_FROM_SOURCE:-false}"
 
-# Validate version format to prevent path traversal attacks
-# Accepts: "latest" or semver like "v0.1.0", "v0.1.0-beta", "v0.1.0-beta-1+build"
-if [ "${VERSION}" != "latest" ]; then
-    if ! echo "${VERSION}" | grep -qE '^v[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?(\+[a-zA-Z0-9.-]+)?$'; then
-        echo "Error: Invalid version format: ${VERSION}" >&2
-        echo "Expected: 'latest' or semver like 'v0.1.0'" >&2
-        exit 1
-    fi
-fi
-
 # Create bin directory
 BIN_DIR="${GITHUB_WORKSPACE:-$(pwd)}/.agnix-bin"
 mkdir -p "${BIN_DIR}"
@@ -52,6 +42,17 @@ if [ "${BUILD_FROM_SOURCE}" = "true" ]; then
     echo "${BIN_DIR}" >> "${GITHUB_PATH:-/dev/null}"
     echo "agnix built from source and installed to ${BIN_DIR}"
     exit 0
+fi
+
+# Validate version format to prevent path traversal attacks (only for download path)
+# Accepts: "latest" or semver like "v0.1.0", "v0.1.0-beta", "v0.1.0-beta-1+build"
+# Use printf to avoid echo interpreting flags like -n or -e
+if [ "${VERSION}" != "latest" ]; then
+    if ! printf '%s' "${VERSION}" | grep -qE '^v[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?(\+[a-zA-Z0-9.-]+)?$'; then
+        echo "Error: Invalid version format: ${VERSION}" >&2
+        echo "Expected: 'latest' or semver like 'v0.1.0'" >&2
+        exit 1
+    fi
 fi
 
 # Detect OS and architecture

@@ -14,25 +14,33 @@ set -euo pipefail
 
 # Sanitize string for GitHub workflow commands
 # Escapes special characters that could be used for command injection
-# Per GitHub docs: %, \r, \n, :, and , must be URL-encoded
+# Per GitHub docs: %, CR, LF, :, and , must be URL-encoded
+# Uses bash parameter substitution for portability (sed is line-oriented)
 sanitize_workflow_value() {
-    printf '%s' "$1" | sed 's/%/%25/g; s/\r/%0D/g; s/\n/%0A/g; s/:/%3A/g; s/,/%2C/g'
+    local value="${1-}"
+    # Encode % first to avoid double-encoding
+    value=${value//'%'/%25}
+    # Replace actual CR and LF characters
+    value=${value//$'\r'/%0D}
+    value=${value//$'\n'/%0A}
+    # Encode additional special characters
+    value=${value//:/%3A}
+    value=${value//,/%2C}
+    printf '%s' "$value"
 }
 
 BIN_DIR="${GITHUB_WORKSPACE:-$(pwd)}/.agnix-bin"
 
-# Detect platform for correct binary name (Windows needs .exe)
-OS="$(uname -s)"
-case "${OS}" in
-    MINGW*|MSYS*|CYGWIN*|Windows_NT)
-        BINARY_NAME="agnix.exe"
-        ;;
-    *)
-        BINARY_NAME="agnix"
-        ;;
-esac
-
-AGNIX="${BIN_DIR}/${BINARY_NAME}"
+# Find agnix binary (handles both Unix and Windows)
+AGNIX_BASE="${BIN_DIR}/agnix"
+if [ -f "${AGNIX_BASE}" ]; then
+    AGNIX="${AGNIX_BASE}"
+elif [ -f "${AGNIX_BASE}.exe" ]; then
+    AGNIX="${AGNIX_BASE}.exe"
+else
+    echo "Error: agnix binary not found in ${BIN_DIR} (expected 'agnix' or 'agnix.exe')." >&2
+    exit 1
+fi
 
 # Build command arguments
 ARGS=()
@@ -95,19 +103,22 @@ fi
 
 # Generate GitHub annotations from diagnostics
 # Use tab delimiter to handle Windows paths that contain colons (e.g., C:/path)
-# Sanitize message content to prevent workflow command injection
+# Sanitize all fields to prevent workflow command injection
 if echo "${OUTPUT}" | jq -e '.diagnostics' > /dev/null 2>&1; then
     echo "${OUTPUT}" | jq -r '.diagnostics[] | "\(.level)\t\(.file)\t\(.line)\t\(.column)\t\(.message) [\(.rule)]"' | while IFS=$'\t' read -r level file line col msg; do
+        safe_file=$(sanitize_workflow_value "${file}")
+        safe_line=$(sanitize_workflow_value "${line}")
+        safe_col=$(sanitize_workflow_value "${col}")
         safe_msg=$(sanitize_workflow_value "${msg}")
         case "${level}" in
             error)
-                echo "::error file=${file},line=${line},col=${col}::${safe_msg}"
+                echo "::error file=${safe_file},line=${safe_line},col=${safe_col}::${safe_msg}"
                 ;;
             warning)
-                echo "::warning file=${file},line=${line},col=${col}::${safe_msg}"
+                echo "::warning file=${safe_file},line=${safe_line},col=${safe_col}::${safe_msg}"
                 ;;
             info)
-                echo "::notice file=${file},line=${line},col=${col}::${safe_msg}"
+                echo "::notice file=${safe_file},line=${safe_line},col=${safe_col}::${safe_msg}"
                 ;;
         esac
     done
