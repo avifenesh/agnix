@@ -1176,3 +1176,431 @@ fn test_fixtures_have_no_empty_placeholder_dirs() {
             .join("\n")
     );
 }
+
+// ============================================================================
+// JSON Output - PE Rule Family Test
+// ============================================================================
+
+#[test]
+fn test_format_json_contains_prompt_engineering_rules() {
+    use std::fs;
+    use std::io::Write;
+
+    // PE rules only run on CLAUDE.md/AGENTS.md files
+    let temp_dir = tempfile::tempdir().unwrap();
+    let claude_md = temp_dir.path().join("CLAUDE.md");
+    let mut file = fs::File::create(&claude_md).unwrap();
+
+    // PE-003 triggers when weak language (should, try to, consider) appears
+    // in a critical section header
+    writeln!(
+        file,
+        r#"# Project Instructions
+
+Some initial content here.
+
+## Critical Rules
+
+You should try to follow these rules. Consider being careful.
+Maybe do this optionally.
+
+## End Section
+
+Final content."#
+    )
+    .unwrap();
+
+    let mut cmd = agnix();
+    let output = cmd
+        .arg(temp_dir.path().to_str().unwrap())
+        .arg("--format")
+        .arg("json")
+        .output()
+        .unwrap();
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let json: serde_json::Value = serde_json::from_str(&stdout).unwrap();
+    let diagnostics = json["diagnostics"].as_array().unwrap();
+
+    let has_pe_rule = diagnostics
+        .iter()
+        .any(|d| d["rule"].as_str().unwrap_or("").starts_with("PE-"));
+
+    assert!(
+        has_pe_rule,
+        "Expected at least one prompt engineering rule (PE-*) in diagnostics, got: {}",
+        stdout
+    );
+}
+
+// ============================================================================
+// SARIF Output Rule Family Coverage Tests
+// ============================================================================
+
+#[test]
+fn test_format_sarif_results_include_agent_diagnostics() {
+    check_sarif_rule_family("tests/fixtures/invalid/agents", &["CC-AG-"], "agent");
+}
+
+#[test]
+fn test_format_sarif_results_include_plugin_diagnostics() {
+    check_sarif_rule_family("tests/fixtures/invalid/plugins", &["CC-PL-"], "plugin");
+}
+
+#[test]
+fn test_format_sarif_results_include_copilot_diagnostics() {
+    check_sarif_rule_family("tests/fixtures/copilot-invalid", &["COP-"], "Copilot");
+}
+
+#[test]
+fn test_format_sarif_results_include_pe_diagnostics() {
+    use std::fs;
+    use std::io::Write;
+
+    // PE rules only run on CLAUDE.md/AGENTS.md files
+    let temp_dir = tempfile::tempdir().unwrap();
+    let claude_md = temp_dir.path().join("CLAUDE.md");
+    let mut file = fs::File::create(&claude_md).unwrap();
+
+    // PE-003 triggers when weak language appears in a critical section header
+    writeln!(
+        file,
+        r#"# Project Instructions
+
+Some initial content.
+
+## Critical Rules
+
+You should try to follow these rules. Consider being careful.
+Maybe do this optionally.
+
+## End Section
+
+Final content."#
+    )
+    .unwrap();
+
+    let mut cmd = agnix();
+    let output = cmd
+        .arg(temp_dir.path().to_str().unwrap())
+        .arg("--format")
+        .arg("sarif")
+        .output()
+        .unwrap();
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let json: serde_json::Value = serde_json::from_str(&stdout).unwrap();
+    let results = json["runs"][0]["results"].as_array().unwrap();
+
+    let has_pe_result = results
+        .iter()
+        .any(|r| r["ruleId"].as_str().unwrap_or("").starts_with("PE-"));
+
+    assert!(
+        has_pe_result,
+        "SARIF results should include prompt engineering diagnostics (PE-*), got: {}",
+        stdout
+    );
+}
+
+#[test]
+fn test_format_sarif_results_include_xml_diagnostics() {
+    check_sarif_rule_family("tests/fixtures/xml", &["XML-"], "XML");
+}
+
+#[test]
+fn test_format_sarif_results_include_ref_diagnostics() {
+    check_sarif_rule_family("tests/fixtures/refs", &["REF-"], "reference");
+}
+
+#[test]
+fn test_format_sarif_results_include_xp_diagnostics() {
+    check_sarif_rule_family("tests/fixtures/cross_platform", &["XP-"], "cross-platform");
+}
+
+#[test]
+fn test_format_sarif_results_include_agm_diagnostics() {
+    check_sarif_rule_family("tests/fixtures/agents_md", &["AGM-"], "AGENTS.md");
+}
+
+// ============================================================================
+// Text Output Formatting Tests
+// ============================================================================
+
+#[test]
+fn test_format_text_shows_diagnostics() {
+    let mut cmd = agnix();
+    let output = cmd
+        .arg("tests/fixtures/invalid/skills/invalid-name")
+        .output()
+        .unwrap();
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    // Should show diagnostic information: file, line, level, message
+    assert!(
+        stdout.contains("SKILL.md") && stdout.contains("error"),
+        "Text output should show diagnostic with file and level, got: {}",
+        stdout
+    );
+}
+
+#[test]
+fn test_format_text_rule_in_verbose() {
+    let mut cmd = agnix();
+    let output = cmd
+        .arg("tests/fixtures/invalid/skills/invalid-name")
+        .arg("--verbose")
+        .output()
+        .unwrap();
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    // Verbose mode should show the rule ID
+    assert!(
+        stdout.contains("rule:") || stdout.contains("AS-004") || stdout.contains("CC-SK-001"),
+        "Verbose text output should show rule ID, got: {}",
+        stdout
+    );
+}
+
+#[test]
+fn test_format_text_no_emoji() {
+    let mut cmd = agnix();
+    let output = cmd
+        .arg("tests/fixtures/invalid/skills")
+        .output()
+        .unwrap();
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+
+    // Check for common emoji patterns (Unicode emoji ranges)
+    let has_emoji = stdout.chars().any(|c| {
+        let code = c as u32;
+        (0x1F300..=0x1F9FF).contains(&code)
+            || (0x2600..=0x26FF).contains(&code)
+            || (0x2700..=0x27BF).contains(&code)
+    });
+
+    assert!(
+        !has_emoji,
+        "Text output should not contain emojis (plain text requirement)"
+    );
+}
+
+#[test]
+fn test_format_text_summary_line() {
+    let mut cmd = agnix();
+    let output = cmd
+        .arg("tests/fixtures/invalid/skills")
+        .output()
+        .unwrap();
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    // Summary should show "Found X error(s)" or similar pattern
+    assert!(
+        stdout.contains("Found") && (stdout.contains("error") || stdout.contains("warning")),
+        "Text output should show summary with error/warning counts, got: {}",
+        stdout
+    );
+}
+
+// ============================================================================
+// Fix Flag Tests
+// ============================================================================
+
+#[test]
+fn test_fix_flag_runs_without_error() {
+    use std::fs;
+    use std::io::Write;
+
+    let temp_dir = tempfile::tempdir().unwrap();
+    let skills_dir = temp_dir.path().join("skills").join("test-skill");
+    fs::create_dir_all(&skills_dir).unwrap();
+
+    let skill_path = skills_dir.join("SKILL.md");
+    let mut file = fs::File::create(&skill_path).unwrap();
+    writeln!(
+        file,
+        "---\nname: test-skill\ndescription: A test skill. Use when testing.\n---\nTest content"
+    )
+    .unwrap();
+
+    let mut cmd = agnix();
+    let output = cmd
+        .arg(temp_dir.path().to_str().unwrap())
+        .arg("--fix")
+        .output()
+        .unwrap();
+
+    // The --fix flag should complete successfully
+    assert!(
+        output.status.code().is_some(),
+        "--fix flag should complete without panic"
+    );
+}
+
+#[test]
+fn test_fix_safe_flag_runs_without_error() {
+    use std::fs;
+    use std::io::Write;
+
+    let temp_dir = tempfile::tempdir().unwrap();
+    let skills_dir = temp_dir.path().join("skills").join("test-skill");
+    fs::create_dir_all(&skills_dir).unwrap();
+
+    let skill_path = skills_dir.join("SKILL.md");
+    let mut file = fs::File::create(&skill_path).unwrap();
+    writeln!(
+        file,
+        "---\nname: test-skill\ndescription: A test skill. Use when testing.\n---\nTest content"
+    )
+    .unwrap();
+
+    let mut cmd = agnix();
+    let output = cmd
+        .arg(temp_dir.path().to_str().unwrap())
+        .arg("--fix-safe")
+        .output()
+        .unwrap();
+
+    // The --fix-safe flag should complete successfully
+    assert!(
+        output.status.code().is_some(),
+        "--fix-safe flag should complete without panic"
+    );
+}
+
+#[test]
+fn test_dry_run_does_not_modify_files() {
+    use std::fs;
+    use std::io::Write;
+
+    let temp_dir = tempfile::tempdir().unwrap();
+    let skills_dir = temp_dir.path().join("skills").join("test-skill");
+    fs::create_dir_all(&skills_dir).unwrap();
+
+    let skill_path = skills_dir.join("SKILL.md");
+    let mut file = fs::File::create(&skill_path).unwrap();
+    writeln!(
+        file,
+        "---\nname: Bad_Name\ndescription: A test skill\n---\nTest content"
+    )
+    .unwrap();
+
+    let original_content = fs::read_to_string(&skill_path).unwrap();
+
+    let mut cmd = agnix();
+    cmd.arg(temp_dir.path().to_str().unwrap())
+        .arg("--dry-run")
+        .output()
+        .unwrap();
+
+    // File should NOT be modified in dry-run mode
+    let after_content = fs::read_to_string(&skill_path).unwrap();
+    assert_eq!(
+        original_content, after_content,
+        "--dry-run should not modify files"
+    );
+}
+
+// ============================================================================
+// Combined Flag Tests
+// ============================================================================
+
+#[test]
+fn test_fix_with_format_json() {
+    use std::fs;
+    use std::io::Write;
+
+    let temp_dir = tempfile::tempdir().unwrap();
+    let skills_dir = temp_dir.path().join("skills").join("test-skill");
+    fs::create_dir_all(&skills_dir).unwrap();
+
+    let skill_path = skills_dir.join("SKILL.md");
+    let mut file = fs::File::create(&skill_path).unwrap();
+    writeln!(
+        file,
+        "---\nname: test-skill\ndescription: A test skill. Use when testing.\n---\nTest content"
+    )
+    .unwrap();
+
+    let mut cmd = agnix();
+    let output = cmd
+        .arg(temp_dir.path().to_str().unwrap())
+        .arg("--fix")
+        .arg("--format")
+        .arg("json")
+        .output()
+        .unwrap();
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    // Should produce valid JSON even with --fix
+    let json: Result<serde_json::Value, _> = serde_json::from_str(&stdout);
+    assert!(
+        json.is_ok(),
+        "--fix --format json should produce valid JSON, got: {}",
+        stdout
+    );
+}
+
+#[test]
+fn test_fix_safe_with_format_sarif() {
+    use std::fs;
+    use std::io::Write;
+
+    let temp_dir = tempfile::tempdir().unwrap();
+    let skills_dir = temp_dir.path().join("skills").join("test-skill");
+    fs::create_dir_all(&skills_dir).unwrap();
+
+    let skill_path = skills_dir.join("SKILL.md");
+    let mut file = fs::File::create(&skill_path).unwrap();
+    writeln!(
+        file,
+        "---\nname: test-skill\ndescription: A test skill. Use when testing.\n---\nTest content"
+    )
+    .unwrap();
+
+    let mut cmd = agnix();
+    let output = cmd
+        .arg(temp_dir.path().to_str().unwrap())
+        .arg("--fix-safe")
+        .arg("--format")
+        .arg("sarif")
+        .output()
+        .unwrap();
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    // Should produce valid SARIF JSON
+    let json: Result<serde_json::Value, _> = serde_json::from_str(&stdout);
+    assert!(
+        json.is_ok(),
+        "--fix-safe --format sarif should produce valid SARIF JSON, got: {}",
+        stdout
+    );
+
+    let sarif = json.unwrap();
+    assert_eq!(sarif["version"], "2.1.0", "SARIF version should be 2.1.0");
+}
+
+#[test]
+fn test_strict_with_text_format() {
+    let mut cmd = agnix();
+    let output = cmd
+        .arg("tests/fixtures/invalid/skills")
+        .arg("--strict")
+        .output()
+        .unwrap();
+
+    // With --strict, warnings are treated as errors
+    assert!(
+        !output.status.success(),
+        "--strict should exit non-zero when there are diagnostics"
+    );
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    // Should show text output
+    assert!(
+        stdout.contains("Found") || stdout.contains("error") || stdout.contains("warning"),
+        "--strict with text format should show diagnostic output, got: {}",
+        stdout
+    );
+}

@@ -8,12 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- 52 CLI integration tests for comprehensive coverage of all output formats and flags:
-  - 12 rule family coverage tests (AS, CC-SK, CC-HK, CC-AG, MCP, XML, CC-PL, COP, AGM, CC-MEM, REF, XP)
-  - 5 SARIF output validation tests (schema, tool info, rules, locations, help URIs)
-  - 6 text output formatting tests (location, levels, summary, verbose mode)
-  - 5 fix/dry-run flag tests (--fix, --fix-safe, --dry-run)
-  - 5 flag combination tests (--strict, --verbose, --target, --validate)
+- 71 CLI integration tests for comprehensive coverage of all output formats and flags:
+  - 13 rule family coverage tests (AS, CC-SK, CC-HK, CC-AG, MCP, XML, CC-PL, COP, AGM, CC-MEM, REF, XP, PE)
+  - 14 SARIF output validation tests (schema, tool info, rules, locations, help URIs, rule families)
+  - 10 text output formatting tests (location, levels, summary, verbose mode, diagnostics)
+  - 6 fix/dry-run flag tests (--fix, --fix-safe, --dry-run)
+  - 6 flag combination tests (--strict, --verbose, --target, --validate, format combinations)
 
 - Support for instruction filename variants:
   - CLAUDE.local.md - Claude Code local instructions (not synced to cloud)
