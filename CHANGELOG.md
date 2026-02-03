@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- JSON output `files_checked` now correctly reports total validated files, not just files with diagnostics
 - CLI `--target` flag now validates values instead of silently falling back to "generic"
   - Invalid values rejected with helpful error message showing valid options
   - Prevents configuration typos from going unnoticed

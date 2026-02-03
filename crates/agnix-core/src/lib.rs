@@ -1973,14 +1973,22 @@ Use idiomatic Rust patterns.
         assert!(
             result.diagnostics.iter().any(|d| d.rule == "COP-001"),
             "validate_project should find COP-001 in copilot-invalid fixtures. Found rules: {:?}",
-            result.diagnostics.iter().map(|d| &d.rule).collect::<Vec<_>>()
+            result
+                .diagnostics
+                .iter()
+                .map(|d| &d.rule)
+                .collect::<Vec<_>>()
         );
 
         // Should find COP-002 from bad-frontmatter.instructions.md
         assert!(
             result.diagnostics.iter().any(|d| d.rule == "COP-002"),
             "validate_project should find COP-002 in copilot-invalid fixtures. Found rules: {:?}",
-            result.diagnostics.iter().map(|d| &d.rule).collect::<Vec<_>>()
+            result
+                .diagnostics
+                .iter()
+                .map(|d| &d.rule)
+                .collect::<Vec<_>>()
         );
     }
 
