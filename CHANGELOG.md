@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Warning goes to stderr, preserving JSON/SARIF output validity
 - Pinned `cargo-machete` to version `0.9.1` in CI workflow to prevent nondeterministic build failures
 - Exclude patterns now prune directories during traversal to reduce IO on large repos
+- CLI init command output replaced checkmark emoji with plain text prefix
 
 ### Added
 - Reusable GitHub Action for CI/CD integration:
