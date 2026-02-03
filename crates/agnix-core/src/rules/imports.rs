@@ -106,7 +106,7 @@ fn visit_imports(
 
     let base_dir = file_path.parent().unwrap_or(Path::new("."));
     let normalized_base = normalize_existing_path(base_dir);
-    let normalized_root = normalize_existing_path(project_root);
+    let normalized_root = project_root;
 
     // Determine file type for current file to route its own diagnostics
     let filename = file_path.file_name().and_then(|n| n.to_str()).unwrap_or("");
@@ -160,7 +160,7 @@ fn visit_imports(
         }
 
         let normalized_resolved = normalize_join(&normalized_base, &import.path);
-        if !normalized_resolved.starts_with(&normalized_root) {
+        if !normalized_resolved.starts_with(normalized_root) {
             if check_not_found {
                 diagnostics.push(
                     Diagnostic::error(
@@ -179,7 +179,25 @@ fn visit_imports(
         }
 
         let normalized = if resolved.exists() {
-            normalize_existing_path(&resolved)
+            let canonical_resolved = normalize_existing_path(&resolved);
+            if !canonical_resolved.starts_with(normalized_root) {
+                if check_not_found {
+                    diagnostics.push(
+                        Diagnostic::error(
+                            file_path.clone(),
+                            import.line,
+                            import.column,
+                            rule_not_found,
+                            format!("Import path escapes project root: @{}", import.path),
+                        )
+                        .with_suggestion(
+                            "Use relative paths that stay within the project root".to_string(),
+                        ),
+                    );
+                }
+                continue;
+            }
+            canonical_resolved
         } else {
             resolved
         };
@@ -321,12 +339,17 @@ fn resolve_project_root(path: &Path, config: &LintConfig) -> PathBuf {
         return normalize_existing_path(root);
     }
 
-    find_repo_root(path)
-        .unwrap_or_else(|| normalize_existing_path(path.parent().unwrap_or(Path::new("."))))
+    find_repo_root(path).unwrap_or_else(|| {
+        let fallback = path.parent().unwrap_or(Path::new("."));
+        normalize_existing_path(fallback)
+    })
 }
 
 fn find_repo_root(path: &Path) -> Option<PathBuf> {
     for ancestor in path.ancestors() {
+        if ancestor.as_os_str().is_empty() {
+            continue;
+        }
         let git_marker = ancestor.join(".git");
         if git_marker.is_dir() || git_marker.is_file() {
             return Some(ancestor.to_path_buf());
@@ -664,6 +687,37 @@ mod tests {
 
         let validator = ImportsValidator;
         let diagnostics = validator.validate(&file_path, "See @../../outside.md", &config);
+
+        assert!(diagnostics
+            .iter()
+            .any(|d| { d.rule == "CC-MEM-001" && d.message.contains("escapes project root") }));
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn test_symlink_escape_rejection() {
+        use std::os::unix::fs::symlink;
+
+        let temp = TempDir::new().unwrap();
+        let root = temp.path().join("root");
+        let docs = root.join("docs");
+        let outside = temp.path().join("outside");
+
+        fs::create_dir_all(&docs).unwrap();
+        fs::create_dir_all(&outside).unwrap();
+        fs::write(outside.join("secret.md"), "Secret content").unwrap();
+
+        let link_path = root.join("link");
+        symlink(&outside, &link_path).unwrap();
+
+        let file_path = docs.join("CLAUDE.md");
+        fs::write(&file_path, "See @../link/secret.md").unwrap();
+
+        let mut config = LintConfig::default();
+        config.root_dir = Some(root);
+
+        let validator = ImportsValidator;
+        let diagnostics = validator.validate(&file_path, "See @../link/secret.md", &config);
 
         assert!(diagnostics
             .iter()
