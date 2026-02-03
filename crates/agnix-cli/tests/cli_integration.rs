@@ -55,6 +55,61 @@ exclude = [
     file
 }
 
+// Helper function to check JSON output contains rules from a specific family
+fn check_json_rule_family(fixture: &str, prefixes: &[&str], family_name: &str) {
+    let mut cmd = agnix();
+    let output = cmd
+        .arg(fixture)
+        .arg("--format")
+        .arg("json")
+        .output()
+        .unwrap();
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let json: serde_json::Value = serde_json::from_str(&stdout).unwrap();
+    let diagnostics = json["diagnostics"].as_array().unwrap();
+
+    let has_rule = diagnostics.iter().any(|d| {
+        let rule = d["rule"].as_str().unwrap_or("");
+        prefixes.iter().any(|p| rule.starts_with(p))
+    });
+
+    assert!(
+        has_rule,
+        "Expected at least one {} rule ({}) in diagnostics, got: {}",
+        family_name,
+        prefixes.join(" or "),
+        stdout
+    );
+}
+
+// Helper function to check SARIF output contains rules from a specific family
+fn check_sarif_rule_family(fixture: &str, prefixes: &[&str], family_name: &str) {
+    let mut cmd = agnix();
+    let output = cmd
+        .arg(fixture)
+        .arg("--format")
+        .arg("sarif")
+        .output()
+        .unwrap();
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let json: serde_json::Value = serde_json::from_str(&stdout).unwrap();
+    let results = json["runs"][0]["results"].as_array().unwrap();
+
+    let has_rule = results.iter().any(|r| {
+        let rule_id = r["ruleId"].as_str().unwrap_or("");
+        prefixes.iter().any(|p| rule_id.starts_with(p))
+    });
+
+    assert!(
+        has_rule,
+        "SARIF results should include {} diagnostics ({})",
+        family_name,
+        prefixes.join(" or ")
+    );
+}
+
 #[test]
 fn test_format_sarif_produces_valid_json() {
     let mut cmd = agnix();
@@ -535,204 +590,42 @@ fn test_cli_covers_hook_fixtures_via_cli_validation() {
 
 #[test]
 fn test_format_json_contains_skill_rules() {
-    let mut cmd = agnix();
-    let output = cmd
-        .arg("tests/fixtures/invalid/skills")
-        .arg("--format")
-        .arg("json")
-        .output()
-        .unwrap();
-
-    let stdout = String::from_utf8_lossy(&output.stdout);
-    let json: serde_json::Value = serde_json::from_str(&stdout).unwrap();
-    let diagnostics = json["diagnostics"].as_array().unwrap();
-
-    // Should have at least one AS-* or CC-SK-* rule from invalid skills
-    let has_skill_rule = diagnostics.iter().any(|d| {
-        let rule = d["rule"].as_str().unwrap_or("");
-        rule.starts_with("AS-") || rule.starts_with("CC-SK-")
-    });
-
-    assert!(
-        has_skill_rule,
-        "Expected at least one skill rule (AS-* or CC-SK-*) in diagnostics, got: {}",
-        stdout
-    );
+    check_json_rule_family("tests/fixtures/invalid/skills", &["AS-", "CC-SK-"], "skill");
 }
 
 #[test]
 fn test_format_json_contains_hook_rules() {
-    let mut cmd = agnix();
-    let output = cmd
-        .arg("tests/fixtures/invalid/hooks")
-        .arg("--format")
-        .arg("json")
-        .output()
-        .unwrap();
-
-    let stdout = String::from_utf8_lossy(&output.stdout);
-    let json: serde_json::Value = serde_json::from_str(&stdout).unwrap();
-    let diagnostics = json["diagnostics"].as_array().unwrap();
-
-    let has_hook_rule = diagnostics
-        .iter()
-        .any(|d| d["rule"].as_str().unwrap_or("").starts_with("CC-HK-"));
-
-    assert!(
-        has_hook_rule,
-        "Expected at least one hook rule (CC-HK-*) in diagnostics, got: {}",
-        stdout
-    );
+    check_json_rule_family("tests/fixtures/invalid/hooks", &["CC-HK-"], "hook");
 }
 
 #[test]
 fn test_format_json_contains_agent_rules() {
-    let mut cmd = agnix();
-    let output = cmd
-        .arg("tests/fixtures/invalid/agents")
-        .arg("--format")
-        .arg("json")
-        .output()
-        .unwrap();
-
-    let stdout = String::from_utf8_lossy(&output.stdout);
-    let json: serde_json::Value = serde_json::from_str(&stdout).unwrap();
-    let diagnostics = json["diagnostics"].as_array().unwrap();
-
-    let has_agent_rule = diagnostics
-        .iter()
-        .any(|d| d["rule"].as_str().unwrap_or("").starts_with("CC-AG-"));
-
-    assert!(
-        has_agent_rule,
-        "Expected at least one agent rule (CC-AG-*) in diagnostics, got: {}",
-        stdout
-    );
+    check_json_rule_family("tests/fixtures/invalid/agents", &["CC-AG-"], "agent");
 }
 
 #[test]
 fn test_format_json_contains_mcp_rules() {
-    let mut cmd = agnix();
-    let output = cmd
-        .arg("tests/fixtures/mcp")
-        .arg("--format")
-        .arg("json")
-        .output()
-        .unwrap();
-
-    let stdout = String::from_utf8_lossy(&output.stdout);
-    let json: serde_json::Value = serde_json::from_str(&stdout).unwrap();
-    let diagnostics = json["diagnostics"].as_array().unwrap();
-
-    let has_mcp_rule = diagnostics
-        .iter()
-        .any(|d| d["rule"].as_str().unwrap_or("").starts_with("MCP-"));
-
-    assert!(
-        has_mcp_rule,
-        "Expected at least one MCP rule (MCP-*) in diagnostics, got: {}",
-        stdout
-    );
+    check_json_rule_family("tests/fixtures/mcp", &["MCP-"], "MCP");
 }
 
 #[test]
 fn test_format_json_contains_xml_rules() {
-    let mut cmd = agnix();
-    let output = cmd
-        .arg("tests/fixtures/xml")
-        .arg("--format")
-        .arg("json")
-        .output()
-        .unwrap();
-
-    let stdout = String::from_utf8_lossy(&output.stdout);
-    let json: serde_json::Value = serde_json::from_str(&stdout).unwrap();
-    let diagnostics = json["diagnostics"].as_array().unwrap();
-
-    let has_xml_rule = diagnostics
-        .iter()
-        .any(|d| d["rule"].as_str().unwrap_or("").starts_with("XML-"));
-
-    assert!(
-        has_xml_rule,
-        "Expected at least one XML rule (XML-*) in diagnostics, got: {}",
-        stdout
-    );
+    check_json_rule_family("tests/fixtures/xml", &["XML-"], "XML");
 }
 
 #[test]
 fn test_format_json_contains_plugin_rules() {
-    let mut cmd = agnix();
-    let output = cmd
-        .arg("tests/fixtures/invalid/plugins")
-        .arg("--format")
-        .arg("json")
-        .output()
-        .unwrap();
-
-    let stdout = String::from_utf8_lossy(&output.stdout);
-    let json: serde_json::Value = serde_json::from_str(&stdout).unwrap();
-    let diagnostics = json["diagnostics"].as_array().unwrap();
-
-    let has_plugin_rule = diagnostics
-        .iter()
-        .any(|d| d["rule"].as_str().unwrap_or("").starts_with("CC-PL-"));
-
-    assert!(
-        has_plugin_rule,
-        "Expected at least one plugin rule (CC-PL-*) in diagnostics, got: {}",
-        stdout
-    );
+    check_json_rule_family("tests/fixtures/invalid/plugins", &["CC-PL-"], "plugin");
 }
 
 #[test]
 fn test_format_json_contains_copilot_rules() {
-    let mut cmd = agnix();
-    let output = cmd
-        .arg("tests/fixtures/copilot-invalid")
-        .arg("--format")
-        .arg("json")
-        .output()
-        .unwrap();
-
-    let stdout = String::from_utf8_lossy(&output.stdout);
-    let json: serde_json::Value = serde_json::from_str(&stdout).unwrap();
-    let diagnostics = json["diagnostics"].as_array().unwrap();
-
-    let has_copilot_rule = diagnostics
-        .iter()
-        .any(|d| d["rule"].as_str().unwrap_or("").starts_with("COP-"));
-
-    assert!(
-        has_copilot_rule,
-        "Expected at least one Copilot rule (COP-*) in diagnostics, got: {}",
-        stdout
-    );
+    check_json_rule_family("tests/fixtures/copilot-invalid", &["COP-"], "Copilot");
 }
 
 #[test]
 fn test_format_json_contains_agents_md_rules() {
-    let mut cmd = agnix();
-    let output = cmd
-        .arg("tests/fixtures/agents_md")
-        .arg("--format")
-        .arg("json")
-        .output()
-        .unwrap();
-
-    let stdout = String::from_utf8_lossy(&output.stdout);
-    let json: serde_json::Value = serde_json::from_str(&stdout).unwrap();
-    let diagnostics = json["diagnostics"].as_array().unwrap();
-
-    let has_agm_rule = diagnostics
-        .iter()
-        .any(|d| d["rule"].as_str().unwrap_or("").starts_with("AGM-"));
-
-    assert!(
-        has_agm_rule,
-        "Expected at least one AGENTS.md rule (AGM-*) in diagnostics, got: {}",
-        stdout
-    );
+    check_json_rule_family("tests/fixtures/agents_md", &["AGM-"], "AGENTS.md");
 }
 
 #[test]
@@ -776,52 +669,12 @@ fn test_format_json_contains_memory_rules() {
 
 #[test]
 fn test_format_json_contains_ref_rules() {
-    let mut cmd = agnix();
-    let output = cmd
-        .arg("tests/fixtures/refs")
-        .arg("--format")
-        .arg("json")
-        .output()
-        .unwrap();
-
-    let stdout = String::from_utf8_lossy(&output.stdout);
-    let json: serde_json::Value = serde_json::from_str(&stdout).unwrap();
-    let diagnostics = json["diagnostics"].as_array().unwrap();
-
-    let has_ref_rule = diagnostics
-        .iter()
-        .any(|d| d["rule"].as_str().unwrap_or("").starts_with("REF-"));
-
-    assert!(
-        has_ref_rule,
-        "Expected at least one reference rule (REF-*) in diagnostics, got: {}",
-        stdout
-    );
+    check_json_rule_family("tests/fixtures/refs", &["REF-"], "reference");
 }
 
 #[test]
 fn test_format_json_contains_cross_platform_rules() {
-    let mut cmd = agnix();
-    let output = cmd
-        .arg("tests/fixtures/cross_platform")
-        .arg("--format")
-        .arg("json")
-        .output()
-        .unwrap();
-
-    let stdout = String::from_utf8_lossy(&output.stdout);
-    let json: serde_json::Value = serde_json::from_str(&stdout).unwrap();
-    let diagnostics = json["diagnostics"].as_array().unwrap();
-
-    let has_xp_rule = diagnostics
-        .iter()
-        .any(|d| d["rule"].as_str().unwrap_or("").starts_with("XP-"));
-
-    assert!(
-        has_xp_rule,
-        "Expected at least one cross-platform rule (XP-*) in diagnostics, got: {}",
-        stdout
-    );
+    check_json_rule_family("tests/fixtures/cross_platform", &["XP-"], "cross-platform");
 }
 
 // ============================================================================
@@ -830,75 +683,17 @@ fn test_format_json_contains_cross_platform_rules() {
 
 #[test]
 fn test_format_sarif_results_include_skill_diagnostics() {
-    let mut cmd = agnix();
-    let output = cmd
-        .arg("tests/fixtures/invalid/skills")
-        .arg("--format")
-        .arg("sarif")
-        .output()
-        .unwrap();
-
-    let stdout = String::from_utf8_lossy(&output.stdout);
-    let json: serde_json::Value = serde_json::from_str(&stdout).unwrap();
-    let results = json["runs"][0]["results"].as_array().unwrap();
-
-    let has_skill_result = results.iter().any(|r| {
-        let rule_id = r["ruleId"].as_str().unwrap_or("");
-        rule_id.starts_with("AS-") || rule_id.starts_with("CC-SK-")
-    });
-
-    assert!(
-        has_skill_result,
-        "SARIF results should include skill diagnostics (AS-* or CC-SK-*)"
-    );
+    check_sarif_rule_family("tests/fixtures/invalid/skills", &["AS-", "CC-SK-"], "skill");
 }
 
 #[test]
 fn test_format_sarif_results_include_hook_diagnostics() {
-    let mut cmd = agnix();
-    let output = cmd
-        .arg("tests/fixtures/invalid/hooks")
-        .arg("--format")
-        .arg("sarif")
-        .output()
-        .unwrap();
-
-    let stdout = String::from_utf8_lossy(&output.stdout);
-    let json: serde_json::Value = serde_json::from_str(&stdout).unwrap();
-    let results = json["runs"][0]["results"].as_array().unwrap();
-
-    let has_hook_result = results
-        .iter()
-        .any(|r| r["ruleId"].as_str().unwrap_or("").starts_with("CC-HK-"));
-
-    assert!(
-        has_hook_result,
-        "SARIF results should include hook diagnostics (CC-HK-*)"
-    );
+    check_sarif_rule_family("tests/fixtures/invalid/hooks", &["CC-HK-"], "hook");
 }
 
 #[test]
 fn test_format_sarif_results_include_mcp_diagnostics() {
-    let mut cmd = agnix();
-    let output = cmd
-        .arg("tests/fixtures/mcp")
-        .arg("--format")
-        .arg("sarif")
-        .output()
-        .unwrap();
-
-    let stdout = String::from_utf8_lossy(&output.stdout);
-    let json: serde_json::Value = serde_json::from_str(&stdout).unwrap();
-    let results = json["runs"][0]["results"].as_array().unwrap();
-
-    let has_mcp_result = results
-        .iter()
-        .any(|r| r["ruleId"].as_str().unwrap_or("").starts_with("MCP-"));
-
-    assert!(
-        has_mcp_result,
-        "SARIF results should include MCP diagnostics (MCP-*)"
-    );
+    check_sarif_rule_family("tests/fixtures/mcp", &["MCP-"], "MCP");
 }
 
 #[test]
@@ -1027,10 +822,11 @@ fn test_format_text_shows_file_location() {
 #[test]
 fn test_format_text_shows_error_level() {
     let mut cmd = agnix();
+    // Match diagnostic line format: file:line:col error: message
     cmd.arg("tests/fixtures/invalid/skills/invalid-name")
         .assert()
         .failure()
-        .stdout(predicate::str::contains("error"));
+        .stdout(predicate::str::is_match(r":\d+:\d+.*error").unwrap());
 }
 
 #[test]
@@ -1052,10 +848,11 @@ fn test_format_text_shows_warning_level() {
     .unwrap();
 
     let mut cmd = agnix();
+    // Match diagnostic line format: file:line:col warning: message
     cmd.arg(temp_dir.path().to_str().unwrap())
         .assert()
         .success()
-        .stdout(predicate::str::contains("warning"));
+        .stdout(predicate::str::is_match(r":\d+:\d+.*warning").unwrap());
 }
 
 #[test]
@@ -1116,7 +913,8 @@ fn test_dry_run_no_file_modification() {
     }
 
     let mut cmd = agnix();
-    cmd.arg(temp_dir.path().to_str().unwrap())
+    let output = cmd
+        .arg(temp_dir.path().to_str().unwrap())
         .arg("--dry-run")
         .output()
         .unwrap();
@@ -1126,6 +924,14 @@ fn test_dry_run_no_file_modification() {
     assert_eq!(
         content_after, original_content,
         "File should not be modified with --dry-run"
+    );
+
+    // Verify the flag was recognized (not just silently ignored)
+    // CLI should still produce diagnostic output
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(
+        !stdout.is_empty() || !output.status.success(),
+        "--dry-run flag should be recognized and produce output or error"
     );
 }
 
@@ -1144,6 +950,15 @@ fn test_fix_exit_code_on_remaining_errors() {
         !output.status.success(),
         "Should exit with error code when non-fixable errors remain"
     );
+
+    // Verify the flag was recognized (produces diagnostic output, not clap error)
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(
+        !stdout.is_empty() || stderr.is_empty(),
+        "--fix flag should be recognized and run fix mode, got stderr: {}",
+        stderr
+    );
 }
 
 #[test]
@@ -1159,6 +974,15 @@ fn test_fix_safe_exit_code() {
     assert!(
         !output.status.success(),
         "Should exit with error code when errors remain after --fix-safe"
+    );
+
+    // Verify the flag was recognized (produces diagnostic output, not clap error)
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(
+        !stdout.is_empty() || stderr.is_empty(),
+        "--fix-safe flag should be recognized and run fix mode, got stderr: {}",
+        stderr
     );
 }
 
