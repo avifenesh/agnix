@@ -11,7 +11,7 @@ use std::path::Path;
 pub struct JsonOutput {
     /// Version of agnix that produced this output.
     pub version: String,
-    /// Number of unique files checked.
+    /// Total number of recognized files validated.
     pub files_checked: usize,
     /// List of diagnostics found.
     pub diagnostics: Vec<JsonDiagnostic>,

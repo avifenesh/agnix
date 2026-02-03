@@ -379,6 +379,8 @@ pub fn validate_project_with_registry(
         .collect();
 
     // Count recognized files (exclude FileType::Unknown)
+    // Note: detect_file_type is called again during validation, but it's a fast
+    // string-only operation (no I/O) - the overhead is negligible vs file reads.
     let files_checked = paths
         .iter()
         .filter(|p| detect_file_type(p) != FileType::Unknown)
@@ -2239,15 +2241,15 @@ Use idiomatic Rust patterns.
         let config = LintConfig::default();
         let result = validate_project(temp.path(), &config).unwrap();
 
-        // Should have counted files even though no diagnostics
-        assert!(
-            result.files_checked >= 2,
-            "files_checked should count validated files even with no diagnostics, got {}",
+        // Should have counted exactly the two valid skill files
+        assert_eq!(
+            result.files_checked, 2,
+            "files_checked should count exactly the validated skill files, got {}",
             result.files_checked
         );
         assert!(
-            result.diagnostics.is_empty() || result.diagnostics.iter().all(|d| d.level != DiagnosticLevel::Error),
-            "Valid skill files should have no errors"
+            result.diagnostics.is_empty(),
+            "Valid skill files should have no diagnostics"
         );
     }
 

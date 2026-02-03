@@ -1411,19 +1411,22 @@ fn test_format_json_files_checked_counts_all_validated_files() {
         .output()
         .unwrap();
 
+    assert!(
+        output.status.success(),
+        "agnix exited with non-zero status: {:?}",
+        output.status
+    );
+
     let stdout = String::from_utf8_lossy(&output.stdout);
     let json: serde_json::Value = serde_json::from_str(&stdout).unwrap();
 
     let files_checked = json["files_checked"].as_u64().unwrap();
-    let diagnostics_count = json["diagnostics"].as_array().unwrap().len();
 
-    // files_checked should be at least 2 (the two SKILL.md files we created)
-    // even if there are no diagnostics
-    assert!(
-        files_checked >= 2,
-        "files_checked ({}) should count all validated files, not just files with diagnostics ({})",
-        files_checked,
-        diagnostics_count
+    // files_checked should be exactly 2 (the two SKILL.md files we created)
+    assert_eq!(
+        files_checked, 2,
+        "Expected 2 files checked, found {}",
+        files_checked
     );
 }
 
@@ -1452,6 +1455,12 @@ fn test_format_json_files_checked_excludes_unknown_types() {
         .arg("json")
         .output()
         .unwrap();
+
+    assert!(
+        output.status.success(),
+        "agnix exited with non-zero status: {:?}",
+        output.status
+    );
 
     let stdout = String::from_utf8_lossy(&output.stdout);
     let json: serde_json::Value = serde_json::from_str(&stdout).unwrap();
