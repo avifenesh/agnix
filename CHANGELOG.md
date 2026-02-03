@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Release workflow for automated binary distribution on version tags:
+  - Builds for 5 targets (linux-gnu, linux-musl, macos-x86, macos-arm, windows)
+  - Creates archives with SHA256 checksums
+  - Extracts release notes from CHANGELOG.md
+  - Uploads artifacts to GitHub Releases
 - 52 CLI integration tests for comprehensive coverage of all output formats and flags:
   - 12 rule family coverage tests (AS, CC-SK, CC-HK, CC-AG, MCP, XML, CC-PL, COP, AGM, CC-MEM, REF, XP)
   - 5 SARIF output validation tests (schema, tool info, rules, locations, help URIs)
