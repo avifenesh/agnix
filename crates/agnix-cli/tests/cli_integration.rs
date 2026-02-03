@@ -1420,8 +1420,5 @@ fn test_init_creates_config_file_with_plain_text_output() {
     );
 
     // Verify exit code is success
-    assert!(
-        output.status.success(),
-        "Init command should succeed"
-    );
+    assert!(output.status.success(), "Init command should succeed");
 }
