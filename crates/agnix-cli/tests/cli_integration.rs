@@ -1367,9 +1367,10 @@ fn test_help_shows_target_possible_values() {
     let output = cmd.arg("--help").output().unwrap();
 
     let stdout = String::from_utf8_lossy(&output.stdout);
-    // Help should list possible values for --target
+    // Help should list exact possible values for --target
     assert!(
-        stdout.contains("claude-code") || stdout.contains("possible values"),
-        "Help should show possible target values"
+        stdout.contains("[possible values: generic, claude-code, cursor, codex]"),
+        "Help should show exact possible target values, got: {}",
+        stdout
     );
 }
