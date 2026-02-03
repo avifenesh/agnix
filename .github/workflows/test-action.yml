@@ -2,7 +2,7 @@ name: Test Action
 
 on:
   push:
-    branches: [main, feature/*]
+    branches: [main, feature/*, fix/*]
     paths:
       - 'action.yml'
       - 'scripts/**'
