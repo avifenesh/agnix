@@ -139,16 +139,8 @@ jobs:
             exit 1
           fi
 
-          # Verify SARIF is valid JSON with expected structure
-          # Use Python with explicit file path to handle Windows paths
-          if ! python3 -c "
-import json
-import os
-sarif_path = os.environ.get('SARIF_FILE', '')
-with open(sarif_path, 'r') as f:
-    d = json.load(f)
-    assert 'runs' in d and 'version' in d, 'Missing required SARIF fields'
-"; then
+          # Verify SARIF is valid JSON with expected structure using jq
+          if ! jq -e '.runs and .version' "${SARIF_FILE}" > /dev/null 2>&1; then
             echo "Error: SARIF file is not valid or missing required fields"
             exit 1
           fi
