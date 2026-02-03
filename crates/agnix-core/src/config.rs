@@ -118,14 +118,6 @@ pub struct RuleConfig {
     #[serde(default = "default_true")]
     pub import_references: bool,
 
-    /// Validate tool names
-    #[serde(default = "default_true")]
-    pub tool_names: bool,
-
-    /// Check required fields
-    #[serde(default = "default_true")]
-    pub required_fields: bool,
-
     /// Explicitly disabled rules by ID (e.g., ["CC-AG-001", "AS-005"])
     #[serde(default)]
     pub disabled_rules: Vec<String>,
@@ -150,8 +142,6 @@ impl Default for RuleConfig {
             frontmatter_validation: true,
             xml_balance: true,
             import_references: true,
-            tool_names: true,
-            required_fields: true,
             disabled_rules: Vec::new(),
         }
     }
@@ -975,5 +965,33 @@ skills = false
         assert!(warning.is_some());
         let msg = warning.unwrap();
         assert!(msg.contains("Failed to parse config"));
+    }
+
+    // ===== Backward Compatibility Tests =====
+
+    #[test]
+    fn test_old_config_with_removed_fields_still_parses() {
+        // Test that configs with the removed tool_names and required_fields
+        // options still parse correctly (serde ignores unknown fields by default)
+        let toml_str = r#"
+severity = "Warning"
+target = "Generic"
+exclude = []
+
+[rules]
+skills = true
+hooks = true
+tool_names = true
+required_fields = true
+"#;
+
+        let config: LintConfig = toml::from_str(toml_str)
+            .expect("Failed to parse config with removed fields for backward compatibility");
+
+        // Config should parse successfully with expected values
+        assert_eq!(config.target, TargetTool::Generic);
+        assert!(config.rules.skills);
+        assert!(config.rules.hooks);
+        // The removed fields are simply ignored
     }
 }

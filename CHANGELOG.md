@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+- Removed unused config flags `tool_names` and `required_fields` from `.agnix.toml`
+  - These flags were never referenced in the codebase
+  - Backward compatibility maintained - old configs with these fields still parse correctly
+
 ### Fixed
 - JSON output `files_checked` now correctly reports total validated files, not just files with diagnostics
 - CLI `--target` flag now validates values instead of silently falling back to "generic"
