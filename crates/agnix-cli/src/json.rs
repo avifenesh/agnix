@@ -173,7 +173,6 @@ mod tests {
             "Missing frontmatter".to_string(),
         );
 
-        // files_checked is now passed from core, not computed from diagnostics
         let output = diagnostics_to_json(&[diag], Path::new("/project"), 1);
 
         assert_eq!(output.files_checked, 1);
@@ -207,7 +206,6 @@ mod tests {
             },
         ];
 
-        // files_checked is now passed from core
         let output = diagnostics_to_json(&diags, Path::new("/p"), 4);
 
         assert_eq!(output.summary.errors, 2);
@@ -218,7 +216,6 @@ mod tests {
 
     #[test]
     fn test_files_checked_uses_passed_value() {
-        // files_checked is now passed from core, not computed from diagnostics
         // This test verifies the value comes from the argument, not from counting
         let diags = vec![
             Diagnostic::error(PathBuf::from("/p/a.md"), 1, 1, "AS-001", "A".to_string()),
