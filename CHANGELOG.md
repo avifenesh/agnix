@@ -205,6 +205,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - PE-001 through PE-004 rules now properly dispatch on CLAUDE.md and AGENTS.md files (PromptValidator was implemented but not registered in ValidatorRegistry)
 
 ### Changed
+- Removed miette dependency from agnix-core to reduce binary size and compile times
+  - agnix-core is now a pure library without terminal output dependencies
+  - CLI continues to use colored for output formatting
+  - Removed 8 unused LintError variants that used miette-specific features
 - Downgraded 5 rules from ERROR to WARNING severity based on RFC 2119 audit:
   - PE-001 (Lost in the middle): Research-based recommendation, not spec violation
   - PE-002 (Chain-of-thought on simple task): Best practice advice, not requirement
