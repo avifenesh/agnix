@@ -179,9 +179,10 @@ impl LintConfig {
 
     /// Load config or use default, returning any parse warning
     ///
-    /// Returns a tuple of (config, optional_warning). If the config file exists but
-    /// fails to parse, returns the default config with a warning message describing
-    /// the error. This prevents silent fallback to defaults on config typos.
+    /// Returns a tuple of (config, optional_warning). If a config path is provided
+    /// but the file cannot be loaded or parsed, returns the default config with a
+    /// warning message describing the error. This prevents silent fallback to
+    /// defaults on config typos or missing/unreadable config files.
     pub fn load_or_default(path: Option<&PathBuf>) -> (Self, Option<String>) {
         match path {
             Some(p) => match Self::load(p) {
