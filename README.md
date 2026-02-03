@@ -406,7 +406,7 @@ agnix/
 ## Roadmap
 
 - [x] Core validation engine
-- [x] CLI with miette errors
+- [x] CLI with colored output
 - [x] Agent Skills validation (AS-* + CC-SK-001 to CC-SK-009)
 - [x] CLAUDE.md rules
 - [x] XML balance checking
