@@ -79,11 +79,13 @@ fn extract_sarif_rule_ids() -> BTreeSet<String> {
     ];
 
     // Find the rules_data array bounds to avoid matching rule IDs in test code
-    let rules_data_start = content.find("let rules_data = [").unwrap_or(0);
+    let rules_data_start = content
+        .find("let rules_data = [")
+        .expect("Could not find start of `rules_data` array in sarif.rs");
     let rules_data_end = content[rules_data_start..]
         .find("];")
         .map(|i| rules_data_start + i)
-        .unwrap_or(content.len());
+        .expect("Could not find end of `rules_data` array in sarif.rs");
 
     let rules_section = &content[rules_data_start..rules_data_end];
 
@@ -100,7 +102,7 @@ fn extract_sarif_rule_ids() -> BTreeSet<String> {
 }
 
 fn extract_implemented_rule_ids() -> BTreeSet<String> {
-    let rules_dir = workspace_root().join("crates/agnix-core/src/rules");
+    let core_src = workspace_root().join("crates/agnix-core/src");
     let mut rule_ids = BTreeSet::new();
 
     // Pattern matches rule IDs in Diagnostic::error/warning/info calls
@@ -113,11 +115,9 @@ fn extract_implemented_rule_ids() -> BTreeSet<String> {
         "REF-", "PE-", "XP-",
     ];
 
-    for entry in fs::read_dir(&rules_dir).unwrap() {
-        let entry = entry.unwrap();
-        let path = entry.path();
-        if path.extension().is_some_and(|ext| ext == "rs") {
-            let content = fs::read_to_string(&path).unwrap();
+    // Helper to extract rule IDs from a file
+    let extract_from_file = |path: &Path, rule_ids: &mut BTreeSet<String>| {
+        if let Ok(content) = fs::read_to_string(path) {
             for cap in re.captures_iter(&content) {
                 let rule_id = &cap[1];
                 if valid_prefixes.iter().any(|p| rule_id.starts_with(p)) {
@@ -125,7 +125,20 @@ fn extract_implemented_rule_ids() -> BTreeSet<String> {
                 }
             }
         }
+    };
+
+    // Scan rules directory
+    let rules_dir = core_src.join("rules");
+    for entry in fs::read_dir(&rules_dir).expect("Failed to read rules directory") {
+        let entry = entry.expect("Failed to read directory entry");
+        let path = entry.path();
+        if path.extension().is_some_and(|ext| ext == "rs") {
+            extract_from_file(&path, &mut rule_ids);
+        }
     }
+
+    // Also scan lib.rs for project-level rules (e.g., AGM-006)
+    extract_from_file(&core_src.join("lib.rs"), &mut rule_ids);
 
     rule_ids
 }
@@ -137,29 +150,7 @@ fn scan_fixtures_for_coverage() -> HashMap<String, Vec<String>> {
     // Pattern to match rule IDs in fixture file content or directory names
     let re = Regex::new(r"[A-Z]+-(?:[A-Z]+-)?[0-9]+").unwrap();
 
-    // Map fixture directory patterns to rule categories
-    let dir_to_rules: Vec<(&str, &[&str])> = vec![
-        ("skills", &["AS-", "CC-SK-"]),
-        ("hooks", &["CC-HK-"]),
-        ("agents", &["CC-AG-"]),
-        ("memory", &["CC-MEM-"]),
-        ("plugins", &["CC-PL-"]),
-        ("agents_md", &["AGM-"]),
-        ("mcp", &["MCP-"]),
-        ("copilot", &["COP-"]),
-        ("xml", &["XML-"]),
-        ("refs", &["REF-"]),
-        ("prompt", &["PE-"]),
-        ("cross_platform", &["XP-"]),
-        ("pe", &["PE-"]),
-    ];
-
-    fn scan_dir_recursive(
-        dir: &Path,
-        re: &Regex,
-        coverage: &mut HashMap<String, Vec<String>>,
-        dir_to_rules: &[(&str, &[&str])],
-    ) {
+    fn scan_dir_recursive(dir: &Path, re: &Regex, coverage: &mut HashMap<String, Vec<String>>) {
         if !dir.is_dir() {
             return;
         }
@@ -169,7 +160,7 @@ fn scan_fixtures_for_coverage() -> HashMap<String, Vec<String>> {
             let path = entry.path();
 
             if path.is_dir() {
-                scan_dir_recursive(&path, re, coverage, dir_to_rules);
+                scan_dir_recursive(&path, re, coverage);
             } else if path.is_file() {
                 // Check file content for explicit rule references
                 if let Ok(content) = fs::read_to_string(&path) {
@@ -194,7 +185,7 @@ fn scan_fixtures_for_coverage() -> HashMap<String, Vec<String>> {
         }
     }
 
-    scan_dir_recursive(&fixtures_dir, &re, &mut coverage, &dir_to_rules);
+    scan_dir_recursive(&fixtures_dir, &re, &mut coverage);
     coverage
 }
 
@@ -316,14 +307,16 @@ fn test_all_rules_implemented() {
         eprintln!("{}", report);
     }
 
-    // For now, just verify we have a significant implementation
-    let coverage_pct = (implemented_rules.len() as f64 / documented_rules.len() as f64) * 100.0;
+    // Strict parity: fail if ANY documented rule is not implemented
     assert!(
-        coverage_pct >= 50.0,
-        "Implementation coverage too low: {:.1}% ({}/{} rules)",
-        coverage_pct,
-        implemented_rules.len(),
-        documented_rules.len()
+        not_implemented.is_empty(),
+        "{} rules are documented in rules.json but not implemented:\n{}",
+        not_implemented.len(),
+        not_implemented
+            .iter()
+            .map(|r| format!("  - {}", r))
+            .collect::<Vec<_>>()
+            .join("\n")
     );
 }
 
@@ -346,26 +339,16 @@ fn test_fixture_coverage_exists() {
 
     let not_covered: Vec<&String> = documented_rules.difference(&covered_rules).collect();
 
-    if !not_covered.is_empty() {
-        let mut report = format!(
-            "Rules without explicit fixture coverage ({}):\n",
-            not_covered.len()
-        );
-        for rule in &not_covered {
-            report.push_str(&format!("  - {}\n", rule));
-        }
-        // This is informational - we rely on inferred coverage
-        eprintln!("{}", report);
-    }
-
-    // Assert that most rules have some fixture coverage (explicit or inferred)
-    let coverage_pct = (covered_rules.len() as f64 / documented_rules.len() as f64) * 100.0;
+    // Strict parity: fail if ANY documented rule has no test coverage
     assert!(
-        coverage_pct >= 60.0,
-        "Fixture coverage too low: {:.1}% ({}/{} rules)\nAdd test fixtures for uncovered rules.",
-        coverage_pct,
-        covered_rules.len(),
-        documented_rules.len()
+        not_covered.is_empty(),
+        "{} rules are documented but have no test fixture coverage:\n{}\nAdd test fixtures for uncovered rules.",
+        not_covered.len(),
+        not_covered
+            .iter()
+            .map(|r| format!("  - {}", r))
+            .collect::<Vec<_>>()
+            .join("\n")
     );
 }
 
