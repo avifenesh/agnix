@@ -55,6 +55,19 @@ exclude = [
     file
 }
 
+fn assert_fix_flags_rejected(format: &str, flag: &str) {
+    let mut cmd = agnix();
+    cmd.arg("tests/fixtures/valid")
+        .arg("--format")
+        .arg(format)
+        .arg(flag)
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains(
+            "Fix flags are only supported with text output",
+        ));
+}
+
 // Helper function to check JSON output contains rules from a specific family
 fn check_json_rule_family(fixture: &str, prefixes: &[&str], family_name: &str) {
     let mut cmd = agnix();
@@ -124,6 +137,18 @@ fn test_format_sarif_produces_valid_json() {
         .stdout(predicate::str::contains("\"version\": \"2.1.0\""))
         .stdout(predicate::str::contains("\"$schema\""))
         .stdout(predicate::str::contains("\"runs\""));
+}
+
+#[test]
+fn test_fix_flags_rejected_for_json_and_sarif() {
+    let formats = ["json", "sarif"];
+    let flags = ["--fix", "--dry-run", "--fix-safe"];
+
+    for format in formats {
+        for flag in flags {
+            assert_fix_flags_rejected(format, flag);
+        }
+    }
 }
 
 #[test]
@@ -1105,24 +1130,8 @@ fn test_validate_subcommand() {
 }
 
 #[test]
-fn test_dry_run_with_format_json() {
-    let mut cmd = agnix();
-    let output = cmd
-        .arg("tests/fixtures/invalid/skills")
-        .arg("--dry-run")
-        .arg("--format")
-        .arg("json")
-        .output()
-        .unwrap();
-
-    let stdout = String::from_utf8_lossy(&output.stdout);
-    // Should still produce valid JSON
-    let json: Result<serde_json::Value, _> = serde_json::from_str(&stdout);
-    assert!(
-        json.is_ok(),
-        "--dry-run --format json should produce valid JSON, got: {}",
-        stdout
-    );
+fn test_dry_run_with_format_json_rejected() {
+    assert_fix_flags_rejected("json", "--dry-run");
 }
 
 #[test]

@@ -120,6 +120,7 @@ Features:
 - **Cross-platform paths** - Automatically normalizes Windows backslashes to forward slashes
 - **Relative paths** - File paths are relative to the validation base directory
 - **Proper exit codes** - Returns exit code 1 if errors are found (0 for success)
+- **Fix flags** - `--fix`, `--dry-run`, and `--fix-safe` are only supported with text output
 
 Example JSON output structure:
 ```json
@@ -159,6 +160,7 @@ Features:
 - **Proper exit codes** - Returns exit code 1 if errors are found (0 for success)
 - **Cross-platform paths** - Automatically normalizes Windows backslashes to forward slashes
 - **Relative paths** - File paths are relative to the validation base directory
+- **Fix flags** - `--fix`, `--dry-run`, and `--fix-safe` are only supported with text output
 
 Example SARIF output structure:
 ```json
