@@ -24,6 +24,29 @@ pub enum OutputFormat {
     Sarif,
 }
 
+/// CLI target argument enum with kebab-case names for command line ergonomics.
+/// Separate from TargetTool (which uses PascalCase for config file serialization).
+#[derive(Debug, Clone, Copy, Default, ValueEnum)]
+pub enum TargetArg {
+    #[default]
+    Generic,
+    #[value(name = "claude-code")]
+    ClaudeCode,
+    Cursor,
+    Codex,
+}
+
+impl From<TargetArg> for TargetTool {
+    fn from(arg: TargetArg) -> Self {
+        match arg {
+            TargetArg::Generic => TargetTool::Generic,
+            TargetArg::ClaudeCode => TargetTool::ClaudeCode,
+            TargetArg::Cursor => TargetTool::Cursor,
+            TargetArg::Codex => TargetTool::Codex,
+        }
+    }
+}
+
 #[derive(Parser)]
 #[command(name = "agnix")]
 #[command(author, version, about, long_about = None)]
@@ -44,8 +67,8 @@ struct Cli {
     strict: bool,
 
     /// Target tool (generic, claude-code, cursor, codex)
-    #[arg(short, long, default_value = "generic")]
-    target: String,
+    #[arg(short, long, value_enum, default_value_t = TargetArg::Generic)]
+    target: TargetArg,
 
     /// Config file path
     #[arg(short, long)]
@@ -113,12 +136,7 @@ fn validate_command(path: &Path, cli: &Cli) -> anyhow::Result<()> {
         eprintln!("{} {}", "Warning:".yellow().bold(), warning);
         eprintln!();
     }
-    config.target = match cli.target.as_str() {
-        "claude-code" => TargetTool::ClaudeCode,
-        "cursor" => TargetTool::Cursor,
-        "codex" => TargetTool::Codex,
-        _ => TargetTool::Generic,
-    };
+    config.target = cli.target.into();
 
     let should_fix = cli.fix || cli.fix_safe || cli.dry_run;
     if should_fix && !matches!(cli.format, OutputFormat::Text) {

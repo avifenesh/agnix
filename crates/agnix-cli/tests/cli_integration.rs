@@ -1309,3 +1309,68 @@ fn test_config_warning_with_json_output() {
         stdout
     );
 }
+
+// ============================================================================
+// Target Argument Validation Tests (Issue #129)
+// ============================================================================
+
+#[test]
+fn test_invalid_target_rejected() {
+    let mut cmd = agnix();
+    cmd.arg("tests/fixtures/valid")
+        .arg("--target")
+        .arg("invalid-target")
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("invalid value"));
+}
+
+#[test]
+fn test_typo_target_rejected() {
+    let mut cmd = agnix();
+    // Underscore instead of hyphen should be rejected
+    cmd.arg("tests/fixtures/valid")
+        .arg("--target")
+        .arg("claude_code")
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("invalid value"));
+}
+
+#[test]
+fn test_case_sensitive_target_rejected() {
+    let mut cmd = agnix();
+    // PascalCase should be rejected (CLI uses kebab-case)
+    cmd.arg("tests/fixtures/valid")
+        .arg("--target")
+        .arg("ClaudeCode")
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("invalid value"));
+}
+
+#[test]
+fn test_valid_targets_accepted() {
+    for target in ["generic", "claude-code", "cursor", "codex"] {
+        let mut cmd = agnix();
+        cmd.arg("tests/fixtures/valid")
+            .arg("--target")
+            .arg(target)
+            .assert()
+            .success();
+    }
+}
+
+#[test]
+fn test_help_shows_target_possible_values() {
+    let mut cmd = agnix();
+    let output = cmd.arg("--help").output().unwrap();
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    // Help should list exact possible values for --target
+    assert!(
+        stdout.contains("[possible values: generic, claude-code, cursor, codex]"),
+        "Help should show exact possible target values, got: {}",
+        stdout
+    );
+}

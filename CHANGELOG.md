@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- CLI `--target` flag now validates values instead of silently falling back to "generic"
+  - Invalid values rejected with helpful error message showing valid options
+  - Prevents configuration typos from going unnoticed
 - Config parse errors now display a warning instead of silently falling back to defaults
   - Invalid `.agnix.toml` files show clear error message with parse location
   - Validation continues with default config after displaying warning
