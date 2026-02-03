@@ -292,7 +292,11 @@ pub fn validate_project_with_registry(
         .filter_map(|entry| entry.ok())
         .filter(|entry| entry.path().is_file())
         .filter(|entry| {
-            let mut path_str = entry.path().to_string_lossy().replace('\\', "/");
+            let entry_path = entry.path();
+            // Normalize to relative path for glob matching (fixes #67)
+            let rel_path = entry_path.strip_prefix(path).unwrap_or(entry_path);
+
+            let mut path_str = rel_path.to_string_lossy().replace('\\', "/");
             if let Some(stripped) = path_str.strip_prefix("./") {
                 path_str = stripped.to_string();
             }
@@ -1869,6 +1873,114 @@ Use idiomatic Rust patterns.
         assert!(
             diagnostics.iter().any(|d| d.rule == "PE-003"),
             "Expected PE-003 from AGENTS.md with weak language content"
+        );
+    }
+
+    #[test]
+    fn test_exclude_patterns_with_absolute_path() {
+        let temp = tempfile::TempDir::new().unwrap();
+
+        // Create a structure that should be partially excluded
+        let target_dir = temp.path().join("target");
+        std::fs::create_dir_all(&target_dir).unwrap();
+        std::fs::write(
+            target_dir.join("SKILL.md"),
+            "---\nname: build-artifact\ndescription: Should be excluded\n---\nBody",
+        )
+        .unwrap();
+
+        // Create a file that should NOT be excluded
+        std::fs::write(
+            temp.path().join("SKILL.md"),
+            "---\nname: valid-skill\ndescription: Should be validated\n---\nBody",
+        )
+        .unwrap();
+
+        let mut config = LintConfig::default();
+        config.exclude = vec!["target/**".to_string()];
+
+        // Use absolute path (canonicalize returns absolute path)
+        let abs_path = std::fs::canonicalize(temp.path()).unwrap();
+        let diagnostics = validate_project(&abs_path, &config).unwrap();
+
+        // Should NOT have diagnostics from target/SKILL.md (excluded)
+        let target_diags: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.file.to_string_lossy().contains("target"))
+            .collect();
+        assert!(
+            target_diags.is_empty(),
+            "Files in target/ should be excluded when using absolute path, got: {:?}",
+            target_diags
+        );
+    }
+
+    #[test]
+    fn test_exclude_patterns_with_relative_path() {
+        let temp = tempfile::TempDir::new().unwrap();
+
+        // Create a structure that should be partially excluded
+        let node_modules = temp.path().join("node_modules");
+        std::fs::create_dir_all(&node_modules).unwrap();
+        std::fs::write(
+            node_modules.join("SKILL.md"),
+            "---\nname: npm-artifact\ndescription: Should be excluded\n---\nBody",
+        )
+        .unwrap();
+
+        // Create a file that should NOT be excluded
+        std::fs::write(
+            temp.path().join("AGENTS.md"),
+            "# Project\n\nThis should be validated.",
+        )
+        .unwrap();
+
+        let mut config = LintConfig::default();
+        config.exclude = vec!["node_modules/**".to_string()];
+
+        // Use temp.path() directly (may be absolute on some systems, but test covers the logic)
+        let diagnostics = validate_project(temp.path(), &config).unwrap();
+
+        // Should NOT have diagnostics from node_modules/
+        let nm_diags: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.file.to_string_lossy().contains("node_modules"))
+            .collect();
+        assert!(
+            nm_diags.is_empty(),
+            "Files in node_modules/ should be excluded, got: {:?}",
+            nm_diags
+        );
+    }
+
+    #[test]
+    fn test_exclude_patterns_nested_directories() {
+        let temp = tempfile::TempDir::new().unwrap();
+
+        // Create deeply nested target directory
+        let deep_target = temp.path().join("subproject").join("target").join("debug");
+        std::fs::create_dir_all(&deep_target).unwrap();
+        std::fs::write(
+            deep_target.join("SKILL.md"),
+            "---\nname: deep-artifact\ndescription: Deep exclude test\n---\nBody",
+        )
+        .unwrap();
+
+        let mut config = LintConfig::default();
+        // Use ** prefix to match at any level
+        config.exclude = vec!["**/target/**".to_string()];
+
+        let abs_path = std::fs::canonicalize(temp.path()).unwrap();
+        let diagnostics = validate_project(&abs_path, &config).unwrap();
+
+        let target_diags: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.file.to_string_lossy().contains("target"))
+            .collect();
+        assert!(
+            target_diags.is_empty(),
+            "Deeply nested target/ files should be excluded, got: {:?}",
+            target_diags
         );
     }
 }
