@@ -26,6 +26,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - AGENTS.override.md - Codex CLI override file for workspace-specific rules
   - All variants are validated with the same rules as their base files
 
+### Fixed
+- Reject `--fix`, `--dry-run`, and `--fix-safe` when using JSON or SARIF output formats
+
 ### Security
 - Blocked @import paths that resolve outside the project root to prevent traversal
 - Hardened file reading with symlink rejection and size limits:
