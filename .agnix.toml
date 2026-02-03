@@ -32,6 +32,4 @@ generic_instructions = true
 frontmatter_validation = true
 xml_balance = true
 import_references = true
-tool_names = true
-required_fields = true
 disabled_rules = []
