@@ -18,6 +18,13 @@ impl Validator for ClaudeMdValidator {
     fn validate(&self, path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic> {
         let mut diagnostics = Vec::new();
 
+        // Only validate CLAUDE.md variants (not AGENTS.* files)
+        // CC-MEM rules are Claude Code specific and should not apply to cross-platform AGENTS files
+        let filename = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
+        if !matches!(filename, "CLAUDE.md" | "CLAUDE.local.md") {
+            return diagnostics;
+        }
+
         // CC-MEM-005: Generic instructions detection
         // Also check legacy config flag for backward compatibility
         if config.is_rule_enabled("CC-MEM-005") && config.rules.generic_instructions {
@@ -230,6 +237,61 @@ mod tests {
 
         assert!(!diagnostics.is_empty());
         // Verify rule ID is CC-MEM-005
+        assert!(diagnostics.iter().any(|d| d.rule == "CC-MEM-005"));
+    }
+
+    #[test]
+    fn test_skip_agents_files() {
+        // CC-MEM rules should NOT apply to AGENTS.* files
+        let content = "Be helpful and accurate when responding.";
+        let validator = ClaudeMdValidator;
+
+        // AGENTS.md should be skipped
+        let diagnostics =
+            validator.validate(Path::new("AGENTS.md"), content, &LintConfig::default());
+        assert!(
+            diagnostics.is_empty(),
+            "CC-MEM rules should not fire for AGENTS.md"
+        );
+
+        // AGENTS.local.md should be skipped
+        let diagnostics = validator.validate(
+            Path::new("AGENTS.local.md"),
+            content,
+            &LintConfig::default(),
+        );
+        assert!(
+            diagnostics.is_empty(),
+            "CC-MEM rules should not fire for AGENTS.local.md"
+        );
+
+        // AGENTS.override.md should be skipped
+        let diagnostics = validator.validate(
+            Path::new("AGENTS.override.md"),
+            content,
+            &LintConfig::default(),
+        );
+        assert!(
+            diagnostics.is_empty(),
+            "CC-MEM rules should not fire for AGENTS.override.md"
+        );
+    }
+
+    #[test]
+    fn test_claude_local_md_gets_rules() {
+        // CLAUDE.local.md SHOULD get CC-MEM rules
+        let content = "Be helpful and accurate when responding.";
+        let validator = ClaudeMdValidator;
+        let diagnostics = validator.validate(
+            Path::new("CLAUDE.local.md"),
+            content,
+            &LintConfig::default(),
+        );
+
+        assert!(
+            !diagnostics.is_empty(),
+            "CC-MEM rules should fire for CLAUDE.local.md"
+        );
         assert!(diagnostics.iter().any(|d| d.rule == "CC-MEM-005"));
     }
 

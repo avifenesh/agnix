@@ -53,7 +53,7 @@ impl Validator for ImportsValidator {
 
         // Detect root file type for cycle/depth rules
         let filename = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
-        let is_claude_md = filename == "CLAUDE.md";
+        let is_claude_md = matches!(filename, "CLAUDE.md" | "CLAUDE.local.md");
 
         let root_path = normalize_existing_path(path);
         let mut cache: HashMap<PathBuf, Vec<Import>> = HashMap::new();
@@ -105,7 +105,7 @@ fn visit_imports(
 
     // Determine file type for current file to route its own diagnostics
     let filename = file_path.file_name().and_then(|n| n.to_str()).unwrap_or("");
-    let is_claude_md = filename == "CLAUDE.md";
+    let is_claude_md = matches!(filename, "CLAUDE.md" | "CLAUDE.local.md");
 
     // Check rules based on CURRENT file type for missing imports
     // Check rules based on ROOT file type for cycles/depth (applies to entire chain)
