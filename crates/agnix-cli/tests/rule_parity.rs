@@ -14,6 +14,7 @@ use std::path::{Path, PathBuf};
 /// Rule definition from rules.json
 #[derive(Debug, Deserialize)]
 struct RulesIndex {
+    total_rules: usize,
     rules: Vec<RuleEntry>,
 }
 
@@ -355,6 +356,15 @@ fn test_fixture_coverage_exists() {
 #[test]
 fn test_rules_json_integrity() {
     let rules_index = load_rules_json();
+
+    // Check total_rules field matches actual count
+    assert_eq!(
+        rules_index.rules.len(),
+        rules_index.total_rules,
+        "The 'total_rules' field ({}) in rules.json does not match the actual number of rules ({})",
+        rules_index.total_rules,
+        rules_index.rules.len()
+    );
 
     // Check total count matches expected
     assert_eq!(
