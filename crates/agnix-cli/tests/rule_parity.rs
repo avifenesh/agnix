@@ -172,14 +172,6 @@ fn scan_fixtures_for_coverage() -> HashMap<String, Vec<String>> {
                 // Check directory name for rule references
                 let dir_name = path.file_name().unwrap().to_string_lossy();
 
-                // Infer rule coverage from directory structure
-                for (pattern, _prefixes) in dir_to_rules {
-                    if dir_name.contains(pattern) || path.to_string_lossy().contains(pattern) {
-                        // This directory covers rules with the associated prefixes
-                        // The actual coverage tracking is done via infer_fixture_coverage()
-                    }
-                }
-
                 scan_dir_recursive(&path, re, coverage, dir_to_rules);
             } else if path.is_file() {
                 // Check file content for explicit rule references
@@ -337,8 +329,6 @@ fn test_all_rules_implemented() {
         report.push_str("  1. Rule not yet implemented\n");
         report.push_str("  2. Rule ID string not found in source (check spelling)\n");
 
-        // This is currently a warning, not a failure
-        // Uncomment the assert below to make it a hard requirement
         eprintln!("{}", report);
     }
 
