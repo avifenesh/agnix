@@ -73,8 +73,9 @@ fi
 } >> "${GITHUB_OUTPUT:-/dev/stdout}"
 
 # Generate GitHub annotations from diagnostics
+# Use tab delimiter to handle Windows paths that contain colons (e.g., C:/path)
 if echo "${OUTPUT}" | jq -e '.diagnostics' > /dev/null 2>&1; then
-    echo "${OUTPUT}" | jq -r '.diagnostics[] | "\(.level):\(.file):\(.line):\(.column):\(.message) [\(.rule)]"' | while IFS=: read -r level file line col msg; do
+    echo "${OUTPUT}" | jq -r '.diagnostics[] | "\(.level)\t\(.file)\t\(.line)\t\(.column)\t\(.message) [\(.rule)]"' | while IFS=$'\t' read -r level file line col msg; do
         case "${level}" in
             error)
                 echo "::error file=${file},line=${line},col=${col}::${msg}"
