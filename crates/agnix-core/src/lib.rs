@@ -263,6 +263,68 @@ pub fn validate_project(path: &Path, config: &LintConfig) -> LintResult<Vec<Diag
     validate_project_with_registry(path, config, &registry)
 }
 
+struct ExcludePattern {
+    pattern: glob::Pattern,
+    dir_only_prefix: Option<String>,
+}
+
+fn normalize_rel_path(entry_path: &Path, root: &Path) -> String {
+    let rel_path = entry_path.strip_prefix(root).unwrap_or(entry_path);
+    let mut path_str = rel_path.to_string_lossy().replace('\\', "/");
+    if let Some(stripped) = path_str.strip_prefix("./") {
+        path_str = stripped.to_string();
+    }
+    path_str
+}
+
+fn compile_exclude_patterns(excludes: &[String]) -> Vec<ExcludePattern> {
+    excludes
+        .iter()
+        .map(|pattern| {
+            let normalized = pattern.replace('\\', "/");
+            if normalized.ends_with('/') {
+                let prefix = normalized.trim_end_matches('/').to_string();
+                let glob_pattern = format!("{}/**", prefix);
+                ExcludePattern {
+                    pattern: glob::Pattern::new(&glob_pattern)
+                        .unwrap_or_else(|_| panic!("Invalid exclude pattern in config: {}", pattern)),
+                    dir_only_prefix: Some(prefix),
+                }
+            } else {
+                ExcludePattern {
+                    pattern: glob::Pattern::new(&normalized)
+                        .unwrap_or_else(|_| panic!("Invalid exclude pattern in config: {}", pattern)),
+                    dir_only_prefix: None,
+                }
+            }
+        })
+        .collect()
+}
+
+fn should_prune_dir(rel_dir: &str, exclude_patterns: &[ExcludePattern]) -> bool {
+    if rel_dir.is_empty() {
+        return false;
+    }
+    let probe = format!("{}/__agnix_probe__", rel_dir.trim_end_matches('/'));
+    exclude_patterns
+        .iter()
+        .any(|p| p.pattern.matches(rel_dir) || p.pattern.matches(&probe))
+}
+
+fn is_excluded_file(path_str: &str, exclude_patterns: &[ExcludePattern]) -> bool {
+    exclude_patterns.iter().any(|p| {
+        if !p.pattern.matches(path_str) {
+            return false;
+        }
+        if let Some(prefix) = &p.dir_only_prefix {
+            if path_str == prefix {
+                return false;
+            }
+        }
+        true
+    })
+}
+
 /// Main entry point for validating a project with a custom validator registry
 pub fn validate_project_with_registry(
     path: &Path,
@@ -270,6 +332,7 @@ pub fn validate_project_with_registry(
     registry: &ValidatorRegistry,
 ) -> LintResult<Vec<Diagnostic>> {
     use ignore::WalkBuilder;
+    use std::sync::Arc;
 
     let root_dir = resolve_validation_root(path);
     let mut config = config.clone();
@@ -277,34 +340,37 @@ pub fn validate_project_with_registry(
 
     // Pre-compile exclude patterns once (avoids N+1 pattern compilation)
     // Panic on invalid patterns to catch config errors early
-    let exclude_patterns: Vec<glob::Pattern> = config
-        .exclude
-        .iter()
-        .map(|p| {
-            let normalized = p.replace('\\', "/");
-            glob::Pattern::new(&normalized)
-                .unwrap_or_else(|_| panic!("Invalid exclude pattern in config: {}", p))
-        })
-        .collect();
+    let exclude_patterns = compile_exclude_patterns(&config.exclude);
+    let exclude_patterns = Arc::new(exclude_patterns);
+    let root_path = path.to_path_buf();
 
     // Collect all file paths to validate (sequential walk, parallel validation)
     // Note: hidden(false) includes .github directory for Copilot instruction files
     let paths: Vec<PathBuf> = WalkBuilder::new(path)
         .hidden(false)
         .git_ignore(true)
+        .filter_entry({
+            let exclude_patterns = Arc::clone(&exclude_patterns);
+            let root_path = root_path.clone();
+            move |entry| {
+                let entry_path = entry.path();
+                if entry_path == root_path {
+                    return true;
+                }
+                if entry.file_type().is_some_and(|ft| ft.is_dir()) {
+                    let rel_path = normalize_rel_path(entry_path, &root_path);
+                    return !should_prune_dir(&rel_path, exclude_patterns.as_slice());
+                }
+                true
+            }
+        })
         .build()
         .filter_map(|entry| entry.ok())
         .filter(|entry| entry.path().is_file())
         .filter(|entry| {
             let entry_path = entry.path();
-            // Normalize to relative path for glob matching (fixes #67)
-            let rel_path = entry_path.strip_prefix(path).unwrap_or(entry_path);
-
-            let mut path_str = rel_path.to_string_lossy().replace('\\', "/");
-            if let Some(stripped) = path_str.strip_prefix("./") {
-                path_str = stripped.to_string();
-            }
-            !exclude_patterns.iter().any(|p| p.matches(&path_str))
+            let path_str = normalize_rel_path(entry_path, &root_path);
+            !is_excluded_file(&path_str, exclude_patterns.as_slice())
         })
         .map(|entry| entry.path().to_path_buf())
         .collect();
@@ -1994,6 +2060,71 @@ Use idiomatic Rust patterns.
             target_diags.is_empty(),
             "Deeply nested target/ files should be excluded, got: {:?}",
             target_diags
+        );
+    }
+
+    #[test]
+    fn test_should_prune_dir_with_globbed_patterns() {
+        let patterns = compile_exclude_patterns(&vec![
+            "target/**".to_string(),
+            "**/target/**".to_string(),
+        ]);
+        assert!(
+            should_prune_dir("target", &patterns),
+            "Expected target/** to prune target directory"
+        );
+        assert!(
+            should_prune_dir("sub/target", &patterns),
+            "Expected **/target/** to prune nested target directory"
+        );
+    }
+
+    #[test]
+    fn test_should_prune_dir_for_bare_pattern() {
+        let patterns = compile_exclude_patterns(&vec!["target".to_string()]);
+        assert!(
+            should_prune_dir("target", &patterns),
+            "Bare pattern should prune directory"
+        );
+        assert!(
+            !should_prune_dir("sub/target", &patterns),
+            "Bare pattern should not prune nested directories"
+        );
+    }
+
+    #[test]
+    fn test_should_prune_dir_for_trailing_slash_pattern() {
+        let patterns = compile_exclude_patterns(&vec!["target/".to_string()]);
+        assert!(
+            should_prune_dir("target", &patterns),
+            "Trailing slash pattern should prune directory"
+        );
+    }
+
+    #[test]
+    fn test_should_not_prune_root_dir() {
+        let patterns = compile_exclude_patterns(&vec!["target/**".to_string()]);
+        assert!(
+            !should_prune_dir("", &patterns),
+            "Root directory should never be pruned"
+        );
+    }
+
+    #[test]
+    fn test_dir_only_pattern_does_not_exclude_file_named_dir() {
+        let patterns = compile_exclude_patterns(&vec!["target/".to_string()]);
+        assert!(
+            !is_excluded_file("target", &patterns),
+            "Directory-only pattern should not exclude a file named target"
+        );
+    }
+
+    #[test]
+    fn test_dir_only_pattern_excludes_files_under_dir() {
+        let patterns = compile_exclude_patterns(&vec!["target/".to_string()]);
+        assert!(
+            is_excluded_file("target/file.txt", &patterns),
+            "Directory-only pattern should exclude files under target/"
         );
     }
 }
