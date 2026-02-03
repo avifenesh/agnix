@@ -295,6 +295,23 @@ cargo run --bin agnix -- .
 cargo watch -x test
 ```
 
+### Releasing
+
+To create a release, push a version tag:
+
+```bash
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+This triggers the release workflow which:
+- Builds binaries for Linux (gnu/musl), macOS (x86/ARM), and Windows
+- Creates archives with SHA256 checksums
+- Extracts release notes from CHANGELOG.md
+- Publishes to GitHub Releases
+
+Pre-release versions (e.g., `v0.1.0-beta`) are marked as pre-release automatically.
+
 ## Project Structure
 
 ```
