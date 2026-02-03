@@ -13,6 +13,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - AGENTS.local.md - Codex CLI/OpenCode local instructions
   - AGENTS.override.md - Codex CLI override file for workspace-specific rules
   - All variants are validated with the same rules as their base files
+
+### Security
+- Hardened file reading with symlink rejection and size limits:
+  - Added `FileSymlink` error to reject symlinks (prevents path traversal)
+  - Added `FileTooBig` error for files exceeding 1 MiB (prevents DoS)
+  - New `file_utils` module with `safe_read_file()` using `symlink_metadata()`
+  - Applied to validation, imports, fixes, and config loading
+  - Cross-platform tests for Unix and Windows symlink handling
+
 - GitHub Copilot instruction files validation with 4 rules (COP-001 to COP-004)
   - COP-001: Empty/missing global copilot-instructions.md
   - COP-002: Invalid YAML frontmatter in scoped instruction files

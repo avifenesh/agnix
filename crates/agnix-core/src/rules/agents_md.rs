@@ -191,39 +191,24 @@ Some content"#;
     // ===== AGENTS.* Variant Files =====
 
     #[test]
-    fn test_agents_local_md_gets_agm_rules() {
+    fn test_agents_variants_get_agm_rules() {
+        // Both AGENTS.local.md and AGENTS.override.md should get AGM rules
         let content = r#"```unclosed
 Some content"#;
+        let variants = ["AGENTS.local.md", "AGENTS.override.md"];
         let validator = AgentsMdValidator;
-        let diagnostics = validator.validate(
-            Path::new("AGENTS.local.md"),
-            content,
-            &LintConfig::default(),
-        );
-        let agm_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AGM-001").collect();
-        assert_eq!(
-            agm_001.len(),
-            1,
-            "AGENTS.local.md should get AGM-001 for unclosed code block"
-        );
-    }
 
-    #[test]
-    fn test_agents_override_md_gets_agm_rules() {
-        let content = r#"```unclosed
-Some content"#;
-        let validator = AgentsMdValidator;
-        let diagnostics = validator.validate(
-            Path::new("AGENTS.override.md"),
-            content,
-            &LintConfig::default(),
-        );
-        let agm_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AGM-001").collect();
-        assert_eq!(
-            agm_001.len(),
-            1,
-            "AGENTS.override.md should get AGM-001 for unclosed code block"
-        );
+        for variant in variants {
+            let diagnostics =
+                validator.validate(Path::new(variant), content, &LintConfig::default());
+            let agm_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AGM-001").collect();
+            assert_eq!(
+                agm_001.len(),
+                1,
+                "{} should get AGM-001 for unclosed code block",
+                variant
+            );
+        }
     }
 
     #[test]

@@ -226,41 +226,24 @@ Body"#;
     }
 
     #[test]
-    fn test_xp_002_agents_local_md() {
-        // AGENTS.local.md should get XP-002 for structure issues
+    fn test_xp_002_agents_variants() {
+        // AGENTS variants should get XP-002 for structure issues
         let content = "Just plain text without any markdown headers.";
         let validator = CrossPlatformValidator;
-        let diagnostics = validator.validate(
-            Path::new("AGENTS.local.md"),
-            content,
-            &LintConfig::default(),
-        );
+        let variants = ["AGENTS.local.md", "AGENTS.override.md"];
 
-        let xp_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XP-002").collect();
-        assert_eq!(
-            xp_002.len(),
-            1,
-            "XP-002 should fire for AGENTS.local.md without headers"
-        );
-    }
+        for variant in variants {
+            let diagnostics =
+                validator.validate(Path::new(variant), content, &LintConfig::default());
 
-    #[test]
-    fn test_xp_002_agents_override_md() {
-        // AGENTS.override.md should get XP-002 for structure issues
-        let content = "Plain text only, no headers.";
-        let validator = CrossPlatformValidator;
-        let diagnostics = validator.validate(
-            Path::new("AGENTS.override.md"),
-            content,
-            &LintConfig::default(),
-        );
-
-        let xp_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XP-002").collect();
-        assert_eq!(
-            xp_002.len(),
-            1,
-            "XP-002 should fire for AGENTS.override.md without headers"
-        );
+            let xp_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XP-002").collect();
+            assert_eq!(
+                xp_002.len(),
+                1,
+                "XP-002 should fire for {} without headers",
+                variant
+            );
+        }
     }
 
     #[test]
