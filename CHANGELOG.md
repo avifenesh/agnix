@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Config parse errors now display a warning instead of silently falling back to defaults
+  - Invalid `.agnix.toml` files show clear error message with parse location
+  - Validation continues with default config after displaying warning
+  - Warning goes to stderr, preserving JSON/SARIF output validity
+
 ### Added
 - Release workflow for automated binary distribution on version tags:
   - Builds for 5 targets (linux-gnu, linux-musl, macos-x86, macos-arm, windows)
