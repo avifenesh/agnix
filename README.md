@@ -156,7 +156,7 @@ agnix --format sarif . > results.sarif
 
 Features:
 - **Full SARIF 2.1.0 compliance** - Compatible with GitHub Code Scanning and other SARIF tools
-- **80 validation rules** - All rules included in `driver.rules` with help URIs linking to documentation
+- **84 validation rules** - All rules included in `driver.rules` with help URIs linking to documentation
 - **Proper exit codes** - Returns exit code 1 if errors are found (0 for success)
 - **Cross-platform paths** - Automatically normalizes Windows backslashes to forward slashes
 - **Relative paths** - File paths are relative to the validation base directory
