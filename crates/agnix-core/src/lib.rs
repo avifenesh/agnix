@@ -1459,9 +1459,9 @@ Run npm install and npm build.
 
         for (rule, file_part, message) in expectations {
             assert!(
-                diagnostics.iter().any(|d| {
-                    d.rule == rule && d.file.to_string_lossy().contains(file_part)
-                }),
+                diagnostics
+                    .iter()
+                    .any(|d| { d.rule == rule && d.file.to_string_lossy().contains(file_part) }),
                 "{}",
                 message
             );

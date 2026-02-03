@@ -38,7 +38,11 @@ fn run_json(path: &std::path::Path) -> serde_json::Value {
 
     let stdout = String::from_utf8_lossy(&output.stdout);
     serde_json::from_str(&stdout).unwrap_or_else(|_| {
-        panic!("Expected valid JSON output for {}, got: {}", path.display(), stdout)
+        panic!(
+            "Expected valid JSON output for {}, got: {}",
+            path.display(),
+            stdout
+        )
     })
 }
 
@@ -46,9 +50,7 @@ fn assert_has_rule(json: &serde_json::Value, rule: &str) {
     let diagnostics = json["diagnostics"]
         .as_array()
         .unwrap_or_else(|| panic!("diagnostics missing in JSON output"));
-    let found = diagnostics
-        .iter()
-        .any(|d| d["rule"].as_str() == Some(rule));
+    let found = diagnostics.iter().any(|d| d["rule"].as_str() == Some(rule));
     assert!(found, "Expected {} in diagnostics", rule);
 }
 
@@ -73,12 +75,12 @@ make_cli_test!(
     "refs",
     ["REF-001", "REF-002"]
 );
+make_cli_test!(test_cli_reports_mcp_fixtures, "mcp", ["MCP-001", "MCP-006"]);
 make_cli_test!(
-    test_cli_reports_mcp_fixtures,
-    "mcp",
-    ["MCP-001", "MCP-006"]
+    test_cli_reports_agm_fixtures,
+    "agents_md/no-headers",
+    ["AGM-002"]
 );
-make_cli_test!(test_cli_reports_agm_fixtures, "agents_md/no-headers", ["AGM-002"]);
 make_cli_test!(
     test_cli_reports_xp_fixtures,
     "cross_platform/hard-coded",

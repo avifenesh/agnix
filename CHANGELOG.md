@@ -38,6 +38,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ValidatorRegistry API for custom validator registration in agnix-core
 - AGENTS.md validation rules (AGM-001 to AGM-006)
 - AGENTS.md validator now runs via the default registry, with project-level AGM-006 detection
+- Fixture-family test coverage for AGM/XP/REF/XML/MCP across core and CLI
+- Fixture conventions documented in tests/fixtures/README.md
 - Explicit HTML anchors in VALIDATION-RULES.md for SARIF help_uri links (#88)
   - Added 80 anchors (one per rule) to fix GitHub anchor mismatch
   - Added tests to validate help_uri format and anchor correctness
