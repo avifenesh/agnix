@@ -7,7 +7,7 @@ use agnix_core::{
     apply_fixes,
     config::{LintConfig, TargetTool},
     diagnostics::DiagnosticLevel,
-    validate_project,
+    validate_project, ValidationResult,
 };
 use clap::{Parser, Subcommand, ValueEnum};
 use colored::*;
@@ -148,11 +148,14 @@ fn validate_command(path: &Path, cli: &Cli) -> anyhow::Result<()> {
     // Resolve absolute path for consistent relative output (prefer repo root)
     let base_path = std::fs::canonicalize(".").unwrap_or_else(|_| PathBuf::from("."));
 
-    let diagnostics = validate_project(path, &config)?;
+    let ValidationResult {
+        diagnostics,
+        files_checked,
+    } = validate_project(path, &config)?;
 
     // Handle JSON output format
     if matches!(cli.format, OutputFormat::Json) {
-        let json_output = json::diagnostics_to_json(&diagnostics, &base_path);
+        let json_output = json::diagnostics_to_json(&diagnostics, &base_path, files_checked);
         let json_str = serde_json::to_string_pretty(&json_output)?;
         println!("{}", json_str);
 

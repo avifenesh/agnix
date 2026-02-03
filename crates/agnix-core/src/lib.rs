@@ -28,6 +28,15 @@ pub use diagnostics::{Diagnostic, DiagnosticLevel, Fix, LintError, LintResult};
 pub use fixes::{apply_fixes, FixResult};
 use rules::Validator;
 
+/// Result of validating a project, including diagnostics and metadata.
+#[derive(Debug, Clone)]
+pub struct ValidationResult {
+    /// Diagnostics found during validation.
+    pub diagnostics: Vec<Diagnostic>,
+    /// Number of files that were checked (excludes Unknown file types).
+    pub files_checked: usize,
+}
+
 /// Detected file type for validator dispatch
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum FileType {
@@ -258,7 +267,7 @@ pub fn validate_file_with_registry(
 }
 
 /// Main entry point for validating a project
-pub fn validate_project(path: &Path, config: &LintConfig) -> LintResult<Vec<Diagnostic>> {
+pub fn validate_project(path: &Path, config: &LintConfig) -> LintResult<ValidationResult> {
     let registry = ValidatorRegistry::with_defaults();
     validate_project_with_registry(path, config, &registry)
 }
@@ -322,7 +331,7 @@ pub fn validate_project_with_registry(
     path: &Path,
     config: &LintConfig,
     registry: &ValidatorRegistry,
-) -> LintResult<Vec<Diagnostic>> {
+) -> LintResult<ValidationResult> {
     use ignore::WalkBuilder;
     use std::sync::Arc;
 
@@ -368,6 +377,12 @@ pub fn validate_project_with_registry(
         })
         .map(|entry| entry.path().to_path_buf())
         .collect();
+
+    // Count recognized files (exclude FileType::Unknown)
+    let files_checked = paths
+        .iter()
+        .filter(|p| detect_file_type(p) != FileType::Unknown)
+        .count();
 
     // Validate files in parallel
     let mut diagnostics: Vec<Diagnostic> = paths
@@ -449,7 +464,10 @@ pub fn validate_project_with_registry(
             .then_with(|| a.rule.cmp(&b.rule))
     });
 
-    Ok(diagnostics)
+    Ok(ValidationResult {
+        diagnostics,
+        files_checked,
+    })
 }
 
 fn resolve_validation_root(path: &Path) -> PathBuf {
@@ -731,9 +749,9 @@ mod tests {
         .unwrap();
 
         let config = LintConfig::default();
-        let diagnostics = validate_project(temp.path(), &config).unwrap();
+        let result = validate_project(temp.path(), &config).unwrap();
 
-        assert!(!diagnostics.is_empty());
+        assert!(!result.diagnostics.is_empty());
     }
 
     #[test]
@@ -741,9 +759,9 @@ mod tests {
         let temp = tempfile::TempDir::new().unwrap();
 
         let config = LintConfig::default();
-        let diagnostics = validate_project(temp.path(), &config).unwrap();
+        let result = validate_project(temp.path(), &config).unwrap();
 
-        assert!(diagnostics.is_empty());
+        assert!(result.diagnostics.is_empty());
     }
 
     #[test]
@@ -759,10 +777,10 @@ mod tests {
         .unwrap();
 
         let config = LintConfig::default();
-        let diagnostics = validate_project(temp.path(), &config).unwrap();
+        let result = validate_project(temp.path(), &config).unwrap();
 
-        for i in 1..diagnostics.len() {
-            assert!(diagnostics[i - 1].level <= diagnostics[i].level);
+        for i in 1..result.diagnostics.len() {
+            assert!(result.diagnostics[i - 1].level <= result.diagnostics[i].level);
         }
     }
 
@@ -842,13 +860,18 @@ mod tests {
             let result = validate_project(temp.path(), &config).unwrap();
 
             assert_eq!(
-                first_result.len(),
-                result.len(),
+                first_result.diagnostics.len(),
+                result.diagnostics.len(),
                 "Run {} produced different number of diagnostics",
                 run
             );
 
-            for (i, (a, b)) in first_result.iter().zip(result.iter()).enumerate() {
+            for (i, (a, b)) in first_result
+                .diagnostics
+                .iter()
+                .zip(result.diagnostics.iter())
+                .enumerate()
+            {
                 assert_eq!(
                     a.file, b.file,
                     "Run {} diagnostic {} has different file",
@@ -869,7 +892,7 @@ mod tests {
 
         // Verify we actually got some diagnostics (the dangerous name rule should fire)
         assert!(
-            !first_result.is_empty(),
+            !first_result.diagnostics.is_empty(),
             "Expected diagnostics for deploy-prod-* skill names"
         );
     }
@@ -885,11 +908,11 @@ mod tests {
         .unwrap();
 
         let config = LintConfig::default();
-        let diagnostics = validate_project(temp.path(), &config).unwrap();
+        let result = validate_project(temp.path(), &config).unwrap();
 
         // Should have at least one diagnostic for the dangerous name (CC-SK-006)
         assert!(
-            diagnostics.iter().any(|d| d.rule == "CC-SK-006"),
+            result.diagnostics.iter().any(|d| d.rule == "CC-SK-006"),
             "Expected CC-SK-006 diagnostic for dangerous deploy-prod name"
         );
     }
@@ -918,10 +941,11 @@ mod tests {
         .unwrap();
 
         let config = LintConfig::default();
-        let diagnostics = validate_project(temp.path(), &config).unwrap();
+        let result = validate_project(temp.path(), &config).unwrap();
 
         // Should have diagnostics only from the invalid skill
-        let error_diagnostics: Vec<_> = diagnostics
+        let error_diagnostics: Vec<_> = result
+            .diagnostics
             .iter()
             .filter(|d| d.level == DiagnosticLevel::Error)
             .collect();
@@ -948,10 +972,11 @@ mod tests {
         .unwrap();
 
         let config = LintConfig::default();
-        let diagnostics = validate_project(temp.path(), &config).unwrap();
+        let result = validate_project(temp.path(), &config).unwrap();
 
         // Should detect the plugin.json and report CC-PL-004 for missing description
-        let plugin_diagnostics: Vec<_> = diagnostics
+        let plugin_diagnostics: Vec<_> = result
+            .diagnostics
             .iter()
             .filter(|d| d.rule.starts_with("CC-PL-"))
             .collect();
@@ -1015,10 +1040,11 @@ mod tests {
         .unwrap();
 
         let config = LintConfig::default();
-        let diagnostics = validate_project(temp.path(), &config).unwrap();
+        let result = validate_project(temp.path(), &config).unwrap();
 
         // Should detect the MCP file and report issues
-        let mcp_diagnostics: Vec<_> = diagnostics
+        let mcp_diagnostics: Vec<_> = result
+            .diagnostics
             .iter()
             .filter(|d| d.rule.starts_with("MCP-"))
             .collect();
@@ -1052,10 +1078,14 @@ mod tests {
         .unwrap();
 
         let config = LintConfig::default();
-        let diagnostics = validate_project(temp.path(), &config).unwrap();
+        let result = validate_project(temp.path(), &config).unwrap();
 
         // Should detect XP-001 error for Claude-specific hooks in AGENTS.md
-        let xp_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XP-001").collect();
+        let xp_001: Vec<_> = result
+            .diagnostics
+            .iter()
+            .filter(|d| d.rule == "XP-001")
+            .collect();
         assert!(
             !xp_001.is_empty(),
             "Expected XP-001 error for hooks in AGENTS.md"
@@ -1080,10 +1110,14 @@ agent: Explore
         .unwrap();
 
         let config = LintConfig::default();
-        let diagnostics = validate_project(temp.path(), &config).unwrap();
+        let result = validate_project(temp.path(), &config).unwrap();
 
         // Should detect XP-001 errors for Claude-specific features
-        let xp_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XP-001").collect();
+        let xp_001: Vec<_> = result
+            .diagnostics
+            .iter()
+            .filter(|d| d.rule == "XP-001")
+            .collect();
         assert!(
             !xp_001.is_empty(),
             "Expected XP-001 errors for context:fork and agent in AGENTS.md"
@@ -1102,10 +1136,14 @@ agent: Explore
         .unwrap();
 
         let config = LintConfig::default();
-        let diagnostics = validate_project(temp.path(), &config).unwrap();
+        let result = validate_project(temp.path(), &config).unwrap();
 
         // Should detect XP-002 warning for missing headers
-        let xp_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XP-002").collect();
+        let xp_002: Vec<_> = result
+            .diagnostics
+            .iter()
+            .filter(|d| d.rule == "XP-002")
+            .collect();
         assert!(
             !xp_002.is_empty(),
             "Expected XP-002 warning for missing headers in AGENTS.md"
@@ -1126,10 +1164,14 @@ Check .claude/settings.json and .cursor/rules/ for configuration.
         .unwrap();
 
         let config = LintConfig::default();
-        let diagnostics = validate_project(temp.path(), &config).unwrap();
+        let result = validate_project(temp.path(), &config).unwrap();
 
         // Should detect XP-003 warnings for hard-coded paths
-        let xp_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XP-003").collect();
+        let xp_003: Vec<_> = result
+            .diagnostics
+            .iter()
+            .filter(|d| d.rule == "XP-003")
+            .collect();
         assert_eq!(
             xp_003.len(),
             2,
@@ -1156,10 +1198,11 @@ Follow the coding style guide.
         .unwrap();
 
         let config = LintConfig::default();
-        let diagnostics = validate_project(temp.path(), &config).unwrap();
+        let result = validate_project(temp.path(), &config).unwrap();
 
         // Should have no XP-* diagnostics
-        let xp_rules: Vec<_> = diagnostics
+        let xp_rules: Vec<_> = result
+            .diagnostics
             .iter()
             .filter(|d| d.rule.starts_with("XP-"))
             .collect();
@@ -1188,10 +1231,14 @@ allowed-tools: Read Write
         .unwrap();
 
         let config = LintConfig::default();
-        let diagnostics = validate_project(temp.path(), &config).unwrap();
+        let result = validate_project(temp.path(), &config).unwrap();
 
         // XP-001 should NOT fire for CLAUDE.md (Claude features are allowed there)
-        let xp_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XP-001").collect();
+        let xp_001: Vec<_> = result
+            .diagnostics
+            .iter()
+            .filter(|d| d.rule == "XP-001")
+            .collect();
         assert!(
             xp_001.is_empty(),
             "CLAUDE.md should be allowed to have Claude-specific features"
@@ -1220,10 +1267,14 @@ allowed-tools: Read Write
         .unwrap();
 
         let config = LintConfig::default();
-        let diagnostics = validate_project(temp.path(), &config).unwrap();
+        let result = validate_project(temp.path(), &config).unwrap();
 
         // Should detect AGM-006 for both AGENTS.md files
-        let agm_006: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AGM-006").collect();
+        let agm_006: Vec<_> = result
+            .diagnostics
+            .iter()
+            .filter(|d| d.rule == "AGM-006")
+            .collect();
         assert_eq!(
             agm_006.len(),
             2,
@@ -1253,10 +1304,14 @@ allowed-tools: Read Write
         .unwrap();
 
         let config = LintConfig::default();
-        let diagnostics = validate_project(temp.path(), &config).unwrap();
+        let result = validate_project(temp.path(), &config).unwrap();
 
         // Should not detect AGM-006 for a single AGENTS.md
-        let agm_006: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AGM-006").collect();
+        let agm_006: Vec<_> = result
+            .diagnostics
+            .iter()
+            .filter(|d| d.rule == "AGM-006")
+            .collect();
         assert!(
             agm_006.is_empty(),
             "Single AGENTS.md should not trigger AGM-006"
@@ -1284,9 +1339,13 @@ allowed-tools: Read Write
         .unwrap();
 
         let config = LintConfig::default();
-        let diagnostics = validate_project(temp.path(), &config).unwrap();
+        let result = validate_project(temp.path(), &config).unwrap();
 
-        let agm_006: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AGM-006").collect();
+        let agm_006: Vec<_> = result
+            .diagnostics
+            .iter()
+            .filter(|d| d.rule == "AGM-006")
+            .collect();
         assert_eq!(
             agm_006.len(),
             2,
@@ -1319,10 +1378,14 @@ allowed-tools: Read Write
 
         let mut config = LintConfig::default();
         config.rules.disabled_rules = vec!["AGM-006".to_string()];
-        let diagnostics = validate_project(temp.path(), &config).unwrap();
+        let result = validate_project(temp.path(), &config).unwrap();
 
         // Should not detect AGM-006 when disabled
-        let agm_006: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AGM-006").collect();
+        let agm_006: Vec<_> = result
+            .diagnostics
+            .iter()
+            .filter(|d| d.rule == "AGM-006")
+            .collect();
         assert!(agm_006.is_empty(), "AGM-006 should not fire when disabled");
     }
 
@@ -1339,9 +1402,13 @@ allowed-tools: Read Write
         .unwrap();
 
         let config = LintConfig::default();
-        let diagnostics = validate_project(temp.path(), &config).unwrap();
+        let result = validate_project(temp.path(), &config).unwrap();
 
-        let agm_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AGM-001").collect();
+        let agm_001: Vec<_> = result
+            .diagnostics
+            .iter()
+            .filter(|d| d.rule == "AGM-001")
+            .collect();
         assert!(!agm_001.is_empty(), "Should detect unclosed code block");
     }
 
@@ -1353,9 +1420,13 @@ allowed-tools: Read Write
         std::fs::write(temp.path().join("AGENTS.md"), content).unwrap();
 
         let config = LintConfig::default();
-        let diagnostics = validate_project(temp.path(), &config).unwrap();
+        let result = validate_project(temp.path(), &config).unwrap();
 
-        let agm_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AGM-003").collect();
+        let agm_003: Vec<_> = result
+            .diagnostics
+            .iter()
+            .filter(|d| d.rule == "AGM-003")
+            .collect();
         assert!(
             !agm_003.is_empty(),
             "Should detect character limit exceeded"
@@ -1373,9 +1444,13 @@ allowed-tools: Read Write
         .unwrap();
 
         let config = LintConfig::default();
-        let diagnostics = validate_project(temp.path(), &config).unwrap();
+        let result = validate_project(temp.path(), &config).unwrap();
 
-        let agm_005: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AGM-005").collect();
+        let agm_005: Vec<_> = result
+            .diagnostics
+            .iter()
+            .filter(|d| d.rule == "AGM-005")
+            .collect();
         assert!(
             !agm_005.is_empty(),
             "Should detect unguarded platform features"
@@ -1405,9 +1480,10 @@ Run npm install and npm build.
         .unwrap();
 
         let config = LintConfig::default();
-        let diagnostics = validate_project(temp.path(), &config).unwrap();
+        let result = validate_project(temp.path(), &config).unwrap();
 
-        let agm_errors: Vec<_> = diagnostics
+        let agm_errors: Vec<_> = result
+            .diagnostics
             .iter()
             .filter(|d| d.rule.starts_with("AGM-") && d.level == DiagnosticLevel::Error)
             .collect();
@@ -1437,10 +1513,11 @@ Run npm install and npm build.
         let fixtures_dir = get_fixtures_dir();
 
         let config = LintConfig::default();
-        let diagnostics = validate_project(&fixtures_dir, &config).unwrap();
+        let result = validate_project(&fixtures_dir, &config).unwrap();
 
         // Verify skill fixtures trigger expected AS-* rules
-        let skill_diagnostics: Vec<_> = diagnostics
+        let skill_diagnostics: Vec<_> = result
+            .diagnostics
             .iter()
             .filter(|d| d.rule.starts_with("AS-"))
             .collect();
@@ -1471,7 +1548,8 @@ Run npm install and npm build.
         );
 
         // Verify MCP fixtures trigger expected MCP-* rules
-        let mcp_diagnostics: Vec<_> = diagnostics
+        let mcp_diagnostics: Vec<_> = result
+            .diagnostics
             .iter()
             .filter(|d| d.rule.starts_with("MCP-"))
             .collect();
@@ -1568,7 +1646,8 @@ Run npm install and npm build.
 
         for (rule, file_part, message) in expectations {
             assert!(
-                diagnostics
+                result
+                    .diagnostics
                     .iter()
                     .any(|d| { d.rule == rule && d.file.to_string_lossy().contains(file_part) }),
                 "{}",
@@ -1870,12 +1949,12 @@ Use idiomatic Rust patterns.
 
         let config = LintConfig::default();
         // Use validate_project (directory walk) instead of validate_file
-        let diagnostics = validate_project(temp.path(), &config).unwrap();
+        let result = validate_project(temp.path(), &config).unwrap();
 
         assert!(
-            diagnostics.iter().any(|d| d.rule == "COP-001"),
+            result.diagnostics.iter().any(|d| d.rule == "COP-001"),
             "validate_project should find .github/copilot-instructions.md and report COP-001. Found: {:?}",
-            diagnostics.iter().map(|d| &d.rule).collect::<Vec<_>>()
+            result.diagnostics.iter().map(|d| &d.rule).collect::<Vec<_>>()
         );
     }
 
@@ -1886,20 +1965,20 @@ Use idiomatic Rust patterns.
         let copilot_invalid_dir = fixtures_dir.join("copilot-invalid");
 
         let config = LintConfig::default();
-        let diagnostics = validate_project(&copilot_invalid_dir, &config).unwrap();
+        let result = validate_project(&copilot_invalid_dir, &config).unwrap();
 
         // Should find COP-001 from empty copilot-instructions.md
         assert!(
-            diagnostics.iter().any(|d| d.rule == "COP-001"),
+            result.diagnostics.iter().any(|d| d.rule == "COP-001"),
             "validate_project should find COP-001 in copilot-invalid fixtures. Found rules: {:?}",
-            diagnostics.iter().map(|d| &d.rule).collect::<Vec<_>>()
+            result.diagnostics.iter().map(|d| &d.rule).collect::<Vec<_>>()
         );
 
         // Should find COP-002 from bad-frontmatter.instructions.md
         assert!(
-            diagnostics.iter().any(|d| d.rule == "COP-002"),
+            result.diagnostics.iter().any(|d| d.rule == "COP-002"),
             "validate_project should find COP-002 in copilot-invalid fixtures. Found rules: {:?}",
-            diagnostics.iter().map(|d| &d.rule).collect::<Vec<_>>()
+            result.diagnostics.iter().map(|d| &d.rule).collect::<Vec<_>>()
         );
     }
 
@@ -1974,10 +2053,11 @@ Use idiomatic Rust patterns.
 
         // Use absolute path (canonicalize returns absolute path)
         let abs_path = std::fs::canonicalize(temp.path()).unwrap();
-        let diagnostics = validate_project(&abs_path, &config).unwrap();
+        let result = validate_project(&abs_path, &config).unwrap();
 
         // Should NOT have diagnostics from target/SKILL.md (excluded)
-        let target_diags: Vec<_> = diagnostics
+        let target_diags: Vec<_> = result
+            .diagnostics
             .iter()
             .filter(|d| d.file.to_string_lossy().contains("target"))
             .collect();
@@ -2012,10 +2092,11 @@ Use idiomatic Rust patterns.
         config.exclude = vec!["node_modules/**".to_string()];
 
         // Use temp.path() directly to validate exclude pattern handling
-        let diagnostics = validate_project(temp.path(), &config).unwrap();
+        let result = validate_project(temp.path(), &config).unwrap();
 
         // Should NOT have diagnostics from node_modules/
-        let nm_diags: Vec<_> = diagnostics
+        let nm_diags: Vec<_> = result
+            .diagnostics
             .iter()
             .filter(|d| d.file.to_string_lossy().contains("node_modules"))
             .collect();
@@ -2044,9 +2125,10 @@ Use idiomatic Rust patterns.
         config.exclude = vec!["**/target/**".to_string()];
 
         let abs_path = std::fs::canonicalize(temp.path()).unwrap();
-        let diagnostics = validate_project(&abs_path, &config).unwrap();
+        let result = validate_project(&abs_path, &config).unwrap();
 
-        let target_diags: Vec<_> = diagnostics
+        let target_diags: Vec<_> = result
+            .diagnostics
             .iter()
             .filter(|d| d.file.to_string_lossy().contains("target"))
             .collect();
@@ -2126,6 +2208,72 @@ Use idiomatic Rust patterns.
         assert!(
             is_excluded_file("target/file.txt", &patterns),
             "Directory-only pattern should exclude files under target/"
+        );
+    }
+
+    // ===== ValidationResult files_checked Tests =====
+
+    #[test]
+    fn test_files_checked_with_no_diagnostics() {
+        // Test that files_checked is accurate even when there are no diagnostics
+        let temp = tempfile::TempDir::new().unwrap();
+
+        // Create valid skill files that produce no diagnostics
+        let skill_dir = temp.path().join("skills").join("code-review");
+        std::fs::create_dir_all(&skill_dir).unwrap();
+        std::fs::write(
+            skill_dir.join("SKILL.md"),
+            "---\nname: code-review\ndescription: Use when reviewing code\n---\nBody",
+        )
+        .unwrap();
+
+        // Create another valid skill
+        let skill_dir2 = temp.path().join("skills").join("test-runner");
+        std::fs::create_dir_all(&skill_dir2).unwrap();
+        std::fs::write(
+            skill_dir2.join("SKILL.md"),
+            "---\nname: test-runner\ndescription: Use when running tests\n---\nBody",
+        )
+        .unwrap();
+
+        let config = LintConfig::default();
+        let result = validate_project(temp.path(), &config).unwrap();
+
+        // Should have counted files even though no diagnostics
+        assert!(
+            result.files_checked >= 2,
+            "files_checked should count validated files even with no diagnostics, got {}",
+            result.files_checked
+        );
+        assert!(
+            result.diagnostics.is_empty() || result.diagnostics.iter().all(|d| d.level != DiagnosticLevel::Error),
+            "Valid skill files should have no errors"
+        );
+    }
+
+    #[test]
+    fn test_files_checked_excludes_unknown_file_types() {
+        // Test that files_checked only counts recognized file types
+        let temp = tempfile::TempDir::new().unwrap();
+
+        // Create files of unknown type
+        std::fs::write(temp.path().join("main.rs"), "fn main() {}").unwrap();
+        std::fs::write(temp.path().join("package.json"), "{}").unwrap();
+
+        // Create one recognized file
+        std::fs::write(
+            temp.path().join("SKILL.md"),
+            "---\nname: code-review\ndescription: Use when reviewing code\n---\nBody",
+        )
+        .unwrap();
+
+        let config = LintConfig::default();
+        let result = validate_project(temp.path(), &config).unwrap();
+
+        // Should only count the SKILL.md file, not .rs or package.json
+        assert_eq!(
+            result.files_checked, 1,
+            "files_checked should only count recognized file types"
         );
     }
 }

@@ -4,7 +4,6 @@
 
 use agnix_core::diagnostics::{Diagnostic, DiagnosticLevel};
 use serde::Serialize;
-use std::collections::HashSet;
 use std::path::Path;
 
 /// Root structure for JSON output.
@@ -68,9 +67,14 @@ fn path_to_string(path: &Path, base_path: &Path) -> String {
 }
 
 /// Convert diagnostics to JSON output format.
-pub fn diagnostics_to_json(diagnostics: &[Diagnostic], base_path: &Path) -> JsonOutput {
-    // Single pass: count unique files and levels, map diagnostics
-    let mut files: HashSet<&std::path::PathBuf> = HashSet::new();
+///
+/// `files_checked` is the total number of recognized files validated,
+/// passed from the core validation result.
+pub fn diagnostics_to_json(
+    diagnostics: &[Diagnostic],
+    base_path: &Path,
+    files_checked: usize,
+) -> JsonOutput {
     let mut errors = 0;
     let mut warnings = 0;
     let mut info = 0;
@@ -78,7 +82,6 @@ pub fn diagnostics_to_json(diagnostics: &[Diagnostic], base_path: &Path) -> Json
     let json_diagnostics: Vec<JsonDiagnostic> = diagnostics
         .iter()
         .map(|diag| {
-            files.insert(&diag.file);
             match diag.level {
                 DiagnosticLevel::Error => errors += 1,
                 DiagnosticLevel::Warning => warnings += 1,
@@ -98,7 +101,7 @@ pub fn diagnostics_to_json(diagnostics: &[Diagnostic], base_path: &Path) -> Json
 
     JsonOutput {
         version: env!("CARGO_PKG_VERSION").to_string(),
-        files_checked: files.len(),
+        files_checked,
         diagnostics: json_diagnostics,
         summary: JsonSummary {
             errors,
@@ -115,7 +118,7 @@ mod tests {
 
     #[test]
     fn test_empty_diagnostics() {
-        let output = diagnostics_to_json(&[], Path::new("."));
+        let output = diagnostics_to_json(&[], Path::new("."), 0);
         assert_eq!(output.files_checked, 0);
         assert!(output.diagnostics.is_empty());
         assert_eq!(output.summary.errors, 0);
@@ -125,7 +128,7 @@ mod tests {
 
     #[test]
     fn test_version_matches_cargo() {
-        let output = diagnostics_to_json(&[], Path::new("."));
+        let output = diagnostics_to_json(&[], Path::new("."), 0);
         assert_eq!(output.version, env!("CARGO_PKG_VERSION"));
     }
 
@@ -170,7 +173,8 @@ mod tests {
             "Missing frontmatter".to_string(),
         );
 
-        let output = diagnostics_to_json(&[diag], Path::new("/project"));
+        // files_checked is now passed from core, not computed from diagnostics
+        let output = diagnostics_to_json(&[diag], Path::new("/project"), 1);
 
         assert_eq!(output.files_checked, 1);
         assert_eq!(output.diagnostics.len(), 1);
@@ -203,7 +207,8 @@ mod tests {
             },
         ];
 
-        let output = diagnostics_to_json(&diags, Path::new("/p"));
+        // files_checked is now passed from core
+        let output = diagnostics_to_json(&diags, Path::new("/p"), 4);
 
         assert_eq!(output.summary.errors, 2);
         assert_eq!(output.summary.warnings, 1);
@@ -212,15 +217,18 @@ mod tests {
     }
 
     #[test]
-    fn test_unique_files_counted() {
-        // Two diagnostics in the same file should count as 1 file
+    fn test_files_checked_uses_passed_value() {
+        // files_checked is now passed from core, not computed from diagnostics
+        // This test verifies the value comes from the argument, not from counting
         let diags = vec![
             Diagnostic::error(PathBuf::from("/p/a.md"), 1, 1, "AS-001", "A".to_string()),
             Diagnostic::error(PathBuf::from("/p/a.md"), 5, 1, "AS-002", "B".to_string()),
         ];
 
-        let output = diagnostics_to_json(&diags, Path::new("/p"));
-        assert_eq!(output.files_checked, 1);
+        // Even though both diagnostics are from the same file, we pass 5 as files_checked
+        // to verify the function uses the passed value
+        let output = diagnostics_to_json(&diags, Path::new("/p"), 5);
+        assert_eq!(output.files_checked, 5);
     }
 
     #[test]
@@ -234,7 +242,7 @@ mod tests {
         );
         diag.suggestion = Some("Use lowercase letters and hyphens only".to_string());
 
-        let output = diagnostics_to_json(&[diag], Path::new("/p"));
+        let output = diagnostics_to_json(&[diag], Path::new("/p"), 1);
         assert_eq!(
             output.diagnostics[0].suggestion,
             Some("Use lowercase letters and hyphens only".to_string())
@@ -251,13 +259,13 @@ mod tests {
             "Missing frontmatter".to_string(),
         );
 
-        let output = diagnostics_to_json(&[diag], Path::new("/p"));
+        let output = diagnostics_to_json(&[diag], Path::new("/p"), 1);
         assert!(output.diagnostics[0].suggestion.is_none());
     }
 
     #[test]
     fn test_json_serialization() {
-        let output = diagnostics_to_json(&[], Path::new("."));
+        let output = diagnostics_to_json(&[], Path::new("."), 0);
         let json = serde_json::to_string(&output);
         assert!(json.is_ok(), "Should serialize to JSON");
 
@@ -278,7 +286,7 @@ mod tests {
             "Test".to_string(),
         );
 
-        let output = diagnostics_to_json(&[diag], Path::new("/p"));
+        let output = diagnostics_to_json(&[diag], Path::new("/p"), 1);
         assert_eq!(output.diagnostics[0].line, 1);
         assert_eq!(output.diagnostics[0].column, 1);
     }
