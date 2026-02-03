@@ -166,8 +166,8 @@ pub enum TargetTool {
 
 impl LintConfig {
     /// Load config from file
-    pub fn load(path: &Path) -> anyhow::Result<Self> {
-        let content = safe_read_file(path)?;
+    pub fn load<P: AsRef<Path>>(path: P) -> anyhow::Result<Self> {
+        let content = safe_read_file(path.as_ref())?;
         let config = toml::from_str(&content)?;
         Ok(config)
     }

@@ -19,7 +19,7 @@ use crate::diagnostics::{LintError, LintResult};
 use std::fs;
 use std::path::Path;
 
-/// Default maximum file size (1 MiB)
+/// Default maximum file size (1 MiB = 1,048,576 bytes = 2^20 bytes)
 pub const DEFAULT_MAX_FILE_SIZE: u64 = 1_048_576;
 
 /// Safely read a file with security checks.
