@@ -114,6 +114,13 @@ fn validate_command(path: &Path, cli: &Cli) -> anyhow::Result<()> {
         _ => TargetTool::Generic,
     };
 
+    let should_fix = cli.fix || cli.fix_safe || cli.dry_run;
+    if should_fix && !matches!(cli.format, OutputFormat::Text) {
+        return Err(anyhow::anyhow!(
+            "Fix flags are only supported with text output. Remove --format or use --format text."
+        ));
+    }
+
     // Resolve absolute path for consistent SARIF output
     let base_path = std::fs::canonicalize(path).unwrap_or_else(|_| path.to_path_buf());
 
@@ -237,8 +244,6 @@ fn validate_command(path: &Path, cli: &Cli) -> anyhow::Result<()> {
     }
 
     // --fix-safe implies --fix
-    let should_fix = cli.fix || cli.fix_safe || cli.dry_run;
-
     if should_fix {
         println!();
         let mode = if cli.dry_run { "Preview" } else { "Applying" };
