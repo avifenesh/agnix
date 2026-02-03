@@ -139,7 +139,11 @@ fn visit_imports(
         // Validate path to prevent traversal attacks
         // Reject absolute paths and paths that escape the project root
         let raw_path = Path::new(&import.path);
-        if raw_path.is_absolute() || import.path.starts_with('~') {
+        if raw_path.is_absolute()
+            || import.path.starts_with('/')
+            || import.path.starts_with('\\')
+            || import.path.starts_with('~')
+        {
             if check_not_found {
                 diagnostics.push(
                     Diagnostic::error(
