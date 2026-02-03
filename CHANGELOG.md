@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Invalid `.agnix.toml` files show clear error message with parse location
   - Validation continues with default config after displaying warning
   - Warning goes to stderr, preserving JSON/SARIF output validity
+- Pinned cargo-machete to version 0.9.1 in CI workflow to prevent nondeterministic build failures
 
 ### Added
 - Reusable GitHub Action for CI/CD integration:
