@@ -14,12 +14,25 @@ set -euo pipefail
 
 # Sanitize string for GitHub workflow commands
 # Escapes special characters that could be used for command injection
+# Per GitHub docs: %, \r, \n, :, and , must be URL-encoded
 sanitize_workflow_value() {
-    printf '%s' "$1" | sed 's/%/%25/g; s/\r/%0D/g; s/\n/%0A/g; s/:/%3A/g'
+    printf '%s' "$1" | sed 's/%/%25/g; s/\r/%0D/g; s/\n/%0A/g; s/:/%3A/g; s/,/%2C/g'
 }
 
 BIN_DIR="${GITHUB_WORKSPACE:-$(pwd)}/.agnix-bin"
-AGNIX="${BIN_DIR}/agnix"
+
+# Detect platform for correct binary name (Windows needs .exe)
+OS="$(uname -s)"
+case "${OS}" in
+    MINGW*|MSYS*|CYGWIN*|Windows_NT)
+        BINARY_NAME="agnix.exe"
+        ;;
+    *)
+        BINARY_NAME="agnix"
+        ;;
+esac
+
+AGNIX="${BIN_DIR}/${BINARY_NAME}"
 
 # Build command arguments
 ARGS=()

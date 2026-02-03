@@ -12,9 +12,9 @@ VERSION="${AGNIX_VERSION:-latest}"
 BUILD_FROM_SOURCE="${BUILD_FROM_SOURCE:-false}"
 
 # Validate version format to prevent path traversal attacks
-# Accepts: "latest" or semver like "v0.1.0" or "v0.1.0-beta"
+# Accepts: "latest" or semver like "v0.1.0", "v0.1.0-beta", "v0.1.0-beta-1+build"
 if [ "${VERSION}" != "latest" ]; then
-    if ! echo "${VERSION}" | grep -qE '^v[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$'; then
+    if ! echo "${VERSION}" | grep -qE '^v[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?(\+[a-zA-Z0-9.-]+)?$'; then
         echo "Error: Invalid version format: ${VERSION}" >&2
         echo "Expected: 'latest' or semver like 'v0.1.0'" >&2
         exit 1
@@ -111,7 +111,8 @@ if [ "${VERSION}" = "latest" ]; then
     if [ -n "${GITHUB_TOKEN:-}" ]; then
         CURL_OPTS+=(-H "Authorization: Bearer ${GITHUB_TOKEN}")
     fi
-    VERSION=$(curl "${CURL_OPTS[@]}" "https://api.github.com/repos/${REPO}/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+    # Use jq for robust JSON parsing (jq is a documented dependency)
+    VERSION=$(curl "${CURL_OPTS[@]}" "https://api.github.com/repos/${REPO}/releases/latest" | jq -r '.tag_name // empty')
     if [ -z "${VERSION}" ]; then
         echo "Error: Could not determine latest version. No releases found." >&2
         echo "Please ensure a release exists at https://github.com/${REPO}/releases" >&2
