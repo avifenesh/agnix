@@ -191,16 +191,85 @@ agnix --format json . | jq '.summary.errors'
 agnix --format sarif . > results.sarif
 ```
 
-**GitHub Actions with SARIF:**
+## GitHub Action
+
+Use the official agnix GitHub Action for seamless CI/CD integration:
 
 ```yaml
 - name: Validate agent configs
-  run: agnix --format sarif . > results.sarif
-  
+  uses: avifenesh/agnix@v0.1.0
+  with:
+    target: 'claude-code'
+```
+
+### Action Inputs
+
+| Input | Description | Default |
+|-------|-------------|---------|
+| `path` | Path to validate | `.` |
+| `strict` | Treat warnings as errors | `false` |
+| `target` | Target tool (generic, claude-code, cursor, codex) | `generic` |
+| `config` | Path to .agnix.toml config file | |
+| `format` | Output format (text, json, sarif) | `text` |
+| `verbose` | Verbose output | `false` |
+| `version` | agnix version to use | `latest` |
+
+### Action Outputs
+
+| Output | Description |
+|--------|-------------|
+| `result` | Validation result (success or failure) |
+| `errors` | Number of errors found |
+| `warnings` | Number of warnings found |
+| `sarif-file` | Path to SARIF file (if format=sarif) |
+
+### Examples
+
+**Basic validation:**
+
+```yaml
+- name: Validate agent configs
+  uses: avifenesh/agnix@v0.1.0
+```
+
+**Strict mode with specific target:**
+
+```yaml
+- name: Validate Claude Code configs
+  uses: avifenesh/agnix@v0.1.0
+  with:
+    target: 'claude-code'
+    strict: 'true'
+```
+
+**With SARIF upload to GitHub Code Scanning:**
+
+```yaml
+- name: Validate agent configs
+  id: agnix
+  uses: avifenesh/agnix@v0.1.0
+  with:
+    format: 'sarif'
+
 - name: Upload SARIF results
   uses: github/codeql-action/upload-sarif@v3
   with:
-    sarif_file: results.sarif
+    sarif_file: ${{ steps.agnix.outputs.sarif-file }}
+```
+
+**Conditional failure based on outputs:**
+
+```yaml
+- name: Validate agent configs
+  id: validate
+  uses: avifenesh/agnix@v0.1.0
+  continue-on-error: true
+
+- name: Check results
+  if: steps.validate.outputs.errors > 0
+  run: |
+    echo "Found ${{ steps.validate.outputs.errors }} errors"
+    exit 1
 ```
 
 ## Performance
@@ -342,6 +411,7 @@ agnix/
 - [x] Auto-fix infrastructure (--fix, --dry-run, --fix-safe)
 - [x] Plugin validation (CC-PL-001 to CC-PL-005)
 - [x] MCP tool validation (MCP-001 to MCP-006)
+- [x] GitHub Action for CI/CD integration
 - [ ] LSP server
 - [ ] VS Code extension
 

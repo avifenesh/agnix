@@ -1,0 +1,115 @@
+name: Test Action
+
+on:
+  push:
+    branches: [main, feature/*]
+    paths:
+      - 'action.yml'
+      - 'scripts/**'
+      - '.github/workflows/test-action.yml'
+  pull_request:
+    paths:
+      - 'action.yml'
+      - 'scripts/**'
+      - '.github/workflows/test-action.yml'
+  workflow_dispatch:
+
+jobs:
+  test-action:
+    name: Test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Test action (default inputs)
+        id: test-default
+        uses: ./
+        continue-on-error: true
+
+      - name: Verify outputs set
+        shell: bash
+        env:
+          RESULT: ${{ steps.test-default.outputs.result }}
+          ERRORS: ${{ steps.test-default.outputs.errors }}
+          WARNINGS: ${{ steps.test-default.outputs.warnings }}
+        run: |
+          echo "Result: ${RESULT}"
+          echo "Errors: ${ERRORS}"
+          echo "Warnings: ${WARNINGS}"
+
+          # Verify outputs are set (may be 0)
+          if [ -z "${RESULT}" ]; then
+            echo "Error: result output not set"
+            exit 1
+          fi
+
+      - name: Test action (strict mode)
+        id: test-strict
+        uses: ./
+        with:
+          strict: 'true'
+        continue-on-error: true
+
+      - name: Test action (target claude-code)
+        id: test-target
+        uses: ./
+        with:
+          target: 'claude-code'
+        continue-on-error: true
+
+      - name: Test action (SARIF output)
+        id: test-sarif
+        uses: ./
+        with:
+          format: 'sarif'
+        continue-on-error: true
+
+      - name: Verify SARIF file created
+        if: steps.test-sarif.outputs.sarif_file != ''
+        shell: bash
+        env:
+          SARIF_FILE: ${{ steps.test-sarif.outputs.sarif_file }}
+        run: |
+          if [ -f "${SARIF_FILE}" ]; then
+            echo "SARIF file created: ${SARIF_FILE}"
+            head -20 "${SARIF_FILE}"
+          else
+            echo "SARIF file not found: ${SARIF_FILE}"
+          fi
+
+      - name: Test action (verbose)
+        id: test-verbose
+        uses: ./
+        with:
+          verbose: 'true'
+        continue-on-error: true
+
+  test-sarif-upload:
+    name: Test SARIF Upload
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run agnix with SARIF
+        id: agnix
+        uses: ./
+        with:
+          format: 'sarif'
+        continue-on-error: true
+
+      - name: Upload SARIF to GitHub
+        if: steps.agnix.outputs.sarif_file != ''
+        uses: github/codeql-action/upload-sarif@v3
+        env:
+          SARIF_FILE: ${{ steps.agnix.outputs.sarif_file }}
+        with:
+          sarif_file: ${{ env.SARIF_FILE }}
+        continue-on-error: true

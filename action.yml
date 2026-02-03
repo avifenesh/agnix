@@ -1,0 +1,71 @@
+name: 'agnix'
+description: 'Validate agent configurations (Skills, Hooks, MCP, Memory, Plugins)'
+author: 'avifenesh'
+branding:
+  icon: 'check-circle'
+  color: 'blue'
+
+inputs:
+  path:
+    description: 'Path to validate'
+    required: false
+    default: '.'
+  strict:
+    description: 'Treat warnings as errors'
+    required: false
+    default: 'false'
+  target:
+    description: 'Target tool (generic, claude-code, cursor, codex)'
+    required: false
+    default: 'generic'
+  config:
+    description: 'Path to .agnix.toml config file'
+    required: false
+    default: ''
+  format:
+    description: 'Output format (text, json, sarif)'
+    required: false
+    default: 'text'
+  verbose:
+    description: 'Verbose output'
+    required: false
+    default: 'false'
+  version:
+    description: 'agnix version to use (default: latest)'
+    required: false
+    default: 'latest'
+
+outputs:
+  result:
+    description: 'Validation result (success or failure)'
+    value: ${{ steps.agnix.outputs.result }}
+  errors:
+    description: 'Number of errors found'
+    value: ${{ steps.agnix.outputs.errors }}
+  warnings:
+    description: 'Number of warnings found'
+    value: ${{ steps.agnix.outputs.warnings }}
+  sarif-file:
+    description: 'Path to SARIF file (if format=sarif)'
+    value: ${{ steps.agnix.outputs.sarif_file }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Download agnix
+      shell: bash
+      run: ${{ github.action_path }}/scripts/download.sh
+      env:
+        AGNIX_VERSION: ${{ inputs.version }}
+
+    - name: Run agnix
+      id: agnix
+      shell: bash
+      run: ${{ github.action_path }}/scripts/run.sh
+      env:
+        INPUT_PATH: ${{ inputs.path }}
+        INPUT_STRICT: ${{ inputs.strict }}
+        INPUT_TARGET: ${{ inputs.target }}
+        INPUT_CONFIG: ${{ inputs.config }}
+        INPUT_FORMAT: ${{ inputs.format }}
+        INPUT_VERBOSE: ${{ inputs.verbose }}
