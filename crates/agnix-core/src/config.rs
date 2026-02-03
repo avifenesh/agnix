@@ -985,7 +985,8 @@ tool_names = true
 required_fields = true
 "#;
 
-        let config: LintConfig = toml::from_str(toml_str).unwrap();
+        let config: LintConfig = toml::from_str(toml_str)
+            .expect("Failed to parse config with removed fields for backward compatibility");
 
         // Config should parse successfully with expected values
         assert_eq!(config.target, TargetTool::Generic);
