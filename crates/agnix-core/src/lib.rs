@@ -1938,7 +1938,7 @@ Use idiomatic Rust patterns.
         let mut config = LintConfig::default();
         config.exclude = vec!["node_modules/**".to_string()];
 
-        // Use temp.path() directly (may be absolute on some systems, but test covers the logic)
+        // Use temp.path() directly to validate exclude pattern handling
         let diagnostics = validate_project(temp.path(), &config).unwrap();
 
         // Should NOT have diagnostics from node_modules/
