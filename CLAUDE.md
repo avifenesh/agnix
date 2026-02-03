@@ -54,7 +54,7 @@ Format: `[CATEGORY]-[NUMBER]` (AS-004, CC-HK-001, etc.)
 
 - Compiles and runs with full validation pipeline
 - `validate_project()` walks directories, detects file types, dispatches validators
-- 249 passing tests
+- 663 passing tests
 - See GitHub issues for remaining tasks
 
 ## Top tier tools support:
