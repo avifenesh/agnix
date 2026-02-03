@@ -1176,3 +1176,127 @@ fn test_fixtures_have_no_empty_placeholder_dirs() {
             .join("\n")
     );
 }
+
+// ===== Config Parse Warning Tests =====
+
+#[test]
+fn test_invalid_config_displays_warning_to_stderr() {
+    let temp_dir = tempfile::tempdir().unwrap();
+    let config_path = temp_dir.path().join(".agnix.toml");
+
+    // Create invalid TOML
+    std::fs::write(&config_path, "this is [ invalid toml").unwrap();
+
+    // Create a minimal valid directory to scan
+    let skill_dir = temp_dir.path().join(".claude").join("skills");
+    std::fs::create_dir_all(&skill_dir).unwrap();
+    let skill_file = skill_dir.join("test.md");
+    std::fs::write(&skill_file, "# Test\nSimple content").unwrap();
+
+    let mut cmd = agnix();
+    let output = cmd
+        .arg(temp_dir.path())
+        .arg("--config")
+        .arg(&config_path)
+        .output()
+        .unwrap();
+
+    let stderr = String::from_utf8_lossy(&output.stderr);
+
+    // Should contain warning message
+    assert!(
+        stderr.contains("Warning:") && stderr.contains("Failed to parse config"),
+        "Expected config warning in stderr, got: {}",
+        stderr
+    );
+
+    // Should still produce validation output (continues with defaults)
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(
+        stdout.contains("Validating:"),
+        "Should still run validation with default config"
+    );
+}
+
+#[test]
+fn test_valid_config_no_warning_in_stderr() {
+    let temp_dir = tempfile::tempdir().unwrap();
+    let config_path = temp_dir.path().join(".agnix.toml");
+
+    // Create valid config
+    std::fs::write(
+        &config_path,
+        r#"
+severity = "Warning"
+target = "Generic"
+exclude = []
+
+[rules]
+"#,
+    )
+    .unwrap();
+
+    // Create a minimal valid directory to scan
+    let skill_dir = temp_dir.path().join(".claude").join("skills");
+    std::fs::create_dir_all(&skill_dir).unwrap();
+    let skill_file = skill_dir.join("test.md");
+    std::fs::write(&skill_file, "# Test\nSimple content").unwrap();
+
+    let mut cmd = agnix();
+    let output = cmd
+        .arg(temp_dir.path())
+        .arg("--config")
+        .arg(&config_path)
+        .output()
+        .unwrap();
+
+    let stderr = String::from_utf8_lossy(&output.stderr);
+
+    // Should NOT contain any config warning
+    assert!(
+        !stderr.contains("Failed to parse config"),
+        "Valid config should not produce warning, stderr: {}",
+        stderr
+    );
+}
+
+#[test]
+fn test_config_warning_with_json_output() {
+    let temp_dir = tempfile::tempdir().unwrap();
+    let config_path = temp_dir.path().join(".agnix.toml");
+
+    // Create invalid TOML
+    std::fs::write(&config_path, "invalid [[ toml").unwrap();
+
+    // Create a minimal valid directory to scan
+    let skill_dir = temp_dir.path().join(".claude").join("skills");
+    std::fs::create_dir_all(&skill_dir).unwrap();
+    let skill_file = skill_dir.join("test.md");
+    std::fs::write(&skill_file, "# Test\nSimple content").unwrap();
+
+    let mut cmd = agnix();
+    let output = cmd
+        .arg(temp_dir.path())
+        .arg("--config")
+        .arg(&config_path)
+        .arg("--format")
+        .arg("json")
+        .output()
+        .unwrap();
+
+    let stderr = String::from_utf8_lossy(&output.stderr);
+
+    // Warning should go to stderr, not corrupt JSON output
+    assert!(
+        stderr.contains("Warning:"),
+        "Warning should be in stderr for JSON output"
+    );
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let json: Result<serde_json::Value, _> = serde_json::from_str(&stdout);
+    assert!(
+        json.is_ok(),
+        "JSON output should be valid despite config warning, got: {}",
+        stdout
+    );
+}
