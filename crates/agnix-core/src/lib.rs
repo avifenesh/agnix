@@ -286,14 +286,16 @@ fn compile_exclude_patterns(excludes: &[String]) -> Vec<ExcludePattern> {
                 let prefix = normalized.trim_end_matches('/').to_string();
                 let glob_pattern = format!("{}/**", prefix);
                 ExcludePattern {
-                    pattern: glob::Pattern::new(&glob_pattern)
-                        .unwrap_or_else(|_| panic!("Invalid exclude pattern in config: {}", pattern)),
+                    pattern: glob::Pattern::new(&glob_pattern).unwrap_or_else(|_| {
+                        panic!("Invalid exclude pattern in config: {}", pattern)
+                    }),
                     dir_only_prefix: Some(prefix),
                 }
             } else {
                 ExcludePattern {
-                    pattern: glob::Pattern::new(&normalized)
-                        .unwrap_or_else(|_| panic!("Invalid exclude pattern in config: {}", pattern)),
+                    pattern: glob::Pattern::new(&normalized).unwrap_or_else(|_| {
+                        panic!("Invalid exclude pattern in config: {}", pattern)
+                    }),
                     dir_only_prefix: None,
                 }
             }
@@ -2065,10 +2067,8 @@ Use idiomatic Rust patterns.
 
     #[test]
     fn test_should_prune_dir_with_globbed_patterns() {
-        let patterns = compile_exclude_patterns(&vec![
-            "target/**".to_string(),
-            "**/target/**".to_string(),
-        ]);
+        let patterns =
+            compile_exclude_patterns(&vec!["target/**".to_string(), "**/target/**".to_string()]);
         assert!(
             should_prune_dir("target", &patterns),
             "Expected target/** to prune target directory"

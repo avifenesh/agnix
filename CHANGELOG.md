@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Validation continues with default config after displaying warning
   - Warning goes to stderr, preserving JSON/SARIF output validity
 - Pinned `cargo-machete` to version `0.9.1` in CI workflow to prevent nondeterministic build failures
+- Exclude patterns now prune directories during traversal to reduce IO on large repos
 
 ### Added
 - Reusable GitHub Action for CI/CD integration:
