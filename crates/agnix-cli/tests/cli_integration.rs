@@ -1374,3 +1374,51 @@ fn test_help_shows_target_possible_values() {
         stdout
     );
 }
+
+#[test]
+fn test_init_creates_config_file_with_plain_text_output() {
+    let temp_dir = tempfile::tempdir().unwrap();
+    let config_path = temp_dir.path().join(".agnix.toml");
+
+    let mut cmd = agnix();
+    let output = cmd
+        .arg("init")
+        .arg(config_path.to_str().unwrap())
+        .output()
+        .unwrap();
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+
+    // Verify output contains "Created:" (plain text, no emoji)
+    assert!(
+        stdout.contains("Created:"),
+        "Init output should contain 'Created:', got: {}",
+        stdout
+    );
+
+    // Verify output does NOT contain checkmark emoji
+    assert!(
+        !stdout.contains('\u{2713}') && !stdout.contains('\u{2714}'),
+        "Init output should not contain checkmark emoji, got: {}",
+        stdout
+    );
+
+    // Verify the config file was created
+    assert!(
+        config_path.exists(),
+        "Config file should be created at {}",
+        config_path.display()
+    );
+
+    // Verify the config file contains valid TOML
+    let content = std::fs::read_to_string(&config_path).unwrap();
+    let parsed: Result<toml::Value, _> = toml::from_str(&content);
+    assert!(
+        parsed.is_ok(),
+        "Created config should be valid TOML, got: {}",
+        content
+    );
+
+    // Verify exit code is success
+    assert!(output.status.success(), "Init command should succeed");
+}
