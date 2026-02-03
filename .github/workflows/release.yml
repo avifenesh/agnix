@@ -1,0 +1,116 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    name: Build (${{ matrix.target }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            artifact: agnix
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+            artifact: agnix
+          - os: macos-13
+            target: x86_64-apple-darwin
+            artifact: agnix
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            artifact: agnix
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            artifact: agnix.exe
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install musl tools
+        if: matrix.target == 'x86_64-unknown-linux-musl'
+        run: sudo apt-get update && sudo apt-get install -y musl-tools
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: release-${{ matrix.target }}
+
+      - name: Build release binary
+        run: cargo build --release --target ${{ matrix.target }}
+
+      - name: Create archive (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          cd target/${{ matrix.target }}/release
+          tar czvf ../../../agnix-${{ matrix.target }}.tar.gz ${{ matrix.artifact }}
+          cd ../../..
+          shasum -a 256 agnix-${{ matrix.target }}.tar.gz > agnix-${{ matrix.target }}.tar.gz.sha256
+
+      - name: Create archive (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          cd target/${{ matrix.target }}/release
+          Compress-Archive -Path ${{ matrix.artifact }} -DestinationPath ../../../agnix-${{ matrix.target }}.zip
+          cd ../../..
+          (Get-FileHash agnix-${{ matrix.target }}.zip -Algorithm SHA256).Hash.ToLower() + "  agnix-${{ matrix.target }}.zip" | Out-File -Encoding ASCII agnix-${{ matrix.target }}.zip.sha256
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: agnix-${{ matrix.target }}
+          path: |
+            agnix-${{ matrix.target }}.*
+          if-no-files-found: error
+
+  release:
+    name: Create Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Generate release notes
+        id: notes
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+          # Extract changelog section for this version
+          if grep -q "## \[${VERSION#v}\]" CHANGELOG.md 2>/dev/null; then
+            sed -n "/## \[${VERSION#v}\]/,/## \[/p" CHANGELOG.md | sed '1d;$d' > release_notes.md
+          else
+            echo "Release $VERSION" > release_notes.md
+          fi
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ steps.notes.outputs.version }}
+          body_path: release_notes.md
+          files: artifacts/*
+          draft: false
+          prerelease: ${{ contains(github.ref, '-') }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
