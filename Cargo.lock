@@ -27,6 +27,7 @@ dependencies = [
  "clap",
  "colored",
  "predicates",
+ "regex",
  "serde",
  "serde_json",
  "similar",

@@ -173,12 +173,10 @@ fn scan_fixtures_for_coverage() -> HashMap<String, Vec<String>> {
                 let dir_name = path.file_name().unwrap().to_string_lossy();
 
                 // Infer rule coverage from directory structure
-                for (pattern, prefixes) in dir_to_rules {
+                for (pattern, _prefixes) in dir_to_rules {
                     if dir_name.contains(pattern) || path.to_string_lossy().contains(pattern) {
-                        for prefix in *prefixes {
-                            // This directory covers rules with this prefix
-                            // We'll note the prefix association
-                        }
+                        // This directory covers rules with the associated prefixes
+                        // The actual coverage tracking is done via infer_fixture_coverage()
                     }
                 }
 

@@ -228,6 +228,14 @@ static RULES: LazyLock<Vec<ReportingDescriptor>> = LazyLock::new(|| {
         ("MCP-004", "Missing tool description"),
         ("MCP-005", "Tool without user consent"),
         ("MCP-006", "Untrusted annotations from server"),
+        // GitHub Copilot Rules (COP-001 to COP-004)
+        ("COP-001", "Empty Copilot instruction file"),
+        (
+            "COP-002",
+            "Invalid frontmatter in scoped instructions (missing applyTo)",
+        ),
+        ("COP-003", "Invalid glob pattern in applyTo"),
+        ("COP-004", "Unknown frontmatter keys in scoped instructions"),
         // XML Rules (XML-001 to XML-003)
         ("XML-001", "Unclosed XML tag"),
         ("XML-002", "Mismatched closing tag"),
@@ -371,14 +379,15 @@ mod tests {
     fn test_rules_array_populated() {
         let sarif = diagnostics_to_sarif(&[], Path::new("."));
         let rules = &sarif.runs[0].tool.driver.rules;
-        // Should have 80 rules based on VALIDATION-RULES.md
-        assert_eq!(rules.len(), 80, "Expected 80 rules in SARIF driver");
+        // Should have 84 rules based on VALIDATION-RULES.md
+        assert_eq!(rules.len(), 84, "Expected 84 rules in SARIF driver");
 
         // Verify some specific rules exist
         let rule_ids: Vec<&str> = rules.iter().map(|r| r.id.as_str()).collect();
         assert!(rule_ids.contains(&"AS-001"));
         assert!(rule_ids.contains(&"CC-HK-001"));
         assert!(rule_ids.contains(&"MCP-001"));
+        assert!(rule_ids.contains(&"COP-001"));
         assert!(rule_ids.contains(&"XML-001"));
         assert!(rule_ids.contains(&"XP-003"));
     }
