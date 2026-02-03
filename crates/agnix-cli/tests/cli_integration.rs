@@ -963,10 +963,7 @@ fn test_format_sarif_location_fields() {
         );
 
         if let Some(locs) = locations {
-            assert!(
-                !locs.is_empty(),
-                "Result should have at least one location"
-            );
+            assert!(!locs.is_empty(), "Result should have at least one location");
             let physical = &locs[0]["physicalLocation"];
             assert!(
                 physical["artifactLocation"]["uri"].is_string(),
