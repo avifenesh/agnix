@@ -2,7 +2,13 @@
 //!
 //! Generates Rust code from rules.json at compile time.
 //! Supports both local crate builds (crates.io) and workspace builds (development).
+//!
+//! Generated constants:
+//! - `RULES_DATA`: All rule (id, name) tuples
+//! - `VALID_TOOLS`: Unique tool names from evidence.applies_to.tool
+//! - `TOOL_RULE_PREFIXES`: Mapping of (prefix, tool) for tool-specific rules
 
+use std::collections::{BTreeMap, BTreeSet};
 use std::env;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -156,10 +162,107 @@ fn main() {
         ));
     }
 
+    generated_code.push_str("];\n\n");
+
+    // =========================================================================
+    // Extract unique tools from evidence.applies_to.tool
+    // =========================================================================
+    let mut tools: BTreeSet<String> = BTreeSet::new();
+
+    for rule in rules_array {
+        if let Some(tool) = rule
+            .get("evidence")
+            .and_then(|e| e.get("applies_to"))
+            .and_then(|a| a.get("tool"))
+            .and_then(|t| t.as_str())
+        {
+            if !tool.is_empty() {
+                tools.insert(tool.to_string());
+            }
+        }
+    }
+
+    // Generate VALID_TOOLS constant
+    generated_code.push_str("/// Valid tool names derived from rules.json evidence.applies_to.tool.\n");
+    generated_code.push_str("/// \n");
+    generated_code.push_str("/// These are the tools that have at least one rule specifically for them.\n");
+    generated_code.push_str("pub const VALID_TOOLS: &[&str] = &[\n");
+    for tool in &tools {
+        generated_code.push_str(&format!("    \"{}\",\n", escape_str(tool)));
+    }
+    generated_code.push_str("];\n\n");
+
+    // =========================================================================
+    // Derive prefix-to-tool mappings from rule IDs
+    // =========================================================================
+    // Group rules by their prefix and find the common tool for each prefix
+    let mut prefix_to_tools: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
+
+    for rule in rules_array {
+        let id = rule["id"].as_str().unwrap_or("");
+        let tool = rule
+            .get("evidence")
+            .and_then(|e| e.get("applies_to"))
+            .and_then(|a| a.get("tool"))
+            .and_then(|t| t.as_str());
+
+        if let Some(tool_name) = tool {
+            // Extract prefix from rule ID (e.g., "CC-HK-001" -> "CC-HK-", "COP-001" -> "COP-")
+            if let Some(prefix) = extract_rule_prefix(id) {
+                prefix_to_tools
+                    .entry(prefix)
+                    .or_default()
+                    .insert(tool_name.to_string());
+            }
+        }
+    }
+
+    // Only include prefixes that map to exactly one tool
+    // (prefixes with multiple tools are ambiguous and should not be used for filtering)
+    generated_code.push_str("/// Mapping of rule ID prefixes to their associated tools.\n");
+    generated_code.push_str("/// \n");
+    generated_code.push_str("/// Derived from rules.json: for each prefix, this is the tool that all rules\n");
+    generated_code.push_str("/// with that prefix apply to. Only includes prefixes where all rules\n");
+    generated_code.push_str("/// consistently map to a single tool.\n");
+    generated_code.push_str("pub const TOOL_RULE_PREFIXES: &[(&str, &str)] = &[\n");
+
+    for (prefix, tools_for_prefix) in &prefix_to_tools {
+        if tools_for_prefix.len() == 1 {
+            let tool = tools_for_prefix.iter().next().unwrap();
+            generated_code.push_str(&format!(
+                "    (\"{}\", \"{}\"),\n",
+                escape_str(prefix),
+                escape_str(tool)
+            ));
+        }
+    }
     generated_code.push_str("];\n");
 
     // Write to OUT_DIR
     let out_dir = env::var("OUT_DIR").unwrap();
     let dest_path = Path::new(&out_dir).join("rules_data.rs");
     fs::write(&dest_path, generated_code).expect("Failed to write generated rules");
+}
+
+/// Extract the rule prefix from a rule ID.
+///
+/// Examples:
+/// - "CC-HK-001" -> "CC-HK-"
+/// - "COP-001" -> "COP-"
+/// - "AS-001" -> "AS-"
+fn extract_rule_prefix(rule_id: &str) -> Option<String> {
+    // Find the last hyphen followed by digits
+    let parts: Vec<&str> = rule_id.split('-').collect();
+    if parts.len() < 2 {
+        return None;
+    }
+
+    // Check if the last part is all digits (the rule number)
+    if !parts.last()?.chars().all(|c| c.is_ascii_digit()) {
+        return None;
+    }
+
+    // Join all parts except the last one, with hyphens, and add trailing hyphen
+    let prefix_parts = &parts[..parts.len() - 1];
+    Some(format!("{}-", prefix_parts.join("-")))
 }
