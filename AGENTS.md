@@ -46,7 +46,7 @@ cargo run --bin agnix -- .  # Run CLI
 
 ## Rules Reference
 
-90 rules defined in `knowledge-base/rules.json` (source of truth)
+96 rules defined in `knowledge-base/rules.json` (source of truth)
 
 Human-readable docs: `knowledge-base/VALIDATION-RULES.md`
 

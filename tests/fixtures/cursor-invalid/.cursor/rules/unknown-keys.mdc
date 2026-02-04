@@ -1,0 +1,7 @@
+---
+description: Valid description
+globs: "**/*.ts"
+unknownKey: some value
+anotherBadKey: 123
+---
+# Rules with unknown keys

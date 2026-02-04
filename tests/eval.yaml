@@ -1,0 +1,180 @@
+# Evaluation manifest for agnix rule efficacy testing
+# Each case specifies a file and the expected rule IDs that should fire
+#
+# Note: Some files trigger multiple rules. The expected list should include ALL
+# rules that fire for accurate evaluation.
+
+cases:
+  # ===== Skill Rules (AS-*, CC-SK-*) =====
+
+  - file: fixtures/skills/missing-frontmatter/SKILL.md
+    expected: [AS-001]
+    description: "Missing frontmatter triggers AS-001"
+
+  - file: fixtures/skills/deep-reference/SKILL.md
+    expected: [AS-013]
+    description: "Deep reference triggers AS-013"
+
+  - file: fixtures/skills/windows-path/SKILL.md
+    expected: [AS-014]
+    description: "Windows path separator triggers AS-014"
+
+  - file: fixtures/invalid/skills/invalid-name/SKILL.md
+    expected: [CC-SK-001]
+    description: "Invalid skill name triggers CC-SK-001 (not AS-004)"
+
+  - file: fixtures/invalid/skills/deploy-prod/SKILL.md
+    expected: [CC-SK-006, CC-SK-007, AS-010]
+    description: "Dangerous deploy-prod with unknown tools triggers multiple rules"
+
+  - file: fixtures/invalid/skills/unknown-tool/SKILL.md
+    expected: [CC-SK-008]
+    description: "Unknown tool triggers CC-SK-008 (invalid model in file)"
+
+  - file: fixtures/invalid/skills/invalid-model/SKILL.md
+    expected: [CC-SK-001]
+    description: "Invalid model file has bad name, triggers CC-SK-001"
+
+  - file: fixtures/invalid/skills/invalid-context/SKILL.md
+    expected: [CC-SK-002]
+    description: "Invalid context triggers CC-SK-002"
+
+  - file: fixtures/invalid/skills/invalid-agent/SKILL.md
+    expected: [CC-SK-005]
+    description: "Invalid agent triggers CC-SK-005"
+
+  - file: fixtures/invalid/skills/context-without-agent/SKILL.md
+    expected: [CC-SK-003]
+    description: "Context fork without agent triggers CC-SK-003"
+
+  - file: fixtures/invalid/skills/agent-without-context/SKILL.md
+    expected: [CC-SK-004]
+    description: "Agent without context fork triggers CC-SK-004"
+
+  - file: fixtures/valid/skills/code-review/SKILL.md
+    expected: []
+    description: "Valid skill should have no errors"
+
+  - file: fixtures/valid/skills/with-context-agent/SKILL.md
+    expected: []
+    description: "Valid skill with context and agent should have no errors"
+
+  # ===== MCP Rules (MCP-*) =====
+
+  - file: fixtures/mcp/invalid-jsonrpc-version.mcp.json
+    expected: [MCP-001]
+    description: "Invalid jsonrpc version triggers MCP-001"
+
+  - file: fixtures/mcp/missing-required-fields.mcp.json
+    expected: [MCP-002, MCP-005]
+    description: "Missing required fields triggers MCP-002 and MCP-005"
+
+  - file: fixtures/mcp/invalid-input-schema.mcp.json
+    expected: [MCP-003, MCP-005]
+    description: "Invalid input schema triggers MCP-003 and MCP-005"
+
+  - file: fixtures/mcp/empty-description.mcp.json
+    expected: [MCP-004, MCP-005]
+    description: "Empty description triggers MCP-004 and MCP-005"
+
+  - file: fixtures/mcp/missing-consent.mcp.json
+    expected: [MCP-005]
+    description: "Missing consent field triggers MCP-005"
+
+  - file: fixtures/mcp/untrusted-annotations.mcp.json
+    expected: [MCP-006]
+    description: "Untrusted annotations triggers MCP-006"
+
+  - file: fixtures/mcp/protocol-version-mismatch.mcp.json
+    expected: [MCP-008]
+    description: "Protocol version mismatch triggers MCP-008"
+
+  - file: fixtures/mcp/valid-tool.mcp.json
+    expected: []
+    description: "Valid MCP tool should have no errors"
+
+  # ===== AGENTS.md Rules (AGM-*) =====
+
+  - file: fixtures/agents_md/invalid-markdown/AGENTS.md
+    expected: [AGM-001]
+    description: "Unclosed code block triggers AGM-001"
+
+  - file: fixtures/agents_md/no-headers/AGENTS.md
+    expected: [AGM-002, XP-002]
+    description: "No headers triggers both AGM-002 and XP-002"
+
+  - file: fixtures/agents_md/too-large/AGENTS.md
+    expected: [AGM-003]
+    description: "Exceeding character limit triggers AGM-003"
+
+  - file: fixtures/agents_md/no-context/AGENTS.md
+    expected: [AGM-004]
+    description: "Missing context/purpose triggers AGM-004"
+
+  - file: fixtures/agents_md/unguarded-platform/AGENTS.md
+    expected: [AGM-005, XP-001]
+    description: "Unguarded platform features triggers AGM-005 and XP-001"
+
+  # Note: agents_md/valid/AGENTS.md contains hooks in Claude Code section which
+  # triggers XP-001 (cross-platform warning for Claude-specific features in AGENTS.md)
+  - file: fixtures/agents_md/valid/AGENTS.md
+    expected: [XP-001]
+    description: "Valid AGENTS.md with Claude-specific hooks triggers XP-001"
+
+  # ===== Cross-Platform Rules (XP-*) =====
+
+  - file: fixtures/cross_platform/with-hooks/AGENTS.md
+    expected: [XP-001, AGM-005]
+    description: "Claude-specific hooks triggers XP-001 and AGM-005"
+
+  # Context fork triggers XP-001, AGM-004 (missing context section), and AGM-005 (unguarded)
+  - file: fixtures/cross_platform/with-context-fork/AGENTS.md
+    expected: [XP-001, AGM-004, AGM-005]
+    description: "Context fork triggers XP-001, AGM-004, and AGM-005"
+
+  # No headers file lacks context section too
+  - file: fixtures/cross_platform/no-headers/AGENTS.md
+    expected: [XP-002, AGM-002, AGM-004]
+    description: "No headers triggers XP-002, AGM-002, and AGM-004"
+
+  # Hard-coded paths file also lacks context section
+  - file: fixtures/cross_platform/hard-coded/AGENTS.md
+    expected: [XP-003, AGM-004]
+    description: "Hard-coded paths triggers XP-003 and AGM-004"
+
+  - file: fixtures/cross_platform/valid/AGENTS.md
+    expected: []
+    description: "Valid cross-platform AGENTS.md should have no errors"
+
+  # ===== XML Rules (XML-*) =====
+
+  - file: fixtures/xml/xml-001-unclosed.md
+    expected: [XML-001]
+    description: "Unclosed XML tag triggers XML-001"
+
+  # Mismatched tags also trigger XML-001 (unclosed inner) in addition to XML-002
+  - file: fixtures/xml/xml-002-mismatch.md
+    expected: [XML-001, XML-002]
+    description: "Mismatched XML tags triggers XML-001 and XML-002"
+
+  - file: fixtures/xml/xml-003-unmatched.md
+    expected: [XML-003]
+    description: "Unmatched closing tag triggers XML-003"
+
+  - file: fixtures/xml/xml-valid.md
+    expected: []
+    description: "Valid XML should have no errors"
+
+  # ===== Reference/Import Rules (REF-*) =====
+
+  - file: fixtures/refs/missing-import.md
+    expected: [REF-001]
+    description: "Missing import file triggers REF-001"
+
+  - file: fixtures/refs/broken-link.md
+    expected: [REF-002]
+    description: "Broken relative link triggers REF-002"
+
+  - file: fixtures/refs/valid-links.md
+    expected: []
+    description: "Valid references should have no errors"

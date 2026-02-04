@@ -1,8 +1,8 @@
 {
   "description": "Machine-readable source of truth for all validation rules. When adding a new rule, add it here AND in VALIDATION-RULES.md. CI parity tests enforce sync.",
   "version": "1.0.0",
-  "total_rules": 90,
-  "last_updated": "2026-01-31",
+  "total_rules": 96,
+  "last_updated": "2026-02-04",
   "rules": [
     {
       "id": "AS-001",
@@ -473,6 +473,42 @@
       "category": "copilot"
     },
     {
+      "id": "CUR-001",
+      "name": "Empty Cursor Rule File",
+      "severity": "HIGH",
+      "category": "cursor"
+    },
+    {
+      "id": "CUR-002",
+      "name": "Missing Frontmatter in .mdc File",
+      "severity": "MEDIUM",
+      "category": "cursor"
+    },
+    {
+      "id": "CUR-003",
+      "name": "Invalid YAML Frontmatter",
+      "severity": "HIGH",
+      "category": "cursor"
+    },
+    {
+      "id": "CUR-004",
+      "name": "Invalid Glob Pattern in globs Field",
+      "severity": "HIGH",
+      "category": "cursor"
+    },
+    {
+      "id": "CUR-005",
+      "name": "Unknown Frontmatter Keys",
+      "severity": "MEDIUM",
+      "category": "cursor"
+    },
+    {
+      "id": "CUR-006",
+      "name": "Legacy .cursorrules File Detected",
+      "severity": "MEDIUM",
+      "category": "cursor"
+    },
+    {
       "id": "XML-001",
       "name": "Unclosed XML Tag",
       "severity": "HIGH",
@@ -590,6 +626,11 @@
       "prefix": "COP",
       "count": 4,
       "description": "GitHub Copilot rules"
+    },
+    "cursor": {
+      "prefix": "CUR",
+      "count": 6,
+      "description": "Cursor project rules"
     },
     "xml": {
       "prefix": "XML",

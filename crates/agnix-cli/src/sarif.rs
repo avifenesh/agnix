@@ -242,6 +242,16 @@ static RULES: LazyLock<Vec<ReportingDescriptor>> = LazyLock::new(|| {
         ),
         ("COP-003", "Invalid glob pattern in applyTo"),
         ("COP-004", "Unknown frontmatter keys in scoped instructions"),
+        // Cursor Project Rules (CUR-001 to CUR-006)
+        ("CUR-001", "Empty Cursor rule file"),
+        ("CUR-002", "Missing frontmatter in .mdc file"),
+        ("CUR-003", "Invalid YAML frontmatter in .mdc file"),
+        ("CUR-004", "Invalid glob pattern in globs field"),
+        ("CUR-005", "Unknown frontmatter keys in .mdc file"),
+        (
+            "CUR-006",
+            "Legacy .cursorrules file detected - consider migrating to .mdc format",
+        ),
         // XML Rules (XML-001 to XML-003)
         ("XML-001", "Unclosed XML tag"),
         ("XML-002", "Mismatched closing tag"),
@@ -385,8 +395,8 @@ mod tests {
     fn test_rules_array_populated() {
         let sarif = diagnostics_to_sarif(&[], Path::new("."));
         let rules = &sarif.runs[0].tool.driver.rules;
-        // Should have 89 rules based on VALIDATION-RULES.md
-        assert_eq!(rules.len(), 90, "Expected 90 rules in SARIF driver");
+        // Should have 96 rules based on VALIDATION-RULES.md
+        assert_eq!(rules.len(), 96, "Expected 96 rules in SARIF driver");
 
         // Verify some specific rules exist
         let rule_ids: Vec<&str> = rules.iter().map(|r| r.id.as_str()).collect();
@@ -394,6 +404,7 @@ mod tests {
         assert!(rule_ids.contains(&"CC-HK-001"));
         assert!(rule_ids.contains(&"MCP-001"));
         assert!(rule_ids.contains(&"COP-001"));
+        assert!(rule_ids.contains(&"CUR-001"));
         assert!(rule_ids.contains(&"XML-001"));
         assert!(rule_ids.contains(&"XP-003"));
     }

@@ -75,8 +75,8 @@ fn extract_sarif_rule_ids() -> BTreeSet<String> {
 
     // Filter to only valid rule ID prefixes to avoid matching test assertions
     let valid_prefixes = [
-        "AS-", "CC-SK-", "CC-HK-", "CC-AG-", "CC-MEM-", "CC-PL-", "AGM-", "MCP-", "COP-", "XML-",
-        "REF-", "PE-", "XP-",
+        "AS-", "CC-SK-", "CC-HK-", "CC-AG-", "CC-MEM-", "CC-PL-", "AGM-", "MCP-", "COP-", "CUR-",
+        "XML-", "REF-", "PE-", "XP-",
     ];
 
     // Find the rules_data array bounds to avoid matching rule IDs in test code
@@ -112,8 +112,8 @@ fn extract_implemented_rule_ids() -> BTreeSet<String> {
 
     // Known rule ID prefixes to filter out false positives
     let valid_prefixes = [
-        "AS-", "CC-SK-", "CC-HK-", "CC-AG-", "CC-MEM-", "CC-PL-", "AGM-", "MCP-", "COP-", "XML-",
-        "REF-", "PE-", "XP-",
+        "AS-", "CC-SK-", "CC-HK-", "CC-AG-", "CC-MEM-", "CC-PL-", "AGM-", "MCP-", "COP-", "CUR-",
+        "XML-", "REF-", "PE-", "XP-",
     ];
 
     // Helper to extract rule IDs from a file
@@ -212,6 +212,7 @@ fn infer_fixture_coverage(rules: &[RuleEntry]) -> HashMap<String, Vec<String>> {
         ("agents-md", vec!["agents_md"]),
         ("mcp", vec!["mcp"]),
         ("copilot", vec!["copilot", "copilot-invalid"]),
+        ("cursor", vec!["cursor", "cursor-invalid", "cursor-legacy"]),
         ("xml", vec!["xml"]),
         ("references", vec!["refs"]),
         (
@@ -369,8 +370,8 @@ fn test_rules_json_integrity() {
     // Check total count matches expected
     assert_eq!(
         rules_index.rules.len(),
-        90,
-        "Expected 90 rules in rules.json, found {}",
+        96,
+        "Expected 96 rules in rules.json, found {}",
         rules_index.rules.len()
     );
 
@@ -406,6 +407,7 @@ fn test_rules_json_integrity() {
         "claude-plugins",
         "mcp",
         "copilot",
+        "cursor",
         "xml",
         "references",
         "prompt-engineering",
@@ -460,11 +462,11 @@ fn test_rules_json_matches_validation_rules_md() {
 fn test_sarif_rule_count() {
     let sarif_rules = extract_sarif_rule_ids();
 
-    // SARIF should have exactly 90 rules to match rules.json
+    // SARIF should have exactly 96 rules to match rules.json
     assert_eq!(
         sarif_rules.len(),
-        90,
-        "SARIF should have 90 rules, found {}. Missing or extra rules detected.",
+        96,
+        "SARIF should have 96 rules, found {}. Missing or extra rules detected.",
         sarif_rules.len()
     );
 }

@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Cursor Project Rules support with 6 new validation rules (CUR-001 to CUR-006)
+  - CUR-001: Empty .mdc rule file detection
+  - CUR-002: Missing frontmatter warning
+  - CUR-003: Invalid YAML frontmatter validation
+  - CUR-004: Invalid glob pattern in globs field
+  - CUR-005: Unknown frontmatter keys warning
+  - CUR-006: Legacy .cursorrules migration warning
+  - New file type detection for `.cursor/rules/*.mdc` and `.cursorrules`
+  - Comprehensive test coverage with 8 fixtures
+
 ### Performance
 - AS-015 directory size validation now short-circuits when limit exceeded, improving performance on large skill directories (#84)
 
@@ -63,6 +74,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Documented SHA pin reference in .github/workflows/README.md for maintainability
 
 ### Added
+- Evaluation harness with `agnix eval` command for measuring rule efficacy
+  - Load test cases from YAML manifests with expected rule IDs
+  - Calculate precision, recall, and F1 scores per rule and overall
+  - Output formats: markdown (default), JSON, CSV
+  - Filter by rule prefix (`--filter`)
+  - Verbose mode for per-case details (`--verbose`)
+  - 39 test cases covering AS-*, CC-SK-*, MCP-*, AGM-*, XP-*, XML-*, REF-* rules
+  - Path traversal protection (relative paths only)
+  - Documentation in knowledge-base/EVALUATION.md
 - MCP-008 rule for protocol version validation with configurable `mcp_protocol_version` option
 - 5 new parse error rules with normalized IDs (AS-016, CC-HK-012, CC-AG-007, CC-PL-006, MCP-007)
 - Auto-fix support for CC-MEM-005 and CC-MEM-007 memory rules

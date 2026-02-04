@@ -7,6 +7,7 @@ use agnix_core::{
     apply_fixes,
     config::{LintConfig, TargetTool},
     diagnostics::DiagnosticLevel,
+    eval::{evaluate_manifest_file, EvalFormat},
     validate_project, ValidationResult,
 };
 use clap::{Parser, Subcommand, ValueEnum};
@@ -95,6 +96,25 @@ struct Cli {
     format: OutputFormat,
 }
 
+/// Output format for evaluation results
+#[derive(Debug, Clone, Copy, Default, ValueEnum)]
+pub enum EvalOutputFormat {
+    #[default]
+    Markdown,
+    Json,
+    Csv,
+}
+
+impl From<EvalOutputFormat> for EvalFormat {
+    fn from(f: EvalOutputFormat) -> Self {
+        match f {
+            EvalOutputFormat::Markdown => EvalFormat::Markdown,
+            EvalOutputFormat::Json => EvalFormat::Json,
+            EvalOutputFormat::Csv => EvalFormat::Csv,
+        }
+    }
+}
+
 #[derive(Subcommand)]
 enum Commands {
     /// Validate agent configs
@@ -110,6 +130,24 @@ enum Commands {
         #[arg(default_value = ".agnix.toml")]
         output: PathBuf,
     },
+
+    /// Evaluate rule efficacy against labeled test cases
+    Eval {
+        /// Path to evaluation manifest (YAML file)
+        path: PathBuf,
+
+        /// Output format (markdown, json, csv)
+        #[arg(long, short, value_enum, default_value_t = EvalOutputFormat::Markdown)]
+        format: EvalOutputFormat,
+
+        /// Filter to specific rule prefix (e.g., "AS-", "MCP-")
+        #[arg(long)]
+        filter: Option<String>,
+
+        /// Show detailed results for each case
+        #[arg(long, short)]
+        verbose: bool,
+    },
 }
 
 fn main() {
@@ -118,6 +156,12 @@ fn main() {
     let result = match &cli.command {
         Some(Commands::Validate { path }) => validate_command(path, &cli),
         Some(Commands::Init { output }) => init_command(output),
+        Some(Commands::Eval {
+            path,
+            format,
+            filter,
+            verbose,
+        }) => eval_command(path, *format, filter.as_deref(), *verbose),
         None => validate_command(&cli.path, &cli),
     };
 
@@ -370,6 +414,97 @@ fn init_command(output: &PathBuf) -> anyhow::Result<()> {
     std::fs::write(output, toml_content)?;
 
     println!("{} {}", "Created:".green().bold(), output.display());
+
+    Ok(())
+}
+
+fn eval_command(
+    path: &Path,
+    format: EvalOutputFormat,
+    filter: Option<&str>,
+    verbose: bool,
+) -> anyhow::Result<()> {
+    let config = LintConfig::default();
+
+    println!("{} {}", "Evaluating:".cyan().bold(), path.display());
+    if let Some(f) = filter {
+        println!("  {} {}", "filter:".dimmed(), f);
+    }
+    println!();
+
+    let (results, summary) = evaluate_manifest_file(path, &config, filter)?;
+
+    // Show verbose per-case results if requested
+    if verbose {
+        println!("{}", "Per-Case Results".cyan().bold());
+        println!("{}", "=".repeat(60).dimmed());
+
+        for result in &results {
+            let status = if result.passed() {
+                "PASS".green().bold()
+            } else {
+                "FAIL".red().bold()
+            };
+
+            println!("[{}] {}", status, result.case.file.display());
+
+            if let Some(desc) = &result.case.description {
+                println!("     {}", desc.dimmed());
+            }
+
+            if !result.passed() {
+                if !result.false_positives.is_empty() {
+                    println!(
+                        "     {} {:?}",
+                        "unexpected:".yellow(),
+                        result.false_positives
+                    );
+                }
+                if !result.false_negatives.is_empty() {
+                    println!("     {} {:?}", "missing:".red(), result.false_negatives);
+                }
+            }
+            println!();
+        }
+
+        println!("{}", "=".repeat(60).dimmed());
+        println!();
+    }
+
+    // Output summary in requested format
+    let eval_format: EvalFormat = format.into();
+    match eval_format {
+        EvalFormat::Json => {
+            let json = summary.to_json()?;
+            println!("{}", json);
+        }
+        EvalFormat::Csv => {
+            let csv = summary.to_csv();
+            println!("{}", csv);
+        }
+        EvalFormat::Markdown => {
+            let md = summary.to_markdown();
+            println!("{}", md);
+        }
+    }
+
+    // Print final status
+    println!();
+    if summary.cases_failed == 0 {
+        println!(
+            "{} All {} cases passed",
+            "SUCCESS".green().bold(),
+            summary.cases_run
+        );
+    } else {
+        println!(
+            "{} {}/{} cases failed",
+            "FAILED".red().bold(),
+            summary.cases_failed,
+            summary.cases_run
+        );
+        process::exit(1);
+    }
 
     Ok(())
 }

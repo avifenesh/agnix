@@ -1,0 +1,11 @@
+---
+description: Web frontend rules
+globs:
+  - "**/*.ts"
+  - "**/*.tsx"
+  - "**/*.js"
+  - "**/*.jsx"
+---
+# Frontend Rules
+
+Follow React best practices.

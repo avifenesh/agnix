@@ -2,8 +2,8 @@
 
 > Consolidated from 320KB knowledge base, 75+ sources, 5 research agents
 
-**Last Updated**: 2026-01-31
-**Coverage**: Agent Skills • MCP • Claude Code • Multi-Platform • Prompt Engineering
+**Last Updated**: 2026-02-04
+**Coverage**: Agent Skills • MCP • Claude Code • Cursor • Multi-Platform • Prompt Engineering
 
 ---
 
@@ -617,6 +617,52 @@
 
 ---
 
+## CURSOR PROJECT RULES
+
+<a id="cur-001"></a>
+### CUR-001 [HIGH] Empty Cursor Rule File
+**Requirement**: Cursor .mdc rule files MUST have non-empty content
+**Detection**: `content.trim().is_empty()` after stripping frontmatter
+**Fix**: Add meaningful rules content
+**Source**: docs.cursor.com/en/context
+
+<a id="cur-002"></a>
+### CUR-002 [MEDIUM] Missing Frontmatter in .mdc File
+**Requirement**: Cursor .mdc files SHOULD have YAML frontmatter with metadata
+**Detection**: File doesn't start with `---` markers
+**Fix**: Add YAML frontmatter with description and globs fields
+**Source**: docs.cursor.com/en/context
+
+<a id="cur-003"></a>
+### CUR-003 [HIGH] Invalid YAML Frontmatter
+**Requirement**: .mdc file frontmatter MUST be valid YAML
+**Detection**: YAML parse error on frontmatter content
+**Fix**: Fix YAML syntax errors in frontmatter
+**Source**: docs.cursor.com/en/context
+
+<a id="cur-004"></a>
+### CUR-004 [HIGH] Invalid Glob Pattern in globs Field
+**Requirement**: `globs` field MUST contain valid glob patterns
+**Detection**: Attempt to parse as glob pattern
+**Fix**: Correct the glob syntax
+**Source**: docs.cursor.com/en/context
+
+<a id="cur-005"></a>
+### CUR-005 [MEDIUM] Unknown Frontmatter Keys
+**Requirement**: .mdc frontmatter SHOULD only contain known keys (description, globs, alwaysApply)
+**Detection**: Check for keys other than known keys in frontmatter
+**Fix**: Remove unknown keys
+**Source**: docs.cursor.com/en/context
+
+<a id="cur-006"></a>
+### CUR-006 [MEDIUM] Legacy .cursorrules File Detected
+**Requirement**: Projects SHOULD migrate from .cursorrules to .cursor/rules/*.mdc format
+**Detection**: File named `.cursorrules`
+**Fix**: Create `.cursor/rules/` directory and migrate rules to .mdc files
+**Source**: docs.cursor.com/en/context
+
+---
+
 ## UNIVERSAL RULES (XML)
 
 <a id="xml-001"></a>
@@ -819,12 +865,13 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | AGENTS.md | 6 | 1 | 5 | 0 | 2 |
 | Claude Plugins | 6 | 6 | 0 | 0 | 1 |
 | GitHub Copilot | 4 | 3 | 1 | 0 | 1 |
+| Cursor | 6 | 3 | 3 | 0 | 1 |
 | MCP | 8 | 7 | 1 | 0 | 1 |
 | XML | 3 | 3 | 0 | 0 | 1 |
 | References | 2 | 2 | 0 | 0 | 0 |
 | Prompt Eng | 4 | 0 | 4 | 0 | 1 |
 | Cross-Platform | 3 | 2 | 1 | 0 | 0 |
-| **TOTAL** | **90** | **67** | **23** | **0** | **21** |
+| **TOTAL** | **96** | **70** | **26** | **0** | **22** |
 
 ---
 
@@ -853,7 +900,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 
 ---
 
-**Total Coverage**: 90 validation rules across 13 categories
+**Total Coverage**: 96 validation rules across 14 categories
 **Knowledge Base**: 11,036 lines, 320KB, 75+ sources
-**Certainty**: 67 HIGH, 23 MEDIUM, 0 LOW
-**Auto-Fixable**: 21 rules (23%)
+**Certainty**: 70 HIGH, 26 MEDIUM, 0 LOW
+**Auto-Fixable**: 22 rules (23%)
