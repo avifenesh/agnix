@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Baseline content hashes for spec-drift sentinel. Updated automatically by workflow.",
+  "last_updated": "2025-02-04T00:00:00Z",
+  "sources": {
+    "s-tier": {
+      "agent-skills-spec": {
+        "url": "https://agentskills.io/specification",
+        "hash": "",
+        "description": "Agent Skills specification - primary source for skill definitions"
+      },
+      "mcp-spec": {
+        "url": "https://modelcontextprotocol.io/specification/2025-11-25",
+        "hash": "",
+        "description": "Model Context Protocol specification"
+      },
+      "claude-code-memory": {
+        "url": "https://code.claude.com/docs/en/memory",
+        "hash": "",
+        "description": "Claude Code memory/CLAUDE.md documentation"
+      },
+      "claude-code-hooks": {
+        "url": "https://code.claude.com/docs/en/hooks",
+        "hash": "",
+        "description": "Claude Code hooks documentation"
+      },
+      "claude-code-skills": {
+        "url": "https://code.claude.com/docs/en/skills",
+        "hash": "",
+        "description": "Claude Code skills documentation"
+      },
+      "claude-code-plugins": {
+        "url": "https://code.claude.com/docs/en/plugins-reference",
+        "hash": "",
+        "description": "Claude Code plugins reference"
+      },
+      "claude-code-subagents": {
+        "url": "https://code.claude.com/docs/en/sub-agents",
+        "hash": "",
+        "description": "Claude Code sub-agents documentation"
+      },
+      "codex-cli-agents-md": {
+        "url": "https://developers.openai.com/codex/guides/agents-md/",
+        "hash": "",
+        "description": "OpenAI Codex CLI AGENTS.md guide"
+      },
+      "opencode-rules": {
+        "url": "https://opencode.ai/docs/rules/",
+        "hash": "",
+        "description": "OpenCode rules documentation"
+      }
+    },
+    "a-tier": {
+      "cursor-rules": {
+        "url": "https://cursor.com/docs/context/rules",
+        "hash": "",
+        "description": "Cursor .cursorrules documentation"
+      },
+      "github-copilot": {
+        "url": "https://docs.github.com/en/copilot/customizing-copilot",
+        "hash": "",
+        "description": "GitHub Copilot customization documentation"
+      },
+      "cline-rules": {
+        "url": "https://docs.cline.bot/features/cline-rules/overview",
+        "hash": "",
+        "description": "Cline rules documentation"
+      }
+    }
+  }
+}

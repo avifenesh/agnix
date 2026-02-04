@@ -1,0 +1,267 @@
+# Spec Drift Sentinel
+# Monitors upstream specification sources for changes that may require rule updates.
+# See .github/spec-baselines.json for tracked sources.
+
+name: Spec Drift Sentinel
+
+on:
+  schedule:
+    # S-tier: Weekly on Sunday at midnight UTC
+    - cron: '0 0 * * 0'
+    # A-tier: Monthly on 1st at midnight UTC
+    - cron: '0 0 1 * *'
+  workflow_dispatch:
+    inputs:
+      update_baselines:
+        description: 'Update baseline hashes (run after reviewing changes)'
+        required: false
+        type: boolean
+        default: false
+      tier:
+        description: 'Which tier to check'
+        required: false
+        type: choice
+        options:
+          - all
+          - s-tier
+          - a-tier
+        default: all
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check-drift:
+    name: Check for spec drift
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4
+
+      - name: Check spec sources for drift
+        id: drift-check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          UPDATE_BASELINES: ${{ inputs.update_baselines || 'false' }}
+          TIER_FILTER: ${{ inputs.tier || 'all' }}
+          SCHEDULE_CRON: ${{ github.event.schedule }}
+        run: |
+          set -euo pipefail
+
+          BASELINES_FILE=".github/spec-baselines.json"
+          DRIFT_DETECTED=false
+          DRIFT_REPORT=""
+          NEW_HASHES=""
+
+          # Determine which tiers to check based on trigger
+          check_s_tier=false
+          check_a_tier=false
+
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            case "$TIER_FILTER" in
+              s-tier) check_s_tier=true ;;
+              a-tier) check_a_tier=true ;;
+              all) check_s_tier=true; check_a_tier=true ;;
+            esac
+          elif [[ "${{ github.event_name }}" == "schedule" ]]; then
+            # Weekly schedule (Sunday) = S-tier
+            if [[ "$SCHEDULE_CRON" == "0 0 * * 0" ]]; then
+              check_s_tier=true
+            fi
+            # Monthly schedule (1st) = A-tier
+            if [[ "$SCHEDULE_CRON" == "0 0 1 * *" ]]; then
+              check_a_tier=true
+            fi
+          else
+            # Default: check all (for testing)
+            check_s_tier=true
+            check_a_tier=true
+          fi
+
+          echo "Checking S-tier: $check_s_tier"
+          echo "Checking A-tier: $check_a_tier"
+
+          # Function to normalize content for consistent hashing
+          normalize_content() {
+            # Remove extra whitespace, normalize line endings
+            tr -s '[:space:]' ' ' | sed 's/^ //;s/ $//'
+          }
+
+          # Function to compute hash of URL content
+          compute_hash() {
+            local url="$1"
+            local content
+            local hash
+
+            # Fetch with curl, follow redirects, timeout after 30s
+            content=$(curl -fsSL --max-time 30 "$url" 2>/dev/null || echo "FETCH_FAILED")
+
+            if [[ "$content" == "FETCH_FAILED" ]]; then
+              echo "FETCH_FAILED"
+              return
+            fi
+
+            # Normalize and hash
+            hash=$(echo "$content" | normalize_content | sha256sum | cut -d' ' -f1)
+            echo "$hash"
+          }
+
+          # Function to check sources in a tier
+          check_tier() {
+            local tier="$1"
+            local sources
+            sources=$(jq -r ".sources[\"$tier\"] | keys[]" "$BASELINES_FILE")
+
+            for source in $sources; do
+              local url
+              local baseline_hash
+              local description
+
+              url=$(jq -r ".sources[\"$tier\"][\"$source\"].url" "$BASELINES_FILE")
+              baseline_hash=$(jq -r ".sources[\"$tier\"][\"$source\"].hash" "$BASELINES_FILE")
+              description=$(jq -r ".sources[\"$tier\"][\"$source\"].description" "$BASELINES_FILE")
+
+              echo "Checking: $source ($url)"
+
+              current_hash=$(compute_hash "$url")
+
+              if [[ "$current_hash" == "FETCH_FAILED" ]]; then
+                echo "  WARNING: Failed to fetch $source"
+                DRIFT_REPORT="${DRIFT_REPORT}\n- **$source**: Failed to fetch (may be temporary)"
+                continue
+              fi
+
+              # Store new hash for potential baseline update
+              NEW_HASHES="${NEW_HASHES}${tier}|${source}|${current_hash}\n"
+
+              if [[ -z "$baseline_hash" || "$baseline_hash" == "" ]]; then
+                echo "  INFO: No baseline hash set for $source (first run)"
+                DRIFT_REPORT="${DRIFT_REPORT}\n- **$source**: No baseline (initial hash: ${current_hash:0:12}...)"
+                DRIFT_DETECTED=true
+              elif [[ "$current_hash" != "$baseline_hash" ]]; then
+                echo "  DRIFT DETECTED: $source"
+                echo "    Baseline: ${baseline_hash:0:12}..."
+                echo "    Current:  ${current_hash:0:12}..."
+                DRIFT_REPORT="${DRIFT_REPORT}\n- **$source** ($tier): Content changed"
+                DRIFT_REPORT="${DRIFT_REPORT}\n  - URL: $url"
+                DRIFT_REPORT="${DRIFT_REPORT}\n  - Description: $description"
+                DRIFT_REPORT="${DRIFT_REPORT}\n  - Previous hash: \`${baseline_hash:0:12}...\`"
+                DRIFT_REPORT="${DRIFT_REPORT}\n  - Current hash: \`${current_hash:0:12}...\`"
+                DRIFT_DETECTED=true
+              else
+                echo "  OK: No change"
+              fi
+            done
+          }
+
+          # Check requested tiers
+          if [[ "$check_s_tier" == "true" ]]; then
+            echo ""
+            echo "=== Checking S-tier sources ==="
+            check_tier "s-tier"
+          fi
+
+          if [[ "$check_a_tier" == "true" ]]; then
+            echo ""
+            echo "=== Checking A-tier sources ==="
+            check_tier "a-tier"
+          fi
+
+          # Output results
+          echo ""
+          echo "drift_detected=$DRIFT_DETECTED" >> "$GITHUB_OUTPUT"
+
+          # Escape newlines for GitHub output
+          DRIFT_REPORT_ESCAPED=$(echo -e "$DRIFT_REPORT" | sed ':a;N;$!ba;s/\n/%0A/g')
+          echo "drift_report=$DRIFT_REPORT_ESCAPED" >> "$GITHUB_OUTPUT"
+
+          # Output new hashes if update requested
+          if [[ "$UPDATE_BASELINES" == "true" ]]; then
+            echo ""
+            echo "=== New baseline hashes ==="
+            echo -e "$NEW_HASHES"
+
+            # Write updated baselines file
+            temp_file=$(mktemp)
+            cp "$BASELINES_FILE" "$temp_file"
+
+            echo -e "$NEW_HASHES" | while IFS='|' read -r tier source hash; do
+              if [[ -n "$tier" && -n "$source" && -n "$hash" ]]; then
+                jq ".sources[\"$tier\"][\"$source\"].hash = \"$hash\"" "$temp_file" > "${temp_file}.new"
+                mv "${temp_file}.new" "$temp_file"
+              fi
+            done
+
+            # Update timestamp
+            jq ".last_updated = \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"" "$temp_file" > "${temp_file}.new"
+            mv "${temp_file}.new" "$temp_file"
+
+            echo ""
+            echo "Updated baselines file:"
+            cat "$temp_file"
+            echo ""
+            echo "To update baselines, copy the above JSON to .github/spec-baselines.json"
+          fi
+
+          if [[ "$DRIFT_DETECTED" == "true" ]]; then
+            echo ""
+            echo "DRIFT DETECTED - See report above"
+          else
+            echo ""
+            echo "No drift detected"
+          fi
+
+      - name: Create or update drift issue
+        if: steps.drift-check.outputs.drift_detected == 'true' && inputs.update_baselines != true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DRIFT_REPORT: ${{ steps.drift-check.outputs.drift_report }}
+        run: |
+          set -euo pipefail
+
+          ISSUE_TITLE="Spec Drift Detected - Review Required"
+          ISSUE_LABEL="spec-drift"
+
+          # Check if an open issue already exists
+          existing_issue=$(gh issue list --state open --label "$ISSUE_LABEL" --json number --jq '.[0].number // empty')
+
+          # Decode the escaped report
+          REPORT_BODY=$(echo "$DRIFT_REPORT" | sed 's/%0A/\n/g')
+
+          ISSUE_BODY="## Spec Drift Sentinel Alert
+
+          The following upstream specification sources have changed since our last baseline check.
+          These changes may require updates to agnix validation rules.
+
+          ### Changed Sources
+          $REPORT_BODY
+
+          ### Action Required
+
+          1. **Review each changed source** to understand what has changed
+          2. **Check if rule updates are needed** in \`knowledge-base/rules.json\`
+          3. **Update VALIDATION-RULES.md** if rules are modified
+          4. **Update baselines** by running the workflow with \`update_baselines: true\`
+
+          ### How to Update Baselines
+
+          Run the spec-drift workflow manually with:
+          - \`update_baselines: true\`
+          - \`tier: all\` (or specific tier)
+
+          Then copy the output JSON to \`.github/spec-baselines.json\`.
+
+          ---
+          *This issue was automatically created by the Spec Drift Sentinel workflow.*
+          *Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}*"
+
+          if [[ -n "$existing_issue" ]]; then
+            echo "Updating existing issue #$existing_issue"
+            gh issue comment "$existing_issue" --body "$ISSUE_BODY"
+          else
+            echo "Creating new drift issue"
+            # Ensure label exists
+            gh label create "$ISSUE_LABEL" --description "Upstream spec changes detected" --color "FFA500" 2>/dev/null || true
+            gh issue create --title "$ISSUE_TITLE" --body "$ISSUE_BODY" --label "$ISSUE_LABEL"
+          fi

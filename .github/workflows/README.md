@@ -76,3 +76,4 @@ When a new version of an action is released:
 | changelog.yml | PR | Verify CHANGELOG.md is updated |
 | claude.yml | issue/PR comments | Claude Code assistant |
 | claude-code-review.yml | PR | Automated code review |
+| spec-drift.yml | schedule/manual | Monitor upstream specs for changes |
