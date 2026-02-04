@@ -25,9 +25,6 @@ jobs:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-musl
             artifact: agnix
-          - os: macos-15-large
-            target: x86_64-apple-darwin
-            artifact: agnix
           - os: macos-latest
             target: aarch64-apple-darwin
             artifact: agnix
