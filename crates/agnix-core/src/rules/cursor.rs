@@ -60,8 +60,8 @@ impl Validator for CursorValidator {
         // CUR-001: Empty .mdc rule file (ERROR)
         if config.is_rule_enabled("CUR-001") {
             if let Some(parsed) = parse_mdc_frontmatter(content) {
-                // File has frontmatter - check if body is empty
-                if is_body_empty(&parsed.body) {
+                // Skip CUR-001 if there's a frontmatter parse error - CUR-003 will handle it
+                if parsed.parse_error.is_none() && is_body_empty(&parsed.body) {
                     diagnostics.push(
                         Diagnostic::error(
                             path.to_path_buf(),
@@ -136,13 +136,21 @@ impl Validator for CursorValidator {
         if config.is_rule_enabled("CUR-004") {
             if let Some(ref schema) = parsed.schema {
                 if let Some(ref globs) = schema.globs {
+                    // Find the line number of the globs field for accurate diagnostics
+                    // Note: parsed.raw doesn't include the opening --- line, so we need +1
+                    let globs_line = parsed.raw.lines()
+                        .enumerate()
+                        .find(|(_, line)| line.trim_start().starts_with("globs:"))
+                        .map(|(idx, _)| parsed.start_line + 1 + idx)
+                        .unwrap_or(parsed.start_line);
+
                     for pattern in globs.patterns() {
                         let validation = validate_glob_pattern(pattern);
                         if !validation.valid {
                             diagnostics.push(
                                 Diagnostic::error(
                                     path.to_path_buf(),
-                                    parsed.start_line + 1,
+                                    globs_line,
                                     0,
                                     "CUR-004",
                                     format!(
@@ -263,6 +271,24 @@ globs: "**/*.ts"
         assert!(cur_001[0].message.contains("no content after frontmatter"));
     }
 
+    #[test]
+    fn test_cur_001_skips_when_parse_error() {
+        // When frontmatter has parse error (missing closing ---),
+        // CUR-001 should NOT trigger - CUR-003 handles it
+        let content = r#"---
+description: Unclosed frontmatter
+# Missing closing ---
+"#;
+        let diagnostics = validate_mdc(content);
+        let cur_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CUR-001").collect();
+        assert!(cur_001.is_empty(), "CUR-001 should not trigger when parse_error exists");
+
+        // Verify CUR-003 triggers instead
+        let cur_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CUR-003").collect();
+        assert_eq!(cur_003.len(), 1);
+        assert!(cur_003[0].message.contains("missing closing ---"));
+    }
+
     // ===== CUR-002: Missing Frontmatter =====
 
     #[test]
@@ -380,6 +406,22 @@ globs: "{}"
             let cur_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CUR-004").collect();
             assert!(cur_004.is_empty(), "Pattern '{}' should be valid", pattern);
         }
+    }
+
+    #[test]
+    fn test_cur_004_line_number_accuracy() {
+        // Test that CUR-004 reports the line number of the globs field, not frontmatter start
+        let content = r#"---
+description: Bad glob
+globs: "[unclosed"
+---
+# Rules
+"#;
+        let diagnostics = validate_mdc(content);
+        let cur_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CUR-004").collect();
+        assert_eq!(cur_004.len(), 1);
+        // globs: is on line 3 (line 1 is ---, line 2 is description, line 3 is globs)
+        assert_eq!(cur_004[0].line, 3, "CUR-004 should point to the globs field line");
     }
 
     // ===== CUR-005: Unknown Frontmatter Keys =====
