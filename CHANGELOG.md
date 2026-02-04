@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Performance
+- AS-015 directory size validation now short-circuits when limit exceeded, improving performance on large skill directories (#84)
+
 ### Changed
 - Narrowed agnix-core public API surface (#85)
   - Made `parsers`, `rules`, `schemas`, and `file_utils` modules private

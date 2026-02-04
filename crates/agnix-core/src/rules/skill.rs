@@ -784,8 +784,8 @@ impl Validator for SkillValidator {
         // AS-015: Directory size exceeds 8MB
         if config.is_rule_enabled("AS-015") && path.is_file() {
             if let Some(dir) = path.parent() {
-                let size = directory_size(dir);
                 const MAX_BYTES: u64 = 8 * 1024 * 1024;
+                let size = directory_size_until(dir, MAX_BYTES);
                 if size > MAX_BYTES {
                     diagnostics.push(
                         Diagnostic::error(
@@ -1082,7 +1082,7 @@ fn frontmatter_value_byte_range(
     None
 }
 
-fn directory_size(path: &Path) -> u64 {
+fn directory_size_until(path: &Path, max_bytes: u64) -> u64 {
     let mut total = 0u64;
     let mut stack = vec![path.to_path_buf()];
     while let Some(current) = stack.pop() {
@@ -1104,6 +1104,9 @@ fn directory_size(path: &Path) -> u64 {
             if file_type.is_file() {
                 if let Ok(metadata) = entry.metadata() {
                     total = total.saturating_add(metadata.len());
+                    if total > max_bytes {
+                        return total;
+                    }
                 }
             }
         }
@@ -2988,5 +2991,130 @@ Body"#;
         let parts = split_frontmatter(content);
         let range = frontmatter_value_byte_range(content, &parts, "description");
         assert!(range.is_none());
+    }
+
+    // ===== directory_size_until tests =====
+
+    /// Helper to write N bytes to a file efficiently using a small buffer
+    fn write_bytes_to_file(path: &std::path::Path, num_bytes: usize) {
+        use std::io::Write;
+        let mut file = fs::File::create(path).unwrap();
+        let buffer = [0u8; 8192];
+        let mut remaining = num_bytes;
+        while remaining > 0 {
+            let to_write = remaining.min(buffer.len());
+            file.write_all(&buffer[..to_write]).unwrap();
+            remaining -= to_write;
+        }
+    }
+
+    #[test]
+    fn test_directory_size_until_short_circuits() {
+        let temp_dir = tempfile::tempdir().unwrap();
+
+        // Create 10 files of 1MB each (10MB total)
+        for i in 0..10 {
+            let file_path = temp_dir.path().join(format!("file_{:02}.bin", i));
+            write_bytes_to_file(&file_path, 1024 * 1024);
+        }
+
+        // With a 2MB limit, should short-circuit and return > 2MB
+        let size = directory_size_until(temp_dir.path(), 2 * 1024 * 1024);
+        assert!(size > 2 * 1024 * 1024, "Size should exceed 2MB limit");
+        // Should not have scanned all 10MB (short-circuited after exceeding limit).
+        // Upper bound is 3MB because: directory iteration order is unspecified,
+        // so we may read up to 2 full 1MB files before the check triggers on the 3rd.
+        assert!(
+            size <= 3 * 1024 * 1024,
+            "Size {} should be <= 3MB (short-circuited)",
+            size
+        );
+    }
+
+    #[test]
+    fn test_directory_size_until_accurate_under_limit() {
+        let temp_dir = tempfile::tempdir().unwrap();
+
+        // Create 2 files of 1KB each (2KB total)
+        for i in 0..2 {
+            let file_path = temp_dir.path().join(format!("file_{}.bin", i));
+            write_bytes_to_file(&file_path, 1024);
+        }
+
+        // With a 1MB limit, should return exact size
+        let size = directory_size_until(temp_dir.path(), 1024 * 1024);
+        assert_eq!(size, 2048);
+    }
+
+    #[test]
+    fn test_directory_size_until_handles_empty_directory() {
+        let temp_dir = tempfile::tempdir().unwrap();
+
+        let size = directory_size_until(temp_dir.path(), 1024 * 1024);
+        assert_eq!(size, 0);
+    }
+
+    #[test]
+    fn test_directory_size_until_nested_directories() {
+        let temp_dir = tempfile::tempdir().unwrap();
+
+        // Create nested structure: root/sub1/sub2 with files at each level
+        let sub1 = temp_dir.path().join("sub1");
+        let sub2 = sub1.join("sub2");
+        fs::create_dir_all(&sub2).unwrap();
+
+        // 1KB at root, 2KB in sub1, 3KB in sub2 = 6KB total
+        write_bytes_to_file(&temp_dir.path().join("root.bin"), 1024);
+        write_bytes_to_file(&sub1.join("sub1.bin"), 2048);
+        write_bytes_to_file(&sub2.join("sub2.bin"), 3072);
+
+        let size = directory_size_until(temp_dir.path(), 1024 * 1024);
+        assert_eq!(size, 6144, "Should sum files across all nested directories");
+    }
+
+    #[test]
+    fn test_directory_size_until_nested_short_circuits() {
+        let temp_dir = tempfile::tempdir().unwrap();
+
+        // Create nested structure with large files
+        let sub1 = temp_dir.path().join("sub1");
+        let sub2 = sub1.join("sub2");
+        fs::create_dir_all(&sub2).unwrap();
+
+        // 1MB at each level = 3MB total, with 2MB limit should short-circuit
+        write_bytes_to_file(&temp_dir.path().join("root.bin"), 1024 * 1024);
+        write_bytes_to_file(&sub1.join("sub1.bin"), 1024 * 1024);
+        write_bytes_to_file(&sub2.join("sub2.bin"), 1024 * 1024);
+
+        let size = directory_size_until(temp_dir.path(), 2 * 1024 * 1024);
+        assert!(size > 2 * 1024 * 1024, "Should exceed limit");
+        assert!(size <= 3 * 1024 * 1024, "Should short-circuit before scanning all");
+    }
+
+    #[test]
+    fn test_as_015_boundary_exactly_8mb() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let skill_dir = temp_dir.path().join("skill");
+        fs::create_dir_all(&skill_dir).unwrap();
+
+        // Create SKILL.md
+        let skill_path = skill_dir.join("SKILL.md");
+        fs::write(&skill_path, "---\nname: boundary-test\n---\nBody").unwrap();
+
+        // Create file that brings total to exactly 8MB (minus SKILL.md size)
+        let skill_md_size = fs::metadata(&skill_path).unwrap().len() as usize;
+        let target_size = 8 * 1024 * 1024 - skill_md_size;
+        write_bytes_to_file(&skill_dir.join("data.bin"), target_size);
+
+        let validator = SkillValidator;
+        let content = fs::read_to_string(&skill_path).unwrap();
+        let diagnostics = validator.validate(&skill_path, &content, &LintConfig::default());
+
+        // Exactly 8MB should NOT trigger AS-015 (uses > not >=)
+        let as_015_errors: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-015").collect();
+        assert!(
+            as_015_errors.is_empty(),
+            "Exactly 8MB should not trigger AS-015"
+        );
     }
 }
