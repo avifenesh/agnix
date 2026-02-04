@@ -278,6 +278,45 @@ mod tests {
     }
 
     #[test]
+    fn test_xml_001_fix_nested_tags_applied() {
+        let content = "<outer><inner>content";
+        let validator = XmlValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+        // Both tags are unclosed
+        assert_eq!(diagnostics.len(), 2);
+
+        // Collect fixes and sort descending by position (like fixes.rs does)
+        let mut fixes: Vec<_> = diagnostics.iter().flat_map(|d| &d.fixes).collect();
+        fixes.sort_by(|a, b| b.start_byte.cmp(&a.start_byte));
+
+        // Apply fixes manually (simulating apply_fixes_to_content)
+        let mut result = content.to_string();
+        let mut applied_count = 0;
+        let mut last_start = usize::MAX;
+
+        for fix in &fixes {
+            // Skip overlapping (end > last_start)
+            if fix.end_byte > last_start {
+                continue;
+            }
+            result.replace_range(fix.start_byte..fix.end_byte, &fix.replacement);
+            last_start = fix.start_byte;
+            applied_count += 1;
+        }
+
+        // Both fixes should be applied (insertions at same position are allowed)
+        assert_eq!(applied_count, 2, "Expected 2 fixes to be applied");
+
+        // Result should have both closing tags
+        assert!(
+            result.contains("</inner>") && result.contains("</outer>"),
+            "Expected both closing tags, got: {}",
+            result
+        );
+    }
+
+    #[test]
     fn test_xml_001_fix_description() {
         let content = "<myTag>incomplete";
         let validator = XmlValidator;
