@@ -332,24 +332,31 @@ impl LintConfig {
 
     /// Check if a rule applies based on the tools array
     fn is_rule_for_tools(&self, rule_id: &str) -> bool {
-        // Tool-specific rule prefixes and their corresponding tool names
-        let tool_mapping: &[(&str, &[&str])] = &[
-            ("CC-", &["claude-code"]), // Claude Code specific rules
-            ("COP-", &["copilot"]),    // GitHub Copilot specific rules
-            ("CUR-", &["cursor"]),     // Cursor specific rules
-        ];
-
-        for (prefix, tool_names) in tool_mapping {
+        // Use TOOL_RULE_PREFIXES derived from rules.json at compile time
+        for (prefix, tool) in agnix_rules::TOOL_RULE_PREFIXES {
             if rule_id.starts_with(prefix) {
-                // Check if any of the required tools is in the tools list
-                return tool_names
-                    .iter()
-                    .any(|t| self.tools.iter().any(|u| u.eq_ignore_ascii_case(t)));
+                // Check if the required tool is in the tools list (case-insensitive)
+                // Also accept backward-compat aliases (e.g., "copilot" for "github-copilot")
+                return self.tools.iter().any(|t| {
+                    t.eq_ignore_ascii_case(tool) || Self::is_tool_alias(t, tool)
+                });
             }
         }
 
         // Generic rules (AS-*, XML-*, REF-*, XP-*, AGM-*, MCP-*, PE-*) apply to all tools
         true
+    }
+
+    /// Check if a user-provided tool name is a backward-compatible alias
+    /// for the canonical tool name from rules.json.
+    ///
+    /// For example: "copilot" is an alias for "github-copilot"
+    fn is_tool_alias(user_tool: &str, canonical_tool: &str) -> bool {
+        // Backward compatibility: accept short names as aliases
+        match canonical_tool {
+            "github-copilot" => user_tool.eq_ignore_ascii_case("copilot"),
+            _ => false,
+        }
     }
 
     /// Check if a rule's category is enabled
