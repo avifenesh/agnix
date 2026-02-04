@@ -10,9 +10,6 @@ let client: LanguageClient | undefined;
 let statusBarItem: vscode.StatusBarItem;
 let outputChannel: vscode.OutputChannel;
 
-/**
- * File patterns that agnix validates.
- */
 const AGNIX_FILE_PATTERNS = [
   '**/SKILL.md',
   '**/CLAUDE.md',
@@ -33,7 +30,6 @@ export async function activate(
   outputChannel = vscode.window.createOutputChannel('agnix');
   context.subscriptions.push(outputChannel);
 
-  // Create status bar item
   statusBarItem = vscode.window.createStatusBarItem(
     vscode.StatusBarAlignment.Right,
     100
@@ -41,7 +37,6 @@ export async function activate(
   statusBarItem.command = 'agnix.showOutput';
   context.subscriptions.push(statusBarItem);
 
-  // Register commands
   context.subscriptions.push(
     vscode.commands.registerCommand('agnix.restart', () => restartClient()),
     vscode.commands.registerCommand('agnix.showOutput', () =>
@@ -49,7 +44,6 @@ export async function activate(
     )
   );
 
-  // Watch for configuration changes
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((e) => {
       if (e.affectsConfiguration('agnix')) {
@@ -63,7 +57,6 @@ export async function activate(
     })
   );
 
-  // Start the client if enabled
   const config = vscode.workspace.getConfiguration('agnix');
   if (config.get<boolean>('enable', true)) {
     await startClient();
@@ -74,7 +67,6 @@ async function startClient(): Promise<void> {
   const config = vscode.workspace.getConfiguration('agnix');
   const lspPath = config.get<string>('lspPath', 'agnix-lsp');
 
-  // Check if the LSP binary exists
   const lspExists = await checkLspExists(lspPath);
   if (!lspExists) {
     updateStatusBar('error', 'agnix-lsp not found');
@@ -173,7 +165,6 @@ async function checkLspExists(lspPath: string): Promise<boolean> {
   const { promisify } = require('util');
   const execAsync = promisify(exec);
 
-  // Handle Windows where .exe extension might be needed
   const isWindows = process.platform === 'win32';
   const command = isWindows ? `where ${lspPath}` : `which ${lspPath}`;
 
