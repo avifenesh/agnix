@@ -7,7 +7,9 @@
 //!
 //! ## Features
 //!
-//! - Real-time diagnostics on file open and save
+//! - Real-time diagnostics on file open, change, and save
+//! - Quick-fix code actions for automatic repairs
+//! - Hover documentation for configuration fields
 //! - Supports all agnix validation rules
 //! - Maps agnix diagnostics to LSP diagnostics
 //!
@@ -22,7 +24,10 @@
 //! The server communicates over stdin/stdout using the LSP protocol.
 
 mod backend;
+mod code_actions;
 mod diagnostic_mapper;
+mod hover_provider;
+mod position;
 
 pub use backend::Backend;
 
