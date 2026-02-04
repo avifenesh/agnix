@@ -16,6 +16,7 @@ static AGENT_FIELD_PATTERN: OnceLock<Regex> = OnceLock::new();
 static ALLOWED_TOOLS_PATTERN: OnceLock<Regex> = OnceLock::new();
 static HARD_CODED_PATH_PATTERN: OnceLock<Regex> = OnceLock::new();
 static MARKDOWN_HEADER_PATTERN: OnceLock<Regex> = OnceLock::new();
+static CLAUDE_SECTION_GUARD_PATTERN: OnceLock<Regex> = OnceLock::new();
 
 // XP-004: Build command patterns
 static BUILD_COMMAND_PATTERN: OnceLock<Regex> = OnceLock::new();
@@ -69,15 +70,48 @@ fn allowed_tools_pattern() -> &'static Regex {
     })
 }
 
+fn claude_section_guard_pattern() -> &'static Regex {
+    CLAUDE_SECTION_GUARD_PATTERN.get_or_init(|| {
+        // Match Claude-specific section headers or HTML comments
+        // Examples: "## Claude Code Specific", "## Claude Only", "<!-- Claude Code Specific -->"
+        Regex::new(r"(?im)^(?:#+\s*|<!--\s*)claude(?:\s+code)?(?:\s+specific|\s+only)?(?:\s*-->)?")
+            .unwrap()
+    })
+}
+
 /// Find Claude-specific features in content (for XP-001)
 ///
 /// Detects features that only work in Claude Code but not in other platforms
 /// that read AGENTS.md (Codex CLI, OpenCode, GitHub Copilot, Cursor, Cline).
+///
+/// Features inside a Claude-specific section (marked by a header like
+/// `## Claude Code Specific` or `<!-- Claude Specific -->`) are not reported,
+/// allowing users to document Claude-specific features without triggering errors.
 pub fn find_claude_specific_features(content: &str) -> Vec<ClaudeSpecificFeature> {
     let mut results = Vec::new();
+    let guard_pattern = claude_section_guard_pattern();
+
+    // Track if we're in a Claude-specific section
+    let mut in_claude_section = false;
 
     // Iterate directly over lines without collecting to Vec (memory optimization)
     for (line_num, line) in content.lines().enumerate() {
+        // Check if this line is a Claude section guard
+        if guard_pattern.is_match(line) {
+            in_claude_section = true;
+            continue;
+        }
+
+        // Check if we hit a new section header (non-guard) - resets the guard
+        if line.starts_with('#') && !guard_pattern.is_match(line) {
+            in_claude_section = false;
+        }
+
+        // Skip checking for features if we're inside a guarded Claude section
+        if in_claude_section {
+            continue;
+        }
+
         // Check for hooks patterns
         if let Some(mat) = claude_hooks_pattern().find(line) {
             results.push(ClaudeSpecificFeature {
@@ -980,6 +1014,156 @@ agent: security-reviewer
 ---
 Body"#;
         let results = find_claude_specific_features(content);
+        assert!(results.iter().any(|r| r.feature == "agent"));
+    }
+
+    // ===== XP-001: Claude Section Guard Tests =====
+
+    #[test]
+    fn test_guarded_hooks_in_claude_section() {
+        // Hooks inside a Claude-specific section should NOT be reported
+        let content = r#"# Project Guidelines
+
+## Claude Code Specific
+- type: PreToolExecution
+  command: echo "test"
+"#;
+        let results = find_claude_specific_features(content);
+        assert!(
+            results.is_empty(),
+            "Hooks in Claude-specific section should not trigger XP-001"
+        );
+    }
+
+    #[test]
+    fn test_guarded_context_fork() {
+        // context:fork inside a Claude section should NOT be reported
+        let content = r#"# Config
+
+## Claude Only
+context: fork
+agent: Explore
+"#;
+        let results = find_claude_specific_features(content);
+        assert!(
+            results.is_empty(),
+            "Features in Claude-only section should not trigger XP-001"
+        );
+    }
+
+    #[test]
+    fn test_guarded_agent_field() {
+        // agent field inside a Claude section should NOT be reported
+        let content = r#"# Settings
+
+## Claude Specific
+agent: security-reviewer
+allowed-tools: Read Write
+"#;
+        let results = find_claude_specific_features(content);
+        assert!(
+            results.is_empty(),
+            "Agent field in Claude-specific section should not trigger XP-001"
+        );
+    }
+
+    #[test]
+    fn test_guard_section_ends_at_new_header() {
+        // Guard protection should end when a new header is encountered
+        let content = r#"# Main
+
+## Claude Code Specific
+- type: Stop
+  command: cleanup
+
+## Other Settings
+agent: something
+"#;
+        let results = find_claude_specific_features(content);
+        // The hooks under "Claude Code Specific" should be guarded
+        assert!(
+            !results.iter().any(|r| r.feature == "hooks"),
+            "Hooks in Claude section should be guarded"
+        );
+        // The agent field under "Other Settings" should be reported
+        assert!(
+            results.iter().any(|r| r.feature == "agent"),
+            "Agent field outside Claude section should be reported"
+        );
+    }
+
+    #[test]
+    fn test_multiple_claude_sections() {
+        // Multiple Claude sections should all be guarded
+        let content = r#"# Config
+
+## Claude Code Specific
+- type: PreToolExecution
+  command: test1
+
+## General Settings
+Some general content.
+
+## Claude Only
+context: fork
+agent: Plan
+"#;
+        let results = find_claude_specific_features(content);
+        assert!(
+            results.is_empty(),
+            "Features in any Claude section should be guarded"
+        );
+    }
+
+    #[test]
+    fn test_html_comment_guard() {
+        // HTML comment style guard should also work
+        let content = r#"# Config
+
+<!-- Claude Code Specific -->
+- type: Notification
+  command: notify-send
+"#;
+        let results = find_claude_specific_features(content);
+        assert!(
+            results.is_empty(),
+            "HTML comment guard should protect Claude features"
+        );
+    }
+
+    #[test]
+    fn test_case_insensitive_guard() {
+        // Guard detection should be case-insensitive
+        let content = r#"# Config
+
+## CLAUDE CODE SPECIFIC
+- type: SubagentStop
+  command: cleanup
+
+## claude specific
+allowed-tools: Bash
+"#;
+        let results = find_claude_specific_features(content);
+        assert!(
+            results.is_empty(),
+            "Case-insensitive guard should protect Claude features"
+        );
+    }
+
+    #[test]
+    fn test_unguarded_features_still_detected() {
+        // Features NOT in a Claude section should still be detected
+        let content = r#"# Project Config
+
+## Hooks Setup
+- type: PreToolExecution
+  command: echo "test"
+
+agent: reviewer
+"#;
+        let results = find_claude_specific_features(content);
+        assert_eq!(results.len(), 2, "Unguarded features should be detected");
+        assert!(results.iter().any(|r| r.feature == "hooks"));
         assert!(results.iter().any(|r| r.feature == "agent"));
     }
 
