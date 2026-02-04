@@ -162,7 +162,7 @@ impl Validator for HooksValidator {
                     path.to_path_buf(),
                     1,
                     0,
-                    "hooks::parse",
+                    "CC-HK-012",
                     format!("Failed to parse hooks configuration: {}", e),
                 ));
                 return diagnostics;
@@ -276,7 +276,7 @@ impl Validator for HooksValidator {
                     path.to_path_buf(),
                     1,
                     0,
-                    "hooks::parse",
+                    "CC-HK-012",
                     format!("Failed to parse hooks configuration: {}", e),
                 ));
                 return diagnostics;
@@ -1132,7 +1132,7 @@ mod tests {
 
         let parse_errors: Vec<_> = diagnostics
             .iter()
-            .filter(|d| d.rule == "hooks::parse")
+            .filter(|d| d.rule == "CC-HK-012")
             .collect();
         assert_eq!(parse_errors.len(), 0);
     }
@@ -1145,7 +1145,7 @@ mod tests {
 
         let parse_errors: Vec<_> = diagnostics
             .iter()
-            .filter(|d| d.rule == "hooks::parse")
+            .filter(|d| d.rule == "CC-HK-012")
             .collect();
         assert_eq!(parse_errors.len(), 1);
     }

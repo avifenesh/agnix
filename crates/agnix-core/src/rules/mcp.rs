@@ -84,7 +84,7 @@ impl Validator for McpValidator {
                     path.to_path_buf(),
                     1,
                     0,
-                    "mcp::parse",
+                    "MCP-007",
                     format!("Failed to parse MCP configuration: {}", e),
                 ));
                 return diagnostics;
@@ -759,7 +759,7 @@ mod tests {
     fn test_parse_error_handling() {
         let content = r#"not valid json"#;
         let diagnostics = validate(content);
-        assert!(diagnostics.iter().any(|d| d.rule == "mcp::parse"));
+        assert!(diagnostics.iter().any(|d| d.rule == "MCP-007"));
     }
 
     // Multiple tools test

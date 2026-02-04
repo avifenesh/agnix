@@ -65,7 +65,7 @@ impl Validator for PluginValidator {
                     path.to_path_buf(),
                     1,
                     0,
-                    "plugin::parse",
+                    "CC-PL-006",
                     format!("Failed to parse plugin.json: {}", e),
                 ));
                 return diagnostics;

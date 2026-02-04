@@ -134,7 +134,7 @@ impl Validator for SkillValidator {
                         path.to_path_buf(),
                         frontmatter_line,
                         frontmatter_col,
-                        "skill::parse",
+                        "AS-016",
                         format!("Failed to parse SKILL.md: {}", e),
                     ));
                     None
@@ -2155,7 +2155,7 @@ Body"#;
 
         let parse_errors: Vec<_> = diagnostics
             .iter()
-            .filter(|d| d.rule == "skill::parse")
+            .filter(|d| d.rule == "AS-016")
             .collect();
 
         assert_eq!(
