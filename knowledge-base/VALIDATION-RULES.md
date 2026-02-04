@@ -859,6 +859,24 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 
 ---
 
+## VERSION AWARENESS RULES (VER)
+
+<a id="ver-001"></a>
+### VER-001 [LOW] No Tool/Spec Versions Pinned
+**Requirement**: Projects SHOULD pin tool/spec versions for deterministic validation
+**Detection**: Check if any versions are configured in .agnix.toml [tool_versions] or [spec_revisions]
+**Fix**: Add version configuration to .agnix.toml:
+```toml
+[tool_versions]
+claude_code = "2.1.3"
+
+[spec_revisions]
+mcp_protocol = "2025-06-18"
+```
+**Source**: Best practice for reproducible validation
+
+---
+
 ## PRIORITY MATRIX
 
 ### P0 (MVP - Week 3)

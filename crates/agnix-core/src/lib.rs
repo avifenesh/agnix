@@ -612,6 +612,42 @@ pub fn validate_project_with_registry(
         }
     }
 
+    // VER-001: Warn when no tool/spec versions are explicitly pinned (project-level check)
+    // This helps users understand that version-dependent rules are using default assumptions
+    // Note: We only check explicitly-set fields, not defaults (e.g., mcp_protocol_version has a default)
+    if config.is_rule_enabled("VER-001") {
+        let has_any_version_pinned = config.is_claude_code_version_pinned()
+            || config.tool_versions.codex.is_some()
+            || config.tool_versions.cursor.is_some()
+            || config.tool_versions.copilot.is_some()
+            || config.spec_revisions.mcp_protocol.is_some()
+            || config.spec_revisions.agent_skills_spec.is_some()
+            || config.spec_revisions.agents_md_spec.is_some();
+
+        if !has_any_version_pinned {
+            // Use .agnix.toml path or project root as the file reference
+            let config_file = root_dir.join(".agnix.toml");
+            let report_path = if config_file.exists() {
+                config_file
+            } else {
+                root_dir.clone()
+            };
+
+            diagnostics.push(
+                Diagnostic::info(
+                    report_path,
+                    1,
+                    0,
+                    "VER-001",
+                    "No tool or spec versions pinned. Version-dependent rules will use default assumptions.".to_string(),
+                )
+                .with_suggestion(
+                    "Pin versions in .agnix.toml [tool_versions] or [spec_revisions] for deterministic validation.".to_string(),
+                ),
+            );
+        }
+    }
+
     // Sort by severity (errors first), then by file path, then by line/rule for full determinism
     diagnostics.sort_by(|a, b| {
         a.level
@@ -939,7 +975,9 @@ mod tests {
     fn test_validate_project_empty_dir() {
         let temp = tempfile::TempDir::new().unwrap();
 
-        let config = LintConfig::default();
+        // Disable VER-001 since we're testing an empty project
+        let mut config = LintConfig::default();
+        config.rules.disabled_rules = vec!["VER-001".to_string()];
         let result = validate_project(temp.path(), &config).unwrap();
 
         assert!(result.diagnostics.is_empty());
@@ -2079,6 +2117,92 @@ allowed-tools: Read Write
         );
     }
 
+    // ===== VER-001 Version Awareness Tests =====
+
+    #[test]
+    fn test_ver_001_warns_when_no_versions_pinned() {
+        let temp = tempfile::TempDir::new().unwrap();
+
+        // Create minimal project
+        std::fs::write(temp.path().join("CLAUDE.md"), "# Project\n\nInstructions.").unwrap();
+
+        // Default config has no versions pinned
+        let config = LintConfig::default();
+        let result = validate_project(temp.path(), &config).unwrap();
+
+        let ver_001: Vec<_> = result
+            .diagnostics
+            .iter()
+            .filter(|d| d.rule == "VER-001")
+            .collect();
+        assert!(
+            !ver_001.is_empty(),
+            "Should warn when no tool/spec versions are pinned"
+        );
+        // Should be Info level
+        assert_eq!(ver_001[0].level, DiagnosticLevel::Info);
+    }
+
+    #[test]
+    fn test_ver_001_no_warning_when_tool_version_pinned() {
+        let temp = tempfile::TempDir::new().unwrap();
+
+        std::fs::write(temp.path().join("CLAUDE.md"), "# Project\n\nInstructions.").unwrap();
+
+        let mut config = LintConfig::default();
+        config.tool_versions.claude_code = Some("2.1.3".to_string());
+        let result = validate_project(temp.path(), &config).unwrap();
+
+        let ver_001: Vec<_> = result
+            .diagnostics
+            .iter()
+            .filter(|d| d.rule == "VER-001")
+            .collect();
+        assert!(
+            ver_001.is_empty(),
+            "Should NOT warn when a tool version is pinned"
+        );
+    }
+
+    #[test]
+    fn test_ver_001_no_warning_when_spec_revision_pinned() {
+        let temp = tempfile::TempDir::new().unwrap();
+
+        std::fs::write(temp.path().join("CLAUDE.md"), "# Project\n\nInstructions.").unwrap();
+
+        let mut config = LintConfig::default();
+        config.spec_revisions.mcp_protocol = Some("2025-06-18".to_string());
+        let result = validate_project(temp.path(), &config).unwrap();
+
+        let ver_001: Vec<_> = result
+            .diagnostics
+            .iter()
+            .filter(|d| d.rule == "VER-001")
+            .collect();
+        assert!(
+            ver_001.is_empty(),
+            "Should NOT warn when a spec revision is pinned"
+        );
+    }
+
+    #[test]
+    fn test_ver_001_disabled_rule() {
+        let temp = tempfile::TempDir::new().unwrap();
+
+        std::fs::write(temp.path().join("CLAUDE.md"), "# Project\n\nInstructions.").unwrap();
+
+        let mut config = LintConfig::default();
+        config.rules.disabled_rules = vec!["VER-001".to_string()];
+        let result = validate_project(temp.path(), &config).unwrap();
+
+        let ver_001: Vec<_> = result
+            .diagnostics
+            .iter()
+            .filter(|d| d.rule == "VER-001")
+            .collect();
+        assert!(ver_001.is_empty(), "VER-001 should not fire when disabled");
+    }
+
     // ===== AGM Validation Integration Tests =====
 
     #[test]
@@ -3193,7 +3317,9 @@ Use idiomatic Rust patterns.
         )
         .unwrap();
 
-        let config = LintConfig::default();
+        // Disable VER-001 since we're testing for zero diagnostics on valid files
+        let mut config = LintConfig::default();
+        config.rules.disabled_rules = vec!["VER-001".to_string()];
         let result = validate_project(temp.path(), &config).unwrap();
 
         // Should have counted exactly the two valid skill files

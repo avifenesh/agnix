@@ -150,7 +150,7 @@ fn extract_implemented_rule_ids() -> BTreeSet<String> {
     // Known rule ID prefixes to filter out false positives
     let valid_prefixes = [
         "AS-", "CC-SK-", "CC-HK-", "CC-AG-", "CC-MEM-", "CC-PL-", "AGM-", "MCP-", "COP-", "CUR-",
-        "XML-", "REF-", "PE-", "XP-",
+        "XML-", "REF-", "PE-", "XP-", "VER-",
     ];
 
     // Helper to extract rule IDs from a file
@@ -407,8 +407,8 @@ fn test_rules_json_integrity() {
     // Check total count matches expected
     assert_eq!(
         rules_index.rules.len(),
-        99,
-        "Expected 99 rules in rules.json, found {}",
+        100,
+        "Expected 100 rules in rules.json, found {}",
         rules_index.rules.len()
     );
 
@@ -449,6 +449,7 @@ fn test_rules_json_integrity() {
         "references",
         "prompt-engineering",
         "cross-platform",
+        "version-awareness",
     ];
     for rule in &rules_index.rules {
         assert!(
@@ -502,8 +503,8 @@ fn test_sarif_rule_count() {
     // SARIF should have exactly 99 rules to match rules.json
     assert_eq!(
         sarif_rules.len(),
-        99,
-        "SARIF should have 99 rules, found {}. Missing or extra rules detected.",
+        100,
+        "SARIF should have 100 rules, found {}. Missing or extra rules detected.",
         sarif_rules.len()
     );
 }

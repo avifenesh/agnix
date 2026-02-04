@@ -136,6 +136,20 @@ impl Diagnostic {
         }
     }
 
+    pub fn info(file: PathBuf, line: usize, column: usize, rule: &str, message: String) -> Self {
+        Self {
+            level: DiagnosticLevel::Info,
+            message,
+            file,
+            line,
+            column,
+            rule: rule.to_string(),
+            suggestion: None,
+            fixes: Vec::new(),
+            assumption: None,
+        }
+    }
+
     pub fn with_suggestion(mut self, suggestion: String) -> Self {
         self.suggestion = Some(suggestion);
         self

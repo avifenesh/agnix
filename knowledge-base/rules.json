@@ -1,7 +1,7 @@
 {
   "description": "Machine-readable source of truth for all validation rules. When adding a new rule, add it here AND in VALIDATION-RULES.md. CI parity tests enforce sync.",
   "version": "1.1.0",
-  "total_rules": 99,
+  "total_rules": 100,
   "last_updated": "2026-02-04",
   "schema": {
     "evidence": {
@@ -1457,6 +1457,20 @@
         "normative_level": "SHOULD",
         "tests": { "unit": true, "fixtures": true, "e2e": false }
       }
+    },
+    {
+      "id": "VER-001",
+      "name": "No Tool/Spec Versions Pinned",
+      "severity": "LOW",
+      "category": "version-awareness",
+      "evidence": {
+        "source_type": "community",
+        "source_urls": ["https://github.com/avifenesh/agnix/issues/104"],
+        "verified_on": "2026-02-04",
+        "applies_to": {},
+        "normative_level": "BEST_PRACTICE",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     }
   ],
   "categories": {
@@ -1529,6 +1543,11 @@
       "prefix": "XP",
       "count": 6,
       "description": "Cross-platform compatibility rules"
+    },
+    "version-awareness": {
+      "prefix": "VER",
+      "count": 1,
+      "description": "Version-aware validation rules"
     }
   }
 }
