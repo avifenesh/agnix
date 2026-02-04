@@ -4,7 +4,10 @@ use crate::{
     config::LintConfig,
     diagnostics::Diagnostic,
     rules::Validator,
-    schemas::mcp::{validate_json_schema_structure, McpConfigSchema, McpToolSchema},
+    schemas::mcp::{
+        extract_request_protocol_version, extract_response_protocol_version, is_initialize_message,
+        is_initialize_response, validate_json_schema_structure, McpConfigSchema, McpToolSchema,
+    },
 };
 use std::path::Path;
 
@@ -96,6 +99,11 @@ impl Validator for McpValidator {
         // Check for JSON-RPC version (MCP-001)
         if config.is_rule_enabled("MCP-001") {
             validate_jsonrpc_version(&raw_value, path, content, &mut diagnostics);
+        }
+
+        // Check for protocol version mismatch (MCP-008)
+        if config.is_rule_enabled("MCP-008") {
+            validate_protocol_version(&raw_value, path, content, config, &mut diagnostics);
         }
 
         // Try to parse as MCP config schema
@@ -235,6 +243,67 @@ fn validate_jsonrpc_version(
     }
     // Note: jsonrpc field is only required for JSON-RPC messages, not tool definitions
     // So we don't report missing jsonrpc as an error
+}
+
+/// MCP-008: Validate protocol version matches expected version
+fn validate_protocol_version(
+    value: &serde_json::Value,
+    path: &Path,
+    content: &str,
+    config: &LintConfig,
+    diagnostics: &mut Vec<Diagnostic>,
+) {
+    let expected_version = config.get_mcp_protocol_version();
+
+    // Check initialize request
+    if is_initialize_message(value) {
+        if let Some(actual_version) = extract_request_protocol_version(value) {
+            if actual_version != expected_version {
+                let (line, col) = find_json_field_location(content, "protocolVersion");
+                diagnostics.push(
+                    Diagnostic::warning(
+                        path.to_path_buf(),
+                        line,
+                        col,
+                        "MCP-008",
+                        format!(
+                            "Protocol version mismatch: found '{}', expected '{}'",
+                            actual_version, expected_version
+                        ),
+                    )
+                    .with_suggestion(format!(
+                        "Consider updating to protocol version '{}' for compatibility",
+                        expected_version
+                    )),
+                );
+            }
+        }
+    }
+
+    // Check initialize response
+    if is_initialize_response(value) {
+        if let Some(actual_version) = extract_response_protocol_version(value) {
+            if actual_version != expected_version {
+                let (line, col) = find_json_field_location(content, "protocolVersion");
+                diagnostics.push(
+                    Diagnostic::warning(
+                        path.to_path_buf(),
+                        line,
+                        col,
+                        "MCP-008",
+                        format!(
+                            "Protocol version mismatch: found '{}', expected '{}'",
+                            actual_version, expected_version
+                        ),
+                    )
+                    .with_suggestion(format!(
+                        "Server negotiated version '{}', expected '{}'. Verify compatibility.",
+                        actual_version, expected_version
+                    )),
+                );
+            }
+        }
+    }
 }
 
 /// Validate a single MCP tool
@@ -815,5 +884,148 @@ mod tests {
         let diagnostics = validate(content);
         // Server config doesn't have tools, no tool validation errors
         assert!(diagnostics.is_empty());
+    }
+
+    // MCP-008 Tests
+    #[test]
+    fn test_mcp_008_initialize_request_matching_version() {
+        let content = r#"{
+            "jsonrpc": "2.0",
+            "method": "initialize",
+            "id": 1,
+            "params": {
+                "protocolVersion": "2025-06-18",
+                "clientInfo": {"name": "test-client", "version": "1.0.0"}
+            }
+        }"#;
+        let diagnostics = validate(content);
+        assert!(!diagnostics.iter().any(|d| d.rule == "MCP-008"));
+    }
+
+    #[test]
+    fn test_mcp_008_initialize_request_mismatched_version() {
+        let content = r#"{
+            "jsonrpc": "2.0",
+            "method": "initialize",
+            "id": 1,
+            "params": {
+                "protocolVersion": "2024-11-05",
+                "clientInfo": {"name": "test-client", "version": "1.0.0"}
+            }
+        }"#;
+        let diagnostics = validate(content);
+        let mcp_008 = diagnostics
+            .iter()
+            .filter(|d| d.rule == "MCP-008")
+            .collect::<Vec<_>>();
+        assert_eq!(mcp_008.len(), 1);
+        assert!(mcp_008[0].message.contains("Protocol version mismatch"));
+        assert!(mcp_008[0].message.contains("2024-11-05"));
+        assert!(mcp_008[0].message.contains("2025-06-18"));
+    }
+
+    #[test]
+    fn test_mcp_008_initialize_response_matching_version() {
+        let content = r#"{
+            "jsonrpc": "2.0",
+            "id": 1,
+            "result": {
+                "protocolVersion": "2025-06-18",
+                "serverInfo": {"name": "test-server", "version": "1.0.0"}
+            }
+        }"#;
+        let diagnostics = validate(content);
+        assert!(!diagnostics.iter().any(|d| d.rule == "MCP-008"));
+    }
+
+    #[test]
+    fn test_mcp_008_initialize_response_mismatched_version() {
+        let content = r#"{
+            "jsonrpc": "2.0",
+            "id": 1,
+            "result": {
+                "protocolVersion": "2024-11-05",
+                "serverInfo": {"name": "test-server", "version": "1.0.0"}
+            }
+        }"#;
+        let diagnostics = validate(content);
+        let mcp_008 = diagnostics
+            .iter()
+            .filter(|d| d.rule == "MCP-008")
+            .collect::<Vec<_>>();
+        assert_eq!(mcp_008.len(), 1);
+        assert!(mcp_008[0].message.contains("Protocol version mismatch"));
+    }
+
+    #[test]
+    fn test_mcp_008_custom_expected_version() {
+        let mut config = LintConfig::default();
+        config.mcp_protocol_version = Some("2024-11-05".to_string());
+
+        // This should now match
+        let content = r#"{
+            "jsonrpc": "2.0",
+            "method": "initialize",
+            "id": 1,
+            "params": {"protocolVersion": "2024-11-05"}
+        }"#;
+        let diagnostics = validate_with_config(content, &config);
+        assert!(!diagnostics.iter().any(|d| d.rule == "MCP-008"));
+    }
+
+    #[test]
+    fn test_mcp_008_disabled_rule() {
+        let mut config = LintConfig::default();
+        config.rules.disabled_rules = vec!["MCP-008".to_string()];
+
+        let content = r#"{
+            "jsonrpc": "2.0",
+            "method": "initialize",
+            "id": 1,
+            "params": {"protocolVersion": "2024-11-05"}
+        }"#;
+        let diagnostics = validate_with_config(content, &config);
+        assert!(!diagnostics.iter().any(|d| d.rule == "MCP-008"));
+    }
+
+    #[test]
+    fn test_mcp_008_non_initialize_message_no_error() {
+        let content = r#"{
+            "jsonrpc": "2.0",
+            "method": "tools/list",
+            "id": 1
+        }"#;
+        let diagnostics = validate(content);
+        assert!(!diagnostics.iter().any(|d| d.rule == "MCP-008"));
+    }
+
+    #[test]
+    fn test_mcp_008_initialize_without_protocol_version_no_error() {
+        // Missing protocolVersion should not trigger MCP-008 (version negotiation may handle this)
+        let content = r#"{
+            "jsonrpc": "2.0",
+            "method": "initialize",
+            "id": 1,
+            "params": {"clientInfo": {"name": "test"}}
+        }"#;
+        let diagnostics = validate(content);
+        assert!(!diagnostics.iter().any(|d| d.rule == "MCP-008"));
+    }
+
+    #[test]
+    fn test_mcp_008_warning_level() {
+        let content = r#"{
+            "jsonrpc": "2.0",
+            "method": "initialize",
+            "id": 1,
+            "params": {"protocolVersion": "2024-11-05"}
+        }"#;
+        let diagnostics = validate(content);
+        let mcp_008 = diagnostics.iter().find(|d| d.rule == "MCP-008");
+        assert!(mcp_008.is_some());
+        assert_eq!(
+            mcp_008.unwrap().level,
+            crate::diagnostics::DiagnosticLevel::Warning
+        );
     }
 }

@@ -225,7 +225,7 @@ static RULES: LazyLock<Vec<ReportingDescriptor>> = LazyLock::new(|| {
         ("CC-PL-004", "Missing required plugin field"),
         ("CC-PL-005", "Empty plugin name"),
         ("CC-PL-006", "Failed to parse plugin.json"),
-        // MCP Rules (MCP-001 to MCP-007)
+        // MCP Rules (MCP-001 to MCP-008)
         ("MCP-001", "Invalid JSON-RPC version (must be 2.0)"),
         ("MCP-002", "Missing required tool field"),
         ("MCP-003", "Invalid JSON Schema in inputSchema"),
@@ -233,6 +233,7 @@ static RULES: LazyLock<Vec<ReportingDescriptor>> = LazyLock::new(|| {
         ("MCP-005", "Tool without user consent"),
         ("MCP-006", "Untrusted annotations from server"),
         ("MCP-007", "Failed to parse MCP configuration"),
+        ("MCP-008", "Protocol version mismatch in initialize message"),
         // GitHub Copilot Rules (COP-001 to COP-004)
         ("COP-001", "Empty Copilot instruction file"),
         (
@@ -385,7 +386,7 @@ mod tests {
         let sarif = diagnostics_to_sarif(&[], Path::new("."));
         let rules = &sarif.runs[0].tool.driver.rules;
         // Should have 89 rules based on VALIDATION-RULES.md
-        assert_eq!(rules.len(), 89, "Expected 89 rules in SARIF driver");
+        assert_eq!(rules.len(), 90, "Expected 90 rules in SARIF driver");
 
         // Verify some specific rules exist
         let rule_ids: Vec<&str> = rules.iter().map(|r| r.id.as_str()).collect();

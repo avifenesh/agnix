@@ -1,6 +1,6 @@
 # agnix Knowledge Base - Master Index
 
-> 492KB knowledge, 75+ sources, 5 research agents, 89 validation rules
+> 492KB knowledge, 75+ sources, 5 research agents, 90 validation rules
 
 ---
 
@@ -8,7 +8,7 @@
 
 | What You Need | Start Here |
 |---------------|------------|
-| **Implement validator** | [VALIDATION-RULES.md](./VALIDATION-RULES.md) - 89 rules with detection logic |
+| **Implement validator** | [VALIDATION-RULES.md](./VALIDATION-RULES.md) - 90 rules with detection logic |
 | **Understand a standard** | [standards/](#standards) - HARD-RULES files |
 | **Learn best practices** | [standards/](#standards) - OPINIONS files |
 | **Find patterns** | [PATTERNS-CATALOG.md](./PATTERNS-CATALOG.md) - 70 patterns from awesome-slash |
@@ -23,7 +23,7 @@
 knowledge-base/
 ├── INDEX.md                        # This file
 ├── README.md                       # Detailed navigation guide
-├── VALIDATION-RULES.md             # ⭐ Master validation reference (89 rules)
+├── VALIDATION-RULES.md             # ⭐ Master validation reference (90 rules)
 ├── PATTERNS-CATALOG.md             # 70 production-tested patterns
 │
 ├── standards/                      # 12 files, 9,884 lines, 266KB
@@ -65,13 +65,13 @@ knowledge-base/
 | Standard | Sources | HARD RULES | OPINIONS | Rules Extracted |
 |----------|---------|------------|----------|-----------------|
 | **Agent Skills** | 12 | 19KB | 36KB | 15 rules |
-| **MCP** | 11 | 33KB | 36KB | 6 rules |
+| **MCP** | 11 | 33KB | 36KB | 8 rules |
 | **Claude Code** | 10 | 34KB | 40KB | 42 rules |
 | **Multi-Platform** | 15 | 15KB | 27KB | 3 rules |
 | **Prompt Eng** | 15 | 16KB | 21KB | 4 rules |
 | **AGENTS.md** | 5 | - | - | 6 rules |
 | **awesome-slash** | 12 | - | - | 70 patterns |
-| **Total** | **75+** | **117KB** | **160KB** | **89 rules** |
+| **Total** | **75+** | **117KB** | **160KB** | **90 rules** |
 
 ### Validation Rules by Category
 
@@ -84,12 +84,12 @@ knowledge-base/
 | Claude Memory | 10 | 6 | 4 | 0 | 2 |
 | AGENTS.md | 6 | 3 | 3 | 0 | 2 |
 | Claude Plugins | 5 | 5 | 0 | 0 | 1 |
-| MCP | 6 | 6 | 0 | 0 | 1 |
+| MCP | 8 | 7 | 1 | 0 | 1 |
 | XML | 3 | 3 | 0 | 0 | 1 |
 | References | 2 | 2 | 0 | 0 | 0 |
 | Prompt Eng | 4 | 2 | 2 | 0 | 1 |
 | Cross-Platform | 3 | 2 | 1 | 0 | 0 |
-| **TOTAL** | **89** | **64** | **21** | **4** | **20** |
+| **TOTAL** | **90** | **65** | **22** | **3** | **20** |
 
 ---
 
@@ -127,7 +127,7 @@ knowledge-base/
 ### For Implementation
 
 **Start here**: [VALIDATION-RULES.md](./VALIDATION-RULES.md)
-- 89 rules with rule IDs (AS-001, CC-HK-001, etc.)
+- 90 rules with rule IDs (AS-001, CC-HK-001, etc.)
 - Detection pseudocode
 - Auto-fix implementations
 - Priority matrix (P0/P1/P2)
@@ -248,7 +248,7 @@ Total Size:           492KB
 Standards Covered:     5 (Agent Skills, MCP, Claude Code, Multi-Platform, Prompt Eng)
 Sources Consulted:    75+ (specs, docs, research papers, repos)
 Research Agents:       5 (10+ sources each)
-Validation Rules:     89 rules
+Validation Rules:     90 rules
 Auto-Fixable Rules:   20 rules
 Test Fixtures:        11 files
 Platforms Analyzed:   9 (Claude Code, Codex CLI, OpenCode, Copilot, Cursor, Cline, Roo-Cline, Continue.dev, Aider)

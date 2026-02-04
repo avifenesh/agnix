@@ -1,6 +1,7 @@
 //! Linter configuration
 
 use crate::file_utils::safe_read_file;
+use crate::schemas::mcp::DEFAULT_MCP_PROTOCOL_VERSION;
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 
@@ -19,6 +20,10 @@ pub struct LintConfig {
     /// Target tool (claude-code, cursor, codex, generic)
     pub target: TargetTool,
 
+    /// Expected MCP protocol version for validation (MCP-008)
+    #[serde(default = "default_mcp_protocol_version")]
+    pub mcp_protocol_version: Option<String>,
+
     /// Runtime-only validation root directory (not serialized)
     #[serde(skip)]
     pub root_dir: Option<PathBuf>,
@@ -35,6 +40,7 @@ impl Default for LintConfig {
                 "target/**".to_string(),
             ],
             target: TargetTool::Generic,
+            mcp_protocol_version: default_mcp_protocol_version(),
             root_dir: None,
         }
     }
@@ -50,6 +56,11 @@ pub enum SeverityLevel {
 /// Helper function for serde default
 fn default_true() -> bool {
     true
+}
+
+/// Default MCP protocol version (latest stable per MCP spec)
+fn default_mcp_protocol_version() -> Option<String> {
+    Some(DEFAULT_MCP_PROTOCOL_VERSION.to_string())
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -193,6 +204,13 @@ impl LintConfig {
     /// Set the runtime validation root directory (not persisted)
     pub fn set_root_dir(&mut self, root_dir: PathBuf) {
         self.root_dir = Some(root_dir);
+    }
+
+    /// Get the expected MCP protocol version
+    pub fn get_mcp_protocol_version(&self) -> &str {
+        self.mcp_protocol_version
+            .as_deref()
+            .unwrap_or(DEFAULT_MCP_PROTOCOL_VERSION)
     }
 
     /// Check if a specific rule is enabled based on config
@@ -528,6 +546,61 @@ exclude = []
         assert!(config.is_rule_enabled("MCP-004"));
         assert!(config.is_rule_enabled("MCP-005"));
         assert!(config.is_rule_enabled("MCP-006"));
+        assert!(config.is_rule_enabled("MCP-007"));
+        assert!(config.is_rule_enabled("MCP-008"));
+    }
+
+    // ===== MCP Protocol Version Config Tests =====
+
+    #[test]
+    fn test_default_mcp_protocol_version() {
+        let config = LintConfig::default();
+        assert_eq!(config.get_mcp_protocol_version(), "2025-06-18");
+    }
+
+    #[test]
+    fn test_custom_mcp_protocol_version() {
+        let mut config = LintConfig::default();
+        config.mcp_protocol_version = Some("2024-11-05".to_string());
+        assert_eq!(config.get_mcp_protocol_version(), "2024-11-05");
+    }
+
+    #[test]
+    fn test_mcp_protocol_version_none_fallback() {
+        let mut config = LintConfig::default();
+        config.mcp_protocol_version = None;
+        // Should fall back to default when None
+        assert_eq!(config.get_mcp_protocol_version(), "2025-06-18");
+    }
+
+    #[test]
+    fn test_toml_deserialization_mcp_protocol_version() {
+        let toml_str = r#"
+severity = "Warning"
+target = "Generic"
+exclude = []
+mcp_protocol_version = "2024-11-05"
+
+[rules]
+"#;
+
+        let config: LintConfig = toml::from_str(toml_str).unwrap();
+        assert_eq!(config.get_mcp_protocol_version(), "2024-11-05");
+    }
+
+    #[test]
+    fn test_toml_deserialization_mcp_protocol_version_default() {
+        // Without specifying mcp_protocol_version, should use default
+        let toml_str = r#"
+severity = "Warning"
+target = "Generic"
+exclude = []
+
+[rules]
+"#;
+
+        let config: LintConfig = toml::from_str(toml_str).unwrap();
+        assert_eq!(config.get_mcp_protocol_version(), "2025-06-18");
     }
 
     // ===== Cross-Platform Category Tests =====
