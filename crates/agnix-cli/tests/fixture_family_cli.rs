@@ -97,6 +97,6 @@ fn test_cli_reports_pe_fixtures() {
     let claude_path = temp.path().join("CLAUDE.md");
     std::fs::write(&claude_path, content).unwrap();
 
-    let json = run_json(&temp.path().to_path_buf());
+    let json = run_json(temp.path());
     assert_has_rule(&json, "PE-001");
 }
