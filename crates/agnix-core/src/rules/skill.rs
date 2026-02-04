@@ -2998,7 +2998,7 @@ Body"#;
     /// Helper to write N bytes to a file efficiently using a small buffer
     fn write_bytes_to_file(path: &std::path::Path, num_bytes: usize) {
         use std::io::Write;
-        let mut file = fs::File::create(path).unwrap();
+        let mut file = fs::File::create(path).expect("Failed to create test file");
         let buffer = [0u8; 8192];
         let mut remaining = num_bytes;
         while remaining > 0 {
@@ -3114,7 +3114,8 @@ Body"#;
         let as_015_errors: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-015").collect();
         assert!(
             as_015_errors.is_empty(),
-            "Exactly 8MB should not trigger AS-015"
+            "Exactly 8MB should not trigger AS-015, but got: {:?}",
+            as_015_errors
         );
     }
 }
