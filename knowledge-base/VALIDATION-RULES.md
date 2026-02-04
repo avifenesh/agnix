@@ -794,6 +794,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | AS-010 | Add "Use when..." prefix | MEDIUM |
 | CC-SK-007 | Suggest Bash(git:*) | MEDIUM |
 | CC-MEM-005 | Remove line | HIGH |
+| CC-MEM-007 | Replace weak language with strong | MEDIUM |
 | XML-001 | Add closing tag | MEDIUM |
 
 ---
@@ -806,7 +807,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | Claude Skills | 9 | 7 | 2 | 0 | 3 |
 | Claude Hooks | 12 | 10 | 2 | 0 | 2 |
 | Claude Agents | 7 | 7 | 0 | 0 | 1 |
-| Claude Memory | 10 | 5 | 5 | 0 | 2 |
+| Claude Memory | 10 | 5 | 5 | 0 | 3 |
 | AGENTS.md | 6 | 1 | 5 | 0 | 2 |
 | Claude Plugins | 6 | 6 | 0 | 0 | 1 |
 | GitHub Copilot | 4 | 3 | 1 | 0 | 1 |
