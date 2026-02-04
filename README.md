@@ -16,6 +16,7 @@ agnix .
 - ✅ **Claude Code** - CLAUDE.md (and variants: CLAUDE.local.md), hooks, subagents, plugins
 - ✅ **Subagents** - Agent frontmatter validation (CC-AG-001 to CC-AG-006)
 - ✅ **GitHub Copilot** - Copilot instruction file validation (COP-001 to COP-004)
+- ✅ **Cursor Project Rules** - .cursor/rules/*.mdc validation (CUR-001 to CUR-006)
 - ✅ **Plugins** - Plugin manifest validation (CC-PL-001 to CC-PL-005)
 - ✅ **Generic Instructions** - Detects redundant "be helpful" patterns
 - ✅ **XML Balance** - Ensures tags are properly closed

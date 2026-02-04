@@ -70,8 +70,9 @@ knowledge-base/
 | **Multi-Platform** | 15 | 15KB | 27KB | 3 rules |
 | **Prompt Eng** | 15 | 16KB | 21KB | 4 rules |
 | **AGENTS.md** | 5 | - | - | 6 rules |
+| **Cursor** | 2 | - | - | 6 rules |
 | **awesome-slash** | 12 | - | - | 70 patterns |
-| **Total** | **75+** | **117KB** | **160KB** | **90 rules** |
+| **Total** | **75+** | **117KB** | **160KB** | **96 rules** |
 
 ### Validation Rules by Category
 
@@ -89,7 +90,8 @@ knowledge-base/
 | References | 2 | 2 | 0 | 0 | 0 |
 | Prompt Eng | 4 | 2 | 2 | 0 | 1 |
 | Cross-Platform | 3 | 2 | 1 | 0 | 0 |
-| **TOTAL** | **90** | **65** | **22** | **3** | **20** |
+| Cursor | 6 | 3 | 3 | 0 | 1 |
+| **TOTAL** | **96** | **68** | **25** | **3** | **21** |
 
 ---
 
@@ -248,7 +250,7 @@ Total Size:           492KB
 Standards Covered:     5 (Agent Skills, MCP, Claude Code, Multi-Platform, Prompt Eng)
 Sources Consulted:    75+ (specs, docs, research papers, repos)
 Research Agents:       5 (10+ sources each)
-Validation Rules:     90 rules
+Validation Rules:     96 rules
 Auto-Fixable Rules:   20 rules
 Test Fixtures:        11 files
 Platforms Analyzed:   9 (Claude Code, Codex CLI, OpenCode, Copilot, Cursor, Cline, Roo-Cline, Continue.dev, Aider)

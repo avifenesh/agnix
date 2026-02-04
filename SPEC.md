@@ -18,6 +18,7 @@
 | XML | all .md files | 3 |
 | References | @imports | 2 |
 | GitHub Copilot | .github/copilot-instructions.md, .github/instructions/*.instructions.md | 4 |
+| Cursor Project Rules | .cursor/rules/*.mdc, .cursorrules | 6 |
 
 ## Architecture
 
