@@ -1208,7 +1208,6 @@ agent: reviewer
         );
     }
 
-
     // ===== XP-002: Markdown Structure =====
 
     #[test]
