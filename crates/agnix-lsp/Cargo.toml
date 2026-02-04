@@ -1,0 +1,22 @@
+[package]
+name = "agnix-lsp"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+description = "Language Server Protocol implementation for agnix"
+
+[[bin]]
+name = "agnix-lsp"
+path = "src/main.rs"
+
+[dependencies]
+agnix-core = { path = "../agnix-core" }
+tower-lsp = { workspace = true }
+tokio = { workspace = true }
+anyhow = { workspace = true }
+
+[dev-dependencies]
+tempfile = "3"
