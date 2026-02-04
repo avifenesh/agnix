@@ -322,11 +322,38 @@ pub enum EvalError {
 
 /// Validate that a file path stays within the base directory (prevents path traversal)
 fn validate_path_within_base(file: &Path, base_dir: &Path) -> Result<PathBuf, EvalError> {
+    // Reject absolute paths - only relative paths allowed in manifests
+    if file.is_absolute() {
+        return Err(EvalError::PathTraversal {
+            path: file.to_path_buf(),
+            base_dir: base_dir.to_path_buf(),
+        });
+    }
+
+    // Defense-in-depth: reject paths containing .. segments before joining
+    for component in file.components() {
+        if let std::path::Component::ParentDir = component {
+            return Err(EvalError::PathTraversal {
+                path: file.to_path_buf(),
+                base_dir: base_dir.to_path_buf(),
+            });
+        }
+    }
+
     let joined = base_dir.join(file);
 
-    // Canonicalize both paths to resolve .. and symlinks
-    let canonical_base = base_dir.canonicalize().unwrap_or_else(|_| base_dir.to_path_buf());
-    let canonical_file = joined.canonicalize().unwrap_or_else(|_| joined.clone());
+    // Canonicalize base directory (should always exist)
+    let canonical_base = base_dir.canonicalize().map_err(|_| EvalError::PathTraversal {
+        path: file.to_path_buf(),
+        base_dir: base_dir.to_path_buf(),
+    })?;
+
+    // Canonicalize joined path - fail if it doesn't exist or can't be resolved
+    // This prevents bypass attempts with non-existent malicious paths
+    let canonical_file = joined.canonicalize().map_err(|_| EvalError::Io {
+        path: joined.clone(),
+        source: std::io::Error::new(std::io::ErrorKind::NotFound, "File not found"),
+    })?;
 
     // Check that the file path starts with the base directory
     if !canonical_file.starts_with(&canonical_base) {
@@ -897,8 +924,7 @@ cases:
     fn test_path_traversal_detection() {
         let temp = tempfile::TempDir::new().unwrap();
 
-        // Create a file outside the temp directory isn't possible,
-        // but we can test the path validation logic
+        // Test path with .. segments
         let case = EvalCase {
             file: PathBuf::from("../../../etc/passwd"),
             expected: vec!["SOME-RULE".to_string()],
@@ -908,11 +934,33 @@ cases:
         let config = LintConfig::default();
         let result = evaluate_case(&case, temp.path(), &config);
 
-        // Should detect path traversal and return error result
+        // Should detect path traversal explicitly
         assert!(
-            result.actual.contains(&"eval::path-traversal".to_string())
-                || result.false_negatives.contains(&"SOME-RULE".to_string()),
-            "Should detect path traversal or fail to find file"
+            result.actual.contains(&"eval::path-traversal".to_string()),
+            "Should detect path traversal with .. segments, got: {:?}",
+            result.actual
+        );
+    }
+
+    #[test]
+    fn test_path_traversal_absolute_path() {
+        let temp = tempfile::TempDir::new().unwrap();
+
+        // Test absolute path (not allowed in manifests)
+        let case = EvalCase {
+            file: PathBuf::from("/etc/passwd"),
+            expected: vec!["SOME-RULE".to_string()],
+            description: Some("Absolute path attempt".to_string()),
+        };
+
+        let config = LintConfig::default();
+        let result = evaluate_case(&case, temp.path(), &config);
+
+        // Should detect path traversal for absolute paths
+        assert!(
+            result.actual.contains(&"eval::path-traversal".to_string()),
+            "Should reject absolute paths, got: {:?}",
+            result.actual
         );
     }
 
@@ -921,21 +969,24 @@ cases:
         // Test behavior when validate_file returns an error
         let temp = tempfile::TempDir::new().unwrap();
 
-        // Create a case pointing to a non-existent file
+        // Create an invalid file that will cause validation errors
+        let file_path = temp.path().join("invalid.md");
+        std::fs::write(&file_path, "invalid content that won't parse").unwrap();
+
         let case = EvalCase {
-            file: PathBuf::from("nonexistent.md"),
+            file: PathBuf::from("invalid.md"),
             expected: vec!["SOME-RULE".to_string()],
-            description: Some("File doesn't exist".to_string()),
+            description: Some("Invalid file content".to_string()),
         };
 
         let config = LintConfig::default();
         let result = evaluate_case(&case, temp.path(), &config);
 
-        // Should handle the error gracefully
-        // Either path traversal or eval::error should be in actual
+        // Should handle the case gracefully - either no diagnostics or some actual rules
+        // The expected rule won't fire, so it should be in false_negatives
         assert!(
-            !result.actual.is_empty() || !result.false_negatives.is_empty(),
-            "Should handle missing file"
+            result.false_negatives.contains(&"SOME-RULE".to_string()),
+            "Expected rule should be in false_negatives when it doesn't fire"
         );
     }
 
