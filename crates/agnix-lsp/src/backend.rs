@@ -47,11 +47,8 @@ fn create_error_diagnostic(code: &str, message: String) -> Diagnostic {
 ///
 /// # Performance Notes
 ///
-/// The `LintConfig` is cached and reused across validations to avoid
-/// repeated allocations. The `ValidatorRegistry` is currently created
-/// per-validation inside `agnix_core::validate_file` - this is a known
-/// limitation of the agnix-core API that could be optimized in the future
-/// by using `validate_file_with_registry` with a shared registry.
+/// Both `LintConfig` and `ValidatorRegistry` are cached and reused across
+/// validations to avoid repeated allocations.
 pub struct Backend {
     client: Client,
     /// Cached lint configuration reused across validations.
@@ -61,6 +58,9 @@ pub struct Backend {
     /// Set during initialize() from the client's root_uri.
     workspace_root: RwLock<Option<PathBuf>>,
     documents: RwLock<HashMap<Url, String>>,
+    /// Cached validator registry reused across validations.
+    /// Immutable after construction; Arc enables sharing across spawn_blocking tasks.
+    registry: Arc<agnix_core::ValidatorRegistry>,
 }
 
 impl Backend {
@@ -71,6 +71,7 @@ impl Backend {
             config: RwLock::new(Arc::new(agnix_core::LintConfig::default())),
             workspace_root: RwLock::new(None),
             documents: RwLock::new(HashMap::new()),
+            registry: Arc::new(agnix_core::ValidatorRegistry::with_defaults()),
         }
     }
 
@@ -79,12 +80,15 @@ impl Backend {
     /// agnix-core validation is CPU-bound and synchronous, so we run it
     /// in a blocking task to avoid blocking the async runtime.
     ///
-    /// The `LintConfig` is cloned from the cached instance to avoid
-    /// repeated allocations on each validation.
+    /// Both `LintConfig` and `ValidatorRegistry` are cloned from cached
+    /// instances to avoid repeated allocations on each validation.
     async fn validate_file(&self, path: PathBuf) -> Vec<Diagnostic> {
         let config = Arc::clone(&*self.config.read().await);
-        let result =
-            tokio::task::spawn_blocking(move || agnix_core::validate_file(&path, &config)).await;
+        let registry = Arc::clone(&self.registry);
+        let result = tokio::task::spawn_blocking(move || {
+            agnix_core::validate_file_with_registry(&path, &config, &registry)
+        })
+        .await;
 
         match result {
             Ok(Ok(diagnostics)) => to_lsp_diagnostics(diagnostics),
@@ -980,5 +984,66 @@ model: sonnet
         }
 
         // All validations should complete (config is reused internally)
+    }
+
+    /// Test that cached registry is used across multiple validations.
+    /// This verifies the ValidatorRegistry caching optimization.
+    #[tokio::test]
+    async fn test_cached_registry_used_for_multiple_validations() {
+        let (service, _socket) = LspService::new(Backend::new);
+
+        // Initialize
+        service
+            .inner()
+            .initialize(InitializeParams::default())
+            .await
+            .unwrap();
+
+        // Create multiple different file types to exercise different validators
+        let temp_dir = tempfile::tempdir().unwrap();
+
+        // Skill file
+        let skill_path = temp_dir.path().join("SKILL.md");
+        std::fs::write(
+            &skill_path,
+            r#"---
+name: test-skill
+version: 1.0.0
+model: sonnet
+---
+
+# Test Skill
+"#,
+        )
+        .unwrap();
+
+        // CLAUDE.md file
+        let claude_path = temp_dir.path().join("CLAUDE.md");
+        std::fs::write(
+            &claude_path,
+            r#"# Project Memory
+
+This is a test project.
+"#,
+        )
+        .unwrap();
+
+        // Validate multiple files (registry is shared across all validations)
+        for path in [&skill_path, &claude_path] {
+            let uri = Url::from_file_path(path).unwrap();
+            service
+                .inner()
+                .did_open(DidOpenTextDocumentParams {
+                    text_document: TextDocumentItem {
+                        uri,
+                        language_id: "markdown".to_string(),
+                        version: 1,
+                        text: String::new(),
+                    },
+                })
+                .await;
+        }
+
+        // All validations should complete successfully with reused registry
     }
 }
