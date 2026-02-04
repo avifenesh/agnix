@@ -1,6 +1,7 @@
 //! Linter configuration
 
 use crate::file_utils::safe_read_file;
+use crate::schemas::mcp::DEFAULT_MCP_PROTOCOL_VERSION;
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 
@@ -59,7 +60,7 @@ fn default_true() -> bool {
 
 /// Default MCP protocol version (latest stable per MCP spec)
 fn default_mcp_protocol_version() -> Option<String> {
-    Some("2025-06-18".to_string())
+    Some(DEFAULT_MCP_PROTOCOL_VERSION.to_string())
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -207,7 +208,9 @@ impl LintConfig {
 
     /// Get the expected MCP protocol version
     pub fn get_mcp_protocol_version(&self) -> &str {
-        self.mcp_protocol_version.as_deref().unwrap_or("2025-06-18")
+        self.mcp_protocol_version
+            .as_deref()
+            .unwrap_or(DEFAULT_MCP_PROTOCOL_VERSION)
     }
 
     /// Check if a specific rule is enabled based on config
