@@ -2,7 +2,7 @@
 
 use crate::{
     config::LintConfig,
-    diagnostics::Diagnostic,
+    diagnostics::{Diagnostic, Fix},
     rules::Validator,
     schemas::hooks::{Hook, HooksSchema, SettingsSchema},
 };
@@ -298,21 +298,33 @@ impl Validator for HooksValidator {
             // CC-HK-001: Invalid event name
             if config.is_rule_enabled("CC-HK-001") {
                 if !HooksSchema::VALID_EVENTS.contains(&event.as_str()) {
-                    let suggestion = find_closest_event(event);
-                    diagnostics.push(
-                        Diagnostic::error(
-                            path.to_path_buf(),
-                            1,
-                            0,
-                            "CC-HK-001",
-                            format!(
-                                "Invalid hook event '{}', valid events: {:?}",
-                                event,
-                                HooksSchema::VALID_EVENTS
-                            ),
-                        )
-                        .with_suggestion(suggestion),
-                    );
+                    let closest = find_closest_event(event);
+                    let mut diagnostic = Diagnostic::error(
+                        path.to_path_buf(),
+                        1,
+                        0,
+                        "CC-HK-001",
+                        format!(
+                            "Invalid hook event '{}', valid events: {:?}",
+                            event,
+                            HooksSchema::VALID_EVENTS
+                        ),
+                    )
+                    .with_suggestion(closest.suggestion);
+
+                    // Add auto-fix if we found a matching event
+                    if let Some(corrected) = closest.corrected_event {
+                        if let Some((start, end)) = find_event_key_position(content, event) {
+                            let replacement = format!("\"{}\"", corrected);
+                            let description = format!("Replace '{}' with '{}'", event, corrected);
+                            // Case-only fixes are safe (high confidence)
+                            let fix =
+                                Fix::replace(start, end, replacement, description, closest.is_case_fix);
+                            diagnostic = diagnostic.with_fix(fix);
+                        }
+                    }
+
+                    diagnostics.push(diagnostic);
                     continue; // Skip further validation for invalid events
                 }
             } else if !HooksSchema::VALID_EVENTS.contains(&event.as_str()) {
@@ -590,25 +602,69 @@ impl Validator for HooksValidator {
     }
 }
 
-fn find_closest_event(invalid_event: &str) -> String {
+/// Result of finding the closest matching event
+struct ClosestEventMatch {
+    suggestion: String,
+    /// The correct event name if a good match was found
+    corrected_event: Option<String>,
+    /// Whether this is a case-only difference (high confidence)
+    is_case_fix: bool,
+}
+
+fn find_closest_event(invalid_event: &str) -> ClosestEventMatch {
     let lower_event = invalid_event.to_lowercase();
 
-    // Check for exact case-insensitive match first
+    // Check for exact case-insensitive match first (high confidence fix)
     for valid in HooksSchema::VALID_EVENTS {
         if valid.to_lowercase() == lower_event {
-            return format!("Did you mean '{}'? Event names are case-sensitive.", valid);
+            return ClosestEventMatch {
+                suggestion: format!("Did you mean '{}'? Event names are case-sensitive.", valid),
+                corrected_event: Some(valid.to_string()),
+                is_case_fix: true,
+            };
         }
     }
 
-    // Check for partial matches
+    // Check for partial matches (lower confidence)
     for valid in HooksSchema::VALID_EVENTS {
         let valid_lower = valid.to_lowercase();
         if valid_lower.contains(&lower_event) || lower_event.contains(&valid_lower) {
-            return format!("Did you mean '{}'?", valid);
+            return ClosestEventMatch {
+                suggestion: format!("Did you mean '{}'?", valid),
+                corrected_event: Some(valid.to_string()),
+                is_case_fix: false,
+            };
         }
     }
 
-    format!("Valid events are: {}", HooksSchema::VALID_EVENTS.join(", "))
+    ClosestEventMatch {
+        suggestion: format!("Valid events are: {}", HooksSchema::VALID_EVENTS.join(", ")),
+        corrected_event: None,
+        is_case_fix: false,
+    }
+}
+
+/// Find the byte position of an event key in JSON content
+/// Returns (start, end) byte positions of the event key (including quotes)
+fn find_event_key_position(content: &str, event: &str) -> Option<(usize, usize)> {
+    // Look for the event key in the "hooks" object
+    // Pattern: "event_name" followed by : (with optional whitespace)
+    let pattern = format!(r#""{}"\s*:"#, regex::escape(event));
+    let re = Regex::new(&pattern).ok()?;
+
+    if let Some(m) = re.find(content) {
+        // Return position of just the quoted event name (without the colon)
+        let quote_end = content[m.start()..m.end()]
+            .find('"')
+            .map(|i| m.start() + i)?;
+        // Find the closing quote
+        let content_after_first_quote = &content[quote_end + 1..];
+        let closing_quote = content_after_first_quote.find('"')?;
+        let end = quote_end + 1 + closing_quote + 1;
+        Some((quote_end, end))
+    } else {
+        None
+    }
 }
 
 #[cfg(test)]
@@ -1802,21 +1858,149 @@ mod tests {
 
     #[test]
     fn test_find_closest_event_exact_case_match() {
-        let suggestion = find_closest_event("pretooluse");
-        assert!(suggestion.contains("PreToolUse"));
-        assert!(suggestion.contains("case-sensitive"));
+        let closest = find_closest_event("pretooluse");
+        assert!(closest.suggestion.contains("PreToolUse"));
+        assert!(closest.suggestion.contains("case-sensitive"));
+        assert_eq!(closest.corrected_event, Some("PreToolUse".to_string()));
+        assert!(closest.is_case_fix);
     }
 
     #[test]
     fn test_find_closest_event_partial_match() {
-        let suggestion = find_closest_event("tool");
-        assert!(suggestion.contains("Did you mean"));
+        let closest = find_closest_event("tool");
+        assert!(closest.suggestion.contains("Did you mean"));
+        assert!(closest.corrected_event.is_some());
+        assert!(!closest.is_case_fix);
     }
 
     #[test]
     fn test_find_closest_event_no_match() {
-        let suggestion = find_closest_event("CompletelyInvalid");
-        assert!(suggestion.contains("Valid events are"));
+        let closest = find_closest_event("CompletelyInvalid");
+        assert!(closest.suggestion.contains("Valid events are"));
+        assert!(closest.corrected_event.is_none());
+    }
+
+    // ===== CC-HK-001 Auto-fix Tests =====
+
+    #[test]
+    fn test_cc_hk_001_case_fix_has_safe_fix() {
+        let content = r#"{
+            "hooks": {
+                "pretooluse": [
+                    {
+                        "matcher": "*",
+                        "hooks": [
+                            { "type": "command", "command": "echo 'test'" }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+        let diagnostics = validate(content);
+        let cc_hk_001: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-HK-001")
+            .collect();
+
+        assert_eq!(cc_hk_001.len(), 1);
+        assert!(cc_hk_001[0].has_fixes());
+
+        let fix = &cc_hk_001[0].fixes[0];
+        assert!(fix.safe); // Case-only fix is safe
+        assert_eq!(fix.replacement, "\"PreToolUse\"");
+    }
+
+    #[test]
+    fn test_cc_hk_001_typo_fix_not_safe() {
+        // "tool" partially matches "PreToolUse"
+        let content = r#"{
+            "hooks": {
+                "tool": [
+                    {
+                        "matcher": "*",
+                        "hooks": [
+                            { "type": "command", "command": "echo 'test'" }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+        let diagnostics = validate(content);
+        let cc_hk_001: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-HK-001")
+            .collect();
+
+        assert_eq!(cc_hk_001.len(), 1);
+        assert!(cc_hk_001[0].has_fixes());
+
+        let fix = &cc_hk_001[0].fixes[0];
+        assert!(!fix.safe); // Partial match is not safe
+    }
+
+    #[test]
+    fn test_cc_hk_001_no_fix_for_completely_invalid() {
+        let content = r#"{
+            "hooks": {
+                "XyzAbc123": [
+                    {
+                        "hooks": [
+                            { "type": "command", "command": "echo 'test'" }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+        let diagnostics = validate(content);
+        let cc_hk_001: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-HK-001")
+            .collect();
+
+        assert_eq!(cc_hk_001.len(), 1);
+        // No fix when there's no reasonable match
+        assert!(!cc_hk_001[0].has_fixes());
+    }
+
+    #[test]
+    fn test_cc_hk_001_fix_correct_byte_position() {
+        let content = r#"{"hooks": {"stop": [{"hooks": [{"type": "command", "command": "echo"}]}]}}"#;
+
+        let diagnostics = validate(content);
+        let cc_hk_001: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-HK-001")
+            .collect();
+
+        assert_eq!(cc_hk_001.len(), 1);
+        assert!(cc_hk_001[0].has_fixes());
+
+        let fix = &cc_hk_001[0].fixes[0];
+
+        // Apply fix and verify
+        let mut fixed = content.to_string();
+        fixed.replace_range(fix.start_byte..fix.end_byte, &fix.replacement);
+        assert!(fixed.contains("\"Stop\""));
+        assert!(!fixed.contains("\"stop\""));
+    }
+
+    #[test]
+    fn test_find_event_key_position() {
+        let content = r#"{"hooks": {"InvalidEvent": []}}"#;
+        let pos = find_event_key_position(content, "InvalidEvent");
+        assert!(pos.is_some());
+        let (start, end) = pos.unwrap();
+        assert_eq!(&content[start..end], "\"InvalidEvent\"");
+    }
+
+    #[test]
+    fn test_find_event_key_position_not_found() {
+        let content = r#"{"hooks": {"ValidEvent": []}}"#;
+        let pos = find_event_key_position(content, "NotPresent");
+        assert!(pos.is_none());
     }
 
     // ===== CC-HK-010 Tests: No Timeout Specified =====
