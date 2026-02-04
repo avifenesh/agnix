@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Narrowed agnix-core public API surface (#85)
+  - Made `parsers`, `rules`, `schemas`, and `file_utils` modules private
+  - Re-exported `Validator` trait for custom validator implementations
+  - No breaking changes for agnix-cli or external consumers using documented API
+
 ### Removed
 - Removed unused config flags `tool_names` and `required_fields` from `.agnix.toml`
   - These flags were never referenced in the codebase
