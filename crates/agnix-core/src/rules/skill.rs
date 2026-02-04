@@ -2,7 +2,7 @@
 
 use crate::{
     config::LintConfig,
-    diagnostics::Diagnostic,
+    diagnostics::{Diagnostic, Fix},
     parsers::frontmatter::{split_frontmatter, FrontmatterParts},
     rules::Validator,
     schemas::SkillSchema,
@@ -45,6 +45,7 @@ static DESCRIPTION_XML_REGEX: OnceLock<Regex> = OnceLock::new();
 static REFERENCE_PATH_REGEX: OnceLock<Regex> = OnceLock::new();
 static WINDOWS_PATH_REGEX: OnceLock<Regex> = OnceLock::new();
 static WINDOWS_PATH_TOKEN_REGEX: OnceLock<Regex> = OnceLock::new();
+static PLAIN_BASH_REGEX: OnceLock<Regex> = OnceLock::new();
 
 /// Valid model values for CC-SK-001
 const VALID_MODELS: &[&str] = &["sonnet", "opus", "haiku", "inherit"];
@@ -70,6 +71,30 @@ const KNOWN_TOOLS: &[&str] = &[
 
 /// Maximum dynamic injections for CC-SK-009
 const MAX_INJECTIONS: usize = 3;
+
+/// Find byte positions of plain "Bash" (not scoped like "Bash(...)") in content
+/// Returns Vec of (start_byte, end_byte) for each occurrence
+fn find_plain_bash_positions(content: &str, search_start: usize) -> Vec<(usize, usize)> {
+    let re = PLAIN_BASH_REGEX.get_or_init(|| {
+        // Match "Bash" at word boundary
+        // Note: regex crate doesn't support lookahead, so we'll filter manually
+        Regex::new(r"\bBash\b").unwrap()
+    });
+
+    let search_content = &content[search_start..];
+    re.find_iter(search_content)
+        .filter_map(|m| {
+            let end_pos = search_start + m.end();
+            // Check if followed by '(' - if so, it's scoped Bash, skip it
+            let next_char = content.get(end_pos..end_pos + 1);
+            if next_char == Some("(") {
+                None // Scoped Bash like Bash(git:*), skip
+            } else {
+                Some((search_start + m.start(), end_pos))
+            }
+        })
+        .collect()
+}
 
 /// Check if an agent name is valid for CC-SK-005.
 /// Valid agents are:
@@ -400,18 +425,38 @@ impl Validator for SkillValidator {
                     // CC-SK-007: Unrestricted Bash warning
                     if config.is_rule_enabled("CC-SK-007") {
                         if let Some(ref tools) = tool_list {
+                            // Find all plain Bash occurrences in the frontmatter
+                            let bash_positions =
+                                find_plain_bash_positions(content, parts.frontmatter_start);
+
+                            let mut bash_pos_iter = bash_positions.iter();
+
                             for tool in tools {
                                 if *tool == "Bash" {
-                                    diagnostics.push(
-                                        Diagnostic::warning(
-                                            path.to_path_buf(),
-                                            allowed_tools_line,
-                                            allowed_tools_col,
-                                            "CC-SK-007",
-                                            "Unrestricted Bash access detected. Consider using scoped version for better security.".to_string(),
-                                        )
-                                        .with_suggestion("Use scoped Bash like 'Bash(git:*)' or 'Bash(npm:*)' instead of plain 'Bash'".to_string()),
-                                    );
+                                    let mut diagnostic = Diagnostic::warning(
+                                        path.to_path_buf(),
+                                        allowed_tools_line,
+                                        allowed_tools_col,
+                                        "CC-SK-007",
+                                        "Unrestricted Bash access detected. Consider using scoped version for better security.".to_string(),
+                                    )
+                                    .with_suggestion("Use scoped Bash like 'Bash(git:*)' or 'Bash(npm:*)' instead of plain 'Bash'".to_string());
+
+                                    // Try to attach a fix for each plain Bash
+                                    if let Some(&(start, end)) = bash_pos_iter.next() {
+                                        // Default replacement: Bash(git:*) as a common use case
+                                        // safe=false because we don't know what scope the user wants
+                                        let fix = Fix::replace(
+                                            start,
+                                            end,
+                                            "Bash(git:*)",
+                                            "Replace unrestricted Bash with scoped Bash(git:*)",
+                                            false,
+                                        );
+                                        diagnostic = diagnostic.with_fix(fix);
+                                    }
+
+                                    diagnostics.push(diagnostic);
                                 }
                             }
                         }
@@ -1235,6 +1280,126 @@ Body"#;
             .collect();
 
         assert_eq!(cc_sk_007_warnings.len(), 0);
+    }
+
+    // ===== CC-SK-007 Auto-fix Tests =====
+
+    #[test]
+    fn test_cc_sk_007_has_fix() {
+        let content = r#"---
+name: git-helper
+description: Use when doing git operations
+allowed-tools: Bash Read Write
+---
+Body"#;
+
+        let validator = SkillValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+        let cc_sk_007: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-SK-007")
+            .collect();
+
+        assert_eq!(cc_sk_007.len(), 1);
+        assert!(cc_sk_007[0].has_fixes());
+
+        let fix = &cc_sk_007[0].fixes[0];
+        assert_eq!(fix.replacement, "Bash(git:*)");
+        assert!(!fix.safe); // Not safe, we don't know user's intended scope
+    }
+
+    #[test]
+    fn test_cc_sk_007_fix_correct_byte_position() {
+        let content = r#"---
+name: helper
+description: Use when helping
+allowed-tools: Bash Read
+---
+Body"#;
+
+        let validator = SkillValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+        let cc_sk_007: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-SK-007")
+            .collect();
+
+        assert_eq!(cc_sk_007.len(), 1);
+        assert!(cc_sk_007[0].has_fixes());
+
+        let fix = &cc_sk_007[0].fixes[0];
+
+        // Apply fix and verify
+        let mut fixed = content.to_string();
+        fixed.replace_range(fix.start_byte..fix.end_byte, &fix.replacement);
+        assert!(fixed.contains("Bash(git:*)"));
+        assert!(!fixed.contains("allowed-tools: Bash "));
+    }
+
+    #[test]
+    fn test_cc_sk_007_multiple_bash_multiple_fixes() {
+        let content = r#"---
+name: helper
+description: Use when helping
+allowed-tools: Bash Read Bash
+---
+Body"#;
+
+        let validator = SkillValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+        let cc_sk_007: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-SK-007")
+            .collect();
+
+        // Each Bash occurrence generates a warning
+        assert_eq!(cc_sk_007.len(), 2);
+        // Each should have a fix
+        assert!(cc_sk_007[0].has_fixes());
+        assert!(cc_sk_007[1].has_fixes());
+    }
+
+    #[test]
+    fn test_cc_sk_007_scoped_bash_no_fix() {
+        let content = r#"---
+name: helper
+description: Use when helping
+allowed-tools: Bash(git:*) Read
+---
+Body"#;
+
+        let validator = SkillValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+        let cc_sk_007: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-SK-007")
+            .collect();
+
+        // Scoped Bash doesn't trigger the warning
+        assert_eq!(cc_sk_007.len(), 0);
+    }
+
+    #[test]
+    fn test_find_plain_bash_positions() {
+        let content = "allowed-tools: Bash Read Bash(git:*) Write Bash";
+        let positions = find_plain_bash_positions(content, 0);
+
+        // Should find 2: "Bash" at position 15 and "Bash" at position 43
+        // But NOT "Bash(git:*)"
+        assert_eq!(positions.len(), 2);
+        assert_eq!(&content[positions[0].0..positions[0].1], "Bash");
+        assert_eq!(&content[positions[1].0..positions[1].1], "Bash");
+    }
+
+    #[test]
+    fn test_find_plain_bash_positions_none() {
+        let content = "allowed-tools: Bash(git:*) Bash(npm:*) Read";
+        let positions = find_plain_bash_positions(content, 0);
+        assert_eq!(positions.len(), 0);
     }
 
     #[test]
