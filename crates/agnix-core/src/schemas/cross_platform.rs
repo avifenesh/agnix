@@ -1982,4 +1982,105 @@ agent: security-reviewer
             results
         );
     }
+
+    #[test]
+    fn test_sequential_different_platform_guards() {
+        // Claude guard followed by Cursor guard - features should be detected/suppressed correctly
+        let content = r#"## Claude Code Specific
+
+- type: PreToolExecution
+  command: echo "claude hook"
+
+## Cursor Specific
+
+- type: PostToolExecution
+  command: echo "cursor hook"
+"#;
+        let results = find_claude_specific_features(content);
+        // Claude hook under Claude guard = suppressed
+        // Cursor hook under Cursor guard = detected (not Claude guard)
+        assert_eq!(
+            results.len(),
+            1,
+            "Should detect 1 hook (under Cursor guard, not Claude): {:?}",
+            results
+        );
+        assert_eq!(results[0].line, 8); // PostToolExecution line (0-indexed: line 9 in 1-indexed)
+    }
+
+    #[test]
+    fn test_all_feature_types_under_one_guard() {
+        // All 4 Claude-specific feature types under one guard should all be suppressed
+        let content = r#"## Claude Code Specific
+
+- type: PreToolExecution
+  command: echo "hook"
+
+agent: security-reviewer
+
+context:fork
+
+allowed_tools:
+  - Read
+  - Write
+"#;
+        let results = find_claude_specific_features(content);
+        assert!(
+            results.is_empty(),
+            "All 4 feature types under Claude guard should be suppressed: {:?}",
+            results
+        );
+    }
+
+    #[test]
+    fn test_permissive_guard_with_hyphens() {
+        // Regex is intentionally permissive - captures "claude" even with hyphens after
+        // This is safe behavior: better to suppress warnings for edge cases than false positive
+        let content = r#"## Claude-Code-Specific
+
+- type: PreToolExecution
+  command: echo "test"
+"#;
+        let results = find_claude_specific_features(content);
+        // Hyphens after "Claude" still match (captures "claude" prefix)
+        assert!(
+            results.is_empty(),
+            "Permissive guard matching is intentional: {:?}",
+            results
+        );
+    }
+
+    #[test]
+    fn test_permissive_guard_typo() {
+        // "Claude Cod" still matches because regex captures "claude" prefix
+        // Intentionally permissive to avoid false positives
+        let content = r#"## Claude Cod Specific
+
+- type: PreToolExecution
+  command: echo "test"
+"#;
+        let results = find_claude_specific_features(content);
+        assert!(
+            results.is_empty(),
+            "Permissive guard matching captures Claude prefix: {:?}",
+            results
+        );
+    }
+
+    #[test]
+    fn test_guard_without_suffix_works() {
+        // "## Claude Code" without "Specific" or "Only" should still work
+        // because the suffix is optional in the regex
+        let content = r#"## Claude Code
+
+- type: PreToolExecution
+  command: echo "test"
+"#;
+        let results = find_claude_specific_features(content);
+        assert!(
+            results.is_empty(),
+            "Guard without suffix should work: {:?}",
+            results
+        );
+    }
 }
