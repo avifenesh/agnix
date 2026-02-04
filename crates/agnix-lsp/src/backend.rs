@@ -987,7 +987,6 @@ model: sonnet
     }
 
     /// Test that cached registry is used across multiple validations.
-    /// This verifies the ValidatorRegistry caching optimization.
     #[tokio::test]
     async fn test_cached_registry_used_for_multiple_validations() {
         let (service, _socket) = LspService::new(Backend::new);
@@ -999,7 +998,6 @@ model: sonnet
             .await
             .unwrap();
 
-        // Create multiple different file types to exercise different validators
         let temp_dir = tempfile::tempdir().unwrap();
 
         // Skill file
@@ -1028,7 +1026,6 @@ This is a test project.
         )
         .unwrap();
 
-        // Validate multiple files (registry is shared across all validations)
         for path in [&skill_path, &claude_path] {
             let uri = Url::from_file_path(path).unwrap();
             service
@@ -1043,7 +1040,5 @@ This is a test project.
                 })
                 .await;
         }
-
-        // All validations should complete successfully with reused registry
     }
 }
