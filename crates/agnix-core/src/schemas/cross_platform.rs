@@ -92,12 +92,13 @@ pub fn find_claude_specific_features(content: &str) -> Vec<ClaudeSpecificFeature
     let mut in_claude_section = false;
 
     for (line_num, line) in content.lines().enumerate() {
-        if guard_pattern.is_match(line) {
+        let is_claude_guard = guard_pattern.is_match(line);
+        if is_claude_guard {
             in_claude_section = true;
             continue;
         }
 
-        if line.starts_with('#') && !guard_pattern.is_match(line) {
+        if line.starts_with('#') && !is_claude_guard {
             in_claude_section = false;
         }
 
@@ -1072,12 +1073,11 @@ allowed-tools: Read Write
 agent: something
 "#;
         let results = find_claude_specific_features(content);
-        // The hooks under "Claude Code Specific" should be guarded
+        assert_eq!(results.len(), 1, "Expected exactly 1 result");
         assert!(
             !results.iter().any(|r| r.feature == "hooks"),
             "Hooks in Claude section should be guarded"
         );
-        // The agent field under "Other Settings" should be reported
         assert!(
             results.iter().any(|r| r.feature == "agent"),
             "Agent field outside Claude section should be reported"

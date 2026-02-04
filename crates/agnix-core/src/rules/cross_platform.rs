@@ -44,7 +44,7 @@ impl Validator for CrossPlatformValidator {
                         ),
                     )
                     .with_suggestion(
-                        "Move Claude-specific features to CLAUDE.md or use platform guards"
+                        "Move to CLAUDE.md or wrap in a Claude-specific section (e.g., '## Claude Code Specific')"
                             .to_string(),
                     ),
                 );
