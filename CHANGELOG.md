@@ -88,6 +88,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Comprehensive test coverage with 8 fixtures
 
 ### Performance
+- LSP server now caches ValidatorRegistry in Backend struct (#171)
+  - Registry wrapped in Arc and shared across spawn_blocking validation tasks
+  - Eliminates redundant HashMap allocations and validator factory lookups per validation
 - AS-015 directory size validation now short-circuits when limit exceeded, improving performance on large skill directories (#84)
 - Stream file walk to reduce memory usage on large repositories (#172)
   - Replaced collect-then-validate pattern with streaming par_bridge()
