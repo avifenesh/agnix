@@ -29,6 +29,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CLI init command output replaced checkmark emoji with plain text prefix
 
 ### Added
+- Auto-fix implementations for three additional rules:
+  - XML-001: Automatically insert closing XML tags for unclosed elements
+  - CC-HK-001: Replace invalid hook event names with closest valid match
+  - CC-SK-007: Replace unrestricted Bash access with scoped alternatives (e.g., `Bash(git:*)`)
 - Reusable GitHub Action for CI/CD integration:
   - Composite action using pre-built release binaries
   - Inputs for path, strict, target, config, format, verbose, version

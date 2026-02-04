@@ -184,7 +184,7 @@
 ### CC-SK-007 [HIGH] Unrestricted Bash
 **Requirement**: Bash in allowed-tools SHOULD be scoped
 **Detection**: `allowed_tools.contains("Bash") && !allowed_tools.contains("Bash(")`
-**Fix**: Suggest `Bash(git:*)` based on skill name
+**Fix**: [AUTO-FIX] Replace unrestricted Bash with scoped version (e.g., `Bash(git:*)`)
 **Source**: awesome-slash/enhance-skills
 
 <a id="cc-sk-008"></a>
@@ -211,7 +211,7 @@
 **Requirement**: Event MUST be one of 12 valid names (case-sensitive)
 **Valid**: SessionStart, UserPromptSubmit, PreToolUse, PermissionRequest, PostToolUse, PostToolUseFailure, SubagentStart, SubagentStop, Stop, PreCompact, Setup, SessionEnd, Notification
 **Detection**: `!VALID_EVENTS.contains(event)`
-**Fix**: Suggest closest match (did you mean PreToolUse?)
+**Fix**: [AUTO-FIX] Replace with closest matching valid event name
 **Source**: code.claude.com/docs/en/hooks
 
 <a id="cc-hk-002"></a>
@@ -580,7 +580,7 @@
 ### XML-001 [HIGH] Unclosed XML Tag
 **Requirement**: All XML tags MUST be properly closed
 **Detection**: Parse tags, check balance with stack
-**Fix**: Add closing tag
+**Fix**: [AUTO-FIX] Automatically insert matching closing XML tag
 **Source**: platform.claude.com/docs prompt engineering
 
 <a id="xml-002"></a>
