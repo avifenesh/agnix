@@ -349,3 +349,479 @@ mod hover_tests {
         assert_eq!(pos.character, 0);
     }
 }
+
+mod lsp_handler_integration_tests {
+    use agnix_lsp::Backend;
+    use tower_lsp::lsp_types::*;
+    use tower_lsp::{LanguageServer, LspService};
+
+    #[tokio::test]
+    async fn test_did_change_triggers_validation() {
+        let (service, _socket) = LspService::new(Backend::new);
+
+        let temp_dir = tempfile::tempdir().unwrap();
+        let skill_path = temp_dir.path().join("SKILL.md");
+        std::fs::write(
+            &skill_path,
+            r#"---
+name: test-skill
+version: 1.0.0
+model: sonnet
+---
+
+# Test Skill
+"#,
+        )
+        .unwrap();
+
+        let uri = Url::from_file_path(&skill_path).unwrap();
+
+        service
+            .inner()
+            .did_open(DidOpenTextDocumentParams {
+                text_document: TextDocumentItem {
+                    uri: uri.clone(),
+                    language_id: "markdown".to_string(),
+                    version: 1,
+                    text: r#"---
+name: test-skill
+version: 1.0.0
+model: sonnet
+---
+
+# Test Skill
+"#
+                    .to_string(),
+                },
+            })
+            .await;
+
+        service
+            .inner()
+            .did_change(DidChangeTextDocumentParams {
+                text_document: VersionedTextDocumentIdentifier {
+                    uri: uri.clone(),
+                    version: 2,
+                },
+                content_changes: vec![TextDocumentContentChangeEvent {
+                    range: None,
+                    range_length: None,
+                    text: r#"---
+name: updated-skill
+version: 1.0.0
+model: sonnet
+---
+
+# Updated Skill
+"#
+                    .to_string(),
+                }],
+            })
+            .await;
+    }
+
+    #[tokio::test]
+    async fn test_did_change_with_invalid_content_produces_diagnostics() {
+        let (service, _socket) = LspService::new(Backend::new);
+
+        let temp_dir = tempfile::tempdir().unwrap();
+        let skill_path = temp_dir.path().join("SKILL.md");
+        std::fs::write(&skill_path, "# Empty skill").unwrap();
+
+        let uri = Url::from_file_path(&skill_path).unwrap();
+
+        service
+            .inner()
+            .did_open(DidOpenTextDocumentParams {
+                text_document: TextDocumentItem {
+                    uri: uri.clone(),
+                    language_id: "markdown".to_string(),
+                    version: 1,
+                    text: "# Empty skill".to_string(),
+                },
+            })
+            .await;
+
+        service
+            .inner()
+            .did_change(DidChangeTextDocumentParams {
+                text_document: VersionedTextDocumentIdentifier {
+                    uri: uri.clone(),
+                    version: 2,
+                },
+                content_changes: vec![TextDocumentContentChangeEvent {
+                    range: None,
+                    range_length: None,
+                    text: r#"---
+name: Invalid Name With Spaces
+version: 1.0.0
+model: invalid-model
+---
+
+# Invalid Skill
+"#
+                    .to_string(),
+                }],
+            })
+            .await;
+    }
+
+    #[tokio::test]
+    async fn test_code_action_returns_none_when_no_fixes() {
+        let (service, _socket) = LspService::new(Backend::new);
+
+        let temp_dir = tempfile::tempdir().unwrap();
+        let skill_path = temp_dir.path().join("SKILL.md");
+        std::fs::write(
+            &skill_path,
+            r#"---
+name: test-skill
+version: 1.0.0
+model: sonnet
+---
+
+# Test Skill
+"#,
+        )
+        .unwrap();
+
+        let uri = Url::from_file_path(&skill_path).unwrap();
+
+        service
+            .inner()
+            .did_open(DidOpenTextDocumentParams {
+                text_document: TextDocumentItem {
+                    uri: uri.clone(),
+                    language_id: "markdown".to_string(),
+                    version: 1,
+                    text: r#"---
+name: test-skill
+version: 1.0.0
+model: sonnet
+---
+
+# Test Skill
+"#
+                    .to_string(),
+                },
+            })
+            .await;
+
+        let result = service
+            .inner()
+            .code_action(CodeActionParams {
+                text_document: TextDocumentIdentifier { uri },
+                range: Range {
+                    start: Position {
+                        line: 0,
+                        character: 0,
+                    },
+                    end: Position {
+                        line: 0,
+                        character: 10,
+                    },
+                },
+                context: CodeActionContext {
+                    diagnostics: vec![],
+                    only: None,
+                    trigger_kind: None,
+                },
+                work_done_progress_params: WorkDoneProgressParams::default(),
+                partial_result_params: PartialResultParams::default(),
+            })
+            .await;
+
+        assert!(result.is_ok());
+        assert!(result.unwrap().is_none());
+    }
+
+    #[tokio::test]
+    async fn test_code_action_returns_none_for_uncached_document() {
+        let (service, _socket) = LspService::new(Backend::new);
+
+        let uri = Url::parse("file:///nonexistent/SKILL.md").unwrap();
+
+        let result = service
+            .inner()
+            .code_action(CodeActionParams {
+                text_document: TextDocumentIdentifier { uri },
+                range: Range {
+                    start: Position {
+                        line: 0,
+                        character: 0,
+                    },
+                    end: Position {
+                        line: 0,
+                        character: 10,
+                    },
+                },
+                context: CodeActionContext {
+                    diagnostics: vec![],
+                    only: None,
+                    trigger_kind: None,
+                },
+                work_done_progress_params: WorkDoneProgressParams::default(),
+                partial_result_params: PartialResultParams::default(),
+            })
+            .await;
+
+        assert!(result.is_ok());
+        assert!(result.unwrap().is_none());
+    }
+
+    #[tokio::test]
+    async fn test_hover_returns_documentation_for_known_field() {
+        let (service, _socket) = LspService::new(Backend::new);
+
+        let temp_dir = tempfile::tempdir().unwrap();
+        let skill_path = temp_dir.path().join("SKILL.md");
+        std::fs::write(
+            &skill_path,
+            r#"---
+name: test-skill
+version: 1.0.0
+model: sonnet
+---
+
+# Test Skill
+"#,
+        )
+        .unwrap();
+
+        let uri = Url::from_file_path(&skill_path).unwrap();
+
+        service
+            .inner()
+            .did_open(DidOpenTextDocumentParams {
+                text_document: TextDocumentItem {
+                    uri: uri.clone(),
+                    language_id: "markdown".to_string(),
+                    version: 1,
+                    text: r#"---
+name: test-skill
+version: 1.0.0
+model: sonnet
+---
+
+# Test Skill
+"#
+                    .to_string(),
+                },
+            })
+            .await;
+
+        let result = service
+            .inner()
+            .hover(HoverParams {
+                text_document_position_params: TextDocumentPositionParams {
+                    text_document: TextDocumentIdentifier { uri },
+                    position: Position {
+                        line: 3,
+                        character: 0,
+                    },
+                },
+                work_done_progress_params: WorkDoneProgressParams::default(),
+            })
+            .await;
+
+        assert!(result.is_ok());
+        let hover = result.unwrap();
+        assert!(hover.is_some());
+
+        let hover = hover.unwrap();
+        match hover.contents {
+            HoverContents::Markup(markup) => {
+                assert_eq!(markup.kind, MarkupKind::Markdown);
+                assert!(markup.value.contains("model"));
+            }
+            _ => panic!("Expected markup content"),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_hover_returns_none_for_unknown_field() {
+        let (service, _socket) = LspService::new(Backend::new);
+
+        let temp_dir = tempfile::tempdir().unwrap();
+        let skill_path = temp_dir.path().join("SKILL.md");
+        std::fs::write(
+            &skill_path,
+            r#"---
+unknownfield: value
+---
+
+# Test
+"#,
+        )
+        .unwrap();
+
+        let uri = Url::from_file_path(&skill_path).unwrap();
+
+        service
+            .inner()
+            .did_open(DidOpenTextDocumentParams {
+                text_document: TextDocumentItem {
+                    uri: uri.clone(),
+                    language_id: "markdown".to_string(),
+                    version: 1,
+                    text: r#"---
+unknownfield: value
+---
+
+# Test
+"#
+                    .to_string(),
+                },
+            })
+            .await;
+
+        let result = service
+            .inner()
+            .hover(HoverParams {
+                text_document_position_params: TextDocumentPositionParams {
+                    text_document: TextDocumentIdentifier { uri },
+                    position: Position {
+                        line: 1,
+                        character: 0,
+                    },
+                },
+                work_done_progress_params: WorkDoneProgressParams::default(),
+            })
+            .await;
+
+        assert!(result.is_ok());
+        assert!(result.unwrap().is_none());
+    }
+
+    #[tokio::test]
+    async fn test_hover_returns_none_for_uncached_document() {
+        let (service, _socket) = LspService::new(Backend::new);
+
+        let uri = Url::parse("file:///nonexistent/SKILL.md").unwrap();
+
+        let result = service
+            .inner()
+            .hover(HoverParams {
+                text_document_position_params: TextDocumentPositionParams {
+                    text_document: TextDocumentIdentifier { uri },
+                    position: Position {
+                        line: 0,
+                        character: 0,
+                    },
+                },
+                work_done_progress_params: WorkDoneProgressParams::default(),
+            })
+            .await;
+
+        assert!(result.is_ok());
+        assert!(result.unwrap().is_none());
+    }
+
+    #[tokio::test]
+    async fn test_document_cache_lifecycle() {
+        let (service, _socket) = LspService::new(Backend::new);
+
+        let temp_dir = tempfile::tempdir().unwrap();
+        let skill_path = temp_dir.path().join("SKILL.md");
+        std::fs::write(&skill_path, "# Initial").unwrap();
+
+        let uri = Url::from_file_path(&skill_path).unwrap();
+
+        service
+            .inner()
+            .did_open(DidOpenTextDocumentParams {
+                text_document: TextDocumentItem {
+                    uri: uri.clone(),
+                    language_id: "markdown".to_string(),
+                    version: 1,
+                    text: "# Initial".to_string(),
+                },
+            })
+            .await;
+
+        let hover_result = service
+            .inner()
+            .hover(HoverParams {
+                text_document_position_params: TextDocumentPositionParams {
+                    text_document: TextDocumentIdentifier { uri: uri.clone() },
+                    position: Position {
+                        line: 0,
+                        character: 0,
+                    },
+                },
+                work_done_progress_params: WorkDoneProgressParams::default(),
+            })
+            .await;
+        assert!(hover_result.is_ok());
+
+        service
+            .inner()
+            .did_change(DidChangeTextDocumentParams {
+                text_document: VersionedTextDocumentIdentifier {
+                    uri: uri.clone(),
+                    version: 2,
+                },
+                content_changes: vec![TextDocumentContentChangeEvent {
+                    range: None,
+                    range_length: None,
+                    text: "# Changed".to_string(),
+                }],
+            })
+            .await;
+
+        service
+            .inner()
+            .did_close(DidCloseTextDocumentParams {
+                text_document: TextDocumentIdentifier { uri: uri.clone() },
+            })
+            .await;
+
+        let hover_after_close = service
+            .inner()
+            .hover(HoverParams {
+                text_document_position_params: TextDocumentPositionParams {
+                    text_document: TextDocumentIdentifier { uri },
+                    position: Position {
+                        line: 0,
+                        character: 0,
+                    },
+                },
+                work_done_progress_params: WorkDoneProgressParams::default(),
+            })
+            .await;
+        assert!(hover_after_close.is_ok());
+        assert!(hover_after_close.unwrap().is_none());
+    }
+
+    #[tokio::test]
+    async fn test_initialize_advertises_code_action_capability() {
+        let (service, _socket) = LspService::new(Backend::new);
+
+        let result = service
+            .inner()
+            .initialize(InitializeParams::default())
+            .await
+            .unwrap();
+
+        match result.capabilities.code_action_provider {
+            Some(CodeActionProviderCapability::Simple(true)) => {}
+            _ => panic!("Expected code action capability"),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_initialize_advertises_hover_capability() {
+        let (service, _socket) = LspService::new(Backend::new);
+
+        let result = service
+            .inner()
+            .initialize(InitializeParams::default())
+            .await
+            .unwrap();
+
+        match result.capabilities.hover_provider {
+            Some(HoverProviderCapability::Simple(true)) => {}
+            _ => panic!("Expected hover capability"),
+        }
+    }
+}
