@@ -1,584 +1,1411 @@
 {
   "description": "Machine-readable source of truth for all validation rules. When adding a new rule, add it here AND in VALIDATION-RULES.md. CI parity tests enforce sync.",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "total_rules": 96,
   "last_updated": "2026-02-04",
+  "schema": {
+    "evidence": {
+      "source_type": "spec|vendor_docs|vendor_code|paper|community",
+      "source_urls": ["array of URLs"],
+      "verified_on": "ISO date string",
+      "applies_to": {
+        "tool": "tool name (optional)",
+        "version_range": "semver range (optional)",
+        "spec_revision": "spec version (optional)"
+      },
+      "normative_level": "MUST|SHOULD|BEST_PRACTICE",
+      "tests": {
+        "unit": "boolean",
+        "fixtures": "boolean",
+        "e2e": "boolean"
+      }
+    }
+  },
   "rules": [
     {
       "id": "AS-001",
       "name": "Missing Frontmatter",
       "severity": "HIGH",
-      "category": "agent-skills"
+      "category": "agent-skills",
+      "evidence": {
+        "source_type": "spec",
+        "source_urls": ["https://agentskills.io/specification"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "spec_revision": "1.0" },
+        "normative_level": "MUST",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "AS-002",
       "name": "Missing Required Field: name",
       "severity": "HIGH",
-      "category": "agent-skills"
+      "category": "agent-skills",
+      "evidence": {
+        "source_type": "spec",
+        "source_urls": ["https://agentskills.io/specification"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "spec_revision": "1.0" },
+        "normative_level": "MUST",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "AS-003",
       "name": "Missing Required Field: description",
       "severity": "HIGH",
-      "category": "agent-skills"
+      "category": "agent-skills",
+      "evidence": {
+        "source_type": "spec",
+        "source_urls": ["https://agentskills.io/specification"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "spec_revision": "1.0" },
+        "normative_level": "MUST",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "AS-004",
       "name": "Invalid Name Format",
       "severity": "HIGH",
-      "category": "agent-skills"
+      "category": "agent-skills",
+      "evidence": {
+        "source_type": "spec",
+        "source_urls": ["https://agentskills.io/specification"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "spec_revision": "1.0" },
+        "normative_level": "MUST",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "AS-005",
       "name": "Name Starts/Ends with Hyphen",
       "severity": "HIGH",
-      "category": "agent-skills"
+      "category": "agent-skills",
+      "evidence": {
+        "source_type": "spec",
+        "source_urls": ["https://agentskills.io/specification"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "spec_revision": "1.0" },
+        "normative_level": "MUST",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "AS-006",
       "name": "Consecutive Hyphens in Name",
       "severity": "HIGH",
-      "category": "agent-skills"
+      "category": "agent-skills",
+      "evidence": {
+        "source_type": "spec",
+        "source_urls": ["https://agentskills.io/specification"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "spec_revision": "1.0" },
+        "normative_level": "MUST",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "AS-007",
       "name": "Reserved Name",
       "severity": "HIGH",
-      "category": "agent-skills"
+      "category": "agent-skills",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": ["https://platform.claude.com/docs"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "tool": "claude-code" },
+        "normative_level": "MUST",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "AS-008",
       "name": "Description Too Short",
       "severity": "HIGH",
-      "category": "agent-skills"
+      "category": "agent-skills",
+      "evidence": {
+        "source_type": "spec",
+        "source_urls": ["https://agentskills.io/specification"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "spec_revision": "1.0" },
+        "normative_level": "MUST",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "AS-009",
       "name": "Description Contains XML",
       "severity": "HIGH",
-      "category": "agent-skills"
+      "category": "agent-skills",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": ["https://platform.claude.com/docs"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "tool": "claude-code" },
+        "normative_level": "MUST",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "AS-010",
       "name": "Missing Trigger Phrase",
       "severity": "MEDIUM",
-      "category": "agent-skills"
+      "category": "agent-skills",
+      "evidence": {
+        "source_type": "community",
+        "source_urls": [
+          "https://github.com/anthropics/awesome-slash",
+          "https://platform.claude.com/docs"
+        ],
+        "verified_on": "2026-02-04",
+        "applies_to": { "tool": "claude-code" },
+        "normative_level": "SHOULD",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "AS-011",
       "name": "Compatibility Too Long",
       "severity": "HIGH",
-      "category": "agent-skills"
+      "category": "agent-skills",
+      "evidence": {
+        "source_type": "spec",
+        "source_urls": ["https://agentskills.io/specification"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "spec_revision": "1.0" },
+        "normative_level": "MUST",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "AS-012",
       "name": "Content Exceeds 500 Lines",
       "severity": "MEDIUM",
-      "category": "agent-skills"
+      "category": "agent-skills",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://platform.claude.com/docs",
+          "https://agentskills.io"
+        ],
+        "verified_on": "2026-02-04",
+        "applies_to": { "tool": "claude-code" },
+        "normative_level": "SHOULD",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "AS-013",
       "name": "File Reference Too Deep",
       "severity": "HIGH",
-      "category": "agent-skills"
+      "category": "agent-skills",
+      "evidence": {
+        "source_type": "spec",
+        "source_urls": ["https://agentskills.io/specification"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "spec_revision": "1.0" },
+        "normative_level": "MUST",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "AS-014",
       "name": "Windows Path Separator",
       "severity": "HIGH",
-      "category": "agent-skills"
+      "category": "agent-skills",
+      "evidence": {
+        "source_type": "spec",
+        "source_urls": ["https://agentskills.io/specification"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "spec_revision": "1.0" },
+        "normative_level": "MUST",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "AS-015",
       "name": "Upload Size Exceeds 8MB",
       "severity": "HIGH",
-      "category": "agent-skills"
+      "category": "agent-skills",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": ["https://platform.claude.com/docs"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "tool": "claude-code" },
+        "normative_level": "MUST",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "AS-016",
       "name": "Skill Parse Error",
       "severity": "HIGH",
-      "category": "agent-skills"
+      "category": "agent-skills",
+      "evidence": {
+        "source_type": "spec",
+        "source_urls": ["https://agentskills.io/specification"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "spec_revision": "1.0" },
+        "normative_level": "MUST",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "CC-SK-001",
       "name": "Invalid Model Value",
       "severity": "HIGH",
-      "category": "claude-skills"
+      "category": "claude-skills",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": ["https://code.claude.com/docs/en/skills"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "tool": "claude-code" },
+        "normative_level": "MUST",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "CC-SK-002",
       "name": "Invalid Context Value",
       "severity": "HIGH",
-      "category": "claude-skills"
+      "category": "claude-skills",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": ["https://code.claude.com/docs/en/skills"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "tool": "claude-code" },
+        "normative_level": "MUST",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "CC-SK-003",
       "name": "Context Without Agent",
       "severity": "HIGH",
-      "category": "claude-skills"
+      "category": "claude-skills",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": ["https://code.claude.com/docs/en/skills"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "tool": "claude-code" },
+        "normative_level": "MUST",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "CC-SK-004",
       "name": "Agent Without Context",
       "severity": "HIGH",
-      "category": "claude-skills"
+      "category": "claude-skills",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": ["https://code.claude.com/docs/en/skills"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "tool": "claude-code" },
+        "normative_level": "MUST",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "CC-SK-005",
       "name": "Invalid Agent Type",
       "severity": "HIGH",
-      "category": "claude-skills"
+      "category": "claude-skills",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": ["https://code.claude.com/docs/en/sub-agents"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "tool": "claude-code" },
+        "normative_level": "MUST",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "CC-SK-006",
       "name": "Dangerous Auto-Invocation",
       "severity": "HIGH",
-      "category": "claude-skills"
+      "category": "claude-skills",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": ["https://code.claude.com/docs/en/skills"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "tool": "claude-code" },
+        "normative_level": "MUST",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "CC-SK-007",
       "name": "Unrestricted Bash",
       "severity": "HIGH",
-      "category": "claude-skills"
+      "category": "claude-skills",
+      "evidence": {
+        "source_type": "community",
+        "source_urls": ["https://github.com/anthropics/awesome-slash"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "tool": "claude-code" },
+        "normative_level": "SHOULD",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "CC-SK-008",
       "name": "Unknown Tool Name",
       "severity": "HIGH",
-      "category": "claude-skills"
+      "category": "claude-skills",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": ["https://code.claude.com/docs/en/settings"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "tool": "claude-code" },
+        "normative_level": "MUST",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "CC-SK-009",
       "name": "Too Many Injections",
       "severity": "MEDIUM",
-      "category": "claude-skills"
+      "category": "claude-skills",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": ["https://platform.claude.com/docs"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "tool": "claude-code" },
+        "normative_level": "SHOULD",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "CC-HK-001",
       "name": "Invalid Hook Event",
       "severity": "HIGH",
-      "category": "claude-hooks"
+      "category": "claude-hooks",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": ["https://code.claude.com/docs/en/hooks"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "tool": "claude-code" },
+        "normative_level": "MUST",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "CC-HK-002",
       "name": "Prompt Hook on Wrong Event",
       "severity": "HIGH",
-      "category": "claude-hooks"
+      "category": "claude-hooks",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": ["https://code.claude.com/docs/en/hooks"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "tool": "claude-code" },
+        "normative_level": "MUST",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "CC-HK-003",
       "name": "Missing Matcher for Tool Events",
       "severity": "HIGH",
-      "category": "claude-hooks"
+      "category": "claude-hooks",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": ["https://code.claude.com/docs/en/hooks"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "tool": "claude-code" },
+        "normative_level": "MUST",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "CC-HK-004",
       "name": "Matcher on Non-Tool Event",
       "severity": "HIGH",
-      "category": "claude-hooks"
+      "category": "claude-hooks",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": ["https://code.claude.com/docs/en/hooks"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "tool": "claude-code" },
+        "normative_level": "MUST",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "CC-HK-005",
       "name": "Missing Type Field",
       "severity": "HIGH",
-      "category": "claude-hooks"
+      "category": "claude-hooks",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": ["https://code.claude.com/docs/en/hooks"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "tool": "claude-code" },
+        "normative_level": "MUST",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "CC-HK-006",
       "name": "Missing Command Field",
       "severity": "HIGH",
-      "category": "claude-hooks"
+      "category": "claude-hooks",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": ["https://code.claude.com/docs/en/hooks"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "tool": "claude-code" },
+        "normative_level": "MUST",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "CC-HK-007",
       "name": "Missing Prompt Field",
       "severity": "HIGH",
-      "category": "claude-hooks"
+      "category": "claude-hooks",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": ["https://code.claude.com/docs/en/hooks"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "tool": "claude-code" },
+        "normative_level": "MUST",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "CC-HK-008",
       "name": "Script File Not Found",
       "severity": "HIGH",
-      "category": "claude-hooks"
+      "category": "claude-hooks",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": ["https://code.claude.com/docs/en/hooks"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "tool": "claude-code" },
+        "normative_level": "MUST",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "CC-HK-009",
       "name": "Dangerous Command Pattern",
       "severity": "HIGH",
-      "category": "claude-hooks"
+      "category": "claude-hooks",
+      "evidence": {
+        "source_type": "community",
+        "source_urls": ["https://github.com/anthropics/awesome-slash"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "tool": "claude-code" },
+        "normative_level": "SHOULD",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "CC-HK-010",
       "name": "Timeout Policy",
       "severity": "MEDIUM",
-      "category": "claude-hooks"
+      "category": "claude-hooks",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": ["https://code.claude.com/docs/en/hooks"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "tool": "claude-code" },
+        "normative_level": "SHOULD",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "CC-HK-011",
       "name": "Invalid Timeout Value",
       "severity": "HIGH",
-      "category": "claude-hooks"
+      "category": "claude-hooks",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": ["https://code.claude.com/docs/en/hooks"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "tool": "claude-code" },
+        "normative_level": "MUST",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "CC-HK-012",
       "name": "Hooks Parse Error",
       "severity": "HIGH",
-      "category": "claude-hooks"
+      "category": "claude-hooks",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": ["https://code.claude.com/docs/en/hooks"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "tool": "claude-code" },
+        "normative_level": "MUST",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "CC-AG-001",
       "name": "Missing Name Field",
       "severity": "HIGH",
-      "category": "claude-agents"
+      "category": "claude-agents",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": ["https://code.claude.com/docs/en/sub-agents"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "tool": "claude-code" },
+        "normative_level": "MUST",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "CC-AG-002",
       "name": "Missing Description Field",
       "severity": "HIGH",
-      "category": "claude-agents"
+      "category": "claude-agents",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": ["https://code.claude.com/docs/en/sub-agents"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "tool": "claude-code" },
+        "normative_level": "MUST",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "CC-AG-003",
       "name": "Invalid Model Value",
       "severity": "HIGH",
-      "category": "claude-agents"
+      "category": "claude-agents",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": ["https://code.claude.com/docs/en/sub-agents"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "tool": "claude-code" },
+        "normative_level": "MUST",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "CC-AG-004",
       "name": "Invalid Permission Mode",
       "severity": "HIGH",
-      "category": "claude-agents"
+      "category": "claude-agents",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": ["https://code.claude.com/docs/en/sub-agents"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "tool": "claude-code" },
+        "normative_level": "MUST",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "CC-AG-005",
       "name": "Referenced Skill Not Found",
       "severity": "HIGH",
-      "category": "claude-agents"
+      "category": "claude-agents",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": ["https://code.claude.com/docs/en/sub-agents"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "tool": "claude-code" },
+        "normative_level": "MUST",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "CC-AG-006",
       "name": "Tool/Disallowed Conflict",
       "severity": "HIGH",
-      "category": "claude-agents"
+      "category": "claude-agents",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": ["https://code.claude.com/docs/en/sub-agents"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "tool": "claude-code" },
+        "normative_level": "MUST",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "CC-AG-007",
       "name": "Agent Parse Error",
       "severity": "HIGH",
-      "category": "claude-agents"
+      "category": "claude-agents",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": ["https://code.claude.com/docs/en/sub-agents"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "tool": "claude-code" },
+        "normative_level": "MUST",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "CC-MEM-001",
       "name": "Invalid Import Path",
       "severity": "HIGH",
-      "category": "claude-memory"
+      "category": "claude-memory",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": ["https://code.claude.com/docs/en/memory"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "tool": "claude-code" },
+        "normative_level": "MUST",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "CC-MEM-002",
       "name": "Circular Import",
       "severity": "HIGH",
-      "category": "claude-memory"
+      "category": "claude-memory",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": ["https://code.claude.com/docs/en/memory"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "tool": "claude-code" },
+        "normative_level": "MUST",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "CC-MEM-003",
       "name": "Import Depth Exceeds 5",
       "severity": "HIGH",
-      "category": "claude-memory"
+      "category": "claude-memory",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": ["https://code.claude.com/docs/en/memory"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "tool": "claude-code" },
+        "normative_level": "MUST",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "CC-MEM-004",
       "name": "Invalid Command Reference",
       "severity": "MEDIUM",
-      "category": "claude-memory"
+      "category": "claude-memory",
+      "evidence": {
+        "source_type": "community",
+        "source_urls": ["https://github.com/anthropics/awesome-slash"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "tool": "claude-code" },
+        "normative_level": "SHOULD",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "CC-MEM-005",
       "name": "Generic Instruction",
       "severity": "HIGH",
-      "category": "claude-memory"
+      "category": "claude-memory",
+      "evidence": {
+        "source_type": "community",
+        "source_urls": [
+          "https://github.com/anthropics/awesome-slash",
+          "https://arxiv.org/abs/2201.11903"
+        ],
+        "verified_on": "2026-02-04",
+        "applies_to": { "tool": "claude-code" },
+        "normative_level": "SHOULD",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "CC-MEM-006",
       "name": "Negative Without Positive",
       "severity": "HIGH",
-      "category": "claude-memory"
+      "category": "claude-memory",
+      "evidence": {
+        "source_type": "paper",
+        "source_urls": ["https://arxiv.org/abs/2201.11903"],
+        "verified_on": "2026-02-04",
+        "applies_to": {},
+        "normative_level": "SHOULD",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "CC-MEM-007",
       "name": "Weak Constraint Language",
       "severity": "HIGH",
-      "category": "claude-memory"
+      "category": "claude-memory",
+      "evidence": {
+        "source_type": "paper",
+        "source_urls": ["https://arxiv.org/abs/2201.11903"],
+        "verified_on": "2026-02-04",
+        "applies_to": {},
+        "normative_level": "SHOULD",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "CC-MEM-008",
       "name": "Critical Content in Middle",
       "severity": "HIGH",
-      "category": "claude-memory"
+      "category": "claude-memory",
+      "evidence": {
+        "source_type": "paper",
+        "source_urls": ["https://aclanthology.org/2024.tacl-1.9/"],
+        "verified_on": "2026-02-04",
+        "applies_to": {},
+        "normative_level": "SHOULD",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "CC-MEM-009",
       "name": "Token Count Exceeded",
       "severity": "MEDIUM",
-      "category": "claude-memory"
+      "category": "claude-memory",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": ["https://code.claude.com/docs/en/memory"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "tool": "claude-code" },
+        "normative_level": "SHOULD",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "CC-MEM-010",
       "name": "README Duplication",
       "severity": "MEDIUM",
-      "category": "claude-memory"
+      "category": "claude-memory",
+      "evidence": {
+        "source_type": "community",
+        "source_urls": ["https://github.com/anthropics/awesome-slash"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "tool": "claude-code" },
+        "normative_level": "SHOULD",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "AGM-001",
       "name": "Valid Markdown Structure",
       "severity": "HIGH",
-      "category": "agents-md"
+      "category": "agents-md",
+      "evidence": {
+        "source_type": "community",
+        "source_urls": [
+          "https://developers.openai.com/codex/guides/agents-md",
+          "https://docs.cursor.com/en/context",
+          "https://docs.cline.bot/features/custom-instructions"
+        ],
+        "verified_on": "2026-02-04",
+        "applies_to": {},
+        "normative_level": "MUST",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "AGM-002",
       "name": "Missing Section Headers",
       "severity": "MEDIUM",
-      "category": "agents-md"
+      "category": "agents-md",
+      "evidence": {
+        "source_type": "community",
+        "source_urls": [
+          "https://docs.cursor.com/en/context",
+          "https://docs.cline.bot/features/custom-instructions"
+        ],
+        "verified_on": "2026-02-04",
+        "applies_to": {},
+        "normative_level": "SHOULD",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "AGM-003",
       "name": "Character Limit (Windsurf)",
       "severity": "MEDIUM",
-      "category": "agents-md"
+      "category": "agents-md",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": ["https://docs.windsurf.com/windsurf/cascade/memories"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "tool": "windsurf" },
+        "normative_level": "SHOULD",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "AGM-004",
       "name": "Missing Project Context",
       "severity": "MEDIUM",
-      "category": "agents-md"
+      "category": "agents-md",
+      "evidence": {
+        "source_type": "community",
+        "source_urls": [
+          "https://developers.openai.com/codex/guides/agents-md",
+          "https://docs.cursor.com/en/context"
+        ],
+        "verified_on": "2026-02-04",
+        "applies_to": {},
+        "normative_level": "BEST_PRACTICE",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "AGM-005",
       "name": "Platform-Specific Features Without Guard",
       "severity": "MEDIUM",
-      "category": "agents-md"
+      "category": "agents-md",
+      "evidence": {
+        "source_type": "community",
+        "source_urls": [
+          "https://developers.openai.com/codex/guides/agents-md",
+          "https://docs.cursor.com/en/context"
+        ],
+        "verified_on": "2026-02-04",
+        "applies_to": {},
+        "normative_level": "SHOULD",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "AGM-006",
       "name": "Nested AGENTS.md Hierarchy",
       "severity": "MEDIUM",
-      "category": "agents-md"
+      "category": "agents-md",
+      "evidence": {
+        "source_type": "community",
+        "source_urls": [
+          "https://developers.openai.com/codex/guides/agents-md",
+          "https://docs.cline.bot/features/custom-instructions",
+          "https://github.com/github/docs/changelog/2025-06-17-github-copilot-coding-agent-now-supports-agents-md-custom-instructions"
+        ],
+        "verified_on": "2026-02-04",
+        "applies_to": {},
+        "normative_level": "BEST_PRACTICE",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "CC-PL-001",
       "name": "Plugin Manifest Not in .claude-plugin/",
       "severity": "HIGH",
-      "category": "claude-plugins"
+      "category": "claude-plugins",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": ["https://code.claude.com/docs/en/plugins"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "tool": "claude-code" },
+        "normative_level": "MUST",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "CC-PL-002",
       "name": "Components in .claude-plugin/",
       "severity": "HIGH",
-      "category": "claude-plugins"
+      "category": "claude-plugins",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": ["https://code.claude.com/docs/en/plugins-reference"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "tool": "claude-code" },
+        "normative_level": "MUST",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "CC-PL-003",
       "name": "Invalid Semver",
       "severity": "HIGH",
-      "category": "claude-plugins"
+      "category": "claude-plugins",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": ["https://code.claude.com/docs/en/plugins-reference"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "tool": "claude-code" },
+        "normative_level": "MUST",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "CC-PL-004",
       "name": "Missing Required Plugin Field",
       "severity": "HIGH",
-      "category": "claude-plugins"
+      "category": "claude-plugins",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": ["https://code.claude.com/docs/en/plugins-reference"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "tool": "claude-code" },
+        "normative_level": "MUST",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "CC-PL-005",
       "name": "Empty Plugin Name",
       "severity": "HIGH",
-      "category": "claude-plugins"
+      "category": "claude-plugins",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": ["https://code.claude.com/docs/en/plugins-reference"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "tool": "claude-code" },
+        "normative_level": "MUST",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "CC-PL-006",
       "name": "Plugin Parse Error",
       "severity": "HIGH",
-      "category": "claude-plugins"
+      "category": "claude-plugins",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": ["https://code.claude.com/docs/en/plugins-reference"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "tool": "claude-code" },
+        "normative_level": "MUST",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "MCP-001",
       "name": "Invalid JSON-RPC Version",
       "severity": "HIGH",
-      "category": "mcp"
+      "category": "mcp",
+      "evidence": {
+        "source_type": "spec",
+        "source_urls": ["https://modelcontextprotocol.io/specification"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "spec_revision": "2025-06-18" },
+        "normative_level": "MUST",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "MCP-002",
       "name": "Missing Required Tool Field",
       "severity": "HIGH",
-      "category": "mcp"
+      "category": "mcp",
+      "evidence": {
+        "source_type": "spec",
+        "source_urls": ["https://modelcontextprotocol.io/docs/concepts/tools"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "spec_revision": "2025-06-18" },
+        "normative_level": "MUST",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "MCP-003",
       "name": "Invalid JSON Schema",
       "severity": "HIGH",
-      "category": "mcp"
+      "category": "mcp",
+      "evidence": {
+        "source_type": "spec",
+        "source_urls": ["https://modelcontextprotocol.io/specification"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "spec_revision": "2025-06-18" },
+        "normative_level": "MUST",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "MCP-004",
       "name": "Missing Tool Description",
       "severity": "HIGH",
-      "category": "mcp"
+      "category": "mcp",
+      "evidence": {
+        "source_type": "spec",
+        "source_urls": ["https://modelcontextprotocol.io/docs/concepts/tools"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "spec_revision": "2025-06-18" },
+        "normative_level": "SHOULD",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "MCP-005",
       "name": "Tool Without User Consent",
       "severity": "HIGH",
-      "category": "mcp"
+      "category": "mcp",
+      "evidence": {
+        "source_type": "spec",
+        "source_urls": ["https://modelcontextprotocol.io/specification"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "spec_revision": "2025-06-18" },
+        "normative_level": "MUST",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "MCP-006",
       "name": "Untrusted Annotations",
       "severity": "HIGH",
-      "category": "mcp"
+      "category": "mcp",
+      "evidence": {
+        "source_type": "spec",
+        "source_urls": ["https://modelcontextprotocol.io/docs/concepts/tools"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "spec_revision": "2025-06-18" },
+        "normative_level": "MUST",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "MCP-007",
       "name": "MCP Parse Error",
       "severity": "HIGH",
-      "category": "mcp"
+      "category": "mcp",
+      "evidence": {
+        "source_type": "spec",
+        "source_urls": ["https://modelcontextprotocol.io/specification"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "spec_revision": "2025-06-18" },
+        "normative_level": "MUST",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "MCP-008",
       "name": "Protocol Version Mismatch",
       "severity": "MEDIUM",
-      "category": "mcp"
+      "category": "mcp",
+      "evidence": {
+        "source_type": "spec",
+        "source_urls": ["https://modelcontextprotocol.io/specification"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "spec_revision": "2025-06-18" },
+        "normative_level": "SHOULD",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "COP-001",
       "name": "Empty Copilot Instruction File",
       "severity": "HIGH",
-      "category": "copilot"
+      "category": "copilot",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": ["https://docs.github.com/en/copilot/customizing-copilot"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "tool": "github-copilot" },
+        "normative_level": "MUST",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "COP-002",
       "name": "Invalid Frontmatter in Scoped Instructions",
       "severity": "HIGH",
-      "category": "copilot"
+      "category": "copilot",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": ["https://docs.github.com/en/copilot/customizing-copilot"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "tool": "github-copilot" },
+        "normative_level": "MUST",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "COP-003",
       "name": "Invalid Glob Pattern in applyTo",
       "severity": "HIGH",
-      "category": "copilot"
+      "category": "copilot",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": ["https://docs.github.com/en/copilot/customizing-copilot"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "tool": "github-copilot" },
+        "normative_level": "MUST",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "COP-004",
       "name": "Unknown Frontmatter Keys",
       "severity": "MEDIUM",
-      "category": "copilot"
+      "category": "copilot",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": ["https://docs.github.com/en/copilot/customizing-copilot"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "tool": "github-copilot" },
+        "normative_level": "SHOULD",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "CUR-001",
       "name": "Empty Cursor Rule File",
       "severity": "HIGH",
-      "category": "cursor"
+      "category": "cursor",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": ["https://docs.cursor.com/en/context"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "tool": "cursor" },
+        "normative_level": "MUST",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "CUR-002",
       "name": "Missing Frontmatter in .mdc File",
       "severity": "MEDIUM",
-      "category": "cursor"
+      "category": "cursor",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": ["https://docs.cursor.com/en/context"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "tool": "cursor" },
+        "normative_level": "SHOULD",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "CUR-003",
       "name": "Invalid YAML Frontmatter",
       "severity": "HIGH",
-      "category": "cursor"
+      "category": "cursor",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": ["https://docs.cursor.com/en/context"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "tool": "cursor" },
+        "normative_level": "MUST",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "CUR-004",
       "name": "Invalid Glob Pattern in globs Field",
       "severity": "HIGH",
-      "category": "cursor"
+      "category": "cursor",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": ["https://docs.cursor.com/en/context"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "tool": "cursor" },
+        "normative_level": "MUST",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "CUR-005",
       "name": "Unknown Frontmatter Keys",
       "severity": "MEDIUM",
-      "category": "cursor"
+      "category": "cursor",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": ["https://docs.cursor.com/en/context"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "tool": "cursor" },
+        "normative_level": "SHOULD",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "CUR-006",
       "name": "Legacy .cursorrules File Detected",
       "severity": "MEDIUM",
-      "category": "cursor"
+      "category": "cursor",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": ["https://docs.cursor.com/en/context"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "tool": "cursor" },
+        "normative_level": "SHOULD",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "XML-001",
       "name": "Unclosed XML Tag",
       "severity": "HIGH",
-      "category": "xml"
+      "category": "xml",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": ["https://platform.claude.com/docs"],
+        "verified_on": "2026-02-04",
+        "applies_to": {},
+        "normative_level": "MUST",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "XML-002",
       "name": "Mismatched Closing Tag",
       "severity": "HIGH",
-      "category": "xml"
+      "category": "xml",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": ["https://www.w3.org/TR/xml/"],
+        "verified_on": "2026-02-04",
+        "applies_to": {},
+        "normative_level": "MUST",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "XML-003",
       "name": "Unmatched Closing Tag",
       "severity": "HIGH",
-      "category": "xml"
+      "category": "xml",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": ["https://www.w3.org/TR/xml/"],
+        "verified_on": "2026-02-04",
+        "applies_to": {},
+        "normative_level": "MUST",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "REF-001",
       "name": "Import File Not Found",
       "severity": "HIGH",
-      "category": "references"
+      "category": "references",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": ["https://code.claude.com/docs/en/memory"],
+        "verified_on": "2026-02-04",
+        "applies_to": { "tool": "claude-code" },
+        "normative_level": "MUST",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "REF-002",
       "name": "Broken Markdown Link",
       "severity": "HIGH",
-      "category": "references"
+      "category": "references",
+      "evidence": {
+        "source_type": "community",
+        "source_urls": ["https://spec.commonmark.org/"],
+        "verified_on": "2026-02-04",
+        "applies_to": {},
+        "normative_level": "SHOULD",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "PE-001",
       "name": "Lost in the Middle",
       "severity": "MEDIUM",
-      "category": "prompt-engineering"
+      "category": "prompt-engineering",
+      "evidence": {
+        "source_type": "paper",
+        "source_urls": ["https://aclanthology.org/2024.tacl-1.9/"],
+        "verified_on": "2026-02-04",
+        "applies_to": {},
+        "normative_level": "SHOULD",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "PE-002",
       "name": "Chain-of-Thought on Simple Task",
       "severity": "MEDIUM",
-      "category": "prompt-engineering"
+      "category": "prompt-engineering",
+      "evidence": {
+        "source_type": "paper",
+        "source_urls": ["https://arxiv.org/abs/2201.11903"],
+        "verified_on": "2026-02-04",
+        "applies_to": {},
+        "normative_level": "SHOULD",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "PE-003",
       "name": "Weak Imperative Language",
       "severity": "MEDIUM",
-      "category": "prompt-engineering"
+      "category": "prompt-engineering",
+      "evidence": {
+        "source_type": "paper",
+        "source_urls": [
+          "https://arxiv.org/abs/2201.11903",
+          "https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview"
+        ],
+        "verified_on": "2026-02-04",
+        "applies_to": {},
+        "normative_level": "SHOULD",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "PE-004",
       "name": "Ambiguous Instructions",
       "severity": "MEDIUM",
-      "category": "prompt-engineering"
+      "category": "prompt-engineering",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": ["https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview"],
+        "verified_on": "2026-02-04",
+        "applies_to": {},
+        "normative_level": "SHOULD",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "XP-001",
       "name": "Platform-Specific Feature in Generic Config",
       "severity": "HIGH",
-      "category": "cross-platform"
+      "category": "cross-platform",
+      "evidence": {
+        "source_type": "community",
+        "source_urls": [
+          "https://developers.openai.com/codex/guides/agents-md",
+          "https://docs.cursor.com/en/context"
+        ],
+        "verified_on": "2026-02-04",
+        "applies_to": {},
+        "normative_level": "MUST",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "XP-002",
       "name": "AGENTS.md Platform Compatibility",
       "severity": "HIGH",
-      "category": "cross-platform"
+      "category": "cross-platform",
+      "evidence": {
+        "source_type": "community",
+        "source_urls": [
+          "https://developers.openai.com/codex/guides/agents-md",
+          "https://opencode.ai/docs/rules",
+          "https://docs.cursor.com/en/context",
+          "https://docs.cline.bot/features/custom-instructions",
+          "https://github.com/github/docs/changelog/2025-06-17-github-copilot-coding-agent-now-supports-agents-md-custom-instructions"
+        ],
+        "verified_on": "2026-02-04",
+        "applies_to": {},
+        "normative_level": "SHOULD",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     },
     {
       "id": "XP-003",
       "name": "Hard-Coded Platform Paths",
       "severity": "HIGH",
-      "category": "cross-platform"
+      "category": "cross-platform",
+      "evidence": {
+        "source_type": "community",
+        "source_urls": [
+          "https://developers.openai.com/codex/guides/agents-md",
+          "https://docs.cursor.com/en/context"
+        ],
+        "verified_on": "2026-02-04",
+        "applies_to": {},
+        "normative_level": "SHOULD",
+        "tests": { "unit": true, "fixtures": true, "e2e": false }
+      }
     }
   ],
   "categories": {
