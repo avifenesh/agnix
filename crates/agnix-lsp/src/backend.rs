@@ -986,7 +986,8 @@ model: sonnet
         // All validations should complete (config is reused internally)
     }
 
-    /// Test that cached registry is used across multiple validations.
+    /// Regression test: validates multiple files using the cached registry.
+    /// Verifies the Arc<ValidatorRegistry> is thread-safe across spawn_blocking tasks.
     #[tokio::test]
     async fn test_cached_registry_used_for_multiple_validations() {
         let (service, _socket) = LspService::new(Backend::new);
