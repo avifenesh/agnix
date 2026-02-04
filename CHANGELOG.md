@@ -238,6 +238,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 48 comprehensive unit tests for MCP validation
 - Cross-platform validation rules XP-001, XP-002, XP-003
   - XP-001: Detects Claude-specific features (hooks, context:fork, agent, allowed-tools) in AGENTS.md (error)
+    - Supports section guards: Features inside Claude-specific sections (e.g., `## Claude Code Specific`) are allowed
   - XP-002: Validates AGENTS.md markdown structure for cross-platform compatibility (warning)
   - XP-003: Detects hard-coded platform paths (.claude/, .opencode/, .cursor/, etc.) in configs (warning)
 - New `cross_platform` config category toggle for XP-* rules
