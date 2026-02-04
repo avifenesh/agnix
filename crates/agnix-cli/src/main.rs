@@ -281,6 +281,9 @@ fn validate_command(path: &Path, cli: &Cli) -> anyhow::Result<()> {
             if let Some(suggestion) = &diag.suggestion {
                 println!("  {} {}", "help:".cyan(), suggestion);
             }
+            if let Some(assumption) = &diag.assumption {
+                println!("  {} {}", "note:".yellow(), assumption);
+            }
             for fix in &diag.fixes {
                 let safety = if fix.safe { "safe" } else { "unsafe" };
                 println!("  {} {} ({})", "fix:".green(), fix.description, safety);

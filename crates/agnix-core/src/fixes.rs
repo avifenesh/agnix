@@ -136,6 +136,7 @@ mod tests {
             rule: "TEST-001".to_string(),
             suggestion: None,
             fixes,
+            assumption: None,
         }
     }
 
@@ -304,6 +305,7 @@ mod tests {
             rule: "TEST-001".to_string(),
             suggestion: None,
             fixes: Vec::new(),
+            assumption: None,
         }];
 
         let results = apply_fixes(&diagnostics, false, false).unwrap();
