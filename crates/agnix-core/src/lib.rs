@@ -614,13 +614,12 @@ pub fn validate_project_with_registry(
 
     // VER-001: Warn when no tool/spec versions are explicitly pinned (project-level check)
     // This helps users understand that version-dependent rules are using default assumptions
-    // Note: We only check explicitly-set fields, not defaults (e.g., mcp_protocol_version has a default)
     if config.is_rule_enabled("VER-001") {
         let has_any_version_pinned = config.is_claude_code_version_pinned()
             || config.tool_versions.codex.is_some()
             || config.tool_versions.cursor.is_some()
             || config.tool_versions.copilot.is_some()
-            || config.spec_revisions.mcp_protocol.is_some()
+            || config.is_mcp_revision_pinned()
             || config.spec_revisions.agent_skills_spec.is_some()
             || config.spec_revisions.agents_md_spec.is_some();
 

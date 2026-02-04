@@ -325,10 +325,11 @@ import_references = true
 # Disable specific rules by ID
 disabled_rules = []  # e.g., ["CC-AG-001", "AS-005"]
 
-[[exclude]]
-"node_modules/**"
-".git/**"
-"target/**"
+exclude = [
+  "node_modules/**",
+  ".git/**",
+  "target/**"
+]
 
 # Version-aware validation (optional)
 [tool_versions]
@@ -356,7 +357,7 @@ For example, CC-HK-010 (timeout policy) uses Claude Code's default timeout behav
 claude_code = "1.0.0"
 ```
 
-The assumption note is removed and you get version-specific validation.
+The assumption note is removed, indicating that the validation behavior matches the pinned version.
 
 ### Target Tool Filtering
 
