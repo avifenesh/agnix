@@ -1,0 +1,116 @@
+{
+  "name": "agnix",
+  "displayName": "agnix - Agent Config Linter",
+  "description": "Real-time validation for agent configuration files (SKILL.md, CLAUDE.md, AGENTS.md, MCP, hooks)",
+  "version": "0.1.0",
+  "publisher": "avifenesh",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/avifenesh/agnix"
+  },
+  "license": "MIT",
+  "icon": "icon.png",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Linters",
+    "Programming Languages"
+  ],
+  "keywords": [
+    "agent",
+    "claude",
+    "mcp",
+    "skills",
+    "validation",
+    "linter"
+  ],
+  "activationEvents": [
+    "workspaceContains:**/SKILL.md",
+    "workspaceContains:**/CLAUDE.md",
+    "workspaceContains:**/AGENTS.md",
+    "workspaceContains:**/.claude/settings.json",
+    "workspaceContains:**/*.mcp.json",
+    "workspaceContains:**/.github/copilot-instructions.md"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "configuration": {
+      "title": "agnix",
+      "properties": {
+        "agnix.lspPath": {
+          "type": "string",
+          "default": "agnix-lsp",
+          "description": "Path to agnix-lsp executable"
+        },
+        "agnix.enable": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable/disable agnix validation"
+        },
+        "agnix.trace.server": {
+          "type": "string",
+          "enum": [
+            "off",
+            "messages",
+            "verbose"
+          ],
+          "default": "off",
+          "description": "Traces the communication between VS Code and the agnix language server"
+        }
+      }
+    },
+    "languages": [
+      {
+        "id": "skill-markdown",
+        "aliases": [
+          "Skill Markdown"
+        ],
+        "filenames": [
+          "SKILL.md"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "skill-markdown",
+        "scopeName": "text.skill.markdown",
+        "path": "./syntaxes/skill-frontmatter.tmLanguage.json",
+        "embeddedLanguages": {
+          "meta.embedded.block.yaml": "yaml",
+          "meta.embedded.block.markdown": "markdown"
+        }
+      }
+    ],
+    "commands": [
+      {
+        "command": "agnix.restart",
+        "title": "Restart Language Server",
+        "category": "agnix"
+      },
+      {
+        "command": "agnix.showOutput",
+        "title": "Show Output Channel",
+        "category": "agnix"
+      }
+    ]
+  },
+  "scripts": {
+    "compile": "node esbuild.js",
+    "watch": "node esbuild.js --watch",
+    "lint": "eslint src --ext ts",
+    "package": "vsce package",
+    "publish": "vsce publish"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^2.22.0",
+    "esbuild": "^0.19.0",
+    "typescript": "^5.3.0"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.0"
+  }
+}
