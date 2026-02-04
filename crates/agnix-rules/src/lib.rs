@@ -93,7 +93,7 @@ pub fn get_tool_for_prefix(prefix: &str) -> Option<&'static str> {
 pub fn get_prefixes_for_tool(tool: &str) -> Vec<&'static str> {
     TOOL_RULE_PREFIXES
         .iter()
-        .filter(|(_, t)| *t == tool)
+        .filter(|(_, t)| t.eq_ignore_ascii_case(tool))
         .map(|(prefix, _)| *prefix)
         .collect()
 }

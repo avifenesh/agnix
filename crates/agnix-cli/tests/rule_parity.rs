@@ -717,27 +717,14 @@ fn test_is_tool_alias_case_sensitivity() {
 
     use agnix_core::LintConfig;
 
-    // Test with mixed case "Copilot"
-    let mut config = LintConfig::default();
-    config.tools = vec!["Copilot".to_string()];
-    assert!(
-        config.is_rule_enabled("COP-001"),
-        "Mixed case 'Copilot' should match 'github-copilot' and enable COP-* rules"
-    );
-
-    // Test with uppercase "COPILOT"
-    let mut config_upper = LintConfig::default();
-    config_upper.tools = vec!["COPILOT".to_string()];
-    assert!(
-        config_upper.is_rule_enabled("COP-001"),
-        "Uppercase 'COPILOT' should match 'github-copilot' and enable COP-* rules"
-    );
-
-    // Test with lowercase "copilot" (baseline)
-    let mut config_lower = LintConfig::default();
-    config_lower.tools = vec!["copilot".to_string()];
-    assert!(
-        config_lower.is_rule_enabled("COP-001"),
-        "Lowercase 'copilot' should match 'github-copilot' and enable COP-* rules"
-    );
+    let aliases = ["Copilot", "COPILOT", "copilot"];
+    for alias in aliases {
+        let mut config = LintConfig::default();
+        config.tools = vec![alias.to_string()];
+        assert!(
+            config.is_rule_enabled("COP-001"),
+            "Alias '{}' should match 'github-copilot' and enable COP-* rules",
+            alias
+        );
+    }
 }

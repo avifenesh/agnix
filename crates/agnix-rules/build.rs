@@ -271,18 +271,13 @@ fn main() {
 /// - "COP-001" -> "COP-"
 /// - "AS-001" -> "AS-"
 fn extract_rule_prefix(rule_id: &str) -> Option<String> {
-    // Find the last hyphen followed by digits
-    let parts: Vec<&str> = rule_id.split('-').collect();
-    if parts.len() < 2 {
-        return None;
+    // Find the last hyphen. If it exists and is followed by only digits,
+    // we've found our prefix. This is more efficient than splitting into a vector
+    // and correctly handles edge cases like trailing hyphens.
+    if let Some((prefix, suffix)) = rule_id.rsplit_once('-') {
+        if !suffix.is_empty() && suffix.chars().all(|c| c.is_ascii_digit()) {
+            return Some(format!("{}-", prefix));
+        }
     }
-
-    // Check if the last part is all digits (the rule number)
-    if !parts.last()?.chars().all(|c| c.is_ascii_digit()) {
-        return None;
-    }
-
-    // Join all parts except the last one, with hyphens, and add trailing hyphen
-    let prefix_parts = &parts[..parts.len() - 1];
-    Some(format!("{}-", prefix_parts.join("-")))
+    None
 }
