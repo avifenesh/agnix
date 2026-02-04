@@ -195,8 +195,16 @@ fn main() {
     // =========================================================================
     // Derive prefix-to-tool mappings from rule IDs
     // =========================================================================
-    // Group rules by their prefix and find the common tool for each prefix
-    let mut prefix_to_tools: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
+    // Group rules by their prefix and track:
+    // 1. Which tools are specified for rules with this prefix
+    // 2. Whether any rule with this prefix has NO tool (making it generic)
+    #[derive(Default)]
+    struct PrefixInfo {
+        tools: BTreeSet<String>,
+        has_generic: bool, // true if any rule in this prefix has no tool specified
+    }
+
+    let mut prefix_info: BTreeMap<String, PrefixInfo> = BTreeMap::new();
 
     for rule in rules_array {
         let id = rule["id"].as_str().unwrap_or("");
@@ -206,29 +214,35 @@ fn main() {
             .and_then(|a| a.get("tool"))
             .and_then(|t| t.as_str());
 
-        if let Some(tool_name) = tool {
-            // Extract prefix from rule ID (e.g., "CC-HK-001" -> "CC-HK-", "COP-001" -> "COP-")
-            if let Some(prefix) = extract_rule_prefix(id) {
-                prefix_to_tools
-                    .entry(prefix)
-                    .or_default()
-                    .insert(tool_name.to_string());
+        if let Some(prefix) = extract_rule_prefix(id) {
+            let info = prefix_info.entry(prefix).or_default();
+            if let Some(tool_name) = tool {
+                if !tool_name.is_empty() {
+                    info.tools.insert(tool_name.to_string());
+                } else {
+                    info.has_generic = true;
+                }
+            } else {
+                // No tool specified = generic rule, applies to all tools
+                info.has_generic = true;
             }
         }
     }
 
-    // Only include prefixes that map to exactly one tool
-    // (prefixes with multiple tools are ambiguous and should not be used for filtering)
+    // Only include prefixes that:
+    // 1. Have exactly one tool specified AND
+    // 2. Have NO generic rules (all rules specify that tool)
     generated_code.push_str("/// Mapping of rule ID prefixes to their associated tools.\n");
     generated_code.push_str("/// \n");
     generated_code.push_str("/// Derived from rules.json: for each prefix, this is the tool that all rules\n");
-    generated_code.push_str("/// with that prefix apply to. Only includes prefixes where all rules\n");
-    generated_code.push_str("/// consistently map to a single tool.\n");
+    generated_code.push_str("/// with that prefix apply to. Only includes prefixes where ALL rules\n");
+    generated_code.push_str("/// consistently specify the same tool (excludes generic prefixes).\n");
     generated_code.push_str("pub const TOOL_RULE_PREFIXES: &[(&str, &str)] = &[\n");
 
-    for (prefix, tools_for_prefix) in &prefix_to_tools {
-        if tools_for_prefix.len() == 1 {
-            let tool = tools_for_prefix.iter().next().unwrap();
+    for (prefix, info) in &prefix_info {
+        // Only include if: exactly one tool AND no generic rules
+        if info.tools.len() == 1 && !info.has_generic {
+            let tool = info.tools.iter().next().unwrap();
             generated_code.push_str(&format!(
                 "    (\"{}\", \"{}\"),\n",
                 escape_str(prefix),

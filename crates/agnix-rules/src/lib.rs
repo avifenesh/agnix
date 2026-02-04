@@ -246,8 +246,10 @@ mod tests {
         assert_eq!(get_tool_for_prefix("CC-HK-"), Some("claude-code"));
         assert_eq!(get_tool_for_prefix("CC-SK-"), Some("claude-code"));
         assert_eq!(get_tool_for_prefix("CC-AG-"), Some("claude-code"));
-        assert_eq!(get_tool_for_prefix("CC-MEM-"), Some("claude-code"));
         assert_eq!(get_tool_for_prefix("CC-PL-"), Some("claude-code"));
+        // Note: CC-MEM- is NOT in the mapping because some CC-MEM-* rules
+        // have empty applies_to (making them generic)
+        assert_eq!(get_tool_for_prefix("CC-MEM-"), None);
     }
 
     #[test]
@@ -284,8 +286,10 @@ mod tests {
         assert!(prefixes.contains(&"CC-HK-"));
         assert!(prefixes.contains(&"CC-SK-"));
         assert!(prefixes.contains(&"CC-AG-"));
-        assert!(prefixes.contains(&"CC-MEM-"));
         assert!(prefixes.contains(&"CC-PL-"));
+        // Note: CC-MEM- is NOT in the list because some CC-MEM-* rules
+        // have empty applies_to (making them generic rules)
+        assert!(!prefixes.contains(&"CC-MEM-"));
     }
 
     #[test]
