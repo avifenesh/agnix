@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- MCP-008 rule for protocol version validation with configurable `mcp_protocol_version` option
 - 5 new parse error rules with normalized IDs (AS-016, CC-HK-012, CC-AG-007, CC-PL-006, MCP-007)
 - Auto-fix support for CC-MEM-005 and CC-MEM-007 memory rules
   - CC-MEM-005: Delete lines containing generic instructions
