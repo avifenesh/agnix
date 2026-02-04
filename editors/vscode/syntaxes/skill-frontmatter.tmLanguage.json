@@ -1,0 +1,62 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Skill Markdown",
+  "scopeName": "text.skill.markdown",
+  "patterns": [
+    {
+      "include": "#frontmatter"
+    },
+    {
+      "include": "text.html.markdown"
+    }
+  ],
+  "repository": {
+    "frontmatter": {
+      "begin": "\\A(-{3})\\s*$",
+      "beginCaptures": {
+        "1": {
+          "name": "punctuation.definition.frontmatter.begin.skill"
+        }
+      },
+      "end": "^(-{3})\\s*$",
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.frontmatter.end.skill"
+        }
+      },
+      "name": "meta.embedded.block.yaml",
+      "contentName": "meta.embedded.block.yaml",
+      "patterns": [
+        {
+          "include": "#skill-keys"
+        },
+        {
+          "include": "source.yaml"
+        }
+      ]
+    },
+    "skill-keys": {
+      "patterns": [
+        {
+          "match": "^\\s*(name|description|model|allowed_tools|denied_tools|context|agent)\\s*(:)",
+          "captures": {
+            "1": {
+              "name": "keyword.control.skill.key"
+            },
+            "2": {
+              "name": "punctuation.separator.key-value.yaml"
+            }
+          }
+        },
+        {
+          "match": "^\\s*(sonnet|opus|haiku|inherit)\\s*$",
+          "captures": {
+            "1": {
+              "name": "constant.language.skill.model"
+            }
+          }
+        }
+      ]
+    }
+  }
+}
