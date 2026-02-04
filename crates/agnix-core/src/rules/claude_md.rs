@@ -817,7 +817,10 @@ You should consider this approach.
         let mut fixed = content.to_string();
         fixed.replace_range(fix.start_byte..fix.end_byte, &fix.replacement);
 
-        assert_eq!(fixed, "# Critical Rules\n\nYou must follow the coding style.");
+        assert_eq!(
+            fixed,
+            "# Critical Rules\n\nYou must follow the coding style."
+        );
     }
 
     #[test]
@@ -841,12 +844,7 @@ You should consider this approach.
                 .iter()
                 .filter(|d| d.rule == "CC-MEM-007")
                 .collect();
-            assert_eq!(
-                mem007.len(),
-                1,
-                "Expected one CC-MEM-007 for: {}",
-                content
-            );
+            assert_eq!(mem007.len(), 1, "Expected one CC-MEM-007 for: {}", content);
             assert!(mem007[0].has_fixes());
 
             let fix = &mem007[0].fixes[0];

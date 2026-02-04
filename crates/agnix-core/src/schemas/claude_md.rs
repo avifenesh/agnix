@@ -654,7 +654,10 @@ mod tests {
         let wc = &results[0];
         let mut modified = content.to_string();
         modified.replace_range(wc.start_byte..wc.end_byte, "must");
-        assert_eq!(modified, "# Critical Rules\n\nYou must follow the coding style.");
+        assert_eq!(
+            modified,
+            "# Critical Rules\n\nYou must follow the coding style."
+        );
     }
 
     #[test]
@@ -668,7 +671,10 @@ mod tests {
         // Verify byte offsets allow correct replacement
         let mut modified = content.to_string();
         modified.replace_range(wc.start_byte..wc.end_byte, "must");
-        assert_eq!(modified, "# Critical Rules\n\nmust follow the coding style.");
+        assert_eq!(
+            modified,
+            "# Critical Rules\n\nmust follow the coding style."
+        );
     }
 
     #[test]
@@ -697,7 +703,10 @@ mod tests {
         // Apply fixes from end to start to avoid offset issues
         modified.replace_range(results[1].start_byte..results[1].end_byte, "must");
         modified.replace_range(results[0].start_byte..results[0].end_byte, "must");
-        assert_eq!(modified, "# Critical Rules\n\nYou must do this.\nYou must do that.");
+        assert_eq!(
+            modified,
+            "# Critical Rules\n\nYou must do this.\nYou must do that."
+        );
     }
 
     // ===== CRLF line ending tests =====
