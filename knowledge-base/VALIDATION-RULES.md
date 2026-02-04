@@ -353,6 +353,7 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
   - Prompt: `timeout > 30` exceeds 30s default
 **Fix**: Add explicit timeout within default limits (600s for commands, 30s for prompts)
 **Source**: code.claude.com/docs/en/hooks
+**Version-Aware**: When Claude Code version is not pinned in `.agnix.toml [tool_versions]`, an assumption note is added indicating default timeout behavior is assumed. Pin the version for version-specific validation.
 
 <a id="cc-hk-011"></a>
 ### CC-HK-011 [HIGH] Invalid Timeout Value
@@ -648,6 +649,7 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 **Fix**: Update protocolVersion to match expected version, or configure `mcp_protocol_version` in agnix config to match your target version
 **Note**: This is a warning (not error) because MCP allows version negotiation between client and server
 **Source**: modelcontextprotocol.io/specification (Protocol Versioning)
+**Version-Aware**: When MCP protocol version is not pinned in `.agnix.toml [spec_revisions]`, an assumption note is added indicating default protocol version is being used. Pin the version with `mcp_protocol = "2025-06-18"` for explicit control.
 
 ---
 
@@ -854,6 +856,24 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 **Detection**: Detect multiple instruction files (CLAUDE.md, AGENTS.md, .cursor/rules/, etc.) without documented precedence
 **Fix**: Document which file takes precedence (e.g., "CLAUDE.md takes precedence over AGENTS.md")
 **Source**: multi-platform clarity requirements
+
+---
+
+## VERSION AWARENESS RULES (VER)
+
+<a id="ver-001"></a>
+### VER-001 [LOW] No Tool/Spec Versions Pinned
+**Requirement**: Projects SHOULD pin tool/spec versions for deterministic validation
+**Detection**: Check if any versions are configured in .agnix.toml [tool_versions] or [spec_revisions]
+**Fix**: Add version configuration to .agnix.toml:
+```toml
+[tool_versions]
+claude_code = "2.1.3"
+
+[spec_revisions]
+mcp_protocol = "2025-06-18"
+```
+**Source**: Best practice for reproducible validation
 
 ---
 

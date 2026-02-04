@@ -16,6 +16,9 @@ pub struct HooksValidator;
 const COMMAND_HOOK_DEFAULT_TIMEOUT: u64 = 600; // 10 minutes
 const PROMPT_HOOK_DEFAULT_TIMEOUT: u64 = 30; // 30 seconds
 
+/// Version assumption note for CC-HK-010 when claude_code version is not pinned
+const CC_HK_010_ASSUMPTION: &str = "Assumes Claude Code default timeout behavior. Pin claude_code version in .agnix.toml [tool_versions] for version-specific validation.";
+
 struct DangerousPattern {
     regex: Regex,
     pattern: &'static str,
@@ -404,41 +407,51 @@ impl Validator for HooksValidator {
                         } => {
                             // CC-HK-010: Timeout policy for command hooks (600s default)
                             if config.is_rule_enabled("CC-HK-010") {
+                                let version_pinned = config.is_claude_code_version_pinned();
+
                                 if timeout.is_none() {
-                                    diagnostics.push(
-                                        Diagnostic::warning(
+                                    let mut diag = Diagnostic::warning(
+                                        path.to_path_buf(),
+                                        1,
+                                        0,
+                                        "CC-HK-010",
+                                        format!(
+                                            "Command hook at {} has no timeout specified",
+                                            hook_location
+                                        ),
+                                    )
+                                    .with_suggestion(
+                                        "Add a \"timeout\" field (e.g., 600 for command hooks)"
+                                            .to_string(),
+                                    );
+
+                                    if !version_pinned {
+                                        diag = diag.with_assumption(CC_HK_010_ASSUMPTION);
+                                    }
+
+                                    diagnostics.push(diag);
+                                }
+                                if let Some(t) = timeout {
+                                    if *t > COMMAND_HOOK_DEFAULT_TIMEOUT {
+                                        let mut diag = Diagnostic::warning(
                                             path.to_path_buf(),
                                             1,
                                             0,
                                             "CC-HK-010",
                                             format!(
-                                                "Command hook at {} has no timeout specified",
-                                                hook_location
+                                                "Command hook at {} has timeout {}s exceeding {}s default",
+                                                hook_location, t, COMMAND_HOOK_DEFAULT_TIMEOUT
                                             ),
                                         )
                                         .with_suggestion(
-                                            "Add a \"timeout\" field (e.g., 600 for command hooks)"
-                                                .to_string(),
-                                        ),
-                                    );
-                                }
-                                if let Some(t) = timeout {
-                                    if *t > COMMAND_HOOK_DEFAULT_TIMEOUT {
-                                        diagnostics.push(
-                                            Diagnostic::warning(
-                                                path.to_path_buf(),
-                                                1,
-                                                0,
-                                                "CC-HK-010",
-                                                format!(
-                                                    "Command hook at {} has timeout {}s exceeding {}s default",
-                                                    hook_location, t, COMMAND_HOOK_DEFAULT_TIMEOUT
-                                                ),
-                                            )
-                                            .with_suggestion(
-                                                format!("Consider timeout <= {}s (10-minute default limit)", COMMAND_HOOK_DEFAULT_TIMEOUT),
-                                            ),
+                                            format!("Consider timeout <= {}s (10-minute default limit)", COMMAND_HOOK_DEFAULT_TIMEOUT),
                                         );
+
+                                        if !version_pinned {
+                                            diag = diag.with_assumption(CC_HK_010_ASSUMPTION);
+                                        }
+
+                                        diagnostics.push(diag);
                                     }
                                 }
                             }
@@ -523,41 +536,51 @@ impl Validator for HooksValidator {
                         } => {
                             // CC-HK-010: Timeout policy for prompt hooks (30s default)
                             if config.is_rule_enabled("CC-HK-010") {
+                                let version_pinned = config.is_claude_code_version_pinned();
+
                                 if timeout.is_none() {
-                                    diagnostics.push(
-                                        Diagnostic::warning(
+                                    let mut diag = Diagnostic::warning(
+                                        path.to_path_buf(),
+                                        1,
+                                        0,
+                                        "CC-HK-010",
+                                        format!(
+                                            "Prompt hook at {} has no timeout specified",
+                                            hook_location
+                                        ),
+                                    )
+                                    .with_suggestion(
+                                        "Add a \"timeout\" field (e.g., 30 for prompt hooks)"
+                                            .to_string(),
+                                    );
+
+                                    if !version_pinned {
+                                        diag = diag.with_assumption(CC_HK_010_ASSUMPTION);
+                                    }
+
+                                    diagnostics.push(diag);
+                                }
+                                if let Some(t) = timeout {
+                                    if *t > PROMPT_HOOK_DEFAULT_TIMEOUT {
+                                        let mut diag = Diagnostic::warning(
                                             path.to_path_buf(),
                                             1,
                                             0,
                                             "CC-HK-010",
                                             format!(
-                                                "Prompt hook at {} has no timeout specified",
-                                                hook_location
+                                                "Prompt hook at {} has timeout {}s exceeding {}s default",
+                                                hook_location, t, PROMPT_HOOK_DEFAULT_TIMEOUT
                                             ),
                                         )
                                         .with_suggestion(
-                                            "Add a \"timeout\" field (e.g., 30 for prompt hooks)"
-                                                .to_string(),
-                                        ),
-                                    );
-                                }
-                                if let Some(t) = timeout {
-                                    if *t > PROMPT_HOOK_DEFAULT_TIMEOUT {
-                                        diagnostics.push(
-                                            Diagnostic::warning(
-                                                path.to_path_buf(),
-                                                1,
-                                                0,
-                                                "CC-HK-010",
-                                                format!(
-                                                    "Prompt hook at {} has timeout {}s exceeding {}s default",
-                                                    hook_location, t, PROMPT_HOOK_DEFAULT_TIMEOUT
-                                                ),
-                                            )
-                                            .with_suggestion(
-                                                format!("Consider timeout <= {}s (30-second default limit)", PROMPT_HOOK_DEFAULT_TIMEOUT),
-                                            ),
+                                            format!("Consider timeout <= {}s (30-second default limit)", PROMPT_HOOK_DEFAULT_TIMEOUT),
                                         );
+
+                                        if !version_pinned {
+                                            diag = diag.with_assumption(CC_HK_010_ASSUMPTION);
+                                        }
+
+                                        diagnostics.push(diag);
                                     }
                                 }
                             }
@@ -2604,5 +2627,132 @@ mod tests {
             .filter(|d| d.rule == "CC-HK-009")
             .collect();
         assert_eq!(cc_hk_009.len(), 0);
+    }
+
+    // ===== Version-Aware CC-HK-010 Tests =====
+
+    #[test]
+    fn test_cc_hk_010_assumption_when_version_not_pinned() {
+        // Default config has no version pinned
+        let config = LintConfig::default();
+        assert!(!config.is_claude_code_version_pinned());
+
+        let content = r#"{
+            "hooks": {
+                "PreToolUse": [
+                    {
+                        "matcher": "Bash",
+                        "hooks": [
+                            { "type": "command", "command": "echo test" }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+        let validator = HooksValidator;
+        let diagnostics = validator.validate(Path::new("settings.json"), content, &config);
+
+        let cc_hk_010: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-HK-010")
+            .collect();
+
+        assert_eq!(cc_hk_010.len(), 1);
+        // Should have an assumption note when version not pinned
+        assert!(cc_hk_010[0].assumption.is_some());
+        let assumption = cc_hk_010[0].assumption.as_ref().unwrap();
+        assert!(assumption.contains("Assumes Claude Code default timeout behavior"));
+        assert!(assumption.contains("[tool_versions]"));
+    }
+
+    #[test]
+    fn test_cc_hk_010_no_assumption_when_version_pinned() {
+        let mut config = LintConfig::default();
+        config.tool_versions.claude_code = Some("1.0.0".to_string());
+        assert!(config.is_claude_code_version_pinned());
+
+        let content = r#"{
+            "hooks": {
+                "PreToolUse": [
+                    {
+                        "matcher": "Bash",
+                        "hooks": [
+                            { "type": "command", "command": "echo test" }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+        let validator = HooksValidator;
+        let diagnostics = validator.validate(Path::new("settings.json"), content, &config);
+
+        let cc_hk_010: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-HK-010")
+            .collect();
+
+        assert_eq!(cc_hk_010.len(), 1);
+        // Should NOT have an assumption note when version is pinned
+        assert!(cc_hk_010[0].assumption.is_none());
+    }
+
+    #[test]
+    fn test_cc_hk_010_prompt_assumption_when_version_not_pinned() {
+        let config = LintConfig::default();
+
+        let content = r#"{
+            "hooks": {
+                "Stop": [
+                    {
+                        "hooks": [
+                            { "type": "prompt", "prompt": "Summarize session" }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+        let validator = HooksValidator;
+        let diagnostics = validator.validate(Path::new("settings.json"), content, &config);
+
+        let cc_hk_010: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-HK-010")
+            .collect();
+
+        assert_eq!(cc_hk_010.len(), 1);
+        assert!(cc_hk_010[0].assumption.is_some());
+    }
+
+    #[test]
+    fn test_cc_hk_010_exceeds_default_assumption_when_version_not_pinned() {
+        let config = LintConfig::default();
+
+        let content = r#"{
+            "hooks": {
+                "PreToolUse": [
+                    {
+                        "matcher": "Bash",
+                        "hooks": [
+                            { "type": "command", "command": "echo test", "timeout": 700 }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+        let validator = HooksValidator;
+        let diagnostics = validator.validate(Path::new("settings.json"), content, &config);
+
+        let cc_hk_010: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-HK-010")
+            .collect();
+
+        assert_eq!(cc_hk_010.len(), 1);
+        // Warning about exceeding default should also have assumption when unpinned
+        assert!(cc_hk_010[0].assumption.is_some());
     }
 }
