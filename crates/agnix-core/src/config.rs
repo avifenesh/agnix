@@ -109,6 +109,10 @@ pub struct RuleConfig {
     #[serde(default = "default_true")]
     pub copilot: bool,
 
+    /// Enable Cursor project rules validation (CUR-*)
+    #[serde(default = "default_true")]
+    pub cursor: bool,
+
     /// Enable prompt engineering validation (PE-*)
     #[serde(default = "default_true")]
     pub prompt_engineering: bool,
@@ -148,6 +152,7 @@ impl Default for RuleConfig {
             cross_platform: true,
             agents_md: true,
             copilot: true,
+            cursor: true,
             prompt_engineering: true,
             generic_instructions: true,
             frontmatter_validation: true,
@@ -258,6 +263,7 @@ impl LintConfig {
             s if s.starts_with("XP-") => self.rules.cross_platform,
             s if s.starts_with("AGM-") => self.rules.agents_md,
             s if s.starts_with("COP-") => self.rules.copilot,
+            s if s.starts_with("CUR-") => self.rules.cursor,
             s if s.starts_with("PE-") => self.rules.prompt_engineering,
             // Unknown rules are enabled by default
             _ => true,
@@ -971,6 +977,100 @@ copilot = false
         assert!(!config.is_rule_enabled("COP-002"));
         assert!(!config.is_rule_enabled("COP-003"));
         assert!(!config.is_rule_enabled("COP-004"));
+    }
+
+    // ===== Cursor Category Tests =====
+
+    #[test]
+    fn test_default_config_enables_cur_rules() {
+        let config = LintConfig::default();
+
+        assert!(config.is_rule_enabled("CUR-001"));
+        assert!(config.is_rule_enabled("CUR-002"));
+        assert!(config.is_rule_enabled("CUR-003"));
+        assert!(config.is_rule_enabled("CUR-004"));
+        assert!(config.is_rule_enabled("CUR-005"));
+        assert!(config.is_rule_enabled("CUR-006"));
+    }
+
+    #[test]
+    fn test_category_disabled_cursor() {
+        let mut config = LintConfig::default();
+        config.rules.cursor = false;
+
+        assert!(!config.is_rule_enabled("CUR-001"));
+        assert!(!config.is_rule_enabled("CUR-002"));
+        assert!(!config.is_rule_enabled("CUR-003"));
+        assert!(!config.is_rule_enabled("CUR-004"));
+        assert!(!config.is_rule_enabled("CUR-005"));
+        assert!(!config.is_rule_enabled("CUR-006"));
+
+        // Other categories still enabled
+        assert!(config.is_rule_enabled("CC-AG-001"));
+        assert!(config.is_rule_enabled("AS-005"));
+        assert!(config.is_rule_enabled("COP-001"));
+    }
+
+    #[test]
+    fn test_cur_rules_work_with_all_targets() {
+        // CUR-* rules are NOT target-specific
+        let targets = [
+            TargetTool::Generic,
+            TargetTool::ClaudeCode,
+            TargetTool::Cursor,
+            TargetTool::Codex,
+        ];
+
+        for target in targets {
+            let mut config = LintConfig::default();
+            config.target = target;
+
+            assert!(
+                config.is_rule_enabled("CUR-001"),
+                "CUR-001 should be enabled for {:?}",
+                target
+            );
+            assert!(
+                config.is_rule_enabled("CUR-006"),
+                "CUR-006 should be enabled for {:?}",
+                target
+            );
+        }
+    }
+
+    #[test]
+    fn test_disabled_specific_cur_rule() {
+        let mut config = LintConfig::default();
+        config.rules.disabled_rules = vec!["CUR-001".to_string()];
+
+        assert!(!config.is_rule_enabled("CUR-001"));
+        assert!(config.is_rule_enabled("CUR-002"));
+        assert!(config.is_rule_enabled("CUR-003"));
+        assert!(config.is_rule_enabled("CUR-004"));
+        assert!(config.is_rule_enabled("CUR-005"));
+        assert!(config.is_rule_enabled("CUR-006"));
+    }
+
+    #[test]
+    fn test_toml_deserialization_cursor() {
+        let toml_str = r#"
+severity = "Warning"
+target = "Generic"
+exclude = []
+
+[rules]
+cursor = false
+"#;
+
+        let config: LintConfig = toml::from_str(toml_str).unwrap();
+
+        assert!(!config.rules.cursor);
+        assert!(!config.is_rule_enabled("CUR-001"));
+        assert!(!config.is_rule_enabled("CUR-002"));
+        assert!(!config.is_rule_enabled("CUR-003"));
+        assert!(!config.is_rule_enabled("CUR-004"));
+        assert!(!config.is_rule_enabled("CUR-005"));
+        assert!(!config.is_rule_enabled("CUR-006"));
     }
 
     // ===== Config Load Warning Tests =====

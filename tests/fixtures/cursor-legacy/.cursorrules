@@ -1,0 +1,8 @@
+# Legacy Cursor Rules
+
+This is a legacy .cursorrules file that should be migrated to .cursor/rules/*.mdc format.
+
+## Guidelines
+
+- Follow coding standards
+- Write tests

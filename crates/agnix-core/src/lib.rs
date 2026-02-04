@@ -56,6 +56,10 @@ pub enum FileType {
     Copilot,
     /// GitHub Copilot scoped instructions (.github/instructions/*.instructions.md)
     CopilotScoped,
+    /// Cursor project rules (.cursor/rules/*.mdc)
+    CursorRule,
+    /// Legacy Cursor rules file (.cursorrules)
+    CursorRulesLegacy,
     /// Other .md files (for XML/import checks)
     GenericMarkdown,
     /// Skip validation
@@ -128,6 +132,8 @@ impl ValidatorRegistry {
             (FileType::Copilot, xml_validator),
             (FileType::CopilotScoped, copilot_validator),
             (FileType::CopilotScoped, xml_validator),
+            (FileType::CursorRule, cursor_validator),
+            (FileType::CursorRulesLegacy, cursor_validator),
             (FileType::GenericMarkdown, cross_platform_validator),
             (FileType::GenericMarkdown, xml_validator),
             (FileType::GenericMarkdown, imports_validator),
@@ -192,6 +198,10 @@ fn prompt_validator() -> Box<dyn Validator> {
 fn copilot_validator() -> Box<dyn Validator> {
     Box::new(rules::copilot::CopilotValidator)
 }
+
+fn cursor_validator() -> Box<dyn Validator> {
+    Box::new(rules::cursor::CursorValidator)
+}
 /// Detect file type based on path patterns
 pub fn detect_file_type(path: &Path) -> FileType {
     let filename = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
@@ -225,6 +235,13 @@ pub fn detect_file_type(path: &Path) -> FileType {
         {
             FileType::CopilotScoped
         }
+        // Cursor project rules (.cursor/rules/*.mdc)
+        name if name.ends_with(".mdc") && parent == Some("rules") && grandparent == Some(".cursor") =>
+        {
+            FileType::CursorRule
+        }
+        // Legacy Cursor rules file (.cursorrules in root)
+        ".cursorrules" => FileType::CursorRulesLegacy,
         name if name.ends_with(".md") => {
             if parent == Some("agents") || grandparent == Some("agents") {
                 FileType::Agent
@@ -2007,6 +2024,259 @@ Use idiomatic Rust patterns.
                 .iter()
                 .map(|d| &d.rule)
                 .collect::<Vec<_>>()
+        );
+    }
+
+    // ===== Cursor Project Rules Validation Integration Tests =====
+
+    #[test]
+    fn test_detect_cursor_rule() {
+        assert_eq!(
+            detect_file_type(Path::new(".cursor/rules/typescript.mdc")),
+            FileType::CursorRule
+        );
+        assert_eq!(
+            detect_file_type(Path::new("project/.cursor/rules/rust.mdc")),
+            FileType::CursorRule
+        );
+    }
+
+    #[test]
+    fn test_detect_cursor_legacy() {
+        assert_eq!(
+            detect_file_type(Path::new(".cursorrules")),
+            FileType::CursorRulesLegacy
+        );
+        assert_eq!(
+            detect_file_type(Path::new("project/.cursorrules")),
+            FileType::CursorRulesLegacy
+        );
+    }
+
+    #[test]
+    fn test_cursor_not_detected_outside_cursor_dir() {
+        // .mdc files outside .cursor/rules/ should not be detected as CursorRule
+        assert_ne!(
+            detect_file_type(Path::new("rules/typescript.mdc")),
+            FileType::CursorRule
+        );
+        assert_ne!(
+            detect_file_type(Path::new(".cursor/typescript.mdc")),
+            FileType::CursorRule
+        );
+    }
+
+    #[test]
+    fn test_validators_for_cursor() {
+        let registry = ValidatorRegistry::with_defaults();
+
+        let cursor_validators = registry.validators_for(FileType::CursorRule);
+        assert_eq!(cursor_validators.len(), 1); // cursor only
+
+        let legacy_validators = registry.validators_for(FileType::CursorRulesLegacy);
+        assert_eq!(legacy_validators.len(), 1); // cursor only
+    }
+
+    #[test]
+    fn test_validate_cursor_fixtures() {
+        // Use validate_file directly since .cursor is a hidden directory
+        let fixtures_dir = get_fixtures_dir();
+        let cursor_dir = fixtures_dir.join("cursor");
+
+        let config = LintConfig::default();
+
+        // Validate valid .mdc file
+        let valid_path = cursor_dir.join(".cursor/rules/valid.mdc");
+        let diagnostics = validate_file(&valid_path, &config).unwrap();
+        let cur_errors: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule.starts_with("CUR-") && d.level == DiagnosticLevel::Error)
+            .collect();
+        assert!(
+            cur_errors.is_empty(),
+            "Valid .mdc file should have no CUR errors, got: {:?}",
+            cur_errors
+        );
+
+        // Validate .mdc file with multiple globs
+        let multiple_globs_path = cursor_dir.join(".cursor/rules/multiple-globs.mdc");
+        let diagnostics = validate_file(&multiple_globs_path, &config).unwrap();
+        let cur_errors: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule.starts_with("CUR-") && d.level == DiagnosticLevel::Error)
+            .collect();
+        assert!(
+            cur_errors.is_empty(),
+            "Valid .mdc file with multiple globs should have no CUR errors, got: {:?}",
+            cur_errors
+        );
+    }
+
+    #[test]
+    fn test_validate_cursor_invalid_fixtures() {
+        // Use validate_file directly since .cursor is a hidden directory
+        let fixtures_dir = get_fixtures_dir();
+        let cursor_invalid_dir = fixtures_dir.join("cursor-invalid");
+        let config = LintConfig::default();
+
+        // CUR-001: Empty .mdc file
+        let empty_mdc = cursor_invalid_dir.join(".cursor/rules/empty.mdc");
+        let diagnostics = validate_file(&empty_mdc, &config).unwrap();
+        assert!(
+            diagnostics.iter().any(|d| d.rule == "CUR-001"),
+            "Expected CUR-001 from empty.mdc fixture"
+        );
+
+        // CUR-002: Missing frontmatter
+        let no_frontmatter = cursor_invalid_dir.join(".cursor/rules/no-frontmatter.mdc");
+        let diagnostics = validate_file(&no_frontmatter, &config).unwrap();
+        assert!(
+            diagnostics.iter().any(|d| d.rule == "CUR-002"),
+            "Expected CUR-002 from no-frontmatter.mdc fixture"
+        );
+
+        // CUR-003: Invalid YAML
+        let bad_yaml = cursor_invalid_dir.join(".cursor/rules/bad-yaml.mdc");
+        let diagnostics = validate_file(&bad_yaml, &config).unwrap();
+        assert!(
+            diagnostics.iter().any(|d| d.rule == "CUR-003"),
+            "Expected CUR-003 from bad-yaml.mdc fixture"
+        );
+
+        // CUR-004: Invalid glob pattern
+        let bad_glob = cursor_invalid_dir.join(".cursor/rules/bad-glob.mdc");
+        let diagnostics = validate_file(&bad_glob, &config).unwrap();
+        assert!(
+            diagnostics.iter().any(|d| d.rule == "CUR-004"),
+            "Expected CUR-004 from bad-glob.mdc fixture"
+        );
+
+        // CUR-005: Unknown keys
+        let unknown_keys = cursor_invalid_dir.join(".cursor/rules/unknown-keys.mdc");
+        let diagnostics = validate_file(&unknown_keys, &config).unwrap();
+        assert!(
+            diagnostics.iter().any(|d| d.rule == "CUR-005"),
+            "Expected CUR-005 from unknown-keys.mdc fixture"
+        );
+    }
+
+    #[test]
+    fn test_validate_cursor_legacy_fixture() {
+        let fixtures_dir = get_fixtures_dir();
+        let legacy_path = fixtures_dir.join("cursor-legacy/.cursorrules");
+        let config = LintConfig::default();
+
+        let diagnostics = validate_file(&legacy_path, &config).unwrap();
+        assert!(
+            diagnostics.iter().any(|d| d.rule == "CUR-006"),
+            "Expected CUR-006 from .cursorrules fixture"
+        );
+    }
+
+    #[test]
+    fn test_validate_cursor_file_empty() {
+        let temp = tempfile::TempDir::new().unwrap();
+        let cursor_dir = temp.path().join(".cursor").join("rules");
+        std::fs::create_dir_all(&cursor_dir).unwrap();
+        let file_path = cursor_dir.join("empty.mdc");
+        std::fs::write(&file_path, "").unwrap();
+
+        let config = LintConfig::default();
+        let diagnostics = validate_file(&file_path, &config).unwrap();
+
+        let cur_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CUR-001").collect();
+        assert_eq!(cur_001.len(), 1, "Expected CUR-001 for empty file");
+    }
+
+    #[test]
+    fn test_validate_cursor_mdc_missing_frontmatter() {
+        let temp = tempfile::TempDir::new().unwrap();
+        let cursor_dir = temp.path().join(".cursor").join("rules");
+        std::fs::create_dir_all(&cursor_dir).unwrap();
+        let file_path = cursor_dir.join("test.mdc");
+        std::fs::write(&file_path, "# Rules without frontmatter").unwrap();
+
+        let config = LintConfig::default();
+        let diagnostics = validate_file(&file_path, &config).unwrap();
+
+        let cur_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CUR-002").collect();
+        assert_eq!(cur_002.len(), 1, "Expected CUR-002 for missing frontmatter");
+    }
+
+    #[test]
+    fn test_validate_cursor_valid_mdc() {
+        let temp = tempfile::TempDir::new().unwrap();
+        let cursor_dir = temp.path().join(".cursor").join("rules");
+        std::fs::create_dir_all(&cursor_dir).unwrap();
+        let file_path = cursor_dir.join("rust.mdc");
+        std::fs::write(
+            &file_path,
+            r#"---
+description: Rust rules
+globs: "**/*.rs"
+---
+# Rust Rules
+
+Use idiomatic Rust patterns.
+"#,
+        )
+        .unwrap();
+
+        let config = LintConfig::default();
+        let diagnostics = validate_file(&file_path, &config).unwrap();
+
+        let cur_errors: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule.starts_with("CUR-") && d.level == DiagnosticLevel::Error)
+            .collect();
+        assert!(
+            cur_errors.is_empty(),
+            "Valid .mdc file should have no CUR errors"
+        );
+    }
+
+    #[test]
+    fn test_validate_project_finds_cursor_hidden_dir() {
+        // Test validate_project walks .cursor directory
+        let temp = tempfile::TempDir::new().unwrap();
+        let cursor_dir = temp.path().join(".cursor").join("rules");
+        std::fs::create_dir_all(&cursor_dir).unwrap();
+
+        // Create an empty .mdc file (should trigger CUR-001)
+        let file_path = cursor_dir.join("empty.mdc");
+        std::fs::write(&file_path, "").unwrap();
+
+        let config = LintConfig::default();
+        let result = validate_project(temp.path(), &config).unwrap();
+
+        assert!(
+            result.diagnostics.iter().any(|d| d.rule == "CUR-001"),
+            "validate_project should find .cursor/rules/empty.mdc and report CUR-001. Found: {:?}",
+            result.diagnostics.iter().map(|d| &d.rule).collect::<Vec<_>>()
+        );
+    }
+
+    #[test]
+    fn test_validate_project_finds_cursor_invalid_fixtures() {
+        // Test validate_project on the actual fixture directory
+        let fixtures_dir = get_fixtures_dir();
+        let cursor_invalid_dir = fixtures_dir.join("cursor-invalid");
+
+        let config = LintConfig::default();
+        let result = validate_project(&cursor_invalid_dir, &config).unwrap();
+
+        // Should find CUR-001 from empty.mdc
+        assert!(
+            result.diagnostics.iter().any(|d| d.rule == "CUR-001"),
+            "validate_project should find CUR-001 in cursor-invalid fixtures. Found rules: {:?}",
+            result.diagnostics.iter().map(|d| &d.rule).collect::<Vec<_>>()
+        );
+
+        // Should find CUR-002 from no-frontmatter.mdc
+        assert!(
+            result.diagnostics.iter().any(|d| d.rule == "CUR-002"),
+            "validate_project should find CUR-002 in cursor-invalid fixtures. Found rules: {:?}",
+            result.diagnostics.iter().map(|d| &d.rule).collect::<Vec<_>>()
         );
     }
 

@@ -10,6 +10,7 @@ pub mod agents_md;
 pub mod claude_md;
 pub mod copilot;
 pub mod cross_platform;
+pub mod cursor;
 pub mod hooks;
 pub mod mcp;
 pub mod plugin;

@@ -1,0 +1,5 @@
+---
+globs: [unclosed
+description: This YAML is broken
+---
+# Rules
