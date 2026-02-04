@@ -3003,7 +3003,8 @@ Body"#;
         let mut remaining = num_bytes;
         while remaining > 0 {
             let to_write = remaining.min(buffer.len());
-            file.write_all(&buffer[..to_write]).expect("Failed to write test data");
+            file.write_all(&buffer[..to_write])
+                .expect("Failed to write test data");
             remaining -= to_write;
         }
     }
@@ -3088,7 +3089,10 @@ Body"#;
 
         let size = directory_size_until(temp_dir.path(), 2 * 1024 * 1024);
         assert!(size > 2 * 1024 * 1024, "Should exceed limit");
-        assert!(size <= 3 * 1024 * 1024, "Should short-circuit before scanning all");
+        assert!(
+            size <= 3 * 1024 * 1024,
+            "Should short-circuit before scanning all"
+        );
     }
 
     #[test]
@@ -3099,10 +3103,13 @@ Body"#;
 
         // Create SKILL.md
         let skill_path = skill_dir.join("SKILL.md");
-        fs::write(&skill_path, "---\nname: boundary-test\n---\nBody").expect("Failed to write SKILL.md");
+        fs::write(&skill_path, "---\nname: boundary-test\n---\nBody")
+            .expect("Failed to write SKILL.md");
 
         // Create file that brings total to exactly 8MB (minus SKILL.md size)
-        let skill_md_size = fs::metadata(&skill_path).expect("Failed to read SKILL.md metadata").len() as usize;
+        let skill_md_size = fs::metadata(&skill_path)
+            .expect("Failed to read SKILL.md metadata")
+            .len() as usize;
         let target_size = 8 * 1024 * 1024 - skill_md_size;
         write_bytes_to_file(&skill_dir.join("data.bin"), target_size);
 
