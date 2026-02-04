@@ -20,6 +20,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Backward compatibility maintained - old configs with these fields still parse correctly
 
 ### Fixed
+- CLAUDE/AGENTS parity test now resilient to different directory structures (worktrees, symlinks)
+  - Replaced brittle `.ancestors().nth(2)` with dynamic workspace root detection
+  - New `workspace_root()` helper searches for `[workspace]` in ancestor Cargo.toml files
 - JSON output `files_checked` now correctly reports total validated files, not just files with diagnostics
 - CLI `--target` flag now validates values instead of silently falling back to "generic"
   - Invalid values rejected with helpful error message showing valid options

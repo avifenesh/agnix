@@ -485,6 +485,28 @@ fn resolve_validation_root(path: &Path) -> PathBuf {
 mod tests {
     use super::*;
 
+    fn workspace_root() -> &'static Path {
+        use std::sync::OnceLock;
+
+        static ROOT: OnceLock<PathBuf> = OnceLock::new();
+        ROOT.get_or_init(|| {
+            let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+            for ancestor in manifest_dir.ancestors() {
+                let cargo_toml = ancestor.join("Cargo.toml");
+                if let Ok(content) = std::fs::read_to_string(&cargo_toml) {
+                    if content.contains("[workspace]") || content.contains("[workspace.") {
+                        return ancestor.to_path_buf();
+                    }
+                }
+            }
+            panic!(
+                "Failed to locate workspace root from CARGO_MANIFEST_DIR={}",
+                manifest_dir.display()
+            );
+        })
+        .as_path()
+    }
+
     #[test]
     fn test_detect_skill_file() {
         assert_eq!(detect_file_type(Path::new("SKILL.md")), FileType::Skill);
@@ -539,14 +561,16 @@ mod tests {
 
     #[test]
     fn test_repo_agents_md_matches_claude_md() {
-        let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
-        let repo_root = manifest_dir
-            .ancestors()
-            .nth(2)
-            .expect("Failed to locate repo root from CARGO_MANIFEST_DIR");
+        let repo_root = workspace_root();
 
-        let claude = std::fs::read_to_string(repo_root.join("CLAUDE.md")).unwrap();
-        let agents = std::fs::read_to_string(repo_root.join("AGENTS.md")).unwrap();
+        let claude_path = repo_root.join("CLAUDE.md");
+        let claude = std::fs::read_to_string(&claude_path).unwrap_or_else(|e| {
+            panic!("Failed to read CLAUDE.md at {}: {e}", claude_path.display());
+        });
+        let agents_path = repo_root.join("AGENTS.md");
+        let agents = std::fs::read_to_string(&agents_path).unwrap_or_else(|e| {
+            panic!("Failed to read AGENTS.md at {}: {e}", agents_path.display());
+        });
 
         assert_eq!(agents, claude, "AGENTS.md must match CLAUDE.md");
     }
@@ -1499,13 +1523,7 @@ Run npm install and npm build.
 
     /// Helper to locate the fixtures directory for testing
     fn get_fixtures_dir() -> PathBuf {
-        let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
-        manifest_dir
-            .ancestors()
-            .nth(2)
-            .expect("Failed to locate repo root")
-            .join("tests")
-            .join("fixtures")
+        workspace_root().join("tests").join("fixtures")
     }
 
     #[test]
