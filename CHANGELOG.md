@@ -17,6 +17,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Editor support for VS Code, Neovim, Helix, and other LSP-compatible editors
   - Comprehensive test coverage with 36 unit and integration tests
   - Installation: `cargo install --path crates/agnix-lsp`
+- VS Code extension with full LSP integration (#22)
+  - Real-time diagnostics for all 99 validation rules
+  - Status bar indicator showing agnix validation status
+  - Syntax highlighting for SKILL.md YAML frontmatter
+  - Commands: 'Restart Language Server' and 'Show Output Channel'
+  - Configuration: agnix.lspPath, agnix.enable, agnix.trace.server
+  - Safe LSP binary detection (prevents command injection)
+  - Documentation in editors/vscode/README.md
 - Spec Drift Sentinel workflow for automated upstream specification monitoring (#107)
   - Weekly checks for S-tier sources (Agent Skills, MCP, Claude Code, Codex CLI, OpenCode)
   - Monthly checks for A-tier sources (Cursor, GitHub Copilot, Cline)

@@ -30,26 +30,7 @@ agnix-lsp
 
 ### VS Code
 
-Use the official agnix VS Code extension:
-
-1. Install `agnix-lsp` (see Installation above)
-2. Install the extension from `editors/vscode/`:
-   ```bash
-   cd editors/vscode
-   npm install
-   npm run compile
-   npm run package
-   code --install-extension agnix-0.1.0.vsix
-   ```
-
-Or install from VS Code Marketplace (when published).
-
-Configure the LSP path in VS Code settings if needed:
-```json
-{
-  "agnix.lspPath": "/path/to/agnix-lsp"
-}
-```
+A dedicated VS Code extension is available at `editors/vscode`. See `editors/vscode/README.md` for installation and usage.
 
 ### Neovim (with nvim-lspconfig)
 
