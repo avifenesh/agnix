@@ -407,8 +407,8 @@ pub fn validate_project_with_registry(
     // Validate files in parallel
     let mut diagnostics: Vec<Diagnostic> = paths
         .par_iter()
-        .flat_map(|file_path| {
-            match validate_file_with_registry(file_path, &config, registry) {
+        .flat_map(
+            |file_path| match validate_file_with_registry(file_path, &config, registry) {
                 Ok(file_diagnostics) => file_diagnostics,
                 Err(e) => {
                     vec![Diagnostic::error(
@@ -419,8 +419,8 @@ pub fn validate_project_with_registry(
                         format!("Failed to validate file: {}", e),
                     )]
                 }
-            }
-        })
+            },
+        )
         .collect();
 
     // AGM-006: Check for multiple AGENTS.md files in the directory tree (project-level check)
