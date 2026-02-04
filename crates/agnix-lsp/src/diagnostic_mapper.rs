@@ -19,11 +19,9 @@ pub fn to_lsp_diagnostic(diag: &Diagnostic) -> LspDiagnostic {
         DiagnosticLevel::Info => DiagnosticSeverity::INFORMATION,
     };
 
-    // Convert 1-indexed line/column to 0-indexed
     let line = diag.line.saturating_sub(1) as u32;
     let column = diag.column.saturating_sub(1) as u32;
 
-    // Build message with suggestion if present
     let message = if let Some(ref suggestion) = diag.suggestion {
         format!("{}\n\nSuggestion: {}", diag.message, suggestion)
     } else {

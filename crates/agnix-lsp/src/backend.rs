@@ -26,12 +26,6 @@ impl Backend {
     }
 
     /// Validate a file and publish diagnostics to the client.
-    ///
-    /// This function:
-    /// 1. Extracts the file path from the URI
-    /// 2. Runs agnix-core validation in a blocking task
-    /// 3. Converts diagnostics to LSP format
-    /// 4. Publishes results to the client
     async fn validate_and_publish(&self, uri: Url) {
         let path = match uri.to_file_path() {
             Ok(p) => p,
@@ -64,7 +58,6 @@ impl Backend {
         match result {
             Ok(Ok(diagnostics)) => to_lsp_diagnostics(diagnostics),
             Ok(Err(e)) => {
-                // Return a single diagnostic for the validation error
                 vec![Diagnostic {
                     range: Range {
                         start: Position { line: 0, character: 0 },
@@ -81,7 +74,6 @@ impl Backend {
                 }]
             }
             Err(e) => {
-                // Task join error (panic in blocking task)
                 vec![Diagnostic {
                     range: Range {
                         start: Position { line: 0, character: 0 },
@@ -137,7 +129,6 @@ impl LanguageServer for Backend {
     }
 
     async fn did_close(&self, params: DidCloseTextDocumentParams) {
-        // Clear diagnostics when file is closed
         self.client
             .publish_diagnostics(params.text_document.uri, vec![], None)
             .await;
