@@ -54,6 +54,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - New `file_utils` module with `safe_read_file()` using `symlink_metadata()`
   - Applied to validation, imports, fixes, and config loading
   - Cross-platform tests for Unix and Windows symlink handling
+- Hardened GitHub Actions workflows with security best practices:
+  - Added explicit permissions blocks to all workflows (principle of least privilege)
+  - SHA-pinned all third-party actions to prevent supply chain attacks
+  - Restricted cache saves to main branch only (prevents cache poisoning from PRs)
+  - Documented SHA pin reference in .github/workflows/README.md for maintainability
 
 ### Added
 - Auto-fix implementations for five additional rules:
