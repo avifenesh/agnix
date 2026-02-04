@@ -811,8 +811,8 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 <a id="xp-001"></a>
 ### XP-001 [HIGH] Platform-Specific Feature in Generic Config
 **Requirement**: Generic configs MUST NOT use platform-specific features
-**Detection**: Check for Claude-only features (hooks, context: fork) in AGENTS.md
-**Fix**: Move to CLAUDE.md or add platform guard
+**Detection**: Check for Claude-only features (hooks, context: fork, agent, allowed_tools) in AGENTS.md. Features under platform guard section headers (e.g., `## Claude Code Specific`, `## Claude Only`, `<!-- Claude Code -->`) are allowed.
+**Fix**: Move to CLAUDE.md or add platform guard section header
 **Source**: multi-platform research
 
 <a id="xp-002"></a>
