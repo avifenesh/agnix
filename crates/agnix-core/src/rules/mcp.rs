@@ -1,5 +1,8 @@
 //! MCP (Model Context Protocol) validation (MCP-001 to MCP-006)
 
+/// Version assumption note for MCP-008 when mcp_protocol is not pinned
+const MCP_008_ASSUMPTION: &str = "Using default MCP protocol version. Pin mcp_protocol in .agnix.toml [spec_revisions] for explicit control.";
+
 use crate::{
     config::LintConfig,
     diagnostics::Diagnostic,
@@ -278,7 +281,7 @@ fn validate_protocol_version(
 
                 if !version_pinned {
                     diag = diag.with_assumption(
-                        "Using default MCP protocol version. Pin mcp_protocol in .agnix.toml [spec_revisions] for explicit control."
+                        MCP_008_ASSUMPTION
                     );
                 }
 
@@ -309,7 +312,7 @@ fn validate_protocol_version(
 
                 if !version_pinned {
                     diag = diag.with_assumption(
-                        "Using default MCP protocol version. Pin mcp_protocol in .agnix.toml [spec_revisions] for explicit control."
+                        MCP_008_ASSUMPTION
                     );
                 }
 

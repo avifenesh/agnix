@@ -16,6 +16,9 @@ pub struct HooksValidator;
 const COMMAND_HOOK_DEFAULT_TIMEOUT: u64 = 600; // 10 minutes
 const PROMPT_HOOK_DEFAULT_TIMEOUT: u64 = 30; // 30 seconds
 
+/// Version assumption note for CC-HK-010 when claude_code version is not pinned
+const CC_HK_010_ASSUMPTION: &str = "Assumes Claude Code default timeout behavior. Pin claude_code version in .agnix.toml [tool_versions] for version-specific validation.";
+
 struct DangerousPattern {
     regex: Regex,
     pattern: &'static str,
@@ -424,7 +427,7 @@ impl Validator for HooksValidator {
 
                                     if !version_pinned {
                                         diag = diag.with_assumption(
-                                            "Assumes Claude Code default timeout behavior. Pin claude_code version in .agnix.toml [tool_versions] for version-specific validation."
+                                            CC_HK_010_ASSUMPTION
                                         );
                                     }
 
@@ -448,7 +451,7 @@ impl Validator for HooksValidator {
 
                                         if !version_pinned {
                                             diag = diag.with_assumption(
-                                                "Assumes Claude Code default timeout behavior. Pin claude_code version in .agnix.toml [tool_versions] for version-specific validation."
+                                                CC_HK_010_ASSUMPTION
                                             );
                                         }
 
@@ -557,7 +560,7 @@ impl Validator for HooksValidator {
 
                                     if !version_pinned {
                                         diag = diag.with_assumption(
-                                            "Assumes Claude Code default timeout behavior. Pin claude_code version in .agnix.toml [tool_versions] for version-specific validation."
+                                            CC_HK_010_ASSUMPTION
                                         );
                                     }
 
@@ -581,7 +584,7 @@ impl Validator for HooksValidator {
 
                                         if !version_pinned {
                                             diag = diag.with_assumption(
-                                                "Assumes Claude Code default timeout behavior. Pin claude_code version in .agnix.toml [tool_versions] for version-specific validation."
+                                                CC_HK_010_ASSUMPTION
                                             );
                                         }
 
