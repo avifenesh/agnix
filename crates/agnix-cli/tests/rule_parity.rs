@@ -666,13 +666,8 @@ fn test_evidence_test_coverage_accuracy() {
 fn test_applies_to_tool_values() {
     let rules_index = load_rules_json();
 
-    let valid_tools = [
-        "claude-code",
-        "cursor",
-        "github-copilot",
-        "windsurf",
-        // Add more as needed
-    ];
+    // Use valid_tools derived from rules.json at compile time
+    let valid_tools = agnix_rules::valid_tools();
 
     for rule in &rules_index.rules {
         if let Some(ref tool) = rule.evidence.applies_to.tool {
