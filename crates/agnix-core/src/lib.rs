@@ -367,7 +367,7 @@ pub fn validate_project_with_registry(
 
     let walk_root = std::fs::canonicalize(path).unwrap_or_else(|_| path.to_path_buf());
 
-    // Collect all file paths to validate (sequential walk, parallel validation)
+    // Collect file paths (sequential walk, parallel validation)
     // Note: hidden(false) includes .github directory for Copilot instruction files
     let paths: Vec<PathBuf> = WalkBuilder::new(&walk_root)
         .hidden(false)
@@ -398,9 +398,7 @@ pub fn validate_project_with_registry(
         .map(|entry| entry.path().to_path_buf())
         .collect();
 
-    // Count recognized files (exclude FileType::Unknown)
-    // Note: detect_file_type is called again during validation, but it's a fast
-    // string-only operation (no I/O) - the overhead is negligible vs file reads.
+    // Count recognized files (detect_file_type is string-only, no I/O)
     let files_checked = paths
         .iter()
         .filter(|p| detect_file_type(p) != FileType::Unknown)
@@ -427,17 +425,13 @@ pub fn validate_project_with_registry(
 
     // AGM-006: Check for multiple AGENTS.md files in the directory tree (project-level check)
     if config.is_rule_enabled("AGM-006") {
-        let agents_files: Vec<_> = paths
+        let agents_md_paths: Vec<_> = paths
             .iter()
-            .filter(|p| {
-                p.file_name()
-                    .and_then(|n| n.to_str())
-                    .is_some_and(|name| name == "AGENTS.md")
-            })
+            .filter(|p| p.file_name().and_then(|n| n.to_str()) == Some("AGENTS.md"))
             .collect();
 
-        if agents_files.len() > 1 {
-            for agents_file in &agents_files {
+        if agents_md_paths.len() > 1 {
+            for agents_file in &agents_md_paths {
                 let parent_files =
                     schemas::agents_md::check_agents_md_hierarchy(agents_file, &paths);
                 let description = if !parent_files.is_empty() {
@@ -450,9 +444,9 @@ pub fn validate_project_with_registry(
                         parent_paths.join(", ")
                     )
                 } else {
-                    let other_paths: Vec<String> = agents_files
+                    let other_paths: Vec<String> = agents_md_paths
                         .iter()
-                        .filter(|p| *p != agents_file)
+                        .filter(|p| p.as_path() != agents_file.as_path())
                         .map(|p| p.to_string_lossy().to_string())
                         .collect();
                     format!(
@@ -1001,6 +995,66 @@ mod tests {
                 .iter()
                 .all(|d| d.file.to_string_lossy().contains("invalid")),
             "Errors should only come from the invalid skill"
+        );
+    }
+
+    #[test]
+    fn test_validate_project_agents_md_collection() {
+        // Verify that validation correctly collects AGENTS.md paths for AGM-006
+        let temp = tempfile::TempDir::new().unwrap();
+
+        // Create multiple AGENTS.md files in different directories
+        std::fs::write(temp.path().join("AGENTS.md"), "# Root agents").unwrap();
+
+        let subdir = temp.path().join("subproject");
+        std::fs::create_dir_all(&subdir).unwrap();
+        std::fs::write(subdir.join("AGENTS.md"), "# Subproject agents").unwrap();
+
+        let config = LintConfig::default();
+        let result = validate_project(temp.path(), &config).unwrap();
+
+        // Should have AGM-006 warnings for both AGENTS.md files
+        let agm006_diagnostics: Vec<_> = result
+            .diagnostics
+            .iter()
+            .filter(|d| d.rule == "AGM-006")
+            .collect();
+
+        assert_eq!(
+            agm006_diagnostics.len(),
+            2,
+            "Expected AGM-006 diagnostic for each AGENTS.md file, got: {:?}",
+            agm006_diagnostics
+        );
+    }
+
+    #[test]
+    fn test_validate_project_files_checked_count() {
+        // Verify that validation correctly counts recognized file types
+        let temp = tempfile::TempDir::new().unwrap();
+
+        // Create recognized file types
+        std::fs::write(
+            temp.path().join("SKILL.md"),
+            "---\nname: test-skill\ndescription: Test skill\n---\nBody",
+        )
+        .unwrap();
+        std::fs::write(temp.path().join("CLAUDE.md"), "# Project memory").unwrap();
+
+        // Create unrecognized file types (should not be counted)
+        // Note: .md files are GenericMarkdown (recognized), so use non-markdown extensions
+        std::fs::write(temp.path().join("notes.txt"), "Some notes").unwrap();
+        std::fs::write(temp.path().join("data.json"), "{}").unwrap();
+
+        let config = LintConfig::default();
+        let result = validate_project(temp.path(), &config).unwrap();
+
+        // files_checked should only count recognized types (SKILL.md + CLAUDE.md = 2)
+        // .txt and .json (not matching MCP patterns) are FileType::Unknown
+        assert_eq!(
+            result.files_checked, 2,
+            "files_checked should count only recognized file types, got {}",
+            result.files_checked
         );
     }
 

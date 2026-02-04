@@ -31,6 +31,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Performance
 - AS-015 directory size validation now short-circuits when limit exceeded, improving performance on large skill directories (#84)
+- Investigated streaming validation with par_bridge() - current collect+par_iter approach found optimal for typical workloads (#83)
+
+### Tests
+- Added validation pipeline tests for AGENTS.md path collection and files_checked counter (#83)
 
 ### Changed
 - Narrowed agnix-core public API surface (#85)
