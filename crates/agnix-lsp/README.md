@@ -69,10 +69,13 @@ command = "agnix-lsp"
 
 ## Features
 
+- Real-time diagnostics as you type (via textDocument/didChange)
 - Real-time diagnostics on file open and save
 - Supports all agnix validation rules (100 rules)
 - Maps diagnostic severity levels (Error, Warning, Info)
 - Rule codes shown in diagnostic messages
+- Quick-fix code actions for auto-fixable diagnostics
+- Hover documentation for frontmatter fields (name, version, model, etc.)
 
 ## Supported File Types
 
@@ -108,7 +111,10 @@ agnix-lsp/
 │   ├── lib.rs              # Public API and server setup
 │   ├── main.rs             # Binary entry point
 │   ├── backend.rs          # LSP protocol implementation
-│   └── diagnostic_mapper.rs # Converts agnix diagnostics to LSP format
+│   ├── diagnostic_mapper.rs # Converts agnix diagnostics to LSP format
+│   ├── code_actions.rs      # Quick-fix code action generation
+│   ├── hover_provider.rs    # Hover documentation for frontmatter fields
+│   └── position.rs          # Byte offset to LSP position conversion
 └── tests/
     └── lsp_integration.rs  # Integration tests
 ```

@@ -3,6 +3,7 @@
 //! Implements the Language Server Protocol using tower-lsp, providing
 //! real-time validation of agent configuration files.
 
+use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::Arc;
 
@@ -11,12 +12,38 @@ use tower_lsp::jsonrpc::Result;
 use tower_lsp::lsp_types::*;
 use tower_lsp::{Client, LanguageServer};
 
-use crate::diagnostic_mapper::to_lsp_diagnostics;
+use crate::code_actions::fixes_to_code_actions;
+use crate::diagnostic_mapper::{deserialize_fixes, to_lsp_diagnostics};
+use crate::hover_provider::hover_at_position;
+
+fn create_error_diagnostic(code: &str, message: String) -> Diagnostic {
+    Diagnostic {
+        range: Range {
+            start: Position {
+                line: 0,
+                character: 0,
+            },
+            end: Position {
+                line: 0,
+                character: 0,
+            },
+        },
+        severity: Some(DiagnosticSeverity::ERROR),
+        code: Some(NumberOrString::String(code.to_string())),
+        code_description: None,
+        source: Some("agnix".to_string()),
+        message,
+        related_information: None,
+        tags: None,
+        data: None,
+    }
+}
 
 /// LSP backend that handles validation requests.
 ///
 /// The backend maintains a connection to the LSP client and validates
-/// files on open and save events.
+/// files on open, change, and save events. It also provides code actions
+/// for quick fixes and hover documentation for configuration fields.
 ///
 /// # Performance Notes
 ///
@@ -33,6 +60,7 @@ pub struct Backend {
     /// Workspace root path for boundary validation (security).
     /// Set during initialize() from the client's root_uri.
     workspace_root: RwLock<Option<PathBuf>>,
+    documents: RwLock<HashMap<Url, String>>,
 }
 
 impl Backend {
@@ -42,54 +70,8 @@ impl Backend {
             client,
             config: RwLock::new(Arc::new(agnix_core::LintConfig::default())),
             workspace_root: RwLock::new(None),
+            documents: RwLock::new(HashMap::new()),
         }
-    }
-
-    /// Validate a file and publish diagnostics to the client.
-    ///
-    /// Performs workspace boundary validation to prevent path traversal attacks.
-    /// Files outside the workspace root are rejected with a warning.
-    async fn validate_and_publish(&self, uri: Url) {
-        let file_path = match uri.to_file_path() {
-            Ok(p) => p,
-            Err(()) => {
-                self.client
-                    .log_message(MessageType::WARNING, format!("Invalid file URI: {}", uri))
-                    .await;
-                return;
-            }
-        };
-
-        // Security: Validate file is within workspace boundaries
-        if let Some(ref workspace_root) = *self.workspace_root.read().await {
-            // Canonicalize to resolve symlinks and .. components
-            let canonical_path = match file_path.canonicalize() {
-                Ok(p) => p,
-                Err(_) => {
-                    // File may not exist yet, use the raw path but still check prefix
-                    file_path.clone()
-                }
-            };
-            let canonical_root = workspace_root
-                .canonicalize()
-                .unwrap_or_else(|_| workspace_root.clone());
-
-            if !canonical_path.starts_with(&canonical_root) {
-                self.client
-                    .log_message(
-                        MessageType::WARNING,
-                        format!("File outside workspace boundary: {}", uri),
-                    )
-                    .await;
-                return;
-            }
-        }
-
-        let diagnostics = self.validate_file(file_path).await;
-
-        self.client
-            .publish_diagnostics(uri, diagnostics, None)
-            .await;
     }
 
     /// Run validation on a file in a blocking task.
@@ -106,53 +88,109 @@ impl Backend {
 
         match result {
             Ok(Ok(diagnostics)) => to_lsp_diagnostics(diagnostics),
-            Ok(Err(e)) => {
-                vec![Diagnostic {
-                    range: Range {
-                        start: Position {
-                            line: 0,
-                            character: 0,
-                        },
-                        end: Position {
-                            line: 0,
-                            character: 0,
-                        },
-                    },
-                    severity: Some(DiagnosticSeverity::ERROR),
-                    code: Some(NumberOrString::String(
-                        "agnix::validation-error".to_string(),
-                    )),
-                    code_description: None,
-                    source: Some("agnix".to_string()),
-                    message: format!("Validation error: {}", e),
-                    related_information: None,
-                    tags: None,
-                    data: None,
-                }]
+            Ok(Err(e)) => vec![create_error_diagnostic(
+                "agnix::validation-error",
+                format!("Validation error: {}", e),
+            )],
+            Err(e) => vec![create_error_diagnostic(
+                "agnix::internal-error",
+                format!("Internal error: {}", e),
+            )],
+        }
+    }
+
+    /// Validate from cached content and publish diagnostics.
+    ///
+    /// Used for did_change events where we have the content in memory.
+    /// This avoids reading from disk and provides real-time feedback.
+    async fn validate_from_content_and_publish(&self, uri: Url) {
+        let file_path = match uri.to_file_path() {
+            Ok(p) => p,
+            Err(()) => {
+                self.client
+                    .log_message(MessageType::WARNING, format!("Invalid file URI: {}", uri))
+                    .await;
+                return;
             }
-            Err(e) => {
-                vec![Diagnostic {
-                    range: Range {
-                        start: Position {
-                            line: 0,
-                            character: 0,
-                        },
-                        end: Position {
-                            line: 0,
-                            character: 0,
-                        },
-                    },
-                    severity: Some(DiagnosticSeverity::ERROR),
-                    code: Some(NumberOrString::String("agnix::internal-error".to_string())),
-                    code_description: None,
-                    source: Some("agnix".to_string()),
-                    message: format!("Internal error: {}", e),
-                    related_information: None,
-                    tags: None,
-                    data: None,
-                }]
+        };
+
+        // Security: Validate file is within workspace boundaries
+        if let Some(ref workspace_root) = *self.workspace_root.read().await {
+            let canonical_path = match file_path.canonicalize() {
+                Ok(p) => p,
+                Err(_) => file_path.clone(),
+            };
+            let canonical_root = workspace_root
+                .canonicalize()
+                .unwrap_or_else(|_| workspace_root.clone());
+
+            if !canonical_path.starts_with(&canonical_root) {
+                self.client
+                    .log_message(
+                        MessageType::WARNING,
+                        format!("File outside workspace boundary: {}", uri),
+                    )
+                    .await;
+                return;
             }
         }
+
+        // Get content from cache
+        let content = {
+            let docs = self.documents.read().await;
+            match docs.get(&uri) {
+                Some(c) => c.clone(),
+                None => {
+                    // Fall back to file-based validation
+                    drop(docs);
+                    let diagnostics = self.validate_file(file_path).await;
+                    self.client
+                        .publish_diagnostics(uri, diagnostics, None)
+                        .await;
+                    return;
+                }
+            }
+        };
+
+        let config = Arc::clone(&*self.config.read().await);
+        let result = tokio::task::spawn_blocking(move || {
+            let file_type = agnix_core::detect_file_type(&file_path);
+            if file_type == agnix_core::FileType::Unknown {
+                return Ok(vec![]);
+            }
+
+            let registry = agnix_core::ValidatorRegistry::with_defaults();
+            let validators = registry.validators_for(file_type);
+            let mut diagnostics = Vec::new();
+
+            for validator in validators {
+                diagnostics.extend(validator.validate(&file_path, &content, &config));
+            }
+
+            Ok::<_, agnix_core::LintError>(diagnostics)
+        })
+        .await;
+
+        let diagnostics = match result {
+            Ok(Ok(diagnostics)) => to_lsp_diagnostics(diagnostics),
+            Ok(Err(e)) => vec![create_error_diagnostic(
+                "agnix::validation-error",
+                format!("Validation error: {}", e),
+            )],
+            Err(e) => vec![create_error_diagnostic(
+                "agnix::internal-error",
+                format!("Internal error: {}", e),
+            )],
+        };
+
+        self.client
+            .publish_diagnostics(uri, diagnostics, None)
+            .await;
+    }
+
+    /// Get cached document content for a URI.
+    async fn get_document_content(&self, uri: &Url) -> Option<String> {
+        self.documents.read().await.get(uri).cloned()
     }
 }
 
@@ -190,6 +228,8 @@ impl LanguageServer for Backend {
                 text_document_sync: Some(TextDocumentSyncCapability::Kind(
                     TextDocumentSyncKind::FULL,
                 )),
+                code_action_provider: Some(CodeActionProviderCapability::Simple(true)),
+                hover_provider: Some(HoverProviderCapability::Simple(true)),
                 ..Default::default()
             },
             server_info: Some(ServerInfo {
@@ -210,17 +250,98 @@ impl LanguageServer for Backend {
     }
 
     async fn did_open(&self, params: DidOpenTextDocumentParams) {
-        self.validate_and_publish(params.text_document.uri).await;
+        {
+            let mut docs = self.documents.write().await;
+            docs.insert(
+                params.text_document.uri.clone(),
+                params.text_document.text.clone(),
+            );
+        }
+        self.validate_from_content_and_publish(params.text_document.uri)
+            .await;
+    }
+
+    async fn did_change(&self, params: DidChangeTextDocumentParams) {
+        if let Some(change) = params.content_changes.into_iter().next() {
+            {
+                let mut docs = self.documents.write().await;
+                docs.insert(params.text_document.uri.clone(), change.text);
+            }
+            self.validate_from_content_and_publish(params.text_document.uri)
+                .await;
+        }
     }
 
     async fn did_save(&self, params: DidSaveTextDocumentParams) {
-        self.validate_and_publish(params.text_document.uri).await;
+        self.validate_from_content_and_publish(params.text_document.uri)
+            .await;
     }
 
     async fn did_close(&self, params: DidCloseTextDocumentParams) {
+        {
+            let mut docs = self.documents.write().await;
+            docs.remove(&params.text_document.uri);
+        }
         self.client
             .publish_diagnostics(params.text_document.uri, vec![], None)
             .await;
+    }
+
+    async fn code_action(&self, params: CodeActionParams) -> Result<Option<CodeActionResponse>> {
+        let uri = &params.text_document.uri;
+
+        // Get document content for byte-to-position conversion
+        let content = match self.get_document_content(uri).await {
+            Some(c) => c,
+            None => return Ok(None),
+        };
+
+        let mut actions = Vec::new();
+
+        // Extract fixes from diagnostics that overlap with the request range
+        for diag in &params.context.diagnostics {
+            // Check if this diagnostic overlaps with the requested range
+            let diag_range = &diag.range;
+            let req_range = &params.range;
+
+            let overlaps = diag_range.start.line <= req_range.end.line
+                && diag_range.end.line >= req_range.start.line;
+
+            if !overlaps {
+                continue;
+            }
+
+            // Deserialize fixes from diagnostic.data
+            let fixes = deserialize_fixes(diag.data.as_ref());
+            if !fixes.is_empty() {
+                actions.extend(fixes_to_code_actions(uri, &fixes, &content));
+            }
+        }
+
+        if actions.is_empty() {
+            Ok(None)
+        } else {
+            Ok(Some(
+                actions
+                    .into_iter()
+                    .map(CodeActionOrCommand::CodeAction)
+                    .collect(),
+            ))
+        }
+    }
+
+    async fn hover(&self, params: HoverParams) -> Result<Option<Hover>> {
+        let uri = &params.text_document_position_params.text_document.uri;
+        let position = params.text_document_position_params.position;
+
+        // Get document content
+        let content = match self.get_document_content(uri).await {
+            Some(c) => c,
+            None => return Ok(None),
+        };
+
+        // Get hover info for the position
+        Ok(hover_at_position(&content, position))
     }
 }
 
