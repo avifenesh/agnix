@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- crates.io publishing support (#20)
+  - New `agnix-rules` crate for independent rule updates without CLI republish
+  - LICENSE-MIT and LICENSE-APACHE files for dual licensing
+  - Crate-level READMEs for crates.io pages
+  - Automatic crates.io publish on release tags via CI workflow
+  - Parity test ensures rules.json stays in sync between knowledge-base and crate
+  - Input validation in build.rs for secure code generation
 - Language Server Protocol (LSP) implementation for real-time editor validation (#18)
   - New `agnix-lsp` crate with tower-lsp backend
   - Real-time diagnostics on file open and save events

@@ -37,7 +37,7 @@ agnix .
 cargo install --path crates/agnix-cli
 ```
 
-### From crates.io (coming soon)
+### From crates.io
 
 ```bash
 cargo install agnix

@@ -31,3 +31,6 @@ STATUS.md
 .claude/state/*
 .claude/workflow-status.json
 .claude/plan.md
+
+# Plugin state
+.agnix/state/

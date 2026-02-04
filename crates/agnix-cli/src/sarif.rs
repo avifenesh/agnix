@@ -3,15 +3,13 @@
 //! Implements SARIF 2.1.0 specification for CI/CD integration.
 //! https://docs.oasis-open.org/sarif/sarif/v2.1.0/sarif-v2.1.0.html
 //!
-//! Rules are loaded from knowledge-base/rules.json at compile time via build.rs.
+//! Rules are loaded from the agnix-rules crate at compile time.
 
 use agnix_core::diagnostics::{Diagnostic, DiagnosticLevel};
+use agnix_rules::RULES_DATA;
 use serde::Serialize;
 use std::path::Path;
 use std::sync::LazyLock;
-
-// Include the auto-generated rules data from build.rs
-include!(concat!(env!("OUT_DIR"), "/sarif_rules.rs"));
 
 const SARIF_SCHEMA: &str =
     "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/main/sarif-2.1/schema/sarif-schema-2.1.0.json";
