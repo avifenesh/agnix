@@ -134,6 +134,13 @@
 **Fix**: Remove large assets or split skill
 **Source**: platform.claude.com/docs
 
+<a id="as-016"></a>
+### AS-016 [HIGH] Skill Parse Error
+**Requirement**: SKILL.md frontmatter MUST be valid YAML
+**Detection**: YAML parse error on frontmatter content
+**Fix**: Fix YAML syntax errors in frontmatter
+**Source**: agentskills.io/specification
+
 ---
 
 ## CLAUDE CODE RULES (SKILLS)
@@ -288,6 +295,13 @@
 **Fix**: Set to 30
 **Source**: code.claude.com/docs/en/hooks
 
+<a id="cc-hk-012"></a>
+### CC-HK-012 [HIGH] Hooks Parse Error
+**Requirement**: Hooks configuration MUST be valid JSON
+**Detection**: JSON parse error on settings.json
+**Fix**: Fix JSON syntax errors in hooks configuration
+**Source**: code.claude.com/docs/en/hooks
+
 ---
 
 ## CLAUDE CODE RULES (SUBAGENTS)
@@ -332,6 +346,13 @@
 **Requirement**: Tool cannot be in both `tools` and `disallowedTools`
 **Detection**: `tools.intersection(disallowedTools).is_empty()`
 **Fix**: Remove from one list
+**Source**: code.claude.com/docs/en/sub-agents
+
+<a id="cc-ag-007"></a>
+### CC-AG-007 [HIGH] Agent Parse Error
+**Requirement**: Agent frontmatter MUST be valid YAML
+**Detection**: YAML parse error on agent frontmatter
+**Fix**: Fix YAML syntax errors in agent frontmatter
 **Source**: code.claude.com/docs/en/sub-agents
 
 ---
@@ -494,6 +515,13 @@
 **Fix**: Add plugin name
 **Source**: code.claude.com/docs/en/plugins-reference
 
+<a id="cc-pl-006"></a>
+### CC-PL-006 [HIGH] Plugin Parse Error
+**Requirement**: plugin.json MUST be valid JSON
+**Detection**: JSON parse error on plugin.json
+**Fix**: Fix JSON syntax errors in plugin.json
+**Source**: code.claude.com/docs/en/plugins-reference
+
 ---
 
 ## MCP RULES
@@ -539,6 +567,13 @@
 **Detection**: Check server trust level
 **Fix**: Add validation layer
 **Source**: modelcontextprotocol.io/docs/concepts/tools
+
+<a id="mcp-007"></a>
+### MCP-007 [HIGH] MCP Parse Error
+**Requirement**: MCP configuration MUST be valid JSON
+**Detection**: JSON parse error on MCP configuration file
+**Fix**: Fix JSON syntax errors in MCP configuration
+**Source**: modelcontextprotocol.io/specification
 
 ---
 
@@ -767,20 +802,20 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 
 | Category | Total Rules | HIGH | MEDIUM | LOW | Auto-Fixable |
 |----------|-------------|------|--------|-----|--------------|
-| Agent Skills | 15 | 13 | 2 | 0 | 6 |
+| Agent Skills | 16 | 14 | 2 | 0 | 6 |
 | Claude Skills | 9 | 7 | 2 | 0 | 3 |
-| Claude Hooks | 11 | 9 | 2 | 0 | 2 |
-| Claude Agents | 6 | 6 | 0 | 0 | 1 |
+| Claude Hooks | 12 | 10 | 2 | 0 | 2 |
+| Claude Agents | 7 | 7 | 0 | 0 | 1 |
 | Claude Memory | 10 | 5 | 5 | 0 | 2 |
 | AGENTS.md | 6 | 1 | 5 | 0 | 2 |
-| Claude Plugins | 5 | 5 | 0 | 0 | 1 |
+| Claude Plugins | 6 | 6 | 0 | 0 | 1 |
 | GitHub Copilot | 4 | 3 | 1 | 0 | 1 |
-| MCP | 6 | 6 | 0 | 0 | 1 |
+| MCP | 7 | 7 | 0 | 0 | 1 |
 | XML | 3 | 3 | 0 | 0 | 1 |
 | References | 2 | 2 | 0 | 0 | 0 |
 | Prompt Eng | 4 | 0 | 4 | 0 | 1 |
 | Cross-Platform | 3 | 2 | 1 | 0 | 0 |
-| **TOTAL** | **84** | **62** | **22** | **0** | **21** |
+| **TOTAL** | **89** | **67** | **22** | **0** | **21** |
 
 ---
 
@@ -809,7 +844,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 
 ---
 
-**Total Coverage**: 84 validation rules across 13 categories
+**Total Coverage**: 89 validation rules across 13 categories
 **Knowledge Base**: 11,036 lines, 320KB, 75+ sources
-**Certainty**: 62 HIGH, 22 MEDIUM, 0 LOW
-**Auto-Fixable**: 21 rules (25%)
+**Certainty**: 67 HIGH, 22 MEDIUM, 0 LOW
+**Auto-Fixable**: 21 rules (24%)

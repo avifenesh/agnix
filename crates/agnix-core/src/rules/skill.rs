@@ -130,13 +130,15 @@ impl Validator for SkillValidator {
             match parse_frontmatter_fields(&parts.frontmatter) {
                 Ok(frontmatter) => Some(frontmatter),
                 Err(e) => {
-                    diagnostics.push(Diagnostic::error(
-                        path.to_path_buf(),
-                        frontmatter_line,
-                        frontmatter_col,
-                        "skill::parse",
-                        format!("Failed to parse SKILL.md: {}", e),
-                    ));
+                    if config.is_rule_enabled("AS-016") {
+                        diagnostics.push(Diagnostic::error(
+                            path.to_path_buf(),
+                            frontmatter_line,
+                            frontmatter_col,
+                            "AS-016",
+                            format!("Failed to parse SKILL.md: {}", e),
+                        ));
+                    }
                     None
                 }
             }
@@ -2153,10 +2155,7 @@ Body"#;
         let validator = SkillValidator;
         let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
 
-        let parse_errors: Vec<_> = diagnostics
-            .iter()
-            .filter(|d| d.rule == "skill::parse")
-            .collect();
+        let parse_errors: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-016").collect();
 
         assert_eq!(
             parse_errors.len(),

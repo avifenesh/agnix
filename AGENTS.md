@@ -31,7 +31,7 @@
 crates/
 ├── agnix-core/     # Parsers, schemas, rules, diagnostics
 └── agnix-cli/      # CLI with clap
-knowledge-base/     # 84 rules, 75+ sources
+knowledge-base/     # 89 rules, 75+ sources
 tests/fixtures/     # Test cases
 ```
 
@@ -46,7 +46,7 @@ cargo run --bin agnix -- .  # Run CLI
 
 ## Rules Reference
 
-84 rules defined in `knowledge-base/rules.json` (source of truth)
+89 rules defined in `knowledge-base/rules.json` (source of truth)
 
 Human-readable docs: `knowledge-base/VALIDATION-RULES.md`
 

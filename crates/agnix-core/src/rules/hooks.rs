@@ -158,13 +158,15 @@ impl Validator for HooksValidator {
         let raw_value: serde_json::Value = match serde_json::from_str(content) {
             Ok(v) => v,
             Err(e) => {
-                diagnostics.push(Diagnostic::error(
-                    path.to_path_buf(),
-                    1,
-                    0,
-                    "hooks::parse",
-                    format!("Failed to parse hooks configuration: {}", e),
-                ));
+                if config.is_rule_enabled("CC-HK-012") {
+                    diagnostics.push(Diagnostic::error(
+                        path.to_path_buf(),
+                        1,
+                        0,
+                        "CC-HK-012",
+                        format!("Failed to parse hooks configuration: {}", e),
+                    ));
+                }
                 return diagnostics;
             }
         };
@@ -272,13 +274,15 @@ impl Validator for HooksValidator {
         let settings: SettingsSchema = match serde_json::from_str(content) {
             Ok(s) => s,
             Err(e) => {
-                diagnostics.push(Diagnostic::error(
-                    path.to_path_buf(),
-                    1,
-                    0,
-                    "hooks::parse",
-                    format!("Failed to parse hooks configuration: {}", e),
-                ));
+                if config.is_rule_enabled("CC-HK-012") {
+                    diagnostics.push(Diagnostic::error(
+                        path.to_path_buf(),
+                        1,
+                        0,
+                        "CC-HK-012",
+                        format!("Failed to parse hooks configuration: {}", e),
+                    ));
+                }
                 return diagnostics;
             }
         };
@@ -1132,7 +1136,7 @@ mod tests {
 
         let parse_errors: Vec<_> = diagnostics
             .iter()
-            .filter(|d| d.rule == "hooks::parse")
+            .filter(|d| d.rule == "CC-HK-012")
             .collect();
         assert_eq!(parse_errors.len(), 0);
     }
@@ -1145,7 +1149,7 @@ mod tests {
 
         let parse_errors: Vec<_> = diagnostics
             .iter()
-            .filter(|d| d.rule == "hooks::parse")
+            .filter(|d| d.rule == "CC-HK-012")
             .collect();
         assert_eq!(parse_errors.len(), 1);
     }

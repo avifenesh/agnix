@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- 5 new parse error rules with normalized IDs (AS-016, CC-HK-012, CC-AG-007, CC-PL-006, MCP-007)
+
 ### Removed
 - Removed unused config flags `tool_names` and `required_fields` from `.agnix.toml`
   - These flags were never referenced in the codebase
@@ -27,6 +30,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Pinned `cargo-machete` to version `0.9.1` in CI workflow to prevent nondeterministic build failures
 - Exclude patterns now prune directories during traversal to reduce IO on large repos
 - CLI init command output replaced checkmark emoji with plain text prefix
+- Reject `--fix`, `--dry-run`, and `--fix-safe` when using JSON or SARIF output formats
+- Exclude glob patterns now match correctly when validate_project() is called with absolute paths (#67)
+  - Patterns like `target/**` previously failed to match when walker yielded absolute paths
+  - Added path normalization by stripping base path prefix before glob matching
+- PE-001 through PE-004 rules now properly dispatch on CLAUDE.md and AGENTS.md files (PromptValidator was implemented but not registered in ValidatorRegistry)
+
+### Security
+- GitHub Action: Validate version input format to prevent path traversal attacks
+- GitHub Action: Sanitize diagnostic messages in workflow commands to prevent injection
+- GitHub Action: Use authenticated GitHub API requests when token available (avoids rate limits)
+- Blocked @import paths that resolve outside the project root to prevent traversal
+- Hardened file reading with symlink rejection and size limits:
+  - Added `FileSymlink` error to reject symlinks (prevents path traversal)
+  - Added `FileTooBig` error for files exceeding 1 MiB (prevents DoS)
+  - New `file_utils` module with `safe_read_file()` using `symlink_metadata()`
+  - Applied to validation, imports, fixes, and config loading
+  - Cross-platform tests for Unix and Windows symlink handling
 
 ### Added
 - Reusable GitHub Action for CI/CD integration:
@@ -53,23 +73,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - AGENTS.local.md - Codex CLI/OpenCode local instructions
   - AGENTS.override.md - Codex CLI override file for workspace-specific rules
   - All variants are validated with the same rules as their base files
-
-### Fixed
-- Reject `--fix`, `--dry-run`, and `--fix-safe` when using JSON or SARIF output formats
-
-### Security
-- GitHub Action: Validate version input format to prevent path traversal attacks
-- GitHub Action: Sanitize diagnostic messages in workflow commands to prevent injection
-- GitHub Action: Use authenticated GitHub API requests when token available (avoids rate limits)
-- Blocked @import paths that resolve outside the project root to prevent traversal
-- Hardened file reading with symlink rejection and size limits:
-  - Added `FileSymlink` error to reject symlinks (prevents path traversal)
-  - Added `FileTooBig` error for files exceeding 1 MiB (prevents DoS)
-  - New `file_utils` module with `safe_read_file()` using `symlink_metadata()`
-  - Applied to validation, imports, fixes, and config loading
-  - Cross-platform tests for Unix and Windows symlink handling
-
-### Added
 - Rule parity CI check to ensure documented rules stay in sync with implementation:
   - Added `knowledge-base/rules.json` as machine-readable source of truth for all 84 rules
   - Added `crates/agnix-cli/tests/rule_parity.rs` integration test suite
