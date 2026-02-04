@@ -426,16 +426,12 @@ pub fn validate_project_with_registry(
 
             // Collect AGENTS.md paths for AGM-006 check
             if file_path.file_name().and_then(|n| n.to_str()) == Some("AGENTS.md") {
-                if let Ok(mut paths) = agents_md_paths.lock() {
-                    paths.push(file_path.clone());
-                }
+                agents_md_paths.lock().unwrap().push(file_path.clone());
             }
 
             // Collect instruction file paths for XP-004/005/006 checks
             if schemas::cross_platform::is_instruction_file(&file_path) {
-                if let Ok(mut paths) = instruction_file_paths.lock() {
-                    paths.push(file_path.clone());
-                }
+                instruction_file_paths.lock().unwrap().push(file_path.clone());
             }
 
             // Validate the file
