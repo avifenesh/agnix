@@ -425,9 +425,13 @@ impl Validator for SkillValidator {
                     // CC-SK-007: Unrestricted Bash warning
                     if config.is_rule_enabled("CC-SK-007") {
                         if let Some(ref tools) = tool_list {
-                            // Find all plain Bash occurrences in the frontmatter
-                            let bash_positions =
-                                find_plain_bash_positions(content, parts.frontmatter_start);
+                            // Find all plain Bash occurrences in the allowed-tools line only
+                            // to avoid matching "Bash" in other fields like description
+                            let search_start =
+                                frontmatter_key_offset(&parts.frontmatter, "allowed-tools")
+                                    .map(|offset| parts.frontmatter_start + offset)
+                                    .unwrap_or(parts.frontmatter_start);
+                            let bash_positions = find_plain_bash_positions(content, search_start);
 
                             let mut bash_pos_iter = bash_positions.iter();
 

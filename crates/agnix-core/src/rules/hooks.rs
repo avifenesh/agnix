@@ -653,23 +653,13 @@ fn find_closest_event(invalid_event: &str) -> ClosestEventMatch {
 /// Returns (start, end) byte positions of the event key (including quotes)
 fn find_event_key_position(content: &str, event: &str) -> Option<(usize, usize)> {
     // Look for the event key in the "hooks" object
-    // Pattern: "event_name" followed by : (with optional whitespace)
-    let pattern = format!(r#""{}"\s*:"#, regex::escape(event));
+    // Pattern: capture the quoted event name, followed by : (with optional whitespace)
+    let pattern = format!(r#"("{}")\s*:"#, regex::escape(event));
     let re = Regex::new(&pattern).ok()?;
-
-    if let Some(m) = re.find(content) {
-        // Return position of just the quoted event name (without the colon)
-        let quote_end = content[m.start()..m.end()]
-            .find('"')
-            .map(|i| m.start() + i)?;
-        // Find the closing quote
-        let content_after_first_quote = &content[quote_end + 1..];
-        let closing_quote = content_after_first_quote.find('"')?;
-        let end = quote_end + 1 + closing_quote + 1;
-        Some((quote_end, end))
-    } else {
-        None
-    }
+    re.captures(content).and_then(|caps| {
+        caps.get(1)
+            .map(|key_match| (key_match.start(), key_match.end()))
+    })
 }
 
 #[cfg(test)]

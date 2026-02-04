@@ -23,7 +23,7 @@ impl Validator for XmlValidator {
         let errors = check_xml_balance_with_content_end(&tags, Some(content.len()));
 
         for error in errors {
-            let diagnostic = match error {
+            match error {
                 XmlBalanceError::Unclosed {
                     tag,
                     line,
@@ -41,6 +41,9 @@ impl Validator for XmlValidator {
 
                     // Create fix: insert closing tag at content end
                     // safe=false because we can't be 100% certain where the user wants it
+                    // NOTE: When multiple tags are unclosed, all fixes insert at the same position.
+                    // The fix application in fixes.rs sorts by descending position, ensuring
+                    // correct nesting order (later fixes applied first).
                     let fix = Fix::insert(
                         content_end_byte,
                         closing_tag,
@@ -48,9 +51,11 @@ impl Validator for XmlValidator {
                         false,
                     );
 
-                    Diagnostic::error(path.to_path_buf(), line, column, rule_id, message)
-                        .with_suggestion(suggestion)
-                        .with_fix(fix)
+                    let diagnostic =
+                        Diagnostic::error(path.to_path_buf(), line, column, rule_id, message)
+                            .with_suggestion(suggestion)
+                            .with_fix(fix);
+                    diagnostics.push(diagnostic);
                 }
                 XmlBalanceError::Mismatch {
                     expected,
@@ -65,8 +70,10 @@ impl Validator for XmlValidator {
                     let message = format!("Expected '</{}>' but found '</{}>'", expected, found);
                     let suggestion = format!("Replace '</{}>' with '</{}>'", found, expected);
 
-                    Diagnostic::error(path.to_path_buf(), line, column, rule_id, message)
-                        .with_suggestion(suggestion)
+                    let diagnostic =
+                        Diagnostic::error(path.to_path_buf(), line, column, rule_id, message)
+                            .with_suggestion(suggestion);
+                    diagnostics.push(diagnostic);
                 }
                 XmlBalanceError::UnmatchedClosing { tag, line, column } => {
                     let rule_id = "XML-003";
@@ -79,12 +86,12 @@ impl Validator for XmlValidator {
                         tag, tag
                     );
 
-                    Diagnostic::error(path.to_path_buf(), line, column, rule_id, message)
-                        .with_suggestion(suggestion)
+                    let diagnostic =
+                        Diagnostic::error(path.to_path_buf(), line, column, rule_id, message)
+                            .with_suggestion(suggestion);
+                    diagnostics.push(diagnostic);
                 }
-            };
-
-            diagnostics.push(diagnostic);
+            }
         }
 
         diagnostics
