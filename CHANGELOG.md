@@ -85,7 +85,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Performance
 - AS-015 directory size validation now short-circuits when limit exceeded, improving performance on large skill directories (#84)
-- Investigated streaming validation with par_bridge() - current collect+par_iter approach found optimal for typical workloads (#83)
+- Stream file walk to reduce memory usage on large repositories (#172)
+  - Replaced collect-then-validate pattern with streaming par_bridge()
+  - Eliminated intermediate Vec<PathBuf> storage (O(n) to O(1) memory for file paths)
+  - Use AtomicUsize and Arc<Mutex<Vec>> for concurrent metadata collection
+  - Small synchronization overhead traded for significant memory reduction on large repos
 
 ### Tests
 - Added validation pipeline tests for AGENTS.md path collection and files_checked counter (#83)
@@ -108,6 +112,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Backward compatibility maintained - old configs with these fields still parse correctly
 
 ### Fixed
+- Mutex locks in streaming validation now use unwrap() for consistent fail-fast on poisoning (#172)
 - CLAUDE/AGENTS parity test now resilient to different directory structures (worktrees, symlinks)
   - Replaced brittle `.ancestors().nth(2)` with dynamic workspace root detection
   - New `workspace_root()` helper searches for `[workspace]` in ancestor Cargo.toml files
