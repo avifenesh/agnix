@@ -111,7 +111,9 @@ This skill has an invalid name.
         let diagnostics = result.unwrap();
         // Should have at least one error for invalid name
         assert!(!diagnostics.is_empty());
-        assert!(diagnostics.iter().any(|d| d.rule.contains("AS-004") || d.rule.contains("CC-SK")));
+        assert!(diagnostics
+            .iter()
+            .any(|d| d.rule.contains("AS-004") || d.rule.contains("CC-SK")));
     }
 
     #[test]

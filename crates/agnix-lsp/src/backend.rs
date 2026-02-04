@@ -69,7 +69,9 @@ impl Backend {
                     file_path.clone()
                 }
             };
-            let canonical_root = workspace_root.canonicalize().unwrap_or_else(|_| workspace_root.clone());
+            let canonical_root = workspace_root
+                .canonicalize()
+                .unwrap_or_else(|_| workspace_root.clone());
 
             if !canonical_path.starts_with(&canonical_root) {
                 self.client
@@ -98,21 +100,27 @@ impl Backend {
     /// repeated allocations on each validation.
     async fn validate_file(&self, path: PathBuf) -> Vec<Diagnostic> {
         let config = Arc::clone(&self.config);
-        let result = tokio::task::spawn_blocking(move || {
-            agnix_core::validate_file(&path, &config)
-        })
-        .await;
+        let result =
+            tokio::task::spawn_blocking(move || agnix_core::validate_file(&path, &config)).await;
 
         match result {
             Ok(Ok(diagnostics)) => to_lsp_diagnostics(diagnostics),
             Ok(Err(e)) => {
                 vec![Diagnostic {
                     range: Range {
-                        start: Position { line: 0, character: 0 },
-                        end: Position { line: 0, character: 0 },
+                        start: Position {
+                            line: 0,
+                            character: 0,
+                        },
+                        end: Position {
+                            line: 0,
+                            character: 0,
+                        },
                     },
                     severity: Some(DiagnosticSeverity::ERROR),
-                    code: Some(NumberOrString::String("agnix::validation-error".to_string())),
+                    code: Some(NumberOrString::String(
+                        "agnix::validation-error".to_string(),
+                    )),
                     code_description: None,
                     source: Some("agnix".to_string()),
                     message: format!("Validation error: {}", e),
@@ -124,8 +132,14 @@ impl Backend {
             Err(e) => {
                 vec![Diagnostic {
                     range: Range {
-                        start: Position { line: 0, character: 0 },
-                        end: Position { line: 0, character: 0 },
+                        start: Position {
+                            line: 0,
+                            character: 0,
+                        },
+                        end: Position {
+                            line: 0,
+                            character: 0,
+                        },
                     },
                     severity: Some(DiagnosticSeverity::ERROR),
                     code: Some(NumberOrString::String("agnix::internal-error".to_string())),
@@ -228,7 +242,9 @@ mod tests {
         }
 
         // Verify server info
-        let server_info = init_result.server_info.expect("server_info should be present");
+        let server_info = init_result
+            .server_info
+            .expect("server_info should be present");
         assert_eq!(server_info.name, "agnix-lsp");
         assert!(server_info.version.is_some());
     }
@@ -250,11 +266,19 @@ mod tests {
         let error_message = "Failed to parse file";
         let diagnostic = Diagnostic {
             range: Range {
-                start: Position { line: 0, character: 0 },
-                end: Position { line: 0, character: 0 },
+                start: Position {
+                    line: 0,
+                    character: 0,
+                },
+                end: Position {
+                    line: 0,
+                    character: 0,
+                },
             },
             severity: Some(DiagnosticSeverity::ERROR),
-            code: Some(NumberOrString::String("agnix::validation-error".to_string())),
+            code: Some(NumberOrString::String(
+                "agnix::validation-error".to_string(),
+            )),
             code_description: None,
             source: Some("agnix".to_string()),
             message: format!("Validation error: {}", error_message),
@@ -265,7 +289,9 @@ mod tests {
 
         assert_eq!(
             diagnostic.code,
-            Some(NumberOrString::String("agnix::validation-error".to_string()))
+            Some(NumberOrString::String(
+                "agnix::validation-error".to_string()
+            ))
         );
         assert_eq!(diagnostic.source, Some("agnix".to_string()));
         assert_eq!(diagnostic.severity, Some(DiagnosticSeverity::ERROR));
@@ -279,8 +305,14 @@ mod tests {
         let error_message = "task panicked";
         let diagnostic = Diagnostic {
             range: Range {
-                start: Position { line: 0, character: 0 },
-                end: Position { line: 0, character: 0 },
+                start: Position {
+                    line: 0,
+                    character: 0,
+                },
+                end: Position {
+                    line: 0,
+                    character: 0,
+                },
             },
             severity: Some(DiagnosticSeverity::ERROR),
             code: Some(NumberOrString::String("agnix::internal-error".to_string())),
