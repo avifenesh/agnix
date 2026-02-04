@@ -17,7 +17,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Input validation in build.rs for secure code generation
 - Language Server Protocol (LSP) implementation for real-time editor validation (#18)
   - New `agnix-lsp` crate with tower-lsp backend
+  - Real-time diagnostics on document changes (textDocument/didChange)
   - Real-time diagnostics on file open and save events
+  - Quick-fix code actions from Fix objects
+  - Hover documentation for frontmatter fields
+  - Document content caching for performance
   - Supports all 100 agnix validation rules with severity mapping
   - Workspace boundary validation for security (prevents path traversal)
   - Config caching optimization for performance
