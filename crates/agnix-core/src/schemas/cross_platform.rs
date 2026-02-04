@@ -98,7 +98,7 @@ pub fn find_claude_specific_features(content: &str) -> Vec<ClaudeSpecificFeature
             continue;
         }
 
-        if line.starts_with('#') && !is_claude_guard {
+        if line.trim_start().starts_with('#') || line.trim_start().starts_with("<!--") {
             in_claude_section = false;
         }
 
@@ -1158,6 +1158,56 @@ agent: reviewer
         assert!(results.iter().any(|r| r.feature == "hooks"));
         assert!(results.iter().any(|r| r.feature == "agent"));
     }
+
+    #[test]
+    fn test_html_comment_header_resets_guard() {
+        // A non-Claude HTML comment header should reset the guard protection
+        // This tests the fix for handling HTML comment headers like <!-- General Settings -->
+        let content = r#"# Config
+
+<!-- Claude Specific -->
+- type: PreToolExecution
+  command: test
+
+<!-- General Settings -->
+agent: reviewer
+"#;
+        let results = find_claude_specific_features(content);
+        assert_eq!(
+            results.len(),
+            1,
+            "Agent field after non-Claude HTML header should be detected"
+        );
+        assert!(
+            results[0].feature == "agent",
+            "Should detect agent field outside Claude section"
+        );
+    }
+
+    #[test]
+    fn test_whitespace_before_markdown_header() {
+        // Headers with leading whitespace should also reset the guard
+        let content = r#"# Config
+
+## Claude Specific
+- type: PreToolExecution
+  command: test
+
+   ## Other Section
+agent: reviewer
+"#;
+        let results = find_claude_specific_features(content);
+        assert_eq!(
+            results.len(),
+            1,
+            "Agent field after indented header should be detected"
+        );
+        assert!(
+            results[0].feature == "agent",
+            "Indented header should reset guard protection"
+        );
+    }
+
 
     // ===== XP-002: Markdown Structure =====
 
