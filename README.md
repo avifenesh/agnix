@@ -329,7 +329,34 @@ disabled_rules = []  # e.g., ["CC-AG-001", "AS-005"]
 "node_modules/**"
 ".git/**"
 "target/**"
+
+# Version-aware validation (optional)
+[tool_versions]
+# Pin tool versions for version-specific validation
+# claude_code = "1.0.0"
+# codex = "0.1.0"
+# cursor = "0.45.0"
+# copilot = "1.0.0"
+
+[spec_revisions]
+# Pin specification revisions for explicit version control
+# mcp_protocol = "2025-06-18"
+# agent_skills_spec = "1.0.0"
+# agents_md_spec = "1.0.0"
 ```
+
+### Version-Aware Validation
+
+When tool versions or spec revisions are not pinned, agnix uses sensible defaults and adds assumption notes to diagnostics. This helps you understand what behavior is assumed and how to get more precise validation.
+
+For example, CC-HK-010 (timeout policy) uses Claude Code's default timeout behavior. If you pin the version:
+
+```toml
+[tool_versions]
+claude_code = "1.0.0"
+```
+
+The assumption note is removed and you get version-specific validation.
 
 ### Target Tool Filtering
 
