@@ -44,7 +44,7 @@ impl Validator for XmlValidator {
                     let fix = Fix::insert(
                         content_end_byte,
                         closing_tag,
-                        format!("Insert closing tag '</{}>", tag),
+                        format!("Insert closing tag '</{}>'", tag),
                         false,
                     );
 
