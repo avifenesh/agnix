@@ -207,9 +207,7 @@ impl LintConfig {
 
     /// Get the expected MCP protocol version
     pub fn get_mcp_protocol_version(&self) -> &str {
-        self.mcp_protocol_version
-            .as_deref()
-            .unwrap_or("2025-06-18")
+        self.mcp_protocol_version.as_deref().unwrap_or("2025-06-18")
     }
 
     /// Check if a specific rule is enabled based on config

@@ -233,10 +233,7 @@ static RULES: LazyLock<Vec<ReportingDescriptor>> = LazyLock::new(|| {
         ("MCP-005", "Tool without user consent"),
         ("MCP-006", "Untrusted annotations from server"),
         ("MCP-007", "Failed to parse MCP configuration"),
-        (
-            "MCP-008",
-            "Protocol version mismatch in initialize message",
-        ),
+        ("MCP-008", "Protocol version mismatch in initialize message"),
         // GitHub Copilot Rules (COP-001 to COP-004)
         ("COP-001", "Empty Copilot instruction file"),
         (
