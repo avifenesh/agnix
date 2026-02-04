@@ -27,7 +27,7 @@ agnix .
 - ✅ **AGENTS.md** - Cross-tool instruction validation (AGM-001 to AGM-006)
 - ✅ **Cross-Platform** - AGENTS.md validation, platform-specific feature detection, cross-layer contradiction detection (XP-001 to XP-006)
 - ✅ **Prompt Engineering** - Validates prompt best practices (PE-001 to PE-004)
-- 🚧 **LSP Server** - Real-time diagnostics (coming soon)
+- ✅ **LSP Server** - Real-time diagnostics in editors (via `agnix-lsp`)
 
 ## Installation
 
@@ -283,6 +283,56 @@ Use the official agnix GitHub Action for seamless CI/CD integration:
     exit 1
 ```
 
+## LSP Server
+
+For real-time validation in your editor, use the LSP server:
+
+```bash
+# Install the LSP server
+cargo install --path crates/agnix-lsp
+
+# Or build from workspace
+cargo build --release -p agnix-lsp
+```
+
+### Editor Setup
+
+**Neovim (with nvim-lspconfig):**
+
+```lua
+local lspconfig = require('lspconfig')
+local configs = require('lspconfig.configs')
+
+if not configs.agnix then
+  configs.agnix = {
+    default_config = {
+      cmd = { 'agnix-lsp' },
+      filetypes = { 'markdown', 'json' },
+      root_dir = function(fname)
+        return lspconfig.util.find_git_ancestor(fname)
+      end,
+    },
+  }
+end
+
+lspconfig.agnix.setup{}
+```
+
+**Helix:**
+
+Add to `~/.config/helix/languages.toml`:
+
+```toml
+[[language]]
+name = "markdown"
+language-servers = ["agnix-lsp"]
+
+[language-server.agnix-lsp]
+command = "agnix-lsp"
+```
+
+See `crates/agnix-lsp/README.md` for more editor configurations.
+
 ## Performance
 
 agnix validates files in parallel using [rayon](https://github.com/rayon-rs/rayon) for optimal performance on large projects. Results are sorted deterministically (errors first, then by file path) to ensure consistent output across runs.
@@ -399,7 +449,7 @@ agnix/
 ├── crates/
 │   ├── agnix-core/        # Core validation engine
 │   ├── agnix-cli/         # CLI binary
-│   ├── agnix-lsp/         # LSP server (coming)
+│   ├── agnix-lsp/         # LSP server
 │   └── agnix-wasm/        # WASM for VS Code (coming)
 ├── tests/
 │   └── fixtures/          # Test configs
@@ -423,7 +473,7 @@ agnix/
 - [x] Plugin validation (CC-PL-001 to CC-PL-005)
 - [x] MCP tool validation (MCP-001 to MCP-006)
 - [x] GitHub Action for CI/CD integration
-- [ ] LSP server
+- [x] LSP server
 - [ ] VS Code extension
 
 ## License
