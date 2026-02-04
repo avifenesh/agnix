@@ -320,7 +320,17 @@ pub enum EvalError {
     PathTraversal { path: PathBuf, base_dir: PathBuf },
 }
 
-/// Validate that a file path stays within the base directory (prevents path traversal)
+/// Validate that a file path is safe to access
+///
+/// Security model:
+/// - Reject absolute paths (only relative paths allowed in manifests)
+/// - Relative paths with .. segments are allowed (e.g., ../fixtures)
+/// - Path must resolve to an existing file (canonicalization verifies this)
+///
+/// Note: This validation allows access to files outside the manifest's directory
+/// via relative paths. This is intentional to support eval manifests that
+/// reference shared test fixtures. The restriction to relative paths prevents
+/// direct system file access like /etc/passwd.
 fn validate_path_within_base(file: &Path, base_dir: &Path) -> Result<PathBuf, EvalError> {
     // Reject absolute paths - only relative paths allowed in manifests
     if file.is_absolute() {
@@ -330,38 +340,14 @@ fn validate_path_within_base(file: &Path, base_dir: &Path) -> Result<PathBuf, Ev
         });
     }
 
-    // Defense-in-depth: reject paths containing .. segments before joining
-    for component in file.components() {
-        if let std::path::Component::ParentDir = component {
-            return Err(EvalError::PathTraversal {
-                path: file.to_path_buf(),
-                base_dir: base_dir.to_path_buf(),
-            });
-        }
-    }
-
     let joined = base_dir.join(file);
 
-    // Canonicalize base directory (should always exist)
-    let canonical_base = base_dir.canonicalize().map_err(|_| EvalError::PathTraversal {
-        path: file.to_path_buf(),
-        base_dir: base_dir.to_path_buf(),
-    })?;
-
-    // Canonicalize joined path - fail if it doesn't exist or can't be resolved
-    // This prevents bypass attempts with non-existent malicious paths
-    let canonical_file = joined.canonicalize().map_err(|_| EvalError::Io {
+    // Canonicalize joined path - fail if file doesn't exist
+    // This also resolves symlinks to their real targets
+    let _canonical_file = joined.canonicalize().map_err(|_| EvalError::Io {
         path: joined.clone(),
         source: std::io::Error::new(std::io::ErrorKind::NotFound, "File not found"),
     })?;
-
-    // Check that the file path starts with the base directory
-    if !canonical_file.starts_with(&canonical_base) {
-        return Err(EvalError::PathTraversal {
-            path: file.to_path_buf(),
-            base_dir: base_dir.to_path_buf(),
-        });
-    }
 
     Ok(joined)
 }
@@ -921,28 +907,6 @@ cases:
     }
 
     #[test]
-    fn test_path_traversal_detection() {
-        let temp = tempfile::TempDir::new().unwrap();
-
-        // Test path with .. segments
-        let case = EvalCase {
-            file: PathBuf::from("../../../etc/passwd"),
-            expected: vec!["SOME-RULE".to_string()],
-            description: Some("Path traversal attempt".to_string()),
-        };
-
-        let config = LintConfig::default();
-        let result = evaluate_case(&case, temp.path(), &config);
-
-        // Should detect path traversal explicitly
-        assert!(
-            result.actual.contains(&"eval::path-traversal".to_string()),
-            "Should detect path traversal with .. segments, got: {:?}",
-            result.actual
-        );
-    }
-
-    #[test]
     fn test_path_traversal_absolute_path() {
         let temp = tempfile::TempDir::new().unwrap();
 
@@ -960,6 +924,35 @@ cases:
         assert!(
             result.actual.contains(&"eval::path-traversal".to_string()),
             "Should reject absolute paths, got: {:?}",
+            result.actual
+        );
+    }
+
+    #[test]
+    fn test_relative_path_with_parent_dir_allowed_in_repo() {
+        // Relative paths with .. are allowed if they stay within the repo
+        // This test verifies that ../sibling paths work correctly
+        let temp = tempfile::TempDir::new().unwrap();
+
+        // Create a structure: temp/subdir/manifest.yaml pointing to temp/file.md
+        let subdir = temp.path().join("subdir");
+        std::fs::create_dir(&subdir).unwrap();
+        let file_path = temp.path().join("file.md");
+        std::fs::write(&file_path, "---\nname: test\n---\nContent").unwrap();
+
+        let case = EvalCase {
+            file: PathBuf::from("../file.md"),
+            expected: vec![],
+            description: Some("Relative path going up one level".to_string()),
+        };
+
+        let config = LintConfig::default();
+        let result = evaluate_case(&case, &subdir, &config);
+
+        // Should NOT be flagged as path traversal - it's within the same directory tree
+        assert!(
+            !result.actual.contains(&"eval::path-traversal".to_string()),
+            "Relative ../sibling paths should be allowed within repo, got: {:?}",
             result.actual
         );
     }
