@@ -78,20 +78,21 @@ knowledge-base/
 
 | Category | Rules | HIGH | MEDIUM | LOW | Auto-Fix |
 |----------|-------|------|--------|-----|----------|
-| Agent Skills | 15 | 13 | 2 | 0 | 6 |
+| Agent Skills | 16 | 14 | 2 | 0 | 6 |
 | Claude Skills | 9 | 7 | 2 | 0 | 3 |
-| Claude Hooks | 11 | 9 | 2 | 0 | 2 |
-| Claude Agents | 6 | 6 | 0 | 0 | 1 |
+| Claude Hooks | 12 | 10 | 2 | 0 | 2 |
+| Claude Agents | 7 | 7 | 0 | 0 | 1 |
 | Claude Memory | 10 | 6 | 4 | 0 | 2 |
 | AGENTS.md | 6 | 3 | 3 | 0 | 2 |
-| Claude Plugins | 5 | 5 | 0 | 0 | 1 |
+| Claude Plugins | 6 | 6 | 0 | 0 | 1 |
+| GitHub Copilot | 4 | 4 | 0 | 0 | 0 |
 | MCP | 8 | 7 | 1 | 0 | 1 |
 | XML | 3 | 3 | 0 | 0 | 1 |
 | References | 2 | 2 | 0 | 0 | 0 |
 | Prompt Eng | 4 | 2 | 2 | 0 | 1 |
 | Cross-Platform | 3 | 2 | 1 | 0 | 0 |
 | Cursor | 6 | 3 | 3 | 0 | 1 |
-| **TOTAL** | **96** | **68** | **25** | **3** | **21** |
+| **TOTAL** | **96** | **71** | **22** | **3** | **21** |
 
 ---
 
