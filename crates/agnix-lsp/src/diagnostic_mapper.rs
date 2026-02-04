@@ -77,6 +77,7 @@ mod tests {
             rule: rule.to_string(),
             suggestion: suggestion.map(String::from),
             fixes: vec![],
+            assumption: None,
         }
     }
 

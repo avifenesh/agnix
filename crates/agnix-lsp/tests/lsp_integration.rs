@@ -26,6 +26,7 @@ mod diagnostic_mapper_tests {
             rule: rule.to_string(),
             suggestion: None,
             fixes: vec![],
+            assumption: None,
         }
     }
 
