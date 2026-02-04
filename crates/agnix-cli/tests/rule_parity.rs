@@ -516,6 +516,7 @@ fn test_sarif_rule_count() {
 #[test]
 fn test_all_rules_have_evidence_metadata() {
     let rules_index = load_rules_json();
+    let date_re = Regex::new(r"^\d{4}-\d{2}-\d{2}$").unwrap();
 
     for rule in &rules_index.rules {
         // Check source_urls is not empty
@@ -526,7 +527,6 @@ fn test_all_rules_have_evidence_metadata() {
         );
 
         // Check verified_on is a valid date format (YYYY-MM-DD)
-        let date_re = Regex::new(r"^\d{4}-\d{2}-\d{2}$").unwrap();
         assert!(
             date_re.is_match(&rule.evidence.verified_on),
             "Rule {} has invalid verified_on date format: '{}'. Expected YYYY-MM-DD",

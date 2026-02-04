@@ -1087,6 +1087,6 @@ cases:
         // Test root file fallback - parent() returns "" on Windows for just filename
         let base = EvalManifest::base_dir("manifest.yaml");
         // Parent of "manifest.yaml" is either "" or "." depending on platform
-        assert!(base == PathBuf::from(".") || base == PathBuf::from(""));
+        assert!(base == std::path::Path::new(".") || base == std::path::Path::new(""));
     }
 }

@@ -10,6 +10,16 @@
 //! - CLAUDE.md memory files
 //! - Plugin manifests
 
+// Allow common test patterns that clippy flags but are intentional in tests
+#![cfg_attr(
+    test,
+    allow(
+        clippy::field_reassign_with_default,
+        clippy::len_zero,
+        clippy::useless_vec
+    )
+)]
+
 pub mod config;
 pub mod diagnostics;
 pub mod eval;

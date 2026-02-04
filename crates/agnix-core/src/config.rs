@@ -61,7 +61,15 @@ pub struct LintConfig {
     pub exclude: Vec<String>,
 
     /// Target tool (claude-code, cursor, codex, generic)
+    /// Deprecated: Use `tools` array instead for multi-tool support
     pub target: TargetTool,
+
+    /// Tools to validate for (e.g., ["claude-code", "cursor"])
+    /// When specified, agnix automatically enables rules for these tools
+    /// and disables rules for tools not in the list.
+    /// Valid values: "claude-code", "cursor", "codex", "copilot", "generic"
+    #[serde(default)]
+    pub tools: Vec<String>,
 
     /// Expected MCP protocol version for validation (MCP-008)
     /// Deprecated: Use spec_revisions.mcp_protocol instead
@@ -91,6 +99,7 @@ impl Default for LintConfig {
                 "target/**".to_string(),
             ],
             target: TargetTool::Generic,
+            tools: Vec::new(),
             mcp_protocol_version: None,
             tool_versions: ToolVersions::default(),
             spec_revisions: SpecRevisions::default(),
@@ -306,13 +315,40 @@ impl LintConfig {
         self.is_category_enabled(rule_id)
     }
 
-    /// Check if a rule applies to the current target tool
+    /// Check if a rule applies to the current target tool(s)
     fn is_rule_for_target(&self, rule_id: &str) -> bool {
-        // CC-* rules only apply to ClaudeCode or Generic targets
+        // If tools array is specified, use it for filtering
+        if !self.tools.is_empty() {
+            return self.is_rule_for_tools(rule_id);
+        }
+
+        // Legacy: CC-* rules only apply to ClaudeCode or Generic targets
         if rule_id.starts_with("CC-") {
             return matches!(self.target, TargetTool::ClaudeCode | TargetTool::Generic);
         }
         // All other rules (AS-*, XML-*, REF-*) apply to all targets
+        true
+    }
+
+    /// Check if a rule applies based on the tools array
+    fn is_rule_for_tools(&self, rule_id: &str) -> bool {
+        // Tool-specific rule prefixes and their corresponding tool names
+        let tool_mapping: &[(&str, &[&str])] = &[
+            ("CC-", &["claude-code"]), // Claude Code specific rules
+            ("COP-", &["copilot"]),    // GitHub Copilot specific rules
+            ("CUR-", &["cursor"]),     // Cursor specific rules
+        ];
+
+        for (prefix, tool_names) in tool_mapping {
+            if rule_id.starts_with(prefix) {
+                // Check if any of the required tools is in the tools list
+                return tool_names
+                    .iter()
+                    .any(|t| self.tools.iter().any(|u| u.eq_ignore_ascii_case(t)));
+            }
+        }
+
+        // Generic rules (AS-*, XML-*, REF-*, XP-*, AGM-*, MCP-*, PE-*) apply to all tools
         true
     }
 
@@ -339,6 +375,7 @@ impl LintConfig {
 }
 
 #[cfg(test)]
+#[allow(clippy::field_reassign_with_default)]
 mod tests {
     use super::*;
 
@@ -1434,5 +1471,184 @@ exclude = []
         assert!(!config.is_mcp_revision_pinned());
         // Should still return default
         assert_eq!(config.get_mcp_protocol_version(), "2025-06-18");
+    }
+
+    // ===== Tools Array Tests =====
+
+    #[test]
+    fn test_tools_array_empty_uses_target() {
+        // When tools is empty, fall back to target behavior
+        let mut config = LintConfig::default();
+        config.tools = vec![];
+        config.target = TargetTool::Cursor;
+
+        // With Cursor target and empty tools, CC-* rules should be disabled
+        assert!(!config.is_rule_enabled("CC-AG-001"));
+        assert!(!config.is_rule_enabled("CC-HK-001"));
+
+        // AS-* rules should still work
+        assert!(config.is_rule_enabled("AS-005"));
+    }
+
+    #[test]
+    fn test_tools_array_claude_code_only() {
+        let mut config = LintConfig::default();
+        config.tools = vec!["claude-code".to_string()];
+
+        // CC-* rules should be enabled
+        assert!(config.is_rule_enabled("CC-AG-001"));
+        assert!(config.is_rule_enabled("CC-HK-001"));
+        assert!(config.is_rule_enabled("CC-SK-006"));
+
+        // COP-* and CUR-* rules should be disabled
+        assert!(!config.is_rule_enabled("COP-001"));
+        assert!(!config.is_rule_enabled("CUR-001"));
+
+        // Generic rules should still be enabled
+        assert!(config.is_rule_enabled("AS-005"));
+        assert!(config.is_rule_enabled("XP-001"));
+        assert!(config.is_rule_enabled("AGM-001"));
+    }
+
+    #[test]
+    fn test_tools_array_cursor_only() {
+        let mut config = LintConfig::default();
+        config.tools = vec!["cursor".to_string()];
+
+        // CUR-* rules should be enabled
+        assert!(config.is_rule_enabled("CUR-001"));
+        assert!(config.is_rule_enabled("CUR-006"));
+
+        // CC-* and COP-* rules should be disabled
+        assert!(!config.is_rule_enabled("CC-AG-001"));
+        assert!(!config.is_rule_enabled("COP-001"));
+
+        // Generic rules should still be enabled
+        assert!(config.is_rule_enabled("AS-005"));
+        assert!(config.is_rule_enabled("XP-001"));
+    }
+
+    #[test]
+    fn test_tools_array_copilot_only() {
+        let mut config = LintConfig::default();
+        config.tools = vec!["copilot".to_string()];
+
+        // COP-* rules should be enabled
+        assert!(config.is_rule_enabled("COP-001"));
+        assert!(config.is_rule_enabled("COP-002"));
+
+        // CC-* and CUR-* rules should be disabled
+        assert!(!config.is_rule_enabled("CC-AG-001"));
+        assert!(!config.is_rule_enabled("CUR-001"));
+
+        // Generic rules should still be enabled
+        assert!(config.is_rule_enabled("AS-005"));
+        assert!(config.is_rule_enabled("XP-001"));
+    }
+
+    #[test]
+    fn test_tools_array_multiple_tools() {
+        let mut config = LintConfig::default();
+        config.tools = vec!["claude-code".to_string(), "cursor".to_string()];
+
+        // CC-* and CUR-* rules should both be enabled
+        assert!(config.is_rule_enabled("CC-AG-001"));
+        assert!(config.is_rule_enabled("CC-HK-001"));
+        assert!(config.is_rule_enabled("CUR-001"));
+        assert!(config.is_rule_enabled("CUR-006"));
+
+        // COP-* rules should be disabled (not in tools)
+        assert!(!config.is_rule_enabled("COP-001"));
+
+        // Generic rules should still be enabled
+        assert!(config.is_rule_enabled("AS-005"));
+        assert!(config.is_rule_enabled("XP-001"));
+    }
+
+    #[test]
+    fn test_tools_array_case_insensitive() {
+        let mut config = LintConfig::default();
+        config.tools = vec!["Claude-Code".to_string(), "CURSOR".to_string()];
+
+        // Should work case-insensitively
+        assert!(config.is_rule_enabled("CC-AG-001"));
+        assert!(config.is_rule_enabled("CUR-001"));
+    }
+
+    #[test]
+    fn test_tools_array_overrides_target() {
+        let mut config = LintConfig::default();
+        config.target = TargetTool::Cursor; // Legacy: would disable CC-*
+        config.tools = vec!["claude-code".to_string()]; // New: should enable CC-*
+
+        // tools array should override target
+        assert!(config.is_rule_enabled("CC-AG-001"));
+        assert!(!config.is_rule_enabled("CUR-001")); // Cursor not in tools
+    }
+
+    #[test]
+    fn test_tools_toml_deserialization() {
+        let toml_str = r#"
+severity = "Warning"
+target = "Generic"
+exclude = []
+tools = ["claude-code", "cursor"]
+
+[rules]
+"#;
+
+        let config: LintConfig = toml::from_str(toml_str).unwrap();
+
+        assert_eq!(config.tools.len(), 2);
+        assert!(config.tools.contains(&"claude-code".to_string()));
+        assert!(config.tools.contains(&"cursor".to_string()));
+
+        // Verify rule enablement
+        assert!(config.is_rule_enabled("CC-AG-001"));
+        assert!(config.is_rule_enabled("CUR-001"));
+        assert!(!config.is_rule_enabled("COP-001"));
+    }
+
+    #[test]
+    fn test_tools_toml_backward_compatible() {
+        // Old configs without tools field should still work
+        let toml_str = r#"
+severity = "Warning"
+target = "ClaudeCode"
+exclude = []
+
+[rules]
+"#;
+
+        let config: LintConfig = toml::from_str(toml_str).unwrap();
+
+        assert!(config.tools.is_empty());
+        // Falls back to target behavior
+        assert!(config.is_rule_enabled("CC-AG-001"));
+    }
+
+    #[test]
+    fn test_tools_disabled_rules_still_works() {
+        let mut config = LintConfig::default();
+        config.tools = vec!["claude-code".to_string()];
+        config.rules.disabled_rules = vec!["CC-AG-001".to_string()];
+
+        // CC-AG-001 is explicitly disabled even though claude-code is in tools
+        assert!(!config.is_rule_enabled("CC-AG-001"));
+        // Other CC-* rules should still work
+        assert!(config.is_rule_enabled("CC-AG-002"));
+        assert!(config.is_rule_enabled("CC-HK-001"));
+    }
+
+    #[test]
+    fn test_tools_category_disabled_still_works() {
+        let mut config = LintConfig::default();
+        config.tools = vec!["claude-code".to_string()];
+        config.rules.hooks = false;
+
+        // CC-HK-* rules should be disabled because hooks category is disabled
+        assert!(!config.is_rule_enabled("CC-HK-001"));
+        // Other CC-* rules should still work
+        assert!(config.is_rule_enabled("CC-AG-001"));
     }
 }

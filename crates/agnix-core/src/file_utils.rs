@@ -75,7 +75,7 @@ pub fn safe_write_file(path: &Path, content: &str) -> LintResult<()> {
     let permissions = metadata.permissions();
     let parent = path.parent().ok_or_else(|| LintError::FileWrite {
         path: path.to_path_buf(),
-        source: io::Error::new(io::ErrorKind::Other, "Missing parent directory"),
+        source: io::Error::other("Missing parent directory"),
     })?;
     let file_name = path
         .file_name()
