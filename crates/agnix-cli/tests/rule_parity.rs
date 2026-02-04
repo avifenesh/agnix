@@ -6,6 +6,9 @@
 //! 3. Covered by test fixtures in tests/fixtures/
 //! 4. Have valid evidence metadata
 
+// Allow common test patterns that clippy flags but are intentional in tests
+#![allow(clippy::field_reassign_with_default)]
+
 use regex::Regex;
 use serde::Deserialize;
 use std::collections::{BTreeSet, HashMap};

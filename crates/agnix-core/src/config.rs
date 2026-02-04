@@ -332,7 +332,9 @@ impl LintConfig {
 
     /// Check if a rule applies based on the tools array
     fn is_rule_for_tools(&self, rule_id: &str) -> bool {
-        // Use TOOL_RULE_PREFIXES derived from rules.json at compile time
+        // Use TOOL_RULE_PREFIXES derived from rules.json at compile time.
+        // Note: TOOL_RULE_PREFIXES is small (~6 entries), so linear search is acceptable.
+        // If this grows significantly larger, consider using a HashMap for O(1) lookups.
         for (prefix, tool) in agnix_rules::TOOL_RULE_PREFIXES {
             if rule_id.starts_with(prefix) {
                 // Check if the required tool is in the tools list (case-insensitive)
@@ -350,7 +352,15 @@ impl LintConfig {
     /// Check if a user-provided tool name is a backward-compatible alias
     /// for the canonical tool name from rules.json.
     ///
-    /// For example: "copilot" is an alias for "github-copilot"
+    /// Currently only "github-copilot" has an alias ("copilot"). This exists for
+    /// backward compatibility: early versions of agnix used the shorter "copilot"
+    /// name in configs, and we need to continue supporting that for existing users.
+    /// The canonical names in rules.json use the full "github-copilot" to match
+    /// the official tool name from GitHub's documentation.
+    ///
+    /// Note: This function does NOT treat canonical names as aliases of themselves.
+    /// For example, "github-copilot" is NOT an alias for "github-copilot" - that's
+    /// handled by the direct eq_ignore_ascii_case comparison in is_rule_for_tools().
     fn is_tool_alias(user_tool: &str, canonical_tool: &str) -> bool {
         // Backward compatibility: accept short names as aliases
         match canonical_tool {
@@ -1657,5 +1667,40 @@ exclude = []
         assert!(!config.is_rule_enabled("CC-HK-001"));
         // Other CC-* rules should still work
         assert!(config.is_rule_enabled("CC-AG-001"));
+    }
+
+    // ===== is_tool_alias Edge Case Tests =====
+
+    #[test]
+    fn test_is_tool_alias_unknown_alias_returns_false() {
+        // Unknown aliases should return false
+        assert!(!LintConfig::is_tool_alias("unknown", "github-copilot"));
+        assert!(!LintConfig::is_tool_alias("gh-copilot", "github-copilot"));
+        assert!(!LintConfig::is_tool_alias("", "github-copilot"));
+    }
+
+    #[test]
+    fn test_is_tool_alias_canonical_name_not_alias_of_itself() {
+        // Canonical name "github-copilot" is NOT treated as an alias of itself.
+        // This is by design - canonical names match via direct comparison in
+        // is_rule_for_tools(), not through the alias mechanism.
+        assert!(!LintConfig::is_tool_alias("github-copilot", "github-copilot"));
+        assert!(!LintConfig::is_tool_alias("GitHub-Copilot", "github-copilot"));
+    }
+
+    #[test]
+    fn test_is_tool_alias_copilot_is_alias_for_github_copilot() {
+        // "copilot" is an alias for "github-copilot" (backward compatibility)
+        assert!(LintConfig::is_tool_alias("copilot", "github-copilot"));
+        assert!(LintConfig::is_tool_alias("Copilot", "github-copilot"));
+        assert!(LintConfig::is_tool_alias("COPILOT", "github-copilot"));
+    }
+
+    #[test]
+    fn test_is_tool_alias_no_aliases_for_other_tools() {
+        // Other tools have no aliases defined
+        assert!(!LintConfig::is_tool_alias("claude", "claude-code"));
+        assert!(!LintConfig::is_tool_alias("cc", "claude-code"));
+        assert!(!LintConfig::is_tool_alias("cur", "cursor"));
     }
 }

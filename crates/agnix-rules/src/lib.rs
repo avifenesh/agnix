@@ -383,4 +383,88 @@ mod tests {
         assert_eq!(normalize_tool_name("unknown-tool"), None);
         assert_eq!(normalize_tool_name(""), None);
     }
+
+    // ===== get_prefixes_for_tool Edge Case Tests =====
+
+    #[test]
+    fn test_get_prefixes_for_tool_empty_string() {
+        // Empty string should return empty Vec (no tool matches empty)
+        let prefixes = get_prefixes_for_tool("");
+        assert!(
+            prefixes.is_empty(),
+            "Empty string tool should return empty Vec"
+        );
+    }
+
+    #[test]
+    fn test_get_prefixes_for_tool_unknown_tool() {
+        // Unknown tool should return empty Vec
+        let prefixes = get_prefixes_for_tool("nonexistent-tool");
+        assert!(
+            prefixes.is_empty(),
+            "Unknown tool should return empty Vec"
+        );
+    }
+
+    #[test]
+    fn test_get_prefixes_for_tool_claude_code_multiple_prefixes() {
+        // claude-code should have multiple prefixes (CC-HK-, CC-SK-, CC-AG-, CC-PL-)
+        let prefixes = get_prefixes_for_tool("claude-code");
+        assert!(
+            prefixes.len() > 1,
+            "claude-code should have multiple prefixes, got {}",
+            prefixes.len()
+        );
+        // Verify some expected prefixes are present
+        assert!(
+            prefixes.contains(&"CC-HK-"),
+            "claude-code prefixes should include CC-HK-"
+        );
+        assert!(
+            prefixes.contains(&"CC-SK-"),
+            "claude-code prefixes should include CC-SK-"
+        );
+    }
+
+    // ===== get_tool_for_prefix Edge Case Tests =====
+
+    #[test]
+    fn test_get_tool_for_prefix_empty_string() {
+        // Empty prefix should return None
+        assert_eq!(
+            get_tool_for_prefix(""),
+            None,
+            "Empty prefix should return None"
+        );
+    }
+
+    #[test]
+    fn test_get_tool_for_prefix_unknown_prefix() {
+        // Unknown prefix should return None
+        assert_eq!(
+            get_tool_for_prefix("NONEXISTENT-"),
+            None,
+            "Unknown prefix should return None"
+        );
+        assert_eq!(
+            get_tool_for_prefix("XX-"),
+            None,
+            "XX- prefix should return None"
+        );
+    }
+
+    #[test]
+    fn test_get_tool_for_prefix_partial_match_not_supported() {
+        // Partial prefixes should not match
+        assert_eq!(
+            get_tool_for_prefix("CC-"),
+            None,
+            "Partial prefix CC- (without HK/SK/AG) should not match"
+        );
+        assert_eq!(
+            get_tool_for_prefix("C"),
+            None,
+            "Single character should not match"
+        );
+    }
 }

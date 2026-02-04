@@ -110,3 +110,28 @@ fn test_rules_data_accessible_and_valid() {
         );
     }
 }
+
+#[test]
+fn test_empty_tool_string_treated_as_generic() {
+    // Verify that empty tool strings in evidence.applies_to.tool are treated as generic rules.
+    // The build.rs script treats empty strings the same as null/None - they make the rule
+    // generic (applies to all tools). This test verifies that behavior is maintained.
+    //
+    // Empty strings in VALID_TOOLS would indicate a bug in build.rs.
+    let valid_tools = agnix_rules::valid_tools();
+    assert!(
+        !valid_tools.contains(&""),
+        "VALID_TOOLS should not contain empty string. \
+         Empty tool values in rules.json should be treated as generic, not as a valid tool."
+    );
+
+    // Also verify no tool prefix maps to empty string
+    for (prefix, tool) in agnix_rules::TOOL_RULE_PREFIXES {
+        assert!(
+            !tool.is_empty(),
+            "TOOL_RULE_PREFIXES contains empty tool for prefix '{}'. \
+             This indicates a bug in build.rs.",
+            prefix
+        );
+    }
+}
