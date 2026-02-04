@@ -8,8 +8,8 @@ on:
   schedule:
     # S-tier: Weekly on Sunday at midnight UTC
     - cron: '0 0 * * 0'
-    # A-tier: Monthly on 1st at midnight UTC
-    - cron: '0 0 1 * *'
+    # A-tier: Weekly on Wednesday at midnight UTC (staggered from S-tier)
+    - cron: '0 0 * * 3'
   workflow_dispatch:
     inputs:
       update_baselines:
@@ -78,8 +78,8 @@ jobs:
             if [[ "$SCHEDULE_CRON" == "0 0 * * 0" ]]; then
               check_s_tier=true
             fi
-            # Monthly schedule (1st midnight UTC) = A-tier sources
-            if [[ "$SCHEDULE_CRON" == "0 0 1 * *" ]]; then
+            # Weekly schedule (Wednesday midnight UTC) = A-tier sources
+            if [[ "$SCHEDULE_CRON" == "0 0 * * 3" ]]; then
               check_a_tier=true
             fi
           else
