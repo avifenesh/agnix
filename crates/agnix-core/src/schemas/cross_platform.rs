@@ -527,8 +527,20 @@ fn extract_tool_names_from_line(line: &str, start_pos: usize) -> Vec<String> {
 
     // Known tool names (case-insensitive matching)
     let known_tools = [
-        "Bash", "Read", "Write", "Edit", "Grep", "Glob", "Task", "WebFetch",
-        "AskUserQuestion", "TodoRead", "TodoWrite", "mcp", "computer", "execute",
+        "Bash",
+        "Read",
+        "Write",
+        "Edit",
+        "Grep",
+        "Glob",
+        "Task",
+        "WebFetch",
+        "AskUserQuestion",
+        "TodoRead",
+        "TodoWrite",
+        "mcp",
+        "computer",
+        "execute",
     ];
 
     // Match tool names in the remainder
@@ -755,7 +767,8 @@ pub fn is_instruction_file(path: &Path) -> bool {
     file_name == "claude.md"
         || file_name == "agents.md"
         || file_name == ".clinerules"
-        || (path_str.contains(".cursor") && (path_str.ends_with(".mdc") || path_str.contains("rules")))
+        || (path_str.contains(".cursor")
+            && (path_str.ends_with(".mdc") || path_str.contains("rules")))
         || (path_str.contains(".github") && path_str.contains("copilot"))
         || path_str.contains(".opencode")
 }
@@ -1026,7 +1039,9 @@ Then `npm run build` to build the project.
 "#;
         let results = extract_build_commands(content);
         assert_eq!(results.len(), 2);
-        assert!(results.iter().all(|r| r.package_manager == PackageManager::Npm));
+        assert!(results
+            .iter()
+            .all(|r| r.package_manager == PackageManager::Npm));
     }
 
     #[test]
@@ -1045,7 +1060,9 @@ Use pnpm install for dependencies.
         let content = "yarn add express\nyarn test";
         let results = extract_build_commands(content);
         assert_eq!(results.len(), 2);
-        assert!(results.iter().all(|r| r.package_manager == PackageManager::Yarn));
+        assert!(results
+            .iter()
+            .all(|r| r.package_manager == PackageManager::Yarn));
     }
 
     #[test]
@@ -1053,7 +1070,9 @@ Use pnpm install for dependencies.
         let content = "bun install\nbun run build";
         let results = extract_build_commands(content);
         assert_eq!(results.len(), 2);
-        assert!(results.iter().all(|r| r.package_manager == PackageManager::Bun));
+        assert!(results
+            .iter()
+            .all(|r| r.package_manager == PackageManager::Bun));
     }
 
     #[test]
@@ -1125,7 +1144,9 @@ Use pnpm install for dependencies.
         let results = extract_tool_constraints(content);
         assert!(!results.is_empty());
         assert!(results.iter().any(|r| r.tool_name == "Read"));
-        assert!(results.iter().all(|r| r.constraint_type == ConstraintType::Allow));
+        assert!(results
+            .iter()
+            .all(|r| r.constraint_type == ConstraintType::Allow));
     }
 
     #[test]
@@ -1134,7 +1155,9 @@ Use pnpm install for dependencies.
         let results = extract_tool_constraints(content);
         assert!(!results.is_empty());
         assert!(results.iter().any(|r| r.tool_name == "Bash"));
-        assert!(results.iter().any(|r| r.constraint_type == ConstraintType::Disallow));
+        assert!(results
+            .iter()
+            .any(|r| r.constraint_type == ConstraintType::Disallow));
     }
 
     #[test]
@@ -1215,10 +1238,7 @@ Use pnpm install for dependencies.
     #[test]
     fn test_categorize_cursor_rules() {
         use std::path::PathBuf;
-        let layer = categorize_layer(
-            &PathBuf::from("project/.cursor/rules/test.mdc"),
-            "# Rules",
-        );
+        let layer = categorize_layer(&PathBuf::from("project/.cursor/rules/test.mdc"), "# Rules");
         assert_eq!(layer.layer_type, LayerType::CursorRules);
     }
 
@@ -1305,8 +1325,12 @@ Use pnpm install for dependencies.
 
         assert!(is_instruction_file(&PathBuf::from("CLAUDE.md")));
         assert!(is_instruction_file(&PathBuf::from("AGENTS.md")));
-        assert!(is_instruction_file(&PathBuf::from(".cursor/rules/test.mdc")));
-        assert!(is_instruction_file(&PathBuf::from(".github/copilot-instructions.md")));
+        assert!(is_instruction_file(&PathBuf::from(
+            ".cursor/rules/test.mdc"
+        )));
+        assert!(is_instruction_file(&PathBuf::from(
+            ".github/copilot-instructions.md"
+        )));
         assert!(is_instruction_file(&PathBuf::from(".clinerules")));
 
         assert!(!is_instruction_file(&PathBuf::from("README.md")));

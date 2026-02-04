@@ -512,7 +512,8 @@ pub fn validate_project_with_registry(
                     .filter(|(_, cmds)| !cmds.is_empty())
                     .collect();
 
-                let build_conflicts = schemas::cross_platform::detect_build_conflicts(&file_commands);
+                let build_conflicts =
+                    schemas::cross_platform::detect_build_conflicts(&file_commands);
                 for conflict in build_conflicts {
                     diagnostics.push(
                         Diagnostic::warning(
@@ -555,7 +556,8 @@ pub fn validate_project_with_registry(
                     .filter(|(_, constraints)| !constraints.is_empty())
                     .collect();
 
-                let tool_conflicts = schemas::cross_platform::detect_tool_conflicts(&file_constraints);
+                let tool_conflicts =
+                    schemas::cross_platform::detect_tool_conflicts(&file_constraints);
                 for conflict in tool_conflicts {
                     diagnostics.push(
                         Diagnostic::error(
