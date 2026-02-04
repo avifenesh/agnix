@@ -6,12 +6,12 @@
 
 | Type | Files | Rules |
 |------|-------|-------|
-| Skills | SKILL.md | 24 |
-| Hooks | settings.json | 11 |
+| Skills | SKILL.md | 25 |
+| Hooks | settings.json | 12 |
 | Memory (Claude Code) | CLAUDE.md, CLAUDE.local.md | 10 |
 | Instructions (Cross-Tool) | AGENTS.md, AGENTS.local.md, AGENTS.override.md | 6 |
-| Agents | agents/*.md | 6 |
-| Plugins | plugin.json | 5 |
+| Agents | agents/*.md | 7 |
+| Plugins | plugin.json | 6 |
 | Prompt Engineering | CLAUDE.md, AGENTS.md | 4 |
 | Cross-Platform | AGENTS.md | 6 |
 | MCP | tool definitions | 8 |

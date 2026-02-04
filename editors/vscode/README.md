@@ -5,7 +5,7 @@ Real-time validation for agent configuration files in VS Code.
 ## Features
 
 - Real-time diagnostics for agent configuration files
-- Validates 99 rules across multiple configuration types
+- Validates 100 rules across multiple configuration types
 - Status bar indicator showing validation status
 - Syntax highlighting for SKILL.md frontmatter
 

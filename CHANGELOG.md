@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Language Server Protocol (LSP) implementation for real-time editor validation (#18)
   - New `agnix-lsp` crate with tower-lsp backend
   - Real-time diagnostics on file open and save events
-  - Supports all 99 agnix validation rules with severity mapping
+  - Supports all 100 agnix validation rules with severity mapping
   - Workspace boundary validation for security (prevents path traversal)
   - Config caching optimization for performance
   - Editor support for VS Code, Neovim, Helix, and other LSP-compatible editors
@@ -32,7 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Case-insensitive tool name matching
   - Takes precedence over legacy `target` field for flexibility
 - VS Code extension with full LSP integration (#22)
-  - Real-time diagnostics for all 99 validation rules
+  - Real-time diagnostics for all 100 validation rules
   - Status bar indicator showing agnix validation status
   - Syntax highlighting for SKILL.md YAML frontmatter
   - Commands: 'Restart Language Server' and 'Show Output Channel'
@@ -62,7 +62,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - HashMap-based O(n*m) algorithms for efficient conflict detection
   - Word boundary matching to prevent false positives
   - Backup file exclusion (.bak, .old, .tmp, .swp, ~)
-- Evidence metadata schema for all 96 validation rules
+- Evidence metadata schema for all 100 validation rules
   - Added `evidence` field to each rule in `knowledge-base/rules.json` with:
     - `source_type`: Classification (spec, vendor_docs, vendor_code, paper, community)
     - `source_urls`: Links to authoritative documentation or specifications

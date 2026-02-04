@@ -35,6 +35,7 @@ When updating actions, use these SHA commits (last verified: 2025-02):
 actions/checkout@v4:           34e114876b0b11c390a56381ad16ebd13914f8d5
 actions/upload-artifact@v4:    ea165f8d65b6e75b540449e92b4886f43607fa02
 actions/download-artifact@v4:  d3f86a106a0bac45b974a628896c90dbdf5c8093
+actions/setup-python@v5:       a26af69be951a213d495a4c3e4e4022e16d87065
 
 # Rust Tooling
 dtolnay/rust-toolchain@stable: 4be9e76fd7c4901c61fb841f559994984270fce7

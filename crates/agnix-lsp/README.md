@@ -70,7 +70,7 @@ command = "agnix-lsp"
 ## Features
 
 - Real-time diagnostics on file open and save
-- Supports all agnix validation rules (99 rules)
+- Supports all agnix validation rules (100 rules)
 - Maps diagnostic severity levels (Error, Warning, Info)
 - Rule codes shown in diagnostic messages
 
