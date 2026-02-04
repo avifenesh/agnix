@@ -1,4 +1,9 @@
 //! Schema definitions for agent config files
+//!
+//! This module is internal to agnix-core. Some items may not be used
+//! directly but are preserved for potential future use or extensibility.
+
+#![allow(dead_code)]
 
 pub mod agent;
 pub mod agents_md;
@@ -10,9 +15,3 @@ pub mod mcp;
 pub mod plugin;
 pub mod prompt;
 pub mod skill;
-
-pub use agent::AgentSchema;
-pub use hooks::HooksSchema;
-pub use mcp::McpToolSchema;
-pub use plugin::PluginSchema;
-pub use skill::SkillSchema;

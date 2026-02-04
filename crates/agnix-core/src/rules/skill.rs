@@ -5,7 +5,7 @@ use crate::{
     diagnostics::{Diagnostic, Fix},
     parsers::frontmatter::{split_frontmatter, FrontmatterParts},
     rules::Validator,
-    schemas::SkillSchema,
+    schemas::skill::SkillSchema,
 };
 use regex::Regex;
 use serde::Deserialize;
