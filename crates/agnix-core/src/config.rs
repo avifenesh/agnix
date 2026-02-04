@@ -545,6 +545,61 @@ exclude = []
         assert!(config.is_rule_enabled("MCP-004"));
         assert!(config.is_rule_enabled("MCP-005"));
         assert!(config.is_rule_enabled("MCP-006"));
+        assert!(config.is_rule_enabled("MCP-007"));
+        assert!(config.is_rule_enabled("MCP-008"));
+    }
+
+    // ===== MCP Protocol Version Config Tests =====
+
+    #[test]
+    fn test_default_mcp_protocol_version() {
+        let config = LintConfig::default();
+        assert_eq!(config.get_mcp_protocol_version(), "2025-06-18");
+    }
+
+    #[test]
+    fn test_custom_mcp_protocol_version() {
+        let mut config = LintConfig::default();
+        config.mcp_protocol_version = Some("2024-11-05".to_string());
+        assert_eq!(config.get_mcp_protocol_version(), "2024-11-05");
+    }
+
+    #[test]
+    fn test_mcp_protocol_version_none_fallback() {
+        let mut config = LintConfig::default();
+        config.mcp_protocol_version = None;
+        // Should fall back to default when None
+        assert_eq!(config.get_mcp_protocol_version(), "2025-06-18");
+    }
+
+    #[test]
+    fn test_toml_deserialization_mcp_protocol_version() {
+        let toml_str = r#"
+severity = "Warning"
+target = "Generic"
+exclude = []
+mcp_protocol_version = "2024-11-05"
+
+[rules]
+"#;
+
+        let config: LintConfig = toml::from_str(toml_str).unwrap();
+        assert_eq!(config.get_mcp_protocol_version(), "2024-11-05");
+    }
+
+    #[test]
+    fn test_toml_deserialization_mcp_protocol_version_default() {
+        // Without specifying mcp_protocol_version, should use default
+        let toml_str = r#"
+severity = "Warning"
+target = "Generic"
+exclude = []
+
+[rules]
+"#;
+
+        let config: LintConfig = toml::from_str(toml_str).unwrap();
+        assert_eq!(config.get_mcp_protocol_version(), "2025-06-18");
     }
 
     // ===== Cross-Platform Category Tests =====
