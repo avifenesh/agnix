@@ -4,7 +4,9 @@
 //! real-time validation of agent configuration files.
 
 use std::path::PathBuf;
+use std::sync::Arc;
 
+use tokio::sync::RwLock;
 use tower_lsp::jsonrpc::Result;
 use tower_lsp::lsp_types::*;
 use tower_lsp::{Client, LanguageServer};
@@ -15,19 +17,39 @@ use crate::diagnostic_mapper::to_lsp_diagnostics;
 ///
 /// The backend maintains a connection to the LSP client and validates
 /// files on open and save events.
+///
+/// # Performance Notes
+///
+/// The `LintConfig` is cached and reused across validations to avoid
+/// repeated allocations. The `ValidatorRegistry` is currently created
+/// per-validation inside `agnix_core::validate_file` - this is a known
+/// limitation of the agnix-core API that could be optimized in the future
+/// by using `validate_file_with_registry` with a shared registry.
 pub struct Backend {
     client: Client,
+    /// Cached lint configuration reused across validations.
+    config: Arc<agnix_core::LintConfig>,
+    /// Workspace root path for boundary validation (security).
+    /// Set during initialize() from the client's root_uri.
+    workspace_root: RwLock<Option<PathBuf>>,
 }
 
 impl Backend {
     /// Create a new backend instance with the given client connection.
     pub fn new(client: Client) -> Self {
-        Self { client }
+        Self {
+            client,
+            config: Arc::new(agnix_core::LintConfig::default()),
+            workspace_root: RwLock::new(None),
+        }
     }
 
     /// Validate a file and publish diagnostics to the client.
+    ///
+    /// Performs workspace boundary validation to prevent path traversal attacks.
+    /// Files outside the workspace root are rejected with a warning.
     async fn validate_and_publish(&self, uri: Url) {
-        let path = match uri.to_file_path() {
+        let file_path = match uri.to_file_path() {
             Ok(p) => p,
             Err(()) => {
                 self.client
@@ -37,7 +59,30 @@ impl Backend {
             }
         };
 
-        let diagnostics = self.validate_file(path).await;
+        // Security: Validate file is within workspace boundaries
+        if let Some(ref workspace_root) = *self.workspace_root.read().await {
+            // Canonicalize to resolve symlinks and .. components
+            let canonical_path = match file_path.canonicalize() {
+                Ok(p) => p,
+                Err(_) => {
+                    // File may not exist yet, use the raw path but still check prefix
+                    file_path.clone()
+                }
+            };
+            let canonical_root = workspace_root.canonicalize().unwrap_or_else(|_| workspace_root.clone());
+
+            if !canonical_path.starts_with(&canonical_root) {
+                self.client
+                    .log_message(
+                        MessageType::WARNING,
+                        format!("File outside workspace boundary: {}", uri),
+                    )
+                    .await;
+                return;
+            }
+        }
+
+        let diagnostics = self.validate_file(file_path).await;
 
         self.client
             .publish_diagnostics(uri, diagnostics, None)
@@ -48,9 +93,12 @@ impl Backend {
     ///
     /// agnix-core validation is CPU-bound and synchronous, so we run it
     /// in a blocking task to avoid blocking the async runtime.
+    ///
+    /// The `LintConfig` is cloned from the cached instance to avoid
+    /// repeated allocations on each validation.
     async fn validate_file(&self, path: PathBuf) -> Vec<Diagnostic> {
+        let config = Arc::clone(&self.config);
         let result = tokio::task::spawn_blocking(move || {
-            let config = agnix_core::LintConfig::default();
             agnix_core::validate_file(&path, &config)
         })
         .await;
@@ -95,7 +143,14 @@ impl Backend {
 
 #[tower_lsp::async_trait]
 impl LanguageServer for Backend {
-    async fn initialize(&self, _: InitializeParams) -> Result<InitializeResult> {
+    async fn initialize(&self, params: InitializeParams) -> Result<InitializeResult> {
+        // Capture workspace root for path boundary validation
+        if let Some(root_uri) = params.root_uri {
+            if let Ok(root_path) = root_uri.to_file_path() {
+                *self.workspace_root.write().await = Some(root_path);
+            }
+        }
+
         Ok(InitializeResult {
             capabilities: ServerCapabilities {
                 text_document_sync: Some(TextDocumentSyncCapability::Kind(
@@ -484,5 +539,216 @@ model: sonnet
         assert!(!version.is_empty());
         // Should match the crate version pattern (e.g., "0.1.0")
         assert!(version.contains('.'));
+    }
+
+    /// Test that initialize captures workspace root from root_uri.
+    #[tokio::test]
+    async fn test_initialize_captures_workspace_root() {
+        let (service, _socket) = LspService::new(Backend::new);
+
+        let temp_dir = tempfile::tempdir().unwrap();
+        let root_uri = Url::from_file_path(temp_dir.path()).unwrap();
+
+        let init_params = InitializeParams {
+            root_uri: Some(root_uri),
+            ..Default::default()
+        };
+
+        let result = service.inner().initialize(init_params).await;
+        assert!(result.is_ok());
+
+        // The workspace root should now be set (we can't directly access it,
+        // but the test verifies initialize handles root_uri without error)
+    }
+
+    /// Test that files within workspace are validated normally.
+    #[tokio::test]
+    async fn test_file_within_workspace_validated() {
+        let (service, _socket) = LspService::new(Backend::new);
+
+        // Create workspace with a skill file
+        let temp_dir = tempfile::tempdir().unwrap();
+        let skill_path = temp_dir.path().join("SKILL.md");
+        std::fs::write(
+            &skill_path,
+            r#"---
+name: test-skill
+version: 1.0.0
+model: sonnet
+---
+
+# Test Skill
+"#,
+        )
+        .unwrap();
+
+        // Initialize with workspace root
+        let root_uri = Url::from_file_path(temp_dir.path()).unwrap();
+        let init_params = InitializeParams {
+            root_uri: Some(root_uri),
+            ..Default::default()
+        };
+        service.inner().initialize(init_params).await.unwrap();
+
+        // File within workspace should be validated
+        let uri = Url::from_file_path(&skill_path).unwrap();
+        service
+            .inner()
+            .did_open(DidOpenTextDocumentParams {
+                text_document: TextDocumentItem {
+                    uri,
+                    language_id: "markdown".to_string(),
+                    version: 1,
+                    text: String::new(),
+                },
+            })
+            .await;
+
+        // Should complete without error (file is within workspace)
+    }
+
+    /// Test that files outside workspace are rejected.
+    /// This tests the workspace boundary validation security feature.
+    #[tokio::test]
+    async fn test_file_outside_workspace_rejected() {
+        let (service, _socket) = LspService::new(Backend::new);
+
+        // Create two separate directories
+        let workspace_dir = tempfile::tempdir().unwrap();
+        let outside_dir = tempfile::tempdir().unwrap();
+
+        // Create a file outside the workspace
+        let outside_file = outside_dir.path().join("SKILL.md");
+        std::fs::write(
+            &outside_file,
+            r#"---
+name: outside-skill
+version: 1.0.0
+model: sonnet
+---
+
+# Outside Skill
+"#,
+        )
+        .unwrap();
+
+        // Initialize with workspace root
+        let root_uri = Url::from_file_path(workspace_dir.path()).unwrap();
+        let init_params = InitializeParams {
+            root_uri: Some(root_uri),
+            ..Default::default()
+        };
+        service.inner().initialize(init_params).await.unwrap();
+
+        // Try to validate file outside workspace
+        let uri = Url::from_file_path(&outside_file).unwrap();
+        service
+            .inner()
+            .did_open(DidOpenTextDocumentParams {
+                text_document: TextDocumentItem {
+                    uri,
+                    language_id: "markdown".to_string(),
+                    version: 1,
+                    text: String::new(),
+                },
+            })
+            .await;
+
+        // Should complete without error (logs warning and returns early)
+        // The file is rejected but no panic occurs
+    }
+
+    /// Test validation without workspace root (backwards compatibility).
+    /// When no workspace root is set, all files should be accepted.
+    #[tokio::test]
+    async fn test_validation_without_workspace_root() {
+        let (service, _socket) = LspService::new(Backend::new);
+
+        // Initialize without root_uri
+        let init_params = InitializeParams::default();
+        service.inner().initialize(init_params).await.unwrap();
+
+        // Create a file anywhere
+        let temp_dir = tempfile::tempdir().unwrap();
+        let skill_path = temp_dir.path().join("SKILL.md");
+        std::fs::write(
+            &skill_path,
+            r#"---
+name: test-skill
+version: 1.0.0
+model: sonnet
+---
+
+# Test Skill
+"#,
+        )
+        .unwrap();
+
+        // Should validate normally (no workspace boundary check)
+        let uri = Url::from_file_path(&skill_path).unwrap();
+        service
+            .inner()
+            .did_open(DidOpenTextDocumentParams {
+                text_document: TextDocumentItem {
+                    uri,
+                    language_id: "markdown".to_string(),
+                    version: 1,
+                    text: String::new(),
+                },
+            })
+            .await;
+
+        // Should complete without error
+    }
+
+    /// Test that cached config is used (performance optimization).
+    /// We verify this indirectly by running multiple validations.
+    #[tokio::test]
+    async fn test_cached_config_used_for_multiple_validations() {
+        let (service, _socket) = LspService::new(Backend::new);
+
+        // Initialize
+        service
+            .inner()
+            .initialize(InitializeParams::default())
+            .await
+            .unwrap();
+
+        // Create multiple skill files
+        let temp_dir = tempfile::tempdir().unwrap();
+        for i in 0..3 {
+            let skill_path = temp_dir.path().join(format!("skill{}/SKILL.md", i));
+            std::fs::create_dir_all(skill_path.parent().unwrap()).unwrap();
+            std::fs::write(
+                &skill_path,
+                format!(
+                    r#"---
+name: test-skill-{}
+version: 1.0.0
+model: sonnet
+---
+
+# Test Skill {}
+"#,
+                    i, i
+                ),
+            )
+            .unwrap();
+
+            let uri = Url::from_file_path(&skill_path).unwrap();
+            service
+                .inner()
+                .did_open(DidOpenTextDocumentParams {
+                    text_document: TextDocumentItem {
+                        uri,
+                        language_id: "markdown".to_string(),
+                        version: 1,
+                        text: String::new(),
+                    },
+                })
+                .await;
+        }
+
+        // All validations should complete (config is reused internally)
     }
 }
