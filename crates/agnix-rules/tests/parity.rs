@@ -61,11 +61,52 @@ fn test_rules_json_parity() {
 }
 
 #[test]
-fn test_rules_count_matches_exported() {
-    // Verify that RULES_DATA has the expected number of rules
+fn test_rules_count_matches_source() {
+    // Verify that RULES_DATA count matches the source rules.json
+    let rules_path = Path::new(env!("CARGO_MANIFEST_DIR")).join("rules.json");
+
+    if !rules_path.exists() {
+        eprintln!("Skipping rule count test: rules.json not found");
+        return;
+    }
+
+    let rules_json = fs::read_to_string(&rules_path)
+        .unwrap_or_else(|e| panic!("Failed to read {}: {}", rules_path.display(), e));
+    let rules: serde_json::Value = serde_json::from_str(&rules_json)
+        .unwrap_or_else(|e| panic!("Failed to parse {}: {}", rules_path.display(), e));
+
+    let expected_count = rules["rules"]
+        .as_array()
+        .expect("rules.json must have 'rules' array")
+        .len();
+
     assert_eq!(
         agnix_rules::rule_count(),
-        99,
-        "Expected 99 rules in RULES_DATA"
+        expected_count,
+        "RULES_DATA count ({}) doesn't match rules.json count ({})",
+        agnix_rules::rule_count(),
+        expected_count
     );
+}
+
+#[test]
+fn test_rules_data_accessible_and_valid() {
+    // Verify that all RULES_DATA entries are accessible and have valid format
+    for (id, name) in agnix_rules::RULES_DATA {
+        // IDs should be non-empty and follow pattern like AS-001, CC-HK-001
+        assert!(!id.is_empty(), "Rule ID should not be empty");
+        assert!(
+            id.chars().all(|c| c.is_ascii_alphanumeric() || c == '-'),
+            "Rule ID '{}' contains invalid characters",
+            id
+        );
+
+        // Names should be non-empty and have no control characters
+        assert!(!name.is_empty(), "Rule '{}' name should not be empty", id);
+        assert!(
+            !name.chars().any(|c| c.is_control() && c != ' '),
+            "Rule '{}' name contains control characters",
+            id
+        );
+    }
 }

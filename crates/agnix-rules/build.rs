@@ -7,6 +7,9 @@ use std::env;
 use std::fs;
 use std::path::{Path, PathBuf};
 
+/// Maximum allowed file size for rules.json (5 MB)
+const MAX_RULES_FILE_SIZE: u64 = 5 * 1024 * 1024;
+
 /// Find the workspace root by searching for Cargo.toml with [workspace]
 fn find_workspace_root(start: &Path) -> Option<PathBuf> {
     start
@@ -57,6 +60,19 @@ fn main() {
         );
     };
 
+    // Validate file size before reading (defense against DoS)
+    let file_size = fs::metadata(&rules_path)
+        .unwrap_or_else(|e| panic!("Failed to get metadata for {}: {}", rules_path.display(), e))
+        .len();
+    if file_size > MAX_RULES_FILE_SIZE {
+        panic!(
+            "rules.json at {} is too large ({} bytes, max {} bytes)",
+            rules_path.display(),
+            file_size,
+            MAX_RULES_FILE_SIZE
+        );
+    }
+
     let rules_json = fs::read_to_string(&rules_path).unwrap_or_else(|e| {
         panic!(
             "Failed to read rules.json at {}: {}",
@@ -87,17 +103,53 @@ fn main() {
     generated_code.push_str("/// This is the complete list of validation rules from knowledge-base/rules.json.\n");
     generated_code.push_str("pub const RULES_DATA: &[(&str, &str)] = &[\n");
 
-    for rule in rules_array {
-        let id = rule["id"].as_str().expect("rule must have id");
-        let name = rule["name"].as_str().expect("rule must have name");
-        // Escape special characters for Rust string literal (defense-in-depth)
-        let escape_str = |s: &str| {
-            s.replace('\\', "\\\\")
-                .replace('"', "\\\"")
-                .replace('\n', "\\n")
-                .replace('\r', "\\r")
-                .replace('\t', "\\t")
-        };
+    // Escape special characters for Rust string literal (defense-in-depth)
+    let escape_str = |s: &str| {
+        s.replace('\\', "\\\\")
+            .replace('"', "\\\"")
+            .replace('\n', "\\n")
+            .replace('\r', "\\r")
+            .replace('\t', "\\t")
+    };
+
+    // Validate rule ID format (e.g., AS-001, CC-HK-001, MCP-001)
+    let is_valid_id = |id: &str| -> bool {
+        !id.is_empty()
+            && id.len() <= 20
+            && id
+                .chars()
+                .all(|c| c.is_ascii_alphanumeric() || c == '-')
+    };
+
+    // Validate rule name (non-empty, reasonable length, no control characters)
+    let is_valid_name = |name: &str| -> bool {
+        !name.is_empty()
+            && name.len() <= 200
+            && !name.chars().any(|c| c.is_control() && c != ' ')
+    };
+
+    for (idx, rule) in rules_array.iter().enumerate() {
+        let id = rule["id"]
+            .as_str()
+            .unwrap_or_else(|| panic!("rule[{}] must have string 'id' field", idx));
+        let name = rule["name"]
+            .as_str()
+            .unwrap_or_else(|| panic!("rule[{}] must have string 'name' field", idx));
+
+        // Validate fields before code generation
+        if !is_valid_id(id) {
+            panic!(
+                "rule[{}] has invalid id '{}': must be 1-20 alphanumeric/hyphen characters",
+                idx, id
+            );
+        }
+        if !is_valid_name(name) {
+            panic!(
+                "rule[{}] '{}' has invalid name: must be 1-200 chars, no control characters",
+                idx, id
+            );
+        }
+
         let escaped_id = escape_str(id);
         let escaped_name = escape_str(name);
         generated_code.push_str(&format!(
