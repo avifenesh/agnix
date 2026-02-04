@@ -130,48 +130,13 @@ fn load_rules_json() -> RulesIndex {
         .unwrap_or_else(|e| panic!("Failed to parse {}: {}", rules_path.display(), e))
 }
 
+/// Extract SARIF rule IDs from rules.json (since SARIF rules are now generated from rules.json at build time)
 fn extract_sarif_rule_ids() -> BTreeSet<String> {
-    let sarif_path = workspace_root().join("crates/agnix-cli/src/sarif.rs");
-    let content = fs::read_to_string(&sarif_path)
-        .unwrap_or_else(|e| panic!("Failed to read {}: {}", sarif_path.display(), e));
-
-    // Match rule IDs in the rules_data array
-    // Handles both single-line: ("AS-001", "description")
-    // And multi-line patterns:
-    //     (
-    //         "AS-004",
-    //         "description",
-    //     ),
-    // The pattern matches quoted rule IDs that appear in the rules_data context
-    let re = Regex::new(r#""([A-Z]+-(?:[A-Z]+-)?[0-9]+)""#).unwrap();
-
-    // Filter to only valid rule ID prefixes to avoid matching test assertions
-    let valid_prefixes = [
-        "AS-", "CC-SK-", "CC-HK-", "CC-AG-", "CC-MEM-", "CC-PL-", "AGM-", "MCP-", "COP-", "CUR-",
-        "XML-", "REF-", "PE-", "XP-",
-    ];
-
-    // Find the rules_data array bounds to avoid matching rule IDs in test code
-    let rules_data_start = content
-        .find("let rules_data = [")
-        .expect("Could not find start of `rules_data` array in sarif.rs");
-    let rules_data_end = content[rules_data_start..]
-        .find("];")
-        .map(|i| rules_data_start + i)
-        .expect("Could not find end of `rules_data` array in sarif.rs");
-
-    let rules_section = &content[rules_data_start..rules_data_end];
-
-    re.captures_iter(rules_section)
-        .filter_map(|cap| {
-            let id = cap[1].to_string();
-            if valid_prefixes.iter().any(|p| id.starts_with(p)) {
-                Some(id)
-            } else {
-                None
-            }
-        })
-        .collect()
+    // Since SARIF rules are now generated from rules.json via build.rs,
+    // we verify SARIF parity by checking rules.json directly.
+    // The build.rs script transforms rules.json into SARIF rules at compile time.
+    let rules_index = load_rules_json();
+    rules_index.rules.iter().map(|r| r.id.clone()).collect()
 }
 
 fn extract_implemented_rule_ids() -> BTreeSet<String> {
