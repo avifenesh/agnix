@@ -24,6 +24,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Editor support for VS Code, Neovim, Helix, and other LSP-compatible editors
   - Comprehensive test coverage with 36 unit and integration tests
   - Installation: `cargo install --path crates/agnix-lsp`
+  - LSP now loads `.agnix.toml` from workspace root (#174)
+- Multi-tool support via `tools` array in config (#175)
+  - Specify `tools = ["claude-code", "cursor"]` to enable only relevant rules
+  - Tool-specific rules (CC-*, COP-*, CUR-*) filtered based on tools list
+  - Generic rules (AS-*, XP-*, AGM-*, MCP-*, PE-*) always apply
+  - Case-insensitive tool name matching
+  - Takes precedence over legacy `target` field for flexibility
 - VS Code extension with full LSP integration (#22)
   - Real-time diagnostics for all 99 validation rules
   - Status bar indicator showing agnix validation status

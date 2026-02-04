@@ -334,9 +334,9 @@ impl LintConfig {
     fn is_rule_for_tools(&self, rule_id: &str) -> bool {
         // Tool-specific rule prefixes and their corresponding tool names
         let tool_mapping: &[(&str, &[&str])] = &[
-            ("CC-", &["claude-code"]),   // Claude Code specific rules
-            ("COP-", &["copilot"]),      // GitHub Copilot specific rules
-            ("CUR-", &["cursor"]),       // Cursor specific rules
+            ("CC-", &["claude-code"]), // Claude Code specific rules
+            ("COP-", &["copilot"]),    // GitHub Copilot specific rules
+            ("CUR-", &["cursor"]),     // Cursor specific rules
         ];
 
         for (prefix, tool_names) in tool_mapping {
