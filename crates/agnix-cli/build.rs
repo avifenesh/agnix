@@ -6,20 +6,34 @@
 
 use std::env;
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
+
+/// Find the workspace root by searching for Cargo.toml with [workspace]
+fn find_workspace_root(start: &Path) -> Option<PathBuf> {
+    start
+        .ancestors()
+        .find(|path| {
+            path.join("Cargo.toml")
+                .exists()
+                .then(|| fs::read_to_string(path.join("Cargo.toml")).ok())
+                .flatten()
+                .is_some_and(|content| {
+                    content.contains("[workspace]") || content.contains("[workspace.")
+                })
+        })
+        .map(|p| p.to_path_buf())
+}
 
 fn main() {
-    // Tell Cargo to re-run this build script if rules.json changes
-    println!("cargo:rerun-if-changed=../../knowledge-base/rules.json");
-
-    // Read rules.json
+    // Find workspace root dynamically (resilient to directory structure changes)
     let manifest_dir = env::var("CARGO_MANIFEST_DIR").unwrap();
-    let rules_path = Path::new(&manifest_dir)
-        .parent()
-        .unwrap()
-        .parent()
-        .unwrap()
-        .join("knowledge-base/rules.json");
+    let workspace_root = find_workspace_root(Path::new(&manifest_dir))
+        .expect("Could not find workspace root containing [workspace] in Cargo.toml");
+
+    let rules_path = workspace_root.join("knowledge-base/rules.json");
+
+    // Tell Cargo to re-run this build script if rules.json changes
+    println!("cargo:rerun-if-changed={}", rules_path.display());
 
     let rules_json = fs::read_to_string(&rules_path).unwrap_or_else(|e| {
         panic!(
