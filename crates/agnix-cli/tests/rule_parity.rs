@@ -6,6 +6,9 @@
 //! 3. Covered by test fixtures in tests/fixtures/
 //! 4. Have valid evidence metadata
 
+// Allow common test patterns that clippy flags but are intentional in tests
+#![allow(clippy::field_reassign_with_default)]
+
 use regex::Regex;
 use serde::Deserialize;
 use std::collections::{BTreeSet, HashMap};
@@ -666,13 +669,8 @@ fn test_evidence_test_coverage_accuracy() {
 fn test_applies_to_tool_values() {
     let rules_index = load_rules_json();
 
-    let valid_tools = [
-        "claude-code",
-        "cursor",
-        "github-copilot",
-        "windsurf",
-        // Add more as needed
-    ];
+    // Use valid_tools derived from rules.json at compile time
+    let valid_tools = agnix_rules::valid_tools();
 
     for rule in &rules_index.rules {
         if let Some(ref tool) = rule.evidence.applies_to.tool {
@@ -684,5 +682,49 @@ fn test_applies_to_tool_values() {
                 valid_tools
             );
         }
+    }
+}
+
+// ============================================================================
+// Tool Mapping Consistency Tests (Review-requested coverage)
+// ============================================================================
+
+#[test]
+fn test_tool_rule_prefixes_consistency() {
+    // Every tool in TOOL_RULE_PREFIXES must also exist in VALID_TOOLS
+    // This ensures no orphaned tools or prefixes exist
+    let valid_tools = agnix_rules::valid_tools();
+
+    for (prefix, tool) in agnix_rules::TOOL_RULE_PREFIXES {
+        assert!(
+            valid_tools.contains(tool),
+            "Tool '{}' from prefix '{}' is not in VALID_TOOLS. \
+             TOOL_RULE_PREFIXES and VALID_TOOLS must be consistent.",
+            tool,
+            prefix
+        );
+    }
+}
+
+#[test]
+fn test_is_tool_alias_case_sensitivity() {
+    // Test that tool alias matching is case insensitive
+    // "Copilot" (mixed case) and "COPILOT" (uppercase) should both
+    // be recognized as valid tools via the alias mechanism
+
+    // The is_tool_alias function is private, but we can test through
+    // LintConfig::is_rule_enabled which uses it internally
+
+    use agnix_core::LintConfig;
+
+    let aliases = ["Copilot", "COPILOT", "copilot"];
+    for alias in aliases {
+        let mut config = LintConfig::default();
+        config.tools = vec![alias.to_string()];
+        assert!(
+            config.is_rule_enabled("COP-001"),
+            "Alias '{}' should match 'github-copilot' and enable COP-* rules",
+            alias
+        );
     }
 }

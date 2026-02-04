@@ -12,6 +12,7 @@ keywords = ["agent", "linter", "validation", "mcp", "skills"]
 categories = ["development-tools", "parser-implementations"]
 
 [dependencies]
+agnix-rules.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 serde_yaml.workspace = true

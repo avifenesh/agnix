@@ -19,6 +19,9 @@ keywords = ["agent", "linter", "claude", "skills", "mcp"]
 categories = ["development-tools", "command-line-utilities"]
 
 [workspace.dependencies]
+# Internal crates
+agnix-rules = { path = "crates/agnix-rules", version = "0.1.0" }
+
 # Core dependencies
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
