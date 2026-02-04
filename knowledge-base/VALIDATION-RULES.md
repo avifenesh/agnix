@@ -575,6 +575,14 @@
 **Fix**: Fix JSON syntax errors in MCP configuration
 **Source**: modelcontextprotocol.io/specification
 
+<a id="mcp-008"></a>
+### MCP-008 [MEDIUM] Protocol Version Mismatch
+**Requirement**: MCP initialize messages SHOULD use the expected protocol version
+**Detection**: Check `protocolVersion` field in initialize request params or response result against configured expected version (default: "2025-06-18")
+**Fix**: Update protocolVersion to match expected version, or configure `mcp_protocol_version` in agnix config to match your target version
+**Note**: This is a warning (not error) because MCP allows version negotiation between client and server
+**Source**: modelcontextprotocol.io/specification (Protocol Versioning)
+
 ---
 
 ## GITHUB COPILOT RULES
@@ -811,12 +819,12 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | AGENTS.md | 6 | 1 | 5 | 0 | 2 |
 | Claude Plugins | 6 | 6 | 0 | 0 | 1 |
 | GitHub Copilot | 4 | 3 | 1 | 0 | 1 |
-| MCP | 7 | 7 | 0 | 0 | 1 |
+| MCP | 8 | 7 | 1 | 0 | 1 |
 | XML | 3 | 3 | 0 | 0 | 1 |
 | References | 2 | 2 | 0 | 0 | 0 |
 | Prompt Eng | 4 | 0 | 4 | 0 | 1 |
 | Cross-Platform | 3 | 2 | 1 | 0 | 0 |
-| **TOTAL** | **89** | **67** | **22** | **0** | **21** |
+| **TOTAL** | **90** | **67** | **23** | **0** | **21** |
 
 ---
 
@@ -845,7 +853,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 
 ---
 
-**Total Coverage**: 89 validation rules across 13 categories
+**Total Coverage**: 90 validation rules across 13 categories
 **Knowledge Base**: 11,036 lines, 320KB, 75+ sources
-**Certainty**: 67 HIGH, 22 MEDIUM, 0 LOW
-**Auto-Fixable**: 21 rules (24%)
+**Certainty**: 67 HIGH, 23 MEDIUM, 0 LOW
+**Auto-Fixable**: 21 rules (23%)

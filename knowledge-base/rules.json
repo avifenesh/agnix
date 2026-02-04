@@ -1,7 +1,7 @@
 {
   "description": "Machine-readable source of truth for all validation rules. When adding a new rule, add it here AND in VALIDATION-RULES.md. CI parity tests enforce sync.",
   "version": "1.0.0",
-  "total_rules": 89,
+  "total_rules": 90,
   "last_updated": "2026-01-31",
   "rules": [
     {
@@ -443,6 +443,12 @@
       "category": "mcp"
     },
     {
+      "id": "MCP-008",
+      "name": "Protocol Version Mismatch",
+      "severity": "MEDIUM",
+      "category": "mcp"
+    },
+    {
       "id": "COP-001",
       "name": "Empty Copilot Instruction File",
       "severity": "HIGH",
@@ -577,7 +583,7 @@
     },
     "mcp": {
       "prefix": "MCP",
-      "count": 7,
+      "count": 8,
       "description": "Model Context Protocol rules"
     },
     "copilot": {
