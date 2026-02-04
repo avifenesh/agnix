@@ -7,6 +7,9 @@ authors.workspace = true
 repository.workspace = true
 homepage.workspace = true
 description = "Core validation engine for agent configurations"
+readme = "README.md"
+keywords = ["agent", "linter", "validation", "mcp", "skills"]
+categories = ["development-tools", "parser-implementations"]
 
 [dependencies]
 serde.workspace = true

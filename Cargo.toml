@@ -2,6 +2,7 @@
 resolver = "2"
 members = [
     "crates/agnix-core",
+    "crates/agnix-rules",
     "crates/agnix-cli",
     "crates/agnix-lsp",
     # "crates/agnix-wasm", # Coming later

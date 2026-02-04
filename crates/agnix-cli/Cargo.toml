@@ -7,13 +7,17 @@ authors.workspace = true
 repository.workspace = true
 homepage.workspace = true
 description = "CLI for agnix - agent config linter"
+readme = "README.md"
+keywords = ["agent", "linter", "cli", "claude", "mcp"]
+categories = ["command-line-utilities", "development-tools"]
 
 [[bin]]
 name = "agnix"
 path = "src/main.rs"
 
 [dependencies]
-agnix-core = { path = "../agnix-core" }
+agnix-core = { path = "../agnix-core", version = "0.1.0" }
+agnix-rules = { path = "../agnix-rules", version = "0.1.0" }
 clap.workspace = true
 colored.workspace = true
 anyhow.workspace = true
@@ -21,9 +25,6 @@ serde.workspace = true
 serde_json.workspace = true
 toml = "0.8"
 similar = "2"
-
-[build-dependencies]
-serde_json = "1"
 
 [dev-dependencies]
 assert_cmd = "2"

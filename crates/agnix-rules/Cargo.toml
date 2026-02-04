@@ -1,0 +1,18 @@
+[package]
+name = "agnix-rules"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+description = "Validation rules for agnix - agent configuration linter"
+readme = "README.md"
+keywords = ["agent", "linter", "rules", "validation", "mcp"]
+categories = ["data-structures"]
+
+[build-dependencies]
+serde_json = "1"
+
+[dev-dependencies]
+serde_json = "1"
