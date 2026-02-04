@@ -5,6 +5,49 @@ use crate::schemas::mcp::DEFAULT_MCP_PROTOCOL_VERSION;
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 
+/// Tool version pinning for version-aware validation
+///
+/// When tool versions are pinned, validators can apply version-specific
+/// behavior instead of using default assumptions. When not pinned,
+/// validators will use sensible defaults and add assumption notes.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct ToolVersions {
+    /// Claude Code version (e.g., "1.0.0")
+    #[serde(default)]
+    pub claude_code: Option<String>,
+
+    /// Codex CLI version (e.g., "0.1.0")
+    #[serde(default)]
+    pub codex: Option<String>,
+
+    /// Cursor version (e.g., "0.45.0")
+    #[serde(default)]
+    pub cursor: Option<String>,
+
+    /// GitHub Copilot version (e.g., "1.0.0")
+    #[serde(default)]
+    pub copilot: Option<String>,
+}
+
+/// Specification revision pinning for version-aware validation
+///
+/// When spec revisions are pinned, validators can apply revision-specific
+/// rules. When not pinned, validators use the latest known revision.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct SpecRevisions {
+    /// MCP protocol version (e.g., "2025-06-18", "2024-11-05")
+    #[serde(default)]
+    pub mcp_protocol: Option<String>,
+
+    /// Agent Skills specification revision
+    #[serde(default)]
+    pub agent_skills_spec: Option<String>,
+
+    /// AGENTS.md specification revision
+    #[serde(default)]
+    pub agents_md_spec: Option<String>,
+}
+
 /// Configuration for the linter
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LintConfig {
@@ -21,8 +64,17 @@ pub struct LintConfig {
     pub target: TargetTool,
 
     /// Expected MCP protocol version for validation (MCP-008)
+    /// Deprecated: Use spec_revisions.mcp_protocol instead
     #[serde(default = "default_mcp_protocol_version")]
     pub mcp_protocol_version: Option<String>,
+
+    /// Tool version pinning for version-aware validation
+    #[serde(default)]
+    pub tool_versions: ToolVersions,
+
+    /// Specification revision pinning for version-aware validation
+    #[serde(default)]
+    pub spec_revisions: SpecRevisions,
 
     /// Runtime-only validation root directory (not serialized)
     #[serde(skip)]
@@ -41,6 +93,8 @@ impl Default for LintConfig {
             ],
             target: TargetTool::Generic,
             mcp_protocol_version: default_mcp_protocol_version(),
+            tool_versions: ToolVersions::default(),
+            spec_revisions: SpecRevisions::default(),
             root_dir: None,
         }
     }
@@ -212,10 +266,32 @@ impl LintConfig {
     }
 
     /// Get the expected MCP protocol version
+    ///
+    /// Priority: spec_revisions.mcp_protocol > mcp_protocol_version > default
     pub fn get_mcp_protocol_version(&self) -> &str {
+        // Prefer the new spec_revisions field
+        if let Some(ref version) = self.spec_revisions.mcp_protocol {
+            return version;
+        }
+        // Fall back to legacy field
         self.mcp_protocol_version
             .as_deref()
             .unwrap_or(DEFAULT_MCP_PROTOCOL_VERSION)
+    }
+
+    /// Check if MCP protocol revision is explicitly pinned
+    pub fn is_mcp_revision_pinned(&self) -> bool {
+        self.spec_revisions.mcp_protocol.is_some() || self.mcp_protocol_version.is_some()
+    }
+
+    /// Check if Claude Code version is explicitly pinned
+    pub fn is_claude_code_version_pinned(&self) -> bool {
+        self.tool_versions.claude_code.is_some()
+    }
+
+    /// Get the pinned Claude Code version, if any
+    pub fn get_claude_code_version(&self) -> Option<&str> {
+        self.tool_versions.claude_code.as_deref()
     }
 
     /// Check if a specific rule is enabled based on config
@@ -1166,5 +1242,205 @@ required_fields = true
         assert!(config.rules.skills);
         assert!(config.rules.hooks);
         // The removed fields are simply ignored
+    }
+
+    // ===== Tool Versions Tests =====
+
+    #[test]
+    fn test_tool_versions_default_unpinned() {
+        let config = LintConfig::default();
+
+        assert!(config.tool_versions.claude_code.is_none());
+        assert!(config.tool_versions.codex.is_none());
+        assert!(config.tool_versions.cursor.is_none());
+        assert!(config.tool_versions.copilot.is_none());
+        assert!(!config.is_claude_code_version_pinned());
+    }
+
+    #[test]
+    fn test_tool_versions_claude_code_pinned() {
+        let toml_str = r#"
+severity = "Warning"
+target = "ClaudeCode"
+exclude = []
+
+[rules]
+
+[tool_versions]
+claude_code = "1.0.0"
+"#;
+
+        let config: LintConfig = toml::from_str(toml_str).unwrap();
+        assert!(config.is_claude_code_version_pinned());
+        assert_eq!(config.get_claude_code_version(), Some("1.0.0"));
+    }
+
+    #[test]
+    fn test_tool_versions_multiple_pinned() {
+        let toml_str = r#"
+severity = "Warning"
+target = "Generic"
+exclude = []
+
+[rules]
+
+[tool_versions]
+claude_code = "1.0.0"
+codex = "0.1.0"
+cursor = "0.45.0"
+copilot = "1.0.0"
+"#;
+
+        let config: LintConfig = toml::from_str(toml_str).unwrap();
+        assert_eq!(config.tool_versions.claude_code, Some("1.0.0".to_string()));
+        assert_eq!(config.tool_versions.codex, Some("0.1.0".to_string()));
+        assert_eq!(config.tool_versions.cursor, Some("0.45.0".to_string()));
+        assert_eq!(config.tool_versions.copilot, Some("1.0.0".to_string()));
+    }
+
+    // ===== Spec Revisions Tests =====
+
+    #[test]
+    fn test_spec_revisions_default_unpinned() {
+        let config = LintConfig::default();
+
+        assert!(config.spec_revisions.mcp_protocol.is_none());
+        assert!(config.spec_revisions.agent_skills_spec.is_none());
+        assert!(config.spec_revisions.agents_md_spec.is_none());
+        // Note: mcp_protocol_version has a default, so is_mcp_revision_pinned is true by default
+        assert!(config.is_mcp_revision_pinned());
+    }
+
+    #[test]
+    fn test_spec_revisions_mcp_pinned() {
+        let toml_str = r#"
+severity = "Warning"
+target = "Generic"
+exclude = []
+
+[rules]
+
+[spec_revisions]
+mcp_protocol = "2024-11-05"
+"#;
+
+        let config: LintConfig = toml::from_str(toml_str).unwrap();
+        assert!(config.is_mcp_revision_pinned());
+        assert_eq!(config.get_mcp_protocol_version(), "2024-11-05");
+    }
+
+    #[test]
+    fn test_spec_revisions_precedence_over_legacy() {
+        // spec_revisions.mcp_protocol should take precedence over mcp_protocol_version
+        let toml_str = r#"
+severity = "Warning"
+target = "Generic"
+exclude = []
+mcp_protocol_version = "2024-11-05"
+
+[rules]
+
+[spec_revisions]
+mcp_protocol = "2025-06-18"
+"#;
+
+        let config: LintConfig = toml::from_str(toml_str).unwrap();
+        assert_eq!(config.get_mcp_protocol_version(), "2025-06-18");
+    }
+
+    #[test]
+    fn test_spec_revisions_fallback_to_legacy() {
+        // When spec_revisions.mcp_protocol is not set, fall back to mcp_protocol_version
+        let toml_str = r#"
+severity = "Warning"
+target = "Generic"
+exclude = []
+mcp_protocol_version = "2024-11-05"
+
+[rules]
+
+[spec_revisions]
+"#;
+
+        let config: LintConfig = toml::from_str(toml_str).unwrap();
+        assert_eq!(config.get_mcp_protocol_version(), "2024-11-05");
+    }
+
+    #[test]
+    fn test_spec_revisions_multiple_pinned() {
+        let toml_str = r#"
+severity = "Warning"
+target = "Generic"
+exclude = []
+
+[rules]
+
+[spec_revisions]
+mcp_protocol = "2024-11-05"
+agent_skills_spec = "1.0.0"
+agents_md_spec = "1.0.0"
+"#;
+
+        let config: LintConfig = toml::from_str(toml_str).unwrap();
+        assert_eq!(
+            config.spec_revisions.mcp_protocol,
+            Some("2024-11-05".to_string())
+        );
+        assert_eq!(
+            config.spec_revisions.agent_skills_spec,
+            Some("1.0.0".to_string())
+        );
+        assert_eq!(
+            config.spec_revisions.agents_md_spec,
+            Some("1.0.0".to_string())
+        );
+    }
+
+    // ===== Backward Compatibility with New Fields =====
+
+    #[test]
+    fn test_config_without_tool_versions_defaults() {
+        // Old configs without tool_versions section should still work
+        let toml_str = r#"
+severity = "Warning"
+target = "ClaudeCode"
+exclude = []
+
+[rules]
+skills = true
+"#;
+
+        let config: LintConfig = toml::from_str(toml_str).unwrap();
+        assert!(!config.is_claude_code_version_pinned());
+        assert!(config.tool_versions.claude_code.is_none());
+    }
+
+    #[test]
+    fn test_config_without_spec_revisions_defaults() {
+        // Old configs without spec_revisions section should still work
+        let toml_str = r#"
+severity = "Warning"
+target = "Generic"
+exclude = []
+
+[rules]
+"#;
+
+        let config: LintConfig = toml::from_str(toml_str).unwrap();
+        // Default mcp_protocol_version is set, so this is "pinned"
+        assert!(config.is_mcp_revision_pinned());
+        assert_eq!(config.get_mcp_protocol_version(), "2025-06-18");
+    }
+
+    #[test]
+    fn test_is_mcp_revision_pinned_with_none_mcp_protocol_version() {
+        // When both spec_revisions.mcp_protocol and mcp_protocol_version are None
+        let mut config = LintConfig::default();
+        config.mcp_protocol_version = None;
+        config.spec_revisions.mcp_protocol = None;
+
+        assert!(!config.is_mcp_revision_pinned());
+        // Should still return default
+        assert_eq!(config.get_mcp_protocol_version(), "2025-06-18");
     }
 }

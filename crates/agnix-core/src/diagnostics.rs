@@ -90,6 +90,14 @@ pub struct Diagnostic {
     /// Automatic fixes for this diagnostic
     #[serde(default)]
     pub fixes: Vec<Fix>,
+    /// Assumption note for version-aware validation
+    ///
+    /// When tool/spec versions are not pinned, validators may use default
+    /// assumptions. This field documents those assumptions to help users
+    /// understand what behavior is expected and how to get version-specific
+    /// validation.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub assumption: Option<String>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
@@ -110,6 +118,7 @@ impl Diagnostic {
             rule: rule.to_string(),
             suggestion: None,
             fixes: Vec::new(),
+            assumption: None,
         }
     }
 
@@ -123,11 +132,21 @@ impl Diagnostic {
             rule: rule.to_string(),
             suggestion: None,
             fixes: Vec::new(),
+            assumption: None,
         }
     }
 
     pub fn with_suggestion(mut self, suggestion: String) -> Self {
         self.suggestion = Some(suggestion);
+        self
+    }
+
+    /// Add an assumption note for version-aware validation
+    ///
+    /// Used when tool/spec versions are not pinned to document what
+    /// default behavior the validator is assuming.
+    pub fn with_assumption(mut self, assumption: impl Into<String>) -> Self {
+        self.assumption = Some(assumption.into());
         self
     }
 
