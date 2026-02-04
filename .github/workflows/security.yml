@@ -18,10 +18,10 @@ jobs:
     name: CodeQL Analysis
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@2588666de8825e1e9dc4e2329a4c985457d55b32 # v3
         with:
           languages: rust
           queries: security-extended
@@ -30,7 +30,7 @@ jobs:
         run: cargo build --release --workspace
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@2588666de8825e1e9dc4e2329a4c985457d55b32 # v3
         with:
           category: "/language:rust"
 
@@ -38,9 +38,11 @@ jobs:
     name: Security Audit
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: dtolnay/rust-toolchain@4be9e76fd7c4901c61fb841f559994984270fce7 # stable
+      - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2
+        with:
+          save-if: ${{ github.ref == 'refs/heads/main' }}
       - name: Install cargo-audit
         run: cargo install cargo-audit
       - name: Run security audit
