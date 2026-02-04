@@ -1,0 +1,17 @@
+# Source files (not needed in package)
+src/**
+**/*.ts
+!out/**/*.js
+
+# Build configuration
+tsconfig.json
+esbuild.js
+
+# Development files
+.gitignore
+.vscode-test/
+node_modules/
+
+# Other
+*.vsix
+.DS_Store

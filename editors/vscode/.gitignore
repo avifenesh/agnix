@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+
+# Build output
+out/
+dist/
+
+# VS Code extension package
+*.vsix
+
+# VS Code test directory
+.vscode-test/
+
+# TypeScript cache
+*.tsbuildinfo
+
+# npm debug
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
