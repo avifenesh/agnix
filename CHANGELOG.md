@@ -7,13 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
-- 5 new parse error rules with normalized IDs (AS-016, CC-HK-012, CC-AG-007, CC-PL-006, MCP-007)
-- Auto-fix support for CC-MEM-005 and CC-MEM-007 memory rules
-  - CC-MEM-005: Delete lines containing generic instructions
-  - CC-MEM-007: Replace weak constraint language with stronger alternatives
-  - CRLF line ending support for correct byte offsets on Windows
-
 ### Removed
 - Removed unused config flags `tool_names` and `required_fields` from `.agnix.toml`
   - These flags were never referenced in the codebase
@@ -61,6 +54,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Documented SHA pin reference in .github/workflows/README.md for maintainability
 
 ### Added
+- 5 new parse error rules with normalized IDs (AS-016, CC-HK-012, CC-AG-007, CC-PL-006, MCP-007)
+- Auto-fix support for CC-MEM-005 and CC-MEM-007 memory rules
+  - CC-MEM-005: Delete lines containing generic instructions
+  - CC-MEM-007: Replace weak constraint language with stronger alternatives
+  - CRLF line ending support for correct byte offsets on Windows
 - Auto-fix implementations for five additional rules:
   - AS-004: Convert invalid skill names to kebab-case (case-only fixes marked safe)
   - AS-010: Prepend "Use when user wants to " to descriptions missing trigger phrase
@@ -224,12 +222,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Skips external URLs (http://, https://, mailto:, etc.)
   - 4 test fixtures in tests/fixtures/refs/ directory
   - 31 comprehensive unit tests for reference validation
-
-### Fixed
-- Exclude glob patterns now match correctly when validate_project() is called with absolute paths (#67)
-  - Patterns like `target/**` previously failed to match when walker yielded absolute paths
-  - Added path normalization by stripping base path prefix before glob matching
-- PE-001 through PE-004 rules now properly dispatch on CLAUDE.md and AGENTS.md files (PromptValidator was implemented but not registered in ValidatorRegistry)
 
 ### Changed
 - Removed miette dependency from agnix-core to reduce binary size and compile times
