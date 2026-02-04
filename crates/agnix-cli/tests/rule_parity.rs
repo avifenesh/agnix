@@ -649,10 +649,7 @@ fn test_evidence_test_coverage_accuracy() {
 
         // If evidence claims fixtures but we can't find them, that's a problem
         if claims_fixtures && !has_fixtures {
-            mismatches.push(format!(
-                "{}: claims fixtures=true but none found",
-                rule.id
-            ));
+            mismatches.push(format!("{}: claims fixtures=true but none found", rule.id));
         }
     }
 

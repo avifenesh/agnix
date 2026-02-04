@@ -39,7 +39,9 @@ fn main() {
     });
 
     // Extract just the rules array and generate Rust code
-    let rules_array = rules["rules"].as_array().expect("rules.json must have a 'rules' array");
+    let rules_array = rules["rules"]
+        .as_array()
+        .expect("rules.json must have a 'rules' array");
 
     let mut generated_code = String::new();
     generated_code.push_str("// Auto-generated from knowledge-base/rules.json by build.rs\n");
@@ -59,7 +61,10 @@ fn main() {
         };
         let escaped_id = escape_str(id);
         let escaped_name = escape_str(name);
-        generated_code.push_str(&format!("    (\"{}\", \"{}\"),\n", escaped_id, escaped_name));
+        generated_code.push_str(&format!(
+            "    (\"{}\", \"{}\"),\n",
+            escaped_id, escaped_name
+        ));
     }
 
     generated_code.push_str("];\n");

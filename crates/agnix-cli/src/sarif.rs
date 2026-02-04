@@ -393,7 +393,10 @@ mod tests {
             "https://github.com/avifenesh/agnix/blob/main/knowledge-base/VALIDATION-RULES.md#";
 
         for rule in rules {
-            let uri = rule.help_uri.as_ref().expect("All rules should have help_uri");
+            let uri = rule
+                .help_uri
+                .as_ref()
+                .expect("All rules should have help_uri");
 
             assert!(
                 uri.starts_with(BASE_URL),
