@@ -948,7 +948,10 @@ fn frontmatter_key_offset(frontmatter: &str, key: &str) -> Option<usize> {
             if line_end < bytes.len() {
                 if bytes[line_end] == b'\n' {
                     offset = line_end + 1; // LF
-                } else if line_end + 1 < bytes.len() && bytes[line_end] == b'\r' && bytes[line_end + 1] == b'\n' {
+                } else if line_end + 1 < bytes.len()
+                    && bytes[line_end] == b'\r'
+                    && bytes[line_end + 1] == b'\n'
+                {
                     offset = line_end + 2; // CRLF
                 } else {
                     offset = line_end; // No newline (last line)
@@ -969,7 +972,10 @@ fn frontmatter_key_offset(frontmatter: &str, key: &str) -> Option<usize> {
         if line_end < bytes.len() {
             if bytes[line_end] == b'\n' {
                 offset = line_end + 1; // LF
-            } else if line_end + 1 < bytes.len() && bytes[line_end] == b'\r' && bytes[line_end + 1] == b'\n' {
+            } else if line_end + 1 < bytes.len()
+                && bytes[line_end] == b'\r'
+                && bytes[line_end + 1] == b'\n'
+            {
                 offset = line_end + 2; // CRLF
             } else {
                 offset = line_end; // No newline (last line)
@@ -1001,7 +1007,10 @@ fn frontmatter_value_byte_range(
             if line_end < bytes.len() {
                 if bytes[line_end] == b'\n' {
                     offset = line_end + 1; // LF
-                } else if line_end + 1 < bytes.len() && bytes[line_end] == b'\r' && bytes[line_end + 1] == b'\n' {
+                } else if line_end + 1 < bytes.len()
+                    && bytes[line_end] == b'\r'
+                    && bytes[line_end + 1] == b'\n'
+                {
                     offset = line_end + 2; // CRLF
                 } else {
                     offset = line_end; // No newline (last line)
@@ -1065,7 +1074,10 @@ fn frontmatter_value_byte_range(
         if line_end < bytes.len() {
             if bytes[line_end] == b'\n' {
                 offset = line_end + 1; // LF
-            } else if line_end + 1 < bytes.len() && bytes[line_end] == b'\r' && bytes[line_end + 1] == b'\n' {
+            } else if line_end + 1 < bytes.len()
+                && bytes[line_end] == b'\r'
+                && bytes[line_end + 1] == b'\n'
+            {
                 offset = line_end + 2; // CRLF
             } else {
                 offset = line_end; // No newline (last line)

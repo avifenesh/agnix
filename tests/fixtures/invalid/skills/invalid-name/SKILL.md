@@ -1,6 +1,6 @@
 ---
-name: Code-Review
-description: Reviews code
+name: code-review
+description: Use when user wants to Reviews code
 model: gpt-4
 ---
 
