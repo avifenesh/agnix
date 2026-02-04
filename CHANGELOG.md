@@ -60,6 +60,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Documented SHA pin reference in .github/workflows/README.md for maintainability
 
 ### Added
+- Evaluation harness with `agnix eval` command for measuring rule efficacy
+  - Load test cases from YAML manifests with expected rule IDs
+  - Calculate precision, recall, and F1 scores per rule and overall
+  - Output formats: markdown (default), JSON, CSV
+  - Filter by rule prefix (`--filter`)
+  - Verbose mode for per-case details (`--verbose`)
+  - 39 test cases covering AS-*, CC-SK-*, MCP-*, AGM-*, XP-*, XML-*, REF-* rules
+  - Path traversal protection (relative paths only)
+  - Documentation in knowledge-base/EVALUATION.md
 - MCP-008 rule for protocol version validation with configurable `mcp_protocol_version` option
 - 5 new parse error rules with normalized IDs (AS-016, CC-HK-012, CC-AG-007, CC-PL-006, MCP-007)
 - Auto-fix support for CC-MEM-005 and CC-MEM-007 memory rules
