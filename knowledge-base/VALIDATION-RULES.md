@@ -812,7 +812,15 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 ### XP-001 [HIGH] Platform-Specific Feature in Generic Config
 **Requirement**: Generic configs MUST NOT use platform-specific features
 **Detection**: Check for Claude-only features (hooks, context: fork) in AGENTS.md
-**Fix**: Move to CLAUDE.md or add platform guard
+**Fix**: Move to CLAUDE.md or wrap in a Claude-specific section header
+**Example**: Valid guarded section:
+```markdown
+## Claude Code Specific
+- type: PreToolExecution
+  command: echo "lint"
+context: fork
+agent: reviewer
+```
 **Source**: multi-platform research
 
 <a id="xp-002"></a>
