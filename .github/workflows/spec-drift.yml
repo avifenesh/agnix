@@ -50,6 +50,13 @@ jobs:
           set -euo pipefail
 
           BASELINES_FILE=".github/spec-baselines.json"
+
+          # Validate JSON structure
+          if ! jq -e '.sources["s-tier"] and .sources["a-tier"]' "$BASELINES_FILE" > /dev/null 2>&1; then
+            echo "ERROR: Invalid spec-baselines.json structure"
+            exit 1
+          fi
+
           DRIFT_DETECTED=false
           DRIFT_REPORT=""
           NEW_HASHES=""
@@ -93,11 +100,17 @@ jobs:
             local content
             local hash
 
+            # Validate URL is https
+            if [[ ! "$url" =~ ^https:// ]]; then
+              echo "INVALID_URL"
+              return
+            fi
+
             # Fetch with curl, follow redirects, timeout after 30s
             content=$(curl -fsSL --max-time 30 "$url" 2>/dev/null || echo "FETCH_FAILED")
 
-            if [[ "$content" == "FETCH_FAILED" ]]; then
-              echo "FETCH_FAILED"
+            if [[ "$content" == "FETCH_FAILED" || "$content" == "INVALID_URL" ]]; then
+              echo "$content"
               return
             fi
 
@@ -115,11 +128,9 @@ jobs:
             for source in $sources; do
               local url
               local baseline_hash
-              local description
 
               url=$(jq -r ".sources[\"$tier\"][\"$source\"].url" "$BASELINES_FILE")
               baseline_hash=$(jq -r ".sources[\"$tier\"][\"$source\"].hash" "$BASELINES_FILE")
-              description=$(jq -r ".sources[\"$tier\"][\"$source\"].description" "$BASELINES_FILE")
 
               echo "Checking: $source ($url)"
 
@@ -131,10 +142,16 @@ jobs:
                 continue
               fi
 
+              if [[ "$current_hash" == "INVALID_URL" ]]; then
+                echo "  ERROR: Invalid URL for $source (must be https://)"
+                DRIFT_REPORT="${DRIFT_REPORT}\n- **$source**: Invalid URL (must be https://)"
+                continue
+              fi
+
               # Store new hash for potential baseline update
               NEW_HASHES="${NEW_HASHES}${tier}|${source}|${current_hash}\n"
 
-              if [[ -z "$baseline_hash" || "$baseline_hash" == "" ]]; then
+              if [[ -z "$baseline_hash" ]]; then
                 echo "  INFO: No baseline hash set for $source (first run)"
                 DRIFT_REPORT="${DRIFT_REPORT}\n- **$source**: No baseline (initial hash: ${current_hash:0:12}...)"
                 DRIFT_DETECTED=true
@@ -144,7 +161,6 @@ jobs:
                 echo "    Current:  ${current_hash:0:12}..."
                 DRIFT_REPORT="${DRIFT_REPORT}\n- **$source** ($tier): Content changed"
                 DRIFT_REPORT="${DRIFT_REPORT}\n  - URL: $url"
-                DRIFT_REPORT="${DRIFT_REPORT}\n  - Description: $description"
                 DRIFT_REPORT="${DRIFT_REPORT}\n  - Previous hash: \`${baseline_hash:0:12}...\`"
                 DRIFT_REPORT="${DRIFT_REPORT}\n  - Current hash: \`${current_hash:0:12}...\`"
                 DRIFT_DETECTED=true
@@ -171,9 +187,12 @@ jobs:
           echo ""
           echo "drift_detected=$DRIFT_DETECTED" >> "$GITHUB_OUTPUT"
 
-          # Escape newlines for GitHub output
-          DRIFT_REPORT_ESCAPED=$(echo -e "$DRIFT_REPORT" | sed ':a;N;$!ba;s/\n/%0A/g')
-          echo "drift_report=$DRIFT_REPORT_ESCAPED" >> "$GITHUB_OUTPUT"
+          # Use multiline output syntax for drift report
+          {
+            echo "drift_report<<EOF"
+            echo -e "$DRIFT_REPORT"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
 
           # Output new hashes if update requested
           if [[ "$UPDATE_BASELINES" == "true" ]]; then
@@ -223,8 +242,8 @@ jobs:
           # Check if an open issue already exists
           existing_issue=$(gh issue list --state open --label "$ISSUE_LABEL" --json number --jq '.[0].number // empty')
 
-          # Decode the escaped report
-          REPORT_BODY=$(echo "$DRIFT_REPORT" | sed 's/%0A/\n/g')
+          # Use report directly (multiline output preserved)
+          REPORT_BODY="$DRIFT_REPORT"
 
           ISSUE_BODY="## Spec Drift Sentinel Alert
 
