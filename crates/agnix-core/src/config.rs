@@ -19,6 +19,10 @@ pub struct LintConfig {
     /// Target tool (claude-code, cursor, codex, generic)
     pub target: TargetTool,
 
+    /// Expected MCP protocol version for validation (MCP-008)
+    #[serde(default = "default_mcp_protocol_version")]
+    pub mcp_protocol_version: Option<String>,
+
     /// Runtime-only validation root directory (not serialized)
     #[serde(skip)]
     pub root_dir: Option<PathBuf>,
@@ -35,6 +39,7 @@ impl Default for LintConfig {
                 "target/**".to_string(),
             ],
             target: TargetTool::Generic,
+            mcp_protocol_version: default_mcp_protocol_version(),
             root_dir: None,
         }
     }
@@ -50,6 +55,11 @@ pub enum SeverityLevel {
 /// Helper function for serde default
 fn default_true() -> bool {
     true
+}
+
+/// Default MCP protocol version (latest stable per MCP spec)
+fn default_mcp_protocol_version() -> Option<String> {
+    Some("2025-06-18".to_string())
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -193,6 +203,13 @@ impl LintConfig {
     /// Set the runtime validation root directory (not persisted)
     pub fn set_root_dir(&mut self, root_dir: PathBuf) {
         self.root_dir = Some(root_dir);
+    }
+
+    /// Get the expected MCP protocol version
+    pub fn get_mcp_protocol_version(&self) -> &str {
+        self.mcp_protocol_version
+            .as_deref()
+            .unwrap_or("2025-06-18")
     }
 
     /// Check if a specific rule is enabled based on config

@@ -84,6 +84,73 @@ pub const VALID_JSON_SCHEMA_TYPES: &[&str] = &[
     "string", "number", "integer", "boolean", "object", "array", "null",
 ];
 
+/// Default MCP protocol version (latest stable per MCP spec 2025-06-18)
+pub const DEFAULT_MCP_PROTOCOL_VERSION: &str = "2025-06-18";
+
+/// MCP initialize request params
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct McpInitializeParams {
+    /// Protocol version requested by client
+    #[serde(rename = "protocolVersion")]
+    pub protocol_version: Option<String>,
+
+    /// Client info
+    #[serde(rename = "clientInfo")]
+    pub client_info: Option<serde_json::Value>,
+
+    /// Capabilities
+    pub capabilities: Option<serde_json::Value>,
+}
+
+/// MCP initialize result (from server response)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct McpInitializeResult {
+    /// Protocol version negotiated by server
+    #[serde(rename = "protocolVersion")]
+    pub protocol_version: Option<String>,
+
+    /// Server info
+    #[serde(rename = "serverInfo")]
+    pub server_info: Option<serde_json::Value>,
+
+    /// Server capabilities
+    pub capabilities: Option<serde_json::Value>,
+}
+
+/// Check if a JSON-RPC message is an initialize request
+pub fn is_initialize_message(value: &serde_json::Value) -> bool {
+    value
+        .get("method")
+        .and_then(|m| m.as_str())
+        .is_some_and(|m| m == "initialize")
+}
+
+/// Check if a JSON-RPC message is an initialize response (has result with protocolVersion)
+pub fn is_initialize_response(value: &serde_json::Value) -> bool {
+    value
+        .get("result")
+        .and_then(|r| r.get("protocolVersion"))
+        .is_some()
+}
+
+/// Extract protocol version from an initialize request's params
+pub fn extract_request_protocol_version(value: &serde_json::Value) -> Option<String> {
+    value
+        .get("params")
+        .and_then(|p| p.get("protocolVersion"))
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string())
+}
+
+/// Extract protocol version from an initialize response's result
+pub fn extract_response_protocol_version(value: &serde_json::Value) -> Option<String> {
+    value
+        .get("result")
+        .and_then(|r| r.get("protocolVersion"))
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string())
+}
+
 impl McpToolSchema {
     /// Check if all required fields are present
     pub fn has_required_fields(&self) -> (bool, bool, bool) {
@@ -415,5 +482,83 @@ mod tests {
         let errors = validate_json_schema_structure(&schema);
         assert_eq!(errors.len(), 1);
         assert!(errors[0].contains("must be a string or array"));
+    }
+
+    // ===== Protocol Version Helper Tests =====
+
+    #[test]
+    fn test_is_initialize_message() {
+        let msg = json!({"jsonrpc": "2.0", "method": "initialize", "id": 1});
+        assert!(super::is_initialize_message(&msg));
+
+        let other = json!({"jsonrpc": "2.0", "method": "tools/list", "id": 1});
+        assert!(!super::is_initialize_message(&other));
+
+        let no_method = json!({"jsonrpc": "2.0", "id": 1});
+        assert!(!super::is_initialize_message(&no_method));
+    }
+
+    #[test]
+    fn test_is_initialize_response() {
+        let response = json!({
+            "jsonrpc": "2.0",
+            "id": 1,
+            "result": {"protocolVersion": "2025-06-18"}
+        });
+        assert!(super::is_initialize_response(&response));
+
+        let other_response = json!({
+            "jsonrpc": "2.0",
+            "id": 1,
+            "result": {"tools": []}
+        });
+        assert!(!super::is_initialize_response(&other_response));
+    }
+
+    #[test]
+    fn test_extract_request_protocol_version() {
+        let msg = json!({
+            "jsonrpc": "2.0",
+            "method": "initialize",
+            "id": 1,
+            "params": {"protocolVersion": "2024-11-05"}
+        });
+        assert_eq!(
+            super::extract_request_protocol_version(&msg),
+            Some("2024-11-05".to_string())
+        );
+
+        let no_version = json!({
+            "jsonrpc": "2.0",
+            "method": "initialize",
+            "id": 1,
+            "params": {}
+        });
+        assert_eq!(super::extract_request_protocol_version(&no_version), None);
+    }
+
+    #[test]
+    fn test_extract_response_protocol_version() {
+        let response = json!({
+            "jsonrpc": "2.0",
+            "id": 1,
+            "result": {"protocolVersion": "2025-06-18"}
+        });
+        assert_eq!(
+            super::extract_response_protocol_version(&response),
+            Some("2025-06-18".to_string())
+        );
+
+        let no_version = json!({
+            "jsonrpc": "2.0",
+            "id": 1,
+            "result": {}
+        });
+        assert_eq!(super::extract_response_protocol_version(&no_version), None);
+    }
+
+    #[test]
+    fn test_default_mcp_protocol_version_constant() {
+        assert_eq!(super::DEFAULT_MCP_PROTOCOL_VERSION, "2025-06-18");
     }
 }
