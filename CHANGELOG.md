@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- 5 new parse error rules with normalized IDs (AS-016, CC-HK-012, CC-AG-007, CC-PL-006, MCP-007)
+
 ### Removed
 - Removed unused config flags `tool_names` and `required_fields` from `.agnix.toml`
   - These flags were never referenced in the codebase
