@@ -1,0 +1,4 @@
+# Test with Unicode
+
+Tool name: Bashéclair (contains non-ASCII after Bash)
+allowed-tools: Bashü Write

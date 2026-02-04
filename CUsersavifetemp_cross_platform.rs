@@ -332,10 +332,8 @@ pub fn extract_build_commands(content: &str) -> Vec<BuildCommand> {
             };
 
             // Determine command type
-            // Note: " i " requires space after, but "npm i" at end of line needs special handling
             let command_type = if raw.contains(" install")
                 || raw.contains(" i ")
-                || raw.ends_with(" i")
                 || raw.contains(" add")
                 || raw.contains(" ci")
             {
@@ -379,72 +377,35 @@ pub struct BuildConflict {
 
 /// Detect conflicting build commands across instruction files (for XP-004)
 ///
-/// Returns conflicts when different package managers are used for the same command type.
-/// Uses O(n*m) algorithm by grouping commands by type first, then checking for conflicts.
+/// Returns conflicts when different package managers are used for the same command type
 pub fn detect_build_conflicts(
     files: &[(std::path::PathBuf, Vec<BuildCommand>)],
 ) -> Vec<BuildConflict> {
-    use std::collections::HashMap;
-
-    // Group commands by CommandType: HashMap<CommandType, Vec<(PathBuf, BuildCommand)>>
-    let mut by_type: HashMap<CommandType, Vec<(std::path::PathBuf, &BuildCommand)>> =
-        HashMap::new();
-
-    for (path, commands) in files {
-        for cmd in commands {
-            by_type
-                .entry(cmd.command_type)
-                .or_default()
-                .push((path.clone(), cmd));
-        }
-    }
-
     let mut conflicts = Vec::new();
 
-    // For each command type, check if different package managers are used
-    for (cmd_type, entries) in by_type {
-        // Group by package manager within this command type
-        let mut by_manager: HashMap<PackageManager, Vec<(std::path::PathBuf, &BuildCommand)>> =
-            HashMap::new();
+    // Group commands by type across all files
+    for i in 0..files.len() {
+        for j in (i + 1)..files.len() {
+            let (file1, commands1) = &files[i];
+            let (file2, commands2) = &files[j];
 
-        for (path, cmd) in entries {
-            by_manager
-                .entry(cmd.package_manager)
-                .or_default()
-                .push((path, cmd));
-        }
-
-        // If there are multiple package managers for the same command type, report conflicts
-        if by_manager.len() > 1 {
-            let managers: Vec<_> = by_manager.keys().collect();
-
-            // Report conflict between each pair of different package managers
-            for i in 0..managers.len() {
-                for j in (i + 1)..managers.len() {
-                    let manager1 = managers[i];
-                    let manager2 = managers[j];
-
-                    let entries1 = &by_manager[manager1];
-                    let entries2 = &by_manager[manager2];
-
-                    // Take first entry from each group to report
-                    if let (Some((path1, cmd1)), Some((path2, cmd2))) =
-                        (entries1.first(), entries2.first())
+            for cmd1 in commands1 {
+                for cmd2 in commands2 {
+                    // Same command type but different package manager
+                    if cmd1.command_type == cmd2.command_type
+                        && cmd1.package_manager != cmd2.package_manager
                     {
-                        // Skip if both commands are from the same file (false positive)
-                        if path1 != path2 {
-                            conflicts.push(BuildConflict {
-                                file1: path1.clone(),
-                                file1_line: cmd1.line,
-                                file1_manager: *manager1,
-                                file1_command: cmd1.raw_command.clone(),
-                                file2: path2.clone(),
-                                file2_line: cmd2.line,
-                                file2_manager: *manager2,
-                                file2_command: cmd2.raw_command.clone(),
-                                command_type: cmd_type,
-                            });
-                        }
+                        conflicts.push(BuildConflict {
+                            file1: file1.clone(),
+                            file1_line: cmd1.line,
+                            file1_manager: cmd1.package_manager,
+                            file1_command: cmd1.raw_command.clone(),
+                            file2: file2.clone(),
+                            file2_line: cmd2.line,
+                            file2_manager: cmd2.package_manager,
+                            file2_command: cmd2.raw_command.clone(),
+                            command_type: cmd1.command_type,
+                        });
                     }
                 }
             }
@@ -506,24 +467,6 @@ pub fn extract_tool_constraints(content: &str) -> Vec<ToolConstraint> {
         if let Some(mat) = allow_pattern.find(line) {
             let matched = mat.as_str();
 
-            // Check for inline tool name captures first
-            if let Some(caps) = allow_pattern.captures(line) {
-                for i in 1..=6 {
-                    if let Some(tool_cap) = caps.get(i) {
-                        // Normalize to canonical tool name if it matches a known tool
-                        if let Some(canonical) = normalize_tool_name(tool_cap.as_str()) {
-                            results.push(ToolConstraint {
-                                line: line_num + 1,
-                                column: mat.start(),
-                                tool_name: canonical,
-                                constraint_type: ConstraintType::Allow,
-                                source_context: matched.to_string(),
-                            });
-                        }
-                    }
-                }
-            }
-
             // Extract tool names from the line after the pattern
             let tools = extract_tool_names_from_line(line, mat.end());
             for tool in tools {
@@ -545,16 +488,13 @@ pub fn extract_tool_constraints(content: &str) -> Vec<ToolConstraint> {
             if let Some(caps) = disallow_pattern.captures(line) {
                 for i in 1..=6 {
                     if let Some(tool_cap) = caps.get(i) {
-                        // Normalize to canonical tool name if it matches a known tool
-                        if let Some(canonical) = normalize_tool_name(tool_cap.as_str()) {
-                            results.push(ToolConstraint {
-                                line: line_num + 1,
-                                column: mat.start(),
-                                tool_name: canonical,
-                                constraint_type: ConstraintType::Disallow,
-                                source_context: matched.to_string(),
-                            });
-                        }
+                        results.push(ToolConstraint {
+                            line: line_num + 1,
+                            column: mat.start(),
+                            tool_name: tool_cap.as_str().to_string(),
+                            constraint_type: ConstraintType::Disallow,
+                            source_context: matched.to_string(),
+                        });
                     }
                 }
             }
@@ -577,8 +517,6 @@ pub fn extract_tool_constraints(content: &str) -> Vec<ToolConstraint> {
 }
 
 /// Extract tool names from a line after a given position
-///
-/// Uses word boundary matching to avoid false positives (e.g., 'Bash' in 'Bashful').
 fn extract_tool_names_from_line(line: &str, start_pos: usize) -> Vec<String> {
     let mut tools = Vec::new();
     let remainder = if start_pos < line.len() {
@@ -587,61 +525,32 @@ fn extract_tool_names_from_line(line: &str, start_pos: usize) -> Vec<String> {
         return tools;
     };
 
-    let remainder_lower = remainder.to_lowercase();
-    let remainder_bytes = remainder_lower.as_bytes();
+    // Known tool names (case-insensitive matching)
+    let known_tools = [
+        "Bash",
+        "Read",
+        "Write",
+        "Edit",
+        "Grep",
+        "Glob",
+        "Task",
+        "WebFetch",
+        "AskUserQuestion",
+        "TodoRead",
+        "TodoWrite",
+        "mcp",
+        "computer",
+        "execute",
+    ];
 
-    // Match tool names with word boundary checking
-    for tool in KNOWN_TOOLS {
-        let tool_lower = tool.to_lowercase();
-        if let Some(pos) = remainder_lower.find(&tool_lower) {
-            // Check word boundaries
-            let before_ok = pos == 0 || !is_word_char(remainder_bytes[pos - 1]);
-            let after_pos = pos + tool_lower.len();
-            let after_ok =
-                after_pos >= remainder_bytes.len() || !is_word_char(remainder_bytes[after_pos]);
-
-            if before_ok && after_ok {
-                tools.push(tool.to_string());
-            }
+    // Match tool names in the remainder
+    for tool in &known_tools {
+        if remainder.to_lowercase().contains(&tool.to_lowercase()) {
+            tools.push(tool.to_string());
         }
     }
 
     tools
-}
-
-/// Check if a byte is a word character (alphanumeric or underscore)
-#[inline]
-fn is_word_char(b: u8) -> bool {
-    b.is_ascii_alphanumeric() || b == b'_'
-}
-
-/// Known tool names for normalization
-const KNOWN_TOOLS: &[&str] = &[
-    "Bash",
-    "Read",
-    "Write",
-    "Edit",
-    "Grep",
-    "Glob",
-    "Task",
-    "WebFetch",
-    "AskUserQuestion",
-    "TodoRead",
-    "TodoWrite",
-    "mcp",
-    "computer",
-    "execute",
-];
-
-/// Normalize a tool name to its canonical form if it matches a known tool
-fn normalize_tool_name(name: &str) -> Option<String> {
-    let name_lower = name.to_lowercase();
-    for tool in KNOWN_TOOLS {
-        if tool.to_lowercase() == name_lower {
-            return Some(tool.to_string());
-        }
-    }
-    None
 }
 
 /// Conflict between tool constraints across files
@@ -658,73 +567,55 @@ pub struct ToolConflict {
 
 /// Detect conflicting tool constraints across instruction files (for XP-005)
 ///
-/// Returns conflicts when one file allows a tool and another disallows it.
-/// Uses O(n*m) algorithm by grouping constraints by tool name first.
-#[allow(clippy::type_complexity)]
+/// Returns conflicts when one file allows a tool and another disallows it
 pub fn detect_tool_conflicts(
     files: &[(std::path::PathBuf, Vec<ToolConstraint>)],
 ) -> Vec<ToolConflict> {
-    use std::collections::{HashMap, HashSet};
-
-    // Type alias for the grouped constraints
-    type ConstraintGroup<'a> = (
-        Vec<(std::path::PathBuf, &'a ToolConstraint)>,
-        Vec<(std::path::PathBuf, &'a ToolConstraint)>,
-    );
-
-    // Group constraints by tool name (lowercase for case-insensitive matching)
-    // Key: tool_name (lowercase)
-    // Value: (allowed_from: Vec<(path, constraint)>, disallowed_from: Vec<(path, constraint)>)
-    let mut by_tool: HashMap<String, ConstraintGroup<'_>> = HashMap::new();
-
-    for (path, constraints) in files {
-        for constraint in constraints {
-            let tool_key = constraint.tool_name.to_lowercase();
-            let entry = by_tool
-                .entry(tool_key)
-                .or_insert_with(|| (Vec::new(), Vec::new()));
-
-            match constraint.constraint_type {
-                ConstraintType::Allow => entry.0.push((path.clone(), constraint)),
-                ConstraintType::Disallow => entry.1.push((path.clone(), constraint)),
-            }
-        }
-    }
-
     let mut conflicts = Vec::new();
-    let mut reported: HashSet<(String, std::path::PathBuf, std::path::PathBuf)> = HashSet::new();
 
-    // For each tool, check if there are both allow and disallow constraints
-    for (tool_key, (allowed, disallowed)) in by_tool {
-        if allowed.is_empty() || disallowed.is_empty() {
-            continue;
-        }
+    // Build maps of allowed and disallowed tools per file
+    for i in 0..files.len() {
+        for j in 0..files.len() {
+            if i == j {
+                continue;
+            }
 
-        // Report conflicts between allow and disallow constraints
-        for (allow_path, allow_constraint) in &allowed {
-            for (disallow_path, disallow_constraint) in &disallowed {
-                // Skip same file conflicts
-                if allow_path == disallow_path {
+            let (file1, constraints1) = &files[i];
+            let (file2, constraints2) = &files[j];
+
+            for c1 in constraints1 {
+                if c1.constraint_type != ConstraintType::Allow {
                     continue;
                 }
 
-                // Create a normalized key for deduplication (smaller path first)
-                let key = if allow_path < disallow_path {
-                    (tool_key.clone(), allow_path.clone(), disallow_path.clone())
-                } else {
-                    (tool_key.clone(), disallow_path.clone(), allow_path.clone())
-                };
+                for c2 in constraints2 {
+                    if c2.constraint_type != ConstraintType::Disallow {
+                        continue;
+                    }
 
-                if reported.insert(key) {
-                    conflicts.push(ToolConflict {
-                        tool_name: allow_constraint.tool_name.clone(),
-                        allow_file: allow_path.clone(),
-                        allow_line: allow_constraint.line,
-                        allow_context: allow_constraint.source_context.clone(),
-                        disallow_file: disallow_path.clone(),
-                        disallow_line: disallow_constraint.line,
-                        disallow_context: disallow_constraint.source_context.clone(),
-                    });
+                    // Same tool, different constraint
+                    if c1.tool_name.to_lowercase() == c2.tool_name.to_lowercase() {
+                        // Avoid duplicate conflicts (check if already reported with files swapped)
+                        let already_reported = conflicts.iter().any(|conflict: &ToolConflict| {
+                            conflict.tool_name.to_lowercase() == c1.tool_name.to_lowercase()
+                                && ((conflict.allow_file == *file1
+                                    && conflict.disallow_file == *file2)
+                                    || (conflict.allow_file == *file2
+                                        && conflict.disallow_file == *file1))
+                        });
+
+                        if !already_reported {
+                            conflicts.push(ToolConflict {
+                                tool_name: c1.tool_name.clone(),
+                                allow_file: file1.clone(),
+                                allow_line: c1.line,
+                                allow_context: c1.source_context.clone(),
+                                disallow_file: file2.clone(),
+                                disallow_line: c2.line,
+                                disallow_context: c2.source_context.clone(),
+                            });
+                        }
+                    }
                 }
             }
         }
@@ -872,16 +763,6 @@ pub fn is_instruction_file(path: &Path) -> bool {
         .and_then(|n| n.to_str())
         .unwrap_or("")
         .to_lowercase();
-
-    // Skip backup/temp files
-    if path_str.ends_with(".bak")
-        || path_str.ends_with(".old")
-        || path_str.ends_with(".tmp")
-        || path_str.ends_with(".swp")
-        || path_str.ends_with('~')
-    {
-        return false;
-    }
 
     file_name == "claude.md"
         || file_name == "agents.md"
@@ -1221,13 +1102,8 @@ Use pnpm install for dependencies.
         let conflicts = detect_build_conflicts(&files);
 
         assert_eq!(conflicts.len(), 1);
-        // Order may vary with HashMap, so check both managers are present
-        let managers: std::collections::HashSet<_> =
-            [conflicts[0].file1_manager, conflicts[0].file2_manager]
-                .into_iter()
-                .collect();
-        assert!(managers.contains(&PackageManager::Npm));
-        assert!(managers.contains(&PackageManager::Pnpm));
+        assert_eq!(conflicts[0].file1_manager, PackageManager::Npm);
+        assert_eq!(conflicts[0].file2_manager, PackageManager::Pnpm);
     }
 
     #[test]
@@ -1459,336 +1335,5 @@ Use pnpm install for dependencies.
 
         assert!(!is_instruction_file(&PathBuf::from("README.md")));
         assert!(!is_instruction_file(&PathBuf::from("src/main.rs")));
-    }
-
-    // ===== Tool Extraction Word Boundary Tests (review findings) =====
-
-    #[test]
-    fn test_tool_extraction_case_insensitive() {
-        // "Never use BASH" should detect 'Bash' tool (case-insensitive)
-        let content = "Never use BASH for this task.";
-        let results = extract_tool_constraints(content);
-        assert!(
-            results.iter().any(|r| r.tool_name == "Bash"),
-            "Should detect 'Bash' from 'BASH' (case-insensitive)"
-        );
-    }
-
-    #[test]
-    fn test_tool_extraction_word_boundaries() {
-        // "never use subash" should NOT detect Bash (word boundary check)
-        let content = "Never use subash command.";
-        let results = extract_tool_constraints(content);
-        assert!(
-            !results.iter().any(|r| r.tool_name == "Bash"),
-            "Should NOT detect 'Bash' from 'subash' (word boundary)"
-        );
-    }
-
-    #[test]
-    fn test_tool_extraction_no_false_positive_bashful() {
-        // "Bashful developer" should NOT detect Bash
-        let content = "allowed-tools: Bashful developer Read";
-        let results = extract_tool_constraints(content);
-        assert!(
-            !results.iter().any(|r| r.tool_name == "Bash"),
-            "Should NOT detect 'Bash' from 'Bashful'"
-        );
-        // But should detect Read
-        assert!(
-            results.iter().any(|r| r.tool_name == "Read"),
-            "Should detect 'Read'"
-        );
-    }
-
-    #[test]
-    fn test_tool_extraction_no_false_positive_reader() {
-        // "Reader mode" should NOT detect Read
-        let content = "allowed-tools: Reader mode";
-        let results = extract_tool_constraints(content);
-        assert!(
-            !results.iter().any(|r| r.tool_name == "Read"),
-            "Should NOT detect 'Read' from 'Reader'"
-        );
-    }
-
-    #[test]
-    fn test_tool_extraction_valid_word_boundary() {
-        // "Read, Write, Bash" should detect all three
-        let content = "allowed-tools: Read, Write, Bash";
-        let results = extract_tool_constraints(content);
-        assert!(results.iter().any(|r| r.tool_name == "Read"));
-        assert!(results.iter().any(|r| r.tool_name == "Write"));
-        assert!(results.iter().any(|r| r.tool_name == "Bash"));
-    }
-
-    // ===== Three-file conflict tests (review findings) =====
-
-    #[test]
-    fn test_detect_build_conflicts_three_files() {
-        use std::path::PathBuf;
-
-        let file1 = PathBuf::from("CLAUDE.md");
-        let file2 = PathBuf::from("AGENTS.md");
-        let file3 = PathBuf::from(".cursor/rules/dev.mdc");
-
-        let commands1 = vec![BuildCommand {
-            line: 1,
-            column: 0,
-            package_manager: PackageManager::Npm,
-            command_type: CommandType::Install,
-            raw_command: "npm install".to_string(),
-        }];
-
-        let commands2 = vec![BuildCommand {
-            line: 1,
-            column: 0,
-            package_manager: PackageManager::Pnpm,
-            command_type: CommandType::Install,
-            raw_command: "pnpm install".to_string(),
-        }];
-
-        let commands3 = vec![BuildCommand {
-            line: 1,
-            column: 0,
-            package_manager: PackageManager::Yarn,
-            command_type: CommandType::Install,
-            raw_command: "yarn install".to_string(),
-        }];
-
-        let files = vec![(file1, commands1), (file2, commands2), (file3, commands3)];
-        let conflicts = detect_build_conflicts(&files);
-
-        // Should detect conflicts between npm/pnpm, npm/yarn, and pnpm/yarn
-        assert_eq!(
-            conflicts.len(),
-            3,
-            "Should detect 3 conflicts between 3 different package managers"
-        );
-    }
-
-    #[test]
-    fn test_detect_tool_conflicts_three_files() {
-        use std::path::PathBuf;
-
-        let file1 = PathBuf::from("CLAUDE.md");
-        let file2 = PathBuf::from("AGENTS.md");
-        let file3 = PathBuf::from(".cursor/rules/dev.mdc");
-
-        // file1 allows Bash
-        let constraints1 = vec![ToolConstraint {
-            line: 1,
-            column: 0,
-            tool_name: "Bash".to_string(),
-            constraint_type: ConstraintType::Allow,
-            source_context: "allowed-tools:".to_string(),
-        }];
-
-        // file2 disallows Bash
-        let constraints2 = vec![ToolConstraint {
-            line: 1,
-            column: 0,
-            tool_name: "Bash".to_string(),
-            constraint_type: ConstraintType::Disallow,
-            source_context: "never use".to_string(),
-        }];
-
-        // file3 also disallows Bash
-        let constraints3 = vec![ToolConstraint {
-            line: 1,
-            column: 0,
-            tool_name: "Bash".to_string(),
-            constraint_type: ConstraintType::Disallow,
-            source_context: "don't use".to_string(),
-        }];
-
-        let files = vec![
-            (file1, constraints1),
-            (file2, constraints2),
-            (file3, constraints3),
-        ];
-        let conflicts = detect_tool_conflicts(&files);
-
-        // Should detect 2 conflicts: file1 vs file2, file1 vs file3
-        assert_eq!(
-            conflicts.len(),
-            2,
-            "Should detect 2 conflicts (allow vs disallow pairs)"
-        );
-    }
-
-    // ===== Empty file tests (review findings) =====
-
-    #[test]
-    fn test_extract_build_commands_empty_file() {
-        let content = "";
-        let results = extract_build_commands(content);
-        assert!(
-            results.is_empty(),
-            "Empty file should have no build commands"
-        );
-    }
-
-    #[test]
-    fn test_extract_tool_constraints_empty_file() {
-        let content = "";
-        let results = extract_tool_constraints(content);
-        assert!(
-            results.is_empty(),
-            "Empty file should have no tool constraints"
-        );
-    }
-
-    #[test]
-    fn test_detect_build_conflicts_empty_commands() {
-        use std::path::PathBuf;
-
-        let file1 = PathBuf::from("CLAUDE.md");
-        let file2 = PathBuf::from("AGENTS.md");
-
-        // Both files have no commands
-        let files: Vec<(PathBuf, Vec<BuildCommand>)> =
-            vec![(file1, Vec::new()), (file2, Vec::new())];
-        let conflicts = detect_build_conflicts(&files);
-
-        assert!(
-            conflicts.is_empty(),
-            "Files with no commands should have no conflicts"
-        );
-    }
-
-    #[test]
-    fn test_detect_tool_conflicts_empty_constraints() {
-        use std::path::PathBuf;
-
-        let file1 = PathBuf::from("CLAUDE.md");
-        let file2 = PathBuf::from("AGENTS.md");
-
-        // Both files have no constraints
-        let files: Vec<(PathBuf, Vec<ToolConstraint>)> =
-            vec![(file1, Vec::new()), (file2, Vec::new())];
-        let conflicts = detect_tool_conflicts(&files);
-
-        assert!(
-            conflicts.is_empty(),
-            "Files with no constraints should have no conflicts"
-        );
-    }
-
-    // ===== Short-form package manager command detection (issue fix) =====
-
-    #[test]
-    fn test_npm_i_without_trailing_space() {
-        // "npm i" at end of line should be detected as Install
-        let content = "Run `npm i` to install";
-        let results = extract_build_commands(content);
-        assert_eq!(results.len(), 1);
-        assert_eq!(results[0].package_manager, PackageManager::Npm);
-        assert_eq!(
-            results[0].command_type,
-            CommandType::Install,
-            "npm i without trailing space should be Install"
-        );
-    }
-
-    #[test]
-    fn test_yarn_i_at_end_of_content() {
-        // "yarn i\n" at end of content should be detected as Install
-        let content = "Install with yarn i\n";
-        let results = extract_build_commands(content);
-        assert_eq!(results.len(), 1);
-        assert_eq!(results[0].package_manager, PackageManager::Yarn);
-        assert_eq!(
-            results[0].command_type,
-            CommandType::Install,
-            "yarn i at end of line should be Install"
-        );
-    }
-
-    #[test]
-    fn test_pnpm_i_standalone() {
-        // "pnpm i" as standalone command
-        let content = "pnpm i";
-        let results = extract_build_commands(content);
-        assert_eq!(results.len(), 1);
-        assert_eq!(results[0].package_manager, PackageManager::Pnpm);
-        assert_eq!(
-            results[0].command_type,
-            CommandType::Install,
-            "pnpm i should be Install"
-        );
-    }
-
-    #[test]
-    fn test_bun_i_end_of_line() {
-        // "bun i" at end of line in multi-line content
-        let content = "First run bun i\nThen run bun run build";
-        let results = extract_build_commands(content);
-        assert_eq!(results.len(), 2);
-
-        let install_cmd = results.iter().find(|r| r.raw_command.contains(" i"));
-        assert!(install_cmd.is_some());
-        assert_eq!(install_cmd.unwrap().command_type, CommandType::Install);
-    }
-
-    // ===== Backup file exclusion tests (issue fix) =====
-
-    #[test]
-    fn test_backup_file_claude_md_bak() {
-        use std::path::PathBuf;
-        assert!(
-            !is_instruction_file(&PathBuf::from("CLAUDE.md.bak")),
-            "CLAUDE.md.bak should NOT be considered an instruction file"
-        );
-    }
-
-    #[test]
-    fn test_backup_file_agents_md_old() {
-        use std::path::PathBuf;
-        assert!(
-            !is_instruction_file(&PathBuf::from("AGENTS.md.old")),
-            "AGENTS.md.old should NOT be considered an instruction file"
-        );
-    }
-
-    #[test]
-    fn test_backup_file_cursor_rules_tmp() {
-        use std::path::PathBuf;
-        assert!(
-            !is_instruction_file(&PathBuf::from(".cursor/rules/test.mdc.tmp")),
-            ".cursor/rules/test.mdc.tmp should NOT be considered an instruction file"
-        );
-    }
-
-    #[test]
-    fn test_backup_file_swp() {
-        use std::path::PathBuf;
-        assert!(
-            !is_instruction_file(&PathBuf::from("CLAUDE.md.swp")),
-            "CLAUDE.md.swp should NOT be considered an instruction file"
-        );
-    }
-
-    #[test]
-    fn test_backup_file_tilde() {
-        use std::path::PathBuf;
-        assert!(
-            !is_instruction_file(&PathBuf::from("AGENTS.md~")),
-            "AGENTS.md~ should NOT be considered an instruction file"
-        );
-    }
-
-    #[test]
-    fn test_valid_instruction_files_still_work() {
-        use std::path::PathBuf;
-        // Ensure normal files still work after adding backup exclusion
-        assert!(is_instruction_file(&PathBuf::from("CLAUDE.md")));
-        assert!(is_instruction_file(&PathBuf::from("AGENTS.md")));
-        assert!(is_instruction_file(&PathBuf::from(
-            ".cursor/rules/test.mdc"
-        )));
-        assert!(is_instruction_file(&PathBuf::from(
-            ".github/copilot-instructions.md"
-        )));
     }
 }
