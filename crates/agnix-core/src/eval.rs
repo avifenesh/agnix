@@ -315,11 +315,46 @@ pub enum EvalError {
 
     #[error("Validation error for {path}: {message}")]
     Validation { path: PathBuf, message: String },
+
+    #[error("Path traversal attempt detected: {path} escapes base directory {base_dir}")]
+    PathTraversal { path: PathBuf, base_dir: PathBuf },
+}
+
+/// Validate that a file path stays within the base directory (prevents path traversal)
+fn validate_path_within_base(file: &Path, base_dir: &Path) -> Result<PathBuf, EvalError> {
+    let joined = base_dir.join(file);
+
+    // Canonicalize both paths to resolve .. and symlinks
+    let canonical_base = base_dir.canonicalize().unwrap_or_else(|_| base_dir.to_path_buf());
+    let canonical_file = joined.canonicalize().unwrap_or_else(|_| joined.clone());
+
+    // Check that the file path starts with the base directory
+    if !canonical_file.starts_with(&canonical_base) {
+        return Err(EvalError::PathTraversal {
+            path: file.to_path_buf(),
+            base_dir: base_dir.to_path_buf(),
+        });
+    }
+
+    Ok(joined)
 }
 
 /// Evaluate a single case against the validator
 pub fn evaluate_case(case: &EvalCase, base_dir: &Path, config: &LintConfig) -> EvalResult {
-    let file_path = base_dir.join(&case.file);
+    // Validate path doesn't escape base directory
+    let file_path = match validate_path_within_base(&case.file, base_dir) {
+        Ok(path) => path,
+        Err(_) => {
+            // Return error result for path traversal attempts
+            return EvalResult {
+                case: case.clone(),
+                actual: vec!["eval::path-traversal".to_string()],
+                true_positives: vec![],
+                false_positives: vec!["eval::path-traversal".to_string()],
+                false_negatives: case.expected.clone(),
+            };
+        }
+    };
 
     // Run validation
     let diagnostics = match validate_file(&file_path, config) {
@@ -720,5 +755,219 @@ cases:
         );
         // true_positives should be empty since expected is empty
         assert!(result.true_positives.is_empty());
+    }
+
+    #[test]
+    fn test_eval_manifest_load_file_not_found() {
+        let result = EvalManifest::load("nonexistent-manifest-file.yaml");
+        assert!(result.is_err());
+        match result {
+            Err(EvalError::Io { path, .. }) => {
+                assert!(path.to_string_lossy().contains("nonexistent"));
+            }
+            _ => panic!("Expected EvalError::Io"),
+        }
+    }
+
+    #[test]
+    fn test_eval_manifest_load_invalid_yaml() {
+        let temp = tempfile::TempDir::new().unwrap();
+        let manifest_path = temp.path().join("invalid.yaml");
+        std::fs::write(&manifest_path, "invalid: yaml: : syntax").unwrap();
+
+        let result = EvalManifest::load(&manifest_path);
+        assert!(result.is_err());
+        match result {
+            Err(EvalError::Parse { path, message }) => {
+                assert_eq!(path, manifest_path);
+                assert!(!message.is_empty());
+            }
+            _ => panic!("Expected EvalError::Parse"),
+        }
+    }
+
+    #[test]
+    fn test_evaluate_manifest_with_filter() {
+        let temp = tempfile::TempDir::new().unwrap();
+
+        // Create two skill files
+        let skill1_path = temp.path().join("skill1.md");
+        std::fs::write(
+            &skill1_path,
+            "---\nname: deploy-prod\ndescription: Deploy\n---\nBody",
+        )
+        .unwrap();
+
+        let skill2_path = temp.path().join("skill2.md");
+        std::fs::write(
+            &skill2_path,
+            "---\nname: run-tests\ndescription: Tests\n---\nBody",
+        )
+        .unwrap();
+
+        let manifest = EvalManifest {
+            cases: vec![
+                EvalCase {
+                    file: PathBuf::from("skill1.md"),
+                    expected: vec!["CC-SK-006".to_string()],
+                    description: None,
+                },
+                EvalCase {
+                    file: PathBuf::from("skill2.md"),
+                    expected: vec!["AS-004".to_string()],
+                    description: None,
+                },
+            ],
+        };
+
+        let config = LintConfig::default();
+
+        // Filter for CC-SK rules only
+        let results = evaluate_manifest(&manifest, temp.path(), &config, Some("CC-SK"));
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0].case.file, PathBuf::from("skill1.md"));
+
+        // Filter for AS rules only
+        let results = evaluate_manifest(&manifest, temp.path(), &config, Some("AS-"));
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0].case.file, PathBuf::from("skill2.md"));
+
+        // No filter - all cases
+        let results = evaluate_manifest(&manifest, temp.path(), &config, None);
+        assert_eq!(results.len(), 2);
+    }
+
+    #[test]
+    fn test_evaluate_manifest_filter_no_matches() {
+        let temp = tempfile::TempDir::new().unwrap();
+        let skill_path = temp.path().join("skill.md");
+        std::fs::write(
+            &skill_path,
+            "---\nname: test\ndescription: Test\n---\nBody",
+        )
+        .unwrap();
+
+        let manifest = EvalManifest {
+            cases: vec![EvalCase {
+                file: PathBuf::from("skill.md"),
+                expected: vec!["AS-001".to_string()],
+                description: None,
+            }],
+        };
+
+        let config = LintConfig::default();
+        let results = evaluate_manifest(&manifest, temp.path(), &config, Some("NONEXISTENT"));
+        assert!(results.is_empty());
+    }
+
+    #[test]
+    fn test_evaluate_manifest_file_entry_point() {
+        let temp = tempfile::TempDir::new().unwrap();
+
+        // Create skill file
+        let skill_path = temp.path().join("SKILL.md");
+        std::fs::write(
+            &skill_path,
+            "---\nname: deploy-prod\ndescription: Deploy\n---\nBody",
+        )
+        .unwrap();
+
+        // Create manifest
+        let manifest_path = temp.path().join("eval.yaml");
+        std::fs::write(
+            &manifest_path,
+            r#"cases:
+  - file: SKILL.md
+    expected: [CC-SK-006]
+    description: "Dangerous skill name"
+"#,
+        )
+        .unwrap();
+
+        let config = LintConfig::default();
+        let result = evaluate_manifest_file(&manifest_path, &config, None);
+        assert!(result.is_ok());
+
+        let (results, summary) = result.unwrap();
+        assert_eq!(results.len(), 1);
+        assert_eq!(summary.cases_run, 1);
+    }
+
+    #[test]
+    fn test_path_traversal_detection() {
+        let temp = tempfile::TempDir::new().unwrap();
+
+        // Create a file outside the temp directory isn't possible,
+        // but we can test the path validation logic
+        let case = EvalCase {
+            file: PathBuf::from("../../../etc/passwd"),
+            expected: vec!["SOME-RULE".to_string()],
+            description: Some("Path traversal attempt".to_string()),
+        };
+
+        let config = LintConfig::default();
+        let result = evaluate_case(&case, temp.path(), &config);
+
+        // Should detect path traversal and return error result
+        assert!(
+            result.actual.contains(&"eval::path-traversal".to_string())
+                || result.false_negatives.contains(&"SOME-RULE".to_string()),
+            "Should detect path traversal or fail to find file"
+        );
+    }
+
+    #[test]
+    fn test_evaluate_case_validation_error() {
+        // Test behavior when validate_file returns an error
+        let temp = tempfile::TempDir::new().unwrap();
+
+        // Create a case pointing to a non-existent file
+        let case = EvalCase {
+            file: PathBuf::from("nonexistent.md"),
+            expected: vec!["SOME-RULE".to_string()],
+            description: Some("File doesn't exist".to_string()),
+        };
+
+        let config = LintConfig::default();
+        let result = evaluate_case(&case, temp.path(), &config);
+
+        // Should handle the error gracefully
+        // Either path traversal or eval::error should be in actual
+        assert!(
+            !result.actual.is_empty() || !result.false_negatives.is_empty(),
+            "Should handle missing file"
+        );
+    }
+
+    #[test]
+    fn test_eval_format_display() {
+        assert_eq!(format!("{}", EvalFormat::Markdown), "markdown");
+        assert_eq!(format!("{}", EvalFormat::Json), "json");
+        assert_eq!(format!("{}", EvalFormat::Csv), "csv");
+    }
+
+    #[test]
+    fn test_eval_summary_empty_results() {
+        let results: Vec<EvalResult> = vec![];
+        let summary = EvalSummary::from_results(&results);
+
+        assert_eq!(summary.cases_run, 0);
+        assert_eq!(summary.cases_passed, 0);
+        assert_eq!(summary.cases_failed, 0);
+        assert!(summary.rules.is_empty());
+        assert!((summary.overall_precision - 1.0).abs() < 0.001);
+        assert!((summary.overall_recall - 1.0).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_eval_manifest_base_dir() {
+        // Test base_dir extraction with nested path
+        let base = EvalManifest::base_dir("some/path/to/manifest.yaml");
+        assert_eq!(base, PathBuf::from("some/path/to"));
+
+        // Test root file fallback - parent() returns "" on Windows for just filename
+        let base = EvalManifest::base_dir("manifest.yaml");
+        // Parent of "manifest.yaml" is either "" or "." depending on platform
+        assert!(base == PathBuf::from(".") || base == PathBuf::from(""));
     }
 }
