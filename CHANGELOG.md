@@ -49,7 +49,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Cross-platform tests for Unix and Windows symlink handling
 
 ### Added
-- Auto-fix implementations for three additional rules:
+- Auto-fix implementations for five additional rules:
+  - AS-004: Convert invalid skill names to kebab-case (case-only fixes marked safe)
+  - AS-010: Prepend "Use when user wants to " to descriptions missing trigger phrase
   - XML-001: Automatically insert closing XML tags for unclosed elements
   - CC-HK-001: Replace invalid hook event names with closest valid match
   - CC-SK-007: Replace unrestricted Bash access with scoped alternatives (e.g., `Bash(git:*)`)
