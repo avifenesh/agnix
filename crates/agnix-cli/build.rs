@@ -49,14 +49,17 @@ fn main() {
     for rule in rules_array {
         let id = rule["id"].as_str().expect("rule must have id");
         let name = rule["name"].as_str().expect("rule must have name");
-        // Escape special characters for Rust string literal
-        let escaped_name = name
-            .replace('\\', "\\\\")
-            .replace('"', "\\\"")
-            .replace('\n', "\\n")
-            .replace('\r', "\\r")
-            .replace('\t', "\\t");
-        generated_code.push_str(&format!("    (\"{}\", \"{}\"),\n", id, escaped_name));
+        // Escape special characters for Rust string literal (defense-in-depth)
+        let escape_str = |s: &str| {
+            s.replace('\\', "\\\\")
+                .replace('"', "\\\"")
+                .replace('\n', "\\n")
+                .replace('\r', "\\r")
+                .replace('\t', "\\t")
+        };
+        let escaped_id = escape_str(id);
+        let escaped_name = escape_str(name);
+        generated_code.push_str(&format!("    (\"{}\", \"{}\"),\n", escaped_id, escaped_name));
     }
 
     generated_code.push_str("];\n");
