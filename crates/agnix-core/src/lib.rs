@@ -14,9 +14,9 @@ pub mod config;
 pub mod diagnostics;
 pub mod file_utils;
 pub mod fixes;
-pub mod parsers;
-pub mod rules;
-pub mod schemas;
+mod parsers;
+mod rules;
+mod schemas;
 
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -26,7 +26,7 @@ use rayon::prelude::*;
 pub use config::LintConfig;
 pub use diagnostics::{Diagnostic, DiagnosticLevel, Fix, LintError, LintResult};
 pub use fixes::{apply_fixes, FixResult};
-use rules::Validator;
+pub use rules::Validator;
 
 /// Result of validating a project, including diagnostics and metadata.
 #[derive(Debug, Clone)]
