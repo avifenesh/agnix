@@ -242,7 +242,7 @@ pub fn detect_file_type(path: &Path) -> FileType {
         {
             FileType::CursorRule
         }
-        // Legacy Cursor rules file (.cursorrules in root)
+        // Legacy Cursor rules file (.cursorrules)
         ".cursorrules" => FileType::CursorRulesLegacy,
         name if name.ends_with(".md") => {
             if parent == Some("agents") || grandparent == Some("agents") {

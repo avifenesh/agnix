@@ -657,7 +657,7 @@
 <a id="cur-006"></a>
 ### CUR-006 [MEDIUM] Legacy .cursorrules File Detected
 **Requirement**: Projects SHOULD migrate from .cursorrules to .cursor/rules/*.mdc format
-**Detection**: File named `.cursorrules` in project root
+**Detection**: File named `.cursorrules`
 **Fix**: Create `.cursor/rules/` directory and migrate rules to .mdc files
 **Source**: docs.cursor.com/en/context
 
