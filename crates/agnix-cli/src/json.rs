@@ -37,6 +37,9 @@ pub struct JsonDiagnostic {
     /// Optional suggestion for fixing the issue.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub suggestion: Option<String>,
+    /// Optional assumption note for version-aware validation.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub assumption: Option<String>,
 }
 
 /// Summary counts by diagnostic level.
@@ -95,6 +98,7 @@ pub fn diagnostics_to_json(
                 column: diag.column.max(1),
                 message: diag.message.clone(),
                 suggestion: diag.suggestion.clone(),
+                assumption: diag.assumption.clone(),
             }
         })
         .collect();
@@ -203,6 +207,7 @@ mod tests {
                 rule: "AS-004".to_string(),
                 suggestion: None,
                 fixes: vec![],
+                assumption: None,
             },
         ];
 

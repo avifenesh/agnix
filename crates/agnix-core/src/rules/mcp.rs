@@ -1,5 +1,8 @@
 //! MCP (Model Context Protocol) validation (MCP-001 to MCP-006)
 
+/// Version assumption note for MCP-008 when mcp_protocol is not pinned
+const MCP_008_ASSUMPTION: &str = "Using default MCP protocol version. Pin mcp_protocol in .agnix.toml [spec_revisions] for explicit control.";
+
 use crate::{
     config::LintConfig,
     diagnostics::Diagnostic,
@@ -254,28 +257,33 @@ fn validate_protocol_version(
     diagnostics: &mut Vec<Diagnostic>,
 ) {
     let expected_version = config.get_mcp_protocol_version();
+    let version_pinned = config.is_mcp_revision_pinned();
 
     // Check initialize request
     if is_initialize_message(value) {
         if let Some(actual_version) = extract_request_protocol_version(value) {
             if actual_version != expected_version {
                 let (line, col) = find_json_field_location(content, "protocolVersion");
-                diagnostics.push(
-                    Diagnostic::warning(
-                        path.to_path_buf(),
-                        line,
-                        col,
-                        "MCP-008",
-                        format!(
-                            "Protocol version mismatch: found '{}', expected '{}'",
-                            actual_version, expected_version
-                        ),
-                    )
-                    .with_suggestion(format!(
-                        "Consider updating to protocol version '{}' for compatibility",
-                        expected_version
-                    )),
-                );
+                let mut diag = Diagnostic::warning(
+                    path.to_path_buf(),
+                    line,
+                    col,
+                    "MCP-008",
+                    format!(
+                        "Protocol version mismatch: found '{}', expected '{}'",
+                        actual_version, expected_version
+                    ),
+                )
+                .with_suggestion(format!(
+                    "Consider updating to protocol version '{}' for compatibility",
+                    expected_version
+                ));
+
+                if !version_pinned {
+                    diag = diag.with_assumption(MCP_008_ASSUMPTION);
+                }
+
+                diagnostics.push(diag);
             }
         }
     }
@@ -285,22 +293,26 @@ fn validate_protocol_version(
         if let Some(actual_version) = extract_response_protocol_version(value) {
             if actual_version != expected_version {
                 let (line, col) = find_json_field_location(content, "protocolVersion");
-                diagnostics.push(
-                    Diagnostic::warning(
-                        path.to_path_buf(),
-                        line,
-                        col,
-                        "MCP-008",
-                        format!(
-                            "Protocol version mismatch: found '{}', expected '{}'",
-                            actual_version, expected_version
-                        ),
-                    )
-                    .with_suggestion(format!(
-                        "Server negotiated version '{}', expected '{}'. Verify compatibility.",
+                let mut diag = Diagnostic::warning(
+                    path.to_path_buf(),
+                    line,
+                    col,
+                    "MCP-008",
+                    format!(
+                        "Protocol version mismatch: found '{}', expected '{}'",
                         actual_version, expected_version
-                    )),
-                );
+                    ),
+                )
+                .with_suggestion(format!(
+                    "Server negotiated version '{}', expected '{}'. Verify compatibility.",
+                    actual_version, expected_version
+                ));
+
+                if !version_pinned {
+                    diag = diag.with_assumption(MCP_008_ASSUMPTION);
+                }
+
+                diagnostics.push(diag);
             }
         }
     }
@@ -1027,5 +1039,100 @@ mod tests {
             mcp_008.unwrap().level,
             crate::diagnostics::DiagnosticLevel::Warning
         );
+    }
+
+    // ===== Version-Aware MCP-008 Tests =====
+
+    #[test]
+    fn test_mcp_008_assumption_when_version_not_pinned() {
+        // Create a config where mcp is NOT pinned
+        let mut config = LintConfig::default();
+        config.mcp_protocol_version = None;
+        config.spec_revisions.mcp_protocol = None;
+        assert!(!config.is_mcp_revision_pinned());
+
+        let content = r#"{
+            "jsonrpc": "2.0",
+            "method": "initialize",
+            "id": 1,
+            "params": {"protocolVersion": "2024-11-05"}
+        }"#;
+
+        let diagnostics = validate_with_config(content, &config);
+        let mcp_008 = diagnostics.iter().find(|d| d.rule == "MCP-008");
+
+        assert!(mcp_008.is_some());
+        let diag = mcp_008.unwrap();
+        // Should have an assumption note when version not pinned
+        assert!(diag.assumption.is_some());
+        let assumption = diag.assumption.as_ref().unwrap();
+        assert!(assumption.contains("Using default MCP protocol version"));
+        assert!(assumption.contains("[spec_revisions]"));
+    }
+
+    #[test]
+    fn test_mcp_008_no_assumption_when_version_pinned_via_spec_revisions() {
+        let mut config = LintConfig::default();
+        config.spec_revisions.mcp_protocol = Some("2025-06-18".to_string());
+        assert!(config.is_mcp_revision_pinned());
+
+        let content = r#"{
+            "jsonrpc": "2.0",
+            "method": "initialize",
+            "id": 1,
+            "params": {"protocolVersion": "2024-11-05"}
+        }"#;
+
+        let diagnostics = validate_with_config(content, &config);
+        let mcp_008 = diagnostics.iter().find(|d| d.rule == "MCP-008");
+
+        assert!(mcp_008.is_some());
+        let diag = mcp_008.unwrap();
+        // Should NOT have an assumption note when version is pinned
+        assert!(diag.assumption.is_none());
+    }
+
+    #[test]
+    fn test_mcp_008_no_assumption_when_version_pinned_via_legacy() {
+        let mut config = LintConfig::default();
+        config.mcp_protocol_version = Some("2025-06-18".to_string());
+        assert!(config.is_mcp_revision_pinned());
+
+        let content = r#"{
+            "jsonrpc": "2.0",
+            "method": "initialize",
+            "id": 1,
+            "params": {"protocolVersion": "2024-11-05"}
+        }"#;
+
+        let diagnostics = validate_with_config(content, &config);
+        let mcp_008 = diagnostics.iter().find(|d| d.rule == "MCP-008");
+
+        assert!(mcp_008.is_some());
+        let diag = mcp_008.unwrap();
+        // Should NOT have an assumption note when version is pinned via legacy field
+        assert!(diag.assumption.is_none());
+    }
+
+    #[test]
+    fn test_mcp_008_response_assumption_when_version_not_pinned() {
+        let mut config = LintConfig::default();
+        config.mcp_protocol_version = None;
+        config.spec_revisions.mcp_protocol = None;
+
+        let content = r#"{
+            "jsonrpc": "2.0",
+            "id": 1,
+            "result": {
+                "protocolVersion": "2024-11-05",
+                "serverInfo": {"name": "test-server", "version": "1.0.0"}
+            }
+        }"#;
+
+        let diagnostics = validate_with_config(content, &config);
+        let mcp_008 = diagnostics.iter().find(|d| d.rule == "MCP-008");
+
+        assert!(mcp_008.is_some());
+        assert!(mcp_008.unwrap().assumption.is_some());
     }
 }

@@ -237,8 +237,8 @@ mod tests {
     fn test_rules_array_populated() {
         let sarif = diagnostics_to_sarif(&[], Path::new("."));
         let rules = &sarif.runs[0].tool.driver.rules;
-        // Should have 99 rules based on VALIDATION-RULES.md
-        assert_eq!(rules.len(), 99, "Expected 99 rules in SARIF driver");
+        // Should have 100 rules based on VALIDATION-RULES.md
+        assert_eq!(rules.len(), 100, "Expected 100 rules in SARIF driver");
 
         // Verify some specific rules exist
         let rule_ids: Vec<&str> = rules.iter().map(|r| r.id.as_str()).collect();
@@ -339,6 +339,7 @@ mod tests {
             rule: "info".to_string(),
             suggestion: None,
             fixes: vec![],
+            assumption: None,
         };
         let sarif = diagnostics_to_sarif(&[diag], Path::new("/project"));
         assert_eq!(sarif.runs[0].results[0].level, "note");
@@ -431,6 +432,7 @@ mod tests {
             rule: "AS-001".to_string(),
             suggestion: None,
             fixes: vec![],
+            assumption: None,
         };
 
         let sarif = diagnostics_to_sarif(&[diag], Path::new("/project"));

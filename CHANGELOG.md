@@ -25,6 +25,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Auto-creates GitHub issues when drift detected with actionable review steps
   - Manual workflow dispatch for on-demand checks and baseline updates
   - Security hardened: HTTPS-only URL validation, SHA-pinned actions, minimal permissions
+- Version-aware validation with configurable tool and spec versions
+  - New VER-001 rule: Warns when no tool/spec versions are pinned in .agnix.toml
+  - Added [tool_versions] section for pinning tool versions (claude_code, codex, cursor, copilot)
+  - Added [spec_revisions] section for pinning spec versions (mcp_protocol, agent_skills_spec, agents_md_spec)
+  - CC-HK-010 and MCP-008 now add assumption notes when versions are not pinned
+  - Diagnostics include assumption field explaining version-dependent behavior
+  - Documentation in README.md and VALIDATION-RULES.md
 - Cross-layer contradiction detection with 3 new validation rules (XP-004 to XP-006)
   - XP-004: Conflicting build/test commands detection (npm vs pnpm vs yarn vs bun)
   - XP-005: Conflicting tool constraints detection (allow vs disallow across files)
@@ -95,6 +102,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Patterns like `target/**` previously failed to match when walker yielded absolute paths
   - Added path normalization by stripping base path prefix before glob matching
 - PE-001 through PE-004 rules now properly dispatch on CLAUDE.md and AGENTS.md files (PromptValidator was implemented but not registered in ValidatorRegistry)
+- `is_mcp_revision_pinned()` now correctly returns false when neither `spec_revisions.mcp_protocol` nor `mcp_protocol_version` are explicitly set
+  - Previously always returned true due to `serde(default)` on `mcp_protocol_version`
+  - This allows MCP-008 assumption notes to appear when no version is configured
 
 ### Security
 - GitHub Action: Validate version input format to prevent path traversal attacks

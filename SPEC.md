@@ -1,6 +1,6 @@
 # agnix Technical Reference
 
-> Linter for agent configs. 99 rules across 14 categories.
+> Linter for agent configs. 100 rules across 15 categories.
 
 ## What agnix Validates
 
@@ -19,6 +19,7 @@
 | References | @imports | 2 |
 | GitHub Copilot | .github/copilot-instructions.md, .github/instructions/*.instructions.md | 4 |
 | Cursor Project Rules | .cursor/rules/*.mdc, .cursorrules | 6 |
+| Version Awareness | .agnix.toml | 1 |
 
 ## Architecture
 
@@ -30,7 +31,7 @@ agnix/
 │   │   ├── schemas/    # Type definitions
 │   │   └── rules/      # Validators
 │   └── agnix-cli/      # CLI binary
-├── knowledge-base/     # 99 rules documented
+├── knowledge-base/     # 100 rules documented
 └── tests/fixtures/     # Test cases
 ```
 
@@ -63,6 +64,7 @@ All rules in `knowledge-base/VALIDATION-RULES.md`
 - `REF-nnn`: @import/reference validation
 - `PE-nnn`: Prompt engineering
 - `XP-nnn`: Cross-platform compatibility
+- `VER-nnn`: Version awareness
 
 ## Key Rules
 
