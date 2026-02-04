@@ -369,8 +369,8 @@ fn test_rules_json_integrity() {
     // Check total count matches expected
     assert_eq!(
         rules_index.rules.len(),
-        84,
-        "Expected 84 rules in rules.json, found {}",
+        89,
+        "Expected 89 rules in rules.json, found {}",
         rules_index.rules.len()
     );
 
@@ -460,11 +460,11 @@ fn test_rules_json_matches_validation_rules_md() {
 fn test_sarif_rule_count() {
     let sarif_rules = extract_sarif_rule_ids();
 
-    // SARIF should have exactly 84 rules to match rules.json
+    // SARIF should have exactly 89 rules to match rules.json
     assert_eq!(
         sarif_rules.len(),
-        84,
-        "SARIF should have 84 rules, found {}. Missing or extra rules detected.",
+        89,
+        "SARIF should have 89 rules, found {}. Missing or extra rules detected.",
         sarif_rules.len()
     );
 }
