@@ -111,6 +111,14 @@ pub fn extract_markdown_links(content: &str) -> Vec<MarkdownLink> {
 
 /// Check if XML tags are balanced
 pub fn check_xml_balance(tags: &[XmlTag]) -> Vec<XmlBalanceError> {
+    check_xml_balance_with_content_end(tags, None)
+}
+
+/// Check if XML tags are balanced, with optional content length for auto-fix byte positions
+pub fn check_xml_balance_with_content_end(
+    tags: &[XmlTag],
+    content_len: Option<usize>,
+) -> Vec<XmlBalanceError> {
     let mut stack: Vec<&XmlTag> = Vec::new();
     let mut errors = Vec::new();
 
@@ -139,12 +147,20 @@ pub fn check_xml_balance(tags: &[XmlTag]) -> Vec<XmlBalanceError> {
         }
     }
 
-    // Unclosed tags
+    // Unclosed tags - compute content_end_byte for auto-fix
+    // For each unclosed tag, the closing tag should be inserted at the end of content
+    // (or at the start of the next tag at the same/lower nesting level)
+    let content_end = content_len.unwrap_or_else(|| {
+        tags.last().map(|t| t.end_byte).unwrap_or(0)
+    });
+
     for tag in stack {
         errors.push(XmlBalanceError::Unclosed {
             tag: tag.name.clone(),
             line: tag.line,
             column: tag.column,
+            open_tag_end_byte: tag.end_byte,
+            content_end_byte: content_end,
         });
     }
 
@@ -195,6 +211,10 @@ pub enum XmlBalanceError {
         tag: String,
         line: usize,
         column: usize,
+        /// Byte position of the opening tag (for auto-fix)
+        open_tag_end_byte: usize,
+        /// Byte position where the closing tag should be inserted (content end)
+        content_end_byte: usize,
     },
     UnmatchedClosing {
         tag: String,
@@ -411,6 +431,44 @@ mod tests {
         let errors = check_xml_balance(&tags);
         assert_eq!(errors.len(), 1);
         assert!(matches!(errors[0], XmlBalanceError::Unclosed { .. }));
+    }
+
+    #[test]
+    fn test_xml_unclosed_with_content_end() {
+        let content = "<example>test content here";
+        let tags = extract_xml_tags(content);
+        let errors = check_xml_balance_with_content_end(&tags, Some(content.len()));
+        assert_eq!(errors.len(), 1);
+        match &errors[0] {
+            XmlBalanceError::Unclosed {
+                tag,
+                content_end_byte,
+                open_tag_end_byte,
+                ..
+            } => {
+                assert_eq!(tag, "example");
+                assert_eq!(*content_end_byte, content.len());
+                assert_eq!(*open_tag_end_byte, 9); // Length of "<example>"
+            }
+            _ => panic!("Expected Unclosed error"),
+        }
+    }
+
+    #[test]
+    fn test_xml_balance_multiple_unclosed() {
+        let content = "<outer><inner>content";
+        let tags = extract_xml_tags(content);
+        let errors = check_xml_balance_with_content_end(&tags, Some(content.len()));
+        // Both <outer> and <inner> are unclosed
+        assert_eq!(errors.len(), 2);
+        for err in &errors {
+            match err {
+                XmlBalanceError::Unclosed { content_end_byte, .. } => {
+                    assert_eq!(*content_end_byte, content.len());
+                }
+                _ => panic!("Expected Unclosed error"),
+            }
+        }
     }
 
     // ===== Markdown Link Extraction Tests =====

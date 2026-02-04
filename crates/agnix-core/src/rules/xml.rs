@@ -2,8 +2,8 @@
 
 use crate::{
     config::LintConfig,
-    diagnostics::Diagnostic,
-    parsers::markdown::{check_xml_balance, extract_xml_tags, XmlBalanceError},
+    diagnostics::{Diagnostic, Fix},
+    parsers::markdown::{check_xml_balance_with_content_end, extract_xml_tags, XmlBalanceError},
     rules::Validator,
 };
 use std::path::Path;
@@ -20,48 +20,71 @@ impl Validator for XmlValidator {
         }
 
         let tags = extract_xml_tags(content);
-        let errors = check_xml_balance(&tags);
+        let errors = check_xml_balance_with_content_end(&tags, Some(content.len()));
 
         for error in errors {
-            let (rule_id, message, line, column, suggestion) = match error {
-                XmlBalanceError::Unclosed { tag, line, column } => (
-                    "XML-001",
-                    format!("Unclosed XML tag '<{}>'", tag),
+            let diagnostic = match error {
+                XmlBalanceError::Unclosed {
+                    tag,
                     line,
                     column,
-                    format!("Add closing tag '</{}>", tag),
-                ),
+                    content_end_byte,
+                    ..
+                } => {
+                    let rule_id = "XML-001";
+                    if !config.is_rule_enabled(rule_id) {
+                        continue;
+                    }
+                    let message = format!("Unclosed XML tag '<{}>'", tag);
+                    let suggestion = format!("Add closing tag '</{}>'", tag);
+                    let closing_tag = format!("</{}>", tag);
+
+                    // Create fix: insert closing tag at content end
+                    // safe=false because we can't be 100% certain where the user wants it
+                    let fix = Fix::insert(
+                        content_end_byte,
+                        closing_tag,
+                        format!("Insert closing tag '</{}>", tag),
+                        false,
+                    );
+
+                    Diagnostic::error(path.to_path_buf(), line, column, rule_id, message)
+                        .with_suggestion(suggestion)
+                        .with_fix(fix)
+                }
                 XmlBalanceError::Mismatch {
                     expected,
                     found,
                     line,
                     column,
-                } => (
-                    "XML-002",
-                    format!("Expected '</{}>' but found '</{}>'", expected, found),
-                    line,
-                    column,
-                    format!("Replace '</{}>' with '</{}>'", found, expected),
-                ),
-                XmlBalanceError::UnmatchedClosing { tag, line, column } => (
-                    "XML-003",
-                    format!("Unmatched closing tag '</{}>'", tag),
-                    line,
-                    column,
-                    format!(
+                } => {
+                    let rule_id = "XML-002";
+                    if !config.is_rule_enabled(rule_id) {
+                        continue;
+                    }
+                    let message = format!("Expected '</{}>' but found '</{}>'", expected, found);
+                    let suggestion = format!("Replace '</{}>' with '</{}>'", found, expected);
+
+                    Diagnostic::error(path.to_path_buf(), line, column, rule_id, message)
+                        .with_suggestion(suggestion)
+                }
+                XmlBalanceError::UnmatchedClosing { tag, line, column } => {
+                    let rule_id = "XML-003";
+                    if !config.is_rule_enabled(rule_id) {
+                        continue;
+                    }
+                    let message = format!("Unmatched closing tag '</{}>'", tag);
+                    let suggestion = format!(
                         "Remove '</{}>' or add matching opening tag '<{}>'",
                         tag, tag
-                    ),
-                ),
+                    );
+
+                    Diagnostic::error(path.to_path_buf(), line, column, rule_id, message)
+                        .with_suggestion(suggestion)
+                }
             };
 
-            // Check if specific rule is enabled before adding diagnostic
-            if config.is_rule_enabled(rule_id) {
-                diagnostics.push(
-                    Diagnostic::error(path.to_path_buf(), line, column, rule_id, message)
-                        .with_suggestion(suggestion),
-                );
-            }
+            diagnostics.push(diagnostic);
         }
 
         diagnostics
@@ -192,5 +215,94 @@ mod tests {
         let diagnostics = validator.validate(Path::new("test.md"), content, &config);
 
         assert!(diagnostics.is_empty());
+    }
+
+    // ===== Auto-fix Tests for XML-001 =====
+
+    #[test]
+    fn test_xml_001_has_fix() {
+        let content = "<example>test content";
+        let validator = XmlValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+        assert_eq!(diagnostics.len(), 1);
+        assert_eq!(diagnostics[0].rule, "XML-001");
+        assert!(diagnostics[0].has_fixes());
+
+        let fix = &diagnostics[0].fixes[0];
+        assert_eq!(fix.replacement, "</example>");
+        assert_eq!(fix.start_byte, content.len());
+        assert_eq!(fix.end_byte, content.len()); // Insertion: start == end
+        assert!(!fix.safe); // Not safe, position is heuristic
+    }
+
+    #[test]
+    fn test_xml_001_fix_correct_byte_position() {
+        let content = "<tag>some text here";
+        let validator = XmlValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+        assert_eq!(diagnostics.len(), 1);
+        let fix = &diagnostics[0].fixes[0];
+
+        // After applying the fix, content should be balanced
+        let mut fixed_content = content.to_string();
+        fixed_content.insert_str(fix.start_byte, &fix.replacement);
+        assert_eq!(fixed_content, "<tag>some text here</tag>");
+    }
+
+    #[test]
+    fn test_xml_001_fix_nested_tags() {
+        let content = "<outer><inner>content";
+        let validator = XmlValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+        // Both tags are unclosed
+        assert_eq!(diagnostics.len(), 2);
+
+        // Each should have a fix
+        for d in &diagnostics {
+            assert!(d.has_fixes());
+            let fix = &d.fixes[0];
+            assert!(fix.is_insertion());
+            // Fix position is at content end
+            assert_eq!(fix.start_byte, content.len());
+        }
+    }
+
+    #[test]
+    fn test_xml_001_fix_description() {
+        let content = "<myTag>incomplete";
+        let validator = XmlValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+        assert_eq!(diagnostics.len(), 1);
+        let fix = &diagnostics[0].fixes[0];
+        assert!(fix.description.contains("</myTag>"));
+    }
+
+    #[test]
+    fn test_xml_002_no_fix_yet() {
+        // XML-002 (mismatch) doesn't have auto-fix in this implementation
+        let content = "<outer><inner></outer></inner>";
+        let validator = XmlValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+        let xml_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XML-002").collect();
+        assert!(!xml_002.is_empty());
+        // No fix for XML-002
+        assert!(!xml_002[0].has_fixes());
+    }
+
+    #[test]
+    fn test_xml_003_no_fix() {
+        // XML-003 (unmatched closing) doesn't have auto-fix
+        let content = "</orphan>";
+        let validator = XmlValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+        assert_eq!(diagnostics.len(), 1);
+        assert_eq!(diagnostics[0].rule, "XML-003");
+        assert!(!diagnostics[0].has_fixes());
     }
 }
