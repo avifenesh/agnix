@@ -28,7 +28,8 @@ use crate::diagnostic_mapper::to_lsp_diagnostics;
 pub struct Backend {
     client: Client,
     /// Cached lint configuration reused across validations.
-    config: Arc<agnix_core::LintConfig>,
+    /// Wrapped in RwLock to allow loading from .agnix.toml after initialize().
+    config: RwLock<Arc<agnix_core::LintConfig>>,
     /// Workspace root path for boundary validation (security).
     /// Set during initialize() from the client's root_uri.
     workspace_root: RwLock<Option<PathBuf>>,
@@ -39,7 +40,7 @@ impl Backend {
     pub fn new(client: Client) -> Self {
         Self {
             client,
-            config: Arc::new(agnix_core::LintConfig::default()),
+            config: RwLock::new(Arc::new(agnix_core::LintConfig::default())),
             workspace_root: RwLock::new(None),
         }
     }
@@ -99,7 +100,7 @@ impl Backend {
     /// The `LintConfig` is cloned from the cached instance to avoid
     /// repeated allocations on each validation.
     async fn validate_file(&self, path: PathBuf) -> Vec<Diagnostic> {
-        let config = Arc::clone(&self.config);
+        let config = Arc::clone(&*self.config.read().await);
         let result =
             tokio::task::spawn_blocking(move || agnix_core::validate_file(&path, &config)).await;
 
@@ -161,7 +162,26 @@ impl LanguageServer for Backend {
         // Capture workspace root for path boundary validation
         if let Some(root_uri) = params.root_uri {
             if let Ok(root_path) = root_uri.to_file_path() {
-                *self.workspace_root.write().await = Some(root_path);
+                *self.workspace_root.write().await = Some(root_path.clone());
+
+                // Try to load config from .agnix.toml in workspace root
+                let config_path = root_path.join(".agnix.toml");
+                if config_path.exists() {
+                    match agnix_core::LintConfig::load(&config_path) {
+                        Ok(loaded_config) => {
+                            *self.config.write().await = Arc::new(loaded_config);
+                        }
+                        Err(e) => {
+                            // Log error but continue with default config
+                            self.client
+                                .log_message(
+                                    MessageType::WARNING,
+                                    format!("Failed to load .agnix.toml: {}", e),
+                                )
+                                .await;
+                        }
+                    }
+                }
             }
         }
 
@@ -591,6 +611,63 @@ model: sonnet
 
         // The workspace root should now be set (we can't directly access it,
         // but the test verifies initialize handles root_uri without error)
+    }
+
+    /// Test that initialize loads config from .agnix.toml when present.
+    #[tokio::test]
+    async fn test_initialize_loads_config_from_file() {
+        let (service, _socket) = LspService::new(Backend::new);
+
+        let temp_dir = tempfile::tempdir().unwrap();
+
+        // Create a .agnix.toml config file
+        let config_path = temp_dir.path().join(".agnix.toml");
+        std::fs::write(
+            &config_path,
+            r#"
+severity = "Warning"
+target = "ClaudeCode"
+exclude = []
+
+[rules]
+skills = false
+"#,
+        )
+        .unwrap();
+
+        let root_uri = Url::from_file_path(temp_dir.path()).unwrap();
+        let init_params = InitializeParams {
+            root_uri: Some(root_uri),
+            ..Default::default()
+        };
+
+        let result = service.inner().initialize(init_params).await;
+        assert!(result.is_ok());
+
+        // The config should have been loaded (we can't directly access it,
+        // but the test verifies initialize handles .agnix.toml without error)
+    }
+
+    /// Test that initialize handles invalid .agnix.toml gracefully.
+    #[tokio::test]
+    async fn test_initialize_handles_invalid_config() {
+        let (service, _socket) = LspService::new(Backend::new);
+
+        let temp_dir = tempfile::tempdir().unwrap();
+
+        // Create an invalid .agnix.toml config file
+        let config_path = temp_dir.path().join(".agnix.toml");
+        std::fs::write(&config_path, "this is not valid toml [[[").unwrap();
+
+        let root_uri = Url::from_file_path(temp_dir.path()).unwrap();
+        let init_params = InitializeParams {
+            root_uri: Some(root_uri),
+            ..Default::default()
+        };
+
+        // Should still succeed (logs warning, uses default config)
+        let result = service.inner().initialize(init_params).await;
+        assert!(result.is_ok());
     }
 
     /// Test that files within workspace are validated normally.
