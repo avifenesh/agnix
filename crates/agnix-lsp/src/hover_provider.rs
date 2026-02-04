@@ -224,14 +224,8 @@ Rules: MCP-004"#,
 ///
 /// The field name if found, or None if the position is not on a field.
 pub fn get_field_at_position(content: &str, position: Position) -> Option<String> {
-    let lines: Vec<&str> = content.lines().collect();
-
     let line_idx = position.line as usize;
-    if line_idx >= lines.len() {
-        return None;
-    }
-
-    let line = lines[line_idx];
+    let line = content.lines().nth(line_idx)?;
 
     let trimmed = line.trim_start();
     if let Some(colon_pos) = trimmed.find(':') {

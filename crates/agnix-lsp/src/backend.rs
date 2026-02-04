@@ -16,6 +16,23 @@ use crate::code_actions::fixes_to_code_actions;
 use crate::diagnostic_mapper::{deserialize_fixes, to_lsp_diagnostics};
 use crate::hover_provider::hover_at_position;
 
+fn create_error_diagnostic(code: &str, message: String) -> Diagnostic {
+    Diagnostic {
+        range: Range {
+            start: Position { line: 0, character: 0 },
+            end: Position { line: 0, character: 0 },
+        },
+        severity: Some(DiagnosticSeverity::ERROR),
+        code: Some(NumberOrString::String(code.to_string())),
+        code_description: None,
+        source: Some("agnix".to_string()),
+        message,
+        related_information: None,
+        tags: None,
+        data: None,
+    }
+}
+
 /// LSP backend that handles validation requests.
 ///
 /// The backend maintains a connection to the LSP client and validates
@@ -65,52 +82,14 @@ impl Backend {
 
         match result {
             Ok(Ok(diagnostics)) => to_lsp_diagnostics(diagnostics),
-            Ok(Err(e)) => {
-                vec![Diagnostic {
-                    range: Range {
-                        start: Position {
-                            line: 0,
-                            character: 0,
-                        },
-                        end: Position {
-                            line: 0,
-                            character: 0,
-                        },
-                    },
-                    severity: Some(DiagnosticSeverity::ERROR),
-                    code: Some(NumberOrString::String(
-                        "agnix::validation-error".to_string(),
-                    )),
-                    code_description: None,
-                    source: Some("agnix".to_string()),
-                    message: format!("Validation error: {}", e),
-                    related_information: None,
-                    tags: None,
-                    data: None,
-                }]
-            }
-            Err(e) => {
-                vec![Diagnostic {
-                    range: Range {
-                        start: Position {
-                            line: 0,
-                            character: 0,
-                        },
-                        end: Position {
-                            line: 0,
-                            character: 0,
-                        },
-                    },
-                    severity: Some(DiagnosticSeverity::ERROR),
-                    code: Some(NumberOrString::String("agnix::internal-error".to_string())),
-                    code_description: None,
-                    source: Some("agnix".to_string()),
-                    message: format!("Internal error: {}", e),
-                    related_information: None,
-                    tags: None,
-                    data: None,
-                }]
-            }
+            Ok(Err(e)) => vec![create_error_diagnostic(
+                "agnix::validation-error",
+                format!("Validation error: {}", e),
+            )],
+            Err(e) => vec![create_error_diagnostic(
+                "agnix::internal-error",
+                format!("Internal error: {}", e),
+            )],
         }
     }
 
@@ -188,52 +167,14 @@ impl Backend {
 
         let diagnostics = match result {
             Ok(Ok(diagnostics)) => to_lsp_diagnostics(diagnostics),
-            Ok(Err(e)) => {
-                vec![Diagnostic {
-                    range: Range {
-                        start: Position {
-                            line: 0,
-                            character: 0,
-                        },
-                        end: Position {
-                            line: 0,
-                            character: 0,
-                        },
-                    },
-                    severity: Some(DiagnosticSeverity::ERROR),
-                    code: Some(NumberOrString::String(
-                        "agnix::validation-error".to_string(),
-                    )),
-                    code_description: None,
-                    source: Some("agnix".to_string()),
-                    message: format!("Validation error: {}", e),
-                    related_information: None,
-                    tags: None,
-                    data: None,
-                }]
-            }
-            Err(e) => {
-                vec![Diagnostic {
-                    range: Range {
-                        start: Position {
-                            line: 0,
-                            character: 0,
-                        },
-                        end: Position {
-                            line: 0,
-                            character: 0,
-                        },
-                    },
-                    severity: Some(DiagnosticSeverity::ERROR),
-                    code: Some(NumberOrString::String("agnix::internal-error".to_string())),
-                    code_description: None,
-                    source: Some("agnix".to_string()),
-                    message: format!("Internal error: {}", e),
-                    related_information: None,
-                    tags: None,
-                    data: None,
-                }]
-            }
+            Ok(Err(e)) => vec![create_error_diagnostic(
+                "agnix::validation-error",
+                format!("Validation error: {}", e),
+            )],
+            Err(e) => vec![create_error_diagnostic(
+                "agnix::internal-error",
+                format!("Internal error: {}", e),
+            )],
         };
 
         self.client
