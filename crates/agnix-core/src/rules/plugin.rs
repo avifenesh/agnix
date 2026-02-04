@@ -61,13 +61,15 @@ impl Validator for PluginValidator {
         let raw_value: serde_json::Value = match serde_json::from_str(content) {
             Ok(v) => v,
             Err(e) => {
-                diagnostics.push(Diagnostic::error(
-                    path.to_path_buf(),
-                    1,
-                    0,
-                    "CC-PL-006",
-                    format!("Failed to parse plugin.json: {}", e),
-                ));
+                if config.is_rule_enabled("CC-PL-006") {
+                    diagnostics.push(Diagnostic::error(
+                        path.to_path_buf(),
+                        1,
+                        0,
+                        "CC-PL-006",
+                        format!("Failed to parse plugin.json: {}", e),
+                    ));
+                }
                 return diagnostics;
             }
         };

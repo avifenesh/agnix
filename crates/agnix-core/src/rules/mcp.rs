@@ -80,13 +80,15 @@ impl Validator for McpValidator {
         let raw_value: serde_json::Value = match serde_json::from_str(content) {
             Ok(v) => v,
             Err(e) => {
-                diagnostics.push(Diagnostic::error(
-                    path.to_path_buf(),
-                    1,
-                    0,
-                    "MCP-007",
-                    format!("Failed to parse MCP configuration: {}", e),
-                ));
+                if config.is_rule_enabled("MCP-007") {
+                    diagnostics.push(Diagnostic::error(
+                        path.to_path_buf(),
+                        1,
+                        0,
+                        "MCP-007",
+                        format!("Failed to parse MCP configuration: {}", e),
+                    ));
+                }
                 return diagnostics;
             }
         };

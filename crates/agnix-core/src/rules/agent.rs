@@ -84,16 +84,18 @@ impl Validator for AgentValidator {
 
         // Check if content has frontmatter
         if !content.trim_start().starts_with("---") {
-            diagnostics.push(
-                Diagnostic::error(
-                    path.to_path_buf(),
-                    1,
-                    0,
-                    "CC-AG-007",
-                    "Agent file must have YAML frontmatter".to_string(),
-                )
-                .with_suggestion("Add frontmatter between --- markers".to_string()),
-            );
+            if config.is_rule_enabled("CC-AG-007") {
+                diagnostics.push(
+                    Diagnostic::error(
+                        path.to_path_buf(),
+                        1,
+                        0,
+                        "CC-AG-007",
+                        "Agent file must have YAML frontmatter".to_string(),
+                    )
+                    .with_suggestion("Add frontmatter between --- markers".to_string()),
+                );
+            }
             return diagnostics;
         }
 
@@ -101,13 +103,15 @@ impl Validator for AgentValidator {
         let schema: AgentSchema = match parse_frontmatter(content) {
             Ok((s, _body)) => s,
             Err(e) => {
-                diagnostics.push(Diagnostic::error(
-                    path.to_path_buf(),
-                    1,
-                    0,
-                    "CC-AG-007",
-                    format!("Failed to parse agent frontmatter: {}", e),
-                ));
+                if config.is_rule_enabled("CC-AG-007") {
+                    diagnostics.push(Diagnostic::error(
+                        path.to_path_buf(),
+                        1,
+                        0,
+                        "CC-AG-007",
+                        format!("Failed to parse agent frontmatter: {}", e),
+                    ));
+                }
                 return diagnostics;
             }
         };
