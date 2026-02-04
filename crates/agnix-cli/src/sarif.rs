@@ -130,8 +130,8 @@ static RULES: LazyLock<Vec<ReportingDescriptor>> = LazyLock::new(|| {
         .collect()
 });
 
-fn get_all_rules() -> Vec<ReportingDescriptor> {
-    RULES.clone()
+fn get_all_rules() -> &'static [ReportingDescriptor] {
+    &RULES
 }
 
 pub fn diagnostics_to_sarif(diagnostics: &[Diagnostic], base_path: &Path) -> SarifLog {
@@ -167,7 +167,7 @@ pub fn diagnostics_to_sarif(diagnostics: &[Diagnostic], base_path: &Path) -> Sar
                     name: TOOL_NAME.to_string(),
                     version: env!("CARGO_PKG_VERSION").to_string(),
                     information_uri: TOOL_INFO_URI.to_string(),
-                    rules: get_all_rules(),
+                    rules: get_all_rules().to_vec(),
                 },
             },
             results,
@@ -393,7 +393,7 @@ mod tests {
             "https://github.com/avifenesh/agnix/blob/main/knowledge-base/VALIDATION-RULES.md#";
 
         for rule in rules {
-            let uri = rule.help_uri.expect("All rules should have help_uri");
+            let uri = rule.help_uri.as_ref().expect("All rules should have help_uri");
 
             assert!(
                 uri.starts_with(BASE_URL),
@@ -414,5 +414,35 @@ mod tests {
                 anchor
             );
         }
+    }
+
+    #[test]
+    fn test_zero_line_column_clamped_to_one() {
+        // SARIF 2.1.0 requires 1-based positions, so 0 values must be clamped
+        let diag = Diagnostic {
+            level: DiagnosticLevel::Error,
+            message: "Test error".to_string(),
+            file: PathBuf::from("/project/test.md"),
+            line: 0,
+            column: 0,
+            rule: "AS-001".to_string(),
+            suggestion: None,
+            fixes: vec![],
+        };
+
+        let sarif = diagnostics_to_sarif(&[diag], Path::new("/project"));
+
+        let region = &sarif.runs[0].results[0].locations[0]
+            .physical_location
+            .region;
+
+        assert_eq!(
+            region.start_line, 1,
+            "Line 0 should be clamped to 1 for SARIF compatibility"
+        );
+        assert_eq!(
+            region.start_column, 1,
+            "Column 0 should be clamped to 1 for SARIF compatibility"
+        );
     }
 }
