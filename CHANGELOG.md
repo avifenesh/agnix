@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Spec Drift Sentinel workflow for automated upstream specification monitoring (#107)
+  - Weekly checks for S-tier sources (Agent Skills, MCP, Claude Code, Codex CLI, OpenCode)
+  - Monthly checks for A-tier sources (Cursor, GitHub Copilot, Cline)
+  - SHA256 content hashing with whitespace normalization for drift detection
+  - Baseline storage in `.github/spec-baselines.json`
+  - Auto-creates GitHub issues when drift detected with actionable review steps
+  - Manual workflow dispatch for on-demand checks and baseline updates
+  - Security hardened: HTTPS-only URL validation, SHA-pinned actions, minimal permissions
 - Cross-layer contradiction detection with 3 new validation rules (XP-004 to XP-006)
   - XP-004: Conflicting build/test commands detection (npm vs pnpm vs yarn vs bun)
   - XP-005: Conflicting tool constraints detection (allow vs disallow across files)
