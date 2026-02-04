@@ -318,8 +318,13 @@ impl Validator for HooksValidator {
                             let replacement = format!("\"{}\"", corrected);
                             let description = format!("Replace '{}' with '{}'", event, corrected);
                             // Case-only fixes are safe (high confidence)
-                            let fix =
-                                Fix::replace(start, end, replacement, description, closest.is_case_fix);
+                            let fix = Fix::replace(
+                                start,
+                                end,
+                                replacement,
+                                description,
+                                closest.is_case_fix,
+                            );
                             diagnostic = diagnostic.with_fix(fix);
                         }
                     }
@@ -1967,7 +1972,8 @@ mod tests {
 
     #[test]
     fn test_cc_hk_001_fix_correct_byte_position() {
-        let content = r#"{"hooks": {"stop": [{"hooks": [{"type": "command", "command": "echo"}]}]}}"#;
+        let content =
+            r#"{"hooks": {"stop": [{"hooks": [{"type": "command", "command": "echo"}]}]}}"#;
 
         let diagnostics = validate(content);
         let cc_hk_001: Vec<_> = diagnostics

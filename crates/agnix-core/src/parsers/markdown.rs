@@ -150,9 +150,7 @@ pub fn check_xml_balance_with_content_end(
     // Unclosed tags - compute content_end_byte for auto-fix
     // For each unclosed tag, the closing tag should be inserted at the end of content
     // (or at the start of the next tag at the same/lower nesting level)
-    let content_end = content_len.unwrap_or_else(|| {
-        tags.last().map(|t| t.end_byte).unwrap_or(0)
-    });
+    let content_end = content_len.unwrap_or_else(|| tags.last().map(|t| t.end_byte).unwrap_or(0));
 
     for tag in stack {
         errors.push(XmlBalanceError::Unclosed {
@@ -463,7 +461,9 @@ mod tests {
         assert_eq!(errors.len(), 2);
         for err in &errors {
             match err {
-                XmlBalanceError::Unclosed { content_end_byte, .. } => {
+                XmlBalanceError::Unclosed {
+                    content_end_byte, ..
+                } => {
                     assert_eq!(*content_end_byte, content.len());
                 }
                 _ => panic!("Expected Unclosed error"),
