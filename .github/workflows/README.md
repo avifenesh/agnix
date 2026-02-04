@@ -77,3 +77,4 @@ When a new version of an action is released:
 | claude.yml | issue/PR comments | Claude Code assistant |
 | claude-code-review.yml | PR | Automated code review |
 | spec-drift.yml | schedule/manual | Monitor upstream specs for changes |
+| mcp-release-watch.yml | daily/manual | Watch MCP spec repo for new releases |
