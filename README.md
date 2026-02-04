@@ -76,7 +76,7 @@ agnix --format sarif .
 agnix init
 
 # Evaluate rule efficacy
-agnix eval tests/eval/eval.yaml
+agnix eval tests/eval.yaml
 ```
 
 ## Output

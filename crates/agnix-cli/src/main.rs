@@ -426,11 +426,7 @@ fn eval_command(
 ) -> anyhow::Result<()> {
     let config = LintConfig::default();
 
-    println!(
-        "{} {}",
-        "Evaluating:".cyan().bold(),
-        path.display()
-    );
+    println!("{} {}", "Evaluating:".cyan().bold(), path.display());
     if let Some(f) = filter {
         println!("  {} {}", "filter:".dimmed(), f);
     }
@@ -450,11 +446,7 @@ fn eval_command(
                 "FAIL".red().bold()
             };
 
-            println!(
-                "[{}] {}",
-                status,
-                result.case.file.display()
-            );
+            println!("[{}] {}", status, result.case.file.display());
 
             if let Some(desc) = &result.case.description {
                 println!("     {}", desc.dimmed());
@@ -469,11 +461,7 @@ fn eval_command(
                     );
                 }
                 if !result.false_negatives.is_empty() {
-                    println!(
-                        "     {} {:?}",
-                        "missing:".red(),
-                        result.false_negatives
-                    );
+                    println!("     {} {:?}", "missing:".red(), result.false_negatives);
                 }
             }
             println!();

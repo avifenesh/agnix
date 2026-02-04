@@ -221,7 +221,12 @@ impl EvalSummary {
         let total_fn: usize = self.rules.values().map(|m| m.fn_count).sum();
         lines.push(format!(
             "OVERALL,{},{},{},{:.4},{:.4},{:.4}",
-            total_tp, total_fp, total_fn, self.overall_precision, self.overall_recall, self.overall_f1
+            total_tp,
+            total_fp,
+            total_fn,
+            self.overall_precision,
+            self.overall_recall,
+            self.overall_f1
         ));
 
         lines.join("\n")
@@ -324,13 +329,9 @@ pub enum EvalError {
 ///
 /// Security model:
 /// - Reject absolute paths (only relative paths allowed in manifests)
-/// - Relative paths with .. segments are allowed (e.g., ../fixtures)
-/// - Path must resolve to an existing file (canonicalization verifies this)
-///
-/// Note: This validation allows access to files outside the manifest's directory
-/// via relative paths. This is intentional to support eval manifests that
-/// reference shared test fixtures. The restriction to relative paths prevents
-/// direct system file access like /etc/passwd.
+/// - Canonicalize both base directory and file path
+/// - Verify canonical file path starts with canonical base path
+/// - Return canonical path to prevent TOCTOU vulnerabilities
 fn validate_path_within_base(file: &Path, base_dir: &Path) -> Result<PathBuf, EvalError> {
     // Reject absolute paths - only relative paths allowed in manifests
     if file.is_absolute() {
@@ -342,14 +343,28 @@ fn validate_path_within_base(file: &Path, base_dir: &Path) -> Result<PathBuf, Ev
 
     let joined = base_dir.join(file);
 
-    // Canonicalize joined path - fail if file doesn't exist
-    // This also resolves symlinks to their real targets
-    let _canonical_file = joined.canonicalize().map_err(|_| EvalError::Io {
+    // Canonicalize to resolve ".." and symlinks
+    let canonical_file = joined.canonicalize().map_err(|e| EvalError::Io {
         path: joined.clone(),
-        source: std::io::Error::new(std::io::ErrorKind::NotFound, "File not found"),
+        source: e,
     })?;
 
-    Ok(joined)
+    // Canonicalize base directory
+    let canonical_base = base_dir.canonicalize().map_err(|e| EvalError::Io {
+        path: base_dir.to_path_buf(),
+        source: e,
+    })?;
+
+    // Verify file path is within base directory (prevents path traversal)
+    if !canonical_file.starts_with(&canonical_base) {
+        return Err(EvalError::PathTraversal {
+            path: file.to_path_buf(),
+            base_dir: base_dir.to_path_buf(),
+        });
+    }
+
+    // Return canonical path to prevent TOCTOU vulnerabilities
+    Ok(canonical_file)
 }
 
 /// Evaluate a single case against the validator
@@ -434,7 +449,11 @@ pub fn evaluate_manifest(
         .filter(|case| {
             // Apply filter if provided
             match filter {
-                Some(f) => case.expected.iter().any(|rule| rule.contains(f)),
+                Some(f) => {
+                    // Include cases with empty expected (to detect false positives on clean files)
+                    // or cases where any expected rule matches the filter prefix
+                    case.expected.is_empty() || case.expected.iter().any(|rule| rule.starts_with(f))
+                }
                 None => true,
             }
         })
@@ -474,7 +493,10 @@ impl std::str::FromStr for EvalFormat {
             "markdown" | "md" => Ok(EvalFormat::Markdown),
             "json" => Ok(EvalFormat::Json),
             "csv" => Ok(EvalFormat::Csv),
-            _ => Err(format!("Unknown format: {}. Use markdown, json, or csv.", s)),
+            _ => Err(format!(
+                "Unknown format: {}. Use markdown, json, or csv.",
+                s
+            )),
         }
     }
 }
@@ -706,7 +728,10 @@ cases:
 
     #[test]
     fn test_eval_format_from_str() {
-        assert_eq!("markdown".parse::<EvalFormat>().unwrap(), EvalFormat::Markdown);
+        assert_eq!(
+            "markdown".parse::<EvalFormat>().unwrap(),
+            EvalFormat::Markdown
+        );
         assert_eq!("md".parse::<EvalFormat>().unwrap(), EvalFormat::Markdown);
         assert_eq!("json".parse::<EvalFormat>().unwrap(), EvalFormat::Json);
         assert_eq!("csv".parse::<EvalFormat>().unwrap(), EvalFormat::Csv);
@@ -854,11 +879,7 @@ cases:
     fn test_evaluate_manifest_filter_no_matches() {
         let temp = tempfile::TempDir::new().unwrap();
         let skill_path = temp.path().join("skill.md");
-        std::fs::write(
-            &skill_path,
-            "---\nname: test\ndescription: Test\n---\nBody",
-        )
-        .unwrap();
+        std::fs::write(&skill_path, "---\nname: test\ndescription: Test\n---\nBody").unwrap();
 
         let manifest = EvalManifest {
             cases: vec![EvalCase {
@@ -929,12 +950,12 @@ cases:
     }
 
     #[test]
-    fn test_relative_path_with_parent_dir_allowed_in_repo() {
-        // Relative paths with .. are allowed if they stay within the repo
-        // This test verifies that ../sibling paths work correctly
+    fn test_relative_path_escaping_base_dir_blocked() {
+        // Relative paths that escape the base directory should be blocked
+        // This test verifies that ../sibling paths are detected as path traversal
         let temp = tempfile::TempDir::new().unwrap();
 
-        // Create a structure: temp/subdir/manifest.yaml pointing to temp/file.md
+        // Create a structure: temp/subdir as base_dir, temp/file.md as target
         let subdir = temp.path().join("subdir");
         std::fs::create_dir(&subdir).unwrap();
         let file_path = temp.path().join("file.md");
@@ -949,10 +970,40 @@ cases:
         let config = LintConfig::default();
         let result = evaluate_case(&case, &subdir, &config);
 
-        // Should NOT be flagged as path traversal - it's within the same directory tree
+        // Should be flagged as path traversal - escapes base_dir
+        assert!(
+            result.actual.contains(&"eval::path-traversal".to_string()),
+            "Relative ../sibling paths that escape base_dir should be blocked, got: {:?}",
+            result.actual
+        );
+    }
+
+    #[test]
+    fn test_relative_path_within_base_dir_allowed() {
+        // Relative paths that stay within base_dir should be allowed
+        let temp = tempfile::TempDir::new().unwrap();
+
+        // Create file in base_dir
+        let file_path = temp.path().join("SKILL.md");
+        std::fs::write(
+            &file_path,
+            "---\nname: test-skill\ndescription: Test\n---\nBody",
+        )
+        .unwrap();
+
+        let case = EvalCase {
+            file: PathBuf::from("SKILL.md"),
+            expected: vec![],
+            description: Some("File in base directory".to_string()),
+        };
+
+        let config = LintConfig::default();
+        let result = evaluate_case(&case, temp.path(), &config);
+
+        // Should NOT be flagged as path traversal
         assert!(
             !result.actual.contains(&"eval::path-traversal".to_string()),
-            "Relative ../sibling paths should be allowed within repo, got: {:?}",
+            "Files within base_dir should be allowed, got: {:?}",
             result.actual
         );
     }

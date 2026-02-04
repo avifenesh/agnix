@@ -6,19 +6,19 @@ The evaluation harness measures rule efficacy by comparing expected vs actual di
 
 ```bash
 # Run evaluation with default markdown output
-agnix eval tests/eval/eval.yaml
+agnix eval tests/eval.yaml
 
 # Output as JSON
-agnix eval tests/eval/eval.yaml --format json
+agnix eval tests/eval.yaml --format json
 
 # Output as CSV
-agnix eval tests/eval/eval.yaml --format csv
+agnix eval tests/eval.yaml --format csv
 
 # Filter to specific rule family
-agnix eval tests/eval/eval.yaml --filter "AS-"
+agnix eval tests/eval.yaml --filter "AS-"
 
 # Show per-case details
-agnix eval tests/eval/eval.yaml --verbose
+agnix eval tests/eval.yaml --verbose
 ```
 
 ## Manifest Format
@@ -112,7 +112,7 @@ Add evaluation to CI to catch rule regressions:
 
 ```yaml
 - name: Evaluate rule efficacy
-  run: agnix eval tests/eval/eval.yaml
+  run: agnix eval tests/eval.yaml
 ```
 
 ### Rule Development
@@ -129,7 +129,7 @@ When adding a new rule:
 Export metrics to track rule quality over time:
 
 ```bash
-agnix eval tests/eval/eval.yaml --format csv >> metrics-history.csv
+agnix eval tests/eval.yaml --format csv >> metrics-history.csv
 ```
 
 ## Creating Test Cases
