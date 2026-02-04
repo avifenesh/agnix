@@ -1,7 +1,7 @@
 {
   "description": "Machine-readable source of truth for all validation rules. When adding a new rule, add it here AND in VALIDATION-RULES.md. CI parity tests enforce sync.",
   "version": "1.0.0",
-  "total_rules": 84,
+  "total_rules": 89,
   "last_updated": "2026-01-31",
   "rules": [
     {
@@ -91,6 +91,12 @@
     {
       "id": "AS-015",
       "name": "Upload Size Exceeds 8MB",
+      "severity": "HIGH",
+      "category": "agent-skills"
+    },
+    {
+      "id": "AS-016",
+      "name": "Skill Parse Error",
       "severity": "HIGH",
       "category": "agent-skills"
     },
@@ -215,6 +221,12 @@
       "category": "claude-hooks"
     },
     {
+      "id": "CC-HK-012",
+      "name": "Hooks Parse Error",
+      "severity": "HIGH",
+      "category": "claude-hooks"
+    },
+    {
       "id": "CC-AG-001",
       "name": "Missing Name Field",
       "severity": "HIGH",
@@ -247,6 +259,12 @@
     {
       "id": "CC-AG-006",
       "name": "Tool/Disallowed Conflict",
+      "severity": "HIGH",
+      "category": "claude-agents"
+    },
+    {
+      "id": "CC-AG-007",
+      "name": "Agent Parse Error",
       "severity": "HIGH",
       "category": "claude-agents"
     },
@@ -377,6 +395,12 @@
       "category": "claude-plugins"
     },
     {
+      "id": "CC-PL-006",
+      "name": "Plugin Parse Error",
+      "severity": "HIGH",
+      "category": "claude-plugins"
+    },
+    {
       "id": "MCP-001",
       "name": "Invalid JSON-RPC Version",
       "severity": "HIGH",
@@ -409,6 +433,12 @@
     {
       "id": "MCP-006",
       "name": "Untrusted Annotations",
+      "severity": "HIGH",
+      "category": "mcp"
+    },
+    {
+      "id": "MCP-007",
+      "name": "MCP Parse Error",
       "severity": "HIGH",
       "category": "mcp"
     },
@@ -512,7 +542,7 @@
   "categories": {
     "agent-skills": {
       "prefix": "AS",
-      "count": 15,
+      "count": 16,
       "description": "Agent Skills specification rules"
     },
     "claude-skills": {
@@ -522,12 +552,12 @@
     },
     "claude-hooks": {
       "prefix": "CC-HK",
-      "count": 11,
+      "count": 12,
       "description": "Claude Code Hooks rules"
     },
     "claude-agents": {
       "prefix": "CC-AG",
-      "count": 6,
+      "count": 7,
       "description": "Claude Code Subagents rules"
     },
     "claude-memory": {
@@ -542,12 +572,12 @@
     },
     "claude-plugins": {
       "prefix": "CC-PL",
-      "count": 5,
+      "count": 6,
       "description": "Claude Code Plugins rules"
     },
     "mcp": {
       "prefix": "MCP",
-      "count": 6,
+      "count": 7,
       "description": "Model Context Protocol rules"
     },
     "copilot": {
