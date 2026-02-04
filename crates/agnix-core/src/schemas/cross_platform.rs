@@ -16,6 +16,7 @@ static AGENT_FIELD_PATTERN: OnceLock<Regex> = OnceLock::new();
 static ALLOWED_TOOLS_PATTERN: OnceLock<Regex> = OnceLock::new();
 static HARD_CODED_PATH_PATTERN: OnceLock<Regex> = OnceLock::new();
 static MARKDOWN_HEADER_PATTERN: OnceLock<Regex> = OnceLock::new();
+static CLAUDE_SECTION_GUARD_PATTERN: OnceLock<Regex> = OnceLock::new();
 
 // XP-004: Build command patterns
 static BUILD_COMMAND_PATTERN: OnceLock<Regex> = OnceLock::new();
@@ -69,16 +70,67 @@ fn allowed_tools_pattern() -> &'static Regex {
     })
 }
 
+fn claude_section_guard_pattern() -> &'static Regex {
+    CLAUDE_SECTION_GUARD_PATTERN.get_or_init(|| {
+        Regex::new(r"(?im)^(?:#+\s*|<!--\s*)claude(?:\s+code)?(?:\s+specific|\s+only)?(?:\s*-->)?")
+            .unwrap()
+    })
+}
+
 /// Find Claude-specific features in content (for XP-001)
 ///
 /// Detects features that only work in Claude Code but not in other platforms
 /// that read AGENTS.md (Codex CLI, OpenCode, GitHub Copilot, Cursor, Cline).
+///
+/// Features inside a Claude-specific section (marked by a header like
+/// `## Claude Code Specific` or `<!-- Claude Specific -->`) are not reported,
+/// allowing users to document Claude-specific features without triggering errors.
 pub fn find_claude_specific_features(content: &str) -> Vec<ClaudeSpecificFeature> {
     let mut results = Vec::new();
+    let guard_pattern = claude_section_guard_pattern();
 
-    // Iterate directly over lines without collecting to Vec (memory optimization)
+    let mut in_claude_section = false;
+    let mut claude_section_level = 0; // Track the level of the Claude guard header
+
     for (line_num, line) in content.lines().enumerate() {
-        // Check for hooks patterns
+        let is_claude_guard = guard_pattern.is_match(line);
+        if is_claude_guard {
+            in_claude_section = true;
+            // Extract header level for Claude section
+            let trimmed = line.trim_start();
+            if trimmed.starts_with('#') {
+                claude_section_level = trimmed.chars().take_while(|c| *c == '#').count();
+            } else if trimmed.starts_with("<!--") {
+                claude_section_level = 2; // Default to level 2 for HTML comments
+            }
+            continue;
+        }
+
+        // Only reset guard if we encounter a header that is:
+        // 1. At the same or higher level (lower number) as the Claude guard
+        // 2. Not a Claude-specific guard itself
+        if in_claude_section
+            && (line.trim_start().starts_with('#') || line.trim_start().starts_with("<!--"))
+        {
+            let trimmed = line.trim_start();
+            let current_level = if trimmed.starts_with('#') {
+                trimmed.chars().take_while(|c| *c == '#').count()
+            } else if trimmed.starts_with("<!--") {
+                2 // Default to level 2 for HTML comments
+            } else {
+                usize::MAX
+            };
+
+            // Reset guard only if new header is at same or higher level (lower number)
+            if current_level <= claude_section_level {
+                in_claude_section = false;
+            }
+        }
+
+        if in_claude_section {
+            continue;
+        }
+
         if let Some(mat) = claude_hooks_pattern().find(line) {
             results.push(ClaudeSpecificFeature {
                 line: line_num + 1,
@@ -981,6 +1033,245 @@ agent: security-reviewer
 Body"#;
         let results = find_claude_specific_features(content);
         assert!(results.iter().any(|r| r.feature == "agent"));
+    }
+
+    // ===== XP-001: Claude Section Guard Tests =====
+
+    #[test]
+    fn test_guarded_hooks_in_claude_section() {
+        // Hooks inside a Claude-specific section should NOT be reported
+        let content = r#"# Project Guidelines
+
+## Claude Code Specific
+- type: PreToolExecution
+  command: echo "test"
+"#;
+        let results = find_claude_specific_features(content);
+        assert!(
+            results.is_empty(),
+            "Hooks in Claude-specific section should not trigger XP-001"
+        );
+    }
+
+    #[test]
+    fn test_guarded_context_fork() {
+        // context:fork inside a Claude section should NOT be reported
+        let content = r#"# Config
+
+## Claude Only
+context: fork
+agent: Explore
+"#;
+        let results = find_claude_specific_features(content);
+        assert!(
+            results.is_empty(),
+            "Features in Claude-only section should not trigger XP-001"
+        );
+    }
+
+    #[test]
+    fn test_guarded_agent_field() {
+        // agent field inside a Claude section should NOT be reported
+        let content = r#"# Settings
+
+## Claude Specific
+agent: security-reviewer
+allowed-tools: Read Write
+"#;
+        let results = find_claude_specific_features(content);
+        assert!(
+            results.is_empty(),
+            "Agent field in Claude-specific section should not trigger XP-001"
+        );
+    }
+
+    #[test]
+    fn test_guard_section_ends_at_new_header() {
+        // Guard protection should end when a new header is encountered
+        let content = r#"# Main
+
+## Claude Code Specific
+- type: Stop
+  command: cleanup
+
+## Other Settings
+agent: something
+"#;
+        let results = find_claude_specific_features(content);
+        assert_eq!(results.len(), 1, "Expected exactly 1 result");
+        assert!(
+            !results.iter().any(|r| r.feature == "hooks"),
+            "Hooks in Claude section should be guarded"
+        );
+        assert!(
+            results.iter().any(|r| r.feature == "agent"),
+            "Agent field outside Claude section should be reported"
+        );
+    }
+
+    #[test]
+    fn test_multiple_claude_sections() {
+        // Multiple Claude sections should all be guarded
+        let content = r#"# Config
+
+## Claude Code Specific
+- type: PreToolExecution
+  command: test1
+
+## General Settings
+Some general content.
+
+## Claude Only
+context: fork
+agent: Plan
+"#;
+        let results = find_claude_specific_features(content);
+        assert!(
+            results.is_empty(),
+            "Features in any Claude section should be guarded"
+        );
+    }
+
+    #[test]
+    fn test_html_comment_guard() {
+        // HTML comment style guard should also work
+        let content = r#"# Config
+
+<!-- Claude Code Specific -->
+- type: Notification
+  command: notify-send
+"#;
+        let results = find_claude_specific_features(content);
+        assert!(
+            results.is_empty(),
+            "HTML comment guard should protect Claude features"
+        );
+    }
+
+    #[test]
+    fn test_case_insensitive_guard() {
+        // Guard detection should be case-insensitive
+        let content = r#"# Config
+
+## CLAUDE CODE SPECIFIC
+- type: SubagentStop
+  command: cleanup
+
+## claude specific
+allowed-tools: Bash
+"#;
+        let results = find_claude_specific_features(content);
+        assert!(
+            results.is_empty(),
+            "Case-insensitive guard should protect Claude features"
+        );
+    }
+
+    #[test]
+    fn test_unguarded_features_still_detected() {
+        // Features NOT in a Claude section should still be detected
+        let content = r#"# Project Config
+
+## Hooks Setup
+- type: PreToolExecution
+  command: echo "test"
+
+agent: reviewer
+"#;
+        let results = find_claude_specific_features(content);
+        assert_eq!(results.len(), 2, "Unguarded features should be detected");
+        assert!(results.iter().any(|r| r.feature == "hooks"));
+        assert!(results.iter().any(|r| r.feature == "agent"));
+    }
+
+    #[test]
+    fn test_html_comment_header_resets_guard() {
+        // A non-Claude HTML comment header should reset the guard protection
+        // This tests the fix for handling HTML comment headers like <!-- General Settings -->
+        let content = r#"# Config
+
+<!-- Claude Specific -->
+- type: PreToolExecution
+  command: test
+
+<!-- General Settings -->
+agent: reviewer
+"#;
+        let results = find_claude_specific_features(content);
+        assert_eq!(
+            results.len(),
+            1,
+            "Agent field after non-Claude HTML header should be detected"
+        );
+        assert!(
+            results[0].feature == "agent",
+            "Should detect agent field outside Claude section"
+        );
+    }
+
+    #[test]
+    fn test_whitespace_before_markdown_header() {
+        // Headers with leading whitespace should also reset the guard
+        let content = r#"# Config
+
+## Claude Specific
+- type: PreToolExecution
+  command: test
+
+   ## Other Section
+agent: reviewer
+"#;
+        let results = find_claude_specific_features(content);
+        assert_eq!(
+            results.len(),
+            1,
+            "Agent field after indented header should be detected"
+        );
+        assert!(
+            results[0].feature == "agent",
+            "Indented header should reset guard protection"
+        );
+    }
+
+    #[test]
+    fn test_subheaders_within_claude_section() {
+        // Subheaders (###) within a Claude-specific section (##) should not reset the guard
+        // This tests Codex feedback about keeping guard active across subheaders
+        let content = r#"# Config
+
+## Claude Specific
+### Hooks Setup
+- type: PreToolExecution
+  command: test
+
+### Context Configuration
+context: fork
+agent: reviewer
+"#;
+        let results = find_claude_specific_features(content);
+        assert!(
+            results.is_empty(),
+            "Features under subheaders within Claude section should still be protected"
+        );
+    }
+
+    #[test]
+    fn test_reset_on_same_level_header() {
+        // A new top-level header (##) should reset the guard from a ## Claude section
+        let content = r#"## Claude Specific
+- type: PreToolExecution
+  command: test
+
+## Other Settings
+agent: reviewer
+"#;
+        let results = find_claude_specific_features(content);
+        assert_eq!(
+            results.len(),
+            1,
+            "Agent field after same-level header should be detected"
+        );
+        assert!(results[0].feature == "agent");
     }
 
     // ===== XP-002: Markdown Structure =====

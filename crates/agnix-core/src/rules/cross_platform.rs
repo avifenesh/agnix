@@ -44,7 +44,7 @@ impl Validator for CrossPlatformValidator {
                         ),
                     )
                     .with_suggestion(
-                        "Move Claude-specific features to CLAUDE.md or use platform guards"
+                        "Move to CLAUDE.md or wrap in a Claude-specific section (e.g., '## Claude Code Specific')"
                             .to_string(),
                     ),
                 );
@@ -493,5 +493,87 @@ Check .claude/ and .cursor/ paths"#;
         assert!(!xp_001.is_empty(), "Expected XP-001 errors");
         assert!(!xp_002.is_empty(), "Expected XP-002 warnings");
         assert_eq!(xp_003.len(), 2, "Expected 2 XP-003 warnings");
+    }
+
+    // ===== XP-001: Section Guard Integration Tests =====
+
+    #[test]
+    fn test_xp_001_guarded_section_no_errors() {
+        let content = r#"# Project AGENTS.md
+
+## Overview
+This project uses various tools.
+
+## Claude Code Specific
+- type: PreToolExecution
+  command: echo "lint"
+
+context: fork
+agent: security-reviewer
+allowed-tools: Read Write Bash
+"#;
+        let validator = CrossPlatformValidator;
+        let diagnostics =
+            validator.validate(Path::new("AGENTS.md"), content, &LintConfig::default());
+
+        let xp_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XP-001").collect();
+        assert!(
+            xp_001.is_empty(),
+            "XP-001 should not fire for features in Claude-specific section, got {} errors",
+            xp_001.len()
+        );
+    }
+
+    #[test]
+    fn test_xp_001_mixed_guarded_unguarded() {
+        let content = r#"# AGENTS.md
+
+## Claude Code Specific
+- type: Stop
+  command: cleanup
+
+## General Configuration
+agent: some-agent
+"#;
+        let validator = CrossPlatformValidator;
+        let diagnostics =
+            validator.validate(Path::new("AGENTS.md"), content, &LintConfig::default());
+
+        let xp_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XP-001").collect();
+
+        assert_eq!(
+            xp_001.len(),
+            1,
+            "Expected 1 XP-001 error for unguarded agent field"
+        );
+        assert!(
+            xp_001[0].message.contains("agent"),
+            "Error should be for 'agent' feature"
+        );
+    }
+
+    #[test]
+    fn test_xp_001_guard_resets_at_new_section() {
+        let content = r#"# Project
+
+## Claude Only
+- type: Notification
+  command: notify
+
+## Build Commands
+- type: PostToolExecution
+  command: build-check
+"#;
+        let validator = CrossPlatformValidator;
+        let diagnostics =
+            validator.validate(Path::new("AGENTS.md"), content, &LintConfig::default());
+
+        let xp_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XP-001").collect();
+
+        assert_eq!(
+            xp_001.len(),
+            1,
+            "Expected 1 XP-001 error for hooks outside Claude section"
+        );
     }
 }
