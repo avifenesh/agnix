@@ -32,7 +32,10 @@ mod schemas;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
+use rayon::iter::ParallelBridge;
 use rayon::prelude::*;
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::Mutex;
 
 pub use config::LintConfig;
 pub use diagnostics::{Diagnostic, DiagnosticLevel, Fix, LintError, LintResult};
@@ -380,9 +383,14 @@ pub fn validate_project_with_registry(
 
     let walk_root = std::fs::canonicalize(path).unwrap_or_else(|_| path.to_path_buf());
 
-    // Collect file paths (sequential walk, parallel validation)
+    // Shared state for streaming validation
+    let files_checked = Arc::new(AtomicUsize::new(0));
+    let agents_md_paths: Arc<Mutex<Vec<PathBuf>>> = Arc::new(Mutex::new(Vec::new()));
+    let instruction_file_paths: Arc<Mutex<Vec<PathBuf>>> = Arc::new(Mutex::new(Vec::new()));
+
+    // Stream file walk directly into parallel validation (no intermediate Vec)
     // Note: hidden(false) includes .github directory for Copilot instruction files
-    let paths: Vec<PathBuf> = WalkBuilder::new(&walk_root)
+    let mut diagnostics: Vec<Diagnostic> = WalkBuilder::new(&walk_root)
         .hidden(false)
         .git_ignore(true)
         .filter_entry({
@@ -409,19 +417,29 @@ pub fn validate_project_with_registry(
             !is_excluded_file(&path_str, exclude_patterns.as_slice())
         })
         .map(|entry| entry.path().to_path_buf())
-        .collect();
+        .par_bridge()
+        .flat_map(|file_path| {
+            // Count recognized files (detect_file_type is string-only, no I/O)
+            if detect_file_type(&file_path) != FileType::Unknown {
+                files_checked.fetch_add(1, Ordering::Relaxed);
+            }
 
-    // Count recognized files (detect_file_type is string-only, no I/O)
-    let files_checked = paths
-        .iter()
-        .filter(|p| detect_file_type(p) != FileType::Unknown)
-        .count();
+            // Collect AGENTS.md paths for AGM-006 check
+            if file_path.file_name().and_then(|n| n.to_str()) == Some("AGENTS.md") {
+                if let Ok(mut paths) = agents_md_paths.lock() {
+                    paths.push(file_path.clone());
+                }
+            }
 
-    // Validate files in parallel
-    let mut diagnostics: Vec<Diagnostic> = paths
-        .par_iter()
-        .flat_map(
-            |file_path| match validate_file_with_registry(file_path, &config, registry) {
+            // Collect instruction file paths for XP-004/005/006 checks
+            if schemas::cross_platform::is_instruction_file(&file_path) {
+                if let Ok(mut paths) = instruction_file_paths.lock() {
+                    paths.push(file_path.clone());
+                }
+            }
+
+            // Validate the file
+            match validate_file_with_registry(&file_path, &config, registry) {
                 Ok(file_diagnostics) => file_diagnostics,
                 Err(e) => {
                     vec![Diagnostic::error(
@@ -432,21 +450,18 @@ pub fn validate_project_with_registry(
                         format!("Failed to validate file: {}", e),
                     )]
                 }
-            },
-        )
+            }
+        })
         .collect();
 
     // AGM-006: Check for multiple AGENTS.md files in the directory tree (project-level check)
     if config.is_rule_enabled("AGM-006") {
-        let agents_md_paths: Vec<_> = paths
-            .iter()
-            .filter(|p| p.file_name().and_then(|n| n.to_str()) == Some("AGENTS.md"))
-            .collect();
+        let agents_md_paths = agents_md_paths.lock().unwrap();
 
         if agents_md_paths.len() > 1 {
-            for agents_file in &agents_md_paths {
+            for agents_file in agents_md_paths.iter() {
                 let parent_files =
-                    schemas::agents_md::check_agents_md_hierarchy(agents_file, &paths);
+                    schemas::agents_md::check_agents_md_hierarchy(agents_file, &agents_md_paths);
                 let description = if !parent_files.is_empty() {
                     let parent_paths: Vec<String> = parent_files
                         .iter()
@@ -470,7 +485,7 @@ pub fn validate_project_with_registry(
 
                 diagnostics.push(
                     Diagnostic::warning(
-                        (*agents_file).clone(),
+                        agents_file.clone(),
                         1,
                         0,
                         "AGM-006",
@@ -491,23 +506,20 @@ pub fn validate_project_with_registry(
     let xp006_enabled = config.is_rule_enabled("XP-006");
 
     if xp004_enabled || xp005_enabled || xp006_enabled {
-        // Collect instruction files (CLAUDE.md, AGENTS.md, etc.)
-        let instruction_files: Vec<_> = paths
-            .iter()
-            .filter(|p| schemas::cross_platform::is_instruction_file(p))
-            .collect();
+        // Use instruction files collected during streaming validation
+        let instruction_files = instruction_file_paths.lock().unwrap();
 
         if instruction_files.len() > 1 {
             // Read content of all instruction files
             let mut file_contents: Vec<(PathBuf, String)> = Vec::new();
-            for file_path in &instruction_files {
+            for file_path in instruction_files.iter() {
                 match file_utils::safe_read_file(file_path) {
                     Ok(content) => {
-                        file_contents.push(((*file_path).clone(), content));
+                        file_contents.push((file_path.clone(), content));
                     }
                     Err(e) => {
                         diagnostics.push(Diagnostic::error(
-                            (*file_path).clone(),
+                            file_path.clone(),
                             0,
                             0,
                             "XP-004",
@@ -668,6 +680,9 @@ pub fn validate_project_with_registry(
             .then_with(|| a.line.cmp(&b.line))
             .then_with(|| a.rule.cmp(&b.rule))
     });
+
+    // Extract final count from atomic counter
+    let files_checked = files_checked.load(Ordering::Relaxed);
 
     Ok(ValidationResult {
         diagnostics,
