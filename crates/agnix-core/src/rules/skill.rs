@@ -2153,10 +2153,7 @@ Body"#;
         let validator = SkillValidator;
         let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
 
-        let parse_errors: Vec<_> = diagnostics
-            .iter()
-            .filter(|d| d.rule == "AS-016")
-            .collect();
+        let parse_errors: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-016").collect();
 
         assert_eq!(
             parse_errors.len(),
