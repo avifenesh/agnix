@@ -1,6 +1,6 @@
 # agnix Knowledge Base - Master Index
 
-> 492KB knowledge, 75+ sources, 5 research agents, 90 validation rules
+> 492KB knowledge, 75+ sources, 5 research agents, 99 validation rules
 
 ---
 
@@ -8,7 +8,7 @@
 
 | What You Need | Start Here |
 |---------------|------------|
-| **Implement validator** | [VALIDATION-RULES.md](./VALIDATION-RULES.md) - 90 rules with detection logic |
+| **Implement validator** | [VALIDATION-RULES.md](./VALIDATION-RULES.md) - 99 rules with detection logic |
 | **Understand a standard** | [standards/](#standards) - HARD-RULES files |
 | **Learn best practices** | [standards/](#standards) - OPINIONS files |
 | **Find patterns** | [PATTERNS-CATALOG.md](./PATTERNS-CATALOG.md) - 70 patterns from awesome-slash |
@@ -23,7 +23,7 @@
 knowledge-base/
 ├── INDEX.md                        # This file
 ├── README.md                       # Detailed navigation guide
-├── VALIDATION-RULES.md             # ⭐ Master validation reference (90 rules)
+├── VALIDATION-RULES.md             # ⭐ Master validation reference (99 rules)
 ├── PATTERNS-CATALOG.md             # 70 production-tested patterns
 │
 ├── standards/                      # 12 files, 9,884 lines, 266KB
@@ -72,7 +72,7 @@ knowledge-base/
 | **AGENTS.md** | 5 | - | - | 6 rules |
 | **Cursor** | 2 | - | - | 6 rules |
 | **awesome-slash** | 12 | - | - | 70 patterns |
-| **Total** | **75+** | **117KB** | **160KB** | **96 rules** |
+| **Total** | **75+** | **117KB** | **160KB** | **99 rules** |
 
 ### Validation Rules by Category
 
@@ -90,9 +90,9 @@ knowledge-base/
 | XML | 3 | 3 | 0 | 0 | 1 |
 | References | 2 | 2 | 0 | 0 | 0 |
 | Prompt Eng | 4 | 2 | 2 | 0 | 1 |
-| Cross-Platform | 3 | 2 | 1 | 0 | 0 |
+| Cross-Platform | 6 | 3 | 3 | 0 | 0 |
 | Cursor | 6 | 3 | 3 | 0 | 1 |
-| **TOTAL** | **96** | **71** | **22** | **3** | **21** |
+| **TOTAL** | **99** | **71** | **28** | **0** | **22** |
 
 ---
 
@@ -130,7 +130,7 @@ knowledge-base/
 ### For Implementation
 
 **Start here**: [VALIDATION-RULES.md](./VALIDATION-RULES.md)
-- 90 rules with rule IDs (AS-001, CC-HK-001, etc.)
+- 99 rules with rule IDs (AS-001, CC-HK-001, etc.)
 - Detection pseudocode
 - Auto-fix implementations
 - Priority matrix (P0/P1/P2)
@@ -251,7 +251,7 @@ Total Size:           492KB
 Standards Covered:     5 (Agent Skills, MCP, Claude Code, Multi-Platform, Prompt Eng)
 Sources Consulted:    75+ (specs, docs, research papers, repos)
 Research Agents:       5 (10+ sources each)
-Validation Rules:     96 rules
+Validation Rules:     99 rules
 Auto-Fixable Rules:   20 rules
 Test Fixtures:        11 files
 Platforms Analyzed:   9 (Claude Code, Codex CLI, OpenCode, Copilot, Cursor, Cline, Roo-Cline, Continue.dev, Aider)

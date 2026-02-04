@@ -25,7 +25,7 @@ agnix .
 - ✅ **Parallel Validation** - Fast processing of large projects using rayon
 - ✅ **MCP Tools** - Schema and tool validation (MCP-001 to MCP-006)
 - ✅ **AGENTS.md** - Cross-tool instruction validation (AGM-001 to AGM-006)
-- ✅ **Cross-Platform** - AGENTS.md validation, platform-specific feature detection (XP-001 to XP-003)
+- ✅ **Cross-Platform** - AGENTS.md validation, platform-specific feature detection, cross-layer contradiction detection (XP-001 to XP-006)
 - ✅ **Prompt Engineering** - Validates prompt best practices (PE-001 to PE-004)
 - 🚧 **LSP Server** - Real-time diagnostics (coming soon)
 

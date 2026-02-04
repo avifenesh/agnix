@@ -471,6 +471,147 @@ pub fn validate_project_with_registry(
         }
     }
 
+    // XP-004, XP-005, XP-006: Cross-layer contradiction detection (project-level checks)
+    // These rules analyze relationships between multiple instruction files
+    let xp004_enabled = config.is_rule_enabled("XP-004");
+    let xp005_enabled = config.is_rule_enabled("XP-005");
+    let xp006_enabled = config.is_rule_enabled("XP-006");
+
+    if xp004_enabled || xp005_enabled || xp006_enabled {
+        // Collect instruction files (CLAUDE.md, AGENTS.md, etc.)
+        let instruction_files: Vec<_> = paths
+            .iter()
+            .filter(|p| schemas::cross_platform::is_instruction_file(p))
+            .collect();
+
+        if instruction_files.len() > 1 {
+            // Read content of all instruction files
+            let mut file_contents: Vec<(PathBuf, String)> = Vec::new();
+            for file_path in &instruction_files {
+                match file_utils::safe_read_file(file_path) {
+                    Ok(content) => {
+                        file_contents.push(((*file_path).clone(), content));
+                    }
+                    Err(e) => {
+                        diagnostics.push(Diagnostic::error(
+                            (*file_path).clone(),
+                            0,
+                            0,
+                            "XP-004",
+                            format!("Failed to read instruction file: {}", e),
+                        ));
+                    }
+                }
+            }
+
+            // XP-004: Detect conflicting build/test commands
+            if xp004_enabled {
+                let file_commands: Vec<_> = file_contents
+                    .iter()
+                    .map(|(path, content)| {
+                        (
+                            path.clone(),
+                            schemas::cross_platform::extract_build_commands(content),
+                        )
+                    })
+                    .filter(|(_, cmds)| !cmds.is_empty())
+                    .collect();
+
+                let build_conflicts =
+                    schemas::cross_platform::detect_build_conflicts(&file_commands);
+                for conflict in build_conflicts {
+                    diagnostics.push(
+                        Diagnostic::warning(
+                            conflict.file1.clone(),
+                            conflict.file1_line,
+                            0,
+                            "XP-004",
+                            format!(
+                                "Conflicting package managers: {} uses {} but {} uses {} for {} commands",
+                                conflict.file1.display(),
+                                conflict.file1_manager.as_str(),
+                                conflict.file2.display(),
+                                conflict.file2_manager.as_str(),
+                                match conflict.command_type {
+                                    schemas::cross_platform::CommandType::Install => "install",
+                                    schemas::cross_platform::CommandType::Build => "build",
+                                    schemas::cross_platform::CommandType::Test => "test",
+                                    schemas::cross_platform::CommandType::Run => "run",
+                                    schemas::cross_platform::CommandType::Other => "other",
+                                }
+                            ),
+                        )
+                        .with_suggestion(
+                            "Standardize on a single package manager across all instruction files".to_string(),
+                        ),
+                    );
+                }
+            }
+
+            // XP-005: Detect conflicting tool constraints
+            if xp005_enabled {
+                let file_constraints: Vec<_> = file_contents
+                    .iter()
+                    .map(|(path, content)| {
+                        (
+                            path.clone(),
+                            schemas::cross_platform::extract_tool_constraints(content),
+                        )
+                    })
+                    .filter(|(_, constraints)| !constraints.is_empty())
+                    .collect();
+
+                let tool_conflicts =
+                    schemas::cross_platform::detect_tool_conflicts(&file_constraints);
+                for conflict in tool_conflicts {
+                    diagnostics.push(
+                        Diagnostic::error(
+                            conflict.allow_file.clone(),
+                            conflict.allow_line,
+                            0,
+                            "XP-005",
+                            format!(
+                                "Conflicting tool constraints: '{}' is allowed in {} but disallowed in {}",
+                                conflict.tool_name,
+                                conflict.allow_file.display(),
+                                conflict.disallow_file.display()
+                            ),
+                        )
+                        .with_suggestion(
+                            "Resolve the conflict by consistently allowing or disallowing the tool".to_string(),
+                        ),
+                    );
+                }
+            }
+
+            // XP-006: Detect multiple layers without documented precedence
+            if xp006_enabled {
+                let layers: Vec<_> = file_contents
+                    .iter()
+                    .map(|(path, content)| schemas::cross_platform::categorize_layer(path, content))
+                    .collect();
+
+                if let Some(issue) = schemas::cross_platform::detect_precedence_issues(&layers) {
+                    // Report on the first layer file
+                    if let Some(first_layer) = issue.layers.first() {
+                        diagnostics.push(
+                            Diagnostic::warning(
+                                first_layer.path.clone(),
+                                1,
+                                0,
+                                "XP-006",
+                                issue.description,
+                            )
+                            .with_suggestion(
+                                "Document which file takes precedence (e.g., 'CLAUDE.md takes precedence over AGENTS.md')".to_string(),
+                            ),
+                        );
+                    }
+                }
+            }
+        }
+    }
+
     // Sort by severity (errors first), then by file path, then by line/rule for full determinism
     diagnostics.sort_by(|a, b| {
         a.level
@@ -1487,6 +1628,455 @@ allowed-tools: Read Write
             .filter(|d| d.rule == "AGM-006")
             .collect();
         assert!(agm_006.is_empty(), "AGM-006 should not fire when disabled");
+    }
+
+    // ===== XP-004: Conflicting Build Commands =====
+
+    #[test]
+    fn test_xp_004_conflicting_package_managers() {
+        let temp = tempfile::TempDir::new().unwrap();
+
+        // CLAUDE.md uses npm
+        std::fs::write(
+            temp.path().join("CLAUDE.md"),
+            "# Project\n\nUse `npm install` for dependencies.",
+        )
+        .unwrap();
+
+        // AGENTS.md uses pnpm
+        std::fs::write(
+            temp.path().join("AGENTS.md"),
+            "# Project\n\nUse `pnpm install` for dependencies.",
+        )
+        .unwrap();
+
+        let config = LintConfig::default();
+        let result = validate_project(temp.path(), &config).unwrap();
+
+        let xp_004: Vec<_> = result
+            .diagnostics
+            .iter()
+            .filter(|d| d.rule == "XP-004")
+            .collect();
+        assert!(
+            !xp_004.is_empty(),
+            "Should detect conflicting package managers"
+        );
+        assert!(xp_004.iter().any(|d| d.message.contains("npm")));
+        assert!(xp_004.iter().any(|d| d.message.contains("pnpm")));
+    }
+
+    #[test]
+    fn test_xp_004_no_conflict_same_manager() {
+        let temp = tempfile::TempDir::new().unwrap();
+
+        // Both files use npm
+        std::fs::write(
+            temp.path().join("CLAUDE.md"),
+            "# Project\n\nUse `npm install` for dependencies.",
+        )
+        .unwrap();
+
+        std::fs::write(
+            temp.path().join("AGENTS.md"),
+            "# Project\n\nUse `npm run build` for building.",
+        )
+        .unwrap();
+
+        let config = LintConfig::default();
+        let result = validate_project(temp.path(), &config).unwrap();
+
+        let xp_004: Vec<_> = result
+            .diagnostics
+            .iter()
+            .filter(|d| d.rule == "XP-004")
+            .collect();
+        assert!(
+            xp_004.is_empty(),
+            "Should not detect conflict when same package manager is used"
+        );
+    }
+
+    // ===== XP-005: Conflicting Tool Constraints =====
+
+    #[test]
+    fn test_xp_005_conflicting_tool_constraints() {
+        let temp = tempfile::TempDir::new().unwrap();
+
+        // CLAUDE.md allows Bash
+        std::fs::write(
+            temp.path().join("CLAUDE.md"),
+            "# Project\n\nallowed-tools: Read Write Bash",
+        )
+        .unwrap();
+
+        // AGENTS.md disallows Bash
+        std::fs::write(
+            temp.path().join("AGENTS.md"),
+            "# Project\n\nNever use Bash for operations.",
+        )
+        .unwrap();
+
+        let config = LintConfig::default();
+        let result = validate_project(temp.path(), &config).unwrap();
+
+        let xp_005: Vec<_> = result
+            .diagnostics
+            .iter()
+            .filter(|d| d.rule == "XP-005")
+            .collect();
+        assert!(
+            !xp_005.is_empty(),
+            "Should detect conflicting tool constraints"
+        );
+        assert!(xp_005.iter().any(|d| d.message.contains("Bash")));
+    }
+
+    #[test]
+    fn test_xp_005_no_conflict_consistent_constraints() {
+        let temp = tempfile::TempDir::new().unwrap();
+
+        // Both files allow Read
+        std::fs::write(
+            temp.path().join("CLAUDE.md"),
+            "# Project\n\nallowed-tools: Read Write",
+        )
+        .unwrap();
+
+        std::fs::write(
+            temp.path().join("AGENTS.md"),
+            "# Project\n\nYou can use Read for file access.",
+        )
+        .unwrap();
+
+        let config = LintConfig::default();
+        let result = validate_project(temp.path(), &config).unwrap();
+
+        let xp_005: Vec<_> = result
+            .diagnostics
+            .iter()
+            .filter(|d| d.rule == "XP-005")
+            .collect();
+        assert!(
+            xp_005.is_empty(),
+            "Should not detect conflict when constraints are consistent"
+        );
+    }
+
+    // ===== XP-006: Layer Precedence =====
+
+    #[test]
+    fn test_xp_006_no_precedence_documentation() {
+        let temp = tempfile::TempDir::new().unwrap();
+
+        // Both files exist but neither documents precedence
+        std::fs::write(
+            temp.path().join("CLAUDE.md"),
+            "# Project\n\nThis is Claude.md.",
+        )
+        .unwrap();
+
+        std::fs::write(
+            temp.path().join("AGENTS.md"),
+            "# Project\n\nThis is Agents.md.",
+        )
+        .unwrap();
+
+        let config = LintConfig::default();
+        let result = validate_project(temp.path(), &config).unwrap();
+
+        let xp_006: Vec<_> = result
+            .diagnostics
+            .iter()
+            .filter(|d| d.rule == "XP-006")
+            .collect();
+        assert!(
+            !xp_006.is_empty(),
+            "Should detect missing precedence documentation"
+        );
+    }
+
+    #[test]
+    fn test_xp_006_with_precedence_documentation() {
+        let temp = tempfile::TempDir::new().unwrap();
+
+        // CLAUDE.md documents precedence
+        std::fs::write(
+            temp.path().join("CLAUDE.md"),
+            "# Project\n\nCLAUDE.md takes precedence over AGENTS.md.",
+        )
+        .unwrap();
+
+        std::fs::write(
+            temp.path().join("AGENTS.md"),
+            "# Project\n\nThis is Agents.md.",
+        )
+        .unwrap();
+
+        let config = LintConfig::default();
+        let result = validate_project(temp.path(), &config).unwrap();
+
+        let xp_006: Vec<_> = result
+            .diagnostics
+            .iter()
+            .filter(|d| d.rule == "XP-006")
+            .collect();
+        assert!(
+            xp_006.is_empty(),
+            "Should not trigger XP-006 when precedence is documented"
+        );
+    }
+
+    #[test]
+    fn test_xp_006_single_layer_no_issue() {
+        let temp = tempfile::TempDir::new().unwrap();
+
+        // Only CLAUDE.md exists
+        std::fs::write(
+            temp.path().join("CLAUDE.md"),
+            "# Project\n\nThis is Claude.md.",
+        )
+        .unwrap();
+
+        let config = LintConfig::default();
+        let result = validate_project(temp.path(), &config).unwrap();
+
+        let xp_006: Vec<_> = result
+            .diagnostics
+            .iter()
+            .filter(|d| d.rule == "XP-006")
+            .collect();
+        assert!(
+            xp_006.is_empty(),
+            "Should not trigger XP-006 with single instruction layer"
+        );
+    }
+
+    // ===== XP-004/005/006 Edge Case Tests (review findings) =====
+
+    #[test]
+    fn test_xp_004_three_files_conflicting_managers() {
+        let temp = tempfile::TempDir::new().unwrap();
+
+        // CLAUDE.md uses npm
+        std::fs::write(
+            temp.path().join("CLAUDE.md"),
+            "# Project\n\nUse `npm install` for dependencies.",
+        )
+        .unwrap();
+
+        // AGENTS.md uses pnpm
+        std::fs::write(
+            temp.path().join("AGENTS.md"),
+            "# Project\n\nUse `pnpm install` for dependencies.",
+        )
+        .unwrap();
+
+        // Add .cursor rules directory with yarn
+        let cursor_dir = temp.path().join(".cursor").join("rules");
+        std::fs::create_dir_all(&cursor_dir).unwrap();
+        std::fs::write(
+            cursor_dir.join("dev.mdc"),
+            "# Rules\n\nUse `yarn install` for dependencies.",
+        )
+        .unwrap();
+
+        let config = LintConfig::default();
+        let result = validate_project(temp.path(), &config).unwrap();
+
+        let xp_004: Vec<_> = result
+            .diagnostics
+            .iter()
+            .filter(|d| d.rule == "XP-004")
+            .collect();
+
+        // Should detect conflicts between all three different package managers
+        assert!(
+            xp_004.len() >= 2,
+            "Should detect multiple conflicts with 3 different package managers, got {}",
+            xp_004.len()
+        );
+    }
+
+    #[test]
+    fn test_xp_004_disabled_rule() {
+        let temp = tempfile::TempDir::new().unwrap();
+
+        // CLAUDE.md uses npm
+        std::fs::write(
+            temp.path().join("CLAUDE.md"),
+            "# Project\n\nUse `npm install` for dependencies.",
+        )
+        .unwrap();
+
+        // AGENTS.md uses pnpm
+        std::fs::write(
+            temp.path().join("AGENTS.md"),
+            "# Project\n\nUse `pnpm install` for dependencies.",
+        )
+        .unwrap();
+
+        let mut config = LintConfig::default();
+        config.rules.disabled_rules = vec!["XP-004".to_string()];
+        let result = validate_project(temp.path(), &config).unwrap();
+
+        let xp_004: Vec<_> = result
+            .diagnostics
+            .iter()
+            .filter(|d| d.rule == "XP-004")
+            .collect();
+        assert!(xp_004.is_empty(), "XP-004 should not fire when disabled");
+    }
+
+    #[test]
+    fn test_xp_005_disabled_rule() {
+        let temp = tempfile::TempDir::new().unwrap();
+
+        // CLAUDE.md allows Bash
+        std::fs::write(
+            temp.path().join("CLAUDE.md"),
+            "# Project\n\nallowed-tools: Read Write Bash",
+        )
+        .unwrap();
+
+        // AGENTS.md disallows Bash
+        std::fs::write(
+            temp.path().join("AGENTS.md"),
+            "# Project\n\nNever use Bash for operations.",
+        )
+        .unwrap();
+
+        let mut config = LintConfig::default();
+        config.rules.disabled_rules = vec!["XP-005".to_string()];
+        let result = validate_project(temp.path(), &config).unwrap();
+
+        let xp_005: Vec<_> = result
+            .diagnostics
+            .iter()
+            .filter(|d| d.rule == "XP-005")
+            .collect();
+        assert!(xp_005.is_empty(), "XP-005 should not fire when disabled");
+    }
+
+    #[test]
+    fn test_xp_006_disabled_rule() {
+        let temp = tempfile::TempDir::new().unwrap();
+
+        // Both files exist but neither documents precedence
+        std::fs::write(
+            temp.path().join("CLAUDE.md"),
+            "# Project\n\nThis is Claude.md.",
+        )
+        .unwrap();
+
+        std::fs::write(
+            temp.path().join("AGENTS.md"),
+            "# Project\n\nThis is Agents.md.",
+        )
+        .unwrap();
+
+        let mut config = LintConfig::default();
+        config.rules.disabled_rules = vec!["XP-006".to_string()];
+        let result = validate_project(temp.path(), &config).unwrap();
+
+        let xp_006: Vec<_> = result
+            .diagnostics
+            .iter()
+            .filter(|d| d.rule == "XP-006")
+            .collect();
+        assert!(xp_006.is_empty(), "XP-006 should not fire when disabled");
+    }
+
+    #[test]
+    fn test_xp_empty_instruction_files() {
+        let temp = tempfile::TempDir::new().unwrap();
+
+        // Create empty CLAUDE.md and AGENTS.md
+        std::fs::write(temp.path().join("CLAUDE.md"), "").unwrap();
+        std::fs::write(temp.path().join("AGENTS.md"), "").unwrap();
+
+        let config = LintConfig::default();
+        let result = validate_project(temp.path(), &config).unwrap();
+
+        // XP-004 should not fire for empty files (no commands)
+        let xp_004: Vec<_> = result
+            .diagnostics
+            .iter()
+            .filter(|d| d.rule == "XP-004")
+            .collect();
+        assert!(xp_004.is_empty(), "Empty files should not trigger XP-004");
+
+        // XP-005 should not fire for empty files (no constraints)
+        let xp_005: Vec<_> = result
+            .diagnostics
+            .iter()
+            .filter(|d| d.rule == "XP-005")
+            .collect();
+        assert!(xp_005.is_empty(), "Empty files should not trigger XP-005");
+    }
+
+    #[test]
+    fn test_xp_005_case_insensitive_tool_matching() {
+        let temp = tempfile::TempDir::new().unwrap();
+
+        // CLAUDE.md allows BASH (uppercase)
+        std::fs::write(
+            temp.path().join("CLAUDE.md"),
+            "# Project\n\nallowed-tools: Read Write BASH",
+        )
+        .unwrap();
+
+        // AGENTS.md disallows bash (lowercase)
+        std::fs::write(
+            temp.path().join("AGENTS.md"),
+            "# Project\n\nNever use bash for operations.",
+        )
+        .unwrap();
+
+        let config = LintConfig::default();
+        let result = validate_project(temp.path(), &config).unwrap();
+
+        let xp_005: Vec<_> = result
+            .diagnostics
+            .iter()
+            .filter(|d| d.rule == "XP-005")
+            .collect();
+        assert!(
+            !xp_005.is_empty(),
+            "Should detect conflict between BASH and bash (case-insensitive)"
+        );
+    }
+
+    #[test]
+    fn test_xp_005_word_boundary_no_false_positive() {
+        let temp = tempfile::TempDir::new().unwrap();
+
+        // CLAUDE.md allows Bash
+        std::fs::write(
+            temp.path().join("CLAUDE.md"),
+            "# Project\n\nallowed-tools: Read Write Bash",
+        )
+        .unwrap();
+
+        // AGENTS.md mentions "subash" (not "Bash")
+        std::fs::write(
+            temp.path().join("AGENTS.md"),
+            "# Project\n\nNever use subash command.",
+        )
+        .unwrap();
+
+        let config = LintConfig::default();
+        let result = validate_project(temp.path(), &config).unwrap();
+
+        let xp_005: Vec<_> = result
+            .diagnostics
+            .iter()
+            .filter(|d| d.rule == "XP-005")
+            .collect();
+        assert!(
+            xp_005.is_empty(),
+            "Should NOT detect conflict - 'subash' is not 'Bash'"
+        );
     }
 
     // ===== AGM Validation Integration Tests =====

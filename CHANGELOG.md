@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Cross-layer contradiction detection with 3 new validation rules (XP-004 to XP-006)
+  - XP-004: Conflicting build/test commands detection (npm vs pnpm vs yarn vs bun)
+  - XP-005: Conflicting tool constraints detection (allow vs disallow across files)
+  - XP-006: Multiple instruction layers without documented precedence warning
+  - Detects contradictions across CLAUDE.md, AGENTS.md, .cursor/rules, and Copilot files
+  - HashMap-based O(n*m) algorithms for efficient conflict detection
+  - Word boundary matching to prevent false positives
+  - Backup file exclusion (.bak, .old, .tmp, .swp, ~)
 - Evidence metadata schema for all 96 validation rules
   - Added `evidence` field to each rule in `knowledge-base/rules.json` with:
     - `source_type`: Classification (spec, vendor_docs, vendor_code, paper, community)

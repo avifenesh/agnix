@@ -834,6 +834,27 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 **Fix**: Use `$CLAUDE_PROJECT_DIR` or equivalent
 **Source**: multi-platform best practices
 
+<a id="xp-004"></a>
+### XP-004 [MEDIUM] Conflicting Build/Test Commands
+**Requirement**: Instruction files SHOULD use consistent package managers
+**Detection**: Extract build commands (npm/pnpm/yarn/bun) from multiple instruction files, detect conflicts when different managers are used for the same command type
+**Fix**: Standardize on a single package manager across all instruction files
+**Source**: cross-layer consistency best practices
+
+<a id="xp-005"></a>
+### XP-005 [HIGH] Conflicting Tool Constraints
+**Requirement**: Tool constraints MUST NOT conflict across instruction layers
+**Detection**: Extract tool allow/disallow patterns from multiple instruction files, detect when one file allows a tool and another disallows it
+**Fix**: Resolve the conflict by consistently allowing or disallowing the tool
+**Source**: cross-layer consistency requirements
+
+<a id="xp-006"></a>
+### XP-006 [MEDIUM] Multiple Layers Without Documented Precedence
+**Requirement**: When multiple instruction layers exist, precedence SHOULD be documented
+**Detection**: Detect multiple instruction files (CLAUDE.md, AGENTS.md, .cursor/rules/, etc.) without documented precedence
+**Fix**: Document which file takes precedence (e.g., "CLAUDE.md takes precedence over AGENTS.md")
+**Source**: multi-platform clarity requirements
+
 ---
 
 ## PRIORITY MATRIX
@@ -858,7 +879,7 @@ Add these 15 rules:
 Complete coverage:
 - MCP-001 through MCP-006 (MCP protocol)
 - PE-001 through PE-004 (Prompt engineering)
-- XP-001 through XP-003 (Cross-platform)
+- XP-001 through XP-006 (Cross-platform)
 - Remaining MEDIUM/LOW certainty rules
 
 ---
@@ -936,8 +957,8 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | XML | 3 | 3 | 0 | 0 | 1 |
 | References | 2 | 2 | 0 | 0 | 0 |
 | Prompt Eng | 4 | 0 | 4 | 0 | 1 |
-| Cross-Platform | 3 | 2 | 1 | 0 | 0 |
-| **TOTAL** | **96** | **70** | **26** | **0** | **22** |
+| Cross-Platform | 6 | 3 | 3 | 0 | 0 |
+| **TOTAL** | **99** | **71** | **28** | **0** | **22** |
 
 ---
 
@@ -966,7 +987,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 
 ---
 
-**Total Coverage**: 96 validation rules across 14 categories
+**Total Coverage**: 99 validation rules across 14 categories
 **Knowledge Base**: 11,036 lines, 320KB, 75+ sources
-**Certainty**: 70 HIGH, 26 MEDIUM, 0 LOW
-**Auto-Fixable**: 22 rules (23%)
+**Certainty**: 71 HIGH, 28 MEDIUM, 0 LOW
+**Auto-Fixable**: 22 rules (22%)

@@ -5,7 +5,7 @@
 ## Start Here
 
 - [INDEX.md](./INDEX.md) - Master navigation and summaries
-- [VALIDATION-RULES.md](./VALIDATION-RULES.md) - 90 rules with detection logic
+- [VALIDATION-RULES.md](./VALIDATION-RULES.md) - 99 rules with detection logic
 - [PATTERNS-CATALOG.md](./PATTERNS-CATALOG.md) - 70 patterns from awesome-slash
 - [standards/](./standards/) - HARD-RULES and OPINIONS by topic
 - [agent-docs/](./agent-docs/) - Platform references and research
