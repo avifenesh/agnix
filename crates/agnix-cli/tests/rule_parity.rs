@@ -681,3 +681,60 @@ fn test_applies_to_tool_values() {
         }
     }
 }
+
+// ============================================================================
+// Tool Mapping Consistency Tests (Review-requested coverage)
+// ============================================================================
+
+#[test]
+fn test_tool_rule_prefixes_consistency() {
+    // Every tool in TOOL_RULE_PREFIXES must also exist in VALID_TOOLS
+    // This ensures no orphaned tools or prefixes exist
+    let valid_tools = agnix_rules::valid_tools();
+
+    for (prefix, tool) in agnix_rules::TOOL_RULE_PREFIXES {
+        assert!(
+            valid_tools.contains(tool),
+            "Tool '{}' from prefix '{}' is not in VALID_TOOLS. \
+             TOOL_RULE_PREFIXES and VALID_TOOLS must be consistent.",
+            tool,
+            prefix
+        );
+    }
+}
+
+#[test]
+fn test_is_tool_alias_case_sensitivity() {
+    // Test that tool alias matching is case insensitive
+    // "Copilot" (mixed case) and "COPILOT" (uppercase) should both
+    // be recognized as valid tools via the alias mechanism
+
+    // The is_tool_alias function is private, but we can test through
+    // LintConfig::is_rule_enabled which uses it internally
+
+    use agnix_core::LintConfig;
+
+    // Test with mixed case "Copilot"
+    let mut config = LintConfig::default();
+    config.tools = vec!["Copilot".to_string()];
+    assert!(
+        config.is_rule_enabled("COP-001"),
+        "Mixed case 'Copilot' should match 'github-copilot' and enable COP-* rules"
+    );
+
+    // Test with uppercase "COPILOT"
+    let mut config_upper = LintConfig::default();
+    config_upper.tools = vec!["COPILOT".to_string()];
+    assert!(
+        config_upper.is_rule_enabled("COP-001"),
+        "Uppercase 'COPILOT' should match 'github-copilot' and enable COP-* rules"
+    );
+
+    // Test with lowercase "copilot" (baseline)
+    let mut config_lower = LintConfig::default();
+    config_lower.tools = vec!["copilot".to_string()];
+    assert!(
+        config_lower.is_rule_enabled("COP-001"),
+        "Lowercase 'copilot' should match 'github-copilot' and enable COP-* rules"
+    );
+}

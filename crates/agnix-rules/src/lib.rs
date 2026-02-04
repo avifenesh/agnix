@@ -279,6 +279,30 @@ mod tests {
         assert_eq!(get_tool_for_prefix("UNKNOWN-"), None);
     }
 
+    // ===== Mixed-Tool Prefix Scenario Tests (Review-requested coverage) =====
+
+    #[test]
+    fn test_mixed_tool_prefix_as() {
+        // AS-* prefix is all generic (no tool specified for any AS-* rule)
+        // so it returns None - no consistent tool
+        assert_eq!(get_tool_for_prefix("AS-"), None);
+    }
+
+    #[test]
+    fn test_mixed_tool_prefix_cc_mem() {
+        // CC-MEM-* prefix has mixed tools: some rules have "claude-code",
+        // some have null/no tool. Since they're not all the same tool,
+        // the prefix returns None.
+        assert_eq!(get_tool_for_prefix("CC-MEM-"), None);
+    }
+
+    #[test]
+    fn test_consistent_tool_prefix_cc_hk() {
+        // CC-HK-* prefix is consistent: all rules have "claude-code"
+        // so it returns Some("claude-code")
+        assert_eq!(get_tool_for_prefix("CC-HK-"), Some("claude-code"));
+    }
+
     #[test]
     fn test_get_prefixes_for_tool_claude_code() {
         let prefixes = get_prefixes_for_tool("claude-code");
