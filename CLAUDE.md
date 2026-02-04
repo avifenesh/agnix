@@ -52,7 +52,7 @@ Human-readable docs: `knowledge-base/VALIDATION-RULES.md`
 
 Format: `[CATEGORY]-[NUMBER]` (AS-004, CC-HK-001, etc.)
 
-**Adding a new rule**: Add to BOTH `rules.json` AND `VALIDATION-RULES.md`. CI parity tests will fail if they drift.
+**Adding a new rule**: Add to BOTH `rules.json` AND `VALIDATION-RULES.md`. CI parity tests will fail if they drift. Each rule in `rules.json` must include complete `evidence` metadata (source_type, source_urls, verified_on, applies_to, normative_level, tests). See VALIDATION-RULES.md for the evidence schema reference.
 
 ## Current State
 

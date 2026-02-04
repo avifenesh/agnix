@@ -8,6 +8,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Evidence metadata schema for all 96 validation rules
+  - Added `evidence` field to each rule in `knowledge-base/rules.json` with:
+    - `source_type`: Classification (spec, vendor_docs, vendor_code, paper, community)
+    - `source_urls`: Links to authoritative documentation or specifications
+    - `verified_on`: ISO 8601 date of last verification
+    - `applies_to`: Tool/version/spec applicability constraints
+    - `normative_level`: RFC 2119 level (MUST, SHOULD, BEST_PRACTICE)
+    - `tests`: Coverage tracking (unit, fixtures, e2e)
+  - Build-time SARIF rule generation from rules.json (replaces hardcoded registry)
+  - CI validation tests for evidence metadata completeness and validity
+  - Documentation in VALIDATION-RULES.md with schema reference and examples
 - Cursor Project Rules support with 6 new validation rules (CUR-001 to CUR-006)
   - CUR-001: Empty .mdc rule file detection
   - CUR-002: Missing frontmatter warning
