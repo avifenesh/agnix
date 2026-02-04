@@ -102,9 +102,7 @@ pub fn get_prefixes_for_tool(tool: &str) -> Vec<&'static str> {
 ///
 /// This performs case-insensitive matching.
 pub fn is_valid_tool(tool: &str) -> bool {
-    VALID_TOOLS
-        .iter()
-        .any(|t| t.eq_ignore_ascii_case(tool))
+    VALID_TOOLS.iter().any(|t| t.eq_ignore_ascii_case(tool))
 }
 
 /// Normalize a tool name to its canonical form from rules.json.
@@ -400,10 +398,7 @@ mod tests {
     fn test_get_prefixes_for_tool_unknown_tool() {
         // Unknown tool should return empty Vec
         let prefixes = get_prefixes_for_tool("nonexistent-tool");
-        assert!(
-            prefixes.is_empty(),
-            "Unknown tool should return empty Vec"
-        );
+        assert!(prefixes.is_empty(), "Unknown tool should return empty Vec");
     }
 
     #[test]

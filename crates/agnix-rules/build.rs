@@ -183,9 +183,11 @@ fn main() {
     }
 
     // Generate VALID_TOOLS constant
-    generated_code.push_str("/// Valid tool names derived from rules.json evidence.applies_to.tool.\n");
+    generated_code
+        .push_str("/// Valid tool names derived from rules.json evidence.applies_to.tool.\n");
     generated_code.push_str("/// \n");
-    generated_code.push_str("/// These are the tools that have at least one rule specifically for them.\n");
+    generated_code
+        .push_str("/// These are the tools that have at least one rule specifically for them.\n");
     generated_code.push_str("pub const VALID_TOOLS: &[&str] = &[\n");
     for tool in &tools {
         generated_code.push_str(&format!("    \"{}\",\n", escape_str(tool)));
@@ -234,9 +236,13 @@ fn main() {
     // 2. Have NO generic rules (all rules specify that tool)
     generated_code.push_str("/// Mapping of rule ID prefixes to their associated tools.\n");
     generated_code.push_str("/// \n");
-    generated_code.push_str("/// Derived from rules.json: for each prefix, this is the tool that all rules\n");
-    generated_code.push_str("/// with that prefix apply to. Only includes prefixes where ALL rules\n");
-    generated_code.push_str("/// consistently specify the same tool (excludes generic prefixes).\n");
+    generated_code.push_str(
+        "/// Derived from rules.json: for each prefix, this is the tool that all rules\n",
+    );
+    generated_code
+        .push_str("/// with that prefix apply to. Only includes prefixes where ALL rules\n");
+    generated_code
+        .push_str("/// consistently specify the same tool (excludes generic prefixes).\n");
     generated_code.push_str("pub const TOOL_RULE_PREFIXES: &[(&str, &str)] = &[\n");
 
     for (prefix, info) in &prefix_info {

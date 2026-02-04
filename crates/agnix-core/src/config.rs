@@ -339,9 +339,10 @@ impl LintConfig {
             if rule_id.starts_with(prefix) {
                 // Check if the required tool is in the tools list (case-insensitive)
                 // Also accept backward-compat aliases (e.g., "copilot" for "github-copilot")
-                return self.tools.iter().any(|t| {
-                    t.eq_ignore_ascii_case(tool) || Self::is_tool_alias(t, tool)
-                });
+                return self
+                    .tools
+                    .iter()
+                    .any(|t| t.eq_ignore_ascii_case(tool) || Self::is_tool_alias(t, tool));
             }
         }
 
@@ -1684,8 +1685,14 @@ exclude = []
         // Canonical name "github-copilot" is NOT treated as an alias of itself.
         // This is by design - canonical names match via direct comparison in
         // is_rule_for_tools(), not through the alias mechanism.
-        assert!(!LintConfig::is_tool_alias("github-copilot", "github-copilot"));
-        assert!(!LintConfig::is_tool_alias("GitHub-Copilot", "github-copilot"));
+        assert!(!LintConfig::is_tool_alias(
+            "github-copilot",
+            "github-copilot"
+        ));
+        assert!(!LintConfig::is_tool_alias(
+            "GitHub-Copilot",
+            "github-copilot"
+        ));
     }
 
     #[test]
