@@ -35,11 +35,14 @@ pub fn find_generic_instructions(content: &str) -> Vec<GenericInstruction> {
     let mut byte_offset: usize = 0;
     let content_len = content.len();
 
+    // Detect line ending type: CRLF (2 bytes) or LF (1 byte)
+    let line_ending_len = if content.contains("\r\n") { 2 } else { 1 };
+
     for (line_num, line) in content.lines().enumerate() {
         let line_start = byte_offset;
-        // Calculate the end of line: line length + 1 for newline (if not at end of file)
+        // Calculate the end of line: line length + line ending bytes (if not at end of file)
         let line_end = if byte_offset + line.len() < content_len {
-            byte_offset + line.len() + 1 // Include newline
+            byte_offset + line.len() + line_ending_len // Include line ending
         } else {
             byte_offset + line.len() // Last line may not have trailing newline
         };
@@ -199,6 +202,9 @@ pub fn find_weak_constraints(content: &str) -> Vec<WeakConstraint> {
     let mut byte_offset: usize = 0;
     let content_len = content.len();
 
+    // Detect line ending type: CRLF (2 bytes) or LF (1 byte)
+    let line_ending_len = if content.contains("\r\n") { 2 } else { 1 };
+
     let mut current_section: Option<String> = None;
 
     for (line_num, line) in content.lines().enumerate() {
@@ -228,9 +234,9 @@ pub fn find_weak_constraints(content: &str) -> Vec<WeakConstraint> {
             }
         }
 
-        // Move to next line: line length + 1 for newline (if not at end of file)
+        // Move to next line: line length + line ending bytes (if not at end of file)
         byte_offset = if byte_offset + line.len() < content_len {
-            byte_offset + line.len() + 1
+            byte_offset + line.len() + line_ending_len
         } else {
             byte_offset + line.len()
         };
@@ -692,5 +698,96 @@ mod tests {
         modified.replace_range(results[1].start_byte..results[1].end_byte, "must");
         modified.replace_range(results[0].start_byte..results[0].end_byte, "must");
         assert_eq!(modified, "# Critical Rules\n\nYou must do this.\nYou must do that.");
+    }
+
+    // ===== CRLF line ending tests =====
+
+    #[test]
+    fn test_generic_instruction_byte_offsets_crlf() {
+        // CRLF line endings (Windows style)
+        let content = "Line one.\r\nBe helpful and accurate.\r\nLine three.";
+        let results = find_generic_instructions(content);
+        assert!(!results.is_empty());
+
+        let inst = &results[0];
+        // "Be helpful and accurate." is on line 2, starting at byte 11 (after "Line one.\r\n")
+        assert_eq!(inst.start_byte, 11);
+        // Ends at byte 37 (including CRLF)
+        assert_eq!(inst.end_byte, 37);
+    }
+
+    #[test]
+    fn test_generic_instruction_delete_produces_expected_crlf() {
+        let content = "Line one.\r\nBe helpful and accurate.\r\nLine three.";
+        let results = find_generic_instructions(content);
+        assert!(!results.is_empty());
+
+        let inst = &results[0];
+        let mut modified = content.to_string();
+        modified.replace_range(inst.start_byte..inst.end_byte, "");
+        assert_eq!(modified, "Line one.\r\nLine three.");
+    }
+
+    #[test]
+    fn test_generic_instruction_byte_offsets_crlf_last_line() {
+        // CRLF with match on last line (no trailing newline)
+        let content = "Line one.\r\nBe helpful and accurate.";
+        let results = find_generic_instructions(content);
+        assert!(!results.is_empty());
+
+        let inst = &results[0];
+        assert_eq!(inst.start_byte, 11);
+        // Last line, no trailing CRLF
+        assert_eq!(inst.end_byte, 35);
+    }
+
+    #[test]
+    fn test_weak_constraint_byte_offsets_crlf() {
+        let content = "# Critical Rules\r\n\r\nYou should follow the coding style.";
+        let results = find_weak_constraints(content);
+        assert_eq!(results.len(), 1);
+
+        let wc = &results[0];
+        assert_eq!(wc.text.to_lowercase(), "should");
+        // "should" starts at byte 24 (after "# Critical Rules\r\n\r\nYou ")
+        assert_eq!(wc.start_byte, 24);
+        // "should" ends at byte 30
+        assert_eq!(wc.end_byte, 30);
+    }
+
+    #[test]
+    fn test_weak_constraint_replace_produces_expected_crlf() {
+        let content = "# Critical Rules\r\n\r\nYou should follow the coding style.";
+        let results = find_weak_constraints(content);
+        assert_eq!(results.len(), 1);
+
+        let wc = &results[0];
+        let mut modified = content.to_string();
+        modified.replace_range(wc.start_byte..wc.end_byte, "must");
+        assert_eq!(
+            modified,
+            "# Critical Rules\r\n\r\nYou must follow the coding style."
+        );
+    }
+
+    #[test]
+    fn test_weak_constraint_multiline_crlf() {
+        let content = "# Critical Rules\r\n\r\nYou should do this.\r\nYou could do that.";
+        let results = find_weak_constraints(content);
+
+        // Two weak constraints on two lines
+        assert_eq!(results.len(), 2);
+        assert_eq!(results[0].text.to_lowercase(), "should");
+        assert_eq!(results[1].text.to_lowercase(), "could");
+
+        // Verify byte offsets are correct for both
+        let mut modified = content.to_string();
+        // Apply fixes from end to start to avoid offset issues
+        modified.replace_range(results[1].start_byte..results[1].end_byte, "must");
+        modified.replace_range(results[0].start_byte..results[0].end_byte, "must");
+        assert_eq!(
+            modified,
+            "# Critical Rules\r\n\r\nYou must do this.\r\nYou must do that."
+        );
     }
 }
