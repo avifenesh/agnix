@@ -999,8 +999,8 @@ mod tests {
     }
 
     #[test]
-    fn test_streaming_validation_agents_md_collection() {
-        // Verify that streaming validation correctly collects AGENTS.md paths for AGM-006
+    fn test_validate_project_agents_md_collection() {
+        // Verify that validation correctly collects AGENTS.md paths for AGM-006
         let temp = tempfile::TempDir::new().unwrap();
 
         // Create multiple AGENTS.md files in different directories
@@ -1029,8 +1029,8 @@ mod tests {
     }
 
     #[test]
-    fn test_streaming_files_checked_count() {
-        // Verify that streaming validation correctly counts recognized file types
+    fn test_validate_project_files_checked_count() {
+        // Verify that validation correctly counts recognized file types
         let temp = tempfile::TempDir::new().unwrap();
 
         // Create recognized file types
