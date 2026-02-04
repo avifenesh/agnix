@@ -47,13 +47,13 @@ export async function activate(
   );
 
   context.subscriptions.push(
-    vscode.workspace.onDidChangeConfiguration((e) => {
+    vscode.workspace.onDidChangeConfiguration(async (e) => {
       if (e.affectsConfiguration('agnix')) {
         const config = vscode.workspace.getConfiguration('agnix');
         if (!config.get<boolean>('enable', true)) {
-          stopClient();
+          await stopClient();
         } else {
-          restartClient();
+          await restartClient();
         }
       }
     })

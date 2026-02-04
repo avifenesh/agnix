@@ -49,7 +49,7 @@
           }
         },
         {
-          "match": "^\\s*(sonnet|opus|haiku|inherit)\\s*$",
+          "match": ":\\s*(sonnet|opus|haiku|inherit)\\s*$",
           "captures": {
             "1": {
               "name": "constant.language.skill.model"

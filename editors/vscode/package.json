@@ -28,10 +28,16 @@
   "activationEvents": [
     "workspaceContains:**/SKILL.md",
     "workspaceContains:**/CLAUDE.md",
+    "workspaceContains:**/CLAUDE.local.md",
     "workspaceContains:**/AGENTS.md",
+    "workspaceContains:**/AGENTS.local.md",
     "workspaceContains:**/.claude/settings.json",
+    "workspaceContains:**/.claude/settings.local.json",
+    "workspaceContains:**/plugin.json",
     "workspaceContains:**/*.mcp.json",
-    "workspaceContains:**/.github/copilot-instructions.md"
+    "workspaceContains:**/.github/copilot-instructions.md",
+    "workspaceContains:**/.github/instructions/*.instructions.md",
+    "workspaceContains:**/.cursor/rules/*.mdc"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -41,7 +47,8 @@
         "agnix.lspPath": {
           "type": "string",
           "default": "agnix-lsp",
-          "description": "Path to agnix-lsp executable"
+          "description": "Path to agnix-lsp executable",
+          "scope": "machine"
         },
         "agnix.enable": {
           "type": "boolean",
