@@ -23,6 +23,72 @@
 
 ---
 
+## Evidence Metadata Schema
+
+Each rule in `knowledge-base/rules.json` includes an `evidence` object that documents the authoritative source, applicability, and test coverage. This metadata enables:
+
+- **Traceability**: Link rules to their source specifications or research
+- **Filtering**: Apply rules only to relevant tools/versions
+- **Quality assurance**: Track test coverage for each rule
+
+### Evidence Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `source_type` | enum | Classification: `spec`, `vendor_docs`, `vendor_code`, `paper`, `community` |
+| `source_urls` | string[] | URLs to authoritative documentation or specifications |
+| `verified_on` | string | ISO 8601 date when the source was last verified (YYYY-MM-DD) |
+| `applies_to` | object | Tool/version/spec constraints for when the rule applies |
+| `normative_level` | enum | RFC 2119 level: `MUST`, `SHOULD`, `BEST_PRACTICE` |
+| `tests` | object | Test coverage: `{ unit: bool, fixtures: bool, e2e: bool }` |
+
+### Source Types
+
+| Type | Description | Examples |
+|------|-------------|----------|
+| `spec` | Official specification | agentskills.io/specification, modelcontextprotocol.io/specification |
+| `vendor_docs` | Vendor documentation | code.claude.com/docs, docs.github.com/copilot, docs.cursor.com |
+| `vendor_code` | Vendor source code | Reference implementations |
+| `paper` | Academic research | Liu et al. (2023) TACL, Wei et al. (2022) |
+| `community` | Community research | awesome-slash, multi-platform patterns |
+
+### Applicability Constraints
+
+The `applies_to` object specifies when a rule is relevant:
+
+```json
+{
+  "applies_to": {
+    "tool": "claude-code",       // Optional: specific tool
+    "version_range": ">=1.0.0", // Optional: semver range
+    "spec_revision": "2025-06-18" // Optional: spec version
+  }
+}
+```
+
+Rules with an empty `applies_to` object (`{}`) apply universally.
+
+### Example Evidence Block
+
+```json
+{
+  "id": "MCP-001",
+  "name": "Invalid JSON-RPC Version",
+  "severity": "HIGH",
+  "category": "mcp",
+  "evidence": {
+    "source_type": "spec",
+    "source_urls": ["https://modelcontextprotocol.io/specification"],
+    "verified_on": "2026-02-04",
+    "applies_to": { "spec_revision": "2025-06-18" },
+    "normative_level": "MUST",
+    "tests": { "unit": true, "fixtures": true, "e2e": false }
+  }
+}
+```
+
+---
+
 ## AGENT SKILLS RULES
 
 <a id="as-001"></a>
