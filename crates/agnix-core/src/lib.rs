@@ -12,7 +12,7 @@
 
 pub mod config;
 pub mod diagnostics;
-pub mod file_utils;
+mod file_utils;
 pub mod fixes;
 mod parsers;
 mod rules;
