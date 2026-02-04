@@ -1,15 +1,86 @@
 //! Rule parity integration tests.
 //!
-//! Ensures all 84 rules from knowledge-base/rules.json are:
+//! Ensures all 96 rules from knowledge-base/rules.json are:
 //! 1. Registered in SARIF output (sarif.rs)
 //! 2. Implemented in agnix-core/src/rules/*.rs
 //! 3. Covered by test fixtures in tests/fixtures/
+//! 4. Have valid evidence metadata
 
 use regex::Regex;
 use serde::Deserialize;
 use std::collections::{BTreeSet, HashMap};
 use std::fs;
 use std::path::{Path, PathBuf};
+
+/// Evidence source type classification
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum SourceType {
+    /// Official specification (e.g., agentskills.io/specification, modelcontextprotocol.io/specification)
+    Spec,
+    /// Vendor documentation (e.g., code.claude.com/docs, docs.github.com)
+    VendorDocs,
+    /// Vendor source code
+    VendorCode,
+    /// Academic paper or research
+    Paper,
+    /// Community best practices and multi-platform research
+    Community,
+}
+
+/// Normative level for rules (RFC 2119 style)
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum NormativeLevel {
+    /// Absolute requirement
+    Must,
+    /// Recommended but not mandatory
+    Should,
+    /// Optional best practice
+    BestPractice,
+}
+
+/// Applicability constraints for a rule
+#[derive(Debug, Clone, Default, Deserialize)]
+pub struct AppliesTo {
+    /// Tool this rule applies to (e.g., "claude-code", "cursor", "github-copilot")
+    #[serde(default)]
+    pub tool: Option<String>,
+    /// Semver version range (e.g., ">=1.0.0")
+    #[serde(default)]
+    pub version_range: Option<String>,
+    /// Specification revision (e.g., "1.0", "2025-06-18")
+    #[serde(default)]
+    pub spec_revision: Option<String>,
+}
+
+/// Test coverage tracking for a rule
+#[derive(Debug, Clone, Deserialize)]
+pub struct TestCoverage {
+    /// Has unit tests
+    pub unit: bool,
+    /// Has fixture tests
+    pub fixtures: bool,
+    /// Has end-to-end tests
+    pub e2e: bool,
+}
+
+/// Evidence metadata for a rule
+#[derive(Debug, Clone, Deserialize)]
+pub struct Evidence {
+    /// Classification of the evidence source
+    pub source_type: SourceType,
+    /// URLs to authoritative sources
+    pub source_urls: Vec<String>,
+    /// Date when the evidence was last verified (ISO 8601)
+    pub verified_on: String,
+    /// Applicability constraints
+    pub applies_to: AppliesTo,
+    /// RFC 2119-style normative level
+    pub normative_level: NormativeLevel,
+    /// Test coverage information
+    pub tests: TestCoverage,
+}
 
 /// Rule definition from rules.json
 #[derive(Debug, Deserialize)]
@@ -23,9 +94,10 @@ struct RuleEntry {
     id: String,
     #[allow(dead_code)]
     name: String,
-    #[allow(dead_code)]
     severity: String,
     category: String,
+    /// Evidence metadata (required for all rules)
+    evidence: Evidence,
 }
 
 fn workspace_root() -> &'static Path {
@@ -469,4 +541,185 @@ fn test_sarif_rule_count() {
         "SARIF should have 96 rules, found {}. Missing or extra rules detected.",
         sarif_rules.len()
     );
+}
+
+// ============================================================================
+// Evidence Metadata Validation Tests
+// ============================================================================
+
+#[test]
+fn test_all_rules_have_evidence_metadata() {
+    let rules_index = load_rules_json();
+
+    for rule in &rules_index.rules {
+        // Check source_urls is not empty
+        assert!(
+            !rule.evidence.source_urls.is_empty(),
+            "Rule {} has no source URLs in evidence metadata",
+            rule.id
+        );
+
+        // Check verified_on is a valid date format (YYYY-MM-DD)
+        let date_re = Regex::new(r"^\d{4}-\d{2}-\d{2}$").unwrap();
+        assert!(
+            date_re.is_match(&rule.evidence.verified_on),
+            "Rule {} has invalid verified_on date format: '{}'. Expected YYYY-MM-DD",
+            rule.id,
+            rule.evidence.verified_on
+        );
+    }
+}
+
+#[test]
+fn test_evidence_source_urls_valid() {
+    let rules_index = load_rules_json();
+
+    // Basic URL validation pattern
+    let url_re = Regex::new(r"^https?://[^\s]+$").unwrap();
+
+    for rule in &rules_index.rules {
+        for url in &rule.evidence.source_urls {
+            assert!(
+                url_re.is_match(url),
+                "Rule {} has invalid source URL: '{}'",
+                rule.id,
+                url
+            );
+
+            // Check URL doesn't have trailing whitespace
+            assert!(
+                url.trim() == url,
+                "Rule {} source URL has whitespace: '{}'",
+                rule.id,
+                url
+            );
+        }
+    }
+}
+
+#[test]
+fn test_normative_level_consistency() {
+    let rules_index = load_rules_json();
+
+    let mut inconsistencies = Vec::new();
+
+    for rule in &rules_index.rules {
+        // HIGH severity rules should typically have MUST normative level
+        // This is a soft check - we just report inconsistencies
+        let is_high_severity = rule.severity == "HIGH";
+        let is_must_level = rule.evidence.normative_level == NormativeLevel::Must;
+
+        // HIGH + SHOULD/BEST_PRACTICE is suspicious but allowed for some cases
+        // (e.g., rules from research papers that are recommendations)
+        if is_high_severity && !is_must_level {
+            // Only flag if source is spec or vendor_docs (not paper/community)
+            if rule.evidence.source_type == SourceType::Spec
+                || rule.evidence.source_type == SourceType::VendorDocs
+            {
+                inconsistencies.push(format!(
+                    "{}: HIGH severity but {:?} normative level (source: {:?})",
+                    rule.id, rule.evidence.normative_level, rule.evidence.source_type
+                ));
+            }
+        }
+    }
+
+    // This is informational - we don't fail on inconsistencies
+    // Just report them for review
+    if !inconsistencies.is_empty() {
+        eprintln!(
+            "\nNote: {} rules have HIGH severity but non-MUST normative level:",
+            inconsistencies.len()
+        );
+        for msg in &inconsistencies {
+            eprintln!("  - {}", msg);
+        }
+    }
+}
+
+#[test]
+fn test_evidence_source_type_distribution() {
+    let rules_index = load_rules_json();
+
+    let mut by_source: HashMap<String, usize> = HashMap::new();
+
+    for rule in &rules_index.rules {
+        let key = format!("{:?}", rule.evidence.source_type);
+        *by_source.entry(key).or_insert(0) += 1;
+    }
+
+    // Just report distribution - this is informational
+    eprintln!("\nEvidence source type distribution:");
+    let mut sorted: Vec<_> = by_source.iter().collect();
+    sorted.sort_by(|a, b| b.1.cmp(a.1));
+    for (source_type, count) in sorted {
+        eprintln!("  {}: {}", source_type, count);
+    }
+
+    // Ensure we have at least some diversity in sources
+    assert!(
+        by_source.len() >= 3,
+        "Expected at least 3 different source types, found {}",
+        by_source.len()
+    );
+}
+
+#[test]
+fn test_evidence_test_coverage_accuracy() {
+    let rules_index = load_rules_json();
+    let explicit_coverage = scan_fixtures_for_coverage();
+    let inferred_coverage = infer_fixture_coverage(&rules_index.rules);
+
+    // Combine coverage
+    let mut all_coverage: HashMap<String, Vec<String>> = explicit_coverage;
+    for (rule, fixtures) in inferred_coverage {
+        all_coverage.entry(rule).or_default().extend(fixtures);
+    }
+
+    let mut mismatches = Vec::new();
+
+    for rule in &rules_index.rules {
+        let has_fixtures = all_coverage.contains_key(&rule.id);
+        let claims_fixtures = rule.evidence.tests.fixtures;
+
+        // If evidence claims fixtures but we can't find them, that's a problem
+        if claims_fixtures && !has_fixtures {
+            mismatches.push(format!(
+                "{}: claims fixtures=true but none found",
+                rule.id
+            ));
+        }
+    }
+
+    // This should be empty - evidence should be accurate
+    assert!(
+        mismatches.is_empty(),
+        "Evidence test coverage mismatches:\n{}",
+        mismatches.join("\n")
+    );
+}
+
+#[test]
+fn test_applies_to_tool_values() {
+    let rules_index = load_rules_json();
+
+    let valid_tools = [
+        "claude-code",
+        "cursor",
+        "github-copilot",
+        "windsurf",
+        // Add more as needed
+    ];
+
+    for rule in &rules_index.rules {
+        if let Some(ref tool) = rule.evidence.applies_to.tool {
+            assert!(
+                valid_tools.contains(&tool.as_str()),
+                "Rule {} has unknown tool '{}'. Valid tools: {:?}",
+                rule.id,
+                tool,
+                valid_tools
+            );
+        }
+    }
 }
