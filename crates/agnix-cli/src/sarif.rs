@@ -135,6 +135,7 @@ static RULES: LazyLock<Vec<ReportingDescriptor>> = LazyLock::new(|| {
         ("AS-013", "File reference too deep (must be one level)"),
         ("AS-014", "Windows path separator (use forward slashes)"),
         ("AS-015", "Upload size exceeds 8MB"),
+        ("AS-016", "Failed to parse SKILL.md frontmatter"),
         // Claude Code Skills Rules (CC-SK-001 to CC-SK-009)
         (
             "CC-SK-001",
@@ -175,7 +176,8 @@ static RULES: LazyLock<Vec<ReportingDescriptor>> = LazyLock::new(|| {
             "CC-HK-011",
             "Invalid timeout value (must be positive integer)",
         ),
-        // Claude Code Agents Rules (CC-AG-001 to CC-AG-006)
+        ("CC-HK-012", "Failed to parse hooks configuration"),
+        // Claude Code Agents Rules (CC-AG-001 to CC-AG-007)
         ("CC-AG-001", "Missing name field in agent frontmatter"),
         (
             "CC-AG-002",
@@ -185,6 +187,7 @@ static RULES: LazyLock<Vec<ReportingDescriptor>> = LazyLock::new(|| {
         ("CC-AG-004", "Invalid permission mode"),
         ("CC-AG-005", "Referenced skill not found"),
         ("CC-AG-006", "Tool in both tools and disallowedTools"),
+        ("CC-AG-007", "Failed to parse agent frontmatter"),
         // Claude Code Memory Rules (CC-MEM-001 to CC-MEM-010)
         ("CC-MEM-001", "Invalid import path"),
         ("CC-MEM-002", "Circular import detected"),
@@ -221,13 +224,15 @@ static RULES: LazyLock<Vec<ReportingDescriptor>> = LazyLock::new(|| {
         ("CC-PL-003", "Invalid semver version format"),
         ("CC-PL-004", "Missing required plugin field"),
         ("CC-PL-005", "Empty plugin name"),
-        // MCP Rules (MCP-001 to MCP-006)
+        ("CC-PL-006", "Failed to parse plugin.json"),
+        // MCP Rules (MCP-001 to MCP-007)
         ("MCP-001", "Invalid JSON-RPC version (must be 2.0)"),
         ("MCP-002", "Missing required tool field"),
         ("MCP-003", "Invalid JSON Schema in inputSchema"),
         ("MCP-004", "Missing tool description"),
         ("MCP-005", "Tool without user consent"),
         ("MCP-006", "Untrusted annotations from server"),
+        ("MCP-007", "Failed to parse MCP configuration"),
         // GitHub Copilot Rules (COP-001 to COP-004)
         ("COP-001", "Empty Copilot instruction file"),
         (
@@ -379,8 +384,8 @@ mod tests {
     fn test_rules_array_populated() {
         let sarif = diagnostics_to_sarif(&[], Path::new("."));
         let rules = &sarif.runs[0].tool.driver.rules;
-        // Should have 84 rules based on VALIDATION-RULES.md
-        assert_eq!(rules.len(), 84, "Expected 84 rules in SARIF driver");
+        // Should have 89 rules based on VALIDATION-RULES.md
+        assert_eq!(rules.len(), 89, "Expected 89 rules in SARIF driver");
 
         // Verify some specific rules exist
         let rule_ids: Vec<&str> = rules.iter().map(|r| r.id.as_str()).collect();
