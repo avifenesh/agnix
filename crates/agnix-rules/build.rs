@@ -33,8 +33,8 @@ fn main() {
     // Try crate-local rules.json first (for crates.io builds)
     // Then fall back to workspace knowledge-base/rules.json (for development)
     let crate_rules = manifest_path.join("rules.json");
-    let workspace_rules = find_workspace_root(manifest_path)
-        .map(|root| root.join("knowledge-base/rules.json"));
+    let workspace_rules =
+        find_workspace_root(manifest_path).map(|root| root.join("knowledge-base/rules.json"));
 
     // Watch crate-local path for changes (always, in case file is added later)
     println!("cargo:rerun-if-changed={}", crate_rules.display());
@@ -100,7 +100,9 @@ fn main() {
     generated_code.push_str("// Do not edit manually!\n\n");
     generated_code.push_str("/// Rule data as (id, name) tuples.\n");
     generated_code.push_str("/// \n");
-    generated_code.push_str("/// This is the complete list of validation rules from knowledge-base/rules.json.\n");
+    generated_code.push_str(
+        "/// This is the complete list of validation rules from knowledge-base/rules.json.\n",
+    );
     generated_code.push_str("pub const RULES_DATA: &[(&str, &str)] = &[\n");
 
     // Escape special characters for Rust string literal (defense-in-depth)
@@ -116,16 +118,12 @@ fn main() {
     let is_valid_id = |id: &str| -> bool {
         !id.is_empty()
             && id.len() <= 20
-            && id
-                .chars()
-                .all(|c| c.is_ascii_alphanumeric() || c == '-')
+            && id.chars().all(|c| c.is_ascii_alphanumeric() || c == '-')
     };
 
     // Validate rule name (non-empty, reasonable length, no control characters)
     let is_valid_name = |name: &str| -> bool {
-        !name.is_empty()
-            && name.len() <= 200
-            && !name.chars().any(|c| c.is_control() && c != ' ')
+        !name.is_empty() && name.len() <= 200 && !name.chars().any(|c| c.is_control() && c != ' ')
     };
 
     for (idx, rule) in rules_array.iter().enumerate() {
