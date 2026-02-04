@@ -333,6 +333,33 @@ command = "agnix-lsp"
 
 See `crates/agnix-lsp/README.md` for more editor configurations.
 
+**VS Code:**
+
+Install the agnix extension from the VS Code Marketplace, or build from source:
+
+```bash
+cd editors/vscode
+npm install
+npm run compile
+```
+
+Then use "Install from VSIX" in VS Code or run `code --install-extension agnix-0.1.0.vsix`.
+
+The extension provides:
+- Real-time diagnostics as you type
+- Status bar indicator
+- Syntax highlighting for SKILL.md frontmatter
+
+Configure the LSP path in settings if needed:
+
+```json
+{
+  "agnix.lspPath": "/path/to/agnix-lsp"
+}
+```
+
+See `editors/vscode/README.md` for full documentation.
+
 ## Performance
 
 agnix validates files in parallel using [rayon](https://github.com/rayon-rs/rayon) for optimal performance on large projects. Results are sorted deterministically (errors first, then by file path) to ensure consistent output across runs.
@@ -482,7 +509,7 @@ agnix/
 ├── tests/
 │   └── fixtures/          # Test configs
 └── editors/
-    └── vscode/            # VS Code extension (coming)
+    └── vscode/            # VS Code extension
 ```
 
 ## Roadmap
@@ -502,7 +529,7 @@ agnix/
 - [x] MCP tool validation (MCP-001 to MCP-006)
 - [x] GitHub Action for CI/CD integration
 - [x] LSP server
-- [ ] VS Code extension
+- [x] VS Code extension
 
 ## License
 
