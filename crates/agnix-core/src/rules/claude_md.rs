@@ -2,7 +2,7 @@
 
 use crate::{
     config::LintConfig,
-    diagnostics::Diagnostic,
+    diagnostics::{Diagnostic, Fix},
     file_utils::safe_read_file,
     rules::Validator,
     schemas::claude_md::{
@@ -44,7 +44,13 @@ impl Validator for ClaudeMdValidator {
                     .with_suggestion(
                         "Remove generic instructions. Focus on project-specific context."
                             .to_string(),
-                    ),
+                    )
+                    .with_fix(Fix::delete(
+                        inst.start_byte,
+                        inst.end_byte,
+                        "Remove generic instruction line",
+                        true,
+                    )),
                 );
             }
         }
@@ -97,22 +103,35 @@ impl Validator for ClaudeMdValidator {
         if config.is_rule_enabled("CC-MEM-007") {
             let weak = find_weak_constraints(content);
             for w in weak {
-                diagnostics.push(
-                    Diagnostic::warning(
-                        path.to_path_buf(),
-                        w.line,
-                        w.column,
-                        "CC-MEM-007",
-                        format!(
-                            "Weak constraint '{}' in critical section '{}'",
-                            w.text, w.section
-                        ),
-                    )
-                    .with_suggestion(
-                        "Use strong language in critical sections: 'must', 'always', 'required'."
-                            .to_string(),
+                // Determine the replacement for weak language
+                let (replacement, safe) = get_weak_constraint_replacement(&w.text);
+                let mut diagnostic = Diagnostic::warning(
+                    path.to_path_buf(),
+                    w.line,
+                    w.column,
+                    "CC-MEM-007",
+                    format!(
+                        "Weak constraint '{}' in critical section '{}'",
+                        w.text, w.section
                     ),
+                )
+                .with_suggestion(
+                    "Use strong language in critical sections: 'must', 'always', 'required'."
+                        .to_string(),
                 );
+
+                // Add fix if we have a replacement
+                if let Some(repl) = replacement {
+                    diagnostic = diagnostic.with_fix(Fix::replace(
+                        w.start_byte,
+                        w.end_byte,
+                        repl,
+                        format!("Replace '{}' with stronger language", w.text),
+                        safe,
+                    ));
+                }
+
+                diagnostics.push(diagnostic);
             }
         }
 
@@ -219,6 +238,28 @@ impl Validator for ClaudeMdValidator {
         }
 
         diagnostics
+    }
+}
+
+/// Get the replacement for weak constraint language
+/// Returns (replacement_text, is_safe)
+/// - "should" -> "must" (safe)
+/// - "try to" -> "must" (safe)
+/// - "consider" -> "ensure" (safe)
+/// - "maybe" -> "" (delete, safe)
+/// - "might want to" -> "must" (safe)
+/// - "could" -> "must" (not safe - could have other meanings)
+/// - "possibly" -> "" (delete, not safe)
+fn get_weak_constraint_replacement(text: &str) -> (Option<&'static str>, bool) {
+    match text.to_lowercase().as_str() {
+        "should" => (Some("must"), true),
+        "try to" => (Some("must"), true),
+        "consider" => (Some("ensure"), true),
+        "maybe" => (Some(""), true),
+        "might want to" => (Some("must"), true),
+        "could" => (Some("must"), false),
+        "possibly" => (Some(""), false),
+        _ => (None, false),
     }
 }
 
@@ -635,6 +676,205 @@ You should consider this approach.
                 "Rule {} should be disabled",
                 d.rule
             );
+        }
+    }
+
+    // ===== Auto-fix Tests for CC-MEM-005 =====
+
+    #[test]
+    fn test_cc_mem_005_has_fix() {
+        let content = "Be helpful and accurate when responding.";
+        let validator = ClaudeMdValidator;
+        let diagnostics =
+            validator.validate(Path::new("CLAUDE.md"), content, &LintConfig::default());
+
+        let mem005: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-MEM-005")
+            .collect();
+        assert!(!mem005.is_empty());
+        assert!(mem005[0].has_fixes());
+
+        let fix = &mem005[0].fixes[0];
+        assert!(fix.is_deletion());
+        assert!(fix.safe);
+    }
+
+    #[test]
+    fn test_cc_mem_005_fix_byte_positions() {
+        let content = "Line one.\nBe helpful and accurate.\nLine three.";
+        let validator = ClaudeMdValidator;
+        let diagnostics =
+            validator.validate(Path::new("CLAUDE.md"), content, &LintConfig::default());
+
+        let mem005: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-MEM-005")
+            .collect();
+        assert_eq!(mem005.len(), 1);
+
+        let fix = &mem005[0].fixes[0];
+        // Line "Be helpful and accurate." starts at byte 10 (after "Line one.\n")
+        assert_eq!(fix.start_byte, 10);
+        // Ends at byte 35 (after "Be helpful and accurate.\n")
+        assert_eq!(fix.end_byte, 35);
+    }
+
+    #[test]
+    fn test_cc_mem_005_fix_application() {
+        let content = "Line one.\nBe helpful and accurate.\nLine three.";
+        let validator = ClaudeMdValidator;
+        let diagnostics =
+            validator.validate(Path::new("CLAUDE.md"), content, &LintConfig::default());
+
+        let mem005: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-MEM-005")
+            .collect();
+        assert_eq!(mem005.len(), 1);
+
+        let fix = &mem005[0].fixes[0];
+        let mut fixed = content.to_string();
+        fixed.replace_range(fix.start_byte..fix.end_byte, &fix.replacement);
+
+        assert_eq!(fixed, "Line one.\nLine three.");
+    }
+
+    #[test]
+    fn test_cc_mem_005_fix_last_line_no_newline() {
+        let content = "Be helpful and accurate.";
+        let validator = ClaudeMdValidator;
+        let diagnostics =
+            validator.validate(Path::new("CLAUDE.md"), content, &LintConfig::default());
+
+        let mem005: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-MEM-005")
+            .collect();
+        assert_eq!(mem005.len(), 1);
+
+        let fix = &mem005[0].fixes[0];
+        // Last line without newline should have end_byte at content length
+        assert_eq!(fix.start_byte, 0);
+        assert_eq!(fix.end_byte, 24);
+    }
+
+    // ===== Auto-fix Tests for CC-MEM-007 =====
+
+    #[test]
+    fn test_cc_mem_007_has_fix() {
+        let content = "# Critical Rules\n\nYou should follow the coding style.";
+        let validator = ClaudeMdValidator;
+        let diagnostics =
+            validator.validate(Path::new("CLAUDE.md"), content, &LintConfig::default());
+
+        let mem007: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-MEM-007")
+            .collect();
+        assert_eq!(mem007.len(), 1);
+        assert!(mem007[0].has_fixes());
+
+        let fix = &mem007[0].fixes[0];
+        assert_eq!(fix.replacement, "must");
+        assert!(fix.safe);
+    }
+
+    #[test]
+    fn test_cc_mem_007_fix_byte_positions() {
+        let content = "# Critical Rules\n\nYou should follow the coding style.";
+        let validator = ClaudeMdValidator;
+        let diagnostics =
+            validator.validate(Path::new("CLAUDE.md"), content, &LintConfig::default());
+
+        let mem007: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-MEM-007")
+            .collect();
+        assert_eq!(mem007.len(), 1);
+
+        let fix = &mem007[0].fixes[0];
+        // "should" starts at byte 22 (after "# Critical Rules\n\nYou ")
+        assert_eq!(fix.start_byte, 22);
+        // "should" ends at byte 28
+        assert_eq!(fix.end_byte, 28);
+    }
+
+    #[test]
+    fn test_cc_mem_007_fix_application() {
+        let content = "# Critical Rules\n\nYou should follow the coding style.";
+        let validator = ClaudeMdValidator;
+        let diagnostics =
+            validator.validate(Path::new("CLAUDE.md"), content, &LintConfig::default());
+
+        let mem007: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-MEM-007")
+            .collect();
+        assert_eq!(mem007.len(), 1);
+
+        let fix = &mem007[0].fixes[0];
+        let mut fixed = content.to_string();
+        fixed.replace_range(fix.start_byte..fix.end_byte, &fix.replacement);
+
+        assert_eq!(fixed, "# Critical Rules\n\nYou must follow the coding style.");
+    }
+
+    #[test]
+    fn test_cc_mem_007_fix_replacements() {
+        // Test all replacement mappings
+        let test_cases = vec![
+            ("# Critical Rules\n\nYou should do this.", "must", true),
+            ("# Critical Rules\n\nTry to do this.", "must", true),
+            ("# Critical Rules\n\nConsider doing this.", "ensure", true),
+            ("# Critical Rules\n\nMaybe do this.", "", true),
+            ("# Critical Rules\n\nYou could do this.", "must", false),
+        ];
+
+        let validator = ClaudeMdValidator;
+
+        for (content, expected_replacement, expected_safe) in test_cases {
+            let diagnostics =
+                validator.validate(Path::new("CLAUDE.md"), content, &LintConfig::default());
+
+            let mem007: Vec<_> = diagnostics
+                .iter()
+                .filter(|d| d.rule == "CC-MEM-007")
+                .collect();
+            assert_eq!(
+                mem007.len(),
+                1,
+                "Expected one CC-MEM-007 for: {}",
+                content
+            );
+            assert!(mem007[0].has_fixes());
+
+            let fix = &mem007[0].fixes[0];
+            assert_eq!(
+                fix.replacement, expected_replacement,
+                "Wrong replacement for: {}",
+                content
+            );
+            assert_eq!(fix.safe, expected_safe, "Wrong safe flag for: {}", content);
+        }
+    }
+
+    #[test]
+    fn test_cc_mem_007_multiple_weak_words() {
+        let content = "# Critical Rules\n\nYou should consider doing this.";
+        let validator = ClaudeMdValidator;
+        let diagnostics =
+            validator.validate(Path::new("CLAUDE.md"), content, &LintConfig::default());
+
+        let mem007: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-MEM-007")
+            .collect();
+
+        // Each weak word generates a separate diagnostic with its own fix
+        assert!(mem007.len() >= 1);
+        for d in &mem007 {
+            assert!(d.has_fixes());
         }
     }
 }
