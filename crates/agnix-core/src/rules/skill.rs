@@ -87,11 +87,9 @@ fn convert_to_kebab_case(name: &str) -> String {
         if c.is_ascii_alphanumeric() {
             kebab.push(c.to_ascii_lowercase());
             last_was_hyphen = false;
-        } else if matches!(c, '_' | '-' | ' ') {
-            if !last_was_hyphen {
-                kebab.push('-');
-                last_was_hyphen = true;
-            }
+        } else if matches!(c, '_' | '-' | ' ') && !last_was_hyphen {
+            kebab.push('-');
+            last_was_hyphen = true;
         }
         // Other characters are skipped
     }
