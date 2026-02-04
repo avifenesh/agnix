@@ -450,7 +450,11 @@ mod tests {
 
         for field in fields {
             let hover = get_hover_info(field);
-            assert!(hover.is_some(), "Field '{}' should have documentation", field);
+            assert!(
+                hover.is_some(),
+                "Field '{}' should have documentation",
+                field
+            );
         }
     }
 

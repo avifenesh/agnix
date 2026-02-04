@@ -127,7 +127,7 @@ mod tests {
     fn test_byte_to_position_utf8_multibyte() {
         // UTF-8 multibyte character test
         let content = "hello\u{00e9}world"; // e with acute accent (2 bytes)
-        // "hello" is 5 bytes, e-acute is 2 bytes, so 'w' is at byte 7
+                                            // "hello" is 5 bytes, e-acute is 2 bytes, so 'w' is at byte 7
         let pos = byte_to_position(content, 7);
         assert_eq!(pos.line, 0);
         assert_eq!(pos.character, 6); // 6 characters: h-e-l-l-o-e

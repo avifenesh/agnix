@@ -19,8 +19,14 @@ use crate::hover_provider::hover_at_position;
 fn create_error_diagnostic(code: &str, message: String) -> Diagnostic {
     Diagnostic {
         range: Range {
-            start: Position { line: 0, character: 0 },
-            end: Position { line: 0, character: 0 },
+            start: Position {
+                line: 0,
+                character: 0,
+            },
+            end: Position {
+                line: 0,
+                character: 0,
+            },
         },
         severity: Some(DiagnosticSeverity::ERROR),
         code: Some(NumberOrString::String(code.to_string())),
@@ -315,7 +321,12 @@ impl LanguageServer for Backend {
         if actions.is_empty() {
             Ok(None)
         } else {
-            Ok(Some(actions.into_iter().map(CodeActionOrCommand::CodeAction).collect()))
+            Ok(Some(
+                actions
+                    .into_iter()
+                    .map(CodeActionOrCommand::CodeAction)
+                    .collect(),
+            ))
         }
     }
 

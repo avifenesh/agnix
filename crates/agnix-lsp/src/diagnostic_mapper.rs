@@ -265,7 +265,8 @@ mod tests {
     #[test]
     fn test_diagnostic_with_fixes_has_data() {
         let fixes = vec![make_fix(0, 5, "hello", "Replace text", true)];
-        let diag = make_diagnostic_with_fixes(DiagnosticLevel::Error, "Error", 1, 1, "AS-001", fixes);
+        let diag =
+            make_diagnostic_with_fixes(DiagnosticLevel::Error, "Error", 1, 1, "AS-001", fixes);
 
         let lsp_diag = to_lsp_diagnostic(&diag);
 

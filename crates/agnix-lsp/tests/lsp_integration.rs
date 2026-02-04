@@ -306,7 +306,7 @@ mod did_change_tests {
 }
 
 mod hover_tests {
-    use tower_lsp::lsp_types::{Position, Hover, HoverContents, MarkupContent, MarkupKind};
+    use tower_lsp::lsp_types::{Hover, HoverContents, MarkupContent, MarkupKind, Position};
 
     #[test]
     fn test_hover_content_structure() {

@@ -4,10 +4,8 @@
 //! Code actions appear as quick-fix lightbulbs in editors.
 
 use agnix_core::Fix;
-use tower_lsp::lsp_types::{
-    CodeAction, CodeActionKind, TextEdit, Url, WorkspaceEdit,
-};
 use std::collections::HashMap;
+use tower_lsp::lsp_types::{CodeAction, CodeActionKind, TextEdit, Url, WorkspaceEdit};
 
 use crate::position::byte_range_to_lsp_range;
 
