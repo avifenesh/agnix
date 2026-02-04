@@ -65,7 +65,6 @@ pub struct LintConfig {
 
     /// Expected MCP protocol version for validation (MCP-008)
     /// Deprecated: Use spec_revisions.mcp_protocol instead
-    #[serde(default = "default_mcp_protocol_version")]
     pub mcp_protocol_version: Option<String>,
 
     /// Tool version pinning for version-aware validation
@@ -92,7 +91,7 @@ impl Default for LintConfig {
                 "target/**".to_string(),
             ],
             target: TargetTool::Generic,
-            mcp_protocol_version: default_mcp_protocol_version(),
+            mcp_protocol_version: None,
             tool_versions: ToolVersions::default(),
             spec_revisions: SpecRevisions::default(),
             root_dir: None,
@@ -110,11 +109,6 @@ pub enum SeverityLevel {
 /// Helper function for serde default
 fn default_true() -> bool {
     true
-}
-
-/// Default MCP protocol version (latest stable per MCP spec)
-fn default_mcp_protocol_version() -> Option<String> {
-    Some(DEFAULT_MCP_PROTOCOL_VERSION.to_string())
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -269,13 +263,10 @@ impl LintConfig {
     ///
     /// Priority: spec_revisions.mcp_protocol > mcp_protocol_version > default
     pub fn get_mcp_protocol_version(&self) -> &str {
-        // Prefer the new spec_revisions field
-        if let Some(ref version) = self.spec_revisions.mcp_protocol {
-            return version;
-        }
-        // Fall back to legacy field
-        self.mcp_protocol_version
+        self.spec_revisions
+            .mcp_protocol
             .as_deref()
+            .or(self.mcp_protocol_version.as_deref())
             .unwrap_or(DEFAULT_MCP_PROTOCOL_VERSION)
     }
 
@@ -1307,8 +1298,8 @@ copilot = "1.0.0"
         assert!(config.spec_revisions.mcp_protocol.is_none());
         assert!(config.spec_revisions.agent_skills_spec.is_none());
         assert!(config.spec_revisions.agents_md_spec.is_none());
-        // Note: mcp_protocol_version has a default, so is_mcp_revision_pinned is true by default
-        assert!(config.is_mcp_revision_pinned());
+        // mcp_protocol_version is None by default, so is_mcp_revision_pinned returns false
+        assert!(!config.is_mcp_revision_pinned());
     }
 
     #[test]
@@ -1427,8 +1418,9 @@ exclude = []
 "#;
 
         let config: LintConfig = toml::from_str(toml_str).unwrap();
-        // Default mcp_protocol_version is set, so this is "pinned"
-        assert!(config.is_mcp_revision_pinned());
+        // mcp_protocol_version is None when not specified, so is_mcp_revision_pinned returns false
+        assert!(!config.is_mcp_revision_pinned());
+        // get_mcp_protocol_version still returns default value
         assert_eq!(config.get_mcp_protocol_version(), "2025-06-18");
     }
 
