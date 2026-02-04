@@ -90,16 +90,41 @@ pub fn find_claude_specific_features(content: &str) -> Vec<ClaudeSpecificFeature
     let guard_pattern = claude_section_guard_pattern();
 
     let mut in_claude_section = false;
+    let mut claude_section_level = 0; // Track the level of the Claude guard header
 
     for (line_num, line) in content.lines().enumerate() {
         let is_claude_guard = guard_pattern.is_match(line);
         if is_claude_guard {
             in_claude_section = true;
+            // Extract header level for Claude section
+            let trimmed = line.trim_start();
+            if trimmed.starts_with('#') {
+                claude_section_level = trimmed.chars().take_while(|c| *c == '#').count();
+            } else if trimmed.starts_with("<!--") {
+                claude_section_level = 2; // Default to level 2 for HTML comments
+            }
             continue;
         }
 
-        if line.trim_start().starts_with('#') || line.trim_start().starts_with("<!--") {
-            in_claude_section = false;
+        // Only reset guard if we encounter a header that is:
+        // 1. At the same or higher level (lower number) as the Claude guard
+        // 2. Not a Claude-specific guard itself
+        if in_claude_section
+            && (line.trim_start().starts_with('#') || line.trim_start().starts_with("<!--"))
+        {
+            let trimmed = line.trim_start();
+            let current_level = if trimmed.starts_with('#') {
+                trimmed.chars().take_while(|c| *c == '#').count()
+            } else if trimmed.starts_with("<!--") {
+                2 // Default to level 2 for HTML comments
+            } else {
+                usize::MAX
+            };
+
+            // Reset guard only if new header is at same or higher level (lower number)
+            if current_level <= claude_section_level {
+                in_claude_section = false;
+            }
         }
 
         if in_claude_section {
@@ -1206,6 +1231,47 @@ agent: reviewer
             results[0].feature == "agent",
             "Indented header should reset guard protection"
         );
+    }
+
+    #[test]
+    fn test_subheaders_within_claude_section() {
+        // Subheaders (###) within a Claude-specific section (##) should not reset the guard
+        // This tests Codex feedback about keeping guard active across subheaders
+        let content = r#"# Config
+
+## Claude Specific
+### Hooks Setup
+- type: PreToolExecution
+  command: test
+
+### Context Configuration
+context: fork
+agent: reviewer
+"#;
+        let results = find_claude_specific_features(content);
+        assert!(
+            results.is_empty(),
+            "Features under subheaders within Claude section should still be protected"
+        );
+    }
+
+    #[test]
+    fn test_reset_on_same_level_header() {
+        // A new top-level header (##) should reset the guard from a ## Claude section
+        let content = r#"## Claude Specific
+- type: PreToolExecution
+  command: test
+
+## Other Settings
+agent: reviewer
+"#;
+        let results = find_claude_specific_features(content);
+        assert_eq!(
+            results.len(),
+            1,
+            "Agent field after same-level header should be detected"
+        );
+        assert!(results[0].feature == "agent");
     }
 
     // ===== XP-002: Markdown Structure =====
