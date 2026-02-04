@@ -72,8 +72,6 @@ fn allowed_tools_pattern() -> &'static Regex {
 
 fn claude_section_guard_pattern() -> &'static Regex {
     CLAUDE_SECTION_GUARD_PATTERN.get_or_init(|| {
-        // Match Claude-specific section headers or HTML comments
-        // Examples: "## Claude Code Specific", "## Claude Only", "<!-- Claude Code Specific -->"
         Regex::new(r"(?im)^(?:#+\s*|<!--\s*)claude(?:\s+code)?(?:\s+specific|\s+only)?(?:\s*-->)?")
             .unwrap()
     })
@@ -91,28 +89,22 @@ pub fn find_claude_specific_features(content: &str) -> Vec<ClaudeSpecificFeature
     let mut results = Vec::new();
     let guard_pattern = claude_section_guard_pattern();
 
-    // Track if we're in a Claude-specific section
     let mut in_claude_section = false;
 
-    // Iterate directly over lines without collecting to Vec (memory optimization)
     for (line_num, line) in content.lines().enumerate() {
-        // Check if this line is a Claude section guard
         if guard_pattern.is_match(line) {
             in_claude_section = true;
             continue;
         }
 
-        // Check if we hit a new section header (non-guard) - resets the guard
         if line.starts_with('#') && !guard_pattern.is_match(line) {
             in_claude_section = false;
         }
 
-        // Skip checking for features if we're inside a guarded Claude section
         if in_claude_section {
             continue;
         }
 
-        // Check for hooks patterns
         if let Some(mat) = claude_hooks_pattern().find(line) {
             results.push(ClaudeSpecificFeature {
                 line: line_num + 1,

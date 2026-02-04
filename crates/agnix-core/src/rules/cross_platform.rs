@@ -499,7 +499,6 @@ Check .claude/ and .cursor/ paths"#;
 
     #[test]
     fn test_xp_001_guarded_section_no_errors() {
-        // Claude-specific features inside a guarded section should not produce XP-001 errors
         let content = r#"# Project AGENTS.md
 
 ## Overview
@@ -527,7 +526,6 @@ allowed-tools: Read Write Bash
 
     #[test]
     fn test_xp_001_mixed_guarded_unguarded() {
-        // Mix of guarded and unguarded sections - only unguarded should trigger XP-001
         let content = r#"# AGENTS.md
 
 ## Claude Code Specific
@@ -543,7 +541,6 @@ agent: some-agent
 
         let xp_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XP-001").collect();
 
-        // Should only have 1 error for the unguarded agent field
         assert_eq!(
             xp_001.len(),
             1,
@@ -557,7 +554,6 @@ agent: some-agent
 
     #[test]
     fn test_xp_001_guard_resets_at_new_section() {
-        // Guard protection should reset when a new (non-Claude) section starts
         let content = r#"# Project
 
 ## Claude Only
@@ -574,8 +570,6 @@ agent: some-agent
 
         let xp_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XP-001").collect();
 
-        // The hooks under "Claude Only" should be guarded (no error)
-        // The hooks under "Build Commands" should NOT be guarded (error)
         assert_eq!(
             xp_001.len(),
             1,
