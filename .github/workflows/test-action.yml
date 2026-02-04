@@ -172,6 +172,7 @@ jobs:
     name: Test SARIF Upload
     runs-on: ubuntu-latest
     permissions:
+      contents: read
       security-events: write
 
     steps:
