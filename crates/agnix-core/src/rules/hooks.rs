@@ -426,9 +426,7 @@ impl Validator for HooksValidator {
                                     );
 
                                     if !version_pinned {
-                                        diag = diag.with_assumption(
-                                            CC_HK_010_ASSUMPTION
-                                        );
+                                        diag = diag.with_assumption(CC_HK_010_ASSUMPTION);
                                     }
 
                                     diagnostics.push(diag);
@@ -450,9 +448,7 @@ impl Validator for HooksValidator {
                                         );
 
                                         if !version_pinned {
-                                            diag = diag.with_assumption(
-                                                CC_HK_010_ASSUMPTION
-                                            );
+                                            diag = diag.with_assumption(CC_HK_010_ASSUMPTION);
                                         }
 
                                         diagnostics.push(diag);
@@ -559,9 +555,7 @@ impl Validator for HooksValidator {
                                     );
 
                                     if !version_pinned {
-                                        diag = diag.with_assumption(
-                                            CC_HK_010_ASSUMPTION
-                                        );
+                                        diag = diag.with_assumption(CC_HK_010_ASSUMPTION);
                                     }
 
                                     diagnostics.push(diag);
@@ -583,9 +577,7 @@ impl Validator for HooksValidator {
                                         );
 
                                         if !version_pinned {
-                                            diag = diag.with_assumption(
-                                                CC_HK_010_ASSUMPTION
-                                            );
+                                            diag = diag.with_assumption(CC_HK_010_ASSUMPTION);
                                         }
 
                                         diagnostics.push(diag);

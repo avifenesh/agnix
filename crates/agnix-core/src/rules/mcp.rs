@@ -280,9 +280,7 @@ fn validate_protocol_version(
                 ));
 
                 if !version_pinned {
-                    diag = diag.with_assumption(
-                        MCP_008_ASSUMPTION
-                    );
+                    diag = diag.with_assumption(MCP_008_ASSUMPTION);
                 }
 
                 diagnostics.push(diag);
@@ -311,9 +309,7 @@ fn validate_protocol_version(
                 ));
 
                 if !version_pinned {
-                    diag = diag.with_assumption(
-                        MCP_008_ASSUMPTION
-                    );
+                    diag = diag.with_assumption(MCP_008_ASSUMPTION);
                 }
 
                 diagnostics.push(diag);
