@@ -455,7 +455,9 @@ pub fn validate_project_with_registry(
 
     // AGM-006: Check for multiple AGENTS.md files in the directory tree (project-level check)
     if config.is_rule_enabled("AGM-006") {
-        let agents_md_paths = agents_md_paths.lock().unwrap().clone();
+        // Sort for deterministic ordering (parallel collection order is non-deterministic)
+        let mut agents_md_paths = agents_md_paths.lock().unwrap().clone();
+        agents_md_paths.sort();
 
         if agents_md_paths.len() > 1 {
             for agents_file in agents_md_paths.iter() {
@@ -506,7 +508,9 @@ pub fn validate_project_with_registry(
 
     if xp004_enabled || xp005_enabled || xp006_enabled {
         // Use instruction files collected during streaming validation
-        let instruction_files = instruction_file_paths.lock().unwrap().clone();
+        // Sort for deterministic ordering (parallel collection order is non-deterministic)
+        let mut instruction_files = instruction_file_paths.lock().unwrap().clone();
+        instruction_files.sort();
 
         if instruction_files.len() > 1 {
             // Read content of all instruction files
