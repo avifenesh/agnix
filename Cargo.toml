@@ -3,7 +3,7 @@ resolver = "2"
 members = [
     "crates/agnix-core",
     "crates/agnix-cli",
-    # "crates/agnix-lsp",  # Coming later
+    "crates/agnix-lsp",
     # "crates/agnix-wasm", # Coming later
 ]
 
@@ -43,6 +43,9 @@ colored = "3.1.1"
 
 # Async runtime (for LSP later)
 tokio = { version = "1.49.0", features = ["full"] }
+
+# LSP
+tower-lsp = "0.20"
 
 [profile.release]
 lto = "fat"

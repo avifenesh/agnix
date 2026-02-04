@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Language Server Protocol (LSP) implementation for real-time editor validation (#18)
+  - New `agnix-lsp` crate with tower-lsp backend
+  - Real-time diagnostics on file open and save events
+  - Supports all 99 agnix validation rules with severity mapping
+  - Workspace boundary validation for security (prevents path traversal)
+  - Config caching optimization for performance
+  - Editor support for VS Code, Neovim, Helix, and other LSP-compatible editors
+  - Comprehensive test coverage with 36 unit and integration tests
+  - Installation: `cargo install --path crates/agnix-lsp`
 - Spec Drift Sentinel workflow for automated upstream specification monitoring (#107)
   - Weekly checks for S-tier sources (Agent Skills, MCP, Claude Code, Codex CLI, OpenCode)
   - Monthly checks for A-tier sources (Cursor, GitHub Copilot, Cline)
