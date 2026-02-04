@@ -233,17 +233,14 @@ pub fn get_field_at_position(content: &str, position: Position) -> Option<String
 
     let line = lines[line_idx];
 
-    // Look for YAML field pattern: optional whitespace, field name, colon
     let trimmed = line.trim_start();
     if let Some(colon_pos) = trimmed.find(':') {
         let field = trimmed[..colon_pos].trim();
-        // Verify the field is a valid identifier (alphanumeric + underscore)
         if !field.is_empty()
             && field
                 .chars()
                 .all(|c| c.is_alphanumeric() || c == '_' || c == '-')
         {
-            // Check if cursor is on or before the colon (on the field name)
             let char_pos = position.character as usize;
             let leading_spaces = line.len() - trimmed.len();
             let field_end = leading_spaces + colon_pos;
@@ -254,20 +251,15 @@ pub fn get_field_at_position(content: &str, position: Position) -> Option<String
         }
     }
 
-    // Also check JSON-style "field": pattern
-    // Find first quote in the trimmed string
     if let Some(first_quote) = trimmed.find('"') {
         let after_first_quote = &trimmed[first_quote + 1..];
         if let Some(second_quote) = after_first_quote.find('"') {
             let field = &after_first_quote[..second_quote];
-            // Verify it's followed by a colon (with optional whitespace)
             let after_field = &after_first_quote[second_quote + 1..];
             let after_ws = after_field.trim_start();
             if after_ws.starts_with(':') {
-                // Check if cursor is on or before the colon
                 let char_pos = position.character as usize;
                 let leading_spaces = line.len() - trimmed.len();
-                // The colon is at: leading_spaces + first_quote + 1 + second_quote + 1 + whitespace
                 let colon_offset = trimmed.len() - after_ws.len();
                 let field_end = leading_spaces + colon_offset;
 

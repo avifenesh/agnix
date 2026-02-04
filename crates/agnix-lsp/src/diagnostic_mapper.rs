@@ -48,7 +48,6 @@ pub fn to_lsp_diagnostic(diag: &Diagnostic) -> LspDiagnostic {
         diag.message.clone()
     };
 
-    // Serialize fixes to diagnostic.data for code action retrieval
     let data = serialize_fixes(&diag.fixes);
 
     LspDiagnostic {

@@ -37,8 +37,6 @@ pub struct Backend {
     /// Workspace root path for boundary validation (security).
     /// Set during initialize() from the client's root_uri.
     workspace_root: RwLock<Option<PathBuf>>,
-    /// Document content cache for real-time validation.
-    /// Updated on open, change, and removed on close.
     documents: RwLock<HashMap<Url, String>>,
 }
 
@@ -305,7 +303,6 @@ impl LanguageServer for Backend {
     }
 
     async fn did_open(&self, params: DidOpenTextDocumentParams) {
-        // Store document content in cache
         {
             let mut docs = self.documents.write().await;
             docs.insert(
@@ -313,38 +310,31 @@ impl LanguageServer for Backend {
                 params.text_document.text.clone(),
             );
         }
-        // Validate from cached content
         self.validate_from_content_and_publish(params.text_document.uri)
             .await;
     }
 
     async fn did_change(&self, params: DidChangeTextDocumentParams) {
-        // Update document content in cache
-        // With FULL sync mode, we get the complete content in each change
         if let Some(change) = params.content_changes.into_iter().next() {
             {
                 let mut docs = self.documents.write().await;
                 docs.insert(params.text_document.uri.clone(), change.text);
             }
-            // Validate from cached content
             self.validate_from_content_and_publish(params.text_document.uri)
                 .await;
         }
     }
 
     async fn did_save(&self, params: DidSaveTextDocumentParams) {
-        // On save, validate from cached content or fall back to file
         self.validate_from_content_and_publish(params.text_document.uri)
             .await;
     }
 
     async fn did_close(&self, params: DidCloseTextDocumentParams) {
-        // Remove document from cache
         {
             let mut docs = self.documents.write().await;
             docs.remove(&params.text_document.uri);
         }
-        // Clear diagnostics
         self.client
             .publish_diagnostics(params.text_document.uri, vec![], None)
             .await;
