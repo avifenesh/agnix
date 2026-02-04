@@ -91,6 +91,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added validation pipeline tests for AGENTS.md path collection and files_checked counter (#83)
 
 ### Changed
+- Tool mappings derived from rules.json at compile time (#176)
+  - VALID_TOOLS and TOOL_RULE_PREFIXES now extracted from rules.json evidence metadata
+  - New helper functions in agnix-rules: valid_tools(), get_tool_for_prefix(), get_prefixes_for_tool()
+  - Config tools array validation uses derived mappings instead of hardcoded list
+  - Backward compatibility maintained with "copilot" alias for "github-copilot"
+  - Zero runtime cost - all mappings resolved at compile time
 - Narrowed agnix-core public API surface (#85)
   - Made `parsers`, `rules`, `schemas`, and `file_utils` modules private
   - Re-exported `Validator` trait for custom validator implementations
