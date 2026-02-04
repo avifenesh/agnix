@@ -12,7 +12,9 @@ use crate::{
     config::LintConfig,
     diagnostics::Diagnostic,
     rules::Validator,
-    schemas::cursor::{is_body_empty, is_content_empty, parse_mdc_frontmatter, validate_glob_pattern},
+    schemas::cursor::{
+        is_body_empty, is_content_empty, parse_mdc_frontmatter, validate_glob_pattern,
+    },
     FileType,
 };
 use std::path::Path;
@@ -138,7 +140,9 @@ impl Validator for CursorValidator {
                 if let Some(ref globs) = schema.globs {
                     // Find the line number of the globs field for accurate diagnostics
                     // Note: parsed.raw doesn't include the opening --- line, so we need +1
-                    let globs_line = parsed.raw.lines()
+                    let globs_line = parsed
+                        .raw
+                        .lines()
                         .enumerate()
                         .find(|(_, line)| line.trim_start().starts_with("globs:"))
                         .map(|(idx, _)| parsed.start_line + 1 + idx)
@@ -218,11 +222,7 @@ mod tests {
 
     fn validate_mdc_with_config(content: &str, config: &LintConfig) -> Vec<Diagnostic> {
         let validator = CursorValidator;
-        validator.validate(
-            Path::new(".cursor/rules/typescript.mdc"),
-            content,
-            config,
-        )
+        validator.validate(Path::new(".cursor/rules/typescript.mdc"), content, config)
     }
 
     // ===== CUR-001: Empty Rule File =====
@@ -281,7 +281,10 @@ description: Unclosed frontmatter
 "#;
         let diagnostics = validate_mdc(content);
         let cur_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CUR-001").collect();
-        assert!(cur_001.is_empty(), "CUR-001 should not trigger when parse_error exists");
+        assert!(
+            cur_001.is_empty(),
+            "CUR-001 should not trigger when parse_error exists"
+        );
 
         // Verify CUR-003 triggers instead
         let cur_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CUR-003").collect();
@@ -298,7 +301,9 @@ description: Unclosed frontmatter
         let cur_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CUR-002").collect();
         assert_eq!(cur_002.len(), 1);
         assert_eq!(cur_002[0].level, DiagnosticLevel::Warning);
-        assert!(cur_002[0].message.contains("missing recommended frontmatter"));
+        assert!(cur_002[0]
+            .message
+            .contains("missing recommended frontmatter"));
     }
 
     #[test]
@@ -421,7 +426,10 @@ globs: "[unclosed"
         let cur_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CUR-004").collect();
         assert_eq!(cur_004.len(), 1);
         // globs: is on line 3 (line 1 is ---, line 2 is description, line 3 is globs)
-        assert_eq!(cur_004[0].line, 3, "CUR-004 should point to the globs field line");
+        assert_eq!(
+            cur_004[0].line, 3,
+            "CUR-004 should point to the globs field line"
+        );
     }
 
     // ===== CUR-005: Unknown Frontmatter Keys =====

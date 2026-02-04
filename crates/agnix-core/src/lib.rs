@@ -236,7 +236,9 @@ pub fn detect_file_type(path: &Path) -> FileType {
             FileType::CopilotScoped
         }
         // Cursor project rules (.cursor/rules/*.mdc)
-        name if name.ends_with(".mdc") && parent == Some("rules") && grandparent == Some(".cursor") =>
+        name if name.ends_with(".mdc")
+            && parent == Some("rules")
+            && grandparent == Some(".cursor") =>
         {
             FileType::CursorRule
         }
@@ -2252,7 +2254,11 @@ Use idiomatic Rust patterns.
         assert!(
             result.diagnostics.iter().any(|d| d.rule == "CUR-001"),
             "validate_project should find .cursor/rules/empty.mdc and report CUR-001. Found: {:?}",
-            result.diagnostics.iter().map(|d| &d.rule).collect::<Vec<_>>()
+            result
+                .diagnostics
+                .iter()
+                .map(|d| &d.rule)
+                .collect::<Vec<_>>()
         );
     }
 
@@ -2269,14 +2275,22 @@ Use idiomatic Rust patterns.
         assert!(
             result.diagnostics.iter().any(|d| d.rule == "CUR-001"),
             "validate_project should find CUR-001 in cursor-invalid fixtures. Found rules: {:?}",
-            result.diagnostics.iter().map(|d| &d.rule).collect::<Vec<_>>()
+            result
+                .diagnostics
+                .iter()
+                .map(|d| &d.rule)
+                .collect::<Vec<_>>()
         );
 
         // Should find CUR-002 from no-frontmatter.mdc
         assert!(
             result.diagnostics.iter().any(|d| d.rule == "CUR-002"),
             "validate_project should find CUR-002 in cursor-invalid fixtures. Found rules: {:?}",
-            result.diagnostics.iter().map(|d| &d.rule).collect::<Vec<_>>()
+            result
+                .diagnostics
+                .iter()
+                .map(|d| &d.rule)
+                .collect::<Vec<_>>()
         );
     }
 

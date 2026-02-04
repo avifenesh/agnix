@@ -435,10 +435,7 @@ unknownKey: value
 
     #[test]
     fn test_globs_field_multiple() {
-        let globs = GlobsField::Multiple(vec![
-            "**/*.ts".to_string(),
-            "**/*.tsx".to_string(),
-        ]);
+        let globs = GlobsField::Multiple(vec!["**/*.ts".to_string(), "**/*.tsx".to_string()]);
         let patterns = globs.patterns();
         assert_eq!(patterns.len(), 2);
         assert!(patterns.contains(&"**/*.ts"));

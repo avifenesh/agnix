@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Cursor Project Rules support with 6 new validation rules (CUR-001 to CUR-006)
+  - CUR-001: Empty .mdc rule file detection
+  - CUR-002: Missing frontmatter warning
+  - CUR-003: Invalid YAML frontmatter validation
+  - CUR-004: Invalid glob pattern in globs field
+  - CUR-005: Unknown frontmatter keys warning
+  - CUR-006: Legacy .cursorrules migration warning
+  - New file type detection for `.cursor/rules/*.mdc` and `.cursorrules`
+  - Comprehensive test coverage with 8 fixtures
+
 ### Changed
 - Narrowed agnix-core public API surface (#85)
   - Made `parsers`, `rules`, `schemas`, and `file_utils` modules private
