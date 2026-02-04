@@ -1,4 +1,6 @@
 import * as vscode from 'vscode';
+import * as fs from 'fs';
+import * as path from 'path';
 import {
   LanguageClient,
   LanguageClientOptions,
@@ -67,7 +69,7 @@ async function startClient(): Promise<void> {
   const config = vscode.workspace.getConfiguration('agnix');
   const lspPath = config.get<string>('lspPath', 'agnix-lsp');
 
-  const lspExists = await checkLspExists(lspPath);
+  const lspExists = checkLspExists(lspPath);
   if (!lspExists) {
     updateStatusBar('error', 'agnix-lsp not found');
     outputChannel.appendLine(`Error: Could not find agnix-lsp at: ${lspPath}`);
@@ -160,26 +162,48 @@ async function restartClient(): Promise<void> {
   await startClient();
 }
 
-async function checkLspExists(lspPath: string): Promise<boolean> {
-  const { exec } = require('child_process');
-  const { promisify } = require('util');
-  const execAsync = promisify(exec);
+/**
+ * Check if the LSP binary exists and is executable.
+ * Uses safe filesystem checks instead of shell commands to prevent command injection.
+ */
+function checkLspExists(lspPath: string): boolean {
+  // If it's a simple command name (no path separators), check PATH
+  if (!lspPath.includes(path.sep) && !lspPath.includes('/')) {
+    const pathEnv = process.env.PATH || '';
+    const pathDirs = pathEnv.split(path.delimiter);
+    const extensions =
+      process.platform === 'win32' ? ['', '.exe', '.cmd', '.bat'] : [''];
 
-  const isWindows = process.platform === 'win32';
-  const command = isWindows ? `where ${lspPath}` : `which ${lspPath}`;
+    for (const dir of pathDirs) {
+      for (const ext of extensions) {
+        const fullPath = path.join(dir, lspPath + ext);
+        try {
+          fs.accessSync(fullPath, fs.constants.X_OK);
+          return true;
+        } catch {
+          continue;
+        }
+      }
+    }
+    return false;
+  }
 
+  // Absolute or relative path - check directly
   try {
-    await execAsync(command);
+    const resolvedPath = path.resolve(lspPath);
+    fs.accessSync(resolvedPath, fs.constants.X_OK);
     return true;
   } catch {
-    // If not in PATH, check if it's an absolute path that exists
-    const fs = require('fs');
-    try {
-      fs.accessSync(lspPath, fs.constants.X_OK);
-      return true;
-    } catch {
-      return false;
+    // On Windows, try with .exe extension
+    if (process.platform === 'win32' && !lspPath.endsWith('.exe')) {
+      try {
+        fs.accessSync(path.resolve(lspPath + '.exe'), fs.constants.X_OK);
+        return true;
+      } catch {
+        return false;
+      }
     }
+    return false;
   }
 }
 
