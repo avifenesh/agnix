@@ -115,11 +115,11 @@ cases:
     expected: [AGM-005, XP-001]
     description: "Unguarded platform features triggers AGM-005 and XP-001"
 
-  # Note: agents_md/valid/AGENTS.md contains hooks in Claude Code section which
-  # triggers XP-001 (cross-platform warning for Claude-specific features in AGENTS.md)
+  # Note: agents_md/valid/AGENTS.md contains hooks in "## Claude Code Specific" section
+  # which is a properly guarded section - no XP-001 should fire
   - file: fixtures/agents_md/valid/AGENTS.md
-    expected: [XP-001]
-    description: "Valid AGENTS.md with Claude-specific hooks triggers XP-001"
+    expected: []
+    description: "Valid AGENTS.md with guarded Claude-specific hooks should have no errors"
 
   # ===== Cross-Platform Rules (XP-*) =====
 

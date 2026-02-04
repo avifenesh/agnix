@@ -17,6 +17,9 @@ static ALLOWED_TOOLS_PATTERN: OnceLock<Regex> = OnceLock::new();
 static HARD_CODED_PATH_PATTERN: OnceLock<Regex> = OnceLock::new();
 static MARKDOWN_HEADER_PATTERN: OnceLock<Regex> = OnceLock::new();
 
+// XP-001: Platform guard pattern for Claude-specific section detection
+static PLATFORM_GUARD_PATTERN: OnceLock<Regex> = OnceLock::new();
+
 // XP-004: Build command patterns
 static BUILD_COMMAND_PATTERN: OnceLock<Regex> = OnceLock::new();
 
@@ -69,15 +72,55 @@ fn allowed_tools_pattern() -> &'static Regex {
     })
 }
 
+fn platform_guard_pattern() -> &'static Regex {
+    PLATFORM_GUARD_PATTERN.get_or_init(|| {
+        // Match platform guard comments/headers
+        // Examples: "## Claude Code Specific", "<!-- Claude Code -->", "# Cursor Only"
+        Regex::new(r"(?im)^(?:#+\s*|<!--\s*)(claude|cursor|codex|opencode|cline|copilot|windsurf)(?:\s+code)?(?:\s+specific|\s+only)?(?:\s*-->)?").unwrap()
+    })
+}
+
 /// Find Claude-specific features in content (for XP-001)
 ///
 /// Detects features that only work in Claude Code but not in other platforms
 /// that read AGENTS.md (Codex CLI, OpenCode, GitHub Copilot, Cursor, Cline).
+///
+/// Features inside platform-specific guard sections (e.g., "## Claude Code Specific")
+/// are NOT reported, as they are properly documented for cross-platform awareness.
 pub fn find_claude_specific_features(content: &str) -> Vec<ClaudeSpecificFeature> {
     let mut results = Vec::new();
+    let guard_pattern = platform_guard_pattern();
+
+    // Track if we're in a guarded section
+    let mut in_guarded_section = false;
+    let mut current_platform: Option<String> = None;
 
     // Iterate directly over lines without collecting to Vec (memory optimization)
     for (line_num, line) in content.lines().enumerate() {
+        // Check if this line is a platform guard
+        if let Some(cap) = guard_pattern.captures(line) {
+            in_guarded_section = true;
+            current_platform = cap.get(1).map(|m| m.as_str().to_lowercase());
+            continue;
+        }
+
+        // Check if we hit a new section header (non-guard)
+        if line.starts_with('#') && !guard_pattern.is_match(line) {
+            // New section, reset guard status
+            in_guarded_section = false;
+            current_platform = None;
+        }
+
+        // Skip features if we're in a Claude-guarded section
+        let is_claude_guarded = in_guarded_section
+            && current_platform
+                .as_ref()
+                .is_some_and(|p| p == "claude");
+
+        if is_claude_guarded {
+            continue;
+        }
+
         // Check for hooks patterns
         if let Some(mat) = claude_hooks_pattern().find(line) {
             results.push(ClaudeSpecificFeature {
@@ -1790,5 +1833,153 @@ Use pnpm install for dependencies.
         assert!(is_instruction_file(&PathBuf::from(
             ".github/copilot-instructions.md"
         )));
+    }
+
+    // ===== XP-001: Platform Guard Tests =====
+
+    #[test]
+    fn test_guarded_hooks_not_detected() {
+        // Hooks under "## Claude Code Specific" should NOT be detected
+        let content = r#"# Project
+
+This project is a test.
+
+## Claude Code Specific
+
+- type: PreToolExecution
+  command: echo "test"
+- type: Stop
+  command: cleanup
+"#;
+        let results = find_claude_specific_features(content);
+        assert!(
+            results.is_empty(),
+            "Hooks under Claude guard should NOT be detected: {:?}",
+            results
+        );
+    }
+
+    #[test]
+    fn test_guard_resets_on_new_section() {
+        // Guard should reset when hitting a new non-guard section header
+        let content = r#"## Claude Code Specific
+
+- type: PreToolExecution
+  command: echo "guarded"
+
+## Other Settings
+
+- type: PostToolExecution
+  command: echo "unguarded"
+"#;
+        let results = find_claude_specific_features(content);
+        // Only the unguarded hooks should be detected
+        assert_eq!(results.len(), 1, "Should detect 1 unguarded hook: {:?}", results);
+        assert_eq!(results[0].line, 8); // Line with PostToolExecution
+    }
+
+    #[test]
+    fn test_guard_with_blank_lines() {
+        // Guard should persist across blank lines within the section
+        let content = r#"## Claude Code Specific
+
+- type: PreToolExecution
+  command: echo "test"
+
+- type: Stop
+  command: cleanup
+"#;
+        let results = find_claude_specific_features(content);
+        assert!(
+            results.is_empty(),
+            "Guard should persist across blank lines: {:?}",
+            results
+        );
+    }
+
+    #[test]
+    fn test_html_comment_guard() {
+        // HTML comment style guard should also work: <!-- Claude Code -->
+        let content = r#"<!-- Claude Code -->
+
+- type: PreToolExecution
+  command: echo "test"
+"#;
+        let results = find_claude_specific_features(content);
+        assert!(
+            results.is_empty(),
+            "HTML comment guard should work: {:?}",
+            results
+        );
+    }
+
+    #[test]
+    fn test_unguarded_still_detected() {
+        // Features outside guards should still be detected
+        let content = r#"# Config
+
+- type: PreToolExecution
+  command: echo "test"
+
+agent: security-reviewer
+context: fork
+allowed-tools: Read Write
+"#;
+        let results = find_claude_specific_features(content);
+        // Should detect: hooks, agent, context:fork, allowed-tools
+        assert_eq!(results.len(), 4, "Should detect 4 unguarded features: {:?}", results);
+        assert!(results.iter().any(|r| r.feature == "hooks"));
+        assert!(results.iter().any(|r| r.feature == "agent"));
+        assert!(results.iter().any(|r| r.feature == "context:fork"));
+        assert!(results.iter().any(|r| r.feature == "allowed-tools"));
+    }
+
+    #[test]
+    fn test_only_claude_guard_skips_claude_features() {
+        // Cursor guard should NOT skip Claude features
+        let content = r#"## Cursor Specific
+
+- type: PreToolExecution
+  command: echo "test"
+"#;
+        let results = find_claude_specific_features(content);
+        // Claude features under Cursor guard should still be detected
+        assert_eq!(
+            results.len(),
+            1,
+            "Claude features under Cursor guard should be detected: {:?}",
+            results
+        );
+    }
+
+    #[test]
+    fn test_guard_case_insensitive() {
+        // Guard pattern should be case-insensitive
+        let content = r#"## CLAUDE CODE SPECIFIC
+
+- type: PreToolExecution
+  command: echo "test"
+"#;
+        let results = find_claude_specific_features(content);
+        assert!(
+            results.is_empty(),
+            "Case-insensitive guard should work: {:?}",
+            results
+        );
+    }
+
+    #[test]
+    fn test_guard_with_claude_only_variant() {
+        // "Claude Only" variant should work
+        let content = r#"## Claude Only
+
+agent: security-reviewer
+"#;
+        let results = find_claude_specific_features(content);
+        assert!(
+            results.is_empty(),
+            "Claude Only guard should work: {:?}",
+            results
+        );
     }
 }
