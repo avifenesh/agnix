@@ -3003,14 +3003,14 @@ Body"#;
         let mut remaining = num_bytes;
         while remaining > 0 {
             let to_write = remaining.min(buffer.len());
-            file.write_all(&buffer[..to_write]).unwrap();
+            file.write_all(&buffer[..to_write]).expect("Failed to write test data");
             remaining -= to_write;
         }
     }
 
     #[test]
     fn test_directory_size_until_short_circuits() {
-        let temp_dir = tempfile::tempdir().unwrap();
+        let temp_dir = tempfile::tempdir().expect("Failed to create temp dir");
 
         // Create 10 files of 1MB each (10MB total)
         for i in 0..10 {
@@ -3033,7 +3033,7 @@ Body"#;
 
     #[test]
     fn test_directory_size_until_accurate_under_limit() {
-        let temp_dir = tempfile::tempdir().unwrap();
+        let temp_dir = tempfile::tempdir().expect("Failed to create temp dir");
 
         // Create 2 files of 1KB each (2KB total)
         for i in 0..2 {
@@ -3048,7 +3048,7 @@ Body"#;
 
     #[test]
     fn test_directory_size_until_handles_empty_directory() {
-        let temp_dir = tempfile::tempdir().unwrap();
+        let temp_dir = tempfile::tempdir().expect("Failed to create temp dir");
 
         let size = directory_size_until(temp_dir.path(), 1024 * 1024);
         assert_eq!(size, 0);
@@ -3056,12 +3056,12 @@ Body"#;
 
     #[test]
     fn test_directory_size_until_nested_directories() {
-        let temp_dir = tempfile::tempdir().unwrap();
+        let temp_dir = tempfile::tempdir().expect("Failed to create temp dir");
 
         // Create nested structure: root/sub1/sub2 with files at each level
         let sub1 = temp_dir.path().join("sub1");
         let sub2 = sub1.join("sub2");
-        fs::create_dir_all(&sub2).unwrap();
+        fs::create_dir_all(&sub2).expect("Failed to create nested directories");
 
         // 1KB at root, 2KB in sub1, 3KB in sub2 = 6KB total
         write_bytes_to_file(&temp_dir.path().join("root.bin"), 1024);
@@ -3074,12 +3074,12 @@ Body"#;
 
     #[test]
     fn test_directory_size_until_nested_short_circuits() {
-        let temp_dir = tempfile::tempdir().unwrap();
+        let temp_dir = tempfile::tempdir().expect("Failed to create temp dir");
 
         // Create nested structure with large files
         let sub1 = temp_dir.path().join("sub1");
         let sub2 = sub1.join("sub2");
-        fs::create_dir_all(&sub2).unwrap();
+        fs::create_dir_all(&sub2).expect("Failed to create nested directories");
 
         // 1MB at each level = 3MB total, with 2MB limit should short-circuit
         write_bytes_to_file(&temp_dir.path().join("root.bin"), 1024 * 1024);
@@ -3093,21 +3093,21 @@ Body"#;
 
     #[test]
     fn test_as_015_boundary_exactly_8mb() {
-        let temp_dir = tempfile::tempdir().unwrap();
+        let temp_dir = tempfile::tempdir().expect("Failed to create temp dir");
         let skill_dir = temp_dir.path().join("skill");
-        fs::create_dir_all(&skill_dir).unwrap();
+        fs::create_dir_all(&skill_dir).expect("Failed to create skill directory");
 
         // Create SKILL.md
         let skill_path = skill_dir.join("SKILL.md");
-        fs::write(&skill_path, "---\nname: boundary-test\n---\nBody").unwrap();
+        fs::write(&skill_path, "---\nname: boundary-test\n---\nBody").expect("Failed to write SKILL.md");
 
         // Create file that brings total to exactly 8MB (minus SKILL.md size)
-        let skill_md_size = fs::metadata(&skill_path).unwrap().len() as usize;
+        let skill_md_size = fs::metadata(&skill_path).expect("Failed to read SKILL.md metadata").len() as usize;
         let target_size = 8 * 1024 * 1024 - skill_md_size;
         write_bytes_to_file(&skill_dir.join("data.bin"), target_size);
 
         let validator = SkillValidator;
-        let content = fs::read_to_string(&skill_path).unwrap();
+        let content = fs::read_to_string(&skill_path).expect("Failed to read SKILL.md content");
         let diagnostics = validator.validate(&skill_path, &content, &LintConfig::default());
 
         // Exactly 8MB should NOT trigger AS-015 (uses > not >=)
