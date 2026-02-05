@@ -37,6 +37,7 @@ interface LspConfig {
   severity?: string;
   target?: string;
   tools?: string[];
+  locale?: string;
   rules?: {
     skills?: boolean;
     hooks?: boolean;
@@ -96,6 +97,9 @@ export function buildLspConfig(): LspConfig {
 
   const tools = getUserValue<string[]>('tools');
   if (tools !== undefined) result.tools = tools;
+
+  const locale = getUserValue<string>('locale');
+  if (locale !== undefined) result.locale = locale;
 
   // Rules - only include if user set them
   const rulesObj: any = {};

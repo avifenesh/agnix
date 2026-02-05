@@ -47,6 +47,10 @@ pub struct VsCodeConfig {
     /// Spec revision pins
     #[serde(default)]
     pub specs: Option<VsCodeSpecs>,
+
+    /// Output locale for translated messages (e.g., "en", "es", "zh-CN")
+    #[serde(default)]
+    pub locale: Option<String>,
 }
 
 /// Rule category toggles from VS Code settings.
@@ -206,6 +210,12 @@ impl VsCodeConfig {
         if let Some(ref specs) = self.specs {
             specs.merge_into_spec_revisions(&mut config.spec_revisions);
         }
+
+        // Merge locale
+        if let Some(ref locale) = self.locale {
+            config.locale = Some(locale.clone());
+            crate::locale::init_from_config(locale);
+        }
     }
 }
 
@@ -329,6 +339,7 @@ mod tests {
             "severity": "Error",
             "target": "ClaudeCode",
             "tools": ["claude-code", "cursor"],
+            "locale": "es",
             "rules": {
                 "skills": false,
                 "hooks": true,
@@ -366,6 +377,7 @@ mod tests {
             config.tools,
             Some(vec!["claude-code".to_string(), "cursor".to_string()])
         );
+        assert_eq!(config.locale, Some("es".to_string()));
 
         let rules = config.rules.expect("rules should be present");
         assert_eq!(rules.skills, Some(false));
@@ -415,6 +427,7 @@ mod tests {
         assert!(config.rules.is_none());
         assert!(config.versions.is_none());
         assert!(config.specs.is_none());
+        assert!(config.locale.is_none());
     }
 
     #[test]
@@ -568,6 +581,43 @@ mod tests {
             lint_config.tools,
             vec!["claude-code".to_string(), "cursor".to_string()]
         );
+    }
+
+    #[test]
+    fn test_locale_merge() {
+        // Pin locale to "en" for test isolation
+        rust_i18n::set_locale("en");
+
+        let mut lint_config = LintConfig::default();
+        assert!(lint_config.locale.is_none());
+
+        let vscode_config = VsCodeConfig {
+            locale: Some("es".to_string()),
+            ..Default::default()
+        };
+
+        vscode_config.merge_into_lint_config(&mut lint_config);
+
+        assert_eq!(lint_config.locale, Some("es".to_string()));
+
+        // Reset locale for other tests
+        rust_i18n::set_locale("en");
+    }
+
+    #[test]
+    fn test_locale_not_set_preserves_existing() {
+        let mut lint_config = LintConfig::default();
+        lint_config.locale = Some("zh-CN".to_string());
+
+        let vscode_config = VsCodeConfig {
+            severity: Some("Error".to_string()),
+            ..Default::default()
+        };
+
+        vscode_config.merge_into_lint_config(&mut lint_config);
+
+        // locale not in VsCodeConfig, so existing value preserved
+        assert_eq!(lint_config.locale, Some("zh-CN".to_string()));
     }
 }
 
