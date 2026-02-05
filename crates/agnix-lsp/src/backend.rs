@@ -44,7 +44,6 @@ fn create_error_diagnostic(code: &str, message: String) -> Diagnostic {
 /// Resolves `.` and `..` logically -- used when `canonicalize()` fails.
 /// Expects absolute paths (LSP URIs always produce absolute paths).
 fn normalize_path(path: &Path) -> PathBuf {
-    debug_assert!(path.is_absolute(), "normalize_path expects absolute paths");
     let mut components: Vec<Component<'_>> = Vec::new();
     for component in path.components() {
         match component {
