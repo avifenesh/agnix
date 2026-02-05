@@ -83,17 +83,14 @@ pub struct SpecRevisions {
 ///
 /// When cloned, the `Arc<dyn FileSystem>` is shared (not deep-cloned),
 /// maintaining the same filesystem instance across clones.
+///
+/// # Note
+///
+/// The `root_dir` and `import_cache` fields are kept as direct public
+/// fields on `LintConfig` for backward compatibility. This struct only
+/// contains the filesystem abstraction.
 #[derive(Clone)]
 struct RuntimeContext {
-    /// Runtime-only validation root directory
-    root_dir: Option<PathBuf>,
-
-    /// Shared import cache for project-level validation.
-    ///
-    /// When set, validators can use this cache to share parsed import data
-    /// across files, avoiding redundant parsing during import chain traversal.
-    import_cache: Option<crate::parsers::ImportCache>,
-
     /// File system abstraction for testability.
     ///
     /// Validators use this to perform file system operations. Defaults to
@@ -104,8 +101,6 @@ struct RuntimeContext {
 impl Default for RuntimeContext {
     fn default() -> Self {
         Self {
-            root_dir: None,
-            import_cache: None,
             fs: Arc::new(RealFileSystem),
         }
     }
@@ -114,8 +109,6 @@ impl Default for RuntimeContext {
 impl std::fmt::Debug for RuntimeContext {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("RuntimeContext")
-            .field("root_dir", &self.root_dir)
-            .field("import_cache", &self.import_cache.as_ref().map(|_| "..."))
             .field("fs", &"Arc<dyn FileSystem>")
             .finish()
     }
@@ -162,7 +155,7 @@ impl<'a> DefaultRuleFilter<'a> {
         if rule_id.starts_with("CC-") {
             return matches!(self.target, TargetTool::ClaudeCode | TargetTool::Generic);
         }
-        // All other rules (AS-*, XML-*, REF-*) apply to all targets
+        // All other rules apply to all targets (see TOOL_RULE_PREFIXES for tool-specific rules)
         true
     }
 
@@ -278,10 +271,24 @@ pub struct LintConfig {
     #[serde(default)]
     pub spec_revisions: SpecRevisions,
 
-    /// Runtime context for validation operations (not serialized).
+    /// Project root directory for validation (not serialized).
     ///
-    /// Groups runtime-only state: root_dir, import_cache, and filesystem.
-    /// These are set up at runtime and not persisted to configuration files.
+    /// When set, validators can use this to resolve relative paths and
+    /// detect project-escape attempts in import validation.
+    #[serde(skip)]
+    pub root_dir: Option<PathBuf>,
+
+    /// Shared import cache for project-level validation (not serialized).
+    ///
+    /// When set, validators can use this cache to share parsed import data
+    /// across files, avoiding redundant parsing during import chain traversal.
+    #[serde(skip)]
+    pub import_cache: Option<crate::parsers::ImportCache>,
+
+    /// Internal runtime context for validation operations (not serialized).
+    ///
+    /// Groups the filesystem abstraction. The `root_dir` and `import_cache`
+    /// fields are kept separate for backward compatibility.
     #[serde(skip)]
     runtime: RuntimeContext,
 }
@@ -301,6 +308,8 @@ impl Default for LintConfig {
             mcp_protocol_version: None,
             tool_versions: ToolVersions::default(),
             spec_revisions: SpecRevisions::default(),
+            root_dir: None,
+            import_cache: None,
             runtime: RuntimeContext::default(),
         }
     }
@@ -469,13 +478,26 @@ impl LintConfig {
     // =========================================================================
 
     /// Get the runtime validation root directory, if set.
+    ///
+    /// Note: For backward compatibility, you can also access `config.root_dir`
+    /// directly as a public field.
+    #[inline]
     pub fn root_dir(&self) -> Option<&PathBuf> {
-        self.runtime.root_dir.as_ref()
+        self.root_dir.as_ref()
+    }
+
+    /// Alias for `root_dir()` for consistency with other accessors.
+    #[inline]
+    pub fn get_root_dir(&self) -> Option<&PathBuf> {
+        self.root_dir()
     }
 
     /// Set the runtime validation root directory (not persisted)
+    ///
+    /// Note: For backward compatibility, you can also set `config.root_dir`
+    /// directly as a public field.
     pub fn set_root_dir(&mut self, root_dir: PathBuf) {
-        self.runtime.root_dir = Some(root_dir);
+        self.root_dir = Some(root_dir);
     }
 
     /// Set the shared import cache for project-level validation (not persisted).
@@ -483,8 +505,11 @@ impl LintConfig {
     /// When set, the ImportsValidator will use this cache to share parsed
     /// import data across files, improving performance by avoiding redundant
     /// parsing during import chain traversal.
+    ///
+    /// Note: For backward compatibility, you can also set `config.import_cache`
+    /// directly as a public field.
     pub fn set_import_cache(&mut self, cache: crate::parsers::ImportCache) {
-        self.runtime.import_cache = Some(cache);
+        self.import_cache = Some(cache);
     }
 
     /// Get the shared import cache, if one has been set.
@@ -492,8 +517,18 @@ impl LintConfig {
     /// Returns `None` for single-file validation or when the cache hasn't
     /// been initialized. Returns `Some(&ImportCache)` during project-level
     /// validation where import results are shared across files.
+    ///
+    /// Note: For backward compatibility, you can also access `config.import_cache`
+    /// directly as a public field.
+    #[inline]
     pub fn import_cache(&self) -> Option<&crate::parsers::ImportCache> {
-        self.runtime.import_cache.as_ref()
+        self.import_cache.as_ref()
+    }
+
+    /// Alias for `import_cache()` for consistency with other accessors.
+    #[inline]
+    pub fn get_import_cache(&self) -> Option<&crate::parsers::ImportCache> {
+        self.import_cache()
     }
 
     /// Get the file system abstraction.
