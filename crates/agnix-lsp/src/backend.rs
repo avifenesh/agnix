@@ -380,13 +380,14 @@ impl LanguageServer for Backend {
             *config_guard = Arc::new(new_config);
         }
 
-        // Re-validate all open documents with new config (spawn in parallel)
+        // Re-validate all open documents with new config
         let documents: Vec<Url> = {
             let docs = self.documents.read().await;
             docs.keys().cloned().collect()
         };
 
-        // Spawn validation tasks in parallel for better performance
+        // Validate documents sequentially (avoids futures dependency)
+        // For typical workloads (<10 open files), sequential is acceptable
         for uri in documents {
             self.validate_from_content_and_publish(uri).await;
         }

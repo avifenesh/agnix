@@ -142,46 +142,46 @@ suite('Extension Test Suite', () => {
     }
   });
 
-	suite('Configuration Sync', () => {
-		test('buildLspConfig should transform camelCase to snake_case', () => {
-			const config = buildLspConfig();
+  suite('Configuration Sync', () => {
+  	test('buildLspConfig should transform camelCase to snake_case', () => {
+  		const config = buildLspConfig();
 
-			assert.ok(config.rules);
-			assert.strictEqual(typeof config.rules.cross_platform, 'boolean');
-			assert.strictEqual(typeof config.rules.agents_md, 'boolean');
-			assert.strictEqual(typeof config.rules.prompt_engineering, 'boolean');
-		});
+  		assert.ok(config.rules);
+  		assert.strictEqual(typeof config.rules.cross_platform, 'boolean');
+  		assert.strictEqual(typeof config.rules.agents_md, 'boolean');
+  		assert.strictEqual(typeof config.rules.prompt_engineering, 'boolean');
+  	});
 
-		test('buildLspConfig should include all configuration sections', () => {
-			const config = buildLspConfig();
+  	test('buildLspConfig should include all configuration sections', () => {
+  		const config = buildLspConfig();
 
-			assert.ok('severity' in config);
-			assert.ok('target' in config);
-			assert.ok('tools' in config);
-			assert.ok('rules' in config);
-			assert.ok('versions' in config);
-			assert.ok('specs' in config);
-		});
+  		assert.ok('severity' in config);
+  		assert.ok('target' in config);
+  		assert.ok('tools' in config);
+  		assert.ok('rules' in config);
+  		assert.ok('versions' in config);
+  		assert.ok('specs' in config);
+  	});
 
-		test('buildLspConfig rules section should have all 14 fields', () => {
-			const config = buildLspConfig();
+  	test('buildLspConfig rules section should have all 14 fields', () => {
+  		const config = buildLspConfig();
 
-			assert.strictEqual(typeof config.rules?.skills, 'boolean');
-			assert.strictEqual(typeof config.rules?.hooks, 'boolean');
-			assert.strictEqual(typeof config.rules?.agents, 'boolean');
-			assert.strictEqual(typeof config.rules?.memory, 'boolean');
-			assert.strictEqual(typeof config.rules?.plugins, 'boolean');
-			assert.strictEqual(typeof config.rules?.xml, 'boolean');
-			assert.strictEqual(typeof config.rules?.mcp, 'boolean');
-			assert.strictEqual(typeof config.rules?.imports, 'boolean');
-			assert.strictEqual(typeof config.rules?.cross_platform, 'boolean');
-			assert.strictEqual(typeof config.rules?.agents_md, 'boolean');
-			assert.strictEqual(typeof config.rules?.copilot, 'boolean');
-			assert.strictEqual(typeof config.rules?.cursor, 'boolean');
-			assert.strictEqual(typeof config.rules?.prompt_engineering, 'boolean');
-			assert.ok(Array.isArray(config.rules?.disabled_rules));
-		});
-	});
+  		assert.strictEqual(typeof config.rules?.skills, 'boolean');
+  		assert.strictEqual(typeof config.rules?.hooks, 'boolean');
+  		assert.strictEqual(typeof config.rules?.agents, 'boolean');
+  		assert.strictEqual(typeof config.rules?.memory, 'boolean');
+  		assert.strictEqual(typeof config.rules?.plugins, 'boolean');
+  		assert.strictEqual(typeof config.rules?.xml, 'boolean');
+  		assert.strictEqual(typeof config.rules?.mcp, 'boolean');
+  		assert.strictEqual(typeof config.rules?.imports, 'boolean');
+  		assert.strictEqual(typeof config.rules?.cross_platform, 'boolean');
+  		assert.strictEqual(typeof config.rules?.agents_md, 'boolean');
+  		assert.strictEqual(typeof config.rules?.copilot, 'boolean');
+  		assert.strictEqual(typeof config.rules?.cursor, 'boolean');
+  		assert.strictEqual(typeof config.rules?.prompt_engineering, 'boolean');
+  		assert.ok(Array.isArray(config.rules?.disabled_rules));
+  	});
+  });
 
   suite('Language Support', () => {
     test('skill-markdown language should be registered', async () => {
