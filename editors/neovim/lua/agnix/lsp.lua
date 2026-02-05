@@ -138,23 +138,24 @@ function M.setup_autocommands()
   })
 
   -- Also handle BufReadPost for files that may already have their filetype set.
+  -- Uses is_agnix_file() as the single source of truth for supported file patterns.
   vim.api.nvim_create_autocmd('BufReadPost', {
     group = group,
-    pattern = {
-      '*/SKILL.md', '*/CLAUDE.md', '*/CLAUDE.local.md',
-      '*/AGENTS.md', '*/AGENTS.local.md', '*/AGENTS.override.md',
-      '*/.claude/settings.json', '*/.claude/settings.local.json',
-      '*/plugin.json', '*.mcp.json', '*/mcp.json', '*/mcp-*.json',
-      '*/.github/copilot-instructions.md', '*/.github/instructions/*.instructions.md',
-      '*/.cursor/rules/*.mdc', '*/.cursorrules',
-    },
+    pattern = '*',
     callback = function(ev)
       if not cfg.autostart then
         return
       end
+      local bufname = vim.api.nvim_buf_get_name(ev.buf)
+      if bufname == '' then
+        return
+      end
+      if not util.is_agnix_file(bufname) then
+        return
+      end
       M.start(ev.buf)
     end,
-    desc = 'Attach agnix LSP to known file patterns',
+    desc = 'Attach agnix LSP to agnix-supported files',
   })
 end
 

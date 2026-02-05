@@ -93,7 +93,7 @@ function M.setup()
       vim.notify('[agnix] Usage: AgnixIgnoreRule <rule_id>', vim.log.levels.WARN)
       return
     end
-    if not rule_id:match('^[A-Z]+%-[A-Z]*%-?%d+$') then
+    if not (rule_id:match('^[A-Z]+%-%d+$') or rule_id:match('^[A-Z]+%-[A-Z]+%-%d+$')) then
       vim.notify('[agnix] Invalid rule ID format: ' .. rule_id, vim.log.levels.ERROR)
       return
     end
@@ -106,7 +106,7 @@ function M.setup()
       vim.notify('[agnix] Usage: AgnixShowRuleDoc <rule_id>', vim.log.levels.WARN)
       return
     end
-    if not rule_id:match('^[A-Z]+%-[A-Z]*%-?%d+$') then
+    if not (rule_id:match('^[A-Z]+%-%d+$') or rule_id:match('^[A-Z]+%-[A-Z]+%-%d+$')) then
       vim.notify('[agnix] Invalid rule ID format: ' .. rule_id, vim.log.levels.ERROR)
       return
     end
@@ -115,10 +115,11 @@ function M.setup()
     if vim.ui.open then
       vim.ui.open(url)
     else
+      local sysname = vim.loop.os_uname().sysname
       local cmd
-      if vim.fn.has('mac') == 1 then
+      if sysname == 'Darwin' then
         cmd = { 'open', url }
-      elseif vim.fn.has('win32') == 1 then
+      elseif sysname:find('Windows') then
         cmd = { 'cmd', '/c', 'start', '""', url }
       else
         cmd = { 'xdg-open', url }
@@ -240,7 +241,11 @@ function M._ignore_rule(rule_id)
 
   local ok, write_err = pcall(function()
     if has_disabled_rules then
-      local new_content = content:gsub('(disabled_rules%s*=%s*%[)', '%1"' .. rule_id .. '", ')
+      local new_content, subs = content:gsub('(disabled_rules%s*=%s*%[)', '%1"' .. rule_id .. '", ')
+      if subs == 0 then
+        vim.notify('[agnix] Could not locate disabled_rules array in .agnix.toml', vim.log.levels.WARN)
+        return
+      end
       local out = io.open(toml_path, 'w')
       if not out then error('Cannot write to ' .. toml_path) end
       out:write(new_content)

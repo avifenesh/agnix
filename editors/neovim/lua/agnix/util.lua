@@ -87,13 +87,11 @@ function M.is_agnix_file(path)
     return false
   end
 
-  -- Normalize once to avoid repeated gsub in each helper call.
+  -- Normalize once, then use the existing helper functions.
   local p = normalize(path)
-  local name = p:match('[^/]+$') or p
-  local parent_path = p:match('(.+)/[^/]+$')
-  local parent = parent_path and parent_path:match('[^/]+$') or nil
-  local gp_path = p:match('(.+)/[^/]+/[^/]+$')
-  local grandparent = gp_path and gp_path:match('[^/]+$') or nil
+  local name = basename(p)
+  local parent = parent_dir_name(p)
+  local grandparent = grandparent_dir_name(p)
 
   -- SKILL.md
   if name == 'SKILL.md' then
