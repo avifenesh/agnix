@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- JetBrains IDE plugin with LSP integration (#196)
+  - Supports IntelliJ IDEA, WebStorm, PyCharm, and all JetBrains IDEs (2023.2+)
+  - Real-time validation, quick fixes, hover documentation
+  - Auto-download of agnix-lsp binary from GitHub releases
+  - Settings UI with LSP path configuration, auto-download toggle, trace level
+  - Context menu actions: Validate File, Restart Server, Settings
+  - Uses LSP4IJ for standard LSP client support
 - Opt-in telemetry module with privacy-first design (#209)
   - Disabled by default, requires explicit `agnix telemetry enable`
   - Tracks aggregate metrics: rule trigger counts, error/warning counts, duration

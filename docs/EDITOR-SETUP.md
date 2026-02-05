@@ -157,6 +157,71 @@ If using legacy `.cursorrules` file, agnix warns about migration (CUR-006). To m
 3. Add frontmatter with `description` and `globs`
 4. Delete `.cursorrules`
 
+## JetBrains IDEs
+
+agnix provides a native JetBrains plugin for IntelliJ IDEA, WebStorm, PyCharm, and all other JetBrains IDEs.
+
+### Installation
+
+#### From JetBrains Marketplace
+
+1. Open **Settings/Preferences** > **Plugins**
+2. Search for "agnix"
+3. Click **Install**
+4. Restart your IDE
+
+#### Manual Installation
+
+1. Download the latest release from [GitHub Releases](https://github.com/avifenesh/agnix/releases)
+2. Open **Settings/Preferences** > **Plugins**
+3. Click the gear icon > **Install Plugin from Disk...**
+4. Select the downloaded `.zip` file
+5. Restart your IDE
+
+### Requirements
+
+- JetBrains IDE 2023.2 or later
+- [LSP4IJ](https://plugins.jetbrains.com/plugin/23257-lsp4ij) plugin (installed automatically as dependency)
+
+### Configuration
+
+Open **Settings/Preferences** > **Tools** > **agnix** to configure:
+
+- **Enable**: Toggle validation on/off
+- **LSP binary path**: Custom path to agnix-lsp (leave empty for auto-detection)
+- **Auto-download**: Automatically download LSP binary if not found
+- **Trace level**: Debug LSP communication (off, messages, verbose)
+
+### Usage
+
+1. Open any supported file (e.g., `SKILL.md`, `CLAUDE.md`)
+2. Issues appear automatically in the **Problems** panel
+3. Hover over highlighted text for details
+4. Use quick fixes (lightbulb icon or Alt+Enter) to resolve issues
+
+### Context Menu
+
+Right-click in the editor to access:
+- **agnix** > **Validate Current File**
+- **agnix** > **Restart Language Server**
+- **agnix** > **Settings**
+
+### Troubleshooting
+
+**Language server not starting:**
+
+1. Check **Settings** > **Tools** > **agnix** for correct configuration
+2. Verify agnix-lsp binary exists at the configured path
+3. Try **Tools** > **agnix** > **Restart Language Server**
+4. Check the IDE log for errors (**Help** > **Show Log in Explorer/Finder**)
+
+**Binary not found:**
+
+The plugin can automatically download the LSP binary:
+1. Enable **Auto-download** in settings
+2. Or manually install: `cargo install agnix-lsp`
+3. Or download from [GitHub Releases](https://github.com/avifenesh/agnix/releases)
+
 ## Supported File Types
 
 - `SKILL.md` - Agent skill definitions

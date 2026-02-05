@@ -168,7 +168,7 @@ Real-time diagnostics as you type, quick-fix code actions, hover documentation.
 
 ![VS Code validation example](assets/vscode-validation.png)
 
-See [Editor Setup](docs/EDITOR-SETUP.md) for VS Code, Neovim, Helix configuration.
+See [Editor Setup](docs/EDITOR-SETUP.md) for VS Code, JetBrains, Neovim, Helix, Cursor configuration.
 
 ## MCP Server
 
@@ -253,6 +253,7 @@ crates/
   agnix-rules/    # Rule metadata
 editors/
   vscode/         # VS Code extension
+  jetbrains/      # JetBrains IDE plugin
 knowledge-base/   # 100 rules documentation
 ```
 
@@ -264,6 +265,7 @@ knowledge-base/   # 100 rules documentation
 - **LSP server** for real-time editor diagnostics
 - **MCP server** for AI assistant integration
 - **VS Code extension** with syntax highlighting
+- **JetBrains plugin** for IntelliJ, WebStorm, PyCharm
 - **GitHub Action** for CI/CD integration
 - **Auto-fix** infrastructure (--fix, --dry-run, --fix-safe)
 - **Parallel validation** using rayon
@@ -273,7 +275,7 @@ knowledge-base/   # 100 rules documentation
 
 See [GitHub Issues](https://github.com/avifenesh/agnix/issues) for the full roadmap.
 
-**Editor integrations**: Neovim plugin, JetBrains IDE, Zed extension
+**Editor integrations**: Neovim plugin, Zed extension
 
 **Features**: Documentation website, additional rule categories
 
