@@ -28,6 +28,7 @@ use rmcp::{
 };
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use std::collections::HashSet;
 use std::path::Path;
 
 /// Input for validate_file tool
@@ -185,32 +186,65 @@ fn normalize_tool_entry(value: &str) -> Option<String> {
     if trimmed.is_empty() {
         None
     } else {
-        Some(trimmed.to_string())
+        Some(trimmed.to_ascii_lowercase())
     }
 }
 
-fn parse_tools(tools: Option<ToolsInput>) -> Vec<String> {
-    match tools {
+fn canonicalize_tool(value: &str) -> Option<&'static str> {
+    match value {
+        "generic" => Some("generic"),
+        "claude-code" | "claudecode" => Some("claude-code"),
+        "cursor" => Some("cursor"),
+        "codex" => Some("codex"),
+        "copilot" | "github-copilot" => Some("github-copilot"),
+        _ => None,
+    }
+}
+
+fn parse_tools(tools: Option<ToolsInput>) -> Result<Vec<String>, McpError> {
+    let raw: Vec<String> = match tools {
         None => Vec::new(),
         Some(ToolsInput::Csv(csv)) => csv.split(',').filter_map(normalize_tool_entry).collect(),
         Some(ToolsInput::List(list)) => list
             .into_iter()
             .filter_map(|entry| normalize_tool_entry(&entry))
             .collect(),
+    };
+
+    if raw.is_empty() {
+        return Ok(Vec::new());
     }
+
+    let mut seen = HashSet::new();
+    let mut normalized = Vec::new();
+    for tool in raw {
+        let canonical = canonicalize_tool(&tool).ok_or_else(|| {
+            make_invalid_params(format!(
+                "Unknown tool '{}'. Valid values: generic, claude-code, cursor, codex, copilot, github-copilot.",
+                tool
+            ))
+        })?;
+        if seen.insert(canonical) {
+            normalized.push(canonical.to_string());
+        }
+    }
+
+    Ok(normalized)
 }
 
 fn apply_tool_selection(
     config: &mut LintConfig,
     tools: Option<ToolsInput>,
     target: Option<String>,
-) {
-    let parsed_tools = parse_tools(tools);
+) -> Result<(), McpError> {
+    let parsed_tools = parse_tools(tools)?;
     if parsed_tools.is_empty() {
         config.target = parse_target(target);
     } else {
         config.tools = parsed_tools;
     }
+
+    Ok(())
 }
 
 fn diagnostics_to_result(
@@ -278,7 +312,7 @@ impl AgnixServer {
         Parameters(input): Parameters<ValidateFileInput>,
     ) -> Result<CallToolResult, McpError> {
         let mut config = LintConfig::default();
-        apply_tool_selection(&mut config, input.tools, input.target);
+        apply_tool_selection(&mut config, input.tools, input.target)?;
 
         let file_path = Path::new(&input.path);
 
@@ -301,7 +335,7 @@ impl AgnixServer {
         Parameters(input): Parameters<ValidateProjectInput>,
     ) -> Result<CallToolResult, McpError> {
         let mut config = LintConfig::default();
-        apply_tool_selection(&mut config, input.tools, input.target);
+        apply_tool_selection(&mut config, input.tools, input.target)?;
 
         let validation_result = core_validate_project(Path::new(&input.path), &config)
             .map_err(|e| make_error(format!("Failed to validate project: {}", e)))?;
@@ -399,7 +433,9 @@ impl ServerHandler for AgnixServer {
 
 #[cfg(test)]
 mod tests {
-    use super::{apply_tool_selection, parse_tools, ToolsInput, ValidateFileInput};
+    use super::{
+        apply_tool_selection, parse_tools, ToolsInput, ValidateFileInput, ValidateProjectInput,
+    };
     use agnix_core::config::TargetTool;
     use agnix_core::LintConfig;
     use serde_json::json;
@@ -408,7 +444,8 @@ mod tests {
     fn test_parse_tools_csv_trims_and_discards_empty_entries() {
         let tools = parse_tools(Some(ToolsInput::Csv(
             "claude-code, cursor, ,codex,, ".to_string(),
-        )));
+        )))
+        .expect("valid tools should parse");
         assert_eq!(tools, vec!["claude-code", "cursor", "codex"]);
     }
 
@@ -419,8 +456,27 @@ mod tests {
             "".to_string(),
             " cursor".to_string(),
             "   ".to_string(),
-        ])));
+        ])))
+        .expect("valid tools should parse");
         assert_eq!(tools, vec!["claude-code", "cursor"]);
+    }
+
+    #[test]
+    fn test_parse_tools_canonicalizes_and_deduplicates_entries() {
+        let tools = parse_tools(Some(ToolsInput::List(vec![
+            "copilot".to_string(),
+            "github-copilot".to_string(),
+            "cursor".to_string(),
+            "CURSOR".to_string(),
+        ])))
+        .expect("valid tools should parse");
+        assert_eq!(tools, vec!["github-copilot", "cursor"]);
+    }
+
+    #[test]
+    fn test_parse_tools_rejects_unknown_tools() {
+        let result = parse_tools(Some(ToolsInput::List(vec!["claud-code".to_string()])));
+        assert!(result.is_err());
     }
 
     #[test]
@@ -430,7 +486,8 @@ mod tests {
             &mut config,
             Some(ToolsInput::Csv(" , ".to_string())),
             Some("cursor".to_string()),
-        );
+        )
+        .expect("empty tools should fall back to target");
 
         assert!(config.tools.is_empty());
         assert_eq!(config.target, TargetTool::Cursor);
@@ -439,10 +496,25 @@ mod tests {
     #[test]
     fn test_apply_tool_selection_falls_back_to_target_when_tools_missing() {
         let mut config = LintConfig::default();
-        apply_tool_selection(&mut config, None, Some("claude-code".to_string()));
+        apply_tool_selection(&mut config, None, Some("claude-code".to_string()))
+            .expect("missing tools should fall back to target");
 
         assert!(config.tools.is_empty());
         assert_eq!(config.target, TargetTool::ClaudeCode);
+    }
+
+    #[test]
+    fn test_apply_tool_selection_falls_back_to_target_when_tools_empty_list() {
+        let mut config = LintConfig::default();
+        apply_tool_selection(
+            &mut config,
+            Some(ToolsInput::List(vec![])),
+            Some("codex".to_string()),
+        )
+        .expect("empty list should fall back to target");
+
+        assert!(config.tools.is_empty());
+        assert_eq!(config.target, TargetTool::Codex);
     }
 
     #[test]
@@ -452,10 +524,24 @@ mod tests {
             &mut config,
             Some(ToolsInput::Csv("claude-code,cursor".to_string())),
             Some("codex".to_string()),
-        );
+        )
+        .expect("valid tools should override target");
 
         assert_eq!(config.tools, vec!["claude-code", "cursor"]);
         // target remains default; tools array drives filtering precedence in core.
+        assert_eq!(config.target, TargetTool::Generic);
+    }
+
+    #[test]
+    fn test_apply_tool_selection_rejects_unknown_tools() {
+        let mut config = LintConfig::default();
+        let result = apply_tool_selection(
+            &mut config,
+            Some(ToolsInput::Csv("unknown-tool".to_string())),
+            Some("claude-code".to_string()),
+        );
+        assert!(result.is_err());
+        assert!(config.tools.is_empty());
         assert_eq!(config.target, TargetTool::Generic);
     }
 
@@ -490,6 +576,36 @@ mod tests {
             _ => panic!("expected array tools variant"),
         }
         assert!(input.target.is_none());
+    }
+
+    #[test]
+    fn test_validate_project_input_deserializes_csv_tools_payload() {
+        let input: ValidateProjectInput = serde_json::from_value(json!({
+            "path": ".",
+            "tools": "claude-code,cursor"
+        }))
+        .expect("project CSV tools payload should deserialize");
+
+        match input.tools {
+            Some(ToolsInput::Csv(value)) => assert_eq!(value, "claude-code,cursor"),
+            _ => panic!("expected CSV tools variant"),
+        }
+    }
+
+    #[test]
+    fn test_validate_project_input_deserializes_array_tools_payload() {
+        let input: ValidateProjectInput = serde_json::from_value(json!({
+            "path": ".",
+            "tools": ["claude-code", "cursor"]
+        }))
+        .expect("project array tools payload should deserialize");
+
+        match input.tools {
+            Some(ToolsInput::List(values)) => {
+                assert_eq!(values, vec!["claude-code", "cursor"]);
+            }
+            _ => panic!("expected array tools variant"),
+        }
     }
 }
 
