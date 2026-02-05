@@ -153,7 +153,12 @@ fn parse_timestamp(ts: &str) -> Option<u64> {
     }
 
     let bytes = ts.as_bytes();
-    if bytes[4] != b'-' || bytes[7] != b'-' || bytes[10] != b'T' || bytes[13] != b':' || bytes[16] != b':' {
+    if bytes[4] != b'-'
+        || bytes[7] != b'-'
+        || bytes[10] != b'T'
+        || bytes[13] != b':'
+        || bytes[16] != b':'
+    {
         return None;
     }
 
