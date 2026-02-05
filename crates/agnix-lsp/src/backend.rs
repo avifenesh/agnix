@@ -158,13 +158,13 @@ impl Backend {
         };
 
         let config = Arc::clone(&*self.config.read().await);
+        let registry = Arc::clone(&self.registry);
         let result = tokio::task::spawn_blocking(move || {
             let file_type = agnix_core::detect_file_type(&file_path);
             if file_type == agnix_core::FileType::Unknown {
                 return Ok(vec![]);
             }
 
-            let registry = agnix_core::ValidatorRegistry::with_defaults();
             let validators = registry.validators_for(file_type);
             let mut diagnostics = Vec::new();
 
@@ -377,17 +377,19 @@ impl LanguageServer for Backend {
             *config_guard = Arc::new(new_config);
         }
 
-        // Re-validate all open documents with new config
-        let documents: Vec<(Url, String)> = {
+        // Re-validate all open documents with new config (parallel)
+        let documents: Vec<Url> = {
             let docs = self.documents.read().await;
-            docs.iter()
-                .map(|(uri, content)| (uri.clone(), content.clone()))
-                .collect()
+            docs.keys().cloned().collect()
         };
 
-        for (uri, _content) in documents {
-            self.validate_from_content_and_publish(uri).await;
-        }
+        // Use join_all to validate documents in parallel
+        use futures::future::join_all;
+        let validation_futures: Vec<_> = documents
+            .into_iter()
+            .map(|uri| self.validate_from_content_and_publish(uri))
+            .collect();
+        join_all(validation_futures).await;
     }
 }
 

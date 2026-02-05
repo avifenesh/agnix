@@ -287,8 +287,8 @@ async function downloadAndInstallLsp(): Promise<string | null> {
             throw new Error(`Binary not found after extraction: ${binaryPath}`);
           }
 
-          // Make executable
-          await execAsync(`chmod +x "${binaryPath}"`);
+          // Make executable - use fs.chmodSync instead of shell command to avoid injection risks
+          fs.chmodSync(binaryPath, 0o755);
         }
 
         // Clean up archive
