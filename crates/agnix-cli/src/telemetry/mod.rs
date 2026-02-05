@@ -88,17 +88,16 @@ pub fn record_validation(
         Err(_) => return,
     };
 
-    if queue.push(event).is_err() {
-        return;
-    }
-
-    // HTTP submission happens in background thread (only with telemetry feature).
-    // If CLI exits before this completes, events remain safely queued for next run.
-    #[cfg(feature = "telemetry")]
-    {
-        thread::spawn(move || {
-            try_submit_queued_events(&config, &mut queue);
-        });
+    // Push event to queue - if this fails, we can't do anything more
+    if queue.push(event).is_ok() {
+        // HTTP submission happens in background thread (only with telemetry feature).
+        // If CLI exits before this completes, events remain safely queued for next run.
+        #[cfg(feature = "telemetry")]
+        {
+            thread::spawn(move || {
+                try_submit_queued_events(&config, &mut queue);
+            });
+        }
     }
 }
 
