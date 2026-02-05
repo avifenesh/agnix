@@ -1,49 +1,4 @@
 //! Hooks validation rules (CC-HK-001 to CC-HK-012)
-//!
-//! This module validates Claude Code hooks configuration files (.claude/settings.json).
-//!
-//! ## Rules Reference
-//!
-//! | Rule | Severity | Description |
-//! |------|----------|-------------|
-//! | CC-HK-001 | Error | Invalid event name |
-//! | CC-HK-002 | Error | Prompt hook on wrong event type |
-//! | CC-HK-003 | Error | Missing matcher for tool events |
-//! | CC-HK-004 | Error | Matcher on non-tool event |
-//! | CC-HK-005 | Error | Missing type field |
-//! | CC-HK-006 | Error | Missing command field |
-//! | CC-HK-007 | Error | Missing prompt field |
-//! | CC-HK-008 | Error | Script file not found |
-//! | CC-HK-009 | Warning | Dangerous command patterns |
-//! | CC-HK-010 | Warning | Timeout policy violation |
-//! | CC-HK-011 | Error | Invalid timeout value |
-//! | CC-HK-012 | Error | JSON parse error |
-//!
-//! ## Architecture
-//!
-//! Validation functions are organized by rule number and grouped by validation phase:
-//!
-//! ### Pre-Parse Phase (raw JSON checks)
-//! - `validate_cc_hk_005_missing_type_field` - Check for missing type field
-//! - `validate_cc_hk_011_invalid_timeout_values` - Check for invalid timeout values
-//!
-//! ### Event-Level Validation
-//! - `validate_cc_hk_001_event_name` - Validate event name with auto-fix
-//! - `validate_cc_hk_003_matcher_required` - Check matcher required for tool events
-//! - `validate_cc_hk_004_matcher_forbidden` - Check matcher forbidden on non-tool events
-//!
-//! ### Command Hook Validation
-//! - `validate_cc_hk_006_command_field` - Check for missing command field
-//! - `validate_cc_hk_008_script_exists` - Check script file exists
-//! - `validate_cc_hk_009_dangerous_patterns` - Check for dangerous command patterns
-//! - `validate_cc_hk_010_command_timeout` - Check command hook timeout policy
-//!
-//! ### Prompt Hook Validation
-//! - `validate_cc_hk_002_prompt_event_type` - Check prompt hook on correct event
-//! - `validate_cc_hk_007_prompt_field` - Check for missing prompt field
-//! - `validate_cc_hk_010_prompt_timeout` - Check prompt hook timeout policy
-//!
-//! The main `validate()` method orchestrates these functions in sequence.
 
 use crate::{
     config::LintConfig,
@@ -146,17 +101,7 @@ static SCRIPT_PATTERNS: Lazy<Vec<Regex>> = Lazy::new(|| {
     .collect()
 });
 
-// =============================================================================
-// Pre-Parse Validation Functions (CC-HK-005, CC-HK-011)
-// =============================================================================
-// These functions must run before serde deserialization because they check
-// raw JSON values that would be lost during parsing.
-
 /// CC-HK-005: Missing type field
-///
-/// Checks for hooks that are missing the required 'type' field.
-/// This must be checked in raw JSON because invalid type values would cause
-/// serde parsing to fail with a different error message.
 fn validate_cc_hk_005_missing_type_field(
     raw_value: &serde_json::Value,
     path: &Path,
@@ -196,10 +141,6 @@ fn validate_cc_hk_005_missing_type_field(
 }
 
 /// CC-HK-011: Invalid timeout value
-///
-/// Checks for invalid timeout values (negative, zero, float, string, etc.).
-/// This must be checked in raw JSON because negative numbers and floats cannot
-/// be represented in `Option<u64>` after serde deserialization.
 fn validate_cc_hk_011_invalid_timeout_values(
     raw_value: &serde_json::Value,
     path: &Path,
@@ -257,14 +198,7 @@ fn validate_cc_hk_011_invalid_timeout_values(
     }
 }
 
-// =============================================================================
-// Event-Level Validation Functions (CC-HK-001, CC-HK-003, CC-HK-004)
-// =============================================================================
-
-/// CC-HK-001: Invalid event name
-///
-/// Validates that the event name is one of the allowed hook events.
-/// Returns `true` if the event is valid, `false` if invalid (caller should skip further validation).
+/// CC-HK-001: Invalid event name with auto-fix support
 fn validate_cc_hk_001_event_name(
     event: &str,
     path: &Path,
@@ -305,8 +239,6 @@ fn validate_cc_hk_001_event_name(
 }
 
 /// CC-HK-003: Missing matcher for tool events
-///
-/// Tool events (PreToolUse, PostToolUse, PermissionRequest) require a matcher field.
 fn validate_cc_hk_003_matcher_required(
     event: &str,
     matcher: &Option<String>,
@@ -333,8 +265,6 @@ fn validate_cc_hk_003_matcher_required(
 }
 
 /// CC-HK-004: Matcher on non-tool event
-///
-/// Non-tool events (Stop, SubagentStop, SessionStart, etc.) must not have a matcher field.
 fn validate_cc_hk_004_matcher_forbidden(
     event: &str,
     matcher: &Option<String>,
@@ -360,12 +290,6 @@ fn validate_cc_hk_004_matcher_forbidden(
     }
 }
 
-// =============================================================================
-// Helper Functions
-// =============================================================================
-
-/// Check if a command matches any dangerous patterns.
-/// Returns (pattern, reason) if a match is found.
 fn check_dangerous_patterns(command: &str) -> Option<(&'static str, &'static str)> {
     for dp in DANGEROUS_PATTERNS.iter() {
         if dp.regex.is_match(command) {
@@ -375,7 +299,6 @@ fn check_dangerous_patterns(command: &str) -> Option<(&'static str, &'static str
     None
 }
 
-/// Extract script paths from a command string.
 fn extract_script_paths(command: &str) -> Vec<String> {
     let mut paths = Vec::new();
     for re in SCRIPT_PATTERNS.iter() {
@@ -392,7 +315,6 @@ fn extract_script_paths(command: &str) -> Vec<String> {
     paths
 }
 
-/// Resolve a script path relative to the project directory.
 fn resolve_script_path(script_path: &str, project_dir: &Path) -> std::path::PathBuf {
     let resolved = script_path
         .replace("$CLAUDE_PROJECT_DIR", &project_dir.display().to_string())
@@ -407,7 +329,6 @@ fn resolve_script_path(script_path: &str, project_dir: &Path) -> std::path::Path
     }
 }
 
-/// Check if a path contains unresolved environment variables.
 fn has_unresolved_env_vars(path: &str) -> bool {
     let after_claude = path
         .replace("$CLAUDE_PROJECT_DIR", "")
@@ -415,13 +336,7 @@ fn has_unresolved_env_vars(path: &str) -> bool {
     after_claude.contains('$')
 }
 
-// =============================================================================
-// Command Hook Validation Functions (CC-HK-006, CC-HK-008, CC-HK-009, CC-HK-010)
-// =============================================================================
-
 /// CC-HK-006: Missing command field
-///
-/// Command hooks must have a 'command' field specifying the command to execute.
 fn validate_cc_hk_006_command_field(
     command: &Option<String>,
     hook_location: &str,
@@ -446,8 +361,6 @@ fn validate_cc_hk_006_command_field(
 }
 
 /// CC-HK-008: Script file not found
-///
-/// Validates that referenced script files exist on the filesystem.
 fn validate_cc_hk_008_script_exists(
     command: &str,
     project_dir: &Path,
@@ -480,8 +393,6 @@ fn validate_cc_hk_008_script_exists(
 }
 
 /// CC-HK-009: Dangerous command patterns
-///
-/// Warns about potentially dangerous commands like `rm -rf /`, `git reset --hard`, etc.
 fn validate_cc_hk_009_dangerous_patterns(
     command: &str,
     path: &Path,
@@ -505,8 +416,6 @@ fn validate_cc_hk_009_dangerous_patterns(
 }
 
 /// CC-HK-010: Command hook timeout policy
-///
-/// Warns if timeout is missing or exceeds the 600s default for command hooks.
 fn validate_cc_hk_010_command_timeout(
     timeout: &Option<u64>,
     hook_location: &str,
@@ -556,13 +465,7 @@ fn validate_cc_hk_010_command_timeout(
     }
 }
 
-// =============================================================================
-// Prompt Hook Validation Functions (CC-HK-002, CC-HK-007, CC-HK-010)
-// =============================================================================
-
 /// CC-HK-002: Prompt hook on wrong event
-///
-/// Prompt hooks are only allowed for Stop and SubagentStop events.
 fn validate_cc_hk_002_prompt_event_type(
     event: &str,
     hook_location: &str,
@@ -589,8 +492,6 @@ fn validate_cc_hk_002_prompt_event_type(
 }
 
 /// CC-HK-007: Missing prompt field
-///
-/// Prompt hooks must have a 'prompt' field specifying the prompt text.
 fn validate_cc_hk_007_prompt_field(
     prompt: &Option<String>,
     hook_location: &str,
@@ -615,8 +516,6 @@ fn validate_cc_hk_007_prompt_field(
 }
 
 /// CC-HK-010: Prompt hook timeout policy
-///
-/// Warns if timeout is missing or exceeds the 30s default for prompt hooks.
 fn validate_cc_hk_010_prompt_timeout(
     timeout: &Option<u64>,
     hook_location: &str,
@@ -666,8 +565,6 @@ fn validate_cc_hk_010_prompt_timeout(
     }
 }
 
-// Keep HooksValidator methods for backward compatibility with existing tests.
-// These delegate to the standalone functions above.
 #[cfg(test)]
 #[allow(dead_code)]
 impl HooksValidator {
@@ -701,16 +598,10 @@ impl Validator for HooksValidator {
     fn validate(&self, path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic> {
         let mut diagnostics = Vec::new();
 
-        // =====================================================================
-        // Phase 1: Category check
-        // =====================================================================
         if !config.rules.hooks {
             return diagnostics;
         }
 
-        // =====================================================================
-        // Phase 2: JSON parsing
-        // =====================================================================
         let raw_value: serde_json::Value = match serde_json::from_str(content) {
             Ok(v) => v,
             Err(e) => {
@@ -727,9 +618,6 @@ impl Validator for HooksValidator {
             }
         };
 
-        // =====================================================================
-        // Phase 3: Pre-parse validation (raw JSON checks)
-        // =====================================================================
         // CC-HK-005: Missing type field (early return on failure)
         if config.is_rule_enabled("CC-HK-005") {
             validate_cc_hk_005_missing_type_field(&raw_value, path, &mut diagnostics);
@@ -743,9 +631,6 @@ impl Validator for HooksValidator {
             validate_cc_hk_011_invalid_timeout_values(&raw_value, path, &mut diagnostics);
         }
 
-        // =====================================================================
-        // Phase 4: Typed parsing
-        // =====================================================================
         let settings: SettingsSchema = match serde_json::from_str(content) {
             Ok(s) => s,
             Err(e) => {
@@ -773,9 +658,6 @@ impl Validator for HooksValidator {
             })
             .unwrap_or_else(|| Path::new("."));
 
-        // =====================================================================
-        // Phase 5: Event iteration with typed validation
-        // =====================================================================
         for (event, matchers) in &settings.hooks {
             // --- Event-level validation ---
             // CC-HK-001: Invalid event name
