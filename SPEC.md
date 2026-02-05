@@ -178,3 +178,4 @@ When `target` is set to a specific tool, only relevant rules run:
 - Directory walking remains sequential to maintain compatibility with `ignore` crate
 - Memory usage scales with number of files (diagnostics are collected and sorted)
 - Deterministic output guarantees same results across multiple runs
+- Import cache shared across files reduces redundant parsing during @import validation

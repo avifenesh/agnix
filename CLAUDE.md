@@ -57,7 +57,7 @@ tests/fixtures/     # Test cases by category
 - `parsers/` - Frontmatter, JSON, Markdown parsing
 - `schemas/` - Type definitions (12 schemas: skill, hooks, agent, mcp, etc.)
 - `rules/` - Validators implementing Validator trait (13 validators)
-- `config.rs` - LintConfig, ToolVersions, SpecRevisions
+- `config.rs` - LintConfig, ToolVersions, SpecRevisions, ImportCache
 - `diagnostics.rs` - Diagnostic, Fix, DiagnosticLevel
 - `fixes.rs` - Auto-fix application engine
 

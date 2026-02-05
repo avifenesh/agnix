@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Performance
+- Shared import cache at project validation level reduces redundant parsing (#216)
+
 ## [0.3.0] - 2026-02-05
 
 ### Added
