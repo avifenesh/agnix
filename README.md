@@ -42,7 +42,7 @@ agnix validates configs against 100 rules derived from official specs, research 
 
 **Tools**: Claude Code, Cursor, GitHub Copilot, Codex CLI, AGENTS.md
 
-**Integration**: LSP server, VS Code extension, GitHub Action, auto-fix (`--fix`)
+**Integration**: LSP server, VS Code extension, Neovim plugin, GitHub Action, auto-fix (`--fix`)
 
 ## Security
 
@@ -187,6 +187,8 @@ Real-time diagnostics as you type, quick-fix code actions, hover documentation.
 
 **VS Code extension** includes a comprehensive settings UI for configuring all validation options. Changes apply immediately without server restart. See [VS Code extension](editors/vscode/README.md) for details.
 
+**Neovim plugin** with automatic LSP attachment, commands, Telescope integration, and health checks. See [Neovim plugin](editors/neovim/README.md) for details.
+
 See [Editor Setup](docs/EDITOR-SETUP.md) for VS Code, Neovim, Helix configuration.
 
 ## MCP Server
@@ -300,6 +302,7 @@ crates/
   agnix-mcp/      # MCP server
   agnix-rules/    # Rule metadata
 editors/
+  neovim/         # Neovim plugin
   vscode/         # VS Code extension
 knowledge-base/   # 100 rules documentation
 ```
@@ -312,6 +315,7 @@ knowledge-base/   # 100 rules documentation
 - **LSP server** for real-time editor diagnostics
 - **MCP server** for AI assistant integration
 - **VS Code extension** with syntax highlighting
+- **Neovim plugin** with LSP integration and Telescope support
 - **GitHub Action** for CI/CD integration
 - **Auto-fix** infrastructure (--fix, --dry-run, --fix-safe)
 - **Parallel validation** using rayon
@@ -321,7 +325,7 @@ knowledge-base/   # 100 rules documentation
 
 See [GitHub Issues](https://github.com/avifenesh/agnix/issues) for the full roadmap.
 
-**Editor integrations**: Neovim plugin, JetBrains IDE, Zed extension
+**Editor integrations**: JetBrains IDE, Zed extension
 
 **Features**: Documentation website, additional rule categories
 
