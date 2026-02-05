@@ -57,7 +57,7 @@ impl Validator for ImportsValidator {
         let is_claude_md = matches!(filename, "CLAUDE.md" | "CLAUDE.local.md");
 
         let project_root = resolve_project_root(path, ctx);
-        let root_path = normalize_existing_path(path);
+        let root_path = normalize_path_with_fs(path, ctx);
 
         // Use shared cache if available (project-level validation),
         // otherwise create a local cache (single-file validation)
@@ -124,7 +124,7 @@ fn visit_imports(
     let Some(imports) = imports else { return };
 
     let base_dir = file_path.parent().unwrap_or(Path::new("."));
-    let normalized_base = normalize_existing_path(base_dir);
+    let normalized_base = normalize_path_with_fs(base_dir, ctx);
     let normalized_root = project_root;
 
     // Determine file type for current file to route its own diagnostics
@@ -198,7 +198,7 @@ fn visit_imports(
         }
 
         let normalized = if ctx.fs.exists(&resolved) {
-            let canonical_resolved = normalize_existing_path(&resolved);
+            let canonical_resolved = normalize_path_with_fs(&resolved, ctx);
             if !canonical_resolved.starts_with(normalized_root) {
                 if check_not_found {
                     diagnostics.push(
@@ -396,33 +396,35 @@ fn normalize_join(base_dir: &Path, import_path: &str) -> PathBuf {
     result
 }
 
-fn normalize_existing_path(path: &Path) -> PathBuf {
-    std::fs::canonicalize(path).unwrap_or_else(|_| path.to_path_buf())
+fn normalize_path_with_fs(path: &Path, ctx: &ValidatorContext) -> PathBuf {
+    ctx.fs
+        .canonicalize(path)
+        .unwrap_or_else(|_| path.to_path_buf())
 }
 
 fn resolve_project_root(path: &Path, ctx: &ValidatorContext) -> PathBuf {
     if let Some(root) = ctx.root_dir {
-        return normalize_existing_path(root);
+        return normalize_path_with_fs(root, ctx);
     }
 
     // Fallback to config.root_dir if ctx.root_dir is not set
     if let Some(root) = ctx.config.root_dir.as_deref() {
-        return normalize_existing_path(root);
+        return normalize_path_with_fs(root, ctx);
     }
 
-    find_repo_root(path).unwrap_or_else(|| {
+    find_repo_root_with_fs(path, ctx).unwrap_or_else(|| {
         let fallback = path.parent().unwrap_or(Path::new("."));
-        normalize_existing_path(fallback)
+        normalize_path_with_fs(fallback, ctx)
     })
 }
 
-fn find_repo_root(path: &Path) -> Option<PathBuf> {
+fn find_repo_root_with_fs(path: &Path, ctx: &ValidatorContext) -> Option<PathBuf> {
     for ancestor in path.ancestors() {
         if ancestor.as_os_str().is_empty() {
             continue;
         }
         let git_marker = ancestor.join(".git");
-        if git_marker.is_dir() || git_marker.is_file() {
+        if ctx.fs.is_dir(&git_marker) || ctx.fs.is_file(&git_marker) {
             return Some(ancestor.to_path_buf());
         }
     }
