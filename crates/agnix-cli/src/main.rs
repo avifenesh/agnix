@@ -463,6 +463,9 @@ fn validate_command(path: &Path, cli: &Cli) -> anyhow::Result<()> {
         );
     }
 
+    let mut final_errors = errors;
+    let mut final_warnings = warnings;
+
     // --fix-safe implies --fix
     if should_fix {
         println!();
@@ -502,6 +505,23 @@ fn validate_command(path: &Path, cli: &Cli) -> anyhow::Result<()> {
                 if results.len() == 1 { "file" } else { "files" }
             );
         }
+
+        // Re-run validation after applying fixes so exit code reflects remaining issues.
+        if !cli.dry_run {
+            let ValidationResult {
+                diagnostics: post_fix_diagnostics,
+                files_checked: _,
+            } = validate_project(path, &config)?;
+
+            final_errors = post_fix_diagnostics
+                .iter()
+                .filter(|d| d.level == DiagnosticLevel::Error)
+                .count();
+            final_warnings = post_fix_diagnostics
+                .iter()
+                .filter(|d| d.level == DiagnosticLevel::Warning)
+                .count();
+        }
     } else if fixable > 0 {
         println!();
         println!(
@@ -512,7 +532,7 @@ fn validate_command(path: &Path, cli: &Cli) -> anyhow::Result<()> {
     }
 
     // Exit with error if errors remain (even after fixing) or strict mode with warnings
-    if errors > 0 || (cli.strict && warnings > 0) {
+    if final_errors > 0 || (cli.strict && final_warnings > 0) {
         process::exit(1);
     }
 
