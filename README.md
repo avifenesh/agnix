@@ -161,6 +161,8 @@ cargo install agnix-lsp
 
 Real-time diagnostics as you type, quick-fix code actions, hover documentation.
 
+![VS Code validation example](assets/vscode-validation.png)
+
 See [Editor Setup](docs/EDITOR-SETUP.md) for VS Code, Neovim, Helix configuration.
 
 ## MCP Server
