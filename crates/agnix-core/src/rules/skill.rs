@@ -506,10 +506,23 @@ impl Validator for SkillValidator {
                     }
 
                     // Parse allowed_tools once for CC-SK-007 and CC-SK-008
-                    let tool_list: Option<Vec<&str>> = schema
-                        .allowed_tools
-                        .as_ref()
-                        .map(|tools| tools.split_whitespace().collect());
+                    // Supports both formats:
+                    // - Comma-separated: "Bash(git:*), Read, Grep" (preferred)
+                    // - Space-separated: "Read Write Grep" (legacy)
+                    let tool_list: Option<Vec<String>> =
+                        schema.allowed_tools.as_ref().map(|tools| {
+                            if tools.contains(',') {
+                                // Comma-separated format
+                                tools
+                                    .split(',')
+                                    .map(|t| t.trim().to_string())
+                                    .filter(|t| !t.is_empty())
+                                    .collect()
+                            } else {
+                                // Space-separated format (legacy)
+                                tools.split_whitespace().map(|t| t.to_string()).collect()
+                            }
+                        });
 
                     // CC-SK-007: Unrestricted Bash warning
                     if config.is_rule_enabled("CC-SK-007") {
@@ -832,6 +845,36 @@ fn extract_reference_paths(body: &str) -> Vec<PathMatch> {
     paths
 }
 
+/// Check if a string looks like a regex escape sequence rather than a Windows path
+fn is_regex_escape(s: &str) -> bool {
+    // Common regex metacharacter escapes that aren't Windows paths
+    // \n \s \d \w \t \r \b \| \. \/ \$ \^ \+ \* \? \{ \} \[ \] \( \)
+    static REGEX_ESCAPE_CHARS: &[char] = &[
+        'n', 's', 'd', 'w', 't', 'r', 'b', '|', '.', '/', '$', '^', '+', '*', '?', '{', '}', '[',
+        ']', '(', ')', 'S', 'D', 'W', 'B',
+    ];
+
+    // Check if this looks like a regex pattern (contains common regex escapes)
+    let parts: Vec<&str> = s.split('\\').collect();
+    if parts.len() < 2 {
+        return false;
+    }
+
+    // If most backslash-prefixed parts start with regex metacharacters, it's likely a regex
+    let regex_like_count = parts[1..]
+        .iter()
+        .filter(|part| {
+            part.chars()
+                .next()
+                .map(|c| REGEX_ESCAPE_CHARS.contains(&c))
+                .unwrap_or(false)
+        })
+        .count();
+
+    // If more than half of the backslash sequences look like regex escapes, skip it
+    regex_like_count > 0 && regex_like_count >= (parts.len() - 1) / 2
+}
+
 fn extract_windows_paths(body: &str) -> Vec<PathMatch> {
     let re = WINDOWS_PATH_REGEX
         .get_or_init(|| Regex::new(r"(?i)\b(?:[a-z]:)?[a-z0-9._-]+(?:\\[a-z0-9._-]+)+\b").unwrap());
@@ -840,6 +883,10 @@ fn extract_windows_paths(body: &str) -> Vec<PathMatch> {
     let mut seen = HashSet::new();
     for m in re.find_iter(body) {
         if let Some((trimmed, delta)) = trim_path_token_with_offset(m.as_str()) {
+            // Skip regex escape sequences
+            if is_regex_escape(&trimmed) {
+                continue;
+            }
             if seen.insert(trimmed.clone()) {
                 paths.push(PathMatch {
                     path: trimmed,
@@ -850,6 +897,10 @@ fn extract_windows_paths(body: &str) -> Vec<PathMatch> {
     }
     for m in token_re.find_iter(body) {
         if let Some((trimmed, delta)) = trim_path_token_with_offset(m.as_str()) {
+            // Skip regex escape sequences
+            if is_regex_escape(&trimmed) {
+                continue;
+            }
             if seen.insert(trimmed.clone()) {
                 paths.push(PathMatch {
                     path: trimmed,
@@ -867,12 +918,32 @@ fn reference_path_too_deep(path: &str) -> bool {
     let Some(prefix) = parts.next() else {
         return false;
     };
+
+    // Check for file references (references/, reference/, refs/)
     if !prefix.eq_ignore_ascii_case("references")
         && !prefix.eq_ignore_ascii_case("reference")
         && !prefix.eq_ignore_ascii_case("refs")
     {
         return false;
     }
+
+    // Exclude git refs - they're not file references
+    // Git refs look like: refs/remotes/..., refs/heads/..., refs/tags/...
+    if prefix.eq_ignore_ascii_case("refs") {
+        if let Some(second) = parts.next() {
+            if second.eq_ignore_ascii_case("remotes")
+                || second.eq_ignore_ascii_case("heads")
+                || second.eq_ignore_ascii_case("tags")
+                || second.eq_ignore_ascii_case("stash")
+            {
+                return false; // This is a git ref, not a file reference
+            }
+        }
+        // Reset iterator for depth check
+        let parts = normalized.split('/').filter(|part| !part.is_empty());
+        return parts.skip(1).count() > 1;
+    }
+
     parts.count() > 1
 }
 

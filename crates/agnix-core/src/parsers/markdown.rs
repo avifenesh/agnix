@@ -374,12 +374,27 @@ fn scan_xml_tags_in_text(
 }
 
 fn is_probable_import_path(path: &str) -> bool {
-    if path.starts_with('~')
-        || path.contains('/')
-        || path.contains('\\')
-        || path.contains('.')
-        || path.contains(':')
-    {
+    // Absolute paths (start with / or \) are always considered imports
+    // (they will be rejected later in validation)
+    if path.starts_with('/') || path.starts_with('\\') {
+        return true;
+    }
+
+    // If path contains directory separator, require a file extension
+    // to avoid false positives like "@import/reference" (a label, not a file)
+    if path.contains('/') || path.contains('\\') {
+        // Must have a file extension (.md, .txt, etc.)
+        let has_extension = path.rfind('.').is_some_and(|dot_pos| {
+            let after_dot = &path[dot_pos + 1..];
+            let last_sep = path.rfind('/').or_else(|| path.rfind('\\'));
+            // Extension must come after the last separator
+            last_sep.is_none_or(|sep| dot_pos > sep) && !after_dot.is_empty()
+        });
+        return has_extension;
+    }
+
+    // For paths without separators, use existing heuristics
+    if path.starts_with('~') || path.contains('.') || path.contains(':') {
         return true;
     }
     path.chars().any(|c| c.is_ascii_uppercase())

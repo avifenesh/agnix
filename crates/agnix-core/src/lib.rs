@@ -259,7 +259,11 @@ pub fn detect_file_type(path: &Path) -> FileType {
         // Legacy Cursor rules file (.cursorrules)
         ".cursorrules" => FileType::CursorRulesLegacy,
         name if name.ends_with(".md") => {
-            if parent == Some("agents") || grandparent == Some("agents") {
+            // Exclude changelog/history files - not agent configs
+            let lower = name.to_lowercase();
+            if lower == "changelog.md" || lower == "history.md" || lower == "releases.md" {
+                FileType::Unknown
+            } else if parent == Some("agents") || grandparent == Some("agents") {
                 FileType::Agent
             } else {
                 FileType::GenericMarkdown
@@ -3497,7 +3501,11 @@ Use idiomatic Rust patterns.
 
         let mut results: Vec<_> = handles
             .into_iter()
-            .map(|h| h.join().expect("Thread panicked").expect("Validation failed"))
+            .map(|h| {
+                h.join()
+                    .expect("Thread panicked")
+                    .expect("Validation failed")
+            })
             .collect();
 
         // All results should be identical

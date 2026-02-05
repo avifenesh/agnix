@@ -9,15 +9,13 @@
 //! - Project validation throughput
 //! - Frontmatter parsing speed
 
-use criterion::{
-    black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput,
-};
+use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use std::path::Path;
 use tempfile::TempDir;
 
 use agnix_core::{
-    detect_file_type, validate_file, validate_file_with_registry, validate_project,
-    LintConfig, ValidatorRegistry,
+    detect_file_type, validate_file, validate_file_with_registry, validate_project, LintConfig,
+    ValidatorRegistry,
 };
 
 /// Benchmark file type detection - the first step in validation dispatch.
@@ -48,7 +46,7 @@ fn bench_detect_file_type(c: &mut Criterion) {
 /// Benchmark validator registry construction.
 fn bench_validator_registry(c: &mut Criterion) {
     c.bench_function("ValidatorRegistry::with_defaults", |b| {
-        b.iter(|| ValidatorRegistry::with_defaults())
+        b.iter(ValidatorRegistry::with_defaults)
     });
 }
 
@@ -225,7 +223,10 @@ fn bench_validate_project(c: &mut Criterion) {
     // Create a larger project
     let large_temp = TempDir::new().unwrap();
     for i in 0..50 {
-        let skill_dir = large_temp.path().join("skills").join(format!("skill-{}", i));
+        let skill_dir = large_temp
+            .path()
+            .join("skills")
+            .join(format!("skill-{}", i));
         std::fs::create_dir_all(&skill_dir).unwrap();
         std::fs::write(
             skill_dir.join("SKILL.md"),
@@ -237,7 +238,11 @@ fn bench_validate_project(c: &mut Criterion) {
         .unwrap();
     }
 
-    std::fs::write(large_temp.path().join("CLAUDE.md"), "# Project\n\nGuidelines.").unwrap();
+    std::fs::write(
+        large_temp.path().join("CLAUDE.md"),
+        "# Project\n\nGuidelines.",
+    )
+    .unwrap();
 
     let mut group = c.benchmark_group("validate_project");
     group.throughput(Throughput::Elements(51));

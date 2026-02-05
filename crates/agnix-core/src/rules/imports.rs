@@ -393,6 +393,21 @@ fn validate_markdown_links(
             continue;
         }
 
+        // Skip template placeholders like {url}, {repoUrl}, {brackets}
+        if link.url.starts_with('{') && link.url.ends_with('}') {
+            continue;
+        }
+
+        // Skip single-word "links" that don't look like file paths
+        // (no extension, no directory separator) - likely wiki-style links or examples
+        if !link.url.contains('/')
+            && !link.url.contains('\\')
+            && !link.url.contains('.')
+            && !link.url.contains('#')
+        {
+            continue;
+        }
+
         // Strip fragment to get the file path
         let file_path = strip_fragment(&link.url);
 
