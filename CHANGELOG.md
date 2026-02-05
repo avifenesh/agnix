@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- `agnix schema` command for JSON Schema generation (#206)
+  - Outputs JSON Schema for `.agnix.toml` to stdout or file
+  - Generated from Rust types using schemars
+- Config validation with helpful warnings (#206)
+  - Validates `disabled_rules` against known rule ID patterns
+  - Validates `tools` array contains recognized tool names
+  - Warns on deprecated fields (`mcp_protocol_version`)
+- VS Code schema association for `.agnix.toml` autocomplete (#206)
 - Opt-in telemetry module with privacy-first design (#209)
   - Disabled by default, requires explicit `agnix telemetry enable`
   - Tracks aggregate metrics: rule trigger counts, error/warning counts, duration

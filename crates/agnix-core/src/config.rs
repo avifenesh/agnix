@@ -32,7 +32,9 @@ pub struct ToolVersions {
 
     /// GitHub Copilot version (e.g., "1.0.0")
     #[serde(default)]
-    #[schemars(description = "GitHub Copilot version for version-aware validation (e.g., \"1.0.0\")")]
+    #[schemars(
+        description = "GitHub Copilot version for version-aware validation (e.g., \"1.0.0\")"
+    )]
     pub copilot: Option<String>,
 }
 
@@ -44,7 +46,9 @@ pub struct ToolVersions {
 pub struct SpecRevisions {
     /// MCP protocol version (e.g., "2025-06-18", "2024-11-05")
     #[serde(default)]
-    #[schemars(description = "MCP protocol version for revision-specific validation (e.g., \"2025-06-18\", \"2024-11-05\")")]
+    #[schemars(
+        description = "MCP protocol version for revision-specific validation (e.g., \"2025-06-18\", \"2024-11-05\")"
+    )]
     pub mcp_protocol: Option<String>,
 
     /// Agent Skills specification revision
@@ -256,7 +260,9 @@ pub struct LintConfig {
     pub rules: RuleConfig,
 
     /// Paths to exclude
-    #[schemars(description = "Glob patterns for paths to exclude from validation (e.g., [\"node_modules/**\", \"dist/**\"])")]
+    #[schemars(
+        description = "Glob patterns for paths to exclude from validation (e.g., [\"node_modules/**\", \"dist/**\"])"
+    )]
     pub exclude: Vec<String>,
 
     /// Target tool (claude-code, cursor, codex, generic)
@@ -269,12 +275,16 @@ pub struct LintConfig {
     /// and disables rules for tools not in the list.
     /// Valid values: "claude-code", "cursor", "codex", "copilot", "generic"
     #[serde(default)]
-    #[schemars(description = "Tools to validate for. Valid values: \"claude-code\", \"cursor\", \"codex\", \"copilot\", \"generic\"")]
+    #[schemars(
+        description = "Tools to validate for. Valid values: \"claude-code\", \"cursor\", \"codex\", \"copilot\", \"generic\""
+    )]
     pub tools: Vec<String>,
 
     /// Expected MCP protocol version for validation (MCP-008)
     /// Deprecated: Use spec_revisions.mcp_protocol instead
-    #[schemars(description = "Expected MCP protocol version (deprecated: use spec_revisions.mcp_protocol instead)")]
+    #[schemars(
+        description = "Expected MCP protocol version (deprecated: use spec_revisions.mcp_protocol instead)"
+    )]
     pub mcp_protocol_version: Option<String>,
 
     /// Tool version pinning for version-aware validation
@@ -334,7 +344,9 @@ impl Default for LintConfig {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
+)]
 #[schemars(description = "Severity level for filtering diagnostics")]
 pub enum SeverityLevel {
     /// Only show errors
@@ -440,7 +452,9 @@ pub struct RuleConfig {
 
     /// Explicitly disabled rules by ID (e.g., ["CC-AG-001", "AS-005"])
     #[serde(default)]
-    #[schemars(description = "List of rule IDs to explicitly disable (e.g., [\"CC-AG-001\", \"AS-005\"])")]
+    #[schemars(
+        description = "List of rule IDs to explicitly disable (e.g., [\"CC-AG-001\", \"AS-005\"])"
+    )]
     pub disabled_rules: Vec<String>,
 }
 
@@ -470,7 +484,9 @@ impl Default for RuleConfig {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[schemars(description = "Target tool for validation (deprecated: use 'tools' array for multi-tool support)")]
+#[schemars(
+    description = "Target tool for validation (deprecated: use 'tools' array for multi-tool support)"
+)]
 pub enum TargetTool {
     /// Generic Agent Skills standard
     Generic,
@@ -670,7 +686,9 @@ impl LintConfig {
             "XP-", "AGM-", "COP-", "CUR-", "PE-",
         ];
         for rule_id in &self.rules.disabled_rules {
-            let matches_known = known_prefixes.iter().any(|prefix| rule_id.starts_with(prefix));
+            let matches_known = known_prefixes
+                .iter()
+                .any(|prefix| rule_id.starts_with(prefix));
             if !matches_known {
                 warnings.push(ConfigWarning {
                     field: "rules.disabled_rules".to_string(),
@@ -695,10 +713,17 @@ impl LintConfig {
         ];
         for tool in &self.tools {
             let tool_lower = tool.to_lowercase();
-            if !known_tools.iter().any(|k| k.eq_ignore_ascii_case(&tool_lower)) {
+            if !known_tools
+                .iter()
+                .any(|k| k.eq_ignore_ascii_case(&tool_lower))
+            {
                 warnings.push(ConfigWarning {
                     field: "tools".to_string(),
-                    message: format!("Unknown tool '{}'. Valid tools: {}", tool, known_tools.join(", ")),
+                    message: format!(
+                        "Unknown tool '{}'. Valid tools: {}",
+                        tool,
+                        known_tools.join(", ")
+                    ),
                     suggestion: Some("Use one of the supported tool names".to_string()),
                 });
             }
@@ -3040,11 +3065,7 @@ disabled_rules = []
         let warnings = config.validate();
 
         // Should have 3 warnings, one for each invalid rule
-        assert_eq!(
-            warnings.len(),
-            3,
-            "Expected 3 warnings for 3 invalid rules"
-        );
+        assert_eq!(warnings.len(), 3, "Expected 3 warnings for 3 invalid rules");
 
         // Verify each invalid rule is mentioned
         let warning_messages: Vec<&str> = warnings.iter().map(|w| w.message.as_str()).collect();
@@ -3065,11 +3086,7 @@ disabled_rules = []
         let warnings = config.validate();
 
         // Should have 2 warnings for the 2 invalid tools
-        assert_eq!(
-            warnings.len(),
-            2,
-            "Expected 2 warnings for 2 invalid tools"
-        );
+        assert_eq!(warnings.len(), 2, "Expected 2 warnings for 2 invalid tools");
     }
 
     #[test]
