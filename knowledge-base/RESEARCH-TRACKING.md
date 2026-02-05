@@ -32,10 +32,10 @@ Tools are organized by support tier (see CLAUDE.md for definitions). Each entry 
 
 | Tool | Config Format | Documentation URL | Monitoring | Frequency | Last Reviewed | Rule Prefix |
 |------|---------------|-------------------|------------|-----------|---------------|-------------|
-| Roo Code | `.roo/rules/*.md` | https://docs.roocode.com/ | Manual | Quarterly | 2026-02-05 | -- |
-| Kiro CLI | `kiro.md` | https://kiro.dev/docs/ | Manual | Quarterly | 2026-02-05 | -- |
-| amp | `.amp/rules.md` | https://docs.amp.dev/ | Manual | Quarterly | 2026-02-05 | -- |
-| pi | `.pi/config.json` | https://pi.dev/docs/ | Manual | Quarterly | 2026-02-05 | -- |
+| Roo Code | `.roo/rules/*.md` | https://github.com/RooVetGit/Roo-Code | Manual | Quarterly | 2026-02-05 | -- |
+| Kiro CLI | `kiro.md` | https://kiro.dev/ | Manual | Quarterly | 2026-02-05 | -- |
+| amp | `.amp/rules.md` | https://amp.dev/ | Manual | Quarterly | 2026-02-05 | -- |
+| pi | `.pi/config.json` | TBD | Manual | Quarterly | 2026-02-05 | -- |
 
 ### C Tier (community reports fixes only)
 
@@ -43,7 +43,7 @@ Tools are organized by support tier (see CLAUDE.md for definitions). Each entry 
 |------|---------------|-------------------|------------|-----------|---------------|-------------|
 | gemini cli | `GEMINI.md` | https://github.com/google-gemini/gemini-cli | Manual | As reported | 2026-02-05 | -- |
 | continue | `.continue/config.json` | https://docs.continue.dev/ | Manual | As reported | 2026-02-05 | -- |
-| Antigravity | `.antigravity/config.yml` | https://antigravity.dev/docs/ | Manual | As reported | 2026-02-05 | -- |
+| Antigravity | `.antigravity/config.yml` | TBD | Manual | As reported | 2026-02-05 | -- |
 
 ### D Tier (no support, nice to have)
 
@@ -130,7 +130,7 @@ New developments that may require future rule additions or tool tier changes.
 - **Status**: Active development across multiple vendors
 - **Watch**: Whether a universal agent config format emerges
 - **Impact**: Could simplify cross-platform rules (XP-*) or require new universal rules
-- **Sources**: https://agentprotocol.ai, vendor announcements
+- **Sources**: Vendor announcements, community discussions
 
 ### New MCP Patterns
 

@@ -63,6 +63,10 @@ fn test_research_tracking_exists() {
         content.contains("Codex CLI"),
         "RESEARCH-TRACKING.md must list Codex CLI"
     );
+    assert!(
+        content.contains("OpenCode"),
+        "RESEARCH-TRACKING.md must list OpenCode"
+    );
 }
 
 #[test]
