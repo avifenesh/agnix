@@ -23,6 +23,7 @@ M.defaults = {
     severity = nil,
     target = nil,
     tools = nil,
+    locale = nil,
     rules = {
       skills = nil,
       hooks = nil,

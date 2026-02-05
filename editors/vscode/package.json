@@ -122,6 +122,13 @@
           "description": "Tools to validate for. When specified, enables rules for these tools only.",
           "scope": "resource"
         },
+        "agnix.locale": {
+          "type": ["string", "null"],
+          "enum": [null, "en", "es", "zh-CN"],
+          "default": null,
+          "description": "Output locale for translated diagnostic messages. When null, auto-detects from system locale.",
+          "scope": "resource"
+        },
         "agnix.rules.skills": {
           "type": "boolean",
           "default": true,

@@ -37,6 +37,7 @@ interface LspConfig {
   severity?: string;
   target?: string;
   tools?: string[];
+  locale?: string | null;
   rules?: {
     skills?: boolean;
     hooks?: boolean;
@@ -96,6 +97,15 @@ export function buildLspConfig(): LspConfig {
 
   const tools = getUserValue<string[]>('tools');
   if (tools !== undefined) result.tools = tools;
+
+  // Locale - support explicit null to revert to auto-detection
+  const localeInspected = config.inspect<string | null>('locale');
+  if (localeInspected && (localeInspected.workspaceFolderValue !== undefined ||
+                          localeInspected.workspaceValue !== undefined ||
+                          localeInspected.globalValue !== undefined)) {
+    const localeValue = localeInspected.workspaceFolderValue ?? localeInspected.workspaceValue ?? localeInspected.globalValue;
+    result.locale = localeValue; // null is valid (reverts to auto-detection)
+  }
 
   // Rules - only include if user set them
   const rulesObj: any = {};

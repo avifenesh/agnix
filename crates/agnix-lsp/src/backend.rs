@@ -1605,6 +1605,34 @@ model: sonnet
         // Should complete without error
     }
 
+    /// Test that did_change_configuration handles locale setting.
+    #[tokio::test]
+    async fn test_did_change_configuration_with_locale() {
+        let (service, _socket) = LspService::new(Backend::new);
+
+        service
+            .inner()
+            .initialize(InitializeParams::default())
+            .await
+            .unwrap();
+
+        let settings = serde_json::json!({
+            "severity": "Warning",
+            "locale": "es"
+        });
+
+        service
+            .inner()
+            .did_change_configuration(DidChangeConfigurationParams { settings })
+            .await;
+
+        // Verify locale was actually changed
+        assert_eq!(&*rust_i18n::locale(), "es");
+
+        // Reset locale for other tests
+        rust_i18n::set_locale("en");
+    }
+
     // ===== normalize_path() Unit Tests =====
 
     /// Test that '..' components are resolved by removing the preceding normal component.
