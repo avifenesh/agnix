@@ -1,4 +1,32 @@
-//! Hooks validation rules (CC-HK-001 to CC-HK-011)
+//! Hooks validation rules (CC-HK-001 to CC-HK-012)
+//!
+//! This module validates Claude Code hooks configuration files (.claude/settings.json).
+//!
+//! ## Architecture
+//!
+//! Validation functions are organized by rule number and grouped by validation phase:
+//!
+//! ### Pre-Parse Phase (raw JSON checks)
+//! - `validate_cc_hk_005_missing_type_field` - Check for missing type field
+//! - `validate_cc_hk_011_invalid_timeout_values` - Check for invalid timeout values
+//!
+//! ### Event-Level Validation
+//! - `validate_cc_hk_001_event_name` - Validate event name
+//! - `validate_cc_hk_003_matcher_required` - Check matcher required for tool events
+//! - `validate_cc_hk_004_matcher_forbidden` - Check matcher forbidden on non-tool events
+//!
+//! ### Command Hook Validation
+//! - `validate_cc_hk_006_command_field` - Check for missing command field
+//! - `validate_cc_hk_008_script_exists` - Check script file exists
+//! - `validate_cc_hk_009_dangerous_patterns` - Check for dangerous command patterns
+//! - `validate_cc_hk_010_command_timeout` - Check command hook timeout policy
+//!
+//! ### Prompt Hook Validation
+//! - `validate_cc_hk_002_prompt_event_type` - Check prompt hook on correct event
+//! - `validate_cc_hk_007_prompt_field` - Check for missing prompt field
+//! - `validate_cc_hk_010_prompt_timeout` - Check prompt hook timeout policy
+//!
+//! The main `validate()` method orchestrates these functions.
 
 use crate::{
     config::LintConfig,
@@ -101,6 +129,117 @@ static SCRIPT_PATTERNS: Lazy<Vec<Regex>> = Lazy::new(|| {
     .collect()
 });
 
+// =============================================================================
+// Pre-Parse Validation Functions (CC-HK-005, CC-HK-011)
+// =============================================================================
+// These functions must run before serde deserialization because they check
+// raw JSON values that would be lost during parsing.
+
+/// CC-HK-005: Missing type field
+///
+/// Checks for hooks that are missing the required 'type' field.
+/// This must be checked in raw JSON because invalid type values would cause
+/// serde parsing to fail with a different error message.
+fn validate_cc_hk_005_missing_type_field(
+    raw_value: &serde_json::Value,
+    path: &Path,
+    diagnostics: &mut Vec<Diagnostic>,
+) {
+    if let Some(hooks_obj) = raw_value.get("hooks").and_then(|h| h.as_object()) {
+        for (event, matchers) in hooks_obj {
+            if let Some(matchers_arr) = matchers.as_array() {
+                for (matcher_idx, matcher) in matchers_arr.iter().enumerate() {
+                    if let Some(hooks_arr) = matcher.get("hooks").and_then(|h| h.as_array()) {
+                        for (hook_idx, hook) in hooks_arr.iter().enumerate() {
+                            if hook.get("type").is_none() {
+                                let hook_location =
+                                    format!("hooks.{}[{}].hooks[{}]", event, matcher_idx, hook_idx);
+                                diagnostics.push(
+                                    Diagnostic::error(
+                                        path.to_path_buf(),
+                                        1,
+                                        0,
+                                        "CC-HK-005",
+                                        format!(
+                                            "Hook at {} is missing required 'type' field",
+                                            hook_location
+                                        ),
+                                    )
+                                    .with_suggestion(
+                                        "Add 'type': 'command' or 'type': 'prompt'".to_string(),
+                                    ),
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// CC-HK-011: Invalid timeout value
+///
+/// Checks for invalid timeout values (negative, zero, float, string, etc.).
+/// This must be checked in raw JSON because negative numbers and floats cannot
+/// be represented in `Option<u64>` after serde deserialization.
+fn validate_cc_hk_011_invalid_timeout_values(
+    raw_value: &serde_json::Value,
+    path: &Path,
+    diagnostics: &mut Vec<Diagnostic>,
+) {
+    if let Some(hooks_obj) = raw_value.get("hooks").and_then(|h| h.as_object()) {
+        for (event, matchers) in hooks_obj {
+            if let Some(matchers_arr) = matchers.as_array() {
+                for (matcher_idx, matcher) in matchers_arr.iter().enumerate() {
+                    if let Some(hooks_arr) = matcher.get("hooks").and_then(|h| h.as_array()) {
+                        for (hook_idx, hook) in hooks_arr.iter().enumerate() {
+                            if let Some(timeout_val) = hook.get("timeout") {
+                                let is_invalid = match timeout_val {
+                                    serde_json::Value::Number(n) => {
+                                        // A valid timeout must be a positive integer.
+                                        // as_u64() returns Some only for non-negative integer
+                                        // JSON numbers within the u64 range; it returns None
+                                        // for negatives, any floats (including 30.0), or
+                                        // out-of-range values.
+                                        if let Some(val) = n.as_u64() {
+                                            val == 0 // Zero is invalid
+                                        } else {
+                                            true // Negative, float, or out of range
+                                        }
+                                    }
+                                    _ => true, // String, bool, null, object, array are invalid
+                                };
+                                if is_invalid {
+                                    let hook_location = format!(
+                                        "hooks.{}[{}].hooks[{}]",
+                                        event, matcher_idx, hook_idx
+                                    );
+                                    diagnostics.push(
+                                        Diagnostic::error(
+                                            path.to_path_buf(),
+                                            1,
+                                            0,
+                                            "CC-HK-011",
+                                            format!(
+                                                "Invalid timeout value at {}: must be a positive integer",
+                                                hook_location
+                                            ),
+                                        )
+                                        .with_suggestion(
+                                            "Set timeout to a positive integer like 30".to_string(),
+                                        ),
+                                    );
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 impl HooksValidator {
     fn check_dangerous_patterns(&self, command: &str) -> Option<(&'static str, &'static str)> {
         for dp in DANGEROUS_PATTERNS.iter() {
@@ -174,104 +313,18 @@ impl Validator for HooksValidator {
             }
         };
 
-        // CC-HK-005: Missing type field (pre-parse check)
+        // Phase 3: Pre-parse validation (raw JSON checks)
+        // CC-HK-005: Missing type field
         if config.is_rule_enabled("CC-HK-005") {
-            if let Some(hooks_obj) = raw_value.get("hooks").and_then(|h| h.as_object()) {
-                for (event, matchers) in hooks_obj {
-                    if let Some(matchers_arr) = matchers.as_array() {
-                        for (matcher_idx, matcher) in matchers_arr.iter().enumerate() {
-                            if let Some(hooks_arr) = matcher.get("hooks").and_then(|h| h.as_array())
-                            {
-                                for (hook_idx, hook) in hooks_arr.iter().enumerate() {
-                                    if hook.get("type").is_none() {
-                                        let hook_location = format!(
-                                            "hooks.{}[{}].hooks[{}]",
-                                            event, matcher_idx, hook_idx
-                                        );
-                                        diagnostics.push(
-                                            Diagnostic::error(
-                                                path.to_path_buf(),
-                                                1,
-                                                0,
-                                                "CC-HK-005",
-                                                format!(
-                                                    "Hook at {} is missing required 'type' field",
-                                                    hook_location
-                                                ),
-                                            )
-                                            .with_suggestion(
-                                                "Add 'type': 'command' or 'type': 'prompt'"
-                                                    .to_string(),
-                                            ),
-                                        );
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+            validate_cc_hk_005_missing_type_field(&raw_value, path, &mut diagnostics);
+            if diagnostics.iter().any(|d| d.rule == "CC-HK-005") {
+                return diagnostics; // Early return on missing type
             }
         }
 
-        if diagnostics.iter().any(|d| d.rule == "CC-HK-005") {
-            return diagnostics;
-        }
-
-        // CC-HK-011: Invalid timeout value (pre-parse check for negative/zero/non-integer values)
-        // Must check raw JSON before serde deserializes to Option<u64> which can't represent negatives
+        // CC-HK-011: Invalid timeout value
         if config.is_rule_enabled("CC-HK-011") {
-            if let Some(hooks_obj) = raw_value.get("hooks").and_then(|h| h.as_object()) {
-                for (event, matchers) in hooks_obj {
-                    if let Some(matchers_arr) = matchers.as_array() {
-                        for (matcher_idx, matcher) in matchers_arr.iter().enumerate() {
-                            if let Some(hooks_arr) = matcher.get("hooks").and_then(|h| h.as_array())
-                            {
-                                for (hook_idx, hook) in hooks_arr.iter().enumerate() {
-                                    if let Some(timeout_val) = hook.get("timeout") {
-                                        let is_invalid = match timeout_val {
-                                            serde_json::Value::Number(n) => {
-                                                // A valid timeout must be a positive integer.
-                                                // as_u64() returns Some only for non-negative integer
-                                                // JSON numbers within the u64 range; it returns None
-                                                // for negatives, any floats (including 30.0), or
-                                                // out-of-range values.
-                                                if let Some(val) = n.as_u64() {
-                                                    val == 0 // Zero is invalid
-                                                } else {
-                                                    true // Negative, float, or out of range
-                                                }
-                                            }
-                                            _ => true, // String, bool, null, object, array are invalid
-                                        };
-                                        if is_invalid {
-                                            let hook_location = format!(
-                                                "hooks.{}[{}].hooks[{}]",
-                                                event, matcher_idx, hook_idx
-                                            );
-                                            diagnostics.push(
-                                                Diagnostic::error(
-                                                    path.to_path_buf(),
-                                                    1,
-                                                    0,
-                                                    "CC-HK-011",
-                                                    format!(
-                                                        "Invalid timeout value at {}: must be a positive integer",
-                                                        hook_location
-                                                    ),
-                                                )
-                                                .with_suggestion(
-                                                    "Set timeout to a positive integer like 30"
-                                                        .to_string(),
-                                                ),
-                                            );
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            validate_cc_hk_011_invalid_timeout_values(&raw_value, path, &mut diagnostics);
         }
 
         let settings: SettingsSchema = match serde_json::from_str(content) {
