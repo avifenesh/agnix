@@ -669,14 +669,28 @@ impl HooksValidator {
 }
 
 impl Validator for HooksValidator {
+    /// Main validation entry point for hooks configuration.
+    ///
+    /// ## Validation Phases
+    ///
+    /// 1. **Category check** - Early return if hooks category disabled
+    /// 2. **JSON parsing** - Parse raw JSON, report CC-HK-012 on failure
+    /// 3. **Pre-parse validation** - Raw JSON checks (CC-HK-005, CC-HK-011)
+    /// 4. **Typed parsing** - Parse into SettingsSchema
+    /// 5. **Event iteration** - Validate each event and hook
     fn validate(&self, path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic> {
         let mut diagnostics = Vec::new();
 
-        // Early return if hooks category is entirely disabled
+        // =====================================================================
+        // Phase 1: Category check
+        // =====================================================================
         if !config.rules.hooks {
             return diagnostics;
         }
 
+        // =====================================================================
+        // Phase 2: JSON parsing
+        // =====================================================================
         let raw_value: serde_json::Value = match serde_json::from_str(content) {
             Ok(v) => v,
             Err(e) => {
@@ -693,12 +707,14 @@ impl Validator for HooksValidator {
             }
         };
 
+        // =====================================================================
         // Phase 3: Pre-parse validation (raw JSON checks)
-        // CC-HK-005: Missing type field
+        // =====================================================================
+        // CC-HK-005: Missing type field (early return on failure)
         if config.is_rule_enabled("CC-HK-005") {
             validate_cc_hk_005_missing_type_field(&raw_value, path, &mut diagnostics);
             if diagnostics.iter().any(|d| d.rule == "CC-HK-005") {
-                return diagnostics; // Early return on missing type
+                return diagnostics;
             }
         }
 
@@ -707,6 +723,9 @@ impl Validator for HooksValidator {
             validate_cc_hk_011_invalid_timeout_values(&raw_value, path, &mut diagnostics);
         }
 
+        // =====================================================================
+        // Phase 4: Typed parsing
+        // =====================================================================
         let settings: SettingsSchema = match serde_json::from_str(content) {
             Ok(s) => s,
             Err(e) => {
@@ -734,19 +753,22 @@ impl Validator for HooksValidator {
             })
             .unwrap_or_else(|| Path::new("."));
 
+        // =====================================================================
         // Phase 5: Event iteration with typed validation
+        // =====================================================================
         for (event, matchers) in &settings.hooks {
+            // --- Event-level validation ---
             // CC-HK-001: Invalid event name
             if config.is_rule_enabled("CC-HK-001") {
                 if !validate_cc_hk_001_event_name(event, path, content, &mut diagnostics) {
-                    continue; // Skip further validation for invalid events
+                    continue;
                 }
             } else if !HooksSchema::VALID_EVENTS.contains(&event.as_str()) {
-                // Even if rule is disabled, skip invalid events to avoid runtime errors
-                continue;
+                continue; // Skip invalid events even if rule disabled
             }
 
             for (matcher_idx, matcher) in matchers.iter().enumerate() {
+                // --- Matcher-level validation ---
                 // CC-HK-003: Missing matcher for tool events
                 if config.is_rule_enabled("CC-HK-003") {
                     validate_cc_hk_003_matcher_required(
@@ -769,6 +791,7 @@ impl Validator for HooksValidator {
                     );
                 }
 
+                // --- Hook-level validation ---
                 for (hook_idx, hook) in matcher.hooks.iter().enumerate() {
                     let hook_location = format!(
                         "hooks.{}{}.hooks[{}]",
@@ -785,7 +808,7 @@ impl Validator for HooksValidator {
                         Hook::Command {
                             command, timeout, ..
                         } => {
-                            // CC-HK-010: Timeout policy for command hooks (600s default)
+                            // CC-HK-010: Command timeout policy
                             if config.is_rule_enabled("CC-HK-010") {
                                 validate_cc_hk_010_command_timeout(
                                     timeout,
@@ -831,7 +854,7 @@ impl Validator for HooksValidator {
                         Hook::Prompt {
                             prompt, timeout, ..
                         } => {
-                            // CC-HK-010: Timeout policy for prompt hooks (30s default)
+                            // CC-HK-010: Prompt timeout policy
                             if config.is_rule_enabled("CC-HK-010") {
                                 validate_cc_hk_010_prompt_timeout(
                                     timeout,
