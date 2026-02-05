@@ -36,6 +36,8 @@ notify = { version = "7", features = ["macos_fsevent"] }
 notify-debouncer-mini = "0.5"
 ctrlc = "3"
 dirs = "5"
+rust-i18n = { workspace = true }
+sys-locale = { workspace = true }
 
 # Optional: HTTP client for telemetry submission
 reqwest = { version = "0.12", features = ["blocking", "json"], optional = true }

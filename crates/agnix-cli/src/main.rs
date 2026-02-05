@@ -1,6 +1,9 @@
 //! agnix CLI - The nginx of agent configs
 
+rust_i18n::i18n!("../../locales", fallback = "en");
+
 mod json;
+mod locale;
 mod sarif;
 pub mod telemetry;
 mod watch;
@@ -102,6 +105,14 @@ struct Cli {
     /// Watch mode - re-validate on file changes
     #[arg(short, long)]
     watch: bool,
+
+    /// Set output locale (e.g., en, es, zh-CN)
+    #[arg(long)]
+    locale: Option<String>,
+
+    /// List supported locales and exit
+    #[arg(long)]
+    list_locales: bool,
 }
 
 /// Output format for evaluation results
@@ -186,6 +197,15 @@ enum Commands {
 
 fn main() {
     let cli = Cli::parse();
+
+    // Handle --list-locales before anything else
+    if cli.list_locales {
+        locale::print_supported_locales();
+        return;
+    }
+
+    // Initialize locale (--locale flag > env var > system locale > "en")
+    locale::init(cli.locale.as_deref());
 
     // Initialize tracing for verbose mode (only for text output to avoid corrupting JSON/SARIF)
     if cli.verbose && matches!(cli.format, OutputFormat::Text) {

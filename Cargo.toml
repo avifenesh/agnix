@@ -53,6 +53,10 @@ tokio = { version = "1.49.0", features = ["full"] }
 # LSP
 tower-lsp = "0.20"
 
+# i18n
+rust-i18n = "3.1"
+sys-locale = "0.3"
+
 [profile.release]
 lto = "fat"
 codegen-units = 1
