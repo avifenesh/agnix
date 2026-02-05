@@ -383,10 +383,12 @@ pub fn validate_project_with_registry(
     config.set_root_dir(root_dir.clone());
 
     // Initialize shared import cache for project-level validation.
-    // This cache is shared across all file validations, allowing the ImportsValidator
-    // to avoid redundant parsing when traversing import chains that reference the same files.
+    // Reuse an existing cache when one is configured so callers can preserve
+    // cache state across validations (including poison-state recovery tests).
     let import_cache: crate::parsers::ImportCache =
-        std::sync::Arc::new(std::sync::RwLock::new(std::collections::HashMap::new()));
+        config.get_import_cache().cloned().unwrap_or_else(|| {
+            std::sync::Arc::new(std::sync::RwLock::new(std::collections::HashMap::new()))
+        });
     config.set_import_cache(import_cache);
 
     // Pre-compile exclude patterns once (avoids N+1 pattern compilation)

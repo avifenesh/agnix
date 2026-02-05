@@ -71,9 +71,10 @@ impl Validator for ImportsValidator {
         let root_imports = extract_imports(content);
         if let Some(cache) = shared_cache {
             // Write to shared cache only if not already present
-            let mut guard = cache
-                .write()
-                .expect("ImportCache lock poisoned - this indicates a panic in another thread");
+            let mut guard = match cache.write() {
+                Ok(guard) => guard,
+                Err(poisoned) => poisoned.into_inner(),
+            };
             guard.entry(root_path.clone()).or_insert(root_imports);
         } else {
             // Write to local cache
@@ -325,9 +326,10 @@ fn get_imports_for_file(
     if let Some(cache) = shared_cache {
         // Read lock - check if already cached
         {
-            let guard = cache
-                .read()
-                .expect("ImportCache lock poisoned - this indicates a panic in another thread");
+            let guard = match cache.read() {
+                Ok(guard) => guard,
+                Err(poisoned) => poisoned.into_inner(),
+            };
             if let Some(imports) = guard.get(file_path) {
                 return Some(imports.clone());
             }
@@ -346,9 +348,10 @@ fn get_imports_for_file(
 
         // Write lock - use entry() to handle race condition where another thread
         // may have already inserted while we were parsing
-        let mut guard = cache
-            .write()
-            .expect("ImportCache lock poisoned - this indicates a panic in another thread");
+        let mut guard = match cache.write() {
+            Ok(guard) => guard,
+            Err(poisoned) => poisoned.into_inner(),
+        };
         guard
             .entry(file_path.to_path_buf())
             .or_insert_with(|| imports.clone());
