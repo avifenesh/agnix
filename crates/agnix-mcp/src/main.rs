@@ -191,14 +191,23 @@ fn normalize_tool_entry(value: &str) -> Option<String> {
 }
 
 fn canonicalize_tool(value: &str) -> Option<&'static str> {
-    match value {
-        "generic" => Some("generic"),
-        "claude-code" | "claudecode" => Some("claude-code"),
-        "cursor" => Some("cursor"),
-        "codex" => Some("codex"),
-        "copilot" | "github-copilot" => Some("github-copilot"),
-        _ => None,
+    if value.eq_ignore_ascii_case("generic") {
+        return Some("generic");
     }
+
+    if value.eq_ignore_ascii_case("codex") {
+        return Some("codex");
+    }
+
+    if value.eq_ignore_ascii_case("copilot") {
+        return Some("github-copilot");
+    }
+
+    if value.eq_ignore_ascii_case("claudecode") {
+        return Some("claude-code");
+    }
+
+    agnix_rules::normalize_tool_name(value)
 }
 
 fn parse_tools(tools: Option<ToolsInput>) -> Result<Vec<String>, McpError> {
@@ -219,9 +228,18 @@ fn parse_tools(tools: Option<ToolsInput>) -> Result<Vec<String>, McpError> {
     let mut normalized = Vec::new();
     for tool in raw {
         let canonical = canonicalize_tool(&tool).ok_or_else(|| {
+            let mut valid = agnix_rules::valid_tools().to_vec();
+            if !valid.contains(&"generic") {
+                valid.push("generic");
+            }
+            if !valid.contains(&"codex") {
+                valid.push("codex");
+            }
+            valid.sort_unstable();
             make_invalid_params(format!(
-                "Unknown tool '{}'. Valid values: generic, claude-code, cursor, codex, copilot, github-copilot.",
-                tool
+                "Unknown tool '{}'. Valid values: {}. Alias: copilot -> github-copilot.",
+                tool,
+                valid.join(", ")
             ))
         })?;
         if seen.insert(canonical) {
