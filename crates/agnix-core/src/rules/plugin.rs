@@ -1,8 +1,7 @@
 //! Plugin manifest validation (CC-PL-001 to CC-PL-005)
 
 use crate::{
-    config::LintConfig, diagnostics::Diagnostic, fs::FileSystem, rules::Validator,
-    schemas::plugin::PluginSchema,
+    config::LintConfig, diagnostics::Diagnostic, rules::Validator, schemas::plugin::PluginSchema,
 };
 use std::path::Path;
 

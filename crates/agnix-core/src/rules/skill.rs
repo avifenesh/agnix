@@ -1184,6 +1184,8 @@ fn directory_size_until(path: &Path, max_bytes: u64, fs: &dyn FileSystem) -> u64
 mod tests {
     use super::*;
     use crate::config::LintConfig;
+    use crate::fs::RealFileSystem;
+    use std::fs;
 
     #[test]
     fn test_valid_skill() {
@@ -3078,6 +3080,7 @@ Body"#;
     #[test]
     fn test_directory_size_until_short_circuits() {
         let temp_dir = tempfile::tempdir().expect("Failed to create temp dir");
+        let fs = RealFileSystem;
 
         // Create 10 files of 1MB each (10MB total)
         for i in 0..10 {
@@ -3086,7 +3089,7 @@ Body"#;
         }
 
         // With a 2MB limit, should short-circuit and return > 2MB
-        let size = directory_size_until(temp_dir.path(), 2 * 1024 * 1024);
+        let size = directory_size_until(temp_dir.path(), 2 * 1024 * 1024, &fs);
         assert!(size > 2 * 1024 * 1024, "Size should exceed 2MB limit");
         // Should not have scanned all 10MB (short-circuited after exceeding limit).
         // Upper bound is 3MB because: directory iteration order is unspecified,
@@ -3101,6 +3104,7 @@ Body"#;
     #[test]
     fn test_directory_size_until_accurate_under_limit() {
         let temp_dir = tempfile::tempdir().expect("Failed to create temp dir");
+        let fs = RealFileSystem;
 
         // Create 2 files of 1KB each (2KB total)
         for i in 0..2 {
@@ -3109,21 +3113,23 @@ Body"#;
         }
 
         // With a 1MB limit, should return exact size
-        let size = directory_size_until(temp_dir.path(), 1024 * 1024);
+        let size = directory_size_until(temp_dir.path(), 1024 * 1024, &fs);
         assert_eq!(size, 2048);
     }
 
     #[test]
     fn test_directory_size_until_handles_empty_directory() {
         let temp_dir = tempfile::tempdir().expect("Failed to create temp dir");
+        let fs = RealFileSystem;
 
-        let size = directory_size_until(temp_dir.path(), 1024 * 1024);
+        let size = directory_size_until(temp_dir.path(), 1024 * 1024, &fs);
         assert_eq!(size, 0);
     }
 
     #[test]
     fn test_directory_size_until_nested_directories() {
         let temp_dir = tempfile::tempdir().expect("Failed to create temp dir");
+        let real_fs = RealFileSystem;
 
         // Create nested structure: root/sub1/sub2 with files at each level
         let sub1 = temp_dir.path().join("sub1");
@@ -3135,13 +3141,14 @@ Body"#;
         write_bytes_to_file(&sub1.join("sub1.bin"), 2048);
         write_bytes_to_file(&sub2.join("sub2.bin"), 3072);
 
-        let size = directory_size_until(temp_dir.path(), 1024 * 1024);
+        let size = directory_size_until(temp_dir.path(), 1024 * 1024, &real_fs);
         assert_eq!(size, 6144, "Should sum files across all nested directories");
     }
 
     #[test]
     fn test_directory_size_until_nested_short_circuits() {
         let temp_dir = tempfile::tempdir().expect("Failed to create temp dir");
+        let real_fs = RealFileSystem;
 
         // Create nested structure with large files
         let sub1 = temp_dir.path().join("sub1");
@@ -3153,7 +3160,7 @@ Body"#;
         write_bytes_to_file(&sub1.join("sub1.bin"), 1024 * 1024);
         write_bytes_to_file(&sub2.join("sub2.bin"), 1024 * 1024);
 
-        let size = directory_size_until(temp_dir.path(), 2 * 1024 * 1024);
+        let size = directory_size_until(temp_dir.path(), 2 * 1024 * 1024, &real_fs);
         assert!(size > 2 * 1024 * 1024, "Should exceed limit");
         assert!(
             size <= 3 * 1024 * 1024,

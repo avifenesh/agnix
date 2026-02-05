@@ -1,7 +1,6 @@
 //! Fix application engine for automatic corrections
 
 use crate::diagnostics::{Diagnostic, Fix, LintResult};
-use crate::file_utils::{safe_read_file, safe_write_file};
 use crate::fs::{FileSystem, RealFileSystem};
 use std::collections::HashMap;
 use std::path::PathBuf;

@@ -3,7 +3,6 @@
 use crate::{
     config::LintConfig,
     diagnostics::{Diagnostic, Fix},
-    fs::FileSystem,
     rules::Validator,
     schemas::hooks::{Hook, HooksSchema, SettingsSchema},
 };
