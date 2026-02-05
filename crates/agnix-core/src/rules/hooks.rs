@@ -703,7 +703,11 @@ mod tests {
 
     fn validate(content: &str) -> Vec<Diagnostic> {
         let validator = HooksValidator;
-        validator.validate(Path::new("settings.json"), content, &make_ctx(&LintConfig::default()))
+        validator.validate(
+            Path::new("settings.json"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        )
     }
 
     #[test]
@@ -2538,7 +2542,8 @@ mod tests {
         }"#;
 
         let validator = HooksValidator;
-        let diagnostics = validator.validate(Path::new("settings.json"), content, &make_ctx(&config));
+        let diagnostics =
+            validator.validate(Path::new("settings.json"), content, &make_ctx(&config));
 
         // CC-HK-001 should not fire when hooks category is disabled
         let cc_hk_001: Vec<_> = diagnostics
@@ -2567,7 +2572,8 @@ mod tests {
         }"#;
 
         let validator = HooksValidator;
-        let diagnostics = validator.validate(Path::new("settings.json"), content, &make_ctx(&config));
+        let diagnostics =
+            validator.validate(Path::new("settings.json"), content, &make_ctx(&config));
 
         // CC-HK-006 should not fire when specifically disabled
         let cc_hk_006: Vec<_> = diagnostics
@@ -2597,7 +2603,8 @@ mod tests {
         }"#;
 
         let validator = HooksValidator;
-        let diagnostics = validator.validate(Path::new("settings.json"), content, &make_ctx(&config));
+        let diagnostics =
+            validator.validate(Path::new("settings.json"), content, &make_ctx(&config));
 
         // CC-HK-* rules should not fire for Cursor target
         let hook_rules: Vec<_> = diagnostics
@@ -2625,7 +2632,8 @@ mod tests {
         }"#;
 
         let validator = HooksValidator;
-        let diagnostics = validator.validate(Path::new("settings.json"), content, &make_ctx(&config));
+        let diagnostics =
+            validator.validate(Path::new("settings.json"), content, &make_ctx(&config));
 
         // CC-HK-009 should not fire when specifically disabled
         let cc_hk_009: Vec<_> = diagnostics
@@ -2657,7 +2665,8 @@ mod tests {
         }"#;
 
         let validator = HooksValidator;
-        let diagnostics = validator.validate(Path::new("settings.json"), content, &make_ctx(&config));
+        let diagnostics =
+            validator.validate(Path::new("settings.json"), content, &make_ctx(&config));
 
         let cc_hk_010: Vec<_> = diagnostics
             .iter()
@@ -2692,7 +2701,8 @@ mod tests {
         }"#;
 
         let validator = HooksValidator;
-        let diagnostics = validator.validate(Path::new("settings.json"), content, &make_ctx(&config));
+        let diagnostics =
+            validator.validate(Path::new("settings.json"), content, &make_ctx(&config));
 
         let cc_hk_010: Vec<_> = diagnostics
             .iter()
@@ -2721,7 +2731,8 @@ mod tests {
         }"#;
 
         let validator = HooksValidator;
-        let diagnostics = validator.validate(Path::new("settings.json"), content, &make_ctx(&config));
+        let diagnostics =
+            validator.validate(Path::new("settings.json"), content, &make_ctx(&config));
 
         let cc_hk_010: Vec<_> = diagnostics
             .iter()
@@ -2750,7 +2761,8 @@ mod tests {
         }"#;
 
         let validator = HooksValidator;
-        let diagnostics = validator.validate(Path::new("settings.json"), content, &make_ctx(&config));
+        let diagnostics =
+            validator.validate(Path::new("settings.json"), content, &make_ctx(&config));
 
         let cc_hk_010: Vec<_> = diagnostics
             .iter()

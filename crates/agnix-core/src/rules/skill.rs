@@ -1205,7 +1205,11 @@ description: Use when testing skill validation
 Skill body content"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("test.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         assert!(diagnostics.is_empty());
     }
@@ -1219,7 +1223,11 @@ description: Use when validating skill names
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("test.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let as_004_errors: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-004").collect();
         assert_eq!(as_004_errors.len(), 1);
@@ -1231,8 +1239,11 @@ Body"#;
             include_str!("../../../../tests/fixtures/skills/missing-frontmatter/SKILL.md");
 
         let validator = SkillValidator;
-        let diagnostics =
-            validator.validate(Path::new("SKILL.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("SKILL.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let as_001_errors: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-001").collect();
         assert_eq!(as_001_errors.len(), 1);
@@ -1246,7 +1257,11 @@ description: Use when validating missing name
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("test.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let as_002_errors: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-002").collect();
         assert_eq!(as_002_errors.len(), 1);
@@ -1260,7 +1275,11 @@ name: test-skill
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("test.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let as_003_errors: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-003").collect();
         assert_eq!(as_003_errors.len(), 1);
@@ -1275,7 +1294,11 @@ description: Use when validating name format
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("test.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let as_004_errors: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-004").collect();
         assert_eq!(as_004_errors.len(), 1);
@@ -1290,7 +1313,11 @@ description: Use when validating reserved names
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("test.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let as_007_errors: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-007").collect();
         assert_eq!(as_007_errors.len(), 1);
@@ -1305,8 +1332,11 @@ Body"#;
         );
 
         let validator = SkillValidator;
-        let diagnostics =
-            validator.validate(Path::new("test.md"), &content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("test.md"),
+            &content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let as_008_errors: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-008").collect();
         assert_eq!(as_008_errors.len(), 1);
@@ -1321,7 +1351,11 @@ description: ""
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("test.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let as_003_errors: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-003").collect();
         assert_eq!(as_003_errors.len(), 0);
@@ -1339,7 +1373,11 @@ description: Use when validating <xml> tags
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("test.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let as_009_errors: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-009").collect();
         assert_eq!(as_009_errors.len(), 1);
@@ -1354,8 +1392,11 @@ Body"#;
         );
 
         let validator = SkillValidator;
-        let diagnostics =
-            validator.validate(Path::new("test.md"), &content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("test.md"),
+            &content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let as_011_errors: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-011").collect();
         assert_eq!(as_011_errors.len(), 1);
@@ -1370,8 +1411,11 @@ Body"#;
         );
 
         let validator = SkillValidator;
-        let diagnostics =
-            validator.validate(Path::new("test.md"), &content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("test.md"),
+            &content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let as_012_warnings: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-012").collect();
         assert_eq!(as_012_warnings.len(), 1);
@@ -1382,8 +1426,11 @@ Body"#;
         let content = include_str!("../../../../tests/fixtures/skills/deep-reference/SKILL.md");
 
         let validator = SkillValidator;
-        let diagnostics =
-            validator.validate(Path::new("SKILL.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("SKILL.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let as_013_errors: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-013").collect();
         assert_eq!(as_013_errors.len(), 1);
@@ -1399,8 +1446,11 @@ description: Use when validating deep references
 See reference/deep/guide.md for details."#;
 
         let validator = SkillValidator;
-        let diagnostics =
-            validator.validate(Path::new("SKILL.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("SKILL.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let as_013_errors: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-013").collect();
         assert_eq!(as_013_errors.len(), 1);
@@ -1411,8 +1461,11 @@ See reference/deep/guide.md for details."#;
         let content = include_str!("../../../../tests/fixtures/skills/windows-path/SKILL.md");
 
         let validator = SkillValidator;
-        let diagnostics =
-            validator.validate(Path::new("SKILL.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("SKILL.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let as_014_errors: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-014").collect();
         assert_eq!(as_014_errors.len(), 1);
@@ -1440,7 +1493,8 @@ See reference/deep/guide.md for details."#;
 
         let content = fs::read_to_string(&skill_path).unwrap();
         let validator = SkillValidator;
-        let diagnostics = validator.validate(&skill_path, &content, &make_ctx(&LintConfig::default()));
+        let diagnostics =
+            validator.validate(&skill_path, &content, &make_ctx(&LintConfig::default()));
 
         let as_015_errors: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-015").collect();
         assert_eq!(as_015_errors.len(), 1);
@@ -1455,7 +1509,11 @@ description: Deploys to production
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("test.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         // Should have an error for CC-SK-006
         let cc_sk_006_errors: Vec<_> = diagnostics
@@ -1480,7 +1538,11 @@ disable-model-invocation: true
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("test.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         // Should NOT have an error for CC-SK-006
         let cc_sk_006_errors: Vec<_> = diagnostics
@@ -1506,8 +1568,11 @@ Body"#,
             );
 
             let validator = SkillValidator;
-            let diagnostics =
-                validator.validate(Path::new("test.md"), &content, &make_ctx(&LintConfig::default()));
+            let diagnostics = validator.validate(
+                Path::new("test.md"),
+                &content,
+                &make_ctx(&LintConfig::default()),
+            );
 
             // Should have an error for CC-SK-006
             let cc_sk_006_errors: Vec<_> = diagnostics
@@ -1534,7 +1599,11 @@ allowed-tools: Bash Read Write
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("test.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         // Should have a warning for CC-SK-007
         let cc_sk_007_warnings: Vec<_> = diagnostics
@@ -1559,7 +1628,11 @@ allowed-tools: Bash(git:*) Read Write
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("test.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         // Should NOT have a warning for CC-SK-007 (scoped Bash is ok)
         let cc_sk_007_warnings: Vec<_> = diagnostics
@@ -1580,7 +1653,11 @@ allowed-tools: Read Write
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("test.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         // Should NOT have a warning for CC-SK-007 (no Bash at all)
         let cc_sk_007_warnings: Vec<_> = diagnostics
@@ -1603,7 +1680,11 @@ allowed-tools: Bash Read Write
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("test.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let cc_sk_007: Vec<_> = diagnostics
             .iter()
@@ -1628,7 +1709,11 @@ allowed-tools: Bash Read
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("test.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let cc_sk_007: Vec<_> = diagnostics
             .iter()
@@ -1657,7 +1742,11 @@ allowed-tools: Bash Read Bash
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("test.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let cc_sk_007: Vec<_> = diagnostics
             .iter()
@@ -1681,7 +1770,11 @@ allowed-tools: Bash(git:*) Read
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("test.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let cc_sk_007: Vec<_> = diagnostics
             .iter()
@@ -1720,7 +1813,11 @@ description: Use when testing validation
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("test.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let as_005_errors: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-005").collect();
 
@@ -1740,7 +1837,11 @@ description: Use when testing validation
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("test.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let as_005_errors: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-005").collect();
 
@@ -1760,7 +1861,11 @@ description: Use when testing validation
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("test.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let as_006_errors: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-006").collect();
 
@@ -1780,7 +1885,11 @@ description: Reviews code for quality
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("test.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let as_010_warnings: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-010").collect();
 
@@ -1800,7 +1909,11 @@ description: Use when user asks for code review
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("test.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let as_010_warnings: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-010").collect();
 
@@ -1816,7 +1929,11 @@ description: Use this skill to review code
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("test.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let as_010_warnings: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-010").collect();
 
@@ -1835,7 +1952,11 @@ model: gpt-4
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("test.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let cc_sk_001: Vec<_> = diagnostics
             .iter()
@@ -1864,8 +1985,11 @@ Body"#,
             );
 
             let validator = SkillValidator;
-            let diagnostics =
-                validator.validate(Path::new("test.md"), &content, &make_ctx(&LintConfig::default()));
+            let diagnostics = validator.validate(
+                Path::new("test.md"),
+                &content,
+                &make_ctx(&LintConfig::default()),
+            );
 
             let cc_sk_001: Vec<_> = diagnostics
                 .iter()
@@ -1885,7 +2009,11 @@ description: Use when testing
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("test.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let cc_sk_001: Vec<_> = diagnostics
             .iter()
@@ -1907,7 +2035,11 @@ context: split
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("test.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let cc_sk_002: Vec<_> = diagnostics
             .iter()
@@ -1933,7 +2065,11 @@ agent: general-purpose
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("test.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let cc_sk_002: Vec<_> = diagnostics
             .iter()
@@ -1952,7 +2088,11 @@ description: Use when testing
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("test.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let cc_sk_002: Vec<_> = diagnostics
             .iter()
@@ -1974,7 +2114,11 @@ context: fork
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("test.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let cc_sk_003: Vec<_> = diagnostics
             .iter()
@@ -1999,7 +2143,11 @@ agent: Explore
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("test.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let cc_sk_003: Vec<_> = diagnostics
             .iter()
@@ -2021,7 +2169,11 @@ agent: Explore
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("test.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let cc_sk_004: Vec<_> = diagnostics
             .iter()
@@ -2046,7 +2198,11 @@ agent: Explore
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("test.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let cc_sk_004: Vec<_> = diagnostics
             .iter()
@@ -2065,7 +2221,11 @@ description: Use when testing
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("test.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let cc_sk_004: Vec<_> = diagnostics
             .iter()
@@ -2088,7 +2248,11 @@ agent: CustomAgent
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("test.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let cc_sk_005: Vec<_> = diagnostics
             .iter()
@@ -2118,8 +2282,11 @@ Body"#,
             );
 
             let validator = SkillValidator;
-            let diagnostics =
-                validator.validate(Path::new("test.md"), &content, &make_ctx(&LintConfig::default()));
+            let diagnostics = validator.validate(
+                Path::new("test.md"),
+                &content,
+                &make_ctx(&LintConfig::default()),
+            );
 
             let cc_sk_005: Vec<_> = diagnostics
                 .iter()
@@ -2153,8 +2320,11 @@ Body"#,
             );
 
             let validator = SkillValidator;
-            let diagnostics =
-                validator.validate(Path::new("test.md"), &content, &make_ctx(&LintConfig::default()));
+            let diagnostics = validator.validate(
+                Path::new("test.md"),
+                &content,
+                &make_ctx(&LintConfig::default()),
+            );
 
             let cc_sk_005: Vec<_> = diagnostics
                 .iter()
@@ -2199,8 +2369,11 @@ Body"#,
             );
 
             let validator = SkillValidator;
-            let diagnostics =
-                validator.validate(Path::new("test.md"), &content, &make_ctx(&LintConfig::default()));
+            let diagnostics = validator.validate(
+                Path::new("test.md"),
+                &content,
+                &make_ctx(&LintConfig::default()),
+            );
 
             let cc_sk_005: Vec<_> = diagnostics
                 .iter()
@@ -2232,8 +2405,11 @@ Body"#,
         );
 
         let validator = SkillValidator;
-        let diagnostics =
-            validator.validate(Path::new("test.md"), &content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("test.md"),
+            &content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let cc_sk_005: Vec<_> = diagnostics
             .iter()
@@ -2258,8 +2434,11 @@ Body"#,
         );
 
         let validator = SkillValidator;
-        let diagnostics =
-            validator.validate(Path::new("test.md"), &content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("test.md"),
+            &content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let cc_sk_005: Vec<_> = diagnostics
             .iter()
@@ -2275,8 +2454,11 @@ Body"#,
             include_str!("../../../../tests/fixtures/invalid/skills/invalid-agent/SKILL.md");
 
         let validator = SkillValidator;
-        let diagnostics =
-            validator.validate(Path::new("SKILL.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("SKILL.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let cc_sk_005: Vec<_> = diagnostics
             .iter()
@@ -2296,8 +2478,11 @@ Body"#,
             include_str!("../../../../tests/fixtures/valid/skills/with-custom-agent/SKILL.md");
 
         let validator = SkillValidator;
-        let diagnostics =
-            validator.validate(Path::new("SKILL.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("SKILL.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let cc_sk_005: Vec<_> = diagnostics
             .iter()
@@ -2323,7 +2508,11 @@ allowed-tools: Read Write UnknownTool
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("test.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let cc_sk_008: Vec<_> = diagnostics
             .iter()
@@ -2348,7 +2537,11 @@ allowed-tools: Bash Read Write Edit Grep Glob Task
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("test.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let cc_sk_008: Vec<_> = diagnostics
             .iter()
@@ -2368,7 +2561,11 @@ allowed-tools: Bash(git:*) Read Write
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("test.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let cc_sk_008: Vec<_> = diagnostics
             .iter()
@@ -2388,7 +2585,11 @@ allowed-tools: FakeTool1 Read FakeTool2
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("test.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let cc_sk_008: Vec<_> = diagnostics
             .iter()
@@ -2408,7 +2609,11 @@ allowed-tools: FakeTool(scope:*) Read
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("test.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let cc_sk_008: Vec<_> = diagnostics
             .iter()
@@ -2439,7 +2644,11 @@ User: !`whoami`
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("test.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let cc_sk_009: Vec<_> = diagnostics
             .iter()
@@ -2466,7 +2675,11 @@ Branch: !`git branch`
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("test.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let cc_sk_009: Vec<_> = diagnostics
             .iter()
@@ -2486,7 +2699,11 @@ No dynamic injections here.
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("test.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let cc_sk_009: Vec<_> = diagnostics
             .iter()
@@ -2508,7 +2725,11 @@ disable-model-invocation: false
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("test.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let cc_sk_006: Vec<_> = diagnostics
             .iter()
@@ -2532,7 +2753,11 @@ allowed-tools: Bash Read Bash
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("test.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let cc_sk_007: Vec<_> = diagnostics
             .iter()
@@ -2558,7 +2783,11 @@ Body"#;
 
         let validator = SkillValidator;
         // Should not panic on malformed scope syntax
-        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("test.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         // Bash( extracts "Bash", which is known
         // Bash() extracts "Bash", which is known
@@ -2584,7 +2813,11 @@ allowed-tools: bash read
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("test.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let cc_sk_008: Vec<_> = diagnostics
             .iter()
@@ -2604,7 +2837,11 @@ description: USE WHEN testing
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("test.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let as_010: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-010").collect();
 
@@ -2625,7 +2862,11 @@ invalid yaml
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("test.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let parse_errors: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-016").collect();
 
@@ -2789,7 +3030,11 @@ description: Use when testing
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("test.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let as_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-004").collect();
         assert_eq!(as_004.len(), 1);
@@ -2806,7 +3051,11 @@ description: Use when testing
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("test.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let as_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-004").collect();
         assert_eq!(as_004.len(), 1);
@@ -2824,7 +3073,11 @@ description: Use when testing
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("test.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let as_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-004").collect();
         assert_eq!(as_004.len(), 1);
@@ -2842,7 +3095,11 @@ description: Use when testing
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("test.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let as_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-004").collect();
         assert_eq!(as_004.len(), 1);
@@ -2864,7 +3121,11 @@ description: Use when testing
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("test.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let as_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-004").collect();
         assert_eq!(as_004.len(), 1);
@@ -2888,7 +3149,11 @@ description: Use when testing
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("test.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let as_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-004").collect();
         assert_eq!(as_004.len(), 1);
@@ -2906,7 +3171,11 @@ description: Use when testing
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("test.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let as_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-004").collect();
         assert_eq!(as_004.len(), 1);
@@ -2926,7 +3195,11 @@ description: Reviews code for quality
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("test.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let as_010: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-010").collect();
         assert_eq!(as_010.len(), 1);
@@ -2946,7 +3219,11 @@ description: Reviews code for quality
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("test.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let as_010: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-010").collect();
         assert_eq!(as_010.len(), 1);
@@ -2964,7 +3241,11 @@ description: Helps with tasks
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("test.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let as_010: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-010").collect();
         assert_eq!(as_010.len(), 1);
@@ -2986,7 +3267,11 @@ description: "Helps with tasks"
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("test.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let as_010: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-010").collect();
         assert_eq!(as_010.len(), 1);
@@ -3006,8 +3291,11 @@ Body"#;
         let content = format!("---\nname: helper\ndescription: {}\n---\nBody", long_desc);
 
         let validator = SkillValidator;
-        let diagnostics =
-            validator.validate(Path::new("test.md"), &content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("test.md"),
+            &content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let as_010: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-010").collect();
         assert_eq!(as_010.len(), 1);
@@ -3192,7 +3480,8 @@ Body"#;
 
         let validator = SkillValidator;
         let content = fs::read_to_string(&skill_path).expect("Failed to read SKILL.md content");
-        let diagnostics = validator.validate(&skill_path, &content, &make_ctx(&LintConfig::default()));
+        let diagnostics =
+            validator.validate(&skill_path, &content, &make_ctx(&LintConfig::default()));
 
         // Exactly 8MB should NOT trigger AS-015 (uses > not >=)
         let as_015_errors: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-015").collect();

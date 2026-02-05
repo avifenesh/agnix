@@ -131,16 +131,14 @@ impl<'a> ValidatorContext<'a> {
     ///
     /// Returns `None` if neither the context nor config has a root directory set.
     pub fn get_root_dir(&self) -> Option<&Path> {
-        self.root_dir
-            .or(self.config.root_dir.as_deref())
+        self.root_dir.or(self.config.root_dir.as_deref())
     }
 
     /// Get the import cache, falling back to the config's import_cache if not set.
     ///
     /// Returns `None` if neither the context nor config has an import cache set.
     pub fn get_import_cache(&self) -> Option<&ImportCache> {
-        self.import_cache
-            .or(self.config.import_cache.as_ref())
+        self.import_cache.or(self.config.import_cache.as_ref())
     }
 }
 

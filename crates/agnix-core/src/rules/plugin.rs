@@ -1,7 +1,8 @@
 //! Plugin manifest validation (CC-PL-001 to CC-PL-005)
 
 use crate::{
-    context::ValidatorContext, diagnostics::Diagnostic, rules::Validator, schemas::plugin::PluginSchema,
+    context::ValidatorContext, diagnostics::Diagnostic, rules::Validator,
+    schemas::plugin::PluginSchema,
 };
 use std::path::Path;
 

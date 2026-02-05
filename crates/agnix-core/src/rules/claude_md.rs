@@ -278,8 +278,7 @@ mod tests {
         let content = "Be helpful and accurate when responding.";
         let validator = ClaudeMdValidator;
         let config = LintConfig::default();
-        let diagnostics =
-            validator.validate(Path::new("CLAUDE.md"), content, &make_ctx(&config));
+        let diagnostics = validator.validate(Path::new("CLAUDE.md"), content, &make_ctx(&config));
 
         assert!(!diagnostics.is_empty());
         // Verify rule ID is CC-MEM-005
@@ -293,8 +292,11 @@ mod tests {
         let validator = ClaudeMdValidator;
 
         // AGENTS.md should be skipped
-        let diagnostics =
-            validator.validate(Path::new("AGENTS.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("AGENTS.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
         assert!(
             diagnostics.is_empty(),
             "CC-MEM rules should not fire for AGENTS.md"
@@ -400,8 +402,11 @@ mod tests {
     fn test_cc_mem_009_token_exceeded() {
         let content = "x".repeat(6100); // > 6000 chars = > 1500 tokens
         let validator = ClaudeMdValidator;
-        let diagnostics =
-            validator.validate(Path::new("CLAUDE.md"), &content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("CLAUDE.md"),
+            &content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let mem009: Vec<_> = diagnostics
             .iter()
@@ -415,8 +420,11 @@ mod tests {
     fn test_cc_mem_009_under_limit() {
         let content = "Short content.";
         let validator = ClaudeMdValidator;
-        let diagnostics =
-            validator.validate(Path::new("CLAUDE.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("CLAUDE.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let mem009: Vec<_> = diagnostics
             .iter()
@@ -430,8 +438,11 @@ mod tests {
     fn test_cc_mem_006_negative_without_positive() {
         let content = "Never use var in JavaScript.";
         let validator = ClaudeMdValidator;
-        let diagnostics =
-            validator.validate(Path::new("CLAUDE.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("CLAUDE.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let mem006: Vec<_> = diagnostics
             .iter()
@@ -445,8 +456,11 @@ mod tests {
     fn test_cc_mem_006_negative_with_positive() {
         let content = "Never use var, instead prefer const.";
         let validator = ClaudeMdValidator;
-        let diagnostics =
-            validator.validate(Path::new("CLAUDE.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("CLAUDE.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let mem006: Vec<_> = diagnostics
             .iter()
@@ -460,8 +474,11 @@ mod tests {
     fn test_cc_mem_007_weak_in_critical() {
         let content = "# Critical Rules\n\nYou should follow the coding style.";
         let validator = ClaudeMdValidator;
-        let diagnostics =
-            validator.validate(Path::new("CLAUDE.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("CLAUDE.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let mem007: Vec<_> = diagnostics
             .iter()
@@ -475,8 +492,11 @@ mod tests {
     fn test_cc_mem_007_weak_outside_critical() {
         let content = "# General Info\n\nYou should follow the coding style.";
         let validator = ClaudeMdValidator;
-        let diagnostics =
-            validator.validate(Path::new("CLAUDE.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("CLAUDE.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let mem007: Vec<_> = diagnostics
             .iter()
@@ -494,8 +514,11 @@ mod tests {
         let content = lines.join("\n");
 
         let validator = ClaudeMdValidator;
-        let diagnostics =
-            validator.validate(Path::new("CLAUDE.md"), &content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("CLAUDE.md"),
+            &content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let mem008: Vec<_> = diagnostics
             .iter()
@@ -512,8 +535,11 @@ mod tests {
         let content = lines.join("\n");
 
         let validator = ClaudeMdValidator;
-        let diagnostics =
-            validator.validate(Path::new("CLAUDE.md"), &content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("CLAUDE.md"),
+            &content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let mem008: Vec<_> = diagnostics
             .iter()
@@ -546,7 +572,8 @@ mod tests {
 
         let content = fs::read_to_string(&claude_md_path).unwrap();
         let validator = ClaudeMdValidator;
-        let diagnostics = validator.validate(&claude_md_path, &content, &make_ctx(&LintConfig::default()));
+        let diagnostics =
+            validator.validate(&claude_md_path, &content, &make_ctx(&LintConfig::default()));
 
         let mem004: Vec<_> = diagnostics
             .iter()
@@ -575,7 +602,8 @@ mod tests {
 
         let content = fs::read_to_string(&claude_md_path).unwrap();
         let validator = ClaudeMdValidator;
-        let diagnostics = validator.validate(&claude_md_path, &content, &make_ctx(&LintConfig::default()));
+        let diagnostics =
+            validator.validate(&claude_md_path, &content, &make_ctx(&LintConfig::default()));
 
         let mem004: Vec<_> = diagnostics
             .iter()
@@ -606,7 +634,8 @@ mod tests {
 
         let content = fs::read_to_string(&claude_md_path).unwrap();
         let validator = ClaudeMdValidator;
-        let diagnostics = validator.validate(&claude_md_path, &content, &make_ctx(&LintConfig::default()));
+        let diagnostics =
+            validator.validate(&claude_md_path, &content, &make_ctx(&LintConfig::default()));
 
         let mem010: Vec<_> = diagnostics
             .iter()
@@ -642,7 +671,8 @@ mod tests {
 
         let content = fs::read_to_string(&claude_md_path).unwrap();
         let validator = ClaudeMdValidator;
-        let diagnostics = validator.validate(&claude_md_path, &content, &make_ctx(&LintConfig::default()));
+        let diagnostics =
+            validator.validate(&claude_md_path, &content, &make_ctx(&LintConfig::default()));
 
         let mem010: Vec<_> = diagnostics
             .iter()
@@ -690,8 +720,11 @@ You should consider this approach.
     fn test_cc_mem_005_has_fix() {
         let content = "Be helpful and accurate when responding.";
         let validator = ClaudeMdValidator;
-        let diagnostics =
-            validator.validate(Path::new("CLAUDE.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("CLAUDE.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let mem005: Vec<_> = diagnostics
             .iter()
@@ -709,8 +742,11 @@ You should consider this approach.
     fn test_cc_mem_005_fix_byte_positions() {
         let content = "Line one.\nBe helpful and accurate.\nLine three.";
         let validator = ClaudeMdValidator;
-        let diagnostics =
-            validator.validate(Path::new("CLAUDE.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("CLAUDE.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let mem005: Vec<_> = diagnostics
             .iter()
@@ -729,8 +765,11 @@ You should consider this approach.
     fn test_cc_mem_005_fix_application() {
         let content = "Line one.\nBe helpful and accurate.\nLine three.";
         let validator = ClaudeMdValidator;
-        let diagnostics =
-            validator.validate(Path::new("CLAUDE.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("CLAUDE.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let mem005: Vec<_> = diagnostics
             .iter()
@@ -749,8 +788,11 @@ You should consider this approach.
     fn test_cc_mem_005_fix_last_line_no_newline() {
         let content = "Be helpful and accurate.";
         let validator = ClaudeMdValidator;
-        let diagnostics =
-            validator.validate(Path::new("CLAUDE.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("CLAUDE.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let mem005: Vec<_> = diagnostics
             .iter()
@@ -770,8 +812,11 @@ You should consider this approach.
     fn test_cc_mem_007_has_fix() {
         let content = "# Critical Rules\n\nYou should follow the coding style.";
         let validator = ClaudeMdValidator;
-        let diagnostics =
-            validator.validate(Path::new("CLAUDE.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("CLAUDE.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let mem007: Vec<_> = diagnostics
             .iter()
@@ -789,8 +834,11 @@ You should consider this approach.
     fn test_cc_mem_007_fix_byte_positions() {
         let content = "# Critical Rules\n\nYou should follow the coding style.";
         let validator = ClaudeMdValidator;
-        let diagnostics =
-            validator.validate(Path::new("CLAUDE.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("CLAUDE.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let mem007: Vec<_> = diagnostics
             .iter()
@@ -809,8 +857,11 @@ You should consider this approach.
     fn test_cc_mem_007_fix_application() {
         let content = "# Critical Rules\n\nYou should follow the coding style.";
         let validator = ClaudeMdValidator;
-        let diagnostics =
-            validator.validate(Path::new("CLAUDE.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("CLAUDE.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let mem007: Vec<_> = diagnostics
             .iter()
@@ -842,8 +893,11 @@ You should consider this approach.
         let validator = ClaudeMdValidator;
 
         for (content, expected_replacement, expected_safe) in test_cases {
-            let diagnostics =
-                validator.validate(Path::new("CLAUDE.md"), content, &make_ctx(&LintConfig::default()));
+            let diagnostics = validator.validate(
+                Path::new("CLAUDE.md"),
+                content,
+                &make_ctx(&LintConfig::default()),
+            );
 
             let mem007: Vec<_> = diagnostics
                 .iter()
@@ -866,8 +920,11 @@ You should consider this approach.
     fn test_cc_mem_007_multiple_weak_words() {
         let content = "# Critical Rules\n\nYou should consider doing this.";
         let validator = ClaudeMdValidator;
-        let diagnostics =
-            validator.validate(Path::new("CLAUDE.md"), content, &make_ctx(&LintConfig::default()));
+        let diagnostics = validator.validate(
+            Path::new("CLAUDE.md"),
+            content,
+            &make_ctx(&LintConfig::default()),
+        );
 
         let mem007: Vec<_> = diagnostics
             .iter()

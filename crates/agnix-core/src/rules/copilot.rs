@@ -209,11 +209,7 @@ mod tests {
         let validator = CopilotValidator;
         let config = LintConfig::default();
         let ctx = ValidatorContext::new(&config, &RealFileSystem);
-        validator.validate(
-            Path::new(".github/copilot-instructions.md"),
-            content,
-            &ctx,
-        )
+        validator.validate(Path::new(".github/copilot-instructions.md"), content, &ctx)
     }
 
     fn validate_scoped(content: &str) -> Vec<Diagnostic> {

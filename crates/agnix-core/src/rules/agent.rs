@@ -1150,7 +1150,8 @@ description: A test agent without name
 Agent instructions"#;
 
         let validator = AgentValidator;
-        let diagnostics = validator.validate(Path::new("test-agent.md"), content, &make_ctx(&config));
+        let diagnostics =
+            validator.validate(Path::new("test-agent.md"), content, &make_ctx(&config));
 
         // CC-AG-001 should not fire when agents category is disabled
         let cc_ag_001: Vec<_> = diagnostics
@@ -1172,7 +1173,8 @@ model: sonnet
 Agent instructions"#;
 
         let validator = AgentValidator;
-        let diagnostics = validator.validate(Path::new("test-agent.md"), content, &make_ctx(&config));
+        let diagnostics =
+            validator.validate(Path::new("test-agent.md"), content, &make_ctx(&config));
 
         // CC-AG-001 should not fire when specifically disabled
         let cc_ag_001: Vec<_> = diagnostics
@@ -1202,7 +1204,8 @@ description: Agent without name
 Agent instructions"#;
 
         let validator = AgentValidator;
-        let diagnostics = validator.validate(Path::new("test-agent.md"), content, &make_ctx(&config));
+        let diagnostics =
+            validator.validate(Path::new("test-agent.md"), content, &make_ctx(&config));
 
         // CC-AG-* rules should not fire for Cursor target
         let agent_rules: Vec<_> = diagnostics
@@ -1225,7 +1228,8 @@ description: Agent without name
 Agent instructions"#;
 
         let validator = AgentValidator;
-        let diagnostics = validator.validate(Path::new("test-agent.md"), content, &make_ctx(&config));
+        let diagnostics =
+            validator.validate(Path::new("test-agent.md"), content, &make_ctx(&config));
 
         // CC-AG-001 should fire for ClaudeCode target
         let cc_ag_001: Vec<_> = diagnostics

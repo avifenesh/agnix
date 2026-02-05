@@ -163,8 +163,7 @@ mod tests {
 Some content"#;
         let validator = AgentsMdValidator;
         let config = LintConfig::default();
-        let diagnostics =
-            validator.validate(Path::new("CLAUDE.md"), content, &make_ctx(&config));
+        let diagnostics = validator.validate(Path::new("CLAUDE.md"), content, &make_ctx(&config));
         // Should return empty for CLAUDE.md
         assert!(diagnostics.is_empty());
     }
@@ -174,8 +173,7 @@ Some content"#;
         let content = r#"```unclosed"#;
         let validator = AgentsMdValidator;
         let config = LintConfig::default();
-        let diagnostics =
-            validator.validate(Path::new("README.md"), content, &make_ctx(&config));
+        let diagnostics = validator.validate(Path::new("README.md"), content, &make_ctx(&config));
         assert!(diagnostics.is_empty());
     }
 
@@ -186,11 +184,8 @@ Some content"#;
 Some content"#;
         let validator = AgentsMdValidator;
         let config = LintConfig::default();
-        let diagnostics = validator.validate(
-            Path::new("CLAUDE.local.md"),
-            content,
-            &make_ctx(&config),
-        );
+        let diagnostics =
+            validator.validate(Path::new("CLAUDE.local.md"), content, &make_ctx(&config));
         assert!(
             diagnostics.is_empty(),
             "CLAUDE.local.md should not get AGM rules"
@@ -209,8 +204,7 @@ Some content"#;
         let config = LintConfig::default();
 
         for variant in variants {
-            let diagnostics =
-                validator.validate(Path::new(variant), content, &make_ctx(&config));
+            let diagnostics = validator.validate(Path::new(variant), content, &make_ctx(&config));
             let agm_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AGM-001").collect();
             assert_eq!(
                 agm_001.len(),
@@ -226,11 +220,8 @@ Some content"#;
         let content = format!("# Project\n\n{}", "x".repeat(13000));
         let validator = AgentsMdValidator;
         let config = LintConfig::default();
-        let diagnostics = validator.validate(
-            Path::new("AGENTS.local.md"),
-            &content,
-            &make_ctx(&config),
-        );
+        let diagnostics =
+            validator.validate(Path::new("AGENTS.local.md"), &content, &make_ctx(&config));
         let agm_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AGM-003").collect();
         assert_eq!(
             agm_003.len(),
@@ -248,11 +239,8 @@ Some content"#;
 "#;
         let validator = AgentsMdValidator;
         let config = LintConfig::default();
-        let diagnostics = validator.validate(
-            Path::new("AGENTS.override.md"),
-            content,
-            &make_ctx(&config),
-        );
+        let diagnostics =
+            validator.validate(Path::new("AGENTS.override.md"), content, &make_ctx(&config));
         let agm_005: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AGM-005").collect();
         assert_eq!(
             agm_005.len(),

@@ -211,11 +211,7 @@ mod tests {
         let validator = CursorValidator;
         let config = LintConfig::default();
         let ctx = ValidatorContext::new(&config, &RealFileSystem);
-        validator.validate(
-            Path::new(".cursor/rules/typescript.mdc"),
-            content,
-            &ctx,
-        )
+        validator.validate(Path::new(".cursor/rules/typescript.mdc"), content, &ctx)
     }
 
     fn validate_legacy(content: &str) -> Vec<Diagnostic> {
