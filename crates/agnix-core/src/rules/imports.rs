@@ -66,16 +66,17 @@ impl Validator for ImportsValidator {
         let mut visited_depth: HashMap<PathBuf, usize> = HashMap::new();
         let mut stack = Vec::new();
 
-        // Insert the root file's imports into the appropriate cache
+        // Insert the root file's imports into the appropriate cache (if not already present)
         let root_imports = extract_imports(content);
         if let Some(cache) = shared_cache {
-            // Write to shared cache
-            if let Ok(mut guard) = cache.write() {
-                guard.insert(root_path.clone(), root_imports);
-            }
+            // Write to shared cache only if not already present
+            let mut guard = cache
+                .write()
+                .expect("ImportCache lock poisoned - this indicates a panic in another thread");
+            guard.entry(root_path.clone()).or_insert(root_imports);
         } else {
             // Write to local cache
-            local_cache.insert(root_path.clone(), root_imports);
+            local_cache.entry(root_path.clone()).or_insert(root_imports);
         }
 
         visit_imports(
@@ -303,6 +304,12 @@ fn visit_imports(
 /// 2. If miss, drop read lock, parse file, then write (write lock)
 ///
 /// This avoids holding locks during file I/O and parsing.
+///
+/// Note: There's a small window for duplicate work where two threads could both
+/// miss the cache and parse the same file. This is acceptable because:
+/// - The extra work is bounded (only one extra parse per file per thread)
+/// - Using entry() API prevents duplicate insertions
+/// - Lock-free parsing enables better parallelism than holding locks during I/O
 fn get_imports_for_file(
     file_path: &Path,
     content_override: Option<&str>,
@@ -312,14 +319,17 @@ fn get_imports_for_file(
     // Try shared cache first if available
     if let Some(cache) = shared_cache {
         // Read lock - check if already cached
-        if let Ok(guard) = cache.read() {
+        {
+            let guard = cache
+                .read()
+                .expect("ImportCache lock poisoned - this indicates a panic in another thread");
             if let Some(imports) = guard.get(file_path) {
                 return Some(imports.clone());
             }
         }
-        // Cache miss - drop read lock before I/O
+        // Cache miss - read lock dropped here before I/O
 
-        // Parse the file
+        // Parse the file outside of any lock
         let content = match content_override {
             Some(content) => content.to_string(),
             // Silently skip files that can't be read (symlinks, too large, missing).
@@ -329,10 +339,14 @@ fn get_imports_for_file(
         };
         let imports = extract_imports(&content);
 
-        // Write lock - insert into shared cache
-        if let Ok(mut guard) = cache.write() {
-            guard.insert(file_path.to_path_buf(), imports.clone());
-        }
+        // Write lock - use entry() to handle race condition where another thread
+        // may have already inserted while we were parsing
+        let mut guard = cache
+            .write()
+            .expect("ImportCache lock poisoned - this indicates a panic in another thread");
+        guard
+            .entry(file_path.to_path_buf())
+            .or_insert_with(|| imports.clone());
         return Some(imports);
     }
 
