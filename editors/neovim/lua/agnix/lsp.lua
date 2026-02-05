@@ -114,11 +114,8 @@ function M.setup_autocommands()
 
   vim.api.nvim_create_autocmd({ 'BufReadPost', 'FileType' }, {
     group = group,
-    pattern = cfg.filetypes and vim.tbl_map(function(ft)
-      -- BufReadPost expects file globs; FileType expects filetype names.
-      -- We use both event types so match all patterns.
-      return '*'
-    end, cfg.filetypes) or { '*' },
+    -- Match all patterns; the callback filters by is_agnix_file.
+    pattern = { '*' },
     callback = function(ev)
       if not cfg.autostart then
         return

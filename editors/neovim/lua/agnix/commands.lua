@@ -182,8 +182,7 @@ function M._apply_code_actions(preferred_only)
 
     local applied = 0
     for _, action in ipairs(result) do
-      local dominated = action.command or action
-      if not preferred_only or dominated.isPreferred then
+      if not preferred_only or action.isPreferred then
         if action.edit then
           vim.lsp.util.apply_workspace_edit(action.edit, 'utf-8')
           applied = applied + 1
