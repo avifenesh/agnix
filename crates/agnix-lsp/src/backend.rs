@@ -42,7 +42,9 @@ fn create_error_diagnostic(code: &str, message: String) -> Diagnostic {
 
 /// Normalize path components without filesystem access.
 /// Resolves `.` and `..` logically -- used when `canonicalize()` fails.
+/// Expects absolute paths (LSP URIs always produce absolute paths).
 fn normalize_path(path: &Path) -> PathBuf {
+    debug_assert!(path.is_absolute(), "normalize_path expects absolute paths");
     let mut components: Vec<Component<'_>> = Vec::new();
     for component in path.components() {
         match component {
@@ -1642,6 +1644,20 @@ model: sonnet
     fn test_normalize_path_root_only() {
         let result = normalize_path(Path::new("/"));
         assert_eq!(result, PathBuf::from("/"));
+    }
+
+    /// Test excessive '..' beyond root is clamped.
+    #[test]
+    fn test_normalize_path_excessive_parent_traversal() {
+        let result = normalize_path(Path::new("/a/../../../b"));
+        assert_eq!(result, PathBuf::from("/b"));
+    }
+
+    /// Test mixed '.' and '..' components together.
+    #[test]
+    fn test_normalize_path_mixed_special_components() {
+        let result = normalize_path(Path::new("/a/./b/../c/./d"));
+        assert_eq!(result, PathBuf::from("/a/c/d"));
     }
 
     // ===== Path Traversal Regression Tests =====
