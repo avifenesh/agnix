@@ -21,10 +21,12 @@
 )]
 
 pub mod config;
+pub mod context;
 pub mod diagnostics;
 pub mod eval;
 mod file_utils;
 pub mod fixes;
+pub mod fs;
 pub mod parsers;
 mod rules;
 mod schemas;
@@ -38,8 +40,10 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Mutex;
 
 pub use config::LintConfig;
+pub use context::ValidatorContext;
 pub use diagnostics::{Diagnostic, DiagnosticLevel, Fix, LintError, LintResult};
 pub use fixes::{apply_fixes, FixResult};
+pub use fs::{FileSystem, RealFileSystem};
 pub use rules::Validator;
 
 /// Result of validating a project, including diagnostics and metadata.
@@ -292,12 +296,13 @@ pub fn validate_file_with_registry(
     }
 
     let content = file_utils::safe_read_file(path)?;
+    let ctx = ValidatorContext::new(config, &fs::RealFileSystem);
 
     let validators = registry.validators_for(file_type);
     let mut diagnostics = Vec::new();
 
     for validator in validators {
-        diagnostics.extend(validator.validate(path, &content, config));
+        diagnostics.extend(validator.validate(path, &content, &ctx));
     }
 
     Ok(diagnostics)
@@ -924,7 +929,7 @@ mod tests {
                 &self,
                 path: &Path,
                 _content: &str,
-                _config: &LintConfig,
+                _ctx: &ValidatorContext,
             ) -> Vec<Diagnostic> {
                 vec![Diagnostic::error(
                     path.to_path_buf(),
