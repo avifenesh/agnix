@@ -227,7 +227,7 @@ Version awareness (`VER-*`) is always active and controlled through `tool_versio
 - **Parallel validation**: Uses rayon `par_bridge()` for file processing across all CPU cores
 - **Registry caching**: ValidatorRegistry is constructed once and shared (7x speedup vs per-file)
 - **Import cache**: `Arc<RwLock<HashMap>>` shared across files reduces redundant @import parsing
-- **Static regex patterns**: OnceLock for one-time initialization of regex patterns
+- **Static regex patterns**: `static_regex!` macro (in `regex_util.rs`) wraps OnceLock for one-time initialization with descriptive panic messages
 - **Directory walking**: Sequential via `ignore` crate (required for .gitignore compatibility)
 - **Deterministic output**: Results sorted by severity then path for reproducible runs
 
