@@ -34,6 +34,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Audit history tracking and incident response procedures
 
 ### Added
+- Research tracking document (`knowledge-base/RESEARCH-TRACKING.md`) with AI tool inventory and monitoring process (#191)
+- Monthly review checklist (`knowledge-base/MONTHLY-REVIEW.md`) with February 2026 review completed (#191)
+- Rule contribution and tool support request issue templates (#191)
+- Expanded CONTRIBUTING.md with rule authoring guide, evidence requirements, and tier system (#191)
 - `agnix schema` command for JSON Schema generation (#206)
   - Outputs JSON Schema for `.agnix.toml` to stdout or file
   - Generated from Rust types using schemars
