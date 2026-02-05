@@ -7,6 +7,7 @@ Real-time validation for AI agent configuration files in VS Code.
 ## Features
 
 - **Real-time validation** - Diagnostics as you type
+- **JSON Schema validation and autocomplete for `.agnix.toml` config files**
 - **Validates 100 rules** - From official specs and best practices
 - **Diagnostics panel** - Sidebar tree view of all issues by file
 - **CodeLens** - Rule info shown inline above problematic lines
