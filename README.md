@@ -55,9 +55,6 @@ cargo install agnix-cli
 
 # Pre-built binaries
 # Download from https://github.com/avifenesh/agnix/releases
-
-# Docker
-docker run --rm -v $(pwd):/workspace ghcr.io/avifenesh/agnix .
 ```
 
 ## Claude Code Skill
