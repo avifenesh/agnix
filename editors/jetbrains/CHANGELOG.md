@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-02-05
+
+### Fixed
+
+- Re-resolve `agnix-lsp` at startup so first-run installer downloads can launch immediately.
+- Keep `.cursorrules` matching global and remove misleading GitHub-specific grouping.
+- Add explicit `.cursorrules` path coverage in JetBrains file-type tests.
+- Extend plugin compatibility range through JetBrains build `253.*`.
+
 ### Changed
 
 - Use LSP4IJ `OSProcessStreamConnectionProvider` for language server startup.
@@ -14,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Restrict file mappings with `AgnixDocumentMatcher` to avoid false activation on unrelated files.
 - Harden download redirects to trusted HTTPS GitHub asset domains.
 - Replace custom TAR parser with Apache Commons Compress.
+- Add real JetBrains diagnostics screenshot to plugin and repository docs.
 
 ## [0.1.0] - 2026-02-05
 
