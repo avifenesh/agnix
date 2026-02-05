@@ -371,12 +371,7 @@ export async function activate(
     },
     isClientActive: (runningClient: LanguageClient) => runningClient.isRunning(),
     startClient: () => startClientInternal(),
-    stopClient: async (runningClient: LanguageClient) => {
-      await runningClient.stop();
-      if (client === runningClient) {
-        client = undefined;
-      }
-    },
+    stopClient: (runningClient: LanguageClient) => runningClient.stop(),
   });
 
   context.subscriptions.push(
@@ -1449,11 +1444,5 @@ function updateStatusBar(
 }
 
 export function deactivate(): Thenable<void> | undefined {
-  if (!lifecycleController && !client) {
-    return undefined;
-  }
-  if (!lifecycleController) {
-    return client?.stop();
-  }
-  return lifecycleController.stop();
+  return lifecycleController?.stop();
 }
