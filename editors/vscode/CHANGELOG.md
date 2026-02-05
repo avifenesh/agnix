@@ -10,6 +10,7 @@ All notable changes to the "agnix" extension will be documented in this file.
   - Closes stream handles on failure paths
   - Deletes temporary download artifacts when a download fails
   - Adds dedicated unit tests for error and success branches
+- **Client lifecycle race fix** - serialize VS Code LSP client start/stop/restart to avoid stale clients (#241)
 
 ### Added
 

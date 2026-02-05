@@ -10,10 +10,12 @@ import {
   TransportKind,
 } from 'vscode-languageclient/node';
 import { downloadFile } from './download-file';
+import { ClientLifecycleController } from './clientLifecycle';
 
 const execAsync = promisify(exec);
 
 let client: LanguageClient | undefined;
+let lifecycleController: ClientLifecycleController<LanguageClient> | undefined;
 let statusBarItem: vscode.StatusBarItem;
 let outputChannel: vscode.OutputChannel;
 let codeLensProvider: AgnixCodeLensProvider | undefined;
@@ -372,6 +374,16 @@ export async function activate(
   statusBarItem.command = 'agnix.showOutput';
   context.subscriptions.push(statusBarItem);
 
+  lifecycleController = new ClientLifecycleController<LanguageClient>({
+    getClient: () => client,
+    setClient: (nextClient) => {
+      client = nextClient;
+    },
+    isClientActive: (runningClient: LanguageClient) => runningClient.isRunning(),
+    startClient: () => startClientInternal(),
+    stopClient: (runningClient: LanguageClient) => runningClient.stop(),
+  });
+
   context.subscriptions.push(
     vscode.commands.registerCommand('agnix.restart', () => restartClient()),
     vscode.commands.registerCommand('agnix.showOutput', () =>
@@ -471,6 +483,16 @@ export async function activate(
 }
 
 async function startClient(): Promise<void> {
+  if (!lifecycleController) {
+    return;
+  }
+  await lifecycleController.start();
+  if (client && client.isRunning()) {
+    updateStatusBar('ready', 'agnix');
+  }
+}
+
+async function startClientInternal(): Promise<LanguageClient | undefined> {
   let lspPath = findLspBinary();
 
   if (!lspPath) {
@@ -540,7 +562,7 @@ async function startClient(): Promise<void> {
     traceOutputChannel: outputChannel,
   };
 
-  client = new LanguageClient(
+  const nextClient = new LanguageClient(
     'agnix',
     'agnix Language Server',
     serverOptions,
@@ -548,39 +570,41 @@ async function startClient(): Promise<void> {
   );
 
   try {
-    await client.start();
+    await nextClient.start();
     outputChannel.appendLine('agnix-lsp started successfully');
-    updateStatusBar('ready', 'agnix');
 
     // Send initial configuration to the LSP server
     const lspConfig = buildLspConfig();
     outputChannel.appendLine('Sending initial configuration to LSP server');
-    client.sendNotification('workspace/didChangeConfiguration', {
+    nextClient.sendNotification('workspace/didChangeConfiguration', {
       settings: lspConfig,
     });
+    return nextClient;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     outputChannel.appendLine(`Failed to start agnix-lsp: ${message}`);
     updateStatusBar('error', 'agnix (error)');
     vscode.window.showErrorMessage(`Failed to start agnix-lsp: ${message}`);
+    return undefined;
   }
 }
 
 async function stopClient(): Promise<void> {
-  if (client) {
-    await client.stop();
-    client = undefined;
+  if (lifecycleController) {
+    await lifecycleController.stop();
   }
   updateStatusBar('disabled', 'agnix (disabled)');
 }
 
 async function restartClient(): Promise<void> {
   outputChannel.appendLine('Restarting agnix-lsp...');
-  if (client) {
-    await client.stop();
-    client = undefined;
+  if (!lifecycleController) {
+    return;
   }
-  await startClient();
+  await lifecycleController.restart();
+  if (client && client.isRunning()) {
+    updateStatusBar('ready', 'agnix');
+  }
 }
 
 /**
@@ -1430,8 +1454,5 @@ function updateStatusBar(
 }
 
 export function deactivate(): Thenable<void> | undefined {
-  if (!client) {
-    return undefined;
-  }
-  return client.stop();
+  return lifecycleController?.stop();
 }
