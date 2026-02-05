@@ -102,6 +102,11 @@ struct Cli {
     /// Watch mode - re-validate on file changes
     #[arg(short, long)]
     watch: bool,
+
+    /// Maximum number of files to validate (security limit)
+    /// Default: 10,000. Set to 0 to disable the limit (not recommended).
+    #[arg(long)]
+    max_files: Option<usize>,
 }
 
 /// Output format for evaluation results
@@ -288,6 +293,27 @@ fn validate_command(path: &Path, cli: &Cli) -> anyhow::Result<()> {
         }
     }
 
+    // Apply --max-files override if specified
+    if let Some(max_files) = cli.max_files {
+        // 0 means disable the limit (not recommended for security)
+        if max_files == 0 {
+            eprintln!(
+                "{} --max-files=0 disables file count protection. This may allow DoS via large projects.",
+                "Warning:".yellow().bold()
+            );
+            config.max_files_to_validate = None;
+        } else if max_files > 1_000_000 {
+            // Warn on very high limits (>1M files is likely a mistake or attack)
+            eprintln!(
+                "{} --max-files={} is very high. Consider using the default (10,000) for better performance.",
+                "Warning:".yellow().bold(),
+                max_files
+            );
+            config.max_files_to_validate = Some(max_files);
+        } else {
+            config.max_files_to_validate = Some(max_files);
+        }
+    }
     let should_fix = cli.fix || cli.fix_safe || cli.dry_run;
     if should_fix && !matches!(cli.format, OutputFormat::Text) {
         return Err(anyhow::anyhow!(

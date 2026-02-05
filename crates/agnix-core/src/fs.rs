@@ -12,6 +12,29 @@
 //! For tests, use `MockFileSystem` which provides an in-memory HashMap-based
 //! storage with `RwLock` for thread safety.
 //!
+//! ## Security
+//!
+//! ### Symlink Handling
+//!
+//! Both implementations reject symlinks in `read_to_string()` to prevent path
+//! traversal attacks. The `MockFileSystem` also implements depth limiting in
+//! `metadata()` and `canonicalize()` to detect symlink loops.
+//!
+//! ### TOCTOU (Time-of-Check-Time-of-Use)
+//!
+//! There is an inherent TOCTOU window between checking file properties and
+//! reading content. An attacker with local filesystem access could potentially
+//! replace a regular file with a symlink between the check and read operations.
+//! This is acceptable for a linter because:
+//!
+//! 1. The attack requires local filesystem access
+//! 2. The impact is limited to reading unexpected content
+//! 3. Eliminating TOCTOU entirely would require platform-specific APIs
+//!    (O_NOFOLLOW on Unix, FILE_FLAG_OPEN_REPARSE_POINT on Windows)
+//!
+//! For high-security environments, users should run agnix in a sandboxed
+//! environment or on trusted input only.
+//!
 //! ## Example
 //!
 //! ```rust,ignore
@@ -278,8 +301,12 @@ impl MockFileSystem {
         }
     }
 
-    /// Maximum depth for symlink resolution to prevent infinite loops
-    const MAX_SYMLINK_DEPTH: u32 = 40;
+    /// Maximum depth for symlink resolution to prevent infinite loops.
+    ///
+    /// This matches the typical OS limit (Linux ELOOP is triggered at 40 levels).
+    /// Value chosen to match POSIX `SYMLOOP_MAX` and Linux's internal limit.
+    /// See: https://man7.org/linux/man-pages/man3/fpathconf.3.html
+    pub const MAX_SYMLINK_DEPTH: u32 = 40;
 
     /// Internal helper for metadata with depth tracking
     fn metadata_with_depth(&self, path: &Path, depth: u32) -> io::Result<FileMetadata> {
@@ -843,5 +870,157 @@ mod tests {
         // canonicalize() should return the final target
         let canonical = fs.canonicalize(Path::new("/test/link1")).unwrap();
         assert_eq!(canonical, PathBuf::from("/test/file.txt"));
+    }
+
+    #[test]
+    fn test_mock_fs_max_symlink_depth_boundary() {
+        // Test that we can handle chains up to MAX_SYMLINK_DEPTH
+        let fs = MockFileSystem::new();
+        fs.add_file("/test/target.txt", "content");
+
+        // Create a chain of exactly MAX_SYMLINK_DEPTH links
+        let mut prev = PathBuf::from("/test/target.txt");
+        for i in 0..MockFileSystem::MAX_SYMLINK_DEPTH {
+            let link = PathBuf::from(format!("/test/link{}", i));
+            fs.add_symlink(&link, &prev);
+            prev = link;
+        }
+
+        // Should succeed at the boundary
+        let result = fs.metadata(&prev);
+        assert!(result.is_ok(), "Should handle MAX_SYMLINK_DEPTH links");
+    }
+
+    #[test]
+    fn test_mock_fs_exceeds_max_symlink_depth() {
+        // Test that MAX_SYMLINK_DEPTH + 1 links fails
+        let fs = MockFileSystem::new();
+        fs.add_file("/test/target.txt", "content");
+
+        // Create a chain of MAX_SYMLINK_DEPTH + 1 links
+        let mut prev = PathBuf::from("/test/target.txt");
+        for i in 0..=MockFileSystem::MAX_SYMLINK_DEPTH {
+            let link = PathBuf::from(format!("/test/link{}", i));
+            fs.add_symlink(&link, &prev);
+            prev = link;
+        }
+
+        // Should fail beyond the limit
+        let result = fs.metadata(&prev);
+        assert!(
+            result.is_err(),
+            "Should fail when exceeding MAX_SYMLINK_DEPTH"
+        );
+        assert!(result
+            .unwrap_err()
+            .to_string()
+            .contains("too many levels of symbolic links"));
+    }
+
+    // ===== Unix-specific symlink tests for RealFileSystem =====
+
+    #[cfg(unix)]
+    mod unix_tests {
+        use super::*;
+        use std::os::unix::fs::symlink;
+        use tempfile::TempDir;
+
+        #[test]
+        fn test_real_fs_rejects_symlink_read() {
+            let temp = TempDir::new().unwrap();
+            let target = temp.path().join("target.txt");
+            let link = temp.path().join("link.txt");
+
+            std::fs::write(&target, "content").unwrap();
+            symlink(&target, &link).unwrap();
+
+            let fs = RealFileSystem;
+            let result = fs.read_to_string(&link);
+
+            assert!(result.is_err());
+            assert!(matches!(result.unwrap_err(), LintError::FileSymlink { .. }));
+        }
+
+        #[test]
+        fn test_real_fs_symlink_metadata() {
+            let temp = TempDir::new().unwrap();
+            let target = temp.path().join("target.txt");
+            let link = temp.path().join("link.txt");
+
+            std::fs::write(&target, "content").unwrap();
+            symlink(&target, &link).unwrap();
+
+            let fs = RealFileSystem;
+
+            // symlink_metadata should show symlink
+            let meta = fs.symlink_metadata(&link).unwrap();
+            assert!(meta.is_symlink);
+
+            // metadata follows symlink and shows file
+            let meta = fs.metadata(&link).unwrap();
+            assert!(meta.is_file);
+            assert!(!meta.is_symlink);
+        }
+
+        #[test]
+        fn test_real_fs_dangling_symlink() {
+            let temp = TempDir::new().unwrap();
+            let link = temp.path().join("dangling.txt");
+
+            symlink("/nonexistent/target", &link).unwrap();
+
+            let fs = RealFileSystem;
+            let result = fs.read_to_string(&link);
+
+            // Should reject as symlink (caught before we try to read nonexistent target)
+            assert!(result.is_err());
+            assert!(matches!(result.unwrap_err(), LintError::FileSymlink { .. }));
+        }
+
+        #[test]
+        fn test_real_fs_is_symlink() {
+            let temp = TempDir::new().unwrap();
+            let target = temp.path().join("target.txt");
+            let link = temp.path().join("link.txt");
+
+            std::fs::write(&target, "content").unwrap();
+            symlink(&target, &link).unwrap();
+
+            let fs = RealFileSystem;
+
+            assert!(!fs.is_symlink(&target));
+            assert!(fs.is_symlink(&link));
+        }
+
+        #[test]
+        fn test_real_fs_read_dir_skips_symlinks_in_metadata() {
+            let temp = TempDir::new().unwrap();
+
+            // Create a regular file
+            std::fs::write(temp.path().join("file.txt"), "content").unwrap();
+
+            // Create a symlink
+            symlink(temp.path().join("file.txt"), temp.path().join("link.txt")).unwrap();
+
+            let fs = RealFileSystem;
+            let entries = fs.read_dir(temp.path()).unwrap();
+
+            // Both should be returned
+            assert_eq!(entries.len(), 2);
+
+            // But the symlink should have is_symlink = true in metadata
+            let symlink_entry = entries
+                .iter()
+                .find(|e| e.path.file_name().unwrap().to_str().unwrap() == "link.txt");
+            assert!(symlink_entry.is_some());
+            assert!(symlink_entry.unwrap().metadata.is_symlink);
+
+            // And the file should have is_file = true
+            let file_entry = entries
+                .iter()
+                .find(|e| e.path.file_name().unwrap().to_str().unwrap() == "file.txt");
+            assert!(file_entry.is_some());
+            assert!(file_entry.unwrap().metadata.is_file);
+        }
     }
 }

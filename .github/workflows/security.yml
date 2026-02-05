@@ -46,4 +46,14 @@ jobs:
       - name: Install cargo-audit
         run: cargo install cargo-audit
       - name: Run security audit
-        run: cargo audit
+        run: cargo audit --deny warnings --ignore RUSTSEC-2025-0141 --ignore RUSTSEC-2024-0384
+
+  # Additional supply chain security with cargo-deny
+  deny:
+    name: Dependency Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: EmbarkStudios/cargo-deny-action@82eb9f621fbc699dd0918f3ea06864c14cc84246 # v2
+        with:
+          command: check all

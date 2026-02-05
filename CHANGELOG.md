@@ -59,6 +59,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `agnix telemetry` subcommand with status/enable/disable commands
 - Comprehensive telemetry documentation in SECURITY.md
 - Rule ID validation at collection point (defense-in-depth)
+- VS Code extension settings UI for configuring all validation options (#225)
+  - Settings page accessible via "Open Settings (UI)" command
+  - Live preview of all rules with descriptions
+  - Changes apply immediately without server restart
+  - Built with Svelte for reactive UI
 
 ### Changed
 - Refactored SkillValidator internal structure for better maintainability (#211)
