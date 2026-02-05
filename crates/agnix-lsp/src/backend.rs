@@ -1675,9 +1675,9 @@ model: sonnet
         let outside_name = outside_dir
             .path()
             .file_name()
-            .unwrap()
+            .expect("should have a file name")
             .to_str()
-            .unwrap();
+            .expect("should be valid UTF-8");
 
         // Initialize with workspace root
         let root_uri = Url::from_file_path(workspace_dir.path()).unwrap();
