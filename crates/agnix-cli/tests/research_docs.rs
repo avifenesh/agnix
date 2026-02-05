@@ -96,7 +96,7 @@ fn test_index_references_new_docs() {
 }
 
 #[test]
-fn test_issue_templates_exist() {
+fn test_issue_templates_exist_with_frontmatter() {
     let Some(root) = find_workspace_root() else {
         eprintln!("Skipping test: workspace root not found");
         return;
@@ -112,6 +112,58 @@ fn test_issue_templates_exist() {
         let path = root.join(template);
         assert!(path.exists(), "{} must exist", template);
     }
+
+    // Validate rule contribution template frontmatter and structure
+    let rule_template = fs::read_to_string(
+        root.join(".github/ISSUE_TEMPLATE/rule_contribution.md"),
+    )
+    .expect("Failed to read rule_contribution.md");
+    assert!(
+        rule_template.contains("name: Rule Contribution"),
+        "rule_contribution.md must have correct name in frontmatter"
+    );
+    assert!(
+        rule_template.contains("rule-proposal"),
+        "rule_contribution.md must have rule-proposal label"
+    );
+
+    // Validate tool support template frontmatter and structure
+    let tool_template = fs::read_to_string(
+        root.join(".github/ISSUE_TEMPLATE/tool_support_request.md"),
+    )
+    .expect("Failed to read tool_support_request.md");
+    assert!(
+        tool_template.contains("name: Tool Support Request"),
+        "tool_support_request.md must have correct name in frontmatter"
+    );
+    assert!(
+        tool_template.contains("tool-request"),
+        "tool_support_request.md must have tool-request label"
+    );
+}
+
+#[test]
+fn test_changelog_documents_research_tracking() {
+    let Some(root) = find_workspace_root() else {
+        eprintln!("Skipping test: workspace root not found");
+        return;
+    };
+
+    let changelog =
+        fs::read_to_string(root.join("CHANGELOG.md")).expect("Failed to read CHANGELOG.md");
+
+    assert!(
+        changelog.contains("RESEARCH-TRACKING.md"),
+        "CHANGELOG.md must reference RESEARCH-TRACKING.md"
+    );
+    assert!(
+        changelog.contains("MONTHLY-REVIEW.md"),
+        "CHANGELOG.md must reference MONTHLY-REVIEW.md"
+    );
+    assert!(
+        changelog.contains("#191"),
+        "CHANGELOG.md must reference issue #191"
+    );
 }
 
 #[test]
