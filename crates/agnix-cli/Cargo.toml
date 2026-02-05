@@ -15,6 +15,11 @@ categories = ["command-line-utilities", "development-tools"]
 name = "agnix"
 path = "src/main.rs"
 
+[features]
+default = []
+# Enable telemetry HTTP submission (opt-in at compile time too)
+telemetry = ["dep:reqwest"]
+
 [dependencies]
 agnix-core.workspace = true
 agnix-rules.workspace = true
@@ -30,6 +35,10 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 notify = { version = "7", features = ["macos_fsevent"] }
 notify-debouncer-mini = "0.5"
 ctrlc = "3"
+dirs = "5"
+
+# Optional: HTTP client for telemetry submission
+reqwest = { version = "0.12", features = ["blocking", "json"], optional = true }
 
 [dev-dependencies]
 assert_cmd = "2"
