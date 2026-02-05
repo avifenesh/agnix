@@ -69,6 +69,76 @@ class AgnixBinaryDownloader {
             }
             return normalizedHost.endsWith(GITHUB_USER_CONTENT_SUFFIX)
         }
+
+        internal fun isTargetBinaryEntry(entryName: String, binaryName: String): Boolean {
+            return entryName == binaryName ||
+                entryName.endsWith("/$binaryName") ||
+                entryName.endsWith("\\$binaryName")
+        }
+
+        /**
+         * Verify that an output file path is within the destination directory.
+         * Appends separator to prevent prefix matching issues (e.g., /tmp/agnix vs /tmp/agnix-other).
+         */
+        internal fun verifyPathWithinDestination(outFile: File, destination: File) {
+            val canonicalDest = destination.canonicalPath + File.separator
+            val canonicalOut = outFile.canonicalPath
+            if (!canonicalOut.startsWith(canonicalDest) && canonicalOut != destination.canonicalPath) {
+                throw SecurityException("Output path escapes destination directory: $canonicalOut")
+            }
+        }
+
+        /**
+         * Extract a .tar.gz archive.
+         *
+         * Writes only the target binary using a fixed filename (not archive entry names)
+         * to prevent path traversal. The canonical path check is a defense-in-depth guard.
+         */
+        internal fun extractTarGz(archive: File, destination: File, binaryName: String) {
+            FileInputStream(archive).use { fis ->
+                GZIPInputStream(fis).use { gzis ->
+                    TarArchiveInputStream(gzis).use { tis ->
+                        var entry = tis.nextEntry
+                        while (entry != null) {
+                            val name = entry.name
+                            if (!entry.isDirectory && isTargetBinaryEntry(name, binaryName)) {
+                                val outFile = File(destination, binaryName)
+                                verifyPathWithinDestination(outFile, destination)
+                                FileOutputStream(outFile).use { fos ->
+                                    tis.copyTo(fos)
+                                }
+                                return
+                            }
+                            entry = tis.nextEntry
+                        }
+                    }
+                }
+            }
+        }
+
+        /**
+         * Extract a .zip archive.
+         *
+         * Writes only the target binary using a fixed filename (not archive entry names)
+         * to prevent path traversal. The canonical path check is a defense-in-depth guard.
+         */
+        internal fun extractZip(archive: File, destination: File, binaryName: String) {
+            ZipInputStream(FileInputStream(archive)).use { zis ->
+                var entry = zis.nextEntry
+                while (entry != null) {
+                    val name = entry.name
+                    if (!entry.isDirectory && isTargetBinaryEntry(name, binaryName)) {
+                        val outFile = File(destination, binaryName)
+                        verifyPathWithinDestination(outFile, destination)
+                        FileOutputStream(outFile).use { fos ->
+                            zis.copyTo(fos)
+                        }
+                        return
+                    }
+                    entry = zis.nextEntry
+                }
+            }
+        }
     }
 
     /**
@@ -269,78 +339,6 @@ class AgnixBinaryDownloader {
             outputStream?.close()
             connection?.disconnect()
         }
-    }
-
-    /**
-     * Verify that an output file path is within the destination directory.
-     * Appends separator to prevent prefix matching issues (e.g., /tmp/agnix vs /tmp/agnix-other).
-     */
-    private fun verifyPathWithinDestination(outFile: File, destination: File) {
-        val canonicalDest = destination.canonicalPath + File.separator
-        val canonicalOut = outFile.canonicalPath
-        if (!canonicalOut.startsWith(canonicalDest) && canonicalOut != destination.canonicalPath) {
-            throw SecurityException("Output path escapes destination directory: $canonicalOut")
-        }
-    }
-
-    /**
-     * Extract a .tar.gz archive.
-     *
-     * Writes only the target binary using a fixed filename (not archive entry names)
-     * to prevent path traversal. The canonical path check is a defense-in-depth guard.
-     */
-    private fun extractTarGz(archive: File, destination: File, binaryName: String) {
-        FileInputStream(archive).use { fis ->
-            GZIPInputStream(fis).use { gzis ->
-                TarArchiveInputStream(gzis).use { tis ->
-                    var entry = tis.nextEntry
-                    while (entry != null) {
-                        val name = entry.name
-                        if (!entry.isDirectory && isTargetBinaryEntry(name, binaryName)) {
-                            val outFile = File(destination, binaryName)
-                            verifyPathWithinDestination(outFile, destination)
-                            FileOutputStream(outFile).use { fos ->
-                                tis.copyTo(fos)
-                            }
-                            return
-                        }
-                        entry = tis.nextEntry
-                    }
-                }
-            }
-        }
-        logger.error("Binary $binaryName not found in tar.gz archive")
-    }
-
-    /**
-     * Extract a .zip archive.
-     *
-     * Writes only the target binary using a fixed filename (not archive entry names)
-     * to prevent path traversal. The canonical path check is a defense-in-depth guard.
-     */
-    private fun extractZip(archive: File, destination: File, binaryName: String) {
-        ZipInputStream(FileInputStream(archive)).use { zis ->
-            var entry = zis.nextEntry
-            while (entry != null) {
-                val name = entry.name
-                if (!entry.isDirectory && isTargetBinaryEntry(name, binaryName)) {
-                    val outFile = File(destination, binaryName)
-                    verifyPathWithinDestination(outFile, destination)
-                    FileOutputStream(outFile).use { fos ->
-                        zis.copyTo(fos)
-                    }
-                    return
-                }
-                entry = zis.nextEntry
-            }
-        }
-        logger.error("Binary $binaryName not found in zip archive")
-    }
-
-    private fun isTargetBinaryEntry(entryName: String, binaryName: String): Boolean {
-        return entryName == binaryName ||
-            entryName.endsWith("/$binaryName") ||
-            entryName.endsWith("\\$binaryName")
     }
 
     /**
