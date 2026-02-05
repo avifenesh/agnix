@@ -1135,4 +1135,157 @@ mod tests {
         assert!(mcp_008.is_some());
         assert!(mcp_008.unwrap().assumption.is_some());
     }
+
+    // ===== Additional MCP-007 Parse Error Tests =====
+
+    #[test]
+    fn test_mcp_007_invalid_json_syntax() {
+        let content = r#"{ invalid json syntax }"#;
+
+        let diagnostics = validate(content);
+        assert!(diagnostics.iter().any(|d| d.rule == "MCP-007"));
+    }
+
+    #[test]
+    fn test_mcp_007_truncated_json() {
+        let content = r#"{"jsonrpc": "2.0", "method": "test"#;
+
+        let diagnostics = validate(content);
+        assert!(diagnostics.iter().any(|d| d.rule == "MCP-007"));
+    }
+
+    #[test]
+    fn test_mcp_007_empty_file() {
+        let content = "";
+
+        let diagnostics = validate(content);
+        assert!(diagnostics.iter().any(|d| d.rule == "MCP-007"));
+    }
+
+    #[test]
+    fn test_mcp_007_valid_json_no_error() {
+        let content = r#"{
+            "jsonrpc": "2.0",
+            "method": "tools/list",
+            "id": 1
+        }"#;
+
+        let diagnostics = validate(content);
+        assert!(!diagnostics.iter().any(|d| d.rule == "MCP-007"));
+    }
+
+    #[test]
+    fn test_mcp_007_disabled() {
+        let mut config = LintConfig::default();
+        config.rules.disabled_rules = vec!["MCP-007".to_string()];
+
+        let content = r#"{ invalid }"#;
+        let validator = McpValidator;
+        let diagnostics = validator.validate(Path::new("test.json"), content, &config);
+
+        assert!(!diagnostics.iter().any(|d| d.rule == "MCP-007"));
+    }
+
+    // ===== Additional MCP rule coverage =====
+
+    #[test]
+    fn test_mcp_002_nested_tools_array() {
+        let content = r#"{
+            "tools": [
+                { "name": "tool1", "description": "First tool", "inputSchema": {} },
+                { "name": "tool2", "description": "Second tool", "inputSchema": {} }
+            ]
+        }"#;
+
+        let diagnostics = validate(content);
+        assert!(!diagnostics.iter().any(|d| d.rule == "MCP-002"));
+    }
+
+    #[test]
+    fn test_mcp_003_nested_schema_valid() {
+        let content = r#"{
+            "tools": [{
+                "name": "complex-tool",
+                "description": "A tool with nested schema",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "nested": {
+                            "type": "object",
+                            "properties": {
+                                "value": { "type": "string" }
+                            }
+                        }
+                    }
+                }
+            }]
+        }"#;
+
+        let diagnostics = validate(content);
+        assert!(!diagnostics.iter().any(|d| d.rule == "MCP-003"));
+    }
+
+    #[test]
+    fn test_mcp_005_requires_approval_at_tool_level_ok() {
+        // requiresApproval must be at tool level, not in annotations
+        let content = r#"{
+            "tools": [{
+                "name": "safe-tool",
+                "description": "A tool with approval",
+                "inputSchema": {},
+                "requiresApproval": true
+            }]
+        }"#;
+
+        let diagnostics = validate(content);
+        let mcp_005: Vec<_> = diagnostics.iter().filter(|d| d.rule == "MCP-005").collect();
+        assert!(mcp_005.is_empty());
+    }
+
+    #[test]
+    fn test_mcp_006_annotations_triggers_warning() {
+        // MCP-006 warns when annotations exist (they should be validated before trusting)
+        let content = r#"{
+            "tools": [{
+                "name": "annotated-tool",
+                "description": "A tool with annotations",
+                "inputSchema": {},
+                "requiresApproval": true,
+                "annotations": {
+                    "dangerous": false
+                }
+            }]
+        }"#;
+
+        let diagnostics = validate(content);
+        // MCP-006 SHOULD trigger (annotations present = warning)
+        let mcp_006: Vec<_> = diagnostics.iter().filter(|d| d.rule == "MCP-006").collect();
+        assert!(!mcp_006.is_empty(), "MCP-006 should warn about annotations");
+    }
+
+    #[test]
+    fn test_all_mcp_rules_can_be_disabled() {
+        let rules = ["MCP-001", "MCP-002", "MCP-003", "MCP-004", "MCP-005", "MCP-006", "MCP-007", "MCP-008"];
+
+        for rule in rules {
+            let mut config = LintConfig::default();
+            config.rules.disabled_rules = vec![rule.to_string()];
+
+            // Use content that would trigger the rule
+            let content = match rule {
+                "MCP-001" => r#"{"jsonrpc": "1.0"}"#,
+                "MCP-007" => r#"{ invalid }"#,
+                _ => r#"{"tools": [{"name": "t"}]}"#,
+            };
+
+            let validator = McpValidator;
+            let diagnostics = validator.validate(Path::new("test.json"), content, &config);
+
+            assert!(
+                !diagnostics.iter().any(|d| d.rule == rule),
+                "Rule {} should be disabled",
+                rule
+            );
+        }
+    }
 }

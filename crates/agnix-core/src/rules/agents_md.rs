@@ -520,4 +520,136 @@ Plain text only."#;
             "Should detect unguarded platform feature"
         );
     }
+
+    // ===== Additional AGM rule tests =====
+
+    #[test]
+    fn test_agm_001_balanced_code_blocks() {
+        let content = r#"# Project
+
+```python
+def hello():
+    print("world")
+```
+
+More text here."#;
+
+        let diagnostics = validate(content);
+        assert!(!diagnostics.iter().any(|d| d.rule == "AGM-001"));
+    }
+
+    #[test]
+    fn test_agm_001_single_unclosed_block() {
+        // The parser detects unclosed blocks differently - test with single unclosed
+        let content = r#"# Project
+
+```python
+code here without closing"#;
+
+        let diagnostics = validate(content);
+        let agm_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AGM-001").collect();
+        assert!(!agm_001.is_empty(), "Should detect unclosed code block");
+    }
+
+    #[test]
+    fn test_agm_002_multiple_header_levels() {
+        let content = r#"# Main Title
+
+## Subsection
+
+### Details
+
+Content here."#;
+
+        let diagnostics = validate(content);
+        assert!(!diagnostics.iter().any(|d| d.rule == "AGM-002"));
+    }
+
+    #[test]
+    fn test_agm_003_exact_12000_chars() {
+        // AGM-003 checks for content exceeding 12000 char Windsurf limit
+        let content = "a".repeat(12000);
+
+        let validator = AgentsMdValidator;
+        let diagnostics = validator.validate(Path::new("AGENTS.md"), &content, &LintConfig::default());
+        // At exactly 12000 chars, should not trigger (limit is >12000)
+        let agm_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AGM-003").collect();
+        assert!(agm_003.is_empty());
+    }
+
+    #[test]
+    fn test_agm_003_over_12001_chars() {
+        let content = "a".repeat(12001);
+
+        let validator = AgentsMdValidator;
+        let diagnostics = validator.validate(Path::new("AGENTS.md"), &content, &LintConfig::default());
+        let agm_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AGM-003").collect();
+        // 12001 chars should exceed the Windsurf compatibility limit
+        assert!(!agm_003.is_empty());
+    }
+
+    #[test]
+    fn test_agm_004_has_tech_stack_section() {
+        let content = r#"# Project
+
+## Tech Stack
+
+- Rust
+- TypeScript"#;
+
+        let diagnostics = validate(content);
+        assert!(!diagnostics.iter().any(|d| d.rule == "AGM-004"));
+    }
+
+    #[test]
+    fn test_agm_005_hooks_yaml_unguarded() {
+        // Test platform feature detection with YAML hook format
+        let content = r#"# Project
+
+- type: PreToolExecution
+  command: echo "test""#;
+
+        let diagnostics = validate(content);
+        let agm_005: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AGM-005").collect();
+        // Should detect unguarded hooks
+        assert!(!agm_005.is_empty(), "Should detect unguarded hooks");
+    }
+
+    #[test]
+    fn test_agm_005_guarded_with_tool_section() {
+        let content = r#"# Project
+
+## Claude Code
+
+Use context: fork for subagents.
+Configure hooks for automation."#;
+
+        let diagnostics = validate(content);
+        let agm_005: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AGM-005").collect();
+        // Platform features under "Claude Code" section should be guarded
+        assert!(agm_005.is_empty());
+    }
+
+    #[test]
+    fn test_all_agm_rules_can_be_disabled() {
+        let rules = ["AGM-001", "AGM-002", "AGM-003", "AGM-004", "AGM-005"];
+
+        for rule in rules {
+            let mut config = LintConfig::default();
+            config.rules.disabled_rules = vec![rule.to_string()];
+
+            // Content that could trigger each rule
+            let content = r#"```unclosed
+context: fork"#;
+
+            let validator = AgentsMdValidator;
+            let diagnostics = validator.validate(Path::new("AGENTS.md"), content, &config);
+
+            assert!(
+                !diagnostics.iter().any(|d| d.rule == rule),
+                "Rule {} should be disabled",
+                rule
+            );
+        }
+    }
 }

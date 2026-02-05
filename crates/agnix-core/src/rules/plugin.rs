@@ -317,4 +317,268 @@ mod tests {
 
         assert!(diagnostics.iter().any(|d| d.rule == "CC-PL-005"));
     }
+
+    // ===== CC-PL-006: Plugin Parse Error =====
+
+    #[test]
+    fn test_cc_pl_006_invalid_json() {
+        let temp = TempDir::new().unwrap();
+        let plugin_path = temp.path().join(".claude-plugin").join("plugin.json");
+        write_plugin(&plugin_path, r#"{ invalid json }"#);
+
+        let validator = PluginValidator;
+        let diagnostics = validator.validate(
+            &plugin_path,
+            &fs::read_to_string(&plugin_path).unwrap(),
+            &LintConfig::default(),
+        );
+
+        let parse_errors: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-PL-006")
+            .collect();
+        assert_eq!(parse_errors.len(), 1);
+        assert!(parse_errors[0].message.contains("Failed to parse"));
+    }
+
+    #[test]
+    fn test_cc_pl_006_truncated_json() {
+        let temp = TempDir::new().unwrap();
+        let plugin_path = temp.path().join(".claude-plugin").join("plugin.json");
+        write_plugin(&plugin_path, r#"{"name":"test"#);
+
+        let validator = PluginValidator;
+        let diagnostics = validator.validate(
+            &plugin_path,
+            &fs::read_to_string(&plugin_path).unwrap(),
+            &LintConfig::default(),
+        );
+
+        assert!(diagnostics.iter().any(|d| d.rule == "CC-PL-006"));
+    }
+
+    #[test]
+    fn test_cc_pl_006_empty_file() {
+        let temp = TempDir::new().unwrap();
+        let plugin_path = temp.path().join(".claude-plugin").join("plugin.json");
+        write_plugin(&plugin_path, "");
+
+        let validator = PluginValidator;
+        let diagnostics = validator.validate(
+            &plugin_path,
+            &fs::read_to_string(&plugin_path).unwrap(),
+            &LintConfig::default(),
+        );
+
+        assert!(diagnostics.iter().any(|d| d.rule == "CC-PL-006"));
+    }
+
+    #[test]
+    fn test_cc_pl_006_valid_json_no_error() {
+        let temp = TempDir::new().unwrap();
+        let plugin_path = temp.path().join(".claude-plugin").join("plugin.json");
+        write_plugin(
+            &plugin_path,
+            r#"{"name":"test","description":"desc","version":"1.0.0"}"#,
+        );
+
+        let validator = PluginValidator;
+        let diagnostics = validator.validate(
+            &plugin_path,
+            &fs::read_to_string(&plugin_path).unwrap(),
+            &LintConfig::default(),
+        );
+
+        assert!(!diagnostics.iter().any(|d| d.rule == "CC-PL-006"));
+    }
+
+    #[test]
+    fn test_cc_pl_006_disabled() {
+        let temp = TempDir::new().unwrap();
+        let plugin_path = temp.path().join(".claude-plugin").join("plugin.json");
+        write_plugin(&plugin_path, r#"{ invalid }"#);
+
+        let mut config = LintConfig::default();
+        config.rules.disabled_rules = vec!["CC-PL-006".to_string()];
+
+        let validator = PluginValidator;
+        let diagnostics = validator.validate(
+            &plugin_path,
+            &fs::read_to_string(&plugin_path).unwrap(),
+            &config,
+        );
+
+        assert!(!diagnostics.iter().any(|d| d.rule == "CC-PL-006"));
+    }
+
+    // ===== Additional edge case tests =====
+
+    #[test]
+    fn test_cc_pl_001_valid_location_no_error() {
+        let temp = TempDir::new().unwrap();
+        let plugin_path = temp.path().join(".claude-plugin").join("plugin.json");
+        write_plugin(
+            &plugin_path,
+            r#"{"name":"test","description":"desc","version":"1.0.0"}"#,
+        );
+
+        let validator = PluginValidator;
+        let diagnostics = validator.validate(
+            &plugin_path,
+            &fs::read_to_string(&plugin_path).unwrap(),
+            &LintConfig::default(),
+        );
+
+        assert!(!diagnostics.iter().any(|d| d.rule == "CC-PL-001"));
+    }
+
+    #[test]
+    fn test_cc_pl_001_disabled() {
+        let temp = TempDir::new().unwrap();
+        let plugin_path = temp.path().join("plugin.json");
+        write_plugin(
+            &plugin_path,
+            r#"{"name":"test","description":"desc","version":"1.0.0"}"#,
+        );
+
+        let mut config = LintConfig::default();
+        config.rules.disabled_rules = vec!["CC-PL-001".to_string()];
+
+        let validator = PluginValidator;
+        let diagnostics = validator.validate(
+            &plugin_path,
+            &fs::read_to_string(&plugin_path).unwrap(),
+            &config,
+        );
+
+        assert!(!diagnostics.iter().any(|d| d.rule == "CC-PL-001"));
+    }
+
+    #[test]
+    fn test_cc_pl_002_no_components_no_error() {
+        let temp = TempDir::new().unwrap();
+        let plugin_path = temp.path().join(".claude-plugin").join("plugin.json");
+        write_plugin(
+            &plugin_path,
+            r#"{"name":"test","description":"desc","version":"1.0.0"}"#,
+        );
+        // No skills/agents/hooks/commands directories
+
+        let validator = PluginValidator;
+        let diagnostics = validator.validate(
+            &plugin_path,
+            &fs::read_to_string(&plugin_path).unwrap(),
+            &LintConfig::default(),
+        );
+
+        assert!(!diagnostics.iter().any(|d| d.rule == "CC-PL-002"));
+    }
+
+    #[test]
+    fn test_cc_pl_002_multiple_components() {
+        let temp = TempDir::new().unwrap();
+        let plugin_path = temp.path().join(".claude-plugin").join("plugin.json");
+        write_plugin(
+            &plugin_path,
+            r#"{"name":"test","description":"desc","version":"1.0.0"}"#,
+        );
+        // Create multiple disallowed directories
+        fs::create_dir_all(temp.path().join(".claude-plugin").join("skills")).unwrap();
+        fs::create_dir_all(temp.path().join(".claude-plugin").join("agents")).unwrap();
+        fs::create_dir_all(temp.path().join(".claude-plugin").join("hooks")).unwrap();
+
+        let validator = PluginValidator;
+        let diagnostics = validator.validate(
+            &plugin_path,
+            &fs::read_to_string(&plugin_path).unwrap(),
+            &LintConfig::default(),
+        );
+
+        let pl_002_errors: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-PL-002")
+            .collect();
+        assert_eq!(pl_002_errors.len(), 3);
+    }
+
+    #[test]
+    fn test_cc_pl_004_all_fields_present_no_error() {
+        let temp = TempDir::new().unwrap();
+        let plugin_path = temp.path().join(".claude-plugin").join("plugin.json");
+        write_plugin(
+            &plugin_path,
+            r#"{"name":"test","description":"A test plugin","version":"1.0.0"}"#,
+        );
+
+        let validator = PluginValidator;
+        let diagnostics = validator.validate(
+            &plugin_path,
+            &fs::read_to_string(&plugin_path).unwrap(),
+            &LintConfig::default(),
+        );
+
+        assert!(!diagnostics.iter().any(|d| d.rule == "CC-PL-004"));
+    }
+
+    #[test]
+    fn test_cc_pl_004_empty_string_values() {
+        let temp = TempDir::new().unwrap();
+        let plugin_path = temp.path().join(".claude-plugin").join("plugin.json");
+        write_plugin(
+            &plugin_path,
+            r#"{"name":"test","description":"","version":""}"#,
+        );
+
+        let validator = PluginValidator;
+        let diagnostics = validator.validate(
+            &plugin_path,
+            &fs::read_to_string(&plugin_path).unwrap(),
+            &LintConfig::default(),
+        );
+
+        let pl_004_errors: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-PL-004")
+            .collect();
+        // Both description and version are empty
+        assert_eq!(pl_004_errors.len(), 2);
+    }
+
+    #[test]
+    fn test_cc_pl_005_non_empty_name_no_error() {
+        let temp = TempDir::new().unwrap();
+        let plugin_path = temp.path().join(".claude-plugin").join("plugin.json");
+        write_plugin(
+            &plugin_path,
+            r#"{"name":"my-plugin","description":"desc","version":"1.0.0"}"#,
+        );
+
+        let validator = PluginValidator;
+        let diagnostics = validator.validate(
+            &plugin_path,
+            &fs::read_to_string(&plugin_path).unwrap(),
+            &LintConfig::default(),
+        );
+
+        assert!(!diagnostics.iter().any(|d| d.rule == "CC-PL-005"));
+    }
+
+    #[test]
+    fn test_config_disabled_plugins_category() {
+        let temp = TempDir::new().unwrap();
+        let plugin_path = temp.path().join("plugin.json");
+        write_plugin(&plugin_path, r#"{ invalid json }"#);
+
+        let mut config = LintConfig::default();
+        config.rules.plugins = false;
+
+        let validator = PluginValidator;
+        let diagnostics = validator.validate(
+            &plugin_path,
+            &fs::read_to_string(&plugin_path).unwrap(),
+            &config,
+        );
+
+        assert!(diagnostics.is_empty());
+    }
 }

@@ -1469,4 +1469,136 @@ Agent instructions"#;
         // Empty skills array = no errors
         assert_eq!(cc_ag_005.len(), 0);
     }
+
+    // ===== Additional CC-AG-007 Parse Error Tests =====
+
+    #[test]
+    fn test_cc_ag_007_empty_file() {
+        let content = "";
+
+        let diagnostics = validate(content);
+        let parse_errors: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-AG-007")
+            .collect();
+
+        assert_eq!(parse_errors.len(), 1);
+    }
+
+    #[test]
+    fn test_cc_ag_007_invalid_yaml_syntax() {
+        // Test with actually invalid YAML that will fail parsing
+        let content = "---\nname: test\n  bad indent: value\n---\nBody";
+
+        let diagnostics = validate(content);
+        let parse_errors: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-AG-007")
+            .collect();
+
+        assert_eq!(parse_errors.len(), 1);
+    }
+
+    #[test]
+    fn test_cc_ag_007_valid_yaml_no_error() {
+        let content = r#"---
+name: valid-agent
+description: A properly formatted agent
+---
+Agent instructions"#;
+
+        let diagnostics = validate(content);
+        let parse_errors: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-AG-007")
+            .collect();
+
+        assert!(parse_errors.is_empty());
+    }
+
+    #[test]
+    fn test_cc_ag_007_disabled() {
+        let mut config = LintConfig::default();
+        config.rules.disabled_rules = vec!["CC-AG-007".to_string()];
+
+        let content = r#"---
+name: [invalid yaml
+---
+Body"#;
+
+        let validator = AgentValidator;
+        let diagnostics = validator.validate(
+            Path::new("/project/.claude/agents/test.md"),
+            content,
+            &config,
+        );
+
+        assert!(!diagnostics.iter().any(|d| d.rule == "CC-AG-007"));
+    }
+
+    // ===== Additional CC-AG rule edge cases =====
+
+    #[test]
+    fn test_cc_ag_003_all_valid_models() {
+        let valid_models = ["sonnet", "opus", "haiku", "inherit"];
+
+        for model in valid_models {
+            let content = format!(
+                "---\nname: test\ndescription: Test agent\nmodel: {}\n---\nBody",
+                model
+            );
+
+            let diagnostics = validate(&content);
+            let cc_ag_003: Vec<_> = diagnostics
+                .iter()
+                .filter(|d| d.rule == "CC-AG-003")
+                .collect();
+            assert!(
+                cc_ag_003.is_empty(),
+                "Model '{}' should be valid",
+                model
+            );
+        }
+    }
+
+    #[test]
+    fn test_cc_ag_004_all_valid_permission_modes() {
+        let valid_modes = ["default", "acceptEdits", "bypassPermissions", "plan"];
+
+        for mode in valid_modes {
+            let content = format!(
+                "---\nname: test\ndescription: Test agent\npermissionMode: {}\n---\nBody",
+                mode
+            );
+
+            let diagnostics = validate(&content);
+            let cc_ag_004: Vec<_> = diagnostics
+                .iter()
+                .filter(|d| d.rule == "CC-AG-004")
+                .collect();
+            assert!(
+                cc_ag_004.is_empty(),
+                "Permission mode '{}' should be valid",
+                mode
+            );
+        }
+    }
+
+    #[test]
+    fn test_cc_ag_006_both_empty_arrays_ok() {
+        let content = r#"---
+name: test
+description: Test agent
+tools: []
+disallowedTools: []
+---
+Body"#;
+
+        let diagnostics = validate(content);
+        let cc_ag_006: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-AG-006")
+            .collect();
+        assert!(cc_ag_006.is_empty());
+    }
 }
