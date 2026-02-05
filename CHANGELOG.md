@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Refactored SkillValidator internal structure for better maintainability (#211)
+  - Extracted monolithic 660-line validate() method into ValidationContext struct
+  - Grouped validation logic into 11 focused methods by concern
+  - Reduced main validate() from ~660 lines to ~78 lines
+  - All 128 tests pass without modification (zero behavior changes)
+
 ## [0.7.2] - 2026-02-05
 
 ### Fixed
