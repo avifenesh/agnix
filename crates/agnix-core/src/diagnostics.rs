@@ -108,10 +108,16 @@ pub enum DiagnosticLevel {
 }
 
 impl Diagnostic {
-    pub fn error(file: PathBuf, line: usize, column: usize, rule: &str, message: String) -> Self {
+    pub fn error(
+        file: PathBuf,
+        line: usize,
+        column: usize,
+        rule: &str,
+        message: impl Into<String>,
+    ) -> Self {
         Self {
             level: DiagnosticLevel::Error,
-            message,
+            message: message.into(),
             file,
             line,
             column,
@@ -122,10 +128,16 @@ impl Diagnostic {
         }
     }
 
-    pub fn warning(file: PathBuf, line: usize, column: usize, rule: &str, message: String) -> Self {
+    pub fn warning(
+        file: PathBuf,
+        line: usize,
+        column: usize,
+        rule: &str,
+        message: impl Into<String>,
+    ) -> Self {
         Self {
             level: DiagnosticLevel::Warning,
-            message,
+            message: message.into(),
             file,
             line,
             column,
@@ -136,10 +148,16 @@ impl Diagnostic {
         }
     }
 
-    pub fn info(file: PathBuf, line: usize, column: usize, rule: &str, message: String) -> Self {
+    pub fn info(
+        file: PathBuf,
+        line: usize,
+        column: usize,
+        rule: &str,
+        message: impl Into<String>,
+    ) -> Self {
         Self {
             level: DiagnosticLevel::Info,
-            message,
+            message: message.into(),
             file,
             line,
             column,
@@ -150,8 +168,8 @@ impl Diagnostic {
         }
     }
 
-    pub fn with_suggestion(mut self, suggestion: String) -> Self {
-        self.suggestion = Some(suggestion);
+    pub fn with_suggestion(mut self, suggestion: impl Into<String>) -> Self {
+        self.suggestion = Some(suggestion.into());
         self
     }
 

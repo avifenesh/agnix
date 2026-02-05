@@ -42,7 +42,42 @@ agnix validates configs against 100 rules derived from official specs, research 
 
 **Tools**: Claude Code, Cursor, GitHub Copilot, Codex CLI, AGENTS.md ecosystem
 
-**Integration**: LSP server, VS Code extension, GitHub Action, auto-fix (`--fix`)
+**Integration**: LSP server, VS Code extension, Neovim plugin, GitHub Action, auto-fix (`--fix`)
+
+**Localization**: English, Spanish, Chinese (Simplified) with `--locale` flag
+
+## Internationalization (i18n)
+
+agnix supports multiple languages for diagnostic messages and CLI output.
+
+### Supported Languages
+
+| Code | Language |
+|------|----------|
+| `en` | English (default) |
+| `es` | Spanish |
+| `zh-CN` | Chinese (Simplified) |
+
+### Setting the Locale
+
+```bash
+# CLI flag (highest priority)
+agnix --locale es .
+
+# Environment variable
+AGNIX_LOCALE=zh-CN agnix .
+
+# List available locales
+agnix --list-locales
+```
+
+You can also set the locale in `.agnix.toml`:
+
+```toml
+locale = "es"
+```
+
+See [docs/TRANSLATING.md](docs/TRANSLATING.md) for contributing translations.
 
 ## Security
 
@@ -188,7 +223,9 @@ Real-time diagnostics as you type, quick-fix code actions, hover documentation.
 
 **VS Code extension** includes a comprehensive settings UI for configuring all validation options. Changes apply immediately without server restart. See [VS Code extension](editors/vscode/README.md) for details.
 
-See [Editor Setup](docs/EDITOR-SETUP.md) for VS Code, Neovim, Helix, Cursor, and JetBrains setup.
+**Neovim plugin** with automatic LSP attachment, commands, Telescope integration, and health checks. See [Neovim plugin](editors/neovim/README.md) for details.
+
+See [Editor Setup](docs/EDITOR-SETUP.md) for VS Code, Neovim, Helix, Cursor, and JetBrains status.
 
 ## MCP Server
 
@@ -301,6 +338,7 @@ crates/
   agnix-mcp/      # MCP server
   agnix-rules/    # Rule metadata
 editors/
+  neovim/         # Neovim plugin
   vscode/         # VS Code extension
   jetbrains/      # JetBrains IDE plugin
 knowledge-base/   # 100 rules documentation
@@ -315,6 +353,7 @@ knowledge-base/   # 100 rules documentation
 - **MCP server** for AI assistant integration
 - **VS Code extension** with syntax highlighting
 - **JetBrains IDE plugin** under `editors/jetbrains/` (LSP4IJ-based)
+- **Neovim plugin** with LSP integration and Telescope support
 - **GitHub Action** for CI/CD integration
 - **Auto-fix** infrastructure (--fix, --dry-run, --fix-safe)
 - **Parallel validation** using rayon
@@ -324,7 +363,7 @@ knowledge-base/   # 100 rules documentation
 
 See [GitHub Issues](https://github.com/avifenesh/agnix/issues) for the full roadmap.
 
-**Editor integrations**: Neovim plugin, Zed extension
+**Editor integrations**: Zed extension
 
 **Features**: Documentation website, additional rule categories
 

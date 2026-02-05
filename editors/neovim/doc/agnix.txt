@@ -1,0 +1,305 @@
+*agnix.txt*    Lint agent configurations in Neovim
+
+Author:  Avi Fenesh
+License: MIT
+Version: 0.7.2
+
+==============================================================================
+CONTENTS                                                     *agnix-contents*
+
+    1. Introduction ................................ |agnix-introduction|
+    2. Requirements ................................ |agnix-requirements|
+    3. Installation ................................ |agnix-installation|
+    4. Setup ........................................ |agnix-setup|
+    5. Configuration ............................... |agnix-configuration|
+    6. Commands .................................... |agnix-commands|
+    7. Telescope ................................... |agnix-telescope|
+    8. Health Check ................................ |agnix-health|
+    9. API ......................................... |agnix-api|
+
+==============================================================================
+1. INTRODUCTION                                          *agnix-introduction*
+
+agnix validates AI agent configuration files (CLAUDE.md, AGENTS.md,
+SKILL.md, .claude/settings.json, *.mcp.json, .cursor/rules/*.mdc, and more)
+using the agnix-lsp language server.
+
+This plugin provides:
+  - Automatic LSP attachment to supported file types
+  - Real-time diagnostics as you type
+  - Quick-fix code actions
+  - Hover documentation for configuration fields
+  - Commands for server management and rule browsing
+  - Optional Telescope integration
+
+==============================================================================
+2. REQUIREMENTS                                          *agnix-requirements*
+
+  - Neovim >= 0.9
+  - agnix-lsp binary (install with `cargo install agnix-lsp` or download
+    from https://github.com/avifenesh/agnix/releases)
+
+Optional:
+  - telescope.nvim (for rule browsing)
+
+==============================================================================
+3. INSTALLATION                                          *agnix-installation*
+
+                                                         *agnix-lazy.nvim*
+Using lazy.nvim: >lua
+    {
+      'avifenesh/agnix',
+      ft = { 'markdown', 'json' },
+      opts = {},
+      config = function(_, opts)
+        require('agnix').setup(opts)
+      end,
+    }
+<
+
+                                                         *agnix-packer*
+Using packer.nvim: >lua
+    use {
+      'avifenesh/agnix',
+      config = function()
+        require('agnix').setup()
+      end,
+    }
+<
+
+                                                         *agnix-vim-plug*
+Using vim-plug: >vim
+    Plug 'avifenesh/agnix'
+
+    " In your init.lua or after/plugin:
+    lua require('agnix').setup()
+<
+
+Manual installation:
+  Copy the `editors/neovim/` directory contents into your Neovim runtime
+  path (e.g., `~/.local/share/nvim/site/pack/plugins/start/agnix/`).
+
+==============================================================================
+4. SETUP                                                     *agnix-setup*
+
+Call `require('agnix').setup(opts)` with an optional configuration table.
+The plugin will not start automatically until setup is called.
+
+Minimal: >lua
+    require('agnix').setup()
+<
+
+Full example: >lua
+    require('agnix').setup({
+      cmd = nil,              -- auto-detect agnix-lsp binary
+      filetypes = { 'markdown', 'json' },
+      root_markers = { '.git', '.agnix.toml', 'CLAUDE.md', 'AGENTS.md' },
+      autostart = true,
+      on_attach = function(client, bufnr)
+        -- Custom key mappings, etc.
+      end,
+      settings = {
+        severity = 'Warning',    -- 'Error', 'Warning', 'Info'
+        rules = {
+          skills = true,
+          hooks = true,
+          disabled_rules = { 'AS-001' },
+        },
+        versions = {
+          claude_code = '1.0.0',
+        },
+      },
+      log_level = 'warn',
+      telescope = { enable = true },
+    })
+<
+
+==============================================================================
+5. CONFIGURATION                                     *agnix-configuration*
+
+                                                     *agnix-config-cmd*
+cmd ~
+    Type: `string|nil`
+    Default: `nil` (auto-detect)
+    Path to the agnix-lsp binary. When nil, the plugin searches PATH
+    and ~/.cargo/bin/.
+
+                                                     *agnix-config-filetypes*
+filetypes ~
+    Type: `table`
+    Default: `{ 'markdown', 'json' }`
+    Neovim filetypes that may contain agnix-relevant files. Autocommands
+    watch these types but only attach if the file path matches.
+
+                                                     *agnix-config-root-markers*
+root_markers ~
+    Type: `table`
+    Default: `{ '.git', '.agnix.toml', 'CLAUDE.md', 'AGENTS.md' }`
+    Files and directories used to find the project root.
+
+                                                     *agnix-config-autostart*
+autostart ~
+    Type: `boolean`
+    Default: `true`
+    Start the LSP server automatically when a matching file is opened.
+
+                                                     *agnix-config-on-attach*
+on_attach ~
+    Type: `function|nil`
+    Default: `nil`
+    Callback invoked when the LSP client attaches to a buffer.
+    Signature: `function(client, bufnr)`.
+
+                                                     *agnix-config-settings*
+settings ~
+    Type: `table`
+    Default: all nil (server defaults)
+    LSP settings sent to the server. Matches the VsCodeConfig schema.
+
+    Fields:
+      severity .......... `string|nil` "Error", "Warning", "Info"
+      target ............ `string|nil` "Generic", "ClaudeCode", etc.
+      tools ............. `table|nil`  List of tool names
+      rules ............. `table|nil`  Rule category toggles
+        skills .......... `boolean|nil`
+        hooks ........... `boolean|nil`
+        agents .......... `boolean|nil`
+        memory .......... `boolean|nil`
+        plugins ......... `boolean|nil`
+        xml ............. `boolean|nil`
+        mcp ............. `boolean|nil`
+        imports ......... `boolean|nil`
+        cross_platform .. `boolean|nil`
+        agents_md ....... `boolean|nil`
+        copilot ......... `boolean|nil`
+        cursor .......... `boolean|nil`
+        prompt_engineering `boolean|nil`
+        disabled_rules .. `table|nil`  List of rule IDs
+      versions .......... `table|nil`  Tool version pins
+        claude_code ..... `string|nil`
+        codex ........... `string|nil`
+        cursor .......... `string|nil`
+        copilot ......... `string|nil`
+      specs ............. `table|nil`  Specification revisions
+        mcp_protocol .... `string|nil`
+        agent_skills_spec `string|nil`
+        agents_md_spec .. `string|nil`
+
+                                                     *agnix-config-log-level*
+log_level ~
+    Type: `string`
+    Default: `'warn'`
+    Minimum log level. One of: 'trace', 'debug', 'info', 'warn', 'error'.
+
+                                                     *agnix-config-telescope*
+telescope ~
+    Type: `table`
+    Default: `{ enable = true }`
+    Telescope integration settings.
+
+==============================================================================
+6. COMMANDS                                              *agnix-commands*
+
+                                                         *:AgnixSetup*
+:AgnixSetup
+    Initialize the plugin with default configuration. Equivalent to calling
+    `require('agnix').setup({})`. For custom configuration, call
+    `require('agnix').setup(opts)` from your init.lua instead.
+    Registered before setup is called; all other commands require setup.
+
+                                                         *:AgnixStart*
+:AgnixStart
+    Start the LSP server for the current buffer.
+
+                                                         *:AgnixStop*
+:AgnixStop
+    Stop the running LSP server.
+
+                                                         *:AgnixRestart*
+:AgnixRestart
+    Restart the LSP server.
+
+                                                         *:AgnixInfo*
+:AgnixInfo
+    Show information about the LSP server: binary path, running status,
+    and attached buffers.
+
+                                                         *:AgnixValidateFile*
+:AgnixValidateFile
+    Trigger re-validation for the current file by sending a didSave
+    notification to the LSP server.
+
+                                                         *:AgnixShowRules*
+:AgnixShowRules
+    Browse agnix rule categories. Uses Telescope if available, otherwise
+    falls back to vim.ui.select.
+
+                                                         *:AgnixFixAll*
+:AgnixFixAll
+    Request and apply all code action fixes from the LSP server for the
+    current buffer.
+
+                                                         *:AgnixFixSafe*
+:AgnixFixSafe
+    Request code actions and apply only those marked as preferred (safe).
+
+                                                         *:AgnixIgnoreRule*
+:AgnixIgnoreRule {rule_id}
+    Add the given rule to the disabled_rules list in .agnix.toml.
+    Creates the file if it does not exist.
+
+                                                         *:AgnixShowRuleDoc*
+:AgnixShowRuleDoc {rule_id}
+    Open the documentation for the given rule in a web browser.
+
+==============================================================================
+7. TELESCOPE                                             *agnix-telescope*
+
+If telescope.nvim is installed, the plugin registers an extension.
+
+Load it: >lua
+    require('telescope').load_extension('agnix')
+<
+
+Pickers:
+  - `:Telescope agnix rules` - Browse rule categories
+  - `:Telescope agnix diagnostics` - View agnix diagnostics in current buffer
+
+==============================================================================
+8. HEALTH CHECK                                          *agnix-health*
+
+Run `:checkhealth agnix` to verify:
+  - Neovim version
+  - agnix-lsp binary availability
+  - LSP client status
+  - .agnix.toml presence
+  - Optional dependency status
+
+==============================================================================
+9. API                                                   *agnix-api*
+
+                                                         *agnix.setup()*
+agnix.setup({opts})
+    Initialize the plugin. See |agnix-setup| for options.
+
+                                                         *agnix.start()*
+agnix.start()
+    Start the LSP client for the current buffer.
+
+                                                         *agnix.stop()*
+agnix.stop()
+    Stop the running LSP client.
+
+                                                         *agnix.restart()*
+agnix.restart()
+    Restart the LSP client.
+
+                                                         *agnix.util*
+agnix.util
+    Utility module. See `lua/agnix/util.lua`.
+    - find_binary({opts}) - Locate the agnix-lsp binary
+    - is_agnix_file({path}) - Check if a path is an agnix-supported file
+    - get_root_dir({path}) - Find the project root
+
+==============================================================================
+vim:ft=help:tw=78:ts=8:sw=4:sts=4:et:norl:

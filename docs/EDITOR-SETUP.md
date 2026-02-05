@@ -65,7 +65,41 @@ where agnix-lsp  # Windows
 
 ## Neovim
 
-With nvim-lspconfig:
+### agnix.nvim Plugin (Recommended)
+
+The agnix Neovim plugin provides automatic LSP attachment, file type
+detection, commands, Telescope integration, and health checks.
+
+With lazy.nvim:
+
+```lua
+{
+  'avifenesh/agnix',
+  ft = { 'markdown', 'json' },
+  opts = {},
+  config = function(_, opts)
+    require('agnix').setup(opts)
+  end,
+}
+```
+
+With packer.nvim:
+
+```lua
+use {
+  'avifenesh/agnix',
+  config = function()
+    require('agnix').setup()
+  end,
+}
+```
+
+See [editors/neovim/README.md](../editors/neovim/README.md) for full
+configuration, commands, and troubleshooting.
+
+### Manual Setup with nvim-lspconfig
+
+If you prefer manual configuration without the plugin:
 
 ```lua
 local lspconfig = require('lspconfig')
@@ -86,6 +120,9 @@ end
 
 lspconfig.agnix.setup{}
 ```
+
+Note: The manual approach attaches to all markdown and JSON files. The
+plugin is smarter and only attaches to files that agnix actually validates.
 
 ## Helix
 

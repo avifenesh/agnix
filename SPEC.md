@@ -134,6 +134,8 @@ agnix --dry-run .          # Preview fixes without modifying files
 agnix --fix-safe .         # Only apply safe (HIGH certainty) fixes
 agnix --format json .      # JSON output for programmatic consumption
 agnix --format sarif .     # SARIF 2.1.0 output for CI/CD
+agnix --locale es .        # Spanish output
+agnix --list-locales       # Show available locales
 ```
 
 ## Config (.agnix.toml)
@@ -141,6 +143,7 @@ agnix --format sarif .     # SARIF 2.1.0 output for CI/CD
 ```toml
 severity = "Warning"
 target = "Generic"  # Options: Generic, ClaudeCode, Cursor, Codex
+locale = "en"       # Options: en, es, zh-CN
 tools = ["claude-code", "cursor"]  # Preferred over target
 
 [rules]

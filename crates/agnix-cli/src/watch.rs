@@ -1,6 +1,7 @@
 //! Watch mode implementation for continuous validation
 
 use notify_debouncer_mini::{new_debouncer, notify::RecursiveMode, DebounceEventResult};
+use rust_i18n::t;
 use std::path::Path;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::channel;
@@ -20,7 +21,7 @@ where
     })?;
 
     // Initial validation
-    println!("Starting watch mode. Press Ctrl+C to stop.\n");
+    println!("{}\n", t!("cli.watch_starting"));
     let _ = validate_fn();
 
     // Set up file watcher
@@ -37,12 +38,12 @@ where
                 let relevant = events.iter().any(|e| is_relevant_file(&e.path));
                 if relevant {
                     clear_screen();
-                    println!("Changes detected. Re-validating...\n");
+                    println!("{}\n", t!("cli.watch_changes_detected"));
                     let _ = validate_fn();
                 }
             }
             Ok(Err(e)) => {
-                eprintln!("Watch error: {:?}", e);
+                eprintln!("{}", t!("cli.watch_error", error = format!("{:?}", e)));
             }
             Err(std::sync::mpsc::RecvTimeoutError::Timeout) => {
                 // Continue watching
@@ -53,7 +54,7 @@ where
         }
     }
 
-    println!("\nWatch mode stopped.");
+    println!("\n{}", t!("cli.watch_stopped"));
     Ok(())
 }
 

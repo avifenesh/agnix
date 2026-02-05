@@ -13,6 +13,8 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
+pub use super::shared::is_valid_rule_id;
+
 /// Telemetry event types.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type")]
@@ -141,35 +143,6 @@ fn looks_like_path(s: &str) -> bool {
         || s.starts_with('~')
         // Windows drive letter (e.g., "C:")
         || (s.len() > 1 && s.chars().nth(1) == Some(':'))
-}
-
-/// Check if a string is a valid rule ID format.
-///
-/// Rule IDs are in format: XX-NNN or XX-YY-NNN
-/// Examples: AS-001, CC-HK-001, MCP-002
-pub fn is_valid_rule_id(s: &str) -> bool {
-    // Rule IDs are in format: XX-NNN or XX-YY-NNN
-    // Examples: AS-001, CC-HK-001, MCP-002
-
-    let parts: Vec<&str> = s.split('-').collect();
-    if parts.len() < 2 || parts.len() > 3 {
-        return false;
-    }
-
-    // First part(s) should be uppercase letters
-    for part in &parts[..parts.len() - 1] {
-        if part.is_empty() || !part.chars().all(|c| c.is_ascii_uppercase()) {
-            return false;
-        }
-    }
-
-    // Last part should be digits
-    let last = parts.last().unwrap();
-    if last.is_empty() || !last.chars().all(|c| c.is_ascii_digit()) {
-        return false;
-    }
-
-    true
 }
 
 #[cfg(test)]

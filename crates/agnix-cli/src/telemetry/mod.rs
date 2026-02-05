@@ -25,6 +25,7 @@
 
 mod config;
 mod events;
+mod shared;
 
 #[cfg(feature = "telemetry")]
 mod client;
@@ -39,7 +40,6 @@ pub use queue::EventQueue;
 pub use client::TelemetryClient;
 
 use std::collections::HashMap;
-use std::time::Duration;
 
 #[cfg(feature = "telemetry")]
 use std::thread;
@@ -124,66 +124,7 @@ fn try_submit_queued_events(config: &TelemetryConfig, queue: &mut EventQueue) {
 
 /// Get current timestamp as ISO 8601 string.
 fn chrono_timestamp() -> String {
-    use std::time::{SystemTime, UNIX_EPOCH};
-
-    let now = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap_or(Duration::ZERO)
-        .as_secs();
-
-    // Format as ISO 8601 (simplified without external deps)
-    let secs_per_day = 86400u64;
-    let secs_per_hour = 3600u64;
-    let secs_per_minute = 60u64;
-
-    // Days since Unix epoch
-    let days = now / secs_per_day;
-    let remaining = now % secs_per_day;
-
-    // Time components
-    let hours = remaining / secs_per_hour;
-    let remaining = remaining % secs_per_hour;
-    let minutes = remaining / secs_per_minute;
-    let seconds = remaining % secs_per_minute;
-
-    // Calculate year, month, day from days since epoch
-    // This is a simplified calculation
-    let mut year = 1970i32;
-    let mut remaining_days = days as i32;
-
-    loop {
-        let days_in_year = if is_leap_year(year) { 366 } else { 365 };
-        if remaining_days < days_in_year {
-            break;
-        }
-        remaining_days -= days_in_year;
-        year += 1;
-    }
-
-    let days_in_months: [i32; 12] = if is_leap_year(year) {
-        [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-    } else {
-        [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-    };
-
-    let mut month = 1;
-    for days_in_month in days_in_months.iter() {
-        if remaining_days < *days_in_month {
-            break;
-        }
-        remaining_days -= days_in_month;
-        month += 1;
-    }
-    let day = remaining_days + 1;
-
-    format!(
-        "{:04}-{:02}-{:02}T{:02}:{:02}:{:02}Z",
-        year, month, day, hours, minutes, seconds
-    )
-}
-
-fn is_leap_year(year: i32) -> bool {
-    (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0)
+    shared::chrono_timestamp()
 }
 
 #[cfg(test)]
@@ -200,13 +141,5 @@ mod tests {
         // Year should be reasonable (between 2020 and 2100)
         let year: i32 = ts[0..4].parse().unwrap();
         assert!((2020..=2100).contains(&year));
-    }
-
-    #[test]
-    fn test_leap_year() {
-        assert!(is_leap_year(2000)); // Divisible by 400
-        assert!(!is_leap_year(1900)); // Divisible by 100 but not 400
-        assert!(is_leap_year(2024)); // Divisible by 4
-        assert!(!is_leap_year(2023)); // Not divisible by 4
     }
 }
