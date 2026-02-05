@@ -7,7 +7,7 @@ Real-time validation for AI agent configuration files in VS Code.
 ## Features
 
 - **Real-time validation** - Diagnostics as you type
-- **100 validation rules** - From official specs and best practices
+- **Validates 100 rules** - From official specs and best practices
 - **Auto-fix support** - One-click fixes for common issues
 - **Multi-tool** - Claude Code, Cursor, GitHub Copilot, Codex CLI
 - **Status bar** - See validation status at a glance
