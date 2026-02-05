@@ -15,12 +15,30 @@ use crate::{
     parsers::{Import, ImportCache},
     rules::Validator,
 };
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::path::{Component, Path, PathBuf};
 
 pub struct ImportsValidator;
 
 const MAX_IMPORT_DEPTH: usize = 5;
+type DiagnosticKey = (PathBuf, usize, usize, String, String);
+
+fn push_unique_diagnostic(
+    diagnostics: &mut Vec<Diagnostic>,
+    seen_diagnostics: &mut HashSet<DiagnosticKey>,
+    diagnostic: Diagnostic,
+) {
+    let key = (
+        diagnostic.file.clone(),
+        diagnostic.line,
+        diagnostic.column,
+        diagnostic.rule.clone(),
+        diagnostic.message.clone(),
+    );
+    if seen_diagnostics.insert(key) {
+        diagnostics.push(diagnostic);
+    }
+}
 
 /// Check if a URL is a local file link (not external or anchor-only)
 fn is_local_file_link(url: &str) -> bool {
@@ -66,6 +84,7 @@ impl Validator for ImportsValidator {
         let mut local_cache: HashMap<PathBuf, Vec<Import>> = HashMap::new();
         let mut visited_depth: HashMap<PathBuf, usize> = HashMap::new();
         let mut stack = Vec::new();
+        let mut seen_diagnostics: HashSet<DiagnosticKey> = HashSet::new();
 
         // Insert the root file's imports into the appropriate cache (if not already present)
         let root_imports = extract_imports(content);
@@ -89,6 +108,7 @@ impl Validator for ImportsValidator {
             &mut visited_depth,
             &mut stack,
             &mut diagnostics,
+            &mut seen_diagnostics,
             config,
             is_claude_md,
             &project_root,
@@ -111,6 +131,7 @@ fn visit_imports(
     visited_depth: &mut HashMap<PathBuf, usize>,
     stack: &mut Vec<PathBuf>,
     diagnostics: &mut Vec<Diagnostic>,
+    seen_diagnostics: &mut HashSet<DiagnosticKey>,
     config: &LintConfig,
     root_is_claude_md: bool,
     project_root: &Path,
@@ -171,7 +192,9 @@ fn visit_imports(
             || import.path.starts_with('~')
         {
             if check_not_found {
-                diagnostics.push(
+                push_unique_diagnostic(
+                    diagnostics,
+                    seen_diagnostics,
                     Diagnostic::error(
                         file_path.clone(),
                         import.line,
@@ -188,7 +211,9 @@ fn visit_imports(
         let normalized_resolved = normalize_join(&normalized_base, &import.path);
         if !normalized_resolved.starts_with(normalized_root) {
             if check_not_found {
-                diagnostics.push(
+                push_unique_diagnostic(
+                    diagnostics,
+                    seen_diagnostics,
                     Diagnostic::error(
                         file_path.clone(),
                         import.line,
@@ -208,7 +233,9 @@ fn visit_imports(
             let canonical_resolved = normalize_existing_path(&resolved, fs);
             if !canonical_resolved.starts_with(normalized_root) {
                 if check_not_found {
-                    diagnostics.push(
+                    push_unique_diagnostic(
+                        diagnostics,
+                        seen_diagnostics,
                         Diagnostic::error(
                             file_path.clone(),
                             import.line,
@@ -230,7 +257,9 @@ fn visit_imports(
 
         if !fs.exists(&normalized) {
             if check_not_found {
-                diagnostics.push(
+                push_unique_diagnostic(
+                    diagnostics,
+                    seen_diagnostics,
                     Diagnostic::error(
                         file_path.clone(),
                         import.line,
@@ -254,7 +283,9 @@ fn visit_imports(
         // Emit diagnostics if rules are enabled for this file type
         if check_cycle && has_cycle {
             let cycle = format_cycle(stack, &normalized);
-            diagnostics.push(
+            push_unique_diagnostic(
+                diagnostics,
+                seen_diagnostics,
                 Diagnostic::error(
                     file_path.clone(),
                     import.line,
@@ -268,7 +299,9 @@ fn visit_imports(
         }
 
         if check_depth && exceeds_depth {
-            diagnostics.push(
+            push_unique_diagnostic(
+                diagnostics,
+                seen_diagnostics,
                 Diagnostic::error(
                     file_path.clone(),
                     import.line,
@@ -294,6 +327,7 @@ fn visit_imports(
                 visited_depth,
                 stack,
                 diagnostics,
+                seen_diagnostics,
                 config,
                 root_is_claude_md,
                 project_root,
@@ -1323,6 +1357,38 @@ mod tests {
                 .iter()
                 .any(|d| d.rule == "REF-001" && d.message.contains("@missing.md")),
             "Traversal should revisit shared.md at shallower depth and report downstream missing imports"
+        );
+    }
+
+    #[test]
+    fn test_shallower_revisit_does_not_duplicate_missing_import_diagnostics() {
+        let temp = TempDir::new().unwrap();
+        let root = temp.path().join("CLAUDE.md");
+        let a = temp.path().join("a.md");
+        let b = temp.path().join("b.md");
+        let shared = temp.path().join("shared.md");
+
+        fs::write(&root, "@a.md\n@shared.md").unwrap();
+        fs::write(&a, "@b.md").unwrap();
+        fs::write(&b, "@shared.md").unwrap();
+        fs::write(&shared, "@missing.md").unwrap();
+
+        let mut config = LintConfig::default();
+        config.set_root_dir(temp.path().to_path_buf());
+
+        let validator = ImportsValidator;
+        let content = fs::read_to_string(&root).unwrap();
+        let diagnostics = validator.validate(&root, &content, &config);
+
+        let missing: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "REF-001" && d.message.contains("@missing.md"))
+            .collect();
+        assert_eq!(
+            missing.len(),
+            1,
+            "Expected a single REF-001 diagnostic for @missing.md, got {}",
+            missing.len()
         );
     }
 }
