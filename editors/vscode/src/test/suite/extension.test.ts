@@ -65,6 +65,80 @@ suite('Extension Test Suite', () => {
       const trace = config.get<string>('trace.server');
       assert.strictEqual(trace, 'off');
     });
+
+    test('agnix.severity should default to Warning', () => {
+      const config = vscode.workspace.getConfiguration('agnix');
+      const severity = config.get<string>('severity');
+      assert.strictEqual(severity, 'Warning');
+    });
+
+    test('agnix.target should default to Generic', () => {
+      const config = vscode.workspace.getConfiguration('agnix');
+      const target = config.get<string>('target');
+      assert.strictEqual(target, 'Generic');
+    });
+
+    test('agnix.tools should default to empty array', () => {
+      const config = vscode.workspace.getConfiguration('agnix');
+      const tools = config.get<string[]>('tools');
+      assert.deepStrictEqual(tools, []);
+    });
+  });
+
+  suite('Rule Configuration', () => {
+    const ruleCategories = [
+      'skills',
+      'hooks',
+      'agents',
+      'memory',
+      'plugins',
+      'xml',
+      'mcp',
+      'imports',
+      'crossPlatform',
+      'agentsMd',
+      'copilot',
+      'cursor',
+      'promptEngineering',
+    ];
+
+    for (const category of ruleCategories) {
+      test(`agnix.rules.${category} should default to true`, () => {
+        const config = vscode.workspace.getConfiguration('agnix');
+        const value = config.get<boolean>(`rules.${category}`);
+        assert.strictEqual(value, true, `rules.${category} should be true by default`);
+      });
+    }
+
+    test('agnix.rules.disabledRules should default to empty array', () => {
+      const config = vscode.workspace.getConfiguration('agnix');
+      const disabledRules = config.get<string[]>('rules.disabledRules');
+      assert.deepStrictEqual(disabledRules, []);
+    });
+  });
+
+  suite('Version Configuration', () => {
+    const versions = ['claudeCode', 'codex', 'cursor', 'copilot'];
+
+    for (const version of versions) {
+      test(`agnix.versions.${version} should default to null`, () => {
+        const config = vscode.workspace.getConfiguration('agnix');
+        const value = config.get<string | null>(`versions.${version}`);
+        assert.strictEqual(value, null, `versions.${version} should be null by default`);
+      });
+    }
+  });
+
+  suite('Spec Configuration', () => {
+    const specs = ['mcpProtocol', 'agentSkills', 'agentsMd'];
+
+    for (const spec of specs) {
+      test(`agnix.specs.${spec} should default to null`, () => {
+        const config = vscode.workspace.getConfiguration('agnix');
+        const value = config.get<string | null>(`specs.${spec}`);
+        assert.strictEqual(value, null, `specs.${spec} should be null by default`);
+      });
+    }
   });
 
   suite('Language Support', () => {
