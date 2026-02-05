@@ -4,7 +4,7 @@
 //! real-time validation of agent configuration files.
 
 use std::collections::HashMap;
-use std::path::PathBuf;
+use std::path::{Component, Path, PathBuf};
 use std::sync::Arc;
 
 use tokio::sync::RwLock;
@@ -38,6 +38,29 @@ fn create_error_diagnostic(code: &str, message: String) -> Diagnostic {
         tags: None,
         data: None,
     }
+}
+
+/// Normalize path components without filesystem access.
+/// Resolves `.` and `..` logically -- used when `canonicalize()` fails.
+fn normalize_path(path: &Path) -> PathBuf {
+    let mut components: Vec<Component<'_>> = Vec::new();
+    for component in path.components() {
+        match component {
+            Component::CurDir => {}
+            Component::ParentDir => {
+                match components.last() {
+                    Some(Component::Normal(_)) => {
+                        components.pop();
+                    }
+                    // Cannot traverse above root or prefix -- silently drop
+                    Some(Component::RootDir) | Some(Component::Prefix(_)) => {}
+                    _ => components.push(component),
+                }
+            }
+            _ => components.push(component),
+        }
+    }
+    components.iter().collect()
 }
 
 /// LSP backend that handles validation requests.
@@ -123,11 +146,11 @@ impl Backend {
         if let Some(ref workspace_root) = *self.workspace_root.read().await {
             let canonical_path = match file_path.canonicalize() {
                 Ok(p) => p,
-                Err(_) => file_path.clone(),
+                Err(_) => normalize_path(&file_path),
             };
             let canonical_root = workspace_root
                 .canonicalize()
-                .unwrap_or_else(|_| workspace_root.clone());
+                .unwrap_or_else(|_| normalize_path(workspace_root));
 
             if !canonical_path.starts_with(&canonical_root) {
                 self.client
