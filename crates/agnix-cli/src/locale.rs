@@ -173,4 +173,63 @@ mod tests {
         assert!(!is_supported("fr"));
         assert!(!is_supported("de"));
     }
+
+    // ===== Edge case tests =====
+
+    #[test]
+    fn test_empty_string_locale() {
+        let result = normalize_locale("");
+        // Empty string normalizes to empty, which is not supported
+        assert!(!is_supported(&result));
+    }
+
+    #[test]
+    fn test_whitespace_only_locale() {
+        let result = normalize_locale("   ");
+        assert!(!is_supported(&result));
+    }
+
+    #[test]
+    fn test_very_long_locale_string() {
+        let long_locale = "en".to_string() + &"x".repeat(1000);
+        let result = normalize_locale(&long_locale);
+        // Should not match any supported locale
+        assert!(!is_supported(&result));
+    }
+
+    #[test]
+    fn test_special_characters_in_locale() {
+        let result = normalize_locale("@#$%");
+        assert!(!is_supported(&result));
+    }
+
+    #[test]
+    fn test_locale_with_only_encoding() {
+        // Just ".UTF-8" with no language
+        let result = normalize_locale(".UTF-8");
+        assert!(!is_supported(&result));
+    }
+
+    #[test]
+    fn test_init_with_unsupported_locale_falls_back() {
+        // This should print a warning and fall back to "en"
+        init(Some("xx-YY"), None);
+        // After init, locale should be "en" since "xx-YY" is unsupported
+        let current = rust_i18n::locale();
+        assert_eq!(&*current, "en");
+    }
+
+    #[test]
+    fn test_init_with_empty_string_falls_back() {
+        init(Some(""), None);
+        let current = rust_i18n::locale();
+        assert_eq!(&*current, "en");
+    }
+
+    #[test]
+    fn test_normalize_case_insensitive() {
+        assert_eq!(normalize_locale("EN"), "en");
+        assert_eq!(normalize_locale("ES"), "es");
+        assert_eq!(normalize_locale("ZH-cn"), "zh-CN");
+    }
 }
