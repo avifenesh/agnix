@@ -138,9 +138,138 @@ local function test_find_binary_no_opts()
   assert(result == nil or type(result) == 'string', 'find_binary(nil) should return string or nil')
 end
 
+local function test_get_root_dir_exists_and_callable()
+  -- get_root_dir should be a function exposed on the module
+  assert(type(util.get_root_dir) == 'function', 'get_root_dir should be a function')
+end
+
+local function test_get_root_dir_returns_nil_for_path_with_no_markers()
+  -- When vim.fs.find returns nothing for both file and directory searches,
+  -- get_root_dir should return nil.
+  -- We mock vim.fs.find because real temp paths may sit under a directory
+  -- tree that contains .git (e.g. the user home).
+  local orig_find = vim.fs.find
+  vim.fs.find = function()
+    return {}
+  end
+
+  local result = util.get_root_dir('/some/isolated/path/with/no/markers')
+  assert(result == nil, 'get_root_dir should return nil when no markers exist, got: ' .. tostring(result))
+
+  -- Restore
+  vim.fs.find = orig_find
+end
+
+local function test_get_root_dir_finds_git_marker()
+  -- When vim.fs.find returns a .git directory, get_root_dir should return
+  -- its parent (the project root). We mock vim.fs.find to avoid interference
+  -- from .git directories elsewhere in the filesystem.
+  local orig_find = vim.fs.find
+  local call_count = 0
+  vim.fs.find = function(markers, opts)
+    call_count = call_count + 1
+    if call_count == 1 then
+      -- First call searches for type='file'; .git is a directory, so no match
+      return {}
+    end
+    -- Second call searches for type='directory'; return .git path
+    return { '/mock/project/.git' }
+  end
+
+  local result = util.get_root_dir('/mock/project/src/deep')
+
+  vim.fs.find = orig_find
+
+  assert(result ~= nil, 'get_root_dir should find .git marker')
+  local normalized = result:gsub('\\', '/')
+  assert(
+    normalized == '/mock/project',
+    'get_root_dir should return parent of .git, got: ' .. tostring(result)
+  )
+end
+
+local function test_get_root_dir_finds_file_marker()
+  -- When vim.fs.find returns a file marker (e.g. .agnix.toml) on the first
+  -- call (type='file'), get_root_dir should return its parent directory.
+  local orig_find = vim.fs.find
+  vim.fs.find = function(markers, opts)
+    if opts and opts.type == 'file' then
+      return { '/mock/project/.agnix.toml' }
+    end
+    return {}
+  end
+
+  local result = util.get_root_dir('/mock/project/nested')
+
+  vim.fs.find = orig_find
+
+  assert(result ~= nil, 'get_root_dir should find .agnix.toml marker')
+  local normalized = result:gsub('\\', '/')
+  assert(
+    normalized == '/mock/project',
+    'get_root_dir should return parent of .agnix.toml, got: ' .. tostring(result)
+  )
+end
+
+local function test_get_root_dir_finds_claude_md_marker()
+  -- When vim.fs.find returns a CLAUDE.md file, get_root_dir should return
+  -- its parent directory.
+  local orig_find = vim.fs.find
+  vim.fs.find = function(markers, opts)
+    if opts and opts.type == 'file' then
+      return { '/mock/project/CLAUDE.md' }
+    end
+    return {}
+  end
+
+  local result = util.get_root_dir('/mock/project/lib')
+
+  vim.fs.find = orig_find
+
+  assert(result ~= nil, 'get_root_dir should find CLAUDE.md marker')
+  local normalized = result:gsub('\\', '/')
+  assert(
+    normalized == '/mock/project',
+    'get_root_dir should return parent of CLAUDE.md, got: ' .. tostring(result)
+  )
+end
+
+local function test_get_root_dir_prefers_file_over_directory()
+  -- When a file marker is found on the first call, the directory search
+  -- should not be needed.
+  local orig_find = vim.fs.find
+  local calls = {}
+  vim.fs.find = function(markers, opts)
+    calls[#calls + 1] = opts and opts.type or 'unknown'
+    if opts and opts.type == 'file' then
+      return { '/mock/project/AGENTS.md' }
+    end
+    return { '/mock/other/.git' }
+  end
+
+  local result = util.get_root_dir('/mock/project/src')
+
+  vim.fs.find = orig_find
+
+  assert(result ~= nil, 'get_root_dir should find file marker')
+  -- The file search found a result, so only one call should have been made
+  assert(#calls == 1, 'should only call vim.fs.find once when file marker found, got: ' .. #calls)
+  local normalized = result:gsub('\\', '/')
+  assert(
+    normalized == '/mock/project',
+    'get_root_dir should return parent of AGENTS.md, got: ' .. tostring(result)
+  )
+end
+
 -- Run all tests
 test_is_agnix_file()
 test_is_agnix_file_windows_paths()
 test_find_binary_explicit_valid()
 test_find_binary_explicit_invalid_falls_through()
 test_find_binary_no_opts()
+test_get_root_dir_exists_and_callable()
+test_get_root_dir_returns_nil_for_path_with_no_markers()
+test_get_root_dir_finds_git_marker()
+test_get_root_dir_finds_file_marker()
+test_get_root_dir_finds_claude_md_marker()
+test_get_root_dir_prefers_file_over_directory()

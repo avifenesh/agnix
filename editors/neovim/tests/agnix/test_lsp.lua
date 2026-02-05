@@ -109,6 +109,100 @@ local function test_build_lsp_settings_full()
   config.current = nil
 end
 
+local function test_setup_autocommands_creates_augroup()
+  -- Calling setup_autocommands should create an augroup named 'agnix'
+  config.setup({})
+  lsp.setup_autocommands()
+
+  -- Get autocmds in the 'agnix' group; if the group does not exist this errors
+  local ok, autocmds = pcall(vim.api.nvim_get_autocmds, { group = 'agnix' })
+  assert(ok, 'augroup "agnix" should exist after setup_autocommands()')
+  assert(type(autocmds) == 'table', 'autocmds should be a table')
+  assert(#autocmds > 0, 'there should be at least one autocmd in the agnix group')
+
+  -- Verify the autocmd listens for BufReadPost or FileType
+  local found_event = false
+  for _, ac in ipairs(autocmds) do
+    if ac.event == 'BufReadPost' or ac.event == 'FileType' then
+      found_event = true
+      break
+    end
+  end
+  assert(found_event, 'agnix augroup should contain a BufReadPost or FileType autocmd')
+  config.current = nil
+end
+
+local function test_mdc_filetype_registered()
+  -- After requiring agnix.lsp, .mdc should be registered as markdown.
+  -- We test by creating a temp .mdc file, opening it in a buffer, and checking filetype.
+  local tmp = vim.fn.tempname() .. '.mdc'
+  local f = io.open(tmp, 'w')
+  if f then
+    f:write('# Test mdc file\n')
+    f:close()
+  end
+
+  -- Open the file in a buffer
+  vim.cmd('edit ' .. vim.fn.fnameescape(tmp))
+  local bufnr = vim.api.nvim_get_current_buf()
+
+  -- Trigger filetype detection
+  vim.cmd('filetype detect')
+  local ft = vim.bo[bufnr].filetype
+
+  assert(ft == 'markdown', '.mdc file should have markdown filetype, got: ' .. tostring(ft))
+
+  -- Clean up
+  vim.cmd('bdelete!')
+  vim.fn.delete(tmp)
+end
+
+local function test_start_warns_when_binary_not_found()
+  -- When binary is not found, start() should return nil (not crash).
+  -- We mock util.find_binary to guarantee it returns nil, regardless of
+  -- whether agnix-lsp is actually installed on this machine.
+  config.setup({})
+  local util = require('agnix.util')
+  local orig_find_binary = util.find_binary
+  util.find_binary = function()
+    return nil
+  end
+
+  -- Capture notifications to verify a warning is emitted
+  local notifications = {}
+  local original_notify = vim.notify
+  vim.notify = function(msg, level)
+    notifications[#notifications + 1] = { msg = msg, level = level }
+  end
+
+  local result = lsp.start()
+
+  -- Restore mocks
+  vim.notify = original_notify
+  util.find_binary = orig_find_binary
+
+  assert(result == nil, 'start() should return nil when binary is not found')
+  assert(#notifications > 0, 'start() should emit a notification when binary not found')
+
+  local found_warning = false
+  for _, n in ipairs(notifications) do
+    if n.msg:find('not found') then
+      found_warning = true
+      break
+    end
+  end
+  assert(found_warning, 'notification should mention binary not found')
+  config.current = nil
+end
+
+local function test_stop_is_safe_when_not_started()
+  -- Stopping when no client is running should not error
+  lsp.client_id = nil
+  local ok, err = pcall(lsp.stop)
+  assert(ok, 'stop() should not error when no client is running: ' .. tostring(err))
+  assert(lsp.client_id == nil, 'client_id should remain nil after stop()')
+end
+
 -- Run all tests
 test_build_lsp_settings_empty()
 test_build_lsp_settings_with_severity()
@@ -116,3 +210,7 @@ test_build_lsp_settings_with_rules()
 test_build_lsp_settings_with_versions()
 test_build_lsp_settings_with_specs()
 test_build_lsp_settings_full()
+test_setup_autocommands_creates_augroup()
+test_mdc_filetype_registered()
+test_start_warns_when_binary_not_found()
+test_stop_is_safe_when_not_started()
