@@ -60,6 +60,7 @@ tests/fixtures/     # Test cases by category
 - `config.rs` - LintConfig, ToolVersions, SpecRevisions, ImportCache
 - `diagnostics.rs` - Diagnostic, Fix, DiagnosticLevel
 - `fixes.rs` - Auto-fix application engine
+- `fs.rs` - FileSystem trait abstraction (RealFileSystem, MockFileSystem)
 
 ### Key Abstractions
 

@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- FileSystem trait for abstracting file system operations (#213)
+  - Enables unit testing validators with MockFileSystem instead of requiring real temp files
+  - RealFileSystem delegates to std::fs and file_utils for production use
+  - MockFileSystem provides HashMap-based in-memory storage with RwLock for thread safety
+  - Support for symlink handling and circular symlink detection
+  - Integrated into LintConfig via fs() accessor for dependency injection
+
 ### Performance
 - Shared import cache at project validation level reduces redundant parsing (#216)
 
