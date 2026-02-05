@@ -32,6 +32,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - SECURITY.md with reporting policy and security configuration
   - knowledge-base/SECURITY-MODEL.md with threat model and implementation details
   - Audit history tracking and incident response procedures
+- LSP workspace boundary check hardened (#232)
+  - Added normalize_path() fallback when canonicalize() fails
+  - Prevents path traversal via .. components in non-canonical paths
 
 ### Added
 - JetBrains IDE plugin with LSP integration (#196)
