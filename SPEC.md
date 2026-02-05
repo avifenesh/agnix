@@ -53,7 +53,7 @@ agnix implements defense-in-depth security measures:
 | Feature | Implementation | Default |
 |---------|----------------|---------|
 | Symlink rejection | `file_utils::safe_read_file()` | Always on |
-| File size limits | `MAX_FILE_SIZE = 1 MiB` | Always on |
+| File size limits | `DEFAULT_MAX_FILE_SIZE = 1 MiB` | Always on |
 | File count limits | `max_files_to_validate` | 10,000 |
 | ReDoS protection | `MAX_REGEX_INPUT_SIZE = 64 KB` | Always on |
 | Path traversal detection | `normalize_join()` in imports validator | Always on |

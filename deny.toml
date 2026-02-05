@@ -1,0 +1,93 @@
+# cargo-deny configuration
+# https://embarkstudios.github.io/cargo-deny/
+
+[advisories]
+# Deny known vulnerable crates
+db-path = "~/.cargo/advisory-db"
+db-urls = ["https://github.com/rustsec/advisory-db"]
+# Temporary ignore for unmaintained crates (tracked in #227)
+ignore = [
+    "RUSTSEC-2024-0384", # instant (via notify) - waiting for notify update
+]
+
+[licenses]
+# Allow common permissive licenses
+allow = [
+    "MIT",
+    "Apache-2.0",
+    "Apache-2.0 WITH LLVM-exception",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "Zlib",
+    "0BSD",
+    "CC0-1.0",
+    "MPL-2.0",
+    "Unicode-3.0",
+    "Unicode-DFS-2016",
+]
+# The confidence threshold for detecting a license from license text
+confidence-threshold = 0.8
+
+[bans]
+# Lint level for when multiple versions of the same crate are detected
+# Changed from "warn" to "deny" to prevent dependency bloat and supply chain risk.
+#
+# Rationale for "deny" strictness:
+# - Reduces binary size by eliminating duplicate dependencies
+# - Minimizes supply chain attack surface (fewer crate versions = fewer audit targets)
+# - Forces explicit resolution of dependency conflicts
+# - Prevents subtle bugs from different versions of the same crate interacting
+#
+# If this fails, resolve by:
+# 1. Updating dependencies: cargo update -p <crate>
+# 2. Using [bans.skip] to allowlist specific duplicates (with justification)
+# 3. Filing issues with upstream crates to align dependency versions
+multiple-versions = "deny"
+# Lint level for when a crate is found that doesn't match any allowed/denied crates
+wildcards = "allow"
+# List of crates to deny
+deny = []
+# List of crates to skip when checking for duplicates
+# Temporary allowlist for known duplicates (tracked in #227)
+skip = [
+    { name = "bitflags", version = "=1.3.2" },  # notify, lsp-types use v1
+    { name = "getrandom", version = "=0.2.17" }, # dirs use v0.2
+    { name = "hashbrown", version = "=0.14.5" }, # indexmap use v0.14
+    { name = "schemars", version = "=0.8.22" }, # lsp-types use v0.8
+    { name = "schemars_derive", version = "=0.8.22" },
+    { name = "thiserror", version = "=1.0.69" }, # many crates use v1
+    { name = "thiserror-impl", version = "=1.0.69" },
+    { name = "windows-sys", version = "=0.48.0" }, # dirs use v0.48
+    { name = "windows-sys", version = "=0.52.0" }, # notify use v0.52
+    { name = "windows-sys", version = "=0.60.2" }, # tokio/socket2 use v0.60
+    { name = "windows-targets", version = "=0.48.5" },
+    { name = "windows-targets", version = "=0.52.6" },
+    { name = "windows_aarch64_gnullvm", version = "=0.48.5" },
+    { name = "windows_aarch64_gnullvm", version = "=0.52.6" },
+    { name = "windows_aarch64_msvc", version = "=0.48.5" },
+    { name = "windows_aarch64_msvc", version = "=0.52.6" },
+    { name = "windows_i686_gnu", version = "=0.48.5" },
+    { name = "windows_i686_gnu", version = "=0.52.6" },
+    { name = "windows_i686_gnullvm", version = "=0.52.6" },
+    { name = "windows_i686_msvc", version = "=0.48.5" },
+    { name = "windows_i686_msvc", version = "=0.52.6" },
+    { name = "windows_x86_64_gnu", version = "=0.48.5" },
+    { name = "windows_x86_64_gnu", version = "=0.52.6" },
+    { name = "windows_x86_64_gnullvm", version = "=0.48.5" },
+    { name = "windows_x86_64_gnullvm", version = "=0.52.6" },
+    { name = "windows_x86_64_msvc", version = "=0.48.5" },
+    { name = "windows_x86_64_msvc", version = "=0.52.6" },
+]
+# List of crates to skip when checking for duplicates (tree-wide)
+skip-tree = []
+
+[sources]
+# Lint level for crates from unknown registries
+unknown-registry = "warn"
+# Lint level for crates from git repositories
+unknown-git = "warn"
+# List of allowed registries
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]
+# List of allowed git sources (for development forks if needed)
+allow-git = []

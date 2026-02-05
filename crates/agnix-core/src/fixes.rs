@@ -116,17 +116,25 @@ fn apply_fixes_to_content(content: &str, fixes: &[&Fix]) -> (String, Vec<String>
     let mut last_start = usize::MAX;
 
     for fix in fixes {
+        // Check end_byte > start_byte first (more fundamental invariant)
+        if fix.end_byte < fix.start_byte {
+            // Log: Invalid fix range (end before start)
+            continue;
+        }
+        // Then check bounds
         if fix.start_byte > result.len() || fix.end_byte > result.len() {
+            // Log: Fix out of bounds
             continue;
         }
-        if fix.start_byte > fix.end_byte {
-            continue;
-        }
+        // Check UTF-8 boundaries
         if !result.is_char_boundary(fix.start_byte) || !result.is_char_boundary(fix.end_byte) {
+            // Log: UTF-8 boundary violation - this indicates a bug in fix generation
+            // The fix byte offsets don't align with character boundaries
             continue;
         }
         // Skip overlapping fixes (sorted descending, so check against previous fix start)
         if fix.end_byte > last_start {
+            // Log: Skipping overlapping fix
             continue;
         }
 

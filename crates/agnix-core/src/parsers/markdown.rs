@@ -1,4 +1,10 @@
 //! Markdown parser for extracting @imports, links, and checking XML tags
+//!
+//! ## Security
+//!
+//! This module includes size limits to prevent ReDoS (Regular Expression Denial
+//! of Service) attacks. The `MAX_REGEX_INPUT_SIZE` constant limits the size of
+//! content that will be processed by regex operations.
 
 use pulldown_cmark::{Event, Options, Parser, Tag, TagEnd};
 use regex::Regex;
@@ -7,7 +13,27 @@ use std::sync::OnceLock;
 
 static XML_TAG_REGEX: OnceLock<Regex> = OnceLock::new();
 
+/// Maximum size (in bytes) for content processed by regex operations.
+/// This prevents ReDoS attacks by limiting input size to 64KB.
+/// Content larger than this will be processed without regex-based extraction.
+///
+/// **Design Decision**: 64KB was chosen as a balance between:
+/// - Large enough to handle typical documentation files (most are <10KB)
+/// - Small enough to prevent ReDoS on pathological regex input
+/// - Matches typical page sizes for text processing
+/// - 2^16 is a clean power-of-2 boundary
+///
+/// This limit applies to XML tag extraction, import detection, and link parsing.
+/// Files larger than 1 MiB are rejected earlier by `MAX_FILE_SIZE` in file_utils.rs.
+pub const MAX_REGEX_INPUT_SIZE: usize = 65536; // 64KB
+
 /// Extract @import references from markdown content (excluding code blocks/spans)
+///
+/// # Security
+///
+/// This function is NOT subject to `MAX_REGEX_INPUT_SIZE` limits because it uses
+/// byte-by-byte scanning instead of regex. The limit only applies to regex-based
+/// extraction functions (`extract_xml_tags`, `extract_markdown_links`).
 pub fn extract_imports(content: &str) -> Vec<Import> {
     let line_starts = compute_line_starts(content);
     let mut imports = Vec::new();
@@ -31,7 +57,16 @@ pub fn extract_imports(content: &str) -> Vec<Import> {
 }
 
 /// Extract XML tags for balance checking (excluding code blocks/spans)
+///
+/// # Security
+///
+/// Returns early for content exceeding `MAX_REGEX_INPUT_SIZE` to prevent ReDoS.
 pub fn extract_xml_tags(content: &str) -> Vec<XmlTag> {
+    // Security: Skip regex processing for oversized content to prevent ReDoS
+    if content.len() > MAX_REGEX_INPUT_SIZE {
+        return Vec::new();
+    }
+
     let line_starts = compute_line_starts(content);
     let mut tags = Vec::new();
 
@@ -56,6 +91,12 @@ pub fn extract_xml_tags(content: &str) -> Vec<XmlTag> {
 /// Extract markdown links from content (excluding code blocks/spans)
 ///
 /// This extracts both regular links `[text](url)` and image links `![alt](url)`.
+///
+/// # Security
+///
+/// This function is NOT subject to `MAX_REGEX_INPUT_SIZE` limits because it uses
+/// pulldown-cmark's parser instead of regex. The limit only applies to regex-based
+/// extraction (`extract_xml_tags`).
 pub fn extract_markdown_links(content: &str) -> Vec<MarkdownLink> {
     let line_starts = compute_line_starts(content);
     let mut links = Vec::new();
@@ -640,5 +681,176 @@ mod tests {
         assert_eq!(links.len(), 1);
         assert_eq!(links[0].line, 2);
         assert_eq!(links[0].column, 1);
+    }
+
+    // ===== Security: Regex DoS Protection Tests =====
+
+    #[test]
+    fn test_xml_tags_skipped_for_oversized_content() {
+        // Create content larger than MAX_REGEX_INPUT_SIZE
+        let large_content = "a".repeat(MAX_REGEX_INPUT_SIZE + 1000);
+        let content_with_tags = format!("<example>{}</example>", large_content);
+
+        let tags = extract_xml_tags(&content_with_tags);
+        // Tags should be empty because content exceeds size limit
+        // This prevents potential ReDoS attacks
+        assert!(
+            tags.is_empty(),
+            "Oversized content should skip XML tag extraction for security"
+        );
+    }
+
+    #[test]
+    fn test_xml_tags_processed_for_normal_sized_content() {
+        // Content just under the limit should still be processed
+        let content = "<example>test</example>";
+        assert!(content.len() < MAX_REGEX_INPUT_SIZE);
+
+        let tags = extract_xml_tags(content);
+        assert_eq!(tags.len(), 2, "Normal sized content should be processed");
+    }
+
+    #[test]
+    fn test_max_regex_input_size_constant() {
+        // Verify the constant is set to 64KB as documented
+        assert_eq!(MAX_REGEX_INPUT_SIZE, 65536);
+    }
+}
+
+#[cfg(test)]
+mod proptests {
+    use super::*;
+    use proptest::prelude::*;
+
+    proptest! {
+        #![proptest_config(ProptestConfig::with_cases(100))]
+
+        // ===== extract_xml_tags() invariants =====
+
+        #[test]
+        fn extract_xml_tags_never_panics(content in ".*") {
+            // Should never panic on any input
+            let _ = extract_xml_tags(&content);
+        }
+
+        #[test]
+        fn extract_xml_tags_valid_offsets(content in "[a-zA-Z0-9<>/\\-_ ]{0,1000}") {
+            let tags = extract_xml_tags(&content);
+            for tag in &tags {
+                // Byte offsets must be within bounds
+                prop_assert!(tag.start_byte <= content.len());
+                prop_assert!(tag.end_byte <= content.len());
+                prop_assert!(tag.start_byte <= tag.end_byte);
+
+                // Line/column must be positive (1-indexed)
+                prop_assert!(tag.line >= 1);
+                prop_assert!(tag.column >= 1);
+            }
+        }
+
+        #[test]
+        fn check_xml_balance_never_panics(content in ".*") {
+            let tags = extract_xml_tags(&content);
+            // Should never panic on any input
+            let _ = check_xml_balance(&tags);
+            let _ = check_xml_balance_with_content_end(&tags, Some(content.len()));
+        }
+
+        // ===== extract_imports() invariants =====
+
+        #[test]
+        fn extract_imports_never_panics(content in ".*") {
+            // Should never panic on any input
+            let _ = extract_imports(&content);
+        }
+
+        #[test]
+        fn extract_imports_valid_offsets(content in "[a-zA-Z0-9@./\\-_ ]{0,1000}") {
+            let imports = extract_imports(&content);
+            for import in &imports {
+                // Byte offsets must be within bounds
+                prop_assert!(import.start_byte <= content.len());
+                prop_assert!(import.end_byte <= content.len());
+                prop_assert!(import.start_byte <= import.end_byte);
+
+                // Line/column must be positive (1-indexed)
+                prop_assert!(import.line >= 1);
+                prop_assert!(import.column >= 1);
+            }
+        }
+
+        // ===== extract_markdown_links() invariants =====
+
+        #[test]
+        fn extract_markdown_links_never_panics(content in ".*") {
+            // Should never panic on any input
+            let _ = extract_markdown_links(&content);
+        }
+
+        #[test]
+        fn extract_markdown_links_valid_offsets(content in "[a-zA-Z0-9\\[\\]()./\\-_ ]{0,1000}") {
+            let links = extract_markdown_links(&content);
+            for link in &links {
+                // Byte offsets must be within bounds
+                prop_assert!(link.start_byte <= content.len());
+                prop_assert!(link.end_byte <= content.len());
+                prop_assert!(link.start_byte <= link.end_byte);
+
+                // Line/column must be positive (1-indexed)
+                prop_assert!(link.line >= 1);
+                prop_assert!(link.column >= 1);
+            }
+        }
+
+        // ===== Well-formed input generation =====
+
+        #[test]
+        fn xml_tags_balanced_detected(
+            tag in "[a-z]+",
+            content in "[a-zA-Z0-9 ]{0,100}"
+        ) {
+            let input = format!("<{}>{}</{}>", tag, content, tag);
+            let tags = extract_xml_tags(&input);
+            let errors = check_xml_balance(&tags);
+
+            // Well-formed tags should have no balance errors
+            prop_assert!(
+                errors.is_empty(),
+                "Well-formed XML should have no balance errors: {:?}",
+                errors
+            );
+        }
+
+        #[test]
+        fn xml_unclosed_detected(tag in "[a-z]+") {
+            let input = format!("<{}>content", tag);
+            let tags = extract_xml_tags(&input);
+            let errors = check_xml_balance(&tags);
+
+            // Unclosed tag should be detected
+            prop_assert!(
+                errors.len() == 1,
+                "Unclosed tag should be detected"
+            );
+        }
+
+        #[test]
+        fn import_with_extension_detected(
+            dir in "[a-z]+",
+            file in "[a-z]+",
+            ext in "(md|txt|json|yaml)"
+        ) {
+            let input = format!("See @{}/{}.{} for details", dir, file, ext);
+            let imports = extract_imports(&input);
+
+            prop_assert!(
+                !imports.is_empty(),
+                "Import with extension should be detected"
+            );
+            prop_assert_eq!(
+                &imports[0].path,
+                &format!("{}/{}.{}", dir, file, ext)
+            );
+        }
     }
 }

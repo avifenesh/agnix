@@ -1,12 +1,6 @@
 # Security Policy
 
-## Supported Versions
-
-| Version | Supported          |
-| ------- | ------------------ |
-| 0.0.x   | :white_check_mark: |
-
-## Reporting a Vulnerability
+## Reporting Security Vulnerabilities
 
 If you discover a security vulnerability in agnix, please report it responsibly:
 
@@ -24,44 +18,92 @@ You can expect:
 - Status update within 7 days
 - Credit in release notes (unless you prefer anonymity)
 
+## Supported Versions
+
+| Version | Supported          |
+| ------- | ------------------ |
+| 0.7.x   | Yes                |
+| < 0.7   | No                 |
+
 ## Security Model
 
-agnix is a **local linting tool** that validates agent configuration files. Its threat model assumes:
+Agnix is a **local linting tool** that validates agent configuration files. Its threat model assumes:
 
 - **Trusted input files**: Files being validated are from the user's own codebase
 - **Local execution**: The tool runs locally, not as a service
 - **Opt-in telemetry only**: Network access is disabled by default (see Telemetry section)
 
+For detailed security architecture, threat model, and implementation details, see [SECURITY-MODEL.md](knowledge-base/SECURITY-MODEL.md).
+
 ### Security Measures
 
-1. **File Size Limits**: All file reads are capped at 1 MiB to prevent resource exhaustion
-2. **Symlink Rejection**: Symbolic links are rejected to prevent path traversal attacks
-3. **Path Validation**: The LSP server validates files are within workspace boundaries
-4. **No Command Execution**: agnix does not execute external commands or scripts
-5. **Safe File Writes**: Atomic writes with symlink checks for fix application
-
-### Dependency Security
-
-We use `cargo-audit` in CI to check for known vulnerabilities in dependencies. The security workflow runs:
-
-- On every push to main
-- On every pull request
-- Weekly on schedule
+| Feature | Description | Default |
+|---------|-------------|---------|
+| **Symlink Rejection** | All file reads reject symlinks to prevent path traversal | Always on |
+| **File Size Limits** | Maximum file size to prevent memory exhaustion | 1 MiB |
+| **File Count Limits** | Maximum files to validate to prevent DoS | 10,000 |
+| **Regex Input Limits** | Maximum input to regex operations to prevent ReDoS | 64 KB |
+| **Path Traversal Detection** | Import validation detects `../` escape attempts | Always on |
+| **Atomic Writes** | Fix application uses atomic temp-file-then-rename | Always on |
+| **No Command Execution** | agnix does not execute external commands or scripts | N/A |
 
 ### Known Limitations
 
-- **TOCTOU Window**: A small time-of-check-time-of-use window exists between file validation and read/write operations. This is acceptable for the threat model (trusted local files).
-- **YAML Complexity**: While file size limits provide basic protection, deeply nested YAML structures could theoretically cause high memory usage within the 1 MiB limit.
+1. **TOCTOU Window**: There is a time-of-check-time-of-use gap between checking file properties and reading content. An attacker with local filesystem access could potentially exploit this, but impact is limited to reading unexpected content. Platform-specific atomic alternatives (O_NOFOLLOW on Unix) would eliminate this but are not currently implemented.
 
-### Safe Error Handling Patterns
+2. **Platform Differences**: Symlink behavior varies between Unix and Windows. Tests are primarily validated on Unix.
 
-The codebase follows these error handling patterns to maintain security:
+3. **YAML Complexity**: While file size limits provide basic protection, deeply nested YAML structures could cause high memory usage within the 1 MiB limit.
+
+4. **Parser Bugs**: While we use fuzz testing and property-based testing, parsers may have undiscovered bugs.
+
+5. **Telemetry ID Generation**: If telemetry is enabled (disabled by default), session IDs are generated using `uuid::Uuid::new_v4()` which uses the operating system's random number generator. No personally identifiable information is collected.
+
+## Security Configuration
+
+### .agnix.toml Options
+
+```toml
+# Maximum files to validate (DoS protection)
+# Default: 10,000. Set to None to disable (not recommended)
+max_files_to_validate = 10000
+
+# Exclude patterns (skip untrusted directories)
+exclude = [
+    "node_modules/**",
+    ".git/**",
+    "target/**",
+]
+```
+
+### CLI Options
+
+```bash
+# Override file limit
+agnix --max-files 5000 .
+
+# Disable file limit (not recommended)
+agnix --max-files 0 .
+```
+
+## Supply Chain Security
+
+We use multiple layers of dependency verification:
+
+1. **cargo-audit**: Checks for known CVEs in dependencies (runs on every PR)
+2. **cargo-deny**: Checks licenses, duplicates, and sources
+3. **Dependabot**: Automatic security updates
+4. **CodeQL**: Static analysis for Rust code
+
+## Safe Error Handling Patterns
+
+The codebase follows these patterns to maintain security:
 
 1. **Graceful Degradation**: Parsing errors skip the problematic file rather than crashing
-2. **No Sensitive Data in Errors**: Error messages avoid exposing file contents or internal state
-3. **UTF-8 Boundary Safety**: Fix application validates UTF-8 character boundaries before modifying content
-4. **Bounded Iteration**: Regex matches and file walks use limits to prevent resource exhaustion
-5. **Early Validation**: Invalid inputs are rejected at parsing stage before deeper processing
+2. **No Sensitive Data in Errors**: Error messages avoid exposing file contents
+3. **UTF-8 Boundary Safety**: Fix application validates UTF-8 character boundaries
+4. **Bounded Iteration**: Regex matches and file walks use limits to prevent exhaustion
+5. **Early Validation**: Invalid inputs are rejected at parsing stage
 
 ## Telemetry
 
@@ -77,7 +119,7 @@ When telemetry is enabled, we collect only aggregate statistics:
 - Rule trigger counts (e.g., "AS-001: 3 times") - NOT diagnostic messages
 - Error/warning/info counts
 - Validation duration
-- Random installation ID (not tied to user identity)
+- Random installation ID (UUIDv4, not tied to user identity)
 
 **What we NEVER collect:**
 
@@ -122,7 +164,13 @@ cargo install agnix-cli --features telemetry
 
 ## Security Updates
 
-Security fixes are released as patch versions (e.g., 0.1.1) and announced in:
+Security fixes are released as patch versions (e.g., 0.7.1 -> 0.7.2) and announced in:
 
 - GitHub Releases
 - CHANGELOG.md
+
+## Contact
+
+- Security issues: aviarchi1994@gmail.com
+- General issues: GitHub Issues
+- Repository: https://github.com/avifenesh/agnix
