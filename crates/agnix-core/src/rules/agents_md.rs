@@ -9,7 +9,7 @@
 //! - AGM-006: Nested AGENTS.md Hierarchy (MEDIUM) - project-level check
 
 use crate::{
-    config::LintConfig,
+    context::ValidatorContext,
     diagnostics::Diagnostic,
     rules::Validator,
     schemas::agents_md::{
@@ -23,7 +23,7 @@ use std::path::Path;
 pub struct AgentsMdValidator;
 
 impl Validator for AgentsMdValidator {
-    fn validate(&self, path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic> {
+    fn validate(&self, path: &Path, content: &str, ctx: &ValidatorContext) -> Vec<Diagnostic> {
         let mut diagnostics = Vec::new();
 
         // Only validate AGENTS.md variants (not CLAUDE.md files)
@@ -36,7 +36,7 @@ impl Validator for AgentsMdValidator {
         }
 
         // AGM-001: Valid Markdown Structure (ERROR)
-        if config.is_rule_enabled("AGM-001") {
+        if ctx.is_rule_enabled("AGM-001") {
             let validity_issues = check_markdown_validity(content);
             for issue in validity_issues {
                 let level_fn = match issue.issue_type {
@@ -57,7 +57,7 @@ impl Validator for AgentsMdValidator {
         }
 
         // AGM-002: Missing Section Headers (WARNING)
-        if config.is_rule_enabled("AGM-002") {
+        if ctx.is_rule_enabled("AGM-002") {
             if let Some(issue) = check_section_headers(content) {
                 diagnostics.push(
                     Diagnostic::warning(
@@ -73,7 +73,7 @@ impl Validator for AgentsMdValidator {
         }
 
         // AGM-003: Character Limit (WARNING)
-        if config.is_rule_enabled("AGM-003") {
+        if ctx.is_rule_enabled("AGM-003") {
             if let Some(exceeded) = check_character_limit(content, WINDSURF_CHAR_LIMIT) {
                 diagnostics.push(
                     Diagnostic::warning(
@@ -94,7 +94,7 @@ impl Validator for AgentsMdValidator {
         }
 
         // AGM-004: Missing Project Context (WARNING)
-        if config.is_rule_enabled("AGM-004") {
+        if ctx.is_rule_enabled("AGM-004") {
             if let Some(issue) = check_project_context(content) {
                 diagnostics.push(
                     Diagnostic::warning(
@@ -110,7 +110,7 @@ impl Validator for AgentsMdValidator {
         }
 
         // AGM-005: Platform-Specific Features Without Guard (WARNING)
-        if config.is_rule_enabled("AGM-005") {
+        if ctx.is_rule_enabled("AGM-005") {
             let unguarded = find_unguarded_platform_features(content);
             for feature in unguarded {
                 diagnostics.push(
@@ -138,15 +138,21 @@ mod tests {
     use super::*;
     use crate::config::LintConfig;
     use crate::diagnostics::DiagnosticLevel;
+    use crate::fs::RealFileSystem;
+
+    fn make_ctx(config: &LintConfig) -> ValidatorContext<'_> {
+        ValidatorContext::new(config, &RealFileSystem)
+    }
 
     fn validate(content: &str) -> Vec<Diagnostic> {
         let validator = AgentsMdValidator;
-        validator.validate(Path::new("AGENTS.md"), content, &LintConfig::default())
+        let config = LintConfig::default();
+        validator.validate(Path::new("AGENTS.md"), content, &make_ctx(&config))
     }
 
     fn validate_with_config(content: &str, config: &LintConfig) -> Vec<Diagnostic> {
         let validator = AgentsMdValidator;
-        validator.validate(Path::new("AGENTS.md"), content, config)
+        validator.validate(Path::new("AGENTS.md"), content, &make_ctx(config))
     }
 
     // ===== Skip non-AGENTS.md files =====
@@ -156,8 +162,9 @@ mod tests {
         let content = r#"```unclosed
 Some content"#;
         let validator = AgentsMdValidator;
+        let config = LintConfig::default();
         let diagnostics =
-            validator.validate(Path::new("CLAUDE.md"), content, &LintConfig::default());
+            validator.validate(Path::new("CLAUDE.md"), content, &make_ctx(&config));
         // Should return empty for CLAUDE.md
         assert!(diagnostics.is_empty());
     }
@@ -166,8 +173,9 @@ Some content"#;
     fn test_skip_other_md() {
         let content = r#"```unclosed"#;
         let validator = AgentsMdValidator;
+        let config = LintConfig::default();
         let diagnostics =
-            validator.validate(Path::new("README.md"), content, &LintConfig::default());
+            validator.validate(Path::new("README.md"), content, &make_ctx(&config));
         assert!(diagnostics.is_empty());
     }
 
@@ -177,10 +185,11 @@ Some content"#;
         let content = r#"```unclosed
 Some content"#;
         let validator = AgentsMdValidator;
+        let config = LintConfig::default();
         let diagnostics = validator.validate(
             Path::new("CLAUDE.local.md"),
             content,
-            &LintConfig::default(),
+            &make_ctx(&config),
         );
         assert!(
             diagnostics.is_empty(),
@@ -197,10 +206,11 @@ Some content"#;
 Some content"#;
         let variants = ["AGENTS.local.md", "AGENTS.override.md"];
         let validator = AgentsMdValidator;
+        let config = LintConfig::default();
 
         for variant in variants {
             let diagnostics =
-                validator.validate(Path::new(variant), content, &LintConfig::default());
+                validator.validate(Path::new(variant), content, &make_ctx(&config));
             let agm_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AGM-001").collect();
             assert_eq!(
                 agm_001.len(),
@@ -215,10 +225,11 @@ Some content"#;
     fn test_agents_local_md_char_limit() {
         let content = format!("# Project\n\n{}", "x".repeat(13000));
         let validator = AgentsMdValidator;
+        let config = LintConfig::default();
         let diagnostics = validator.validate(
             Path::new("AGENTS.local.md"),
             &content,
-            &LintConfig::default(),
+            &make_ctx(&config),
         );
         let agm_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AGM-003").collect();
         assert_eq!(
@@ -236,10 +247,11 @@ Some content"#;
   command: echo "test"
 "#;
         let validator = AgentsMdValidator;
+        let config = LintConfig::default();
         let diagnostics = validator.validate(
             Path::new("AGENTS.override.md"),
             content,
-            &LintConfig::default(),
+            &make_ctx(&config),
         );
         let agm_005: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AGM-005").collect();
         assert_eq!(
@@ -470,8 +482,9 @@ Just text without headers."#;
         assert!(agm_001.is_empty());
 
         // Other rules should still work
-        assert!(config.is_rule_enabled("AGM-002"));
-        assert!(config.is_rule_enabled("AGM-003"));
+        let ctx = make_ctx(&config);
+        assert!(ctx.is_rule_enabled("AGM-002"));
+        assert!(ctx.is_rule_enabled("AGM-003"));
     }
 
     #[test]

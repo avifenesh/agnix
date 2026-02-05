@@ -5,6 +5,7 @@ const MCP_008_ASSUMPTION: &str = "Using default MCP protocol version. Pin mcp_pr
 
 use crate::{
     config::LintConfig,
+    context::ValidatorContext,
     diagnostics::Diagnostic,
     rules::Validator,
     schemas::mcp::{
@@ -74,11 +75,11 @@ fn find_tool_location(content: &str, tool_index: usize) -> (usize, usize) {
 pub struct McpValidator;
 
 impl Validator for McpValidator {
-    fn validate(&self, path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic> {
+    fn validate(&self, path: &Path, content: &str, ctx: &ValidatorContext) -> Vec<Diagnostic> {
         let mut diagnostics = Vec::new();
 
         // Early return if MCP category is disabled
-        if !config.rules.mcp {
+        if !ctx.config.rules.mcp {
             return diagnostics;
         }
 
@@ -86,7 +87,7 @@ impl Validator for McpValidator {
         let raw_value: serde_json::Value = match serde_json::from_str(content) {
             Ok(v) => v,
             Err(e) => {
-                if config.is_rule_enabled("MCP-007") {
+                if ctx.is_rule_enabled("MCP-007") {
                     diagnostics.push(Diagnostic::error(
                         path.to_path_buf(),
                         1,
@@ -100,13 +101,13 @@ impl Validator for McpValidator {
         };
 
         // Check for JSON-RPC version (MCP-001)
-        if config.is_rule_enabled("MCP-001") {
+        if ctx.is_rule_enabled("MCP-001") {
             validate_jsonrpc_version(&raw_value, path, content, &mut diagnostics);
         }
 
         // Check for protocol version mismatch (MCP-008)
-        if config.is_rule_enabled("MCP-008") {
-            validate_protocol_version(&raw_value, path, content, config, &mut diagnostics);
+        if ctx.is_rule_enabled("MCP-008") {
+            validate_protocol_version(&raw_value, path, content, ctx.config, &mut diagnostics);
         }
 
         // Try to parse as MCP config schema
@@ -128,7 +129,7 @@ impl Validator for McpValidator {
 
         // Validate each successfully parsed tool
         for (idx, tool) in tools.iter().enumerate() {
-            validate_tool(tool, path, content, config, &mut diagnostics, idx);
+            validate_tool(tool, path, content, ctx, &mut diagnostics, idx);
         }
 
         diagnostics
@@ -323,7 +324,7 @@ fn validate_tool(
     tool: &McpToolSchema,
     path: &Path,
     content: &str,
-    config: &LintConfig,
+    ctx: &ValidatorContext,
     diagnostics: &mut Vec<Diagnostic>,
     tool_index: usize,
 ) {
@@ -345,7 +346,7 @@ fn validate_tool(
     let (has_name, has_desc, has_schema) = tool.has_required_fields();
 
     // MCP-002: Missing required tool fields
-    if config.is_rule_enabled("MCP-002") {
+    if ctx.is_rule_enabled("MCP-002") {
         if !has_name {
             let (line, col) = if tool.name.is_some() {
                 find_field("name")
@@ -395,7 +396,7 @@ fn validate_tool(
     }
 
     // MCP-003: Invalid JSON Schema
-    if config.is_rule_enabled("MCP-003") {
+    if ctx.is_rule_enabled("MCP-003") {
         if let Some(schema) = &tool.input_schema {
             let (line, col) = find_field("inputSchema");
             let schema_errors = validate_json_schema_structure(schema);
@@ -415,7 +416,7 @@ fn validate_tool(
     }
 
     // MCP-004: Missing or short tool description
-    if config.is_rule_enabled("MCP-004") && has_desc && !tool.has_meaningful_description() {
+    if ctx.is_rule_enabled("MCP-004") && has_desc && !tool.has_meaningful_description() {
         let (line, col) = find_field("description");
         let desc_len = tool.description.as_ref().map(|d| d.len()).unwrap_or(0);
         diagnostics.push(
@@ -436,7 +437,7 @@ fn validate_tool(
     }
 
     // MCP-005: Tool without user consent mechanism
-    if config.is_rule_enabled("MCP-005") && !tool.has_consent_fields() {
+    if ctx.is_rule_enabled("MCP-005") && !tool.has_consent_fields() {
         diagnostics.push(
             Diagnostic::warning(
                 path.to_path_buf(),
@@ -455,7 +456,7 @@ fn validate_tool(
     }
 
     // MCP-006: Untrusted annotations
-    if config.is_rule_enabled("MCP-006") && tool.has_annotations() {
+    if ctx.is_rule_enabled("MCP-006") && tool.has_annotations() {
         let (line, col) = find_field("annotations");
         diagnostics.push(
             Diagnostic::warning(
@@ -479,18 +480,22 @@ fn validate_tool(
 mod tests {
     use super::*;
     use crate::config::LintConfig;
+    use crate::fs::RealFileSystem;
     use std::path::PathBuf;
 
     fn validate(content: &str) -> Vec<Diagnostic> {
         let validator = McpValidator;
         let path = PathBuf::from("test.mcp.json");
-        validator.validate(&path, content, &LintConfig::default())
+        let config = LintConfig::default();
+        let ctx = ValidatorContext::new(&config, &RealFileSystem);
+        validator.validate(&path, content, &ctx)
     }
 
     fn validate_with_config(content: &str, config: &LintConfig) -> Vec<Diagnostic> {
         let validator = McpValidator;
         let path = PathBuf::from("test.mcp.json");
-        validator.validate(&path, content, config)
+        let ctx = ValidatorContext::new(config, &RealFileSystem);
+        validator.validate(&path, content, &ctx)
     }
 
     // MCP-001 Tests

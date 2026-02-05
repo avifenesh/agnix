@@ -3,7 +3,7 @@
 //! Validates Claude Code subagent definitions in `.claude/agents/*.md`
 
 use crate::{
-    config::LintConfig, diagnostics::Diagnostic, parsers::frontmatter::parse_frontmatter,
+    context::ValidatorContext, diagnostics::Diagnostic, parsers::frontmatter::parse_frontmatter,
     rules::Validator, schemas::agent::AgentSchema,
 };
 use std::collections::HashSet;
@@ -79,12 +79,12 @@ impl AgentValidator {
 }
 
 impl Validator for AgentValidator {
-    fn validate(&self, path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic> {
+    fn validate(&self, path: &Path, content: &str, ctx: &ValidatorContext) -> Vec<Diagnostic> {
         let mut diagnostics = Vec::new();
 
         // Check if content has frontmatter
         if !content.trim_start().starts_with("---") {
-            if config.is_rule_enabled("CC-AG-007") {
+            if ctx.is_rule_enabled("CC-AG-007") {
                 diagnostics.push(
                     Diagnostic::error(
                         path.to_path_buf(),
@@ -103,7 +103,7 @@ impl Validator for AgentValidator {
         let schema: AgentSchema = match parse_frontmatter(content) {
             Ok((s, _body)) => s,
             Err(e) => {
-                if config.is_rule_enabled("CC-AG-007") {
+                if ctx.is_rule_enabled("CC-AG-007") {
                     diagnostics.push(Diagnostic::error(
                         path.to_path_buf(),
                         1,
@@ -117,7 +117,7 @@ impl Validator for AgentValidator {
         };
 
         // CC-AG-001: Missing name field
-        if config.is_rule_enabled("CC-AG-001")
+        if ctx.is_rule_enabled("CC-AG-001")
             && schema.name.as_deref().unwrap_or("").trim().is_empty()
         {
             diagnostics.push(
@@ -133,7 +133,7 @@ impl Validator for AgentValidator {
         }
 
         // CC-AG-002: Missing description field
-        if config.is_rule_enabled("CC-AG-002")
+        if ctx.is_rule_enabled("CC-AG-002")
             && schema
                 .description
                 .as_deref()
@@ -156,7 +156,7 @@ impl Validator for AgentValidator {
         }
 
         // CC-AG-003: Invalid model value
-        if config.is_rule_enabled("CC-AG-003") {
+        if ctx.is_rule_enabled("CC-AG-003") {
             if let Some(model) = &schema.model {
                 if !VALID_MODELS.contains(&model.as_str()) {
                     diagnostics.push(
@@ -181,7 +181,7 @@ impl Validator for AgentValidator {
         }
 
         // CC-AG-004: Invalid permission mode
-        if config.is_rule_enabled("CC-AG-004") {
+        if ctx.is_rule_enabled("CC-AG-004") {
             if let Some(mode) = &schema.permission_mode {
                 if !VALID_PERMISSION_MODES.contains(&mode.as_str()) {
                     diagnostics.push(
@@ -206,7 +206,7 @@ impl Validator for AgentValidator {
         }
 
         // CC-AG-005: Referenced skill not found
-        if config.is_rule_enabled("CC-AG-005") {
+        if ctx.is_rule_enabled("CC-AG-005") {
             if let Some(skills) = &schema.skills {
                 if let Some(project_root) = Self::find_project_root(path) {
                     for skill_name in skills {
@@ -234,7 +234,7 @@ impl Validator for AgentValidator {
         }
 
         // CC-AG-006: Tool/disallowed conflict
-        if config.is_rule_enabled("CC-AG-006") {
+        if ctx.is_rule_enabled("CC-AG-006") {
             if let (Some(tools), Some(disallowed)) = (&schema.tools, &schema.disallowed_tools) {
                 let tools_set: HashSet<&str> = tools.iter().map(|s| s.as_str()).collect();
                 let disallowed_set: HashSet<&str> = disallowed.iter().map(|s| s.as_str()).collect();
@@ -273,20 +273,27 @@ mod tests {
     use super::*;
     use crate::config::LintConfig;
     use crate::diagnostics::DiagnosticLevel;
+    use crate::fs::RealFileSystem;
     use tempfile::TempDir;
+
+    fn make_ctx(config: &LintConfig) -> ValidatorContext<'_> {
+        ValidatorContext::new(config, &RealFileSystem)
+    }
 
     fn validate(content: &str) -> Vec<Diagnostic> {
         let validator = AgentValidator;
+        let config = LintConfig::default();
         validator.validate(
             Path::new("agents/test-agent.md"),
             content,
-            &LintConfig::default(),
+            &make_ctx(&config),
         )
     }
 
     fn validate_with_path(path: &Path, content: &str) -> Vec<Diagnostic> {
         let validator = AgentValidator;
-        validator.validate(path, content, &LintConfig::default())
+        let config = LintConfig::default();
+        validator.validate(path, content, &make_ctx(&config))
     }
 
     // ===== CC-AG-001 Tests: Missing Name Field =====
@@ -1143,7 +1150,7 @@ description: A test agent without name
 Agent instructions"#;
 
         let validator = AgentValidator;
-        let diagnostics = validator.validate(Path::new("test-agent.md"), content, &config);
+        let diagnostics = validator.validate(Path::new("test-agent.md"), content, &make_ctx(&config));
 
         // CC-AG-001 should not fire when agents category is disabled
         let cc_ag_001: Vec<_> = diagnostics
@@ -1165,7 +1172,7 @@ model: sonnet
 Agent instructions"#;
 
         let validator = AgentValidator;
-        let diagnostics = validator.validate(Path::new("test-agent.md"), content, &config);
+        let diagnostics = validator.validate(Path::new("test-agent.md"), content, &make_ctx(&config));
 
         // CC-AG-001 should not fire when specifically disabled
         let cc_ag_001: Vec<_> = diagnostics
@@ -1195,7 +1202,7 @@ description: Agent without name
 Agent instructions"#;
 
         let validator = AgentValidator;
-        let diagnostics = validator.validate(Path::new("test-agent.md"), content, &config);
+        let diagnostics = validator.validate(Path::new("test-agent.md"), content, &make_ctx(&config));
 
         // CC-AG-* rules should not fire for Cursor target
         let agent_rules: Vec<_> = diagnostics
@@ -1218,7 +1225,7 @@ description: Agent without name
 Agent instructions"#;
 
         let validator = AgentValidator;
-        let diagnostics = validator.validate(Path::new("test-agent.md"), content, &config);
+        let diagnostics = validator.validate(Path::new("test-agent.md"), content, &make_ctx(&config));
 
         // CC-AG-001 should fire for ClaudeCode target
         let cc_ag_001: Vec<_> = diagnostics

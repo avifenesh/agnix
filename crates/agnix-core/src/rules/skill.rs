@@ -1,7 +1,7 @@
 //! Skill file validation
 
 use crate::{
-    config::LintConfig,
+    context::ValidatorContext,
     diagnostics::{Diagnostic, Fix},
     parsers::frontmatter::{split_frontmatter, FrontmatterParts},
     rules::Validator,
@@ -157,10 +157,10 @@ fn is_valid_agent(agent: &str) -> bool {
 pub struct SkillValidator;
 
 impl Validator for SkillValidator {
-    fn validate(&self, path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic> {
+    fn validate(&self, path: &Path, content: &str, ctx: &ValidatorContext) -> Vec<Diagnostic> {
         let mut diagnostics = Vec::new();
 
-        if !config.rules.frontmatter_validation {
+        if !ctx.config.rules.frontmatter_validation {
             return diagnostics;
         }
 
@@ -176,7 +176,7 @@ impl Validator for SkillValidator {
         let (body_line, body_col) = line_col_at(parts.body_start, &line_starts);
 
         // AS-001: Missing frontmatter
-        if config.is_rule_enabled("AS-001") && (!parts.has_frontmatter || !parts.has_closing) {
+        if ctx.is_rule_enabled("AS-001") && (!parts.has_frontmatter || !parts.has_closing) {
             diagnostics.push(
                 Diagnostic::error(
                     path.to_path_buf(),
@@ -193,7 +193,7 @@ impl Validator for SkillValidator {
             match parse_frontmatter_fields(&parts.frontmatter) {
                 Ok(frontmatter) => Some(frontmatter),
                 Err(e) => {
-                    if config.is_rule_enabled("AS-016") {
+                    if ctx.is_rule_enabled("AS-016") {
                         diagnostics.push(Diagnostic::error(
                             path.to_path_buf(),
                             frontmatter_line,
@@ -221,7 +221,7 @@ impl Validator for SkillValidator {
             let (context_line, context_col) =
                 frontmatter_key_line_col(&parts, "context", &line_starts);
             // AS-002: Missing name field
-            if config.is_rule_enabled("AS-002") && frontmatter.name.is_none() {
+            if ctx.is_rule_enabled("AS-002") && frontmatter.name.is_none() {
                 diagnostics.push(
                     Diagnostic::error(
                         path.to_path_buf(),
@@ -235,7 +235,7 @@ impl Validator for SkillValidator {
             }
 
             // AS-003: Missing description field
-            if config.is_rule_enabled("AS-003") && frontmatter.description.is_none() {
+            if ctx.is_rule_enabled("AS-003") && frontmatter.description.is_none() {
                 diagnostics.push(
                     Diagnostic::error(
                         path.to_path_buf(),
@@ -252,7 +252,7 @@ impl Validator for SkillValidator {
                 let name_trimmed = name.trim();
 
                 // AS-004: Invalid name format
-                if config.is_rule_enabled("AS-004") {
+                if ctx.is_rule_enabled("AS-004") {
                     let name_re = NAME_FORMAT_REGEX
                         .get_or_init(|| Regex::new(r"^[a-z0-9]+(-[a-z0-9]+)*$").unwrap());
                     if name_trimmed.len() > 64 || !name_re.is_match(name_trimmed) {
@@ -305,7 +305,7 @@ impl Validator for SkillValidator {
                 }
 
                 // AS-005: Name cannot start or end with hyphen
-                if config.is_rule_enabled("AS-005")
+                if ctx.is_rule_enabled("AS-005")
                     && (name_trimmed.starts_with('-') || name_trimmed.ends_with('-'))
                 {
                     diagnostics.push(
@@ -323,7 +323,7 @@ impl Validator for SkillValidator {
                 }
 
                 // AS-006: Name cannot contain consecutive hyphens
-                if config.is_rule_enabled("AS-006") && name_trimmed.contains("--") {
+                if ctx.is_rule_enabled("AS-006") && name_trimmed.contains("--") {
                     diagnostics.push(
                         Diagnostic::error(
                             path.to_path_buf(),
@@ -337,7 +337,7 @@ impl Validator for SkillValidator {
                 }
 
                 // AS-007: Reserved name
-                if config.is_rule_enabled("AS-007") && !name_trimmed.is_empty() {
+                if ctx.is_rule_enabled("AS-007") && !name_trimmed.is_empty() {
                     let reserved = ["anthropic", "claude", "skill"];
                     if reserved.contains(&name_trimmed.to_lowercase().as_str()) {
                         diagnostics.push(
@@ -358,7 +358,7 @@ impl Validator for SkillValidator {
                 let description_trimmed = description.trim();
 
                 // AS-008: Description length
-                if config.is_rule_enabled("AS-008") {
+                if ctx.is_rule_enabled("AS-008") {
                     let len = description_trimmed.len();
                     if !(1..=1024).contains(&len) {
                         diagnostics.push(
@@ -377,7 +377,7 @@ impl Validator for SkillValidator {
                 }
 
                 // AS-009: Description contains XML tags
-                if config.is_rule_enabled("AS-009") {
+                if ctx.is_rule_enabled("AS-009") {
                     let xml_re =
                         DESCRIPTION_XML_REGEX.get_or_init(|| Regex::new(r"<[^>]+>").unwrap());
                     if xml_re.is_match(description) {
@@ -395,7 +395,7 @@ impl Validator for SkillValidator {
                 }
 
                 // AS-010: Description should include trigger phrase
-                if config.is_rule_enabled("AS-010") && !description_trimmed.is_empty() {
+                if ctx.is_rule_enabled("AS-010") && !description_trimmed.is_empty() {
                     let desc_lower = description_trimmed.to_lowercase();
                     if !desc_lower.contains("use when") {
                         let mut diagnostic = Diagnostic::warning(
@@ -435,7 +435,7 @@ impl Validator for SkillValidator {
             }
 
             // AS-011: Compatibility length
-            if config.is_rule_enabled("AS-011") {
+            if ctx.is_rule_enabled("AS-011") {
                 if let Some(compat) = frontmatter.compatibility.as_deref() {
                     let len = compat.trim().len();
                     if len == 0 || len > 500 {
@@ -479,7 +479,7 @@ impl Validator for SkillValidator {
                     };
 
                     // CC-SK-006: Dangerous auto-invocation check
-                    if config.is_rule_enabled("CC-SK-006") {
+                    if ctx.is_rule_enabled("CC-SK-006") {
                         const DANGEROUS_NAMES: &[&str] =
                             &["deploy", "ship", "publish", "delete", "release", "push"];
                         let name_lower = name_trimmed.to_lowercase();
@@ -525,7 +525,7 @@ impl Validator for SkillValidator {
                         });
 
                     // CC-SK-007: Unrestricted Bash warning
-                    if config.is_rule_enabled("CC-SK-007") {
+                    if ctx.is_rule_enabled("CC-SK-007") {
                         if let Some(ref tools) = tool_list {
                             // Find all plain Bash occurrences in the allowed-tools line only
                             // to avoid matching "Bash" in other fields like description
@@ -569,7 +569,7 @@ impl Validator for SkillValidator {
                     }
 
                     // CC-SK-001: Invalid model value
-                    if config.is_rule_enabled("CC-SK-001") {
+                    if ctx.is_rule_enabled("CC-SK-001") {
                         if let Some(model) = &schema.model {
                             if !VALID_MODELS.contains(&model.as_str()) {
                                 diagnostics.push(
@@ -594,7 +594,7 @@ impl Validator for SkillValidator {
                     }
 
                     // CC-SK-002: Invalid context value
-                    if config.is_rule_enabled("CC-SK-002") {
+                    if ctx.is_rule_enabled("CC-SK-002") {
                         if let Some(context) = &schema.context {
                             if context != "fork" {
                                 diagnostics.push(
@@ -618,7 +618,7 @@ impl Validator for SkillValidator {
                     }
 
                     // CC-SK-003: Context without agent
-                    if config.is_rule_enabled("CC-SK-003")
+                    if ctx.is_rule_enabled("CC-SK-003")
                         && schema.context.as_deref() == Some("fork")
                         && schema.agent.is_none()
                     {
@@ -638,7 +638,7 @@ impl Validator for SkillValidator {
                     }
 
                     // CC-SK-004: Agent without context
-                    if config.is_rule_enabled("CC-SK-004")
+                    if ctx.is_rule_enabled("CC-SK-004")
                         && schema.agent.is_some()
                         && schema.context.as_deref() != Some("fork")
                     {
@@ -655,7 +655,7 @@ impl Validator for SkillValidator {
                     }
 
                     // CC-SK-005: Invalid agent type
-                    if config.is_rule_enabled("CC-SK-005") {
+                    if ctx.is_rule_enabled("CC-SK-005") {
                         if let Some(agent) = &schema.agent {
                             if !is_valid_agent(agent) {
                                 diagnostics.push(
@@ -678,7 +678,7 @@ impl Validator for SkillValidator {
                     }
 
                     // CC-SK-008: Unknown tool name
-                    if config.is_rule_enabled("CC-SK-008") {
+                    if ctx.is_rule_enabled("CC-SK-008") {
                         if let Some(ref tools) = tool_list {
                             for tool in tools {
                                 let base_name = tool.split('(').next().unwrap_or(tool);
@@ -709,7 +709,7 @@ impl Validator for SkillValidator {
 
                     // CC-SK-009: Too many injections (warning)
                     // Count across full content (frontmatter + body) per VALIDATION-RULES.md
-                    if config.is_rule_enabled("CC-SK-009") {
+                    if ctx.is_rule_enabled("CC-SK-009") {
                         let injection_count = content.matches("!`").count();
                         if injection_count > MAX_INJECTIONS {
                             diagnostics.push(
@@ -734,7 +734,7 @@ impl Validator for SkillValidator {
         }
 
         // AS-012: Content exceeds 500 lines
-        if config.is_rule_enabled("AS-012") {
+        if ctx.is_rule_enabled("AS-012") {
             let line_count = body_raw.lines().count();
             if line_count > 500 {
                 diagnostics.push(
@@ -751,7 +751,7 @@ impl Validator for SkillValidator {
         }
 
         // AS-013: File reference too deep
-        if config.is_rule_enabled("AS-013") {
+        if ctx.is_rule_enabled("AS-013") {
             let paths = extract_reference_paths(body_raw);
             for ref_path in paths {
                 if reference_path_too_deep(&ref_path.path) {
@@ -774,7 +774,7 @@ impl Validator for SkillValidator {
         }
 
         // AS-014: Windows path separator
-        if config.is_rule_enabled("AS-014") {
+        if ctx.is_rule_enabled("AS-014") {
             let paths = extract_windows_paths(body_raw);
             for win_path in paths {
                 let (line, col) = line_col_at(parts.body_start + win_path.start, &line_starts);
@@ -795,7 +795,7 @@ impl Validator for SkillValidator {
         }
 
         // AS-015: Directory size exceeds 8MB
-        if config.is_rule_enabled("AS-015") && path.is_file() {
+        if ctx.is_rule_enabled("AS-015") && path.is_file() {
             if let Some(dir) = path.parent() {
                 const MAX_BYTES: u64 = 8 * 1024 * 1024;
                 let size = directory_size_until(dir, MAX_BYTES);
@@ -1189,6 +1189,12 @@ fn directory_size_until(path: &Path, max_bytes: u64) -> u64 {
 mod tests {
     use super::*;
     use crate::config::LintConfig;
+    use crate::context::ValidatorContext;
+    use crate::fs::RealFileSystem;
+
+    fn make_ctx(config: &LintConfig) -> ValidatorContext<'_> {
+        ValidatorContext::new(config, &RealFileSystem)
+    }
 
     #[test]
     fn test_valid_skill() {
@@ -1199,7 +1205,7 @@ description: Use when testing skill validation
 Skill body content"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
 
         assert!(diagnostics.is_empty());
     }
@@ -1213,7 +1219,7 @@ description: Use when validating skill names
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
 
         let as_004_errors: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-004").collect();
         assert_eq!(as_004_errors.len(), 1);
@@ -1226,7 +1232,7 @@ Body"#;
 
         let validator = SkillValidator;
         let diagnostics =
-            validator.validate(Path::new("SKILL.md"), content, &LintConfig::default());
+            validator.validate(Path::new("SKILL.md"), content, &make_ctx(&LintConfig::default()));
 
         let as_001_errors: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-001").collect();
         assert_eq!(as_001_errors.len(), 1);
@@ -1240,7 +1246,7 @@ description: Use when validating missing name
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
 
         let as_002_errors: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-002").collect();
         assert_eq!(as_002_errors.len(), 1);
@@ -1254,7 +1260,7 @@ name: test-skill
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
 
         let as_003_errors: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-003").collect();
         assert_eq!(as_003_errors.len(), 1);
@@ -1269,7 +1275,7 @@ description: Use when validating name format
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
 
         let as_004_errors: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-004").collect();
         assert_eq!(as_004_errors.len(), 1);
@@ -1284,7 +1290,7 @@ description: Use when validating reserved names
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
 
         let as_007_errors: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-007").collect();
         assert_eq!(as_007_errors.len(), 1);
@@ -1300,7 +1306,7 @@ Body"#;
 
         let validator = SkillValidator;
         let diagnostics =
-            validator.validate(Path::new("test.md"), &content, &LintConfig::default());
+            validator.validate(Path::new("test.md"), &content, &make_ctx(&LintConfig::default()));
 
         let as_008_errors: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-008").collect();
         assert_eq!(as_008_errors.len(), 1);
@@ -1315,7 +1321,7 @@ description: ""
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
 
         let as_003_errors: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-003").collect();
         assert_eq!(as_003_errors.len(), 0);
@@ -1333,7 +1339,7 @@ description: Use when validating <xml> tags
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
 
         let as_009_errors: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-009").collect();
         assert_eq!(as_009_errors.len(), 1);
@@ -1349,7 +1355,7 @@ Body"#;
 
         let validator = SkillValidator;
         let diagnostics =
-            validator.validate(Path::new("test.md"), &content, &LintConfig::default());
+            validator.validate(Path::new("test.md"), &content, &make_ctx(&LintConfig::default()));
 
         let as_011_errors: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-011").collect();
         assert_eq!(as_011_errors.len(), 1);
@@ -1365,7 +1371,7 @@ Body"#;
 
         let validator = SkillValidator;
         let diagnostics =
-            validator.validate(Path::new("test.md"), &content, &LintConfig::default());
+            validator.validate(Path::new("test.md"), &content, &make_ctx(&LintConfig::default()));
 
         let as_012_warnings: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-012").collect();
         assert_eq!(as_012_warnings.len(), 1);
@@ -1377,7 +1383,7 @@ Body"#;
 
         let validator = SkillValidator;
         let diagnostics =
-            validator.validate(Path::new("SKILL.md"), content, &LintConfig::default());
+            validator.validate(Path::new("SKILL.md"), content, &make_ctx(&LintConfig::default()));
 
         let as_013_errors: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-013").collect();
         assert_eq!(as_013_errors.len(), 1);
@@ -1394,7 +1400,7 @@ See reference/deep/guide.md for details."#;
 
         let validator = SkillValidator;
         let diagnostics =
-            validator.validate(Path::new("SKILL.md"), content, &LintConfig::default());
+            validator.validate(Path::new("SKILL.md"), content, &make_ctx(&LintConfig::default()));
 
         let as_013_errors: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-013").collect();
         assert_eq!(as_013_errors.len(), 1);
@@ -1406,7 +1412,7 @@ See reference/deep/guide.md for details."#;
 
         let validator = SkillValidator;
         let diagnostics =
-            validator.validate(Path::new("SKILL.md"), content, &LintConfig::default());
+            validator.validate(Path::new("SKILL.md"), content, &make_ctx(&LintConfig::default()));
 
         let as_014_errors: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-014").collect();
         assert_eq!(as_014_errors.len(), 1);
@@ -1434,7 +1440,7 @@ See reference/deep/guide.md for details."#;
 
         let content = fs::read_to_string(&skill_path).unwrap();
         let validator = SkillValidator;
-        let diagnostics = validator.validate(&skill_path, &content, &LintConfig::default());
+        let diagnostics = validator.validate(&skill_path, &content, &make_ctx(&LintConfig::default()));
 
         let as_015_errors: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-015").collect();
         assert_eq!(as_015_errors.len(), 1);
@@ -1449,7 +1455,7 @@ description: Deploys to production
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
 
         // Should have an error for CC-SK-006
         let cc_sk_006_errors: Vec<_> = diagnostics
@@ -1474,7 +1480,7 @@ disable-model-invocation: true
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
 
         // Should NOT have an error for CC-SK-006
         let cc_sk_006_errors: Vec<_> = diagnostics
@@ -1501,7 +1507,7 @@ Body"#,
 
             let validator = SkillValidator;
             let diagnostics =
-                validator.validate(Path::new("test.md"), &content, &LintConfig::default());
+                validator.validate(Path::new("test.md"), &content, &make_ctx(&LintConfig::default()));
 
             // Should have an error for CC-SK-006
             let cc_sk_006_errors: Vec<_> = diagnostics
@@ -1528,7 +1534,7 @@ allowed-tools: Bash Read Write
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
 
         // Should have a warning for CC-SK-007
         let cc_sk_007_warnings: Vec<_> = diagnostics
@@ -1553,7 +1559,7 @@ allowed-tools: Bash(git:*) Read Write
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
 
         // Should NOT have a warning for CC-SK-007 (scoped Bash is ok)
         let cc_sk_007_warnings: Vec<_> = diagnostics
@@ -1574,7 +1580,7 @@ allowed-tools: Read Write
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
 
         // Should NOT have a warning for CC-SK-007 (no Bash at all)
         let cc_sk_007_warnings: Vec<_> = diagnostics
@@ -1597,7 +1603,7 @@ allowed-tools: Bash Read Write
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
 
         let cc_sk_007: Vec<_> = diagnostics
             .iter()
@@ -1622,7 +1628,7 @@ allowed-tools: Bash Read
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
 
         let cc_sk_007: Vec<_> = diagnostics
             .iter()
@@ -1651,7 +1657,7 @@ allowed-tools: Bash Read Bash
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
 
         let cc_sk_007: Vec<_> = diagnostics
             .iter()
@@ -1675,7 +1681,7 @@ allowed-tools: Bash(git:*) Read
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
 
         let cc_sk_007: Vec<_> = diagnostics
             .iter()
@@ -1714,7 +1720,7 @@ description: Use when testing validation
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
 
         let as_005_errors: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-005").collect();
 
@@ -1734,7 +1740,7 @@ description: Use when testing validation
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
 
         let as_005_errors: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-005").collect();
 
@@ -1754,7 +1760,7 @@ description: Use when testing validation
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
 
         let as_006_errors: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-006").collect();
 
@@ -1774,7 +1780,7 @@ description: Reviews code for quality
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
 
         let as_010_warnings: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-010").collect();
 
@@ -1794,7 +1800,7 @@ description: Use when user asks for code review
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
 
         let as_010_warnings: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-010").collect();
 
@@ -1810,7 +1816,7 @@ description: Use this skill to review code
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
 
         let as_010_warnings: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-010").collect();
 
@@ -1829,7 +1835,7 @@ model: gpt-4
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
 
         let cc_sk_001: Vec<_> = diagnostics
             .iter()
@@ -1859,7 +1865,7 @@ Body"#,
 
             let validator = SkillValidator;
             let diagnostics =
-                validator.validate(Path::new("test.md"), &content, &LintConfig::default());
+                validator.validate(Path::new("test.md"), &content, &make_ctx(&LintConfig::default()));
 
             let cc_sk_001: Vec<_> = diagnostics
                 .iter()
@@ -1879,7 +1885,7 @@ description: Use when testing
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
 
         let cc_sk_001: Vec<_> = diagnostics
             .iter()
@@ -1901,7 +1907,7 @@ context: split
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
 
         let cc_sk_002: Vec<_> = diagnostics
             .iter()
@@ -1927,7 +1933,7 @@ agent: general-purpose
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
 
         let cc_sk_002: Vec<_> = diagnostics
             .iter()
@@ -1946,7 +1952,7 @@ description: Use when testing
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
 
         let cc_sk_002: Vec<_> = diagnostics
             .iter()
@@ -1968,7 +1974,7 @@ context: fork
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
 
         let cc_sk_003: Vec<_> = diagnostics
             .iter()
@@ -1993,7 +1999,7 @@ agent: Explore
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
 
         let cc_sk_003: Vec<_> = diagnostics
             .iter()
@@ -2015,7 +2021,7 @@ agent: Explore
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
 
         let cc_sk_004: Vec<_> = diagnostics
             .iter()
@@ -2040,7 +2046,7 @@ agent: Explore
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
 
         let cc_sk_004: Vec<_> = diagnostics
             .iter()
@@ -2059,7 +2065,7 @@ description: Use when testing
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
 
         let cc_sk_004: Vec<_> = diagnostics
             .iter()
@@ -2082,7 +2088,7 @@ agent: CustomAgent
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
 
         let cc_sk_005: Vec<_> = diagnostics
             .iter()
@@ -2113,7 +2119,7 @@ Body"#,
 
             let validator = SkillValidator;
             let diagnostics =
-                validator.validate(Path::new("test.md"), &content, &LintConfig::default());
+                validator.validate(Path::new("test.md"), &content, &make_ctx(&LintConfig::default()));
 
             let cc_sk_005: Vec<_> = diagnostics
                 .iter()
@@ -2148,7 +2154,7 @@ Body"#,
 
             let validator = SkillValidator;
             let diagnostics =
-                validator.validate(Path::new("test.md"), &content, &LintConfig::default());
+                validator.validate(Path::new("test.md"), &content, &make_ctx(&LintConfig::default()));
 
             let cc_sk_005: Vec<_> = diagnostics
                 .iter()
@@ -2194,7 +2200,7 @@ Body"#,
 
             let validator = SkillValidator;
             let diagnostics =
-                validator.validate(Path::new("test.md"), &content, &LintConfig::default());
+                validator.validate(Path::new("test.md"), &content, &make_ctx(&LintConfig::default()));
 
             let cc_sk_005: Vec<_> = diagnostics
                 .iter()
@@ -2227,7 +2233,7 @@ Body"#,
 
         let validator = SkillValidator;
         let diagnostics =
-            validator.validate(Path::new("test.md"), &content, &LintConfig::default());
+            validator.validate(Path::new("test.md"), &content, &make_ctx(&LintConfig::default()));
 
         let cc_sk_005: Vec<_> = diagnostics
             .iter()
@@ -2253,7 +2259,7 @@ Body"#,
 
         let validator = SkillValidator;
         let diagnostics =
-            validator.validate(Path::new("test.md"), &content, &LintConfig::default());
+            validator.validate(Path::new("test.md"), &content, &make_ctx(&LintConfig::default()));
 
         let cc_sk_005: Vec<_> = diagnostics
             .iter()
@@ -2270,7 +2276,7 @@ Body"#,
 
         let validator = SkillValidator;
         let diagnostics =
-            validator.validate(Path::new("SKILL.md"), content, &LintConfig::default());
+            validator.validate(Path::new("SKILL.md"), content, &make_ctx(&LintConfig::default()));
 
         let cc_sk_005: Vec<_> = diagnostics
             .iter()
@@ -2291,7 +2297,7 @@ Body"#,
 
         let validator = SkillValidator;
         let diagnostics =
-            validator.validate(Path::new("SKILL.md"), content, &LintConfig::default());
+            validator.validate(Path::new("SKILL.md"), content, &make_ctx(&LintConfig::default()));
 
         let cc_sk_005: Vec<_> = diagnostics
             .iter()
@@ -2317,7 +2323,7 @@ allowed-tools: Read Write UnknownTool
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
 
         let cc_sk_008: Vec<_> = diagnostics
             .iter()
@@ -2342,7 +2348,7 @@ allowed-tools: Bash Read Write Edit Grep Glob Task
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
 
         let cc_sk_008: Vec<_> = diagnostics
             .iter()
@@ -2362,7 +2368,7 @@ allowed-tools: Bash(git:*) Read Write
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
 
         let cc_sk_008: Vec<_> = diagnostics
             .iter()
@@ -2382,7 +2388,7 @@ allowed-tools: FakeTool1 Read FakeTool2
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
 
         let cc_sk_008: Vec<_> = diagnostics
             .iter()
@@ -2402,7 +2408,7 @@ allowed-tools: FakeTool(scope:*) Read
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
 
         let cc_sk_008: Vec<_> = diagnostics
             .iter()
@@ -2433,7 +2439,7 @@ User: !`whoami`
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
 
         let cc_sk_009: Vec<_> = diagnostics
             .iter()
@@ -2460,7 +2466,7 @@ Branch: !`git branch`
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
 
         let cc_sk_009: Vec<_> = diagnostics
             .iter()
@@ -2480,7 +2486,7 @@ No dynamic injections here.
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
 
         let cc_sk_009: Vec<_> = diagnostics
             .iter()
@@ -2502,7 +2508,7 @@ disable-model-invocation: false
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
 
         let cc_sk_006: Vec<_> = diagnostics
             .iter()
@@ -2526,7 +2532,7 @@ allowed-tools: Bash Read Bash
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
 
         let cc_sk_007: Vec<_> = diagnostics
             .iter()
@@ -2552,7 +2558,7 @@ Body"#;
 
         let validator = SkillValidator;
         // Should not panic on malformed scope syntax
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
 
         // Bash( extracts "Bash", which is known
         // Bash() extracts "Bash", which is known
@@ -2578,7 +2584,7 @@ allowed-tools: bash read
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
 
         let cc_sk_008: Vec<_> = diagnostics
             .iter()
@@ -2598,7 +2604,7 @@ description: USE WHEN testing
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
 
         let as_010: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-010").collect();
 
@@ -2619,7 +2625,7 @@ invalid yaml
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
 
         let parse_errors: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-016").collect();
 
@@ -2644,7 +2650,7 @@ description: Missing trigger phrase
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &config);
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&config));
 
         // AS-005 and AS-010 should not fire when skills category is disabled
         let skill_rules: Vec<_> = diagnostics
@@ -2666,7 +2672,7 @@ description: Missing trigger phrase
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &config);
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&config));
 
         // AS-005 should not fire when specifically disabled
         let as_005: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-005").collect();
@@ -2691,7 +2697,7 @@ description: Deploys to production
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &config);
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&config));
 
         // CC-SK-006 should not fire for Cursor target
         let cc_sk_006: Vec<_> = diagnostics
@@ -2719,7 +2725,7 @@ description: Use when deploying to production
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &config);
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&config));
 
         // CC-SK-006 should fire for ClaudeCode target
         let cc_sk_006: Vec<_> = diagnostics
@@ -2783,7 +2789,7 @@ description: Use when testing
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
 
         let as_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-004").collect();
         assert_eq!(as_004.len(), 1);
@@ -2800,7 +2806,7 @@ description: Use when testing
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
 
         let as_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-004").collect();
         assert_eq!(as_004.len(), 1);
@@ -2818,7 +2824,7 @@ description: Use when testing
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
 
         let as_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-004").collect();
         assert_eq!(as_004.len(), 1);
@@ -2836,7 +2842,7 @@ description: Use when testing
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
 
         let as_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-004").collect();
         assert_eq!(as_004.len(), 1);
@@ -2858,7 +2864,7 @@ description: Use when testing
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
 
         let as_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-004").collect();
         assert_eq!(as_004.len(), 1);
@@ -2882,7 +2888,7 @@ description: Use when testing
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
 
         let as_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-004").collect();
         assert_eq!(as_004.len(), 1);
@@ -2900,7 +2906,7 @@ description: Use when testing
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
 
         let as_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-004").collect();
         assert_eq!(as_004.len(), 1);
@@ -2920,7 +2926,7 @@ description: Reviews code for quality
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
 
         let as_010: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-010").collect();
         assert_eq!(as_010.len(), 1);
@@ -2940,7 +2946,7 @@ description: Reviews code for quality
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
 
         let as_010: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-010").collect();
         assert_eq!(as_010.len(), 1);
@@ -2958,7 +2964,7 @@ description: Helps with tasks
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
 
         let as_010: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-010").collect();
         assert_eq!(as_010.len(), 1);
@@ -2980,7 +2986,7 @@ description: "Helps with tasks"
 Body"#;
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&LintConfig::default()));
 
         let as_010: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-010").collect();
         assert_eq!(as_010.len(), 1);
@@ -3001,7 +3007,7 @@ Body"#;
 
         let validator = SkillValidator;
         let diagnostics =
-            validator.validate(Path::new("test.md"), &content, &LintConfig::default());
+            validator.validate(Path::new("test.md"), &content, &make_ctx(&LintConfig::default()));
 
         let as_010: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-010").collect();
         assert_eq!(as_010.len(), 1);
@@ -3186,7 +3192,7 @@ Body"#;
 
         let validator = SkillValidator;
         let content = fs::read_to_string(&skill_path).expect("Failed to read SKILL.md content");
-        let diagnostics = validator.validate(&skill_path, &content, &LintConfig::default());
+        let diagnostics = validator.validate(&skill_path, &content, &make_ctx(&LintConfig::default()));
 
         // Exactly 8MB should NOT trigger AS-015 (uses > not >=)
         let as_015_errors: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-015").collect();

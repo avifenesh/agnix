@@ -8,7 +8,7 @@
 //! - REF-002: Broken markdown links (universal)
 
 use crate::{
-    config::LintConfig,
+    context::ValidatorContext,
     diagnostics::Diagnostic,
     file_utils::safe_read_file,
     parsers::markdown::{extract_imports, extract_markdown_links},
@@ -44,11 +44,11 @@ fn strip_fragment(url: &str) -> &str {
 }
 
 impl Validator for ImportsValidator {
-    fn validate(&self, path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic> {
+    fn validate(&self, path: &Path, content: &str, ctx: &ValidatorContext) -> Vec<Diagnostic> {
         let mut diagnostics = Vec::new();
 
         // Check both new category flag and legacy flag for backward compatibility
-        if !config.rules.imports || !config.rules.import_references {
+        if !ctx.config.rules.imports || !ctx.config.rules.import_references {
             return diagnostics;
         }
 
@@ -56,12 +56,12 @@ impl Validator for ImportsValidator {
         let filename = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
         let is_claude_md = matches!(filename, "CLAUDE.md" | "CLAUDE.local.md");
 
-        let project_root = resolve_project_root(path, config);
+        let project_root = resolve_project_root(path, ctx);
         let root_path = normalize_existing_path(path);
 
         // Use shared cache if available (project-level validation),
         // otherwise create a local cache (single-file validation)
-        let shared_cache = config.import_cache();
+        let shared_cache = ctx.get_import_cache();
         let mut local_cache: HashMap<PathBuf, Vec<Import>> = HashMap::new();
         let mut visited_depth: HashMap<PathBuf, usize> = HashMap::new();
         let mut stack = Vec::new();
@@ -87,13 +87,13 @@ impl Validator for ImportsValidator {
             &mut visited_depth,
             &mut stack,
             &mut diagnostics,
-            config,
+            ctx,
             is_claude_md,
             &project_root,
         );
 
         // Validate markdown links (REF-002)
-        validate_markdown_links(path, content, config, &mut diagnostics);
+        validate_markdown_links(path, content, ctx, &mut diagnostics);
 
         diagnostics
     }
@@ -108,7 +108,7 @@ fn visit_imports(
     visited_depth: &mut HashMap<PathBuf, usize>,
     stack: &mut Vec<PathBuf>,
     diagnostics: &mut Vec<Diagnostic>,
-    config: &LintConfig,
+    ctx: &ValidatorContext,
     root_is_claude_md: bool,
     project_root: &Path,
 ) {
@@ -133,10 +133,10 @@ fn visit_imports(
 
     // Check rules based on CURRENT file type for missing imports
     // Check rules based on ROOT file type for cycles/depth (applies to entire chain)
-    let check_not_found = (is_claude_md && config.is_rule_enabled("CC-MEM-001"))
-        || (!is_claude_md && config.is_rule_enabled("REF-001"));
-    let check_cycle = root_is_claude_md && config.is_rule_enabled("CC-MEM-002");
-    let check_depth = root_is_claude_md && config.is_rule_enabled("CC-MEM-003");
+    let check_not_found = (is_claude_md && ctx.is_rule_enabled("CC-MEM-001"))
+        || (!is_claude_md && ctx.is_rule_enabled("REF-001"));
+    let check_cycle = root_is_claude_md && ctx.is_rule_enabled("CC-MEM-002");
+    let check_depth = root_is_claude_md && ctx.is_rule_enabled("CC-MEM-003");
 
     if !(check_not_found || check_cycle || check_depth) {
         return;
@@ -287,7 +287,7 @@ fn visit_imports(
                 visited_depth,
                 stack,
                 diagnostics,
-                config,
+                ctx,
                 root_is_claude_md,
                 project_root,
             );
@@ -400,8 +400,13 @@ fn normalize_existing_path(path: &Path) -> PathBuf {
     std::fs::canonicalize(path).unwrap_or_else(|_| path.to_path_buf())
 }
 
-fn resolve_project_root(path: &Path, config: &LintConfig) -> PathBuf {
-    if let Some(root) = config.root_dir.as_deref() {
+fn resolve_project_root(path: &Path, ctx: &ValidatorContext) -> PathBuf {
+    if let Some(root) = ctx.root_dir {
+        return normalize_existing_path(root);
+    }
+
+    // Fallback to config.root_dir if ctx.root_dir is not set
+    if let Some(root) = ctx.config.root_dir.as_deref() {
         return normalize_existing_path(root);
     }
 
@@ -443,10 +448,10 @@ fn format_cycle(stack: &[PathBuf], target: &Path) -> String {
 fn validate_markdown_links(
     path: &Path,
     content: &str,
-    config: &LintConfig,
+    ctx: &ValidatorContext,
     diagnostics: &mut Vec<Diagnostic>,
 ) {
-    if !config.is_rule_enabled("REF-002") {
+    if !ctx.is_rule_enabled("REF-002") {
         return;
     }
 
@@ -515,8 +520,14 @@ fn validate_markdown_links(
 mod tests {
     use super::*;
     use crate::config::LintConfig;
+    use crate::context::ValidatorContext;
+    use crate::fs::RealFileSystem;
     use std::fs;
     use tempfile::TempDir;
+
+    fn make_ctx(config: &LintConfig) -> ValidatorContext<'_> {
+        ValidatorContext::new(config, &RealFileSystem)
+    }
 
     #[test]
     fn test_config_disabled_imports_category() {
@@ -525,7 +536,7 @@ mod tests {
 
         let content = "@nonexistent-file.md";
         let validator = ImportsValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &config);
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&config));
 
         assert!(diagnostics.is_empty());
     }
@@ -537,7 +548,7 @@ mod tests {
 
         let content = "@nonexistent-file.md";
         let validator = ImportsValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &config);
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&config));
 
         assert!(diagnostics.is_empty());
     }
@@ -549,7 +560,7 @@ mod tests {
         fs::write(&file_path, "See @missing.md").unwrap();
 
         let validator = ImportsValidator;
-        let diagnostics = validator.validate(&file_path, "See @missing.md", &LintConfig::default());
+        let diagnostics = validator.validate(&file_path, "See @missing.md", &make_ctx(&LintConfig::default()));
 
         assert!(diagnostics.iter().any(|d| d.rule == "CC-MEM-001"));
     }
@@ -563,7 +574,7 @@ mod tests {
         fs::write(&b, "See @CLAUDE.md").unwrap();
 
         let validator = ImportsValidator;
-        let diagnostics = validator.validate(&a, "See @b.md", &LintConfig::default());
+        let diagnostics = validator.validate(&a, "See @b.md", &make_ctx(&LintConfig::default()));
 
         assert!(diagnostics.iter().any(|d| d.rule == "CC-MEM-002"));
     }
@@ -584,7 +595,7 @@ mod tests {
         fs::write(&paths[5], "End").unwrap();
 
         let validator = ImportsValidator;
-        let diagnostics = validator.validate(&claude_md, "See @1.md", &LintConfig::default());
+        let diagnostics = validator.validate(&claude_md, "See @1.md", &make_ctx(&LintConfig::default()));
 
         assert!(diagnostics.iter().any(|d| d.rule == "CC-MEM-003"));
     }
@@ -596,7 +607,7 @@ mod tests {
         fs::write(&file_path, "See @missing.md").unwrap();
 
         let validator = ImportsValidator;
-        let diagnostics = validator.validate(&file_path, "See @missing.md", &LintConfig::default());
+        let diagnostics = validator.validate(&file_path, "See @missing.md", &make_ctx(&LintConfig::default()));
 
         assert!(diagnostics.iter().any(|d| d.rule == "REF-001"));
         assert!(!diagnostics.iter().any(|d| d.rule == "CC-MEM-001"));
@@ -609,7 +620,7 @@ mod tests {
         fs::write(&file_path, "See @missing.md").unwrap();
 
         let validator = ImportsValidator;
-        let diagnostics = validator.validate(&file_path, "See @missing.md", &LintConfig::default());
+        let diagnostics = validator.validate(&file_path, "See @missing.md", &make_ctx(&LintConfig::default()));
 
         assert!(diagnostics.iter().any(|d| d.rule == "REF-001"));
         assert!(!diagnostics.iter().any(|d| d.rule == "CC-MEM-001"));
@@ -622,7 +633,7 @@ mod tests {
         fs::write(&file_path, "See @missing.md").unwrap();
 
         let validator = ImportsValidator;
-        let diagnostics = validator.validate(&file_path, "See @missing.md", &LintConfig::default());
+        let diagnostics = validator.validate(&file_path, "See @missing.md", &make_ctx(&LintConfig::default()));
 
         assert!(diagnostics.iter().any(|d| d.rule == "REF-001"));
         assert!(!diagnostics.iter().any(|d| d.rule == "CC-MEM-001"));
@@ -637,7 +648,7 @@ mod tests {
         fs::write(&b, "See @SKILL.md").unwrap();
 
         let validator = ImportsValidator;
-        let diagnostics = validator.validate(&a, "See @b.md", &LintConfig::default());
+        let diagnostics = validator.validate(&a, "See @b.md", &make_ctx(&LintConfig::default()));
 
         // Non-CLAUDE files don't check cycles, so no diagnostics expected
         assert!(diagnostics.is_empty());
@@ -659,7 +670,7 @@ mod tests {
         fs::write(&paths[5], "End").unwrap();
 
         let validator = ImportsValidator;
-        let diagnostics = validator.validate(&skill_md, "See @1.md", &LintConfig::default());
+        let diagnostics = validator.validate(&skill_md, "See @1.md", &make_ctx(&LintConfig::default()));
 
         // Non-CLAUDE files don't check depth, so no diagnostics expected
         assert!(diagnostics.is_empty());
@@ -675,7 +686,7 @@ mod tests {
         config.rules.disabled_rules.push("REF-001".to_string());
 
         let validator = ImportsValidator;
-        let diagnostics = validator.validate(&file_path, "See @missing.md", &config);
+        let diagnostics = validator.validate(&file_path, "See @missing.md", &make_ctx(&config));
 
         assert!(diagnostics.is_empty());
     }
@@ -692,7 +703,7 @@ mod tests {
         config.rules.disabled_rules.push("CC-MEM-003".to_string());
 
         let validator = ImportsValidator;
-        let diagnostics = validator.validate(&file_path, "See @missing.md", &config);
+        let diagnostics = validator.validate(&file_path, "See @missing.md", &make_ctx(&config));
 
         assert!(diagnostics.iter().any(|d| d.rule == "REF-001"));
     }
@@ -707,7 +718,7 @@ mod tests {
         config.rules.disabled_rules.push("REF-001".to_string());
 
         let validator = ImportsValidator;
-        let diagnostics = validator.validate(&file_path, "See @missing.md", &config);
+        let diagnostics = validator.validate(&file_path, "See @missing.md", &make_ctx(&config));
 
         // CLAUDE.md should still emit CC-MEM-001 even when REF-001 is disabled
         assert!(diagnostics.iter().any(|d| d.rule == "CC-MEM-001"));
@@ -725,7 +736,7 @@ mod tests {
         fs::write(&claude_md, "See @missing.md").unwrap();
 
         let validator = ImportsValidator;
-        let diagnostics = validator.validate(&skill_md, "See @CLAUDE.md", &LintConfig::default());
+        let diagnostics = validator.validate(&skill_md, "See @CLAUDE.md", &make_ctx(&LintConfig::default()));
 
         // CLAUDE.md's missing import should emit CC-MEM-001, not REF-001
         assert!(diagnostics
@@ -744,7 +755,7 @@ mod tests {
 
         let validator = ImportsValidator;
         let diagnostics =
-            validator.validate(&file_path, "See @/etc/passwd", &LintConfig::default());
+            validator.validate(&file_path, "See @/etc/passwd", &make_ctx(&LintConfig::default()));
 
         // Absolute paths should be rejected
         assert!(diagnostics
@@ -767,7 +778,7 @@ mod tests {
         config.root_dir = Some(root);
 
         let validator = ImportsValidator;
-        let diagnostics = validator.validate(&file_path, "See @../../outside.md", &config);
+        let diagnostics = validator.validate(&file_path, "See @../../outside.md", &make_ctx(&config));
 
         assert!(diagnostics
             .iter()
@@ -798,7 +809,7 @@ mod tests {
         config.root_dir = Some(root);
 
         let validator = ImportsValidator;
-        let diagnostics = validator.validate(&file_path, "See @../link/secret.md", &config);
+        let diagnostics = validator.validate(&file_path, "See @../link/secret.md", &make_ctx(&config));
 
         assert!(diagnostics
             .iter()
@@ -846,7 +857,7 @@ mod tests {
         fs::write(&file_path, "See @missing.md").unwrap();
 
         let validator = ImportsValidator;
-        let diagnostics = validator.validate(&file_path, "See @missing.md", &LintConfig::default());
+        let diagnostics = validator.validate(&file_path, "See @missing.md", &make_ctx(&LintConfig::default()));
 
         // Non-CLAUDE.md files emit REF-001 only (not CC-MEM-001)
         assert!(diagnostics.iter().any(|d| d.rule == "REF-001"));
@@ -862,7 +873,7 @@ mod tests {
         fs::write(&file_path, "See @exists.md").unwrap();
 
         let validator = ImportsValidator;
-        let diagnostics = validator.validate(&file_path, "See @exists.md", &LintConfig::default());
+        let diagnostics = validator.validate(&file_path, "See @exists.md", &make_ctx(&LintConfig::default()));
 
         // Should not emit any not-found errors
         assert!(!diagnostics.iter().any(|d| d.rule == "REF-001"));
@@ -879,7 +890,7 @@ mod tests {
         config.rules.disabled_rules = vec!["REF-001".to_string()];
 
         let validator = ImportsValidator;
-        let diagnostics = validator.validate(&file_path, "See @missing.md", &config);
+        let diagnostics = validator.validate(&file_path, "See @missing.md", &make_ctx(&config));
 
         // Non-CLAUDE.md with REF-001 disabled emits nothing
         assert!(diagnostics.is_empty());
@@ -897,7 +908,7 @@ mod tests {
         let diagnostics = validator.validate(
             &file_path,
             "See [guide](missing.md) for more.",
-            &LintConfig::default(),
+            &make_ctx(&LintConfig::default()),
         );
 
         assert!(diagnostics.iter().any(|d| d.rule == "REF-002"));
@@ -917,7 +928,7 @@ mod tests {
         let diagnostics = validator.validate(
             &file_path,
             "See [guide](exists.md) for more.",
-            &LintConfig::default(),
+            &make_ctx(&LintConfig::default()),
         );
 
         assert!(!diagnostics.iter().any(|d| d.rule == "REF-002"));
@@ -931,7 +942,7 @@ mod tests {
         fs::write(&file_path, content).unwrap();
 
         let validator = ImportsValidator;
-        let diagnostics = validator.validate(&file_path, content, &LintConfig::default());
+        let diagnostics = validator.validate(&file_path, content, &make_ctx(&LintConfig::default()));
 
         // External links should not trigger REF-002
         assert!(!diagnostics.iter().any(|d| d.rule == "REF-002"));
@@ -945,7 +956,7 @@ mod tests {
         fs::write(&file_path, content).unwrap();
 
         let validator = ImportsValidator;
-        let diagnostics = validator.validate(&file_path, content, &LintConfig::default());
+        let diagnostics = validator.validate(&file_path, content, &make_ctx(&LintConfig::default()));
 
         // Pure anchor links should not trigger REF-002
         assert!(!diagnostics.iter().any(|d| d.rule == "REF-002"));
@@ -963,7 +974,7 @@ mod tests {
         let diagnostics = validator.validate(
             &file_path,
             "See [section](exists.md#section) for more.",
-            &LintConfig::default(),
+            &make_ctx(&LintConfig::default()),
         );
 
         // File exists, fragment validation is not implemented - no error
@@ -980,7 +991,7 @@ mod tests {
         let diagnostics = validator.validate(
             &file_path,
             "See [section](missing.md#section) for more.",
-            &LintConfig::default(),
+            &make_ctx(&LintConfig::default()),
         );
 
         // File doesn't exist, should error
@@ -997,7 +1008,7 @@ mod tests {
         let diagnostics = validator.validate(
             &file_path,
             "![logo](images/logo.png)",
-            &LintConfig::default(),
+            &make_ctx(&LintConfig::default()),
         );
 
         assert!(diagnostics.iter().any(|d| d.rule == "REF-002"));
@@ -1016,7 +1027,7 @@ mod tests {
 
         let validator = ImportsValidator;
         let diagnostics =
-            validator.validate(&file_path, "See [guide](missing.md) for more.", &config);
+            validator.validate(&file_path, "See [guide](missing.md) for more.", &make_ctx(&config));
 
         assert!(!diagnostics.iter().any(|d| d.rule == "REF-002"));
     }
@@ -1032,7 +1043,7 @@ mod tests {
 
         let validator = ImportsValidator;
         let diagnostics =
-            validator.validate(&file_path, "See [guide](missing.md) for more.", &config);
+            validator.validate(&file_path, "See [guide](missing.md) for more.", &make_ctx(&config));
 
         // When imports category is disabled, no validation happens
         assert!(diagnostics.is_empty());
@@ -1052,7 +1063,7 @@ mod tests {
         let diagnostics = validator.validate(
             &file_path,
             "See [guide](docs/guide.md) for more.",
-            &LintConfig::default(),
+            &make_ctx(&LintConfig::default()),
         );
 
         // Relative path should resolve correctly
@@ -1075,7 +1086,7 @@ mod tests {
         assert!(config.import_cache().is_none());
 
         let validator = ImportsValidator;
-        let diagnostics = validator.validate(&file_path, "See @target.md", &config);
+        let diagnostics = validator.validate(&file_path, "See @target.md", &make_ctx(&config));
 
         // Should succeed with no errors
         assert!(diagnostics.is_empty());
@@ -1106,7 +1117,7 @@ mod tests {
         }
 
         let validator = ImportsValidator;
-        let _ = validator.validate(&file_path, "See @target.md", &config);
+        let _ = validator.validate(&file_path, "See @target.md", &make_ctx(&config));
 
         // Verify cache is populated after validation
         {
@@ -1140,7 +1151,7 @@ mod tests {
         let validator = ImportsValidator;
 
         // First validation - populates cache
-        let _ = validator.validate(&file_path, "See @target.md", &config);
+        let _ = validator.validate(&file_path, "See @target.md", &make_ctx(&config));
         let cache_size_after_first;
         {
             let guard = cache.read().unwrap();
@@ -1148,7 +1159,7 @@ mod tests {
         }
 
         // Second validation - should use cached results
-        let _ = validator.validate(&file_path, "See @target.md", &config);
+        let _ = validator.validate(&file_path, "See @target.md", &make_ctx(&config));
         let cache_size_after_second;
         {
             let guard = cache.read().unwrap();
@@ -1193,7 +1204,7 @@ mod tests {
                     let content = fs::read_to_string(&file_path).unwrap();
 
                     let validator = ImportsValidator;
-                    validator.validate(&file_path, &content, &config)
+                    validator.validate(&file_path, &content, &make_ctx(&config))
                 })
             })
             .collect();

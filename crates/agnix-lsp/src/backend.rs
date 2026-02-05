@@ -165,10 +165,11 @@ impl Backend {
 
             let registry = agnix_core::ValidatorRegistry::with_defaults();
             let validators = registry.validators_for(file_type);
+            let ctx = agnix_core::ValidatorContext::new(&config, &agnix_core::RealFileSystem);
             let mut diagnostics = Vec::new();
 
             for validator in validators {
-                diagnostics.extend(validator.validate(&file_path, &content, &config));
+                diagnostics.extend(validator.validate(&file_path, &content, &ctx));
             }
 
             Ok::<_, agnix_core::LintError>(diagnostics)

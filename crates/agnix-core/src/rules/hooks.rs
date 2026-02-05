@@ -1,7 +1,7 @@
 //! Hooks validation rules (CC-HK-001 to CC-HK-011)
 
 use crate::{
-    config::LintConfig,
+    context::ValidatorContext,
     diagnostics::{Diagnostic, Fix},
     rules::Validator,
     schemas::hooks::{Hook, HooksSchema, SettingsSchema},
@@ -150,18 +150,18 @@ impl HooksValidator {
 }
 
 impl Validator for HooksValidator {
-    fn validate(&self, path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic> {
+    fn validate(&self, path: &Path, content: &str, ctx: &ValidatorContext) -> Vec<Diagnostic> {
         let mut diagnostics = Vec::new();
 
         // Early return if hooks category is entirely disabled
-        if !config.rules.hooks {
+        if !ctx.config.rules.hooks {
             return diagnostics;
         }
 
         let raw_value: serde_json::Value = match serde_json::from_str(content) {
             Ok(v) => v,
             Err(e) => {
-                if config.is_rule_enabled("CC-HK-012") {
+                if ctx.is_rule_enabled("CC-HK-012") {
                     diagnostics.push(Diagnostic::error(
                         path.to_path_buf(),
                         1,
@@ -175,7 +175,7 @@ impl Validator for HooksValidator {
         };
 
         // CC-HK-005: Missing type field (pre-parse check)
-        if config.is_rule_enabled("CC-HK-005") {
+        if ctx.is_rule_enabled("CC-HK-005") {
             if let Some(hooks_obj) = raw_value.get("hooks").and_then(|h| h.as_object()) {
                 for (event, matchers) in hooks_obj {
                     if let Some(matchers_arr) = matchers.as_array() {
@@ -219,7 +219,7 @@ impl Validator for HooksValidator {
 
         // CC-HK-011: Invalid timeout value (pre-parse check for negative/zero/non-integer values)
         // Must check raw JSON before serde deserializes to Option<u64> which can't represent negatives
-        if config.is_rule_enabled("CC-HK-011") {
+        if ctx.is_rule_enabled("CC-HK-011") {
             if let Some(hooks_obj) = raw_value.get("hooks").and_then(|h| h.as_object()) {
                 for (event, matchers) in hooks_obj {
                     if let Some(matchers_arr) = matchers.as_array() {
@@ -277,7 +277,7 @@ impl Validator for HooksValidator {
         let settings: SettingsSchema = match serde_json::from_str(content) {
             Ok(s) => s,
             Err(e) => {
-                if config.is_rule_enabled("CC-HK-012") {
+                if ctx.is_rule_enabled("CC-HK-012") {
                     diagnostics.push(Diagnostic::error(
                         path.to_path_buf(),
                         1,
@@ -303,7 +303,7 @@ impl Validator for HooksValidator {
 
         for (event, matchers) in &settings.hooks {
             // CC-HK-001: Invalid event name
-            if config.is_rule_enabled("CC-HK-001") {
+            if ctx.is_rule_enabled("CC-HK-001") {
                 if !HooksSchema::VALID_EVENTS.contains(&event.as_str()) {
                     let closest = find_closest_event(event);
                     let mut diagnostic = Diagnostic::error(
@@ -346,7 +346,7 @@ impl Validator for HooksValidator {
 
             for (matcher_idx, matcher) in matchers.iter().enumerate() {
                 // CC-HK-003: Missing matcher for tool events
-                if config.is_rule_enabled("CC-HK-003")
+                if ctx.is_rule_enabled("CC-HK-003")
                     && HooksSchema::is_tool_event(event)
                     && matcher.matcher.is_none()
                 {
@@ -369,7 +369,7 @@ impl Validator for HooksValidator {
                 }
 
                 // CC-HK-004: Matcher on non-tool event
-                if config.is_rule_enabled("CC-HK-004")
+                if ctx.is_rule_enabled("CC-HK-004")
                     && !HooksSchema::is_tool_event(event)
                     && matcher.matcher.is_some()
                 {
@@ -406,8 +406,8 @@ impl Validator for HooksValidator {
                             command, timeout, ..
                         } => {
                             // CC-HK-010: Timeout policy for command hooks (600s default)
-                            if config.is_rule_enabled("CC-HK-010") {
-                                let version_pinned = config.is_claude_code_version_pinned();
+                            if ctx.is_rule_enabled("CC-HK-010") {
+                                let version_pinned = ctx.config.is_claude_code_version_pinned();
 
                                 if timeout.is_none() {
                                     let mut diag = Diagnostic::warning(
@@ -457,7 +457,7 @@ impl Validator for HooksValidator {
                             }
 
                             // CC-HK-006: Missing command field
-                            if config.is_rule_enabled("CC-HK-006") && command.is_none() {
+                            if ctx.is_rule_enabled("CC-HK-006") && command.is_none() {
                                 diagnostics.push(
                                         Diagnostic::error(
                                             path.to_path_buf(),
@@ -478,7 +478,7 @@ impl Validator for HooksValidator {
 
                             if let Some(cmd) = command {
                                 // CC-HK-008: Script file not found
-                                if config.is_rule_enabled("CC-HK-008") {
+                                if ctx.is_rule_enabled("CC-HK-008") {
                                     for script_path in self.extract_script_paths(cmd) {
                                         if !self.has_unresolved_env_vars(&script_path) {
                                             let resolved =
@@ -507,7 +507,7 @@ impl Validator for HooksValidator {
                                 }
 
                                 // CC-HK-009: Dangerous command patterns
-                                if config.is_rule_enabled("CC-HK-009") {
+                                if ctx.is_rule_enabled("CC-HK-009") {
                                     if let Some((pattern, reason)) =
                                         self.check_dangerous_patterns(cmd)
                                     {
@@ -535,8 +535,8 @@ impl Validator for HooksValidator {
                             prompt, timeout, ..
                         } => {
                             // CC-HK-010: Timeout policy for prompt hooks (30s default)
-                            if config.is_rule_enabled("CC-HK-010") {
-                                let version_pinned = config.is_claude_code_version_pinned();
+                            if ctx.is_rule_enabled("CC-HK-010") {
+                                let version_pinned = ctx.config.is_claude_code_version_pinned();
 
                                 if timeout.is_none() {
                                     let mut diag = Diagnostic::warning(
@@ -586,7 +586,7 @@ impl Validator for HooksValidator {
                             }
 
                             // CC-HK-002: Prompt on wrong event
-                            if config.is_rule_enabled("CC-HK-002")
+                            if ctx.is_rule_enabled("CC-HK-002")
                                 && !HooksSchema::is_prompt_event(event)
                             {
                                 diagnostics.push(
@@ -607,7 +607,7 @@ impl Validator for HooksValidator {
                             }
 
                             // CC-HK-007: Missing prompt field
-                            if config.is_rule_enabled("CC-HK-007") && prompt.is_none() {
+                            if ctx.is_rule_enabled("CC-HK-007") && prompt.is_none() {
                                 diagnostics.push(
                                     Diagnostic::error(
                                         path.to_path_buf(),
@@ -693,11 +693,17 @@ fn find_event_key_position(content: &str, event: &str) -> Option<(usize, usize)>
 mod tests {
     use super::*;
     use crate::config::LintConfig;
+    use crate::context::ValidatorContext;
     use crate::diagnostics::DiagnosticLevel;
+    use crate::fs::RealFileSystem;
+
+    fn make_ctx(config: &LintConfig) -> ValidatorContext<'_> {
+        ValidatorContext::new(config, &RealFileSystem)
+    }
 
     fn validate(content: &str) -> Vec<Diagnostic> {
         let validator = HooksValidator;
-        validator.validate(Path::new("settings.json"), content, &LintConfig::default())
+        validator.validate(Path::new("settings.json"), content, &make_ctx(&LintConfig::default()))
     }
 
     #[test]
@@ -2532,7 +2538,7 @@ mod tests {
         }"#;
 
         let validator = HooksValidator;
-        let diagnostics = validator.validate(Path::new("settings.json"), content, &config);
+        let diagnostics = validator.validate(Path::new("settings.json"), content, &make_ctx(&config));
 
         // CC-HK-001 should not fire when hooks category is disabled
         let cc_hk_001: Vec<_> = diagnostics
@@ -2561,7 +2567,7 @@ mod tests {
         }"#;
 
         let validator = HooksValidator;
-        let diagnostics = validator.validate(Path::new("settings.json"), content, &config);
+        let diagnostics = validator.validate(Path::new("settings.json"), content, &make_ctx(&config));
 
         // CC-HK-006 should not fire when specifically disabled
         let cc_hk_006: Vec<_> = diagnostics
@@ -2591,7 +2597,7 @@ mod tests {
         }"#;
 
         let validator = HooksValidator;
-        let diagnostics = validator.validate(Path::new("settings.json"), content, &config);
+        let diagnostics = validator.validate(Path::new("settings.json"), content, &make_ctx(&config));
 
         // CC-HK-* rules should not fire for Cursor target
         let hook_rules: Vec<_> = diagnostics
@@ -2619,7 +2625,7 @@ mod tests {
         }"#;
 
         let validator = HooksValidator;
-        let diagnostics = validator.validate(Path::new("settings.json"), content, &config);
+        let diagnostics = validator.validate(Path::new("settings.json"), content, &make_ctx(&config));
 
         // CC-HK-009 should not fire when specifically disabled
         let cc_hk_009: Vec<_> = diagnostics
@@ -2651,7 +2657,7 @@ mod tests {
         }"#;
 
         let validator = HooksValidator;
-        let diagnostics = validator.validate(Path::new("settings.json"), content, &config);
+        let diagnostics = validator.validate(Path::new("settings.json"), content, &make_ctx(&config));
 
         let cc_hk_010: Vec<_> = diagnostics
             .iter()
@@ -2686,7 +2692,7 @@ mod tests {
         }"#;
 
         let validator = HooksValidator;
-        let diagnostics = validator.validate(Path::new("settings.json"), content, &config);
+        let diagnostics = validator.validate(Path::new("settings.json"), content, &make_ctx(&config));
 
         let cc_hk_010: Vec<_> = diagnostics
             .iter()
@@ -2715,7 +2721,7 @@ mod tests {
         }"#;
 
         let validator = HooksValidator;
-        let diagnostics = validator.validate(Path::new("settings.json"), content, &config);
+        let diagnostics = validator.validate(Path::new("settings.json"), content, &make_ctx(&config));
 
         let cc_hk_010: Vec<_> = diagnostics
             .iter()
@@ -2744,7 +2750,7 @@ mod tests {
         }"#;
 
         let validator = HooksValidator;
-        let diagnostics = validator.validate(Path::new("settings.json"), content, &config);
+        let diagnostics = validator.validate(Path::new("settings.json"), content, &make_ctx(&config));
 
         let cc_hk_010: Vec<_> = diagnostics
             .iter()

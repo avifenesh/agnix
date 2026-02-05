@@ -7,7 +7,7 @@
 //! - PE-004: Ambiguous terms (usually/sometimes/if possible)
 
 use crate::{
-    config::LintConfig,
+    context::ValidatorContext,
     diagnostics::Diagnostic,
     rules::Validator,
     schemas::prompt::{
@@ -20,11 +20,11 @@ use std::path::Path;
 pub struct PromptValidator;
 
 impl Validator for PromptValidator {
-    fn validate(&self, path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic> {
+    fn validate(&self, path: &Path, content: &str, ctx: &ValidatorContext) -> Vec<Diagnostic> {
         let mut diagnostics = Vec::new();
 
         // PE-001: Critical content in middle ("lost in the middle")
-        if config.is_rule_enabled("PE-001") {
+        if ctx.is_rule_enabled("PE-001") {
             let critical_in_middle = find_critical_in_middle_pe(content);
             for issue in critical_in_middle {
                 diagnostics.push(
@@ -46,7 +46,7 @@ impl Validator for PromptValidator {
         }
 
         // PE-002: Chain-of-thought on simple tasks
-        if config.is_rule_enabled("PE-002") {
+        if ctx.is_rule_enabled("PE-002") {
             let cot_issues = find_cot_on_simple_tasks(content);
             for issue in cot_issues {
                 diagnostics.push(
@@ -68,7 +68,7 @@ impl Validator for PromptValidator {
         }
 
         // PE-003: Weak imperative language in critical sections
-        if config.is_rule_enabled("PE-003") {
+        if ctx.is_rule_enabled("PE-003") {
             let weak_language = find_weak_imperative_language(content);
             for issue in weak_language {
                 diagnostics.push(
@@ -90,7 +90,7 @@ impl Validator for PromptValidator {
         }
 
         // PE-004: Ambiguous instructions
-        if config.is_rule_enabled("PE-004") {
+        if ctx.is_rule_enabled("PE-004") {
             let ambiguous = find_ambiguous_instructions(content);
             for issue in ambiguous {
                 diagnostics.push(
@@ -120,6 +120,11 @@ mod tests {
     use super::*;
     use crate::config::LintConfig;
     use crate::diagnostics::DiagnosticLevel;
+    use crate::fs::RealFileSystem;
+
+    fn make_ctx(config: &LintConfig) -> ValidatorContext<'_> {
+        ValidatorContext::new(config, &RealFileSystem)
+    }
 
     // ===== PE-001: Critical Content in Middle =====
 
@@ -131,8 +136,9 @@ mod tests {
         let content = lines.join("\n");
 
         let validator = PromptValidator;
+        let config = LintConfig::default();
         let diagnostics =
-            validator.validate(Path::new("SKILL.md"), &content, &LintConfig::default());
+            validator.validate(Path::new("SKILL.md"), &content, &make_ctx(&config));
 
         let pe_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "PE-001").collect();
         assert_eq!(pe_001.len(), 1);
@@ -147,8 +153,9 @@ mod tests {
         let content = lines.join("\n");
 
         let validator = PromptValidator;
+        let config = LintConfig::default();
         let diagnostics =
-            validator.validate(Path::new("SKILL.md"), &content, &LintConfig::default());
+            validator.validate(Path::new("SKILL.md"), &content, &make_ctx(&config));
 
         let pe_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "PE-001").collect();
         assert!(pe_001.is_empty());
@@ -161,8 +168,9 @@ mod tests {
         let content = lines.join("\n");
 
         let validator = PromptValidator;
+        let config = LintConfig::default();
         let diagnostics =
-            validator.validate(Path::new("SKILL.md"), &content, &LintConfig::default());
+            validator.validate(Path::new("SKILL.md"), &content, &make_ctx(&config));
 
         let pe_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "PE-001").collect();
         assert!(pe_001.is_empty());
@@ -172,8 +180,9 @@ mod tests {
     fn test_pe_001_short_document_skipped() {
         let content = "Critical info.\nShort doc.";
         let validator = PromptValidator;
+        let config = LintConfig::default();
         let diagnostics =
-            validator.validate(Path::new("SKILL.md"), content, &LintConfig::default());
+            validator.validate(Path::new("SKILL.md"), content, &make_ctx(&config));
 
         let pe_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "PE-001").collect();
         assert!(pe_001.is_empty());
@@ -188,8 +197,9 @@ mod tests {
 When asked to read the file, think step by step.
 "#;
         let validator = PromptValidator;
+        let config = LintConfig::default();
         let diagnostics =
-            validator.validate(Path::new("SKILL.md"), content, &LintConfig::default());
+            validator.validate(Path::new("SKILL.md"), content, &make_ctx(&config));
 
         let pe_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "PE-002").collect();
         assert_eq!(pe_002.len(), 1);
@@ -203,8 +213,9 @@ When asked to read the file, think step by step.
 Think step by step when reviewing.
 "#;
         let validator = PromptValidator;
+        let config = LintConfig::default();
         let diagnostics =
-            validator.validate(Path::new("SKILL.md"), content, &LintConfig::default());
+            validator.validate(Path::new("SKILL.md"), content, &make_ctx(&config));
 
         let pe_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "PE-002").collect();
         assert!(pe_002.is_empty());
@@ -217,8 +228,9 @@ Think step by step when reviewing.
 Read the file and return contents.
 "#;
         let validator = PromptValidator;
+        let config = LintConfig::default();
         let diagnostics =
-            validator.validate(Path::new("SKILL.md"), content, &LintConfig::default());
+            validator.validate(Path::new("SKILL.md"), content, &make_ctx(&config));
 
         let pe_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "PE-002").collect();
         assert!(pe_002.is_empty());
@@ -233,8 +245,9 @@ Read the file and return contents.
 You should follow the style guide.
 "#;
         let validator = PromptValidator;
+        let config = LintConfig::default();
         let diagnostics =
-            validator.validate(Path::new("CLAUDE.md"), content, &LintConfig::default());
+            validator.validate(Path::new("CLAUDE.md"), content, &make_ctx(&config));
 
         let pe_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "PE-003").collect();
         assert_eq!(pe_003.len(), 1);
@@ -249,8 +262,9 @@ You should follow the style guide.
 You must follow the style guide.
 "#;
         let validator = PromptValidator;
+        let config = LintConfig::default();
         let diagnostics =
-            validator.validate(Path::new("CLAUDE.md"), content, &LintConfig::default());
+            validator.validate(Path::new("CLAUDE.md"), content, &make_ctx(&config));
 
         let pe_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "PE-003").collect();
         assert!(pe_003.is_empty());
@@ -263,8 +277,9 @@ You must follow the style guide.
 You should follow the style guide.
 "#;
         let validator = PromptValidator;
+        let config = LintConfig::default();
         let diagnostics =
-            validator.validate(Path::new("CLAUDE.md"), content, &LintConfig::default());
+            validator.validate(Path::new("CLAUDE.md"), content, &make_ctx(&config));
 
         let pe_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "PE-003").collect();
         assert!(pe_003.is_empty());
@@ -276,8 +291,9 @@ You should follow the style guide.
     fn test_pe_004_usually() {
         let content = "Usually format output as JSON.";
         let validator = PromptValidator;
+        let config = LintConfig::default();
         let diagnostics =
-            validator.validate(Path::new("SKILL.md"), content, &LintConfig::default());
+            validator.validate(Path::new("SKILL.md"), content, &make_ctx(&config));
 
         let pe_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "PE-004").collect();
         assert_eq!(pe_004.len(), 1);
@@ -289,8 +305,9 @@ You should follow the style guide.
     fn test_pe_004_if_possible() {
         let content = "Include tests if possible.";
         let validator = PromptValidator;
+        let config = LintConfig::default();
         let diagnostics =
-            validator.validate(Path::new("SKILL.md"), content, &LintConfig::default());
+            validator.validate(Path::new("SKILL.md"), content, &make_ctx(&config));
 
         let pe_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "PE-004").collect();
         assert_eq!(pe_004.len(), 1);
@@ -300,8 +317,9 @@ You should follow the style guide.
     fn test_pe_004_clear_instruction_ok() {
         let content = "Always format output as JSON.";
         let validator = PromptValidator;
+        let config = LintConfig::default();
         let diagnostics =
-            validator.validate(Path::new("SKILL.md"), content, &LintConfig::default());
+            validator.validate(Path::new("SKILL.md"), content, &make_ctx(&config));
 
         let pe_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "PE-004").collect();
         assert!(pe_004.is_empty());
@@ -313,8 +331,9 @@ You should follow the style guide.
 // Usually this comment is fine
 ```"#;
         let validator = PromptValidator;
+        let config = LintConfig::default();
         let diagnostics =
-            validator.validate(Path::new("SKILL.md"), content, &LintConfig::default());
+            validator.validate(Path::new("SKILL.md"), content, &make_ctx(&config));
 
         let pe_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "PE-004").collect();
         assert!(pe_004.is_empty());
@@ -333,7 +352,7 @@ Usually do Y.
 "#;
 
         let validator = PromptValidator;
-        let diagnostics = validator.validate(Path::new("SKILL.md"), content, &config);
+        let diagnostics = validator.validate(Path::new("SKILL.md"), content, &make_ctx(&config));
 
         // All PE-* rules should be disabled
         let pe_rules: Vec<_> = diagnostics
@@ -353,7 +372,7 @@ You should do X.
 "#;
 
         let validator = PromptValidator;
-        let diagnostics = validator.validate(Path::new("SKILL.md"), content, &config);
+        let diagnostics = validator.validate(Path::new("SKILL.md"), content, &make_ctx(&config));
 
         // PE-003 should not fire when specifically disabled
         let pe_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "PE-003").collect();
@@ -374,8 +393,9 @@ You should do X.
         let content = lines.join("\n");
 
         let validator = PromptValidator;
+        let config = LintConfig::default();
         let diagnostics =
-            validator.validate(Path::new("SKILL.md"), &content, &LintConfig::default());
+            validator.validate(Path::new("SKILL.md"), &content, &make_ctx(&config));
 
         // Should have PE-001, PE-003, and PE-004 issues
         let pe_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "PE-001").collect();
@@ -393,8 +413,9 @@ You should do X.
     fn test_empty_content_string() {
         let content = "";
         let validator = PromptValidator;
+        let config = LintConfig::default();
         let diagnostics =
-            validator.validate(Path::new("SKILL.md"), content, &LintConfig::default());
+            validator.validate(Path::new("SKILL.md"), content, &make_ctx(&config));
 
         // Should not panic, return empty diagnostics
         assert!(
@@ -410,8 +431,9 @@ You should do X.
         let content = lines.join("\n");
 
         let validator = PromptValidator;
+        let config = LintConfig::default();
         let diagnostics =
-            validator.validate(Path::new("SKILL.md"), &content, &LintConfig::default());
+            validator.validate(Path::new("SKILL.md"), &content, &make_ctx(&config));
 
         let pe_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "PE-001").collect();
         // 10 lines is the boundary; at 50% no critical word, so empty
@@ -428,8 +450,9 @@ You should do X.
         let content = lines.join("\n");
 
         let validator = PromptValidator;
+        let config = LintConfig::default();
         let diagnostics =
-            validator.validate(Path::new("SKILL.md"), &content, &LintConfig::default());
+            validator.validate(Path::new("SKILL.md"), &content, &make_ctx(&config));
 
         let pe_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "PE-001").collect();
         assert!(pe_001.is_empty(), "9 lines should skip PE-001 check");
@@ -442,8 +465,9 @@ You should do X.
 This is not a critical section.
 "#;
         let validator = PromptValidator;
+        let config = LintConfig::default();
         let diagnostics =
-            validator.validate(Path::new("SKILL.md"), content, &LintConfig::default());
+            validator.validate(Path::new("SKILL.md"), content, &make_ctx(&config));
 
         let pe_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "PE-003").collect();
         // "Hypercritical" should NOT be recognized as a critical section
@@ -458,8 +482,9 @@ This is not a critical section.
     fn test_pe_004_inline_code_not_flagged() {
         let content = "Format output with `usually` backticks for clarity.";
         let validator = PromptValidator;
+        let config = LintConfig::default();
         let diagnostics =
-            validator.validate(Path::new("SKILL.md"), content, &LintConfig::default());
+            validator.validate(Path::new("SKILL.md"), content, &make_ctx(&config));
 
         let pe_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "PE-004").collect();
         // Content inside inline code should still be checked (current behavior)
@@ -483,7 +508,7 @@ This is not a critical section.
         let content = lines.join("\n");
 
         let validator = PromptValidator;
-        let diagnostics = validator.validate(Path::new("SKILL.md"), &content, &config);
+        let diagnostics = validator.validate(Path::new("SKILL.md"), &content, &make_ctx(&config));
 
         // PE-001 should be disabled
         let pe_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "PE-001").collect();
@@ -509,7 +534,7 @@ This is not a critical section.
         let content = lines.join("\n");
 
         let validator = PromptValidator;
-        let diagnostics = validator.validate(Path::new("SKILL.md"), &content, &config);
+        let diagnostics = validator.validate(Path::new("SKILL.md"), &content, &make_ctx(&config));
 
         // PE-001 and PE-004 should be disabled
         let pe_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "PE-001").collect();

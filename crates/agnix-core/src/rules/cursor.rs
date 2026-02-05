@@ -9,7 +9,7 @@
 //! - CUR-006: Legacy .cursorrules detected (MEDIUM) - migration warning
 
 use crate::{
-    config::LintConfig,
+    context::ValidatorContext,
     diagnostics::Diagnostic,
     rules::Validator,
     schemas::cursor::{
@@ -22,7 +22,7 @@ use std::path::Path;
 pub struct CursorValidator;
 
 impl Validator for CursorValidator {
-    fn validate(&self, path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic> {
+    fn validate(&self, path: &Path, content: &str, ctx: &ValidatorContext) -> Vec<Diagnostic> {
         let mut diagnostics = Vec::new();
 
         // Determine if this is a .mdc rule file or legacy .cursorrules
@@ -30,7 +30,7 @@ impl Validator for CursorValidator {
         let is_legacy = file_type == FileType::CursorRulesLegacy;
 
         // CUR-006: Legacy .cursorrules detected (WARNING)
-        if is_legacy && config.is_rule_enabled("CUR-006") {
+        if is_legacy && ctx.is_rule_enabled("CUR-006") {
             diagnostics.push(
                 Diagnostic::warning(
                     path.to_path_buf(),
@@ -44,7 +44,7 @@ impl Validator for CursorValidator {
                 ),
             );
             // For legacy files, just check if empty and return
-            if config.is_rule_enabled("CUR-001") && is_content_empty(content) {
+            if ctx.is_rule_enabled("CUR-001") && is_content_empty(content) {
                 diagnostics.push(
                     Diagnostic::error(
                         path.to_path_buf(),
@@ -60,7 +60,7 @@ impl Validator for CursorValidator {
         }
 
         // CUR-001: Empty .mdc rule file (ERROR)
-        if config.is_rule_enabled("CUR-001") {
+        if ctx.is_rule_enabled("CUR-001") {
             if let Some(parsed) = parse_mdc_frontmatter(content) {
                 // Skip CUR-001 if there's a frontmatter parse error - CUR-003 will handle it
                 if parsed.parse_error.is_none() && is_body_empty(&parsed.body) {
@@ -97,7 +97,7 @@ impl Validator for CursorValidator {
             Some(p) => p,
             None => {
                 // CUR-002: Missing frontmatter in .mdc file (WARNING)
-                if config.is_rule_enabled("CUR-002") && !is_content_empty(content) {
+                if ctx.is_rule_enabled("CUR-002") && !is_content_empty(content) {
                     diagnostics.push(
                         Diagnostic::warning(
                             path.to_path_buf(),
@@ -117,7 +117,7 @@ impl Validator for CursorValidator {
         };
 
         // CUR-003: Invalid YAML frontmatter (ERROR)
-        if config.is_rule_enabled("CUR-003") {
+        if ctx.is_rule_enabled("CUR-003") {
             if let Some(ref error) = parsed.parse_error {
                 diagnostics.push(
                     Diagnostic::error(
@@ -135,7 +135,7 @@ impl Validator for CursorValidator {
         }
 
         // CUR-004: Invalid glob pattern (ERROR)
-        if config.is_rule_enabled("CUR-004") {
+        if ctx.is_rule_enabled("CUR-004") {
             if let Some(ref schema) = parsed.schema {
                 if let Some(ref globs) = schema.globs {
                     // Find the line number of the globs field for accurate diagnostics
@@ -175,7 +175,7 @@ impl Validator for CursorValidator {
         }
 
         // CUR-005: Unknown frontmatter keys (WARNING)
-        if config.is_rule_enabled("CUR-005") {
+        if ctx.is_rule_enabled("CUR-005") {
             for unknown in &parsed.unknown_keys {
                 diagnostics.push(
                     Diagnostic::warning(
@@ -205,24 +205,30 @@ mod tests {
     use super::*;
     use crate::config::LintConfig;
     use crate::diagnostics::DiagnosticLevel;
+    use crate::fs::RealFileSystem;
 
     fn validate_mdc(content: &str) -> Vec<Diagnostic> {
         let validator = CursorValidator;
+        let config = LintConfig::default();
+        let ctx = ValidatorContext::new(&config, &RealFileSystem);
         validator.validate(
             Path::new(".cursor/rules/typescript.mdc"),
             content,
-            &LintConfig::default(),
+            &ctx,
         )
     }
 
     fn validate_legacy(content: &str) -> Vec<Diagnostic> {
         let validator = CursorValidator;
-        validator.validate(Path::new(".cursorrules"), content, &LintConfig::default())
+        let config = LintConfig::default();
+        let ctx = ValidatorContext::new(&config, &RealFileSystem);
+        validator.validate(Path::new(".cursorrules"), content, &ctx)
     }
 
     fn validate_mdc_with_config(content: &str, config: &LintConfig) -> Vec<Diagnostic> {
         let validator = CursorValidator;
-        validator.validate(Path::new(".cursor/rules/typescript.mdc"), content, config)
+        let ctx = ValidatorContext::new(config, &RealFileSystem);
+        validator.validate(Path::new(".cursor/rules/typescript.mdc"), content, &ctx)
     }
 
     // ===== CUR-001: Empty Rule File =====

@@ -7,7 +7,7 @@
 //! - COP-004: Unknown frontmatter keys (MEDIUM) - warn about unrecognized keys
 
 use crate::{
-    config::LintConfig,
+    context::ValidatorContext,
     diagnostics::Diagnostic,
     rules::Validator,
     schemas::copilot::{is_body_empty, is_content_empty, parse_frontmatter, validate_glob_pattern},
@@ -18,7 +18,7 @@ use std::path::Path;
 pub struct CopilotValidator;
 
 impl Validator for CopilotValidator {
-    fn validate(&self, path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic> {
+    fn validate(&self, path: &Path, content: &str, ctx: &ValidatorContext) -> Vec<Diagnostic> {
         let mut diagnostics = Vec::new();
 
         // Determine if this is global or scoped instruction file
@@ -26,7 +26,7 @@ impl Validator for CopilotValidator {
         let is_scoped = file_type == FileType::CopilotScoped;
 
         // COP-001: Empty instruction file (ERROR)
-        if config.is_rule_enabled("COP-001") {
+        if ctx.is_rule_enabled("COP-001") {
             if is_scoped {
                 // For scoped files, check body after frontmatter
                 if let Some(parsed) = parse_frontmatter(content) {
@@ -89,7 +89,7 @@ impl Validator for CopilotValidator {
             Some(p) => p,
             None => {
                 // COP-002: Missing frontmatter in scoped file
-                if config.is_rule_enabled("COP-002") && !is_content_empty(content) {
+                if ctx.is_rule_enabled("COP-002") && !is_content_empty(content) {
                     diagnostics.push(
                         Diagnostic::error(
                             path.to_path_buf(),
@@ -109,7 +109,7 @@ impl Validator for CopilotValidator {
         };
 
         // COP-002: Invalid frontmatter (YAML parse error)
-        if config.is_rule_enabled("COP-002") {
+        if ctx.is_rule_enabled("COP-002") {
             if let Some(ref error) = parsed.parse_error {
                 diagnostics.push(
                     Diagnostic::error(
@@ -146,7 +146,7 @@ impl Validator for CopilotValidator {
         }
 
         // COP-003: Invalid glob pattern
-        if config.is_rule_enabled("COP-003") {
+        if ctx.is_rule_enabled("COP-003") {
             if let Some(ref schema) = parsed.schema {
                 if let Some(ref apply_to) = schema.apply_to {
                     let validation = validate_glob_pattern(apply_to);
@@ -173,7 +173,7 @@ impl Validator for CopilotValidator {
         }
 
         // COP-004: Unknown frontmatter keys (WARNING)
-        if config.is_rule_enabled("COP-004") {
+        if ctx.is_rule_enabled("COP-004") {
             for unknown in &parsed.unknown_keys {
                 diagnostics.push(
                     Diagnostic::warning(
@@ -203,31 +203,37 @@ mod tests {
     use super::*;
     use crate::config::LintConfig;
     use crate::diagnostics::DiagnosticLevel;
+    use crate::fs::RealFileSystem;
 
     fn validate_global(content: &str) -> Vec<Diagnostic> {
         let validator = CopilotValidator;
+        let config = LintConfig::default();
+        let ctx = ValidatorContext::new(&config, &RealFileSystem);
         validator.validate(
             Path::new(".github/copilot-instructions.md"),
             content,
-            &LintConfig::default(),
+            &ctx,
         )
     }
 
     fn validate_scoped(content: &str) -> Vec<Diagnostic> {
         let validator = CopilotValidator;
+        let config = LintConfig::default();
+        let ctx = ValidatorContext::new(&config, &RealFileSystem);
         validator.validate(
             Path::new(".github/instructions/typescript.instructions.md"),
             content,
-            &LintConfig::default(),
+            &ctx,
         )
     }
 
     fn validate_scoped_with_config(content: &str, config: &LintConfig) -> Vec<Diagnostic> {
         let validator = CopilotValidator;
+        let ctx = ValidatorContext::new(config, &RealFileSystem);
         validator.validate(
             Path::new(".github/instructions/typescript.instructions.md"),
             content,
-            config,
+            &ctx,
         )
     }
 

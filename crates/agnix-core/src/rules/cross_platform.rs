@@ -6,7 +6,7 @@
 //! - XP-003: Hard-coded platform paths in configs (warning)
 
 use crate::{
-    config::LintConfig,
+    context::ValidatorContext,
     diagnostics::Diagnostic,
     rules::Validator,
     schemas::cross_platform::{
@@ -18,7 +18,7 @@ use std::path::Path;
 pub struct CrossPlatformValidator;
 
 impl Validator for CrossPlatformValidator {
-    fn validate(&self, path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic> {
+    fn validate(&self, path: &Path, content: &str, ctx: &ValidatorContext) -> Vec<Diagnostic> {
         let mut diagnostics = Vec::new();
 
         let filename = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
@@ -29,7 +29,7 @@ impl Validator for CrossPlatformValidator {
 
         // XP-001: Claude-specific features in AGENTS.md (ERROR)
         // Only check AGENTS.md files - CLAUDE.md is allowed to have these features
-        if config.is_rule_enabled("XP-001") && is_agents_md {
+        if ctx.is_rule_enabled("XP-001") && is_agents_md {
             let claude_features = find_claude_specific_features(content);
             for feature in claude_features {
                 diagnostics.push(
@@ -53,7 +53,7 @@ impl Validator for CrossPlatformValidator {
 
         // XP-002: AGENTS.md markdown structure (WARNING)
         // Validate that AGENTS.md has proper markdown structure
-        if config.is_rule_enabled("XP-002") && is_agents_md {
+        if ctx.is_rule_enabled("XP-002") && is_agents_md {
             let structure_issues = check_markdown_structure(content);
             for issue in structure_issues {
                 diagnostics.push(
@@ -71,7 +71,7 @@ impl Validator for CrossPlatformValidator {
 
         // XP-003: Hard-coded platform paths (WARNING)
         // Check all config files for hard-coded platform-specific paths
-        if config.is_rule_enabled("XP-003") {
+        if ctx.is_rule_enabled("XP-003") {
             let hard_coded = find_hard_coded_paths(content);
             for path_issue in hard_coded {
                 diagnostics.push(
@@ -101,7 +101,13 @@ impl Validator for CrossPlatformValidator {
 mod tests {
     use super::*;
     use crate::config::{LintConfig, TargetTool};
+    use crate::context::ValidatorContext;
     use crate::diagnostics::DiagnosticLevel;
+    use crate::fs::RealFileSystem;
+
+    fn make_ctx(config: &LintConfig) -> ValidatorContext<'_> {
+        ValidatorContext::new(config, &RealFileSystem)
+    }
 
     // ===== XP-001: Claude-Specific Features in AGENTS.md =====
 
@@ -114,7 +120,7 @@ mod tests {
 "#;
         let validator = CrossPlatformValidator;
         let diagnostics =
-            validator.validate(Path::new("AGENTS.md"), content, &LintConfig::default());
+            validator.validate(Path::new("AGENTS.md"), content, &make_ctx(&LintConfig::default()));
 
         let xp_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XP-001").collect();
         assert_eq!(xp_001.len(), 1);
@@ -131,7 +137,7 @@ context: fork
 Body"#;
         let validator = CrossPlatformValidator;
         let diagnostics =
-            validator.validate(Path::new("AGENTS.md"), content, &LintConfig::default());
+            validator.validate(Path::new("AGENTS.md"), content, &make_ctx(&LintConfig::default()));
 
         let xp_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XP-001").collect();
         assert!(xp_001.iter().any(|d| d.message.contains("context:fork")));
@@ -149,7 +155,7 @@ allowed-tools: Read Write
 Body"#;
         let validator = CrossPlatformValidator;
         let diagnostics =
-            validator.validate(Path::new("CLAUDE.md"), content, &LintConfig::default());
+            validator.validate(Path::new("CLAUDE.md"), content, &make_ctx(&LintConfig::default()));
 
         let xp_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XP-001").collect();
         assert!(
@@ -171,7 +177,7 @@ Body"#;
         let diagnostics = validator.validate(
             Path::new("CLAUDE.local.md"),
             content,
-            &LintConfig::default(),
+            &make_ctx(&LintConfig::default()),
         );
 
         let xp_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XP-001").collect();
@@ -194,7 +200,7 @@ Body"#;
         let diagnostics = validator.validate(
             Path::new("AGENTS.local.md"),
             content,
-            &LintConfig::default(),
+            &make_ctx(&LintConfig::default()),
         );
 
         let xp_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XP-001").collect();
@@ -215,7 +221,7 @@ Body"#;
         let diagnostics = validator.validate(
             Path::new("AGENTS.override.md"),
             content,
-            &LintConfig::default(),
+            &make_ctx(&LintConfig::default()),
         );
 
         let xp_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XP-001").collect();
@@ -234,7 +240,7 @@ Body"#;
 
         for variant in variants {
             let diagnostics =
-                validator.validate(Path::new(variant), content, &LintConfig::default());
+                validator.validate(Path::new(variant), content, &make_ctx(&LintConfig::default()));
 
             let xp_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XP-002").collect();
             assert_eq!(
@@ -258,7 +264,7 @@ Follow the coding style guide.
 "#;
         let validator = CrossPlatformValidator;
         let diagnostics =
-            validator.validate(Path::new("AGENTS.md"), content, &LintConfig::default());
+            validator.validate(Path::new("AGENTS.md"), content, &make_ctx(&LintConfig::default()));
 
         let xp_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XP-001").collect();
         assert!(xp_001.is_empty());
@@ -279,7 +285,7 @@ allowed-tools: Read Write
 "#;
         let validator = CrossPlatformValidator;
         let diagnostics =
-            validator.validate(Path::new("AGENTS.md"), content, &LintConfig::default());
+            validator.validate(Path::new("AGENTS.md"), content, &make_ctx(&LintConfig::default()));
 
         let xp_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XP-001").collect();
         // Should detect multiple Claude-specific features
@@ -297,7 +303,7 @@ allowed-tools: Read Write
         let content = "Just plain text without any markdown headers.";
         let validator = CrossPlatformValidator;
         let diagnostics =
-            validator.validate(Path::new("AGENTS.md"), content, &LintConfig::default());
+            validator.validate(Path::new("AGENTS.md"), content, &make_ctx(&LintConfig::default()));
 
         let xp_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XP-002").collect();
         assert_eq!(xp_002.len(), 1);
@@ -313,7 +319,7 @@ allowed-tools: Read Write
 "#;
         let validator = CrossPlatformValidator;
         let diagnostics =
-            validator.validate(Path::new("AGENTS.md"), content, &LintConfig::default());
+            validator.validate(Path::new("AGENTS.md"), content, &make_ctx(&LintConfig::default()));
 
         let xp_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XP-002").collect();
         assert_eq!(xp_002.len(), 1);
@@ -332,7 +338,7 @@ Run tests with npm test.
 "#;
         let validator = CrossPlatformValidator;
         let diagnostics =
-            validator.validate(Path::new("AGENTS.md"), content, &LintConfig::default());
+            validator.validate(Path::new("AGENTS.md"), content, &make_ctx(&LintConfig::default()));
 
         let xp_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XP-002").collect();
         assert!(xp_002.is_empty());
@@ -344,7 +350,7 @@ Run tests with npm test.
         let content = "Plain text without headers.";
         let validator = CrossPlatformValidator;
         let diagnostics =
-            validator.validate(Path::new("CLAUDE.md"), content, &LintConfig::default());
+            validator.validate(Path::new("CLAUDE.md"), content, &make_ctx(&LintConfig::default()));
 
         let xp_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XP-002").collect();
         assert!(xp_002.is_empty(), "XP-002 should not fire for CLAUDE.md");
@@ -357,7 +363,7 @@ Run tests with npm test.
         let content = "Check the config at .claude/settings.json";
         let validator = CrossPlatformValidator;
         let diagnostics =
-            validator.validate(Path::new("AGENTS.md"), content, &LintConfig::default());
+            validator.validate(Path::new("AGENTS.md"), content, &make_ctx(&LintConfig::default()));
 
         let xp_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XP-003").collect();
         assert_eq!(xp_003.len(), 1);
@@ -375,7 +381,7 @@ Run tests with npm test.
 "#;
         let validator = CrossPlatformValidator;
         let diagnostics =
-            validator.validate(Path::new("AGENTS.md"), content, &LintConfig::default());
+            validator.validate(Path::new("AGENTS.md"), content, &make_ctx(&LintConfig::default()));
 
         let xp_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XP-003").collect();
         assert_eq!(xp_003.len(), 3);
@@ -389,7 +395,7 @@ Use environment variables for all platform-specific settings.
 "#;
         let validator = CrossPlatformValidator;
         let diagnostics =
-            validator.validate(Path::new("AGENTS.md"), content, &LintConfig::default());
+            validator.validate(Path::new("AGENTS.md"), content, &make_ctx(&LintConfig::default()));
 
         let xp_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XP-003").collect();
         assert!(xp_003.is_empty());
@@ -403,13 +409,13 @@ Use environment variables for all platform-specific settings.
 
         // Test CLAUDE.md
         let diagnostics =
-            validator.validate(Path::new("CLAUDE.md"), content, &LintConfig::default());
+            validator.validate(Path::new("CLAUDE.md"), content, &make_ctx(&LintConfig::default()));
         let xp_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XP-003").collect();
         assert_eq!(xp_003.len(), 1, "XP-003 should fire for CLAUDE.md too");
 
         // Test generic markdown
         let diagnostics =
-            validator.validate(Path::new("README.md"), content, &LintConfig::default());
+            validator.validate(Path::new("README.md"), content, &make_ctx(&LintConfig::default()));
         let xp_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XP-003").collect();
         assert_eq!(xp_003.len(), 1, "XP-003 should fire for generic markdown");
     }
@@ -427,7 +433,7 @@ context: fork
 Check .claude/settings.json"#;
 
         let validator = CrossPlatformValidator;
-        let diagnostics = validator.validate(Path::new("AGENTS.md"), content, &config);
+        let diagnostics = validator.validate(Path::new("AGENTS.md"), content, &make_ctx(&config));
 
         // All XP-* rules should be disabled
         let xp_rules: Vec<_> = diagnostics
@@ -449,15 +455,16 @@ agent: Explore
 Body"#;
 
         let validator = CrossPlatformValidator;
-        let diagnostics = validator.validate(Path::new("AGENTS.md"), content, &config);
+        let ctx = make_ctx(&config);
+        let diagnostics = validator.validate(Path::new("AGENTS.md"), content, &ctx);
 
         // XP-001 should not fire when specifically disabled
         let xp_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XP-001").collect();
         assert!(xp_001.is_empty());
 
         // XP-002 and XP-003 should still work
-        assert!(config.is_rule_enabled("XP-002"));
-        assert!(config.is_rule_enabled("XP-003"));
+        assert!(ctx.is_rule_enabled("XP-002"));
+        assert!(ctx.is_rule_enabled("XP-003"));
     }
 
     #[test]
@@ -467,9 +474,10 @@ Body"#;
         config.target = TargetTool::Cursor;
 
         // Cursor target should still have XP-* rules enabled
-        assert!(config.is_rule_enabled("XP-001"));
-        assert!(config.is_rule_enabled("XP-002"));
-        assert!(config.is_rule_enabled("XP-003"));
+        let ctx = make_ctx(&config);
+        assert!(ctx.is_rule_enabled("XP-001"));
+        assert!(ctx.is_rule_enabled("XP-002"));
+        assert!(ctx.is_rule_enabled("XP-003"));
     }
 
     #[test]
@@ -480,7 +488,7 @@ Check .claude/ and .cursor/ paths"#;
 
         let validator = CrossPlatformValidator;
         let diagnostics =
-            validator.validate(Path::new("AGENTS.md"), content, &LintConfig::default());
+            validator.validate(Path::new("AGENTS.md"), content, &make_ctx(&LintConfig::default()));
 
         // Should have:
         // - XP-001 for context:fork
@@ -514,7 +522,7 @@ allowed-tools: Read Write Bash
 "#;
         let validator = CrossPlatformValidator;
         let diagnostics =
-            validator.validate(Path::new("AGENTS.md"), content, &LintConfig::default());
+            validator.validate(Path::new("AGENTS.md"), content, &make_ctx(&LintConfig::default()));
 
         let xp_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XP-001").collect();
         assert!(
@@ -537,7 +545,7 @@ agent: some-agent
 "#;
         let validator = CrossPlatformValidator;
         let diagnostics =
-            validator.validate(Path::new("AGENTS.md"), content, &LintConfig::default());
+            validator.validate(Path::new("AGENTS.md"), content, &make_ctx(&LintConfig::default()));
 
         let xp_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XP-001").collect();
 
@@ -566,7 +574,7 @@ agent: some-agent
 "#;
         let validator = CrossPlatformValidator;
         let diagnostics =
-            validator.validate(Path::new("AGENTS.md"), content, &LintConfig::default());
+            validator.validate(Path::new("AGENTS.md"), content, &make_ctx(&LintConfig::default()));
 
         let xp_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XP-001").collect();
 

@@ -1,7 +1,7 @@
 //! XML tag balance validation
 
 use crate::{
-    config::LintConfig,
+    context::ValidatorContext,
     diagnostics::{Diagnostic, Fix},
     parsers::markdown::{check_xml_balance_with_content_end, extract_xml_tags, XmlBalanceError},
     rules::Validator,
@@ -11,11 +11,11 @@ use std::path::Path;
 pub struct XmlValidator;
 
 impl Validator for XmlValidator {
-    fn validate(&self, path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic> {
+    fn validate(&self, path: &Path, content: &str, ctx: &ValidatorContext) -> Vec<Diagnostic> {
         let mut diagnostics = Vec::new();
 
         // Early return if XML category is disabled or legacy flag is disabled
-        if !config.rules.xml || !config.rules.xml_balance {
+        if !ctx.config.rules.xml || !ctx.config.rules.xml_balance {
             return diagnostics;
         }
 
@@ -32,7 +32,7 @@ impl Validator for XmlValidator {
                     ..
                 } => {
                     let rule_id = "XML-001";
-                    if !config.is_rule_enabled(rule_id) {
+                    if !ctx.is_rule_enabled(rule_id) {
                         continue;
                     }
                     let message = format!("Unclosed XML tag '<{}>'", tag);
@@ -64,7 +64,7 @@ impl Validator for XmlValidator {
                     column,
                 } => {
                     let rule_id = "XML-002";
-                    if !config.is_rule_enabled(rule_id) {
+                    if !ctx.is_rule_enabled(rule_id) {
                         continue;
                     }
                     let message = format!("Expected '</{}>' but found '</{}>'", expected, found);
@@ -77,7 +77,7 @@ impl Validator for XmlValidator {
                 }
                 XmlBalanceError::UnmatchedClosing { tag, line, column } => {
                     let rule_id = "XML-003";
-                    if !config.is_rule_enabled(rule_id) {
+                    if !ctx.is_rule_enabled(rule_id) {
                         continue;
                     }
                     let message = format!("Unmatched closing tag '</{}>'", tag);
@@ -102,12 +102,18 @@ impl Validator for XmlValidator {
 mod tests {
     use super::*;
     use crate::config::LintConfig;
+    use crate::fs::RealFileSystem;
+
+    fn make_ctx(config: &LintConfig) -> ValidatorContext<'_> {
+        ValidatorContext::new(config, &RealFileSystem)
+    }
 
     #[test]
     fn test_unclosed_tag() {
         let content = "<example>test";
         let validator = XmlValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+        let config = LintConfig::default();
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&config));
 
         assert!(!diagnostics.is_empty());
     }
@@ -116,7 +122,8 @@ mod tests {
     fn test_balanced_tags() {
         let content = "<example>test</example>";
         let validator = XmlValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+        let config = LintConfig::default();
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&config));
 
         assert!(diagnostics.is_empty());
     }
@@ -128,7 +135,7 @@ mod tests {
 
         let content = "<example>test";
         let validator = XmlValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &config);
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&config));
 
         assert!(diagnostics.is_empty());
     }
@@ -140,7 +147,7 @@ mod tests {
 
         let content = "<example>test";
         let validator = XmlValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &config);
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&config));
 
         assert!(diagnostics.is_empty());
     }
@@ -150,7 +157,8 @@ mod tests {
     fn test_xml_001_rule_id() {
         let content = "<example>test";
         let validator = XmlValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+        let config = LintConfig::default();
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&config));
 
         assert_eq!(diagnostics.len(), 1);
         assert_eq!(diagnostics[0].rule, "XML-001");
@@ -163,7 +171,8 @@ mod tests {
         // <a><b></a></b> produces a mismatch: expected </b> but found </a>
         let content = "<outer><inner></outer></inner>";
         let validator = XmlValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+        let config = LintConfig::default();
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&config));
 
         // Find the XML-002 diagnostic
         let xml_002 = diagnostics.iter().find(|d| d.rule == "XML-002");
@@ -179,7 +188,8 @@ mod tests {
     fn test_xml_003_rule_id() {
         let content = "</orphan>";
         let validator = XmlValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+        let config = LintConfig::default();
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&config));
 
         assert_eq!(diagnostics.len(), 1);
         assert_eq!(diagnostics[0].rule, "XML-003");
@@ -194,7 +204,7 @@ mod tests {
 
         let content = "<example>test";
         let validator = XmlValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &config);
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&config));
 
         assert!(diagnostics.is_empty());
     }
@@ -206,7 +216,7 @@ mod tests {
 
         let content = "<outer><inner></outer></inner>";
         let validator = XmlValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &config);
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&config));
 
         // XML-002 should be filtered out, but other errors may remain
         assert!(!diagnostics.iter().any(|d| d.rule == "XML-002"));
@@ -219,7 +229,7 @@ mod tests {
 
         let content = "</orphan>";
         let validator = XmlValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &config);
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&config));
 
         assert!(diagnostics.is_empty());
     }
@@ -230,7 +240,8 @@ mod tests {
     fn test_xml_001_has_fix() {
         let content = "<example>test content";
         let validator = XmlValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+        let config = LintConfig::default();
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&config));
 
         assert_eq!(diagnostics.len(), 1);
         assert_eq!(diagnostics[0].rule, "XML-001");
@@ -247,7 +258,8 @@ mod tests {
     fn test_xml_001_fix_correct_byte_position() {
         let content = "<tag>some text here";
         let validator = XmlValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+        let config = LintConfig::default();
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&config));
 
         assert_eq!(diagnostics.len(), 1);
         let fix = &diagnostics[0].fixes[0];
@@ -262,7 +274,8 @@ mod tests {
     fn test_xml_001_fix_nested_tags() {
         let content = "<outer><inner>content";
         let validator = XmlValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+        let config = LintConfig::default();
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&config));
 
         // Both tags are unclosed
         assert_eq!(diagnostics.len(), 2);
@@ -281,7 +294,8 @@ mod tests {
     fn test_xml_001_fix_nested_tags_applied() {
         let content = "<outer><inner>content";
         let validator = XmlValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+        let config = LintConfig::default();
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&config));
 
         // Both tags are unclosed
         assert_eq!(diagnostics.len(), 2);
@@ -320,7 +334,8 @@ mod tests {
     fn test_xml_001_fix_description() {
         let content = "<myTag>incomplete";
         let validator = XmlValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+        let config = LintConfig::default();
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&config));
 
         assert_eq!(diagnostics.len(), 1);
         let fix = &diagnostics[0].fixes[0];
@@ -332,7 +347,8 @@ mod tests {
         // XML-002 (mismatch) doesn't have auto-fix in this implementation
         let content = "<outer><inner></outer></inner>";
         let validator = XmlValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+        let config = LintConfig::default();
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&config));
 
         let xml_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XML-002").collect();
         assert!(!xml_002.is_empty());
@@ -345,7 +361,8 @@ mod tests {
         // XML-003 (unmatched closing) doesn't have auto-fix
         let content = "</orphan>";
         let validator = XmlValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+        let config = LintConfig::default();
+        let diagnostics = validator.validate(Path::new("test.md"), content, &make_ctx(&config));
 
         assert_eq!(diagnostics.len(), 1);
         assert_eq!(diagnostics[0].rule, "XML-003");

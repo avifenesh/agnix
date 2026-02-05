@@ -1,17 +1,17 @@
 //! Plugin manifest validation (CC-PL-001 to CC-PL-005)
 
 use crate::{
-    config::LintConfig, diagnostics::Diagnostic, rules::Validator, schemas::plugin::PluginSchema,
+    context::ValidatorContext, diagnostics::Diagnostic, rules::Validator, schemas::plugin::PluginSchema,
 };
 use std::path::Path;
 
 pub struct PluginValidator;
 
 impl Validator for PluginValidator {
-    fn validate(&self, path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic> {
+    fn validate(&self, path: &Path, content: &str, ctx: &ValidatorContext) -> Vec<Diagnostic> {
         let mut diagnostics = Vec::new();
 
-        if !config.rules.plugins {
+        if !ctx.config.rules.plugins {
             return diagnostics;
         }
 
@@ -22,7 +22,7 @@ impl Validator for PluginValidator {
             .map(|n| n == ".claude-plugin")
             .unwrap_or(false);
 
-        if config.is_rule_enabled("CC-PL-001") && !is_in_claude_plugin {
+        if ctx.is_rule_enabled("CC-PL-001") && !is_in_claude_plugin {
             diagnostics.push(
                 Diagnostic::error(
                     path.to_path_buf(),
@@ -35,7 +35,7 @@ impl Validator for PluginValidator {
             );
         }
 
-        if config.is_rule_enabled("CC-PL-002") && is_in_claude_plugin {
+        if ctx.is_rule_enabled("CC-PL-002") && is_in_claude_plugin {
             if let Some(plugin_dir) = plugin_dir {
                 let disallowed = ["skills", "agents", "hooks", "commands"];
                 for entry in disallowed {
@@ -60,7 +60,7 @@ impl Validator for PluginValidator {
         let raw_value: serde_json::Value = match serde_json::from_str(content) {
             Ok(v) => v,
             Err(e) => {
-                if config.is_rule_enabled("CC-PL-006") {
+                if ctx.is_rule_enabled("CC-PL-006") {
                     diagnostics.push(Diagnostic::error(
                         path.to_path_buf(),
                         1,
@@ -73,13 +73,13 @@ impl Validator for PluginValidator {
             }
         };
 
-        if config.is_rule_enabled("CC-PL-004") {
+        if ctx.is_rule_enabled("CC-PL-004") {
             check_required_field(&raw_value, "name", path, diagnostics.as_mut());
             check_required_field(&raw_value, "description", path, diagnostics.as_mut());
             check_required_field(&raw_value, "version", path, diagnostics.as_mut());
         }
 
-        if config.is_rule_enabled("CC-PL-005") {
+        if ctx.is_rule_enabled("CC-PL-005") {
             if let Some(name) = raw_value.get("name").and_then(|v| v.as_str()) {
                 if name.trim().is_empty() {
                     diagnostics.push(
@@ -103,7 +103,7 @@ impl Validator for PluginValidator {
             }
         };
 
-        if config.is_rule_enabled("CC-PL-003") {
+        if ctx.is_rule_enabled("CC-PL-003") {
             let version = schema.version.trim();
             if !version.is_empty() && !is_valid_semver(version) {
                 diagnostics.push(
@@ -158,8 +158,14 @@ fn is_valid_semver(version: &str) -> bool {
 mod tests {
     use super::*;
     use crate::config::LintConfig;
+    use crate::context::ValidatorContext;
+    use crate::fs::RealFileSystem;
     use std::fs;
     use tempfile::TempDir;
+
+    fn make_ctx(config: &LintConfig) -> ValidatorContext<'_> {
+        ValidatorContext::new(config, &RealFileSystem)
+    }
 
     fn write_plugin(path: &Path, content: &str) {
         fs::create_dir_all(path.parent().unwrap()).unwrap();
@@ -179,7 +185,7 @@ mod tests {
         let diagnostics = validator.validate(
             &plugin_path,
             &fs::read_to_string(&plugin_path).unwrap(),
-            &LintConfig::default(),
+            &make_ctx(&LintConfig::default()),
         );
 
         assert!(diagnostics.iter().any(|d| d.rule == "CC-PL-001"));
@@ -199,7 +205,7 @@ mod tests {
         let diagnostics = validator.validate(
             &plugin_path,
             &fs::read_to_string(&plugin_path).unwrap(),
-            &LintConfig::default(),
+            &make_ctx(&LintConfig::default()),
         );
 
         assert!(diagnostics.iter().any(|d| d.rule == "CC-PL-002"));
@@ -218,7 +224,7 @@ mod tests {
         let diagnostics = validator.validate(
             &plugin_path,
             &fs::read_to_string(&plugin_path).unwrap(),
-            &LintConfig::default(),
+            &make_ctx(&LintConfig::default()),
         );
 
         assert!(diagnostics.iter().any(|d| d.rule == "CC-PL-003"));
@@ -237,7 +243,7 @@ mod tests {
         let diagnostics = validator.validate(
             &plugin_path,
             &fs::read_to_string(&plugin_path).unwrap(),
-            &LintConfig::default(),
+            &make_ctx(&LintConfig::default()),
         );
 
         assert!(!diagnostics.iter().any(|d| d.rule == "CC-PL-003"));
@@ -256,7 +262,7 @@ mod tests {
         let diagnostics = validator.validate(
             &plugin_path,
             &fs::read_to_string(&plugin_path).unwrap(),
-            &LintConfig::default(),
+            &make_ctx(&LintConfig::default()),
         );
 
         assert!(!diagnostics.iter().any(|d| d.rule == "CC-PL-003"));
@@ -275,7 +281,7 @@ mod tests {
         let diagnostics = validator.validate(
             &plugin_path,
             &fs::read_to_string(&plugin_path).unwrap(),
-            &LintConfig::default(),
+            &make_ctx(&LintConfig::default()),
         );
 
         assert!(diagnostics.iter().any(|d| d.rule == "CC-PL-004"));
@@ -292,7 +298,7 @@ mod tests {
         let diagnostics = validator.validate(
             &plugin_path,
             &fs::read_to_string(&plugin_path).unwrap(),
-            &LintConfig::default(),
+            &make_ctx(&LintConfig::default()),
         );
 
         assert!(diagnostics.iter().any(|d| d.rule == "CC-PL-004"));
@@ -311,7 +317,7 @@ mod tests {
         let diagnostics = validator.validate(
             &plugin_path,
             &fs::read_to_string(&plugin_path).unwrap(),
-            &LintConfig::default(),
+            &make_ctx(&LintConfig::default()),
         );
 
         assert!(diagnostics.iter().any(|d| d.rule == "CC-PL-005"));

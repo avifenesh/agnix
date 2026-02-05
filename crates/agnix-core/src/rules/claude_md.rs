@@ -1,9 +1,8 @@
 //! CLAUDE.md validation
 
 use crate::{
-    config::LintConfig,
+    context::ValidatorContext,
     diagnostics::{Diagnostic, Fix},
-    file_utils::safe_read_file,
     rules::Validator,
     schemas::claude_md::{
         check_readme_duplication, check_token_count, extract_npm_scripts, find_critical_in_middle,
@@ -15,7 +14,7 @@ use std::path::Path;
 pub struct ClaudeMdValidator;
 
 impl Validator for ClaudeMdValidator {
-    fn validate(&self, path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic> {
+    fn validate(&self, path: &Path, content: &str, ctx: &ValidatorContext) -> Vec<Diagnostic> {
         let mut diagnostics = Vec::new();
 
         // Only validate CLAUDE.md variants (not AGENTS.* files)
@@ -27,7 +26,7 @@ impl Validator for ClaudeMdValidator {
 
         // CC-MEM-005: Generic instructions detection
         // Also check legacy config flag for backward compatibility
-        if config.is_rule_enabled("CC-MEM-005") && config.rules.generic_instructions {
+        if ctx.is_rule_enabled("CC-MEM-005") && ctx.config.rules.generic_instructions {
             let generic_insts = find_generic_instructions(content);
             for inst in generic_insts {
                 diagnostics.push(
@@ -56,7 +55,7 @@ impl Validator for ClaudeMdValidator {
         }
 
         // CC-MEM-009: Token count exceeded
-        if config.is_rule_enabled("CC-MEM-009") {
+        if ctx.is_rule_enabled("CC-MEM-009") {
             if let Some(exceeded) = check_token_count(content) {
                 diagnostics.push(
                     Diagnostic::warning(
@@ -77,7 +76,7 @@ impl Validator for ClaudeMdValidator {
         }
 
         // CC-MEM-006: Negative without positive
-        if config.is_rule_enabled("CC-MEM-006") {
+        if ctx.is_rule_enabled("CC-MEM-006") {
             let negatives = find_negative_without_positive(content);
             for neg in negatives {
                 diagnostics.push(
@@ -100,7 +99,7 @@ impl Validator for ClaudeMdValidator {
         }
 
         // CC-MEM-007: Weak constraint language in critical sections
-        if config.is_rule_enabled("CC-MEM-007") {
+        if ctx.is_rule_enabled("CC-MEM-007") {
             let weak = find_weak_constraints(content);
             for w in weak {
                 // Determine the replacement for weak language
@@ -136,7 +135,7 @@ impl Validator for ClaudeMdValidator {
         }
 
         // CC-MEM-008: Critical content in middle
-        if config.is_rule_enabled("CC-MEM-008") {
+        if ctx.is_rule_enabled("CC-MEM-008") {
             let critical = find_critical_in_middle(content);
             for c in critical {
                 diagnostics.push(
@@ -159,14 +158,14 @@ impl Validator for ClaudeMdValidator {
         }
 
         // CC-MEM-004: Invalid npm script reference
-        if config.is_rule_enabled("CC-MEM-004") {
+        if ctx.is_rule_enabled("CC-MEM-004") {
             let npm_refs = extract_npm_scripts(content);
             if !npm_refs.is_empty() {
                 // Try to find package.json relative to the CLAUDE.md file
                 if let Some(parent) = path.parent() {
                     let package_json_path = parent.join("package.json");
-                    // Use safe_read_file to prevent DoS and limit file size
-                    if let Ok(pkg_content) = safe_read_file(&package_json_path) {
+                    // Use ctx.fs.read_file to prevent DoS and limit file size
+                    if let Ok(pkg_content) = ctx.fs.read_file(&package_json_path) {
                         // Parse package.json and extract script names
                         if let Ok(pkg_json) =
                             serde_json::from_str::<serde_json::Value>(&pkg_content)
@@ -210,11 +209,11 @@ impl Validator for ClaudeMdValidator {
         }
 
         // CC-MEM-010: README duplication
-        if config.is_rule_enabled("CC-MEM-010") {
+        if ctx.is_rule_enabled("CC-MEM-010") {
             if let Some(parent) = path.parent() {
                 let readme_path = parent.join("README.md");
-                // Use safe_read_file to prevent DoS and limit file size
-                if let Ok(readme_content) = safe_read_file(&readme_path) {
+                // Use ctx.fs.read_file to prevent DoS and limit file size
+                if let Ok(readme_content) = ctx.fs.read_file(&readme_path) {
                     if let Some(dup) = check_readme_duplication(content, &readme_content) {
                         diagnostics.push(
                             Diagnostic::warning(
@@ -267,14 +266,20 @@ fn get_weak_constraint_replacement(text: &str) -> (Option<&'static str>, bool) {
 mod tests {
     use super::*;
     use crate::config::LintConfig;
+    use crate::fs::RealFileSystem;
     use std::fs;
+
+    fn make_ctx(config: &LintConfig) -> ValidatorContext<'_> {
+        ValidatorContext::new(config, &RealFileSystem)
+    }
 
     #[test]
     fn test_generic_instruction_detected() {
         let content = "Be helpful and accurate when responding.";
         let validator = ClaudeMdValidator;
+        let config = LintConfig::default();
         let diagnostics =
-            validator.validate(Path::new("CLAUDE.md"), content, &LintConfig::default());
+            validator.validate(Path::new("CLAUDE.md"), content, &make_ctx(&config));
 
         assert!(!diagnostics.is_empty());
         // Verify rule ID is CC-MEM-005
@@ -289,7 +294,7 @@ mod tests {
 
         // AGENTS.md should be skipped
         let diagnostics =
-            validator.validate(Path::new("AGENTS.md"), content, &LintConfig::default());
+            validator.validate(Path::new("AGENTS.md"), content, &make_ctx(&LintConfig::default()));
         assert!(
             diagnostics.is_empty(),
             "CC-MEM rules should not fire for AGENTS.md"
@@ -299,7 +304,7 @@ mod tests {
         let diagnostics = validator.validate(
             Path::new("AGENTS.local.md"),
             content,
-            &LintConfig::default(),
+            &make_ctx(&LintConfig::default()),
         );
         assert!(
             diagnostics.is_empty(),
@@ -310,7 +315,7 @@ mod tests {
         let diagnostics = validator.validate(
             Path::new("AGENTS.override.md"),
             content,
-            &LintConfig::default(),
+            &make_ctx(&LintConfig::default()),
         );
         assert!(
             diagnostics.is_empty(),
@@ -326,7 +331,7 @@ mod tests {
         let diagnostics = validator.validate(
             Path::new("CLAUDE.local.md"),
             content,
-            &LintConfig::default(),
+            &make_ctx(&LintConfig::default()),
         );
 
         assert!(
@@ -343,7 +348,7 @@ mod tests {
 
         let content = "Be helpful and accurate when responding.";
         let validator = ClaudeMdValidator;
-        let diagnostics = validator.validate(Path::new("CLAUDE.md"), content, &config);
+        let diagnostics = validator.validate(Path::new("CLAUDE.md"), content, &make_ctx(&config));
 
         // Should be empty when memory category is disabled
         assert!(diagnostics.is_empty());
@@ -356,7 +361,7 @@ mod tests {
 
         let content = "Be helpful and accurate when responding.";
         let validator = ClaudeMdValidator;
-        let diagnostics = validator.validate(Path::new("CLAUDE.md"), content, &config);
+        let diagnostics = validator.validate(Path::new("CLAUDE.md"), content, &make_ctx(&config));
 
         // Should be empty when CC-MEM-005 is specifically disabled
         assert!(diagnostics.is_empty());
@@ -371,7 +376,7 @@ mod tests {
 
         let content = "Be helpful and accurate when responding.";
         let validator = ClaudeMdValidator;
-        let diagnostics = validator.validate(Path::new("CLAUDE.md"), content, &config);
+        let diagnostics = validator.validate(Path::new("CLAUDE.md"), content, &make_ctx(&config));
 
         // CC-MEM-005 should not fire for Cursor target
         assert!(diagnostics.is_empty());
@@ -384,7 +389,7 @@ mod tests {
 
         let content = "Be helpful and accurate when responding.";
         let validator = ClaudeMdValidator;
-        let diagnostics = validator.validate(Path::new("CLAUDE.md"), content, &config);
+        let diagnostics = validator.validate(Path::new("CLAUDE.md"), content, &make_ctx(&config));
 
         // Legacy flag should still work
         assert!(diagnostics.is_empty());
@@ -396,7 +401,7 @@ mod tests {
         let content = "x".repeat(6100); // > 6000 chars = > 1500 tokens
         let validator = ClaudeMdValidator;
         let diagnostics =
-            validator.validate(Path::new("CLAUDE.md"), &content, &LintConfig::default());
+            validator.validate(Path::new("CLAUDE.md"), &content, &make_ctx(&LintConfig::default()));
 
         let mem009: Vec<_> = diagnostics
             .iter()
@@ -411,7 +416,7 @@ mod tests {
         let content = "Short content.";
         let validator = ClaudeMdValidator;
         let diagnostics =
-            validator.validate(Path::new("CLAUDE.md"), content, &LintConfig::default());
+            validator.validate(Path::new("CLAUDE.md"), content, &make_ctx(&LintConfig::default()));
 
         let mem009: Vec<_> = diagnostics
             .iter()
@@ -426,7 +431,7 @@ mod tests {
         let content = "Never use var in JavaScript.";
         let validator = ClaudeMdValidator;
         let diagnostics =
-            validator.validate(Path::new("CLAUDE.md"), content, &LintConfig::default());
+            validator.validate(Path::new("CLAUDE.md"), content, &make_ctx(&LintConfig::default()));
 
         let mem006: Vec<_> = diagnostics
             .iter()
@@ -441,7 +446,7 @@ mod tests {
         let content = "Never use var, instead prefer const.";
         let validator = ClaudeMdValidator;
         let diagnostics =
-            validator.validate(Path::new("CLAUDE.md"), content, &LintConfig::default());
+            validator.validate(Path::new("CLAUDE.md"), content, &make_ctx(&LintConfig::default()));
 
         let mem006: Vec<_> = diagnostics
             .iter()
@@ -456,7 +461,7 @@ mod tests {
         let content = "# Critical Rules\n\nYou should follow the coding style.";
         let validator = ClaudeMdValidator;
         let diagnostics =
-            validator.validate(Path::new("CLAUDE.md"), content, &LintConfig::default());
+            validator.validate(Path::new("CLAUDE.md"), content, &make_ctx(&LintConfig::default()));
 
         let mem007: Vec<_> = diagnostics
             .iter()
@@ -471,7 +476,7 @@ mod tests {
         let content = "# General Info\n\nYou should follow the coding style.";
         let validator = ClaudeMdValidator;
         let diagnostics =
-            validator.validate(Path::new("CLAUDE.md"), content, &LintConfig::default());
+            validator.validate(Path::new("CLAUDE.md"), content, &make_ctx(&LintConfig::default()));
 
         let mem007: Vec<_> = diagnostics
             .iter()
@@ -490,7 +495,7 @@ mod tests {
 
         let validator = ClaudeMdValidator;
         let diagnostics =
-            validator.validate(Path::new("CLAUDE.md"), &content, &LintConfig::default());
+            validator.validate(Path::new("CLAUDE.md"), &content, &make_ctx(&LintConfig::default()));
 
         let mem008: Vec<_> = diagnostics
             .iter()
@@ -508,7 +513,7 @@ mod tests {
 
         let validator = ClaudeMdValidator;
         let diagnostics =
-            validator.validate(Path::new("CLAUDE.md"), &content, &LintConfig::default());
+            validator.validate(Path::new("CLAUDE.md"), &content, &make_ctx(&LintConfig::default()));
 
         let mem008: Vec<_> = diagnostics
             .iter()
@@ -541,7 +546,7 @@ mod tests {
 
         let content = fs::read_to_string(&claude_md_path).unwrap();
         let validator = ClaudeMdValidator;
-        let diagnostics = validator.validate(&claude_md_path, &content, &LintConfig::default());
+        let diagnostics = validator.validate(&claude_md_path, &content, &make_ctx(&LintConfig::default()));
 
         let mem004: Vec<_> = diagnostics
             .iter()
@@ -570,7 +575,7 @@ mod tests {
 
         let content = fs::read_to_string(&claude_md_path).unwrap();
         let validator = ClaudeMdValidator;
-        let diagnostics = validator.validate(&claude_md_path, &content, &LintConfig::default());
+        let diagnostics = validator.validate(&claude_md_path, &content, &make_ctx(&LintConfig::default()));
 
         let mem004: Vec<_> = diagnostics
             .iter()
@@ -601,7 +606,7 @@ mod tests {
 
         let content = fs::read_to_string(&claude_md_path).unwrap();
         let validator = ClaudeMdValidator;
-        let diagnostics = validator.validate(&claude_md_path, &content, &LintConfig::default());
+        let diagnostics = validator.validate(&claude_md_path, &content, &make_ctx(&LintConfig::default()));
 
         let mem010: Vec<_> = diagnostics
             .iter()
@@ -637,7 +642,7 @@ mod tests {
 
         let content = fs::read_to_string(&claude_md_path).unwrap();
         let validator = ClaudeMdValidator;
-        let diagnostics = validator.validate(&claude_md_path, &content, &LintConfig::default());
+        let diagnostics = validator.validate(&claude_md_path, &content, &make_ctx(&LintConfig::default()));
 
         let mem010: Vec<_> = diagnostics
             .iter()
@@ -667,7 +672,7 @@ You should consider this approach.
         ];
 
         let validator = ClaudeMdValidator;
-        let diagnostics = validator.validate(Path::new("CLAUDE.md"), &content, &config);
+        let diagnostics = validator.validate(Path::new("CLAUDE.md"), &content, &make_ctx(&config));
 
         // Only CC-MEM-005 should remain (if present)
         for d in &diagnostics {
@@ -686,7 +691,7 @@ You should consider this approach.
         let content = "Be helpful and accurate when responding.";
         let validator = ClaudeMdValidator;
         let diagnostics =
-            validator.validate(Path::new("CLAUDE.md"), content, &LintConfig::default());
+            validator.validate(Path::new("CLAUDE.md"), content, &make_ctx(&LintConfig::default()));
 
         let mem005: Vec<_> = diagnostics
             .iter()
@@ -705,7 +710,7 @@ You should consider this approach.
         let content = "Line one.\nBe helpful and accurate.\nLine three.";
         let validator = ClaudeMdValidator;
         let diagnostics =
-            validator.validate(Path::new("CLAUDE.md"), content, &LintConfig::default());
+            validator.validate(Path::new("CLAUDE.md"), content, &make_ctx(&LintConfig::default()));
 
         let mem005: Vec<_> = diagnostics
             .iter()
@@ -725,7 +730,7 @@ You should consider this approach.
         let content = "Line one.\nBe helpful and accurate.\nLine three.";
         let validator = ClaudeMdValidator;
         let diagnostics =
-            validator.validate(Path::new("CLAUDE.md"), content, &LintConfig::default());
+            validator.validate(Path::new("CLAUDE.md"), content, &make_ctx(&LintConfig::default()));
 
         let mem005: Vec<_> = diagnostics
             .iter()
@@ -745,7 +750,7 @@ You should consider this approach.
         let content = "Be helpful and accurate.";
         let validator = ClaudeMdValidator;
         let diagnostics =
-            validator.validate(Path::new("CLAUDE.md"), content, &LintConfig::default());
+            validator.validate(Path::new("CLAUDE.md"), content, &make_ctx(&LintConfig::default()));
 
         let mem005: Vec<_> = diagnostics
             .iter()
@@ -766,7 +771,7 @@ You should consider this approach.
         let content = "# Critical Rules\n\nYou should follow the coding style.";
         let validator = ClaudeMdValidator;
         let diagnostics =
-            validator.validate(Path::new("CLAUDE.md"), content, &LintConfig::default());
+            validator.validate(Path::new("CLAUDE.md"), content, &make_ctx(&LintConfig::default()));
 
         let mem007: Vec<_> = diagnostics
             .iter()
@@ -785,7 +790,7 @@ You should consider this approach.
         let content = "# Critical Rules\n\nYou should follow the coding style.";
         let validator = ClaudeMdValidator;
         let diagnostics =
-            validator.validate(Path::new("CLAUDE.md"), content, &LintConfig::default());
+            validator.validate(Path::new("CLAUDE.md"), content, &make_ctx(&LintConfig::default()));
 
         let mem007: Vec<_> = diagnostics
             .iter()
@@ -805,7 +810,7 @@ You should consider this approach.
         let content = "# Critical Rules\n\nYou should follow the coding style.";
         let validator = ClaudeMdValidator;
         let diagnostics =
-            validator.validate(Path::new("CLAUDE.md"), content, &LintConfig::default());
+            validator.validate(Path::new("CLAUDE.md"), content, &make_ctx(&LintConfig::default()));
 
         let mem007: Vec<_> = diagnostics
             .iter()
@@ -838,7 +843,7 @@ You should consider this approach.
 
         for (content, expected_replacement, expected_safe) in test_cases {
             let diagnostics =
-                validator.validate(Path::new("CLAUDE.md"), content, &LintConfig::default());
+                validator.validate(Path::new("CLAUDE.md"), content, &make_ctx(&LintConfig::default()));
 
             let mem007: Vec<_> = diagnostics
                 .iter()
@@ -862,7 +867,7 @@ You should consider this approach.
         let content = "# Critical Rules\n\nYou should consider doing this.";
         let validator = ClaudeMdValidator;
         let diagnostics =
-            validator.validate(Path::new("CLAUDE.md"), content, &LintConfig::default());
+            validator.validate(Path::new("CLAUDE.md"), content, &make_ctx(&LintConfig::default()));
 
         let mem007: Vec<_> = diagnostics
             .iter()
