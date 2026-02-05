@@ -2,6 +2,23 @@
 //!
 //! This module validates Claude Code hooks configuration files (.claude/settings.json).
 //!
+//! ## Rules Reference
+//!
+//! | Rule | Severity | Description |
+//! |------|----------|-------------|
+//! | CC-HK-001 | Error | Invalid event name |
+//! | CC-HK-002 | Error | Prompt hook on wrong event type |
+//! | CC-HK-003 | Error | Missing matcher for tool events |
+//! | CC-HK-004 | Error | Matcher on non-tool event |
+//! | CC-HK-005 | Error | Missing type field |
+//! | CC-HK-006 | Error | Missing command field |
+//! | CC-HK-007 | Error | Missing prompt field |
+//! | CC-HK-008 | Error | Script file not found |
+//! | CC-HK-009 | Warning | Dangerous command patterns |
+//! | CC-HK-010 | Warning | Timeout policy violation |
+//! | CC-HK-011 | Error | Invalid timeout value |
+//! | CC-HK-012 | Error | JSON parse error |
+//!
 //! ## Architecture
 //!
 //! Validation functions are organized by rule number and grouped by validation phase:
@@ -11,7 +28,7 @@
 //! - `validate_cc_hk_011_invalid_timeout_values` - Check for invalid timeout values
 //!
 //! ### Event-Level Validation
-//! - `validate_cc_hk_001_event_name` - Validate event name
+//! - `validate_cc_hk_001_event_name` - Validate event name with auto-fix
 //! - `validate_cc_hk_003_matcher_required` - Check matcher required for tool events
 //! - `validate_cc_hk_004_matcher_forbidden` - Check matcher forbidden on non-tool events
 //!
@@ -26,7 +43,7 @@
 //! - `validate_cc_hk_007_prompt_field` - Check for missing prompt field
 //! - `validate_cc_hk_010_prompt_timeout` - Check prompt hook timeout policy
 //!
-//! The main `validate()` method orchestrates these functions.
+//! The main `validate()` method orchestrates these functions in sequence.
 
 use crate::{
     config::LintConfig,
