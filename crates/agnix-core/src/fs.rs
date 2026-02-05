@@ -156,9 +156,7 @@ impl FileSystem for RealFileSystem {
     }
 
     fn is_symlink(&self, path: &Path) -> bool {
-        std::fs::symlink_metadata(path)
-            .map(|m| m.file_type().is_symlink())
-            .unwrap_or(false)
+        path.is_symlink()
     }
 
     fn metadata(&self, path: &Path) -> io::Result<FileMetadata> {
@@ -182,19 +180,21 @@ impl FileSystem for RealFileSystem {
     }
 
     fn read_dir(&self, path: &Path) -> io::Result<Vec<DirEntry>> {
-        let entries = std::fs::read_dir(path)?;
-        let mut result = Vec::new();
-        for entry in entries {
-            let entry = entry?;
-            let path = entry.path();
-            // Use symlink_metadata to avoid following symlinks
-            let metadata = std::fs::symlink_metadata(&path)?;
-            result.push(DirEntry {
-                path,
-                metadata: FileMetadata::from(&metadata),
-            });
-        }
-        Ok(result)
+        Ok(std::fs::read_dir(path)?
+            .filter_map(|entry_res| {
+                // Skip entries that fail to read (permission denied, etc.)
+                // This matches the previous AS-015 behavior of tolerating bad entries
+                let entry = entry_res.ok()?;
+                let path = entry.path();
+                // Use symlink_metadata to avoid following symlinks
+                // Skip entries where metadata fails (transient errors)
+                let metadata = std::fs::symlink_metadata(&path).ok()?;
+                Some(DirEntry {
+                    path,
+                    metadata: FileMetadata::from(&metadata),
+                })
+            })
+            .collect())
     }
 }
 
