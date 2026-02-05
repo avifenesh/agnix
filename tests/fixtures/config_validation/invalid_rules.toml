@@ -2,4 +2,4 @@
 severity = "Warning"
 
 [rules]
-disabled_rules = ["INVALID-001", "FAKE-RULE", "AS-001"]
+disabled_rules = ["INVALID-001", "FAKE-RULE", "UNKNOWN-CATEGORY-001"]
