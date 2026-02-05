@@ -48,6 +48,7 @@ crates/
 ├── agnix-cli/      # CLI binary (clap)
 └── agnix-lsp/      # LSP server (tower-lsp, tokio)
 editors/
+├── neovim/         # Neovim plugin
 └── vscode/         # VS Code extension
 knowledge-base/     # 100 rules, 75+ sources, rules.json
 tests/fixtures/     # Test cases by category

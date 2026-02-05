@@ -34,6 +34,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Audit history tracking and incident response procedures
 
 ### Added
+- Neovim plugin at `editors/neovim/` with full LSP integration (#187)
+  - Automatic LSP attachment to agnix-relevant files
+  - Commands: `:AgnixStart`, `:AgnixStop`, `:AgnixRestart`, `:AgnixInfo`, `:AgnixValidateFile`, `:AgnixShowRules`, `:AgnixFixAll`, `:AgnixFixSafe`, `:AgnixIgnoreRule`, `:AgnixShowRuleDoc`
+  - Optional Telescope integration for rule browsing
+  - `:checkhealth agnix` support
+  - Installation via lazy.nvim, packer.nvim, vim-plug, or manual
 - `agnix schema` command for JSON Schema generation (#206)
   - Outputs JSON Schema for `.agnix.toml` to stdout or file
   - Generated from Rust types using schemars
