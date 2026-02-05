@@ -28,8 +28,10 @@ mod code_actions;
 mod diagnostic_mapper;
 mod hover_provider;
 mod position;
+mod vscode_config;
 
 pub use backend::Backend;
+pub use vscode_config::{VsCodeConfig, VsCodeRules, VsCodeSpecs, VsCodeVersions};
 
 use tower_lsp::{LspService, Server};
 
