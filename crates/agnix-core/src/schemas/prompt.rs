@@ -13,17 +13,16 @@
 //! input.
 
 use regex::Regex;
-use std::sync::OnceLock;
 
 use crate::parsers::markdown::MAX_REGEX_INPUT_SIZE;
+use crate::regex_util::static_regex;
 
-// Static patterns initialized once
-static CRITICAL_KEYWORD_PATTERN: OnceLock<Regex> = OnceLock::new();
-static COT_PHRASE_PATTERN: OnceLock<Regex> = OnceLock::new();
-static SIMPLE_TASK_INDICATOR_PATTERN: OnceLock<Regex> = OnceLock::new();
-static WEAK_LANGUAGE_PATTERN: OnceLock<Regex> = OnceLock::new();
-static CRITICAL_SECTION_PATTERN: OnceLock<Regex> = OnceLock::new();
-static AMBIGUOUS_TERM_PATTERN: OnceLock<Regex> = OnceLock::new();
+static_regex!(fn critical_keyword_pattern, r"(?i)\b(critical|important|must|required|essential|mandatory|crucial|never|always)\b");
+static_regex!(fn cot_phrase_pattern, r"(?i)\b(think\s+step\s+by\s+step|let'?s\s+think|reason\s+through|break\s+(?:it\s+)?down\s+into\s+steps|work\s+through\s+this\s+(?:step\s+by\s+step|systematically))\b");
+static_regex!(fn simple_task_indicator_pattern, r"(?i)\b(read\s+(?:the\s+)?file|write\s+(?:the\s+)?file|copy\s+(?:the\s+)?file|move\s+(?:the\s+)?file|delete\s+(?:the\s+)?file|list\s+files|run\s+(?:the\s+)?(?:command|script)|execute\s+(?:the\s+)?(?:command|script)|format\s+(?:the\s+)?(?:code|output)|rename\s+(?:the\s+)?file|create\s+(?:a\s+)?(?:file|directory|folder)|check\s+(?:if|whether)\s+(?:file|directory)\s+exists)\b");
+static_regex!(fn weak_language_pattern, r"(?i)\b(should|try\s+to|consider|maybe|might|could|possibly|preferably|ideally|optionally)\b");
+static_regex!(fn critical_section_pattern, r"(?i)^#+\s*.*\b(critical|important|required|mandatory|rules|must|essential|security|danger)\b");
+static_regex!(fn ambiguous_term_pattern, r"(?i)\b(usually|sometimes|if\s+possible|when\s+appropriate|as\s+needed|often|occasionally|generally|typically|normally|frequently|regularly|commonly)\b");
 
 // ============================================================================
 // PE-001: Critical Content in Middle ("Lost in the Middle")
@@ -36,15 +35,6 @@ pub struct CriticalInMiddle {
     pub column: usize,
     pub keyword: String,
     pub position_percent: f64,
-}
-
-fn critical_keyword_pattern() -> &'static Regex {
-    CRITICAL_KEYWORD_PATTERN.get_or_init(|| {
-        Regex::new(
-            r"(?i)\b(critical|important|must|required|essential|mandatory|crucial|never|always)\b",
-        )
-        .unwrap()
-    })
 }
 
 /// Find critical content positioned in the middle of the document (40-60%)
@@ -103,21 +93,6 @@ pub struct CotOnSimpleTask {
     pub column: usize,
     pub phrase: String,
     pub task_indicator: String,
-}
-
-fn cot_phrase_pattern() -> &'static Regex {
-    COT_PHRASE_PATTERN.get_or_init(|| {
-        Regex::new(r"(?i)\b(think\s+step\s+by\s+step|let'?s\s+think|reason\s+through|break\s+(?:it\s+)?down\s+into\s+steps|work\s+through\s+this\s+(?:step\s+by\s+step|systematically))\b")
-            .unwrap()
-    })
-}
-
-fn simple_task_indicator_pattern() -> &'static Regex {
-    SIMPLE_TASK_INDICATOR_PATTERN.get_or_init(|| {
-        // Patterns indicating simple/direct tasks that don't need CoT
-        Regex::new(r"(?i)\b(read\s+(?:the\s+)?file|write\s+(?:the\s+)?file|copy\s+(?:the\s+)?file|move\s+(?:the\s+)?file|delete\s+(?:the\s+)?file|list\s+files|run\s+(?:the\s+)?(?:command|script)|execute\s+(?:the\s+)?(?:command|script)|format\s+(?:the\s+)?(?:code|output)|rename\s+(?:the\s+)?file|create\s+(?:a\s+)?(?:file|directory|folder)|check\s+(?:if|whether)\s+(?:file|directory)\s+exists)\b")
-            .unwrap()
-    })
 }
 
 /// Find chain-of-thought phrases used on simple tasks
@@ -197,21 +172,6 @@ pub struct WeakLanguageInCritical {
     pub section_name: String,
 }
 
-fn weak_language_pattern() -> &'static Regex {
-    WEAK_LANGUAGE_PATTERN.get_or_init(|| {
-        Regex::new(r"(?i)\b(should|try\s+to|consider|maybe|might|could|possibly|preferably|ideally|optionally)\b")
-            .unwrap()
-    })
-}
-
-fn critical_section_pattern() -> &'static Regex {
-    CRITICAL_SECTION_PATTERN.get_or_init(|| {
-        // Use word boundaries to avoid matching substrings like "Hypercritical"
-        Regex::new(r"(?i)^#+\s*.*\b(critical|important|required|mandatory|rules|must|essential|security|danger)\b")
-            .unwrap()
-    })
-}
-
 /// Find weak imperative language in critical sections
 ///
 /// Critical sections should use strong language (must/always/never) rather than
@@ -270,14 +230,6 @@ pub struct AmbiguousInstruction {
     pub column: usize,
     pub term: String,
     pub context: String,
-}
-
-fn ambiguous_term_pattern() -> &'static Regex {
-    AMBIGUOUS_TERM_PATTERN.get_or_init(|| {
-        // Terms that create ambiguity without specific criteria
-        Regex::new(r"(?i)\b(usually|sometimes|if\s+possible|when\s+appropriate|as\s+needed|often|occasionally|generally|typically|normally|frequently|regularly|commonly)\b")
-            .unwrap()
-    })
 }
 
 /// Find ambiguous terms in instructions
@@ -350,6 +302,16 @@ pub fn find_ambiguous_instructions(content: &str) -> Vec<AmbiguousInstruction> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_regex_patterns_compile() {
+        let _ = critical_keyword_pattern();
+        let _ = cot_phrase_pattern();
+        let _ = simple_task_indicator_pattern();
+        let _ = weak_language_pattern();
+        let _ = critical_section_pattern();
+        let _ = ambiguous_term_pattern();
+    }
 
     // ===== PE-001: Critical Content in Middle =====
 
