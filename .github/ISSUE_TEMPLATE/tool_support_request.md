@@ -21,7 +21,7 @@ Describe the config file(s) used by this tool:
 - Example config snippet:
 
 ```
-(paste example config here)
+(paste example config here -- remove any API keys, tokens, passwords, or other secrets first)
 ```
 
 ## Tier Suggestion

@@ -28,7 +28,7 @@ See `knowledge-base/VALIDATION-RULES.md` for the evidence schema reference (`sou
 Show a config snippet that demonstrates the problematic pattern this rule would catch:
 
 ```
-(paste config here)
+(paste config here -- remove any API keys, tokens, passwords, or other secrets first)
 ```
 
 ## Expected Behavior
