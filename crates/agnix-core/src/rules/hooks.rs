@@ -343,51 +343,218 @@ fn validate_cc_hk_004_matcher_forbidden(
     }
 }
 
-impl HooksValidator {
-    fn check_dangerous_patterns(&self, command: &str) -> Option<(&'static str, &'static str)> {
-        for dp in DANGEROUS_PATTERNS.iter() {
-            if dp.regex.is_match(command) {
-                return Some((dp.pattern, dp.reason));
+// =============================================================================
+// Helper Functions
+// =============================================================================
+
+/// Check if a command matches any dangerous patterns.
+/// Returns (pattern, reason) if a match is found.
+fn check_dangerous_patterns(command: &str) -> Option<(&'static str, &'static str)> {
+    for dp in DANGEROUS_PATTERNS.iter() {
+        if dp.regex.is_match(command) {
+            return Some((dp.pattern, dp.reason));
+        }
+    }
+    None
+}
+
+/// Extract script paths from a command string.
+fn extract_script_paths(command: &str) -> Vec<String> {
+    let mut paths = Vec::new();
+    for re in SCRIPT_PATTERNS.iter() {
+        for caps in re.captures_iter(command) {
+            if let Some(m) = caps.get(1) {
+                let path = m.as_str().trim_matches(|c| c == '"' || c == '\'');
+                if path.contains("://") || path.starts_with("http") {
+                    continue;
+                }
+                paths.push(path.to_string());
             }
         }
-        None
+    }
+    paths
+}
+
+/// Resolve a script path relative to the project directory.
+fn resolve_script_path(script_path: &str, project_dir: &Path) -> std::path::PathBuf {
+    let resolved = script_path
+        .replace("$CLAUDE_PROJECT_DIR", &project_dir.display().to_string())
+        .replace("${CLAUDE_PROJECT_DIR}", &project_dir.display().to_string());
+
+    let path = std::path::PathBuf::from(&resolved);
+
+    if path.is_relative() {
+        project_dir.join(path)
+    } else {
+        path
+    }
+}
+
+/// Check if a path contains unresolved environment variables.
+fn has_unresolved_env_vars(path: &str) -> bool {
+    let after_claude = path
+        .replace("$CLAUDE_PROJECT_DIR", "")
+        .replace("${CLAUDE_PROJECT_DIR}", "");
+    after_claude.contains('$')
+}
+
+// =============================================================================
+// Command Hook Validation Functions (CC-HK-006, CC-HK-008, CC-HK-009, CC-HK-010)
+// =============================================================================
+
+/// CC-HK-006: Missing command field
+///
+/// Command hooks must have a 'command' field specifying the command to execute.
+fn validate_cc_hk_006_command_field(
+    command: &Option<String>,
+    hook_location: &str,
+    path: &Path,
+    diagnostics: &mut Vec<Diagnostic>,
+) {
+    if command.is_none() {
+        diagnostics.push(
+            Diagnostic::error(
+                path.to_path_buf(),
+                1,
+                0,
+                "CC-HK-006",
+                format!(
+                    "Command hook at {} is missing required 'command' field",
+                    hook_location
+                ),
+            )
+            .with_suggestion("Add a 'command' field with the command to execute".to_string()),
+        );
+    }
+}
+
+/// CC-HK-008: Script file not found
+///
+/// Validates that referenced script files exist on the filesystem.
+fn validate_cc_hk_008_script_exists(
+    command: &str,
+    project_dir: &Path,
+    config: &LintConfig,
+    path: &Path,
+    diagnostics: &mut Vec<Diagnostic>,
+) {
+    let fs = config.fs();
+    for script_path in extract_script_paths(command) {
+        if !has_unresolved_env_vars(&script_path) {
+            let resolved = resolve_script_path(&script_path, project_dir);
+            if !fs.exists(&resolved) {
+                diagnostics.push(
+                    Diagnostic::error(
+                        path.to_path_buf(),
+                        1,
+                        0,
+                        "CC-HK-008",
+                        format!(
+                            "Script file not found at '{}' (resolved to '{}')",
+                            script_path,
+                            resolved.display()
+                        ),
+                    )
+                    .with_suggestion("Create the script file or correct the path".to_string()),
+                );
+            }
+        }
+    }
+}
+
+/// CC-HK-009: Dangerous command patterns
+///
+/// Warns about potentially dangerous commands like `rm -rf /`, `git reset --hard`, etc.
+fn validate_cc_hk_009_dangerous_patterns(
+    command: &str,
+    path: &Path,
+    diagnostics: &mut Vec<Diagnostic>,
+) {
+    if let Some((pattern, reason)) = check_dangerous_patterns(command) {
+        diagnostics.push(
+            Diagnostic::warning(
+                path.to_path_buf(),
+                1,
+                0,
+                "CC-HK-009",
+                format!("Potentially dangerous command pattern detected: {}", reason),
+            )
+            .with_suggestion(format!(
+                "Review the command for safety. Pattern matched: {}",
+                pattern
+            )),
+        );
+    }
+}
+
+/// CC-HK-010: Command hook timeout policy
+///
+/// Warns if timeout is missing or exceeds the 600s default for command hooks.
+fn validate_cc_hk_010_command_timeout(
+    timeout: &Option<u64>,
+    hook_location: &str,
+    version_pinned: bool,
+    path: &Path,
+    diagnostics: &mut Vec<Diagnostic>,
+) {
+    if timeout.is_none() {
+        let mut diag = Diagnostic::warning(
+            path.to_path_buf(),
+            1,
+            0,
+            "CC-HK-010",
+            format!("Command hook at {} has no timeout specified", hook_location),
+        )
+        .with_suggestion("Add a \"timeout\" field (e.g., 600 for command hooks)".to_string());
+
+        if !version_pinned {
+            diag = diag.with_assumption(CC_HK_010_ASSUMPTION);
+        }
+
+        diagnostics.push(diag);
+    }
+    if let Some(t) = timeout {
+        if *t > COMMAND_HOOK_DEFAULT_TIMEOUT {
+            let mut diag = Diagnostic::warning(
+                path.to_path_buf(),
+                1,
+                0,
+                "CC-HK-010",
+                format!(
+                    "Command hook at {} has timeout {}s exceeding {}s default",
+                    hook_location, t, COMMAND_HOOK_DEFAULT_TIMEOUT
+                ),
+            )
+            .with_suggestion(format!(
+                "Consider timeout <= {}s (10-minute default limit)",
+                COMMAND_HOOK_DEFAULT_TIMEOUT
+            ));
+
+            if !version_pinned {
+                diag = diag.with_assumption(CC_HK_010_ASSUMPTION);
+            }
+
+            diagnostics.push(diag);
+        }
+    }
+}
+
+// Keep HooksValidator impl for backward compatibility with existing tests
+impl HooksValidator {
+    fn check_dangerous_patterns(&self, command: &str) -> Option<(&'static str, &'static str)> {
+        check_dangerous_patterns(command)
     }
 
     fn extract_script_paths(&self, command: &str) -> Vec<String> {
-        let mut paths = Vec::new();
-        for re in SCRIPT_PATTERNS.iter() {
-            for caps in re.captures_iter(command) {
-                if let Some(m) = caps.get(1) {
-                    let path = m.as_str().trim_matches(|c| c == '"' || c == '\'');
-                    if path.contains("://") || path.starts_with("http") {
-                        continue;
-                    }
-                    paths.push(path.to_string());
-                }
-            }
-        }
-        paths
+        extract_script_paths(command)
     }
 
     fn resolve_script_path(&self, script_path: &str, project_dir: &Path) -> std::path::PathBuf {
-        let resolved = script_path
-            .replace("$CLAUDE_PROJECT_DIR", &project_dir.display().to_string())
-            .replace("${CLAUDE_PROJECT_DIR}", &project_dir.display().to_string());
-
-        let path = std::path::PathBuf::from(&resolved);
-
-        if path.is_relative() {
-            project_dir.join(path)
-        } else {
-            path
-        }
+        resolve_script_path(script_path, project_dir)
     }
 
     fn has_unresolved_env_vars(&self, path: &str) -> bool {
-        let after_claude = path
-            .replace("$CLAUDE_PROJECT_DIR", "")
-            .replace("${CLAUDE_PROJECT_DIR}", "");
-        after_claude.contains('$')
+        has_unresolved_env_vars(path)
     }
 }
 
@@ -510,128 +677,44 @@ impl Validator for HooksValidator {
                         } => {
                             // CC-HK-010: Timeout policy for command hooks (600s default)
                             if config.is_rule_enabled("CC-HK-010") {
-                                let version_pinned = config.is_claude_code_version_pinned();
-
-                                if timeout.is_none() {
-                                    let mut diag = Diagnostic::warning(
-                                        path.to_path_buf(),
-                                        1,
-                                        0,
-                                        "CC-HK-010",
-                                        format!(
-                                            "Command hook at {} has no timeout specified",
-                                            hook_location
-                                        ),
-                                    )
-                                    .with_suggestion(
-                                        "Add a \"timeout\" field (e.g., 600 for command hooks)"
-                                            .to_string(),
-                                    );
-
-                                    if !version_pinned {
-                                        diag = diag.with_assumption(CC_HK_010_ASSUMPTION);
-                                    }
-
-                                    diagnostics.push(diag);
-                                }
-                                if let Some(t) = timeout {
-                                    if *t > COMMAND_HOOK_DEFAULT_TIMEOUT {
-                                        let mut diag = Diagnostic::warning(
-                                            path.to_path_buf(),
-                                            1,
-                                            0,
-                                            "CC-HK-010",
-                                            format!(
-                                                "Command hook at {} has timeout {}s exceeding {}s default",
-                                                hook_location, t, COMMAND_HOOK_DEFAULT_TIMEOUT
-                                            ),
-                                        )
-                                        .with_suggestion(
-                                            format!("Consider timeout <= {}s (10-minute default limit)", COMMAND_HOOK_DEFAULT_TIMEOUT),
-                                        );
-
-                                        if !version_pinned {
-                                            diag = diag.with_assumption(CC_HK_010_ASSUMPTION);
-                                        }
-
-                                        diagnostics.push(diag);
-                                    }
-                                }
+                                validate_cc_hk_010_command_timeout(
+                                    timeout,
+                                    &hook_location,
+                                    config.is_claude_code_version_pinned(),
+                                    path,
+                                    &mut diagnostics,
+                                );
                             }
 
                             // CC-HK-006: Missing command field
-                            if config.is_rule_enabled("CC-HK-006") && command.is_none() {
-                                diagnostics.push(
-                                        Diagnostic::error(
-                                            path.to_path_buf(),
-                                            1,
-                                            0,
-                                            "CC-HK-006",
-                                            format!(
-                                                "Command hook at {} is missing required 'command' field",
-                                                hook_location
-                                            ),
-                                        )
-                                        .with_suggestion(
-                                            "Add a 'command' field with the command to execute"
-                                                .to_string(),
-                                        ),
-                                    );
+                            if config.is_rule_enabled("CC-HK-006") {
+                                validate_cc_hk_006_command_field(
+                                    command,
+                                    &hook_location,
+                                    path,
+                                    &mut diagnostics,
+                                );
                             }
 
                             if let Some(cmd) = command {
                                 // CC-HK-008: Script file not found
                                 if config.is_rule_enabled("CC-HK-008") {
-                                    let fs = config.fs();
-                                    for script_path in self.extract_script_paths(cmd) {
-                                        if !self.has_unresolved_env_vars(&script_path) {
-                                            let resolved =
-                                                self.resolve_script_path(&script_path, project_dir);
-                                            if !fs.exists(&resolved) {
-                                                diagnostics.push(
-                                                    Diagnostic::error(
-                                                        path.to_path_buf(),
-                                                        1,
-                                                        0,
-                                                        "CC-HK-008",
-                                                        format!(
-                                                            "Script file not found at '{}' (resolved to '{}')",
-                                                            script_path,
-                                                            resolved.display()
-                                                        ),
-                                                    )
-                                                    .with_suggestion(
-                                                        "Create the script file or correct the path"
-                                                            .to_string(),
-                                                    ),
-                                                );
-                                            }
-                                        }
-                                    }
+                                    validate_cc_hk_008_script_exists(
+                                        cmd,
+                                        project_dir,
+                                        config,
+                                        path,
+                                        &mut diagnostics,
+                                    );
                                 }
 
                                 // CC-HK-009: Dangerous command patterns
                                 if config.is_rule_enabled("CC-HK-009") {
-                                    if let Some((pattern, reason)) =
-                                        self.check_dangerous_patterns(cmd)
-                                    {
-                                        diagnostics.push(
-                                            Diagnostic::warning(
-                                                path.to_path_buf(),
-                                                1,
-                                                0,
-                                                "CC-HK-009",
-                                                format!(
-                                                    "Potentially dangerous command pattern detected: {}",
-                                                    reason
-                                                ),
-                                            )
-                                            .with_suggestion(format!(
-                                                "Review the command for safety. Pattern matched: {}",
-                                                pattern
-                                            )),
-                                        );
-                                    }
+                                    validate_cc_hk_009_dangerous_patterns(
+                                        cmd,
+                                        path,
+                                        &mut diagnostics,
+                                    );
                                 }
                             }
                         }
