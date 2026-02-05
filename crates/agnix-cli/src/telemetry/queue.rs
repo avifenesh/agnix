@@ -148,12 +148,10 @@ fn parse_timestamp(ts: &str) -> Option<u64> {
         return None;
     }
 
-    // Reject non-ASCII input (multi-byte UTF-8 could cause incorrect slicing)
     if !ts.is_ascii() {
         return None;
     }
 
-    // Validate separator characters at expected positions
     let bytes = ts.as_bytes();
     if bytes[4] != b'-' || bytes[7] != b'-' || bytes[10] != b'T' || bytes[13] != b':' || bytes[16] != b':' {
         return None;
@@ -166,7 +164,6 @@ fn parse_timestamp(ts: &str) -> Option<u64> {
     let minute: u32 = ts.get(14..16)?.parse().ok()?;
     let second: u32 = ts.get(17..19)?.parse().ok()?;
 
-    // Range validation
     if year < 1970 {
         return None;
     }
@@ -205,7 +202,6 @@ fn parse_timestamp(ts: &str) -> Option<u64> {
         days += *days_in_month as i64;
     }
 
-    // Days in current month (checked_sub to prevent u32 underflow)
     days += day.checked_sub(1)? as i64;
 
     // Convert to seconds
@@ -394,33 +390,21 @@ mod tests {
 
     #[test]
     fn test_parse_timestamp_rejects_invalid_ranges() {
-        // Day 0
         assert!(parse_timestamp("2024-01-00T00:00:00Z").is_none());
-        // Month 0
         assert!(parse_timestamp("2024-00-01T00:00:00Z").is_none());
-        // Month 13
         assert!(parse_timestamp("2024-13-01T00:00:00Z").is_none());
-        // Day 32
         assert!(parse_timestamp("2024-01-32T00:00:00Z").is_none());
-        // Hour 25
         assert!(parse_timestamp("2024-01-01T25:00:00Z").is_none());
-        // Hour 24
         assert!(parse_timestamp("2024-01-01T24:00:00Z").is_none());
-        // Minute 60
         assert!(parse_timestamp("2024-01-01T00:60:00Z").is_none());
-        // Second 60
         assert!(parse_timestamp("2024-01-01T00:00:60Z").is_none());
     }
 
     #[test]
     fn test_parse_timestamp_rejects_wrong_separators() {
-        // Slashes instead of dashes
         assert!(parse_timestamp("2024/01/01T00:00:00Z").is_none());
-        // Space instead of T
         assert!(parse_timestamp("2024-01-01 00:00:00Z").is_none());
-        // Dots instead of colons
         assert!(parse_timestamp("2024-01-01T00.00.00Z").is_none());
-        // All dashes
         assert!(parse_timestamp("2024-01-01-00:00:00Z").is_none());
     }
 
