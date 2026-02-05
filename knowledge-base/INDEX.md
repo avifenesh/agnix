@@ -1,6 +1,6 @@
 # agnix Knowledge Base - Master Index
 
-> 492KB knowledge, 75+ sources, 5 research agents, 100 validation rules
+> 100 validation rules across 15 categories, sourced from 75+ references
 
 ---
 
@@ -26,7 +26,7 @@ knowledge-base/
 ├── VALIDATION-RULES.md             # ⭐ Master validation reference (100 rules)
 ├── PATTERNS-CATALOG.md             # 70 production-tested patterns
 │
-├── standards/                      # 12 files, 9,884 lines, 266KB
+├── standards/                      # HARD-RULES and OPINIONS by topic
 │   ├── README.md                   # Standards navigation
 │   ├── RESEARCH-SUMMARY.md         # Research methodology
 │   │
@@ -246,9 +246,9 @@ Update knowledge base when:
 ## Statistics
 
 ```
-Total Documents:       26 files
-Total Lines:          17,647 lines
-Total Size:           492KB
+Total Documents:       27 files
+Total Lines:          18,159 lines
+Total Size:           624KB
 Standards Covered:     5 (Agent Skills, MCP, Claude Code, Multi-Platform, Prompt Eng)
 Sources Consulted:    75+ (specs, docs, research papers, repos)
 Research Agents:       5 (10+ sources each)
@@ -260,6 +260,6 @@ Platforms Analyzed:   9 (Claude Code, Codex CLI, OpenCode, Copilot, Cursor, Clin
 
 ---
 
-**Status**: Knowledge base complete, ready for implementation
-**Next**: Implement validators using VALIDATION-RULES.md
-**Confidence**: HIGH - all rules sourced from official specs or research
+**Status**: Knowledge base integrated with the active validation engine
+**Next**: Keep `rules.json` and `VALIDATION-RULES.md` synchronized as rules evolve
+**Confidence**: HIGH - rules are mapped to source evidence and covered by tests

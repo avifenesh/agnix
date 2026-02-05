@@ -1,4 +1,6 @@
-# Implementation Plan: LSP Diagnostics and Code Actions (#19)
+# Implementation Plan (Historical): LSP Diagnostics and Code Actions (#19)
+
+> Status: Completed. This file is retained as a historical implementation record.
 
 ## Overview
 

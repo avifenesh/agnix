@@ -17,6 +17,8 @@ cargo build --release -p agnix-lsp
 
 ## VS Code
 
+The VS Code extension auto-downloads `agnix-lsp` on first use. Manual install is optional.
+
 Install the extension from source:
 
 ```bash
@@ -159,79 +161,19 @@ If using legacy `.cursorrules` file, agnix warns about migration (CUR-006). To m
 
 ## JetBrains IDEs
 
-agnix provides a native JetBrains plugin for IntelliJ IDEA, WebStorm, PyCharm, and all other JetBrains IDEs.
+JetBrains support in this repository is currently a scaffold under `editors/jetbrains/` and is not production-ready.
 
-### Installation
-
-#### From JetBrains Marketplace
-
-1. Open **Settings/Preferences** > **Plugins**
-2. Search for "agnix"
-3. Click **Install**
-4. Restart your IDE
-
-#### Manual Installation
-
-1. Download the latest release from [GitHub Releases](https://github.com/avifenesh/agnix/releases)
-2. Open **Settings/Preferences** > **Plugins**
-3. Click the gear icon > **Install Plugin from Disk...**
-4. Select the downloaded `.zip` file
-5. Restart your IDE
-
-### Requirements
-
-- JetBrains IDE 2023.2 or later
-- [LSP4IJ](https://plugins.jetbrains.com/plugin/23257-lsp4ij) plugin (installed automatically as dependency)
-
-### Configuration
-
-Open **Settings/Preferences** > **Tools** > **agnix** to configure:
-
-- **Enable**: Toggle validation on/off
-- **LSP binary path**: Custom path to agnix-lsp (leave empty for auto-detection)
-- **Auto-download**: Automatically download LSP binary if not found
-- **CodeLens**: Show CodeLens annotations
-- **Trace level**: Debug LSP communication (off, messages, verbose)
-
-### Usage
-
-1. Open any supported file (e.g., `SKILL.md`, `CLAUDE.md`)
-2. Issues appear automatically in the **Problems** panel
-3. Hover over highlighted text for details
-4. Use quick fixes (lightbulb icon or Alt+Enter) to resolve issues
-
-### Context Menu
-
-Right-click in the editor to access:
-- **agnix** > **Validate Current File**
-- **agnix** > **Restart Language Server**
-- **agnix** > **Settings**
-
-### Troubleshooting
-
-**Language server not starting:**
-
-1. Check **Settings** > **Tools** > **agnix** for correct configuration
-2. Verify agnix-lsp binary exists at the configured path
-3. Try **Tools** > **agnix** > **Restart Language Server**
-4. Check the IDE log for errors (**Help** > **Show Log in Explorer/Finder**)
-
-**Binary not found:**
-
-The plugin can automatically download the LSP binary:
-1. Enable **Auto-download** in settings
-2. Or manually install: `cargo install agnix-lsp`
-3. Or download from [GitHub Releases](https://github.com/avifenesh/agnix/releases)
+If you need JetBrains integration today, run `agnix-lsp` manually via [LSP4IJ](https://plugins.jetbrains.com/plugin/23257-lsp4ij).
 
 ## Supported File Types
 
 - `SKILL.md` - Agent skill definitions
-- `CLAUDE.md`, `AGENTS.md` - Memory files
-- `.claude/settings.json` - Hook configurations
+- `CLAUDE.md`, `CLAUDE.local.md`, `AGENTS.md`, `AGENTS.local.md`, `AGENTS.override.md` - Memory files
+- `.claude/settings.json`, `.claude/settings.local.json` - Hook configurations
 - `plugin.json` - Plugin manifests
-- `*.mcp.json` - MCP tool configurations
-- `.github/copilot-instructions.md` - Copilot instructions
-- `.cursor/rules/*.mdc` - Cursor project rules
+- `*.mcp.json`, `mcp.json`, `mcp-*.json` - MCP tool configurations
+- `.github/copilot-instructions.md`, `.github/instructions/*.instructions.md` - Copilot instructions
+- `.cursor/rules/*.mdc`, `.cursorrules` - Cursor project rules
 
 ## Features
 

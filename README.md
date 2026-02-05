@@ -38,9 +38,9 @@ agnix validates configs against 100 rules derived from official specs, research 
 
 ## Features
 
-**Validation**: Skills, Hooks, Agents, Plugins, MCP, Memory, Prompt Engineering, XML, Imports, Cross-platform
+**Validation**: Skills, Hooks, Agents, Plugins, MCP, Memory, Prompt Engineering, XML, Imports, Cross-platform, AGENTS.md, Copilot, Cursor, Version Awareness
 
-**Tools**: Claude Code, Cursor, GitHub Copilot, Codex CLI, AGENTS.md
+**Tools**: Claude Code, Cursor, GitHub Copilot, Codex CLI, AGENTS.md ecosystem
 
 **Integration**: LSP server, VS Code extension, GitHub Action, auto-fix (`--fix`)
 
@@ -170,7 +170,7 @@ See [full action documentation](docs/CONFIGURATION.md#github-action) for all inp
 # .pre-commit-config.yaml
 repos:
   - repo: https://github.com/avifenesh/agnix
-    rev: v0.7.0
+    rev: v0.7.2
     hooks:
       - id: agnix
 ```
@@ -187,7 +187,7 @@ Real-time diagnostics as you type, quick-fix code actions, hover documentation.
 
 **VS Code extension** includes a comprehensive settings UI for configuring all validation options. Changes apply immediately without server restart. See [VS Code extension](editors/vscode/README.md) for details.
 
-See [Editor Setup](docs/EDITOR-SETUP.md) for VS Code, JetBrains, Neovim, Helix, Cursor configuration.
+See [Editor Setup](docs/EDITOR-SETUP.md) for VS Code, Neovim, Helix, Cursor, and JetBrains status.
 
 ## MCP Server
 
@@ -275,10 +275,10 @@ See [SPEC.md](SPEC.md#performance-characteristics) for detailed methodology and 
 |------|-------|--------------|
 | [Agent Skills](https://agentskills.io) | AS-*, CC-SK-* | SKILL.md |
 | [Claude Code](https://docs.anthropic.com/en/docs/build-with-claude/claude-code) | CC-* | CLAUDE.md, hooks, agents, plugins |
-| [GitHub Copilot](https://docs.github.com/en/copilot) | COP-* | .github/copilot-instructions.md |
-| [Cursor](https://cursor.com) | CUR-* | .cursor/rules/*.mdc |
+| [GitHub Copilot](https://docs.github.com/en/copilot) | COP-* | .github/copilot-instructions.md, .github/instructions/*.instructions.md |
+| [Cursor](https://cursor.com) | CUR-* | .cursor/rules/*.mdc, .cursorrules |
 | [MCP](https://modelcontextprotocol.io) | MCP-* | *.mcp.json |
-| [AGENTS.md](https://agentsmd.org) | AGM-*, XP-* | AGENTS.md |
+| [AGENTS.md](https://agentsmd.org) | AGM-*, XP-* | AGENTS.md, AGENTS.local.md, AGENTS.override.md |
 
 ## Development
 
@@ -301,19 +301,19 @@ crates/
   agnix-rules/    # Rule metadata
 editors/
   vscode/         # VS Code extension
-  jetbrains/      # JetBrains IDE plugin
+  jetbrains/      # JetBrains extension scaffold (WIP)
 knowledge-base/   # 100 rules documentation
 ```
 
 ## What's Included
 
-- **100 validation rules** across 12 categories
+- **100 validation rules** across 15 categories
 - **1500+ tests** ensuring reliability
 - **CLI** with colored output, JSON/SARIF formats
 - **LSP server** for real-time editor diagnostics
 - **MCP server** for AI assistant integration
 - **VS Code extension** with syntax highlighting
-- **JetBrains plugin** for IntelliJ, WebStorm, PyCharm
+- **JetBrains extension scaffold** under `editors/jetbrains/` (work in progress)
 - **GitHub Action** for CI/CD integration
 - **Auto-fix** infrastructure (--fix, --dry-run, --fix-safe)
 - **Parallel validation** using rayon

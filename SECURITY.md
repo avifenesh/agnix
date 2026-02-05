@@ -20,10 +20,10 @@ You can expect:
 
 ## Supported Versions
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 0.7.x   | Yes                |
-| < 0.7   | No                 |
+| Version | Supported |
+| ------- | --------- |
+| 0.7.x   | Yes       |
+| < 0.7   | No        |
 
 ## Security Model
 
@@ -31,21 +31,21 @@ Agnix is a **local linting tool** that validates agent configuration files. Its 
 
 - **Trusted input files**: Files being validated are from the user's own codebase
 - **Local execution**: The tool runs locally, not as a service
-- **Opt-in telemetry only**: Network access is disabled by default (see Telemetry section)
+- **Opt-in telemetry only**: Network submission is disabled by default and requires explicit opt-in (see Telemetry section)
 
 For detailed security architecture, threat model, and implementation details, see [SECURITY-MODEL.md](knowledge-base/SECURITY-MODEL.md).
 
 ### Security Measures
 
-| Feature | Description | Default |
-|---------|-------------|---------|
-| **Symlink Rejection** | All file reads reject symlinks to prevent path traversal | Always on |
-| **File Size Limits** | Maximum file size to prevent memory exhaustion | 1 MiB |
-| **File Count Limits** | Maximum files to validate to prevent DoS | 10,000 |
-| **Regex Input Limits** | Maximum input to regex operations to prevent ReDoS | 64 KB |
-| **Path Traversal Detection** | Import validation detects `../` escape attempts | Always on |
-| **Atomic Writes** | Fix application uses atomic temp-file-then-rename | Always on |
-| **No Command Execution** | agnix does not execute external commands or scripts | N/A |
+| Feature                      | Description                                              | Default   |
+| ---------------------------- | -------------------------------------------------------- | --------- |
+| **Symlink Rejection**        | All file reads reject symlinks to prevent path traversal | Always on |
+| **File Size Limits**         | Maximum file size to prevent memory exhaustion           | 1 MiB     |
+| **File Count Limits**        | Maximum files to validate to prevent DoS                 | 10,000    |
+| **Regex Input Limits**       | Maximum input to regex operations to prevent ReDoS       | 64 KB     |
+| **Path Traversal Detection** | Import validation detects `../` escape attempts          | Always on |
+| **Atomic Writes**            | Fix application uses atomic temp-file-then-rename        | Always on |
+| **No Command Execution**     | agnix does not execute external commands or scripts      | N/A       |
 
 ### Known Limitations
 
