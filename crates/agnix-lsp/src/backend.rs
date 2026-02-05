@@ -82,7 +82,7 @@ pub struct Backend {
     /// Workspace root path for boundary validation (security).
     /// Set during initialize() from the client's root_uri.
     workspace_root: RwLock<Option<PathBuf>>,
-    documents: RwLock<HashMap<Url, String>>,
+    documents: RwLock<HashMap<Url, Arc<String>>>,
     /// Cached validator registry reused across validations.
     /// Immutable after construction; Arc enables sharing across spawn_blocking tasks.
     registry: Arc<agnix_core::ValidatorRegistry>,
@@ -168,7 +168,7 @@ impl Backend {
         let content = {
             let docs = self.documents.read().await;
             match docs.get(&uri) {
-                Some(c) => c.clone(),
+                Some(c) => Arc::clone(c),
                 None => {
                     // Fall back to file-based validation
                     drop(docs);
@@ -193,7 +193,7 @@ impl Backend {
             let mut diagnostics = Vec::new();
 
             for validator in validators {
-                diagnostics.extend(validator.validate(&file_path, &content, &config));
+                diagnostics.extend(validator.validate(&file_path, content.as_str(), &config));
             }
 
             Ok::<_, agnix_core::LintError>(diagnostics)
@@ -218,7 +218,7 @@ impl Backend {
     }
 
     /// Get cached document content for a URI.
-    async fn get_document_content(&self, uri: &Url) -> Option<String> {
+    async fn get_document_content(&self, uri: &Url) -> Option<Arc<String>> {
         self.documents.read().await.get(uri).cloned()
     }
 }
@@ -283,25 +283,23 @@ impl LanguageServer for Backend {
     }
 
     async fn did_open(&self, params: DidOpenTextDocumentParams) {
+        let uri = params.text_document.uri;
+        let text = params.text_document.text;
         {
             let mut docs = self.documents.write().await;
-            docs.insert(
-                params.text_document.uri.clone(),
-                params.text_document.text.clone(),
-            );
+            docs.insert(uri.clone(), Arc::new(text));
         }
-        self.validate_from_content_and_publish(params.text_document.uri)
-            .await;
+        self.validate_from_content_and_publish(uri).await;
     }
 
     async fn did_change(&self, params: DidChangeTextDocumentParams) {
+        let uri = params.text_document.uri;
         if let Some(change) = params.content_changes.into_iter().next() {
             {
                 let mut docs = self.documents.write().await;
-                docs.insert(params.text_document.uri.clone(), change.text);
+                docs.insert(uri.clone(), Arc::new(change.text));
             }
-            self.validate_from_content_and_publish(params.text_document.uri)
-                .await;
+            self.validate_from_content_and_publish(uri).await;
         }
     }
 
@@ -347,7 +345,7 @@ impl LanguageServer for Backend {
             // Deserialize fixes from diagnostic.data
             let fixes = deserialize_fixes(diag.data.as_ref());
             if !fixes.is_empty() {
-                actions.extend(fixes_to_code_actions(uri, &fixes, &content));
+                actions.extend(fixes_to_code_actions(uri, &fixes, content.as_str()));
             }
         }
 
@@ -374,7 +372,7 @@ impl LanguageServer for Backend {
         };
 
         // Get hover info for the position
-        Ok(hover_at_position(&content, position))
+        Ok(hover_at_position(content.as_str(), position))
     }
 
     async fn did_change_configuration(&self, params: DidChangeConfigurationParams) {
@@ -1245,6 +1243,43 @@ This is a test project.
             .await;
         assert!(hover.is_ok());
         assert!(hover.unwrap().is_some());
+    }
+
+    /// Regression: cached document reads should share the same allocation.
+    #[tokio::test]
+    async fn test_get_document_content_returns_shared_arc() {
+        let (service, _socket) = LspService::new(Backend::new);
+
+        let temp_dir = tempfile::tempdir().unwrap();
+        let skill_path = temp_dir.path().join("SKILL.md");
+        std::fs::write(&skill_path, "# Shared").unwrap();
+
+        let uri = Url::from_file_path(&skill_path).unwrap();
+
+        service
+            .inner()
+            .did_open(DidOpenTextDocumentParams {
+                text_document: TextDocumentItem {
+                    uri: uri.clone(),
+                    language_id: "markdown".to_string(),
+                    version: 1,
+                    text: "# Shared".to_string(),
+                },
+            })
+            .await;
+
+        let first = service
+            .inner()
+            .get_document_content(&uri)
+            .await
+            .expect("cached content should exist");
+        let second = service
+            .inner()
+            .get_document_content(&uri)
+            .await
+            .expect("cached content should exist");
+
+        assert!(Arc::ptr_eq(&first, &second));
     }
 
     /// Test that multiple documents have independent caches.
