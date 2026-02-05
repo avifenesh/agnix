@@ -1805,16 +1805,9 @@ fn test_fix_safe_skips_structural_as_004() {
 #[test]
 fn test_telemetry_status_shows_disabled_by_default() {
     let mut cmd = agnix();
-    let output = cmd
-        .arg("telemetry")
-        .arg("status")
-        .output()
-        .unwrap();
+    let output = cmd.arg("telemetry").arg("status").output().unwrap();
 
-    assert!(
-        output.status.success(),
-        "telemetry status should succeed"
-    );
+    assert!(output.status.success(), "telemetry status should succeed");
 
     let stdout = String::from_utf8_lossy(&output.stdout);
 
@@ -1837,10 +1830,7 @@ fn test_telemetry_status_shows_disabled_by_default() {
 fn test_telemetry_status_default_action() {
     // "agnix telemetry" without action should default to status
     let mut cmd = agnix();
-    let output = cmd
-        .arg("telemetry")
-        .output()
-        .unwrap();
+    let output = cmd.arg("telemetry").output().unwrap();
 
     assert!(
         output.status.success(),
@@ -1858,16 +1848,9 @@ fn test_telemetry_status_default_action() {
 #[test]
 fn test_telemetry_help_shows_actions() {
     let mut cmd = agnix();
-    let output = cmd
-        .arg("telemetry")
-        .arg("--help")
-        .output()
-        .unwrap();
+    let output = cmd.arg("telemetry").arg("--help").output().unwrap();
 
-    assert!(
-        output.status.success(),
-        "telemetry --help should succeed"
-    );
+    assert!(output.status.success(), "telemetry --help should succeed");
 
     let stdout = String::from_utf8_lossy(&output.stdout);
 
@@ -1897,16 +1880,9 @@ fn test_telemetry_enable_disable_roundtrip() {
 
     // Test enable
     let mut cmd = agnix();
-    let output = cmd
-        .arg("telemetry")
-        .arg("enable")
-        .output()
-        .unwrap();
+    let output = cmd.arg("telemetry").arg("enable").output().unwrap();
 
-    assert!(
-        output.status.success(),
-        "telemetry enable should succeed"
-    );
+    assert!(output.status.success(), "telemetry enable should succeed");
 
     let stdout = String::from_utf8_lossy(&output.stdout);
     // Should indicate success or already enabled
@@ -1918,16 +1894,9 @@ fn test_telemetry_enable_disable_roundtrip() {
 
     // Test disable
     let mut cmd = agnix();
-    let output = cmd
-        .arg("telemetry")
-        .arg("disable")
-        .output()
-        .unwrap();
+    let output = cmd.arg("telemetry").arg("disable").output().unwrap();
 
-    assert!(
-        output.status.success(),
-        "telemetry disable should succeed"
-    );
+    assert!(output.status.success(), "telemetry disable should succeed");
 
     let stdout = String::from_utf8_lossy(&output.stdout);
     assert!(

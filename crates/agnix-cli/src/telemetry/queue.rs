@@ -71,9 +71,9 @@ impl EventQueue {
     /// Push an event onto the queue.
     pub fn push(&mut self, event: TelemetryEvent) -> io::Result<()> {
         // Validate privacy before storing
-        event.validate_privacy().map_err(|e| {
-            io::Error::new(io::ErrorKind::InvalidData, e.to_string())
-        })?;
+        event
+            .validate_privacy()
+            .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e.to_string()))?;
 
         self.events.push_back(event);
 
@@ -88,11 +88,7 @@ impl EventQueue {
     /// Take a batch of events for submission.
     /// Does NOT remove them from the queue - call `remove_batch` after successful submission.
     pub fn take_batch(&mut self, max_count: usize) -> Vec<TelemetryEvent> {
-        self.events
-            .iter()
-            .take(max_count)
-            .cloned()
-            .collect()
+        self.events.iter().take(max_count).cloned().collect()
     }
 
     /// Remove successfully submitted events from the front of the queue.
@@ -126,7 +122,7 @@ impl EventQueue {
 
     /// Prune events older than MAX_EVENT_AGE_DAYS.
     fn prune_old_events(&mut self) {
-        use std::time::{SystemTime, UNIX_EPOCH, Duration};
+        use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
@@ -276,7 +272,9 @@ mod tests {
 
         // Add 3 events
         for i in 0..3 {
-            queue.events.push_back(make_event(&format!("2024-01-0{}T00:00:00Z", i + 1)));
+            queue
+                .events
+                .push_back(make_event(&format!("2024-01-0{}T00:00:00Z", i + 1)));
         }
 
         // Take 0 should return empty
@@ -297,7 +295,9 @@ mod tests {
 
         // Add 5 events
         for i in 0..5 {
-            queue.events.push_back(make_event(&format!("2024-01-0{}T00:00:00Z", i + 1)));
+            queue
+                .events
+                .push_back(make_event(&format!("2024-01-0{}T00:00:00Z", i + 1)));
         }
 
         // Remove 0 should do nothing

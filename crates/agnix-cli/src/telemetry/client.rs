@@ -18,10 +18,7 @@ impl TelemetryClient {
     /// Create a new telemetry client.
     pub fn new(config: &TelemetryConfig) -> io::Result<Self> {
         let installation_id = config.installation_id.clone().ok_or_else(|| {
-            io::Error::new(
-                io::ErrorKind::InvalidInput,
-                "No installation ID configured",
-            )
+            io::Error::new(io::ErrorKind::InvalidInput, "No installation ID configured")
         })?;
 
         let client = reqwest::blocking::Client::builder()
@@ -51,9 +48,9 @@ impl TelemetryClient {
 
         // Validate privacy before submission
         for event in events {
-            event.validate_privacy().map_err(|e| {
-                io::Error::new(io::ErrorKind::InvalidData, e.to_string())
-            })?;
+            event
+                .validate_privacy()
+                .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e.to_string()))?;
         }
 
         let payload = BatchPayload {
@@ -78,10 +75,7 @@ impl TelemetryClient {
         } else {
             Err(io::Error::new(
                 io::ErrorKind::Other,
-                format!(
-                    "Telemetry server returned error: {}",
-                    response.status()
-                ),
+                format!("Telemetry server returned error: {}", response.status()),
             ))
         }
     }

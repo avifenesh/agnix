@@ -124,7 +124,7 @@ impl TelemetryConfig {
             "TRAVIS",
             "CIRCLECI",
             "JENKINS_URL",
-            "TF_BUILD",           // Azure Pipelines
+            "TF_BUILD", // Azure Pipelines
             "BUILDKITE",
             "TEAMCITY_VERSION",
             "CODEBUILD_BUILD_ID", // AWS CodeBuild
@@ -308,7 +308,10 @@ mod tests {
             installation_id: Some(generate_uuid()),
             ..Default::default()
         };
-        assert!(!config.is_enabled(), "DO_NOT_TRACK should disable telemetry");
+        assert!(
+            !config.is_enabled(),
+            "DO_NOT_TRACK should disable telemetry"
+        );
 
         // Restore original state
         match original {
@@ -366,7 +369,10 @@ mod tests {
         // Second enable should preserve the ID
         let id = config.installation_id.clone();
         let _ = config.enable();
-        assert_eq!(config.installation_id, id, "enable() should preserve existing ID");
+        assert_eq!(
+            config.installation_id, id,
+            "enable() should preserve existing ID"
+        );
     }
 
     #[test]

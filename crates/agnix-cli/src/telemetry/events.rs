@@ -126,8 +126,12 @@ impl std::error::Error for PrivacyViolation {}
 /// Check if a string looks like a file path.
 fn looks_like_path(s: &str) -> bool {
     // Check for common path indicators
-    s.contains('/') || s.contains('\\') || s.contains(".md") || s.contains(".json")
-        || s.starts_with('.') || s.starts_with('~')
+    s.contains('/')
+        || s.contains('\\')
+        || s.contains(".md")
+        || s.contains(".json")
+        || s.starts_with('.')
+        || s.starts_with('~')
         || (s.len() > 1 && s.chars().nth(1) == Some(':')) // Windows drive letter
 }
 
@@ -198,9 +202,7 @@ mod tests {
             file_type_counts: [("skill".to_string(), 5), ("mcp".to_string(), 3)]
                 .into_iter()
                 .collect(),
-            rule_trigger_counts: [("AS-001".to_string(), 2)]
-                .into_iter()
-                .collect(),
+            rule_trigger_counts: [("AS-001".to_string(), 2)].into_iter().collect(),
             error_count: 1,
             warning_count: 2,
             info_count: 0,
@@ -298,7 +300,10 @@ mod tests {
             timestamp: "2024-01-01T00:00:00Z".to_string(),
         });
 
-        assert!(event.validate_privacy().is_ok(), "Empty hashmaps should pass validation");
+        assert!(
+            event.validate_privacy().is_ok(),
+            "Empty hashmaps should pass validation"
+        );
     }
 
     #[test]
@@ -334,7 +339,7 @@ mod tests {
         assert!(!is_valid_rule_id("AS"));
         // Invalid: leading zero is still valid format
         assert!(is_valid_rule_id("AS-001")); // 001 is valid
-        // Invalid: too many dashes
+                                             // Invalid: too many dashes
         assert!(!is_valid_rule_id("A-B-C-001"));
         // Invalid: empty parts
         assert!(!is_valid_rule_id("--001"));

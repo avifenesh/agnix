@@ -763,7 +763,11 @@ fn telemetry_command(action: TelemetryAction) -> anyhow::Result<()> {
             println!(
                 "  {} {}",
                 "Configured:".dimmed(),
-                if config.enabled { "enabled" } else { "disabled" }
+                if config.enabled {
+                    "enabled"
+                } else {
+                    "disabled"
+                }
             );
             println!(
                 "  {} {}",
