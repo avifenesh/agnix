@@ -5,7 +5,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.redhat.devtools.lsp4ij.LanguageServerManager
 import io.agnix.jetbrains.AgnixIcons
 import io.agnix.jetbrains.filetype.AgnixFileTypes
 

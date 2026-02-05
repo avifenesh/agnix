@@ -4,9 +4,6 @@ import com.intellij.openapi.project.Project
 import com.redhat.devtools.lsp4ij.LanguageServerFactory
 import com.redhat.devtools.lsp4ij.client.LanguageClientImpl
 import com.redhat.devtools.lsp4ij.server.StreamConnectionProvider
-import io.agnix.jetbrains.binary.AgnixBinaryResolver
-import io.agnix.jetbrains.notifications.AgnixNotifications
-import io.agnix.jetbrains.settings.AgnixSettings
 
 /**
  * LSP server factory for agnix.

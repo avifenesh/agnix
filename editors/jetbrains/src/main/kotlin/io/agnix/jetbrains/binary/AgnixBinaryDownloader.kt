@@ -228,29 +228,34 @@ class AgnixBinaryDownloader {
     }
 
     /**
-     * Extract a .tar.gz archive with path traversal protection.
+     * Verify that an output file path is within the destination directory.
+     * Appends separator to prevent prefix matching issues (e.g., /tmp/agnix vs /tmp/agnix-other).
+     */
+    private fun verifyPathWithinDestination(outFile: File, destination: File) {
+        val canonicalDest = destination.canonicalPath + File.separator
+        val canonicalOut = outFile.canonicalPath
+        if (!canonicalOut.startsWith(canonicalDest) && canonicalOut != destination.canonicalPath) {
+            throw SecurityException("Output path escapes destination directory: $canonicalOut")
+        }
+    }
+
+    /**
+     * Extract a .tar.gz archive.
+     *
+     * Writes only the target binary using a fixed filename (not archive entry names)
+     * to prevent path traversal. The canonical path check is a defense-in-depth guard.
      */
     private fun extractTarGz(archive: File, destination: File, binaryName: String) {
-        val canonicalDestination = destination.canonicalPath
         FileInputStream(archive).use { fis ->
             GZIPInputStream(fis).use { gzis ->
                 TarInputStream(gzis).use { tis ->
                     var entry = tis.nextEntry
                     while (entry != null) {
                         val name = entry.name
-                        // Security: Reject path traversal attempts
-                        if (name.contains("..")) {
-                            logger.warn("Skipping suspicious archive entry with path traversal: $name")
-                            entry = tis.nextEntry
-                            continue
-                        }
                         // Look for the binary file (may be in root or subdirectory)
                         if (name.endsWith(binaryName) || name == binaryName) {
                             val outFile = File(destination, binaryName)
-                            // Security: Verify output path is within destination
-                            if (!outFile.canonicalPath.startsWith(canonicalDestination)) {
-                                throw SecurityException("Archive entry would write outside destination: $name")
-                            }
+                            verifyPathWithinDestination(outFile, destination)
                             FileOutputStream(outFile).use { fos ->
                                 tis.copyTo(fos)
                             }
@@ -265,27 +270,20 @@ class AgnixBinaryDownloader {
     }
 
     /**
-     * Extract a .zip archive with path traversal protection.
+     * Extract a .zip archive.
+     *
+     * Writes only the target binary using a fixed filename (not archive entry names)
+     * to prevent path traversal. The canonical path check is a defense-in-depth guard.
      */
     private fun extractZip(archive: File, destination: File, binaryName: String) {
-        val canonicalDestination = destination.canonicalPath
         ZipInputStream(FileInputStream(archive)).use { zis ->
             var entry = zis.nextEntry
             while (entry != null) {
                 val name = entry.name
-                // Security: Reject path traversal attempts
-                if (name.contains("..")) {
-                    logger.warn("Skipping suspicious archive entry with path traversal: $name")
-                    entry = zis.nextEntry
-                    continue
-                }
                 // Look for the binary file (may be in root or subdirectory)
                 if (name.endsWith(binaryName) || name == binaryName) {
                     val outFile = File(destination, binaryName)
-                    // Security: Verify output path is within destination
-                    if (!outFile.canonicalPath.startsWith(canonicalDestination)) {
-                        throw SecurityException("Archive entry would write outside destination: $name")
-                    }
+                    verifyPathWithinDestination(outFile, destination)
                     FileOutputStream(outFile).use { fos ->
                         zis.copyTo(fos)
                     }
