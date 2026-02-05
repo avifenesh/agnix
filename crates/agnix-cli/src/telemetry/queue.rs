@@ -144,7 +144,7 @@ impl EventQueue {
 /// Parse an ISO 8601 timestamp to Unix seconds.
 fn parse_timestamp(ts: &str) -> Option<u64> {
     // Simple parser for YYYY-MM-DDTHH:MM:SSZ format
-    if ts.len() < 19 {
+    if ts.len() < 20 {
         return None;
     }
 
@@ -158,6 +158,7 @@ fn parse_timestamp(ts: &str) -> Option<u64> {
         || bytes[10] != b'T'
         || bytes[13] != b':'
         || bytes[16] != b':'
+        || bytes[19] != b'Z'
     {
         return None;
     }
@@ -342,13 +343,11 @@ mod tests {
 
     #[test]
     fn test_parse_timestamp_edge_cases() {
-        // Leap year date
-        let ts = parse_timestamp("2024-02-29T12:00:00Z");
-        assert!(ts.is_some());
+        // Leap year date: 2024-02-29T12:00:00Z = 1709208000
+        assert_eq!(parse_timestamp("2024-02-29T12:00:00Z"), Some(1_709_208_000));
 
-        // End of month
-        let ts = parse_timestamp("2024-01-31T23:59:59Z");
-        assert!(ts.is_some());
+        // End of month: 2024-01-31T23:59:59Z = 1706745599
+        assert_eq!(parse_timestamp("2024-01-31T23:59:59Z"), Some(1_706_745_599));
 
         // Too short
         assert!(parse_timestamp("2024-01-01").is_none());
@@ -435,14 +434,8 @@ mod tests {
         // Unix epoch: 1970-01-01T00:00:00Z -> 0
         assert_eq!(parse_timestamp("1970-01-01T00:00:00Z"), Some(0));
 
-        // Leap year Feb 29
-        let ts = parse_timestamp("2000-02-29T00:00:00Z");
-        assert!(ts.is_some());
-        // 2000-02-29 = 30 years from 1970 + Jan(31) + 28 days
-        // Verify it is a reasonable value (between 2000-02-28 and 2000-03-01)
-        let val = ts.unwrap();
-        assert!(val > 951_000_000); // after ~2000-02-20
-        assert!(val < 952_000_000); // before ~2000-03-01
+        // Leap year Feb 29: 2000-02-29T00:00:00Z = 951782400
+        assert_eq!(parse_timestamp("2000-02-29T00:00:00Z"), Some(951_782_400));
 
         // End of year
         let ts = parse_timestamp("2024-12-31T23:59:59Z");
