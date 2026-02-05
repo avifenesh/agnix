@@ -17,6 +17,7 @@ use agnix_core::{
 };
 use clap::{Parser, Subcommand, ValueEnum};
 use colored::*;
+use rust_i18n::t;
 use similar::{ChangeTag, TextDiff};
 use std::collections::HashMap;
 use std::env;
@@ -242,7 +243,7 @@ fn main() {
     };
 
     if let Err(e) = result {
-        eprintln!("{} {}", "Error:".red().bold(), e);
+        eprintln!("{} {}", t!("cli.error_label").red().bold(), e);
         process::exit(1);
     }
 }
@@ -255,13 +256,15 @@ fn validate_command(path: &Path, cli: &Cli) -> anyhow::Result<()> {
     if cli.watch {
         if !matches!(cli.format, OutputFormat::Text) {
             return Err(anyhow::anyhow!(
-                "Watch mode is only supported with text output."
+                "{}",
+                t!("cli.watch_error_text_only")
             ));
         }
         let should_fix = cli.fix || cli.fix_safe || cli.dry_run;
         if should_fix {
             return Err(anyhow::anyhow!(
-                "Watch mode cannot be combined with fix flags."
+                "{}",
+                t!("cli.watch_error_fix")
             ));
         }
 
@@ -284,7 +287,7 @@ fn validate_command(path: &Path, cli: &Cli) -> anyhow::Result<()> {
 
     // Display config warning before validation output
     if let Some(warning) = config_warning {
-        eprintln!("{} {}", "Warning:".yellow().bold(), warning);
+        eprintln!("{} {}", t!("cli.warning_label").yellow().bold(), warning);
         eprintln!();
     }
     config.target = cli.target.into();
@@ -296,12 +299,12 @@ fn validate_command(path: &Path, cli: &Cli) -> anyhow::Result<()> {
             for warning in &config_warnings {
                 eprintln!(
                     "{} [{}] {}",
-                    "Config warning:".yellow().bold(),
+                    t!("cli.config_warning_label").yellow().bold(),
                     warning.field.dimmed(),
                     warning.message
                 );
                 if let Some(suggestion) = &warning.suggestion {
-                    eprintln!("  {} {}", "hint:".cyan(), suggestion);
+                    eprintln!("  {} {}", t!("cli.hint_label").cyan(), suggestion);
                 }
             }
             eprintln!();
@@ -311,7 +314,8 @@ fn validate_command(path: &Path, cli: &Cli) -> anyhow::Result<()> {
     let should_fix = cli.fix || cli.fix_safe || cli.dry_run;
     if should_fix && !matches!(cli.format, OutputFormat::Text) {
         return Err(anyhow::anyhow!(
-            "Fix flags are only supported with text output. Remove --format or use --format text."
+            "{}",
+            t!("cli.fix_error_text_only")
         ));
     }
 
@@ -371,11 +375,11 @@ fn validate_command(path: &Path, cli: &Cli) -> anyhow::Result<()> {
     }
 
     // Text output format
-    println!("{} {}", "Validating:".cyan().bold(), path.display());
+    println!("{} {}", t!("cli.validating").cyan().bold(), path.display());
     println!();
 
     if diagnostics.is_empty() {
-        println!("{}", "No issues found".green().bold());
+        println!("{}", t!("cli.no_issues_found").green().bold());
         return Ok(());
     }
 
@@ -401,7 +405,7 @@ fn validate_command(path: &Path, cli: &Cli) -> anyhow::Result<()> {
         };
 
         let fixable_marker = if diag.has_fixes() {
-            " [fixable]".green().to_string()
+            format!(" {}", t!("cli.fixable")).green().to_string()
         } else {
             String::new()
         };
@@ -417,16 +421,16 @@ fn validate_command(path: &Path, cli: &Cli) -> anyhow::Result<()> {
         );
 
         if cli.verbose {
-            println!("  {} {}", "rule:".dimmed(), diag.rule.dimmed());
+            println!("  {} {}", t!("cli.rule_label").dimmed(), diag.rule.dimmed());
             if let Some(suggestion) = &diag.suggestion {
-                println!("  {} {}", "help:".cyan(), suggestion);
+                println!("  {} {}", t!("cli.help_label").cyan(), suggestion);
             }
             if let Some(assumption) = &diag.assumption {
-                println!("  {} {}", "note:".yellow(), assumption);
+                println!("  {} {}", t!("cli.note_label").yellow(), assumption);
             }
             for fix in &diag.fixes {
-                let safety = if fix.safe { "safe" } else { "unsafe" };
-                println!("  {} {} ({})", "fix:".green(), fix.description, safety);
+                let safety = if fix.safe { t!("cli.safe") } else { t!("cli.unsafe") };
+                println!("  {} {} ({})", t!("cli.fix_label").green(), fix.description, safety);
             }
         }
         println!();
@@ -434,46 +438,46 @@ fn validate_command(path: &Path, cli: &Cli) -> anyhow::Result<()> {
 
     println!("{}", "-".repeat(60).dimmed());
     println!(
-        "Found {} {}, {} {}",
-        errors,
-        if errors == 1 { "error" } else { "errors" },
-        warnings,
-        if warnings == 1 { "warning" } else { "warnings" }
+        "{}",
+        t!("cli.found_errors_warnings",
+            errors = errors,
+            error_word = if errors == 1 { t!("cli.error_singular") } else { t!("cli.error_plural") },
+            warnings = warnings,
+            warning_word = if warnings == 1 { t!("cli.warning_singular") } else { t!("cli.warning_plural") }
+        )
     );
 
     if infos > 0 {
-        println!("  {} info messages", infos);
+        println!("{}", t!("cli.info_messages", count = infos));
     }
 
     if fixable > 0 {
         println!(
-            "  {} {} automatically fixable",
-            fixable,
-            if fixable == 1 {
-                "issue is"
-            } else {
-                "issues are"
-            }
+            "{}",
+            t!("cli.fixable_issues",
+                count = fixable,
+                word = if fixable == 1 { t!("cli.issue_is") } else { t!("cli.issues_are") }
+            )
         );
     }
 
     // --fix-safe implies --fix
     if should_fix {
         println!();
-        let mode = if cli.dry_run { "Preview" } else { "Applying" };
-        let safe_mode = if cli.fix_safe { " (safe only)" } else { "" };
-        println!("{} fixes{}...", mode.cyan().bold(), safe_mode);
+        let mode = if cli.dry_run { t!("cli.preview") } else { t!("cli.applying") };
+        let safe_mode = if cli.fix_safe { t!("cli.safe_only") } else { "".into() };
+        println!("{}", t!("cli.applying_fixes", mode = mode.cyan().bold(), safe_mode = safe_mode));
 
         let results = apply_fixes(&diagnostics, cli.dry_run, cli.fix_safe)?;
 
         if results.is_empty() {
-            println!("  No fixes to apply");
+            println!("{}", t!("cli.no_fixes"));
         } else {
             for result in &results {
                 println!();
                 println!(
                     "  {} {}",
-                    if cli.dry_run { "Would fix:" } else { "Fixed:" }.green(),
+                    if cli.dry_run { t!("cli.would_fix") } else { t!("cli.fixed") }.green(),
                     result.path.display()
                 );
                 for desc in &result.applied {
@@ -482,26 +486,30 @@ fn validate_command(path: &Path, cli: &Cli) -> anyhow::Result<()> {
 
                 if cli.dry_run && cli.verbose {
                     println!();
-                    println!("  {}:", "Diff".yellow());
+                    println!("  {}:", t!("cli.diff_label").yellow());
                     show_diff(&result.original, &result.fixed);
                 }
             }
 
             println!();
-            let action = if cli.dry_run { "Would fix" } else { "Fixed" };
+            let action = if cli.dry_run { t!("cli.would_fix") } else { t!("cli.fixed") };
             println!(
-                "{} {} {}",
-                action.green().bold(),
-                results.len(),
-                if results.len() == 1 { "file" } else { "files" }
+                "{}",
+                t!("cli.fix_summary",
+                    action = action.green().bold(),
+                    count = results.len(),
+                    word = if results.len() == 1 { t!("cli.file_singular") } else { t!("cli.file_plural") }
+                )
             );
         }
     } else if fixable > 0 {
         println!();
         println!(
-            "{} Run with {} to apply fixes",
-            "hint:".cyan(),
-            "--fix".bold()
+            "{} {}",
+            t!("cli.hint_label").cyan(),
+            t!("cli.hint_run_fix",
+                flag = "--fix".bold()
+            )
         );
     }
 
@@ -531,7 +539,7 @@ fn run_single_validation(
     let (mut config, config_warning) = LintConfig::load_or_default(config_path.as_ref());
 
     if let Some(warning) = config_warning {
-        eprintln!("{} {}", "Warning:".yellow().bold(), warning);
+        eprintln!("{} {}", t!("cli.warning_label").yellow().bold(), warning);
         eprintln!();
     }
     config.target = target.into();
@@ -541,11 +549,11 @@ fn run_single_validation(
         files_checked: _,
     } = validate_project(path, &config)?;
 
-    println!("{} {}", "Validating:".cyan().bold(), path.display());
+    println!("{} {}", t!("cli.validating").cyan().bold(), path.display());
     println!();
 
     if diagnostics.is_empty() {
-        println!("{}", "No issues found".green().bold());
+        println!("{}", t!("cli.no_issues_found").green().bold());
         return Ok(false);
     }
 
@@ -575,9 +583,9 @@ fn run_single_validation(
         );
 
         if verbose {
-            println!("  {} {}", "rule:".dimmed(), diag.rule.dimmed());
+            println!("  {} {}", t!("cli.rule_label").dimmed(), diag.rule.dimmed());
             if let Some(suggestion) = &diag.suggestion {
-                println!("  {} {}", "help:".cyan(), suggestion);
+                println!("  {} {}", t!("cli.help_label").cyan(), suggestion);
             }
         }
         println!();
@@ -585,11 +593,13 @@ fn run_single_validation(
 
     println!("{}", "-".repeat(60).dimmed());
     println!(
-        "Found {} {}, {} {}",
-        errors,
-        if errors == 1 { "error" } else { "errors" },
-        warnings,
-        if warnings == 1 { "warning" } else { "warnings" }
+        "{}",
+        t!("cli.found_errors_warnings",
+            errors = errors,
+            error_word = if errors == 1 { t!("cli.error_singular") } else { t!("cli.error_plural") },
+            warnings = warnings,
+            warning_word = if warnings == 1 { t!("cli.warning_singular") } else { t!("cli.warning_plural") }
+        )
     );
 
     Ok(errors > 0 || (strict && warnings > 0))
@@ -660,7 +670,7 @@ fn init_command(output: &PathBuf) -> anyhow::Result<()> {
 
     std::fs::write(output, toml_content)?;
 
-    println!("{} {}", "Created:".green().bold(), output.display());
+    println!("{} {}", t!("cli.created").green().bold(), output.display());
 
     Ok(())
 }
@@ -672,7 +682,7 @@ fn schema_command(output: Option<&PathBuf>) -> anyhow::Result<()> {
     match output {
         Some(path) => {
             std::fs::write(path, &json)?;
-            println!("{} {}", "Schema written to:".green().bold(), path.display());
+            println!("{} {}", t!("cli.schema_written").green().bold(), path.display());
         }
         None => {
             println!("{}", json);
@@ -690,9 +700,9 @@ fn eval_command(
 ) -> anyhow::Result<()> {
     let config = LintConfig::default();
 
-    println!("{} {}", "Evaluating:".cyan().bold(), path.display());
+    println!("{} {}", t!("cli.evaluating").cyan().bold(), path.display());
     if let Some(f) = filter {
-        println!("  {} {}", "filter:".dimmed(), f);
+        println!("  {} {}", t!("cli.filter_label").dimmed(), f);
     }
     println!();
 
@@ -700,14 +710,14 @@ fn eval_command(
 
     // Show verbose per-case results if requested
     if verbose {
-        println!("{}", "Per-Case Results".cyan().bold());
+        println!("{}", t!("cli.per_case_results").cyan().bold());
         println!("{}", "=".repeat(60).dimmed());
 
         for result in &results {
             let status = if result.passed() {
-                "PASS".green().bold()
+                t!("cli.pass").green().bold()
             } else {
-                "FAIL".red().bold()
+                t!("cli.fail").red().bold()
             };
 
             println!("[{}] {}", status, result.case.file.display());
@@ -720,12 +730,12 @@ fn eval_command(
                 if !result.false_positives.is_empty() {
                     println!(
                         "     {} {:?}",
-                        "unexpected:".yellow(),
+                        t!("cli.unexpected_label").yellow(),
                         result.false_positives
                     );
                 }
                 if !result.false_negatives.is_empty() {
-                    println!("     {} {:?}", "missing:".red(), result.false_negatives);
+                    println!("     {} {:?}", t!("cli.missing_label").red(), result.false_negatives);
                 }
             }
             println!();
@@ -756,16 +766,15 @@ fn eval_command(
     println!();
     if summary.cases_failed == 0 {
         println!(
-            "{} All {} cases passed",
-            "SUCCESS".green().bold(),
-            summary.cases_run
+            "{} {}",
+            t!("cli.success").green().bold(),
+            t!("cli.all_cases_passed", count = summary.cases_run)
         );
     } else {
         println!(
-            "{} {}/{} cases failed",
-            "FAILED".red().bold(),
-            summary.cases_failed,
-            summary.cases_run
+            "{} {}",
+            t!("cli.failed").red().bold(),
+            t!("cli.cases_failed", failed = summary.cases_failed, total = summary.cases_run)
         );
         process::exit(1);
     }
@@ -822,52 +831,53 @@ fn telemetry_command(action: TelemetryAction) -> anyhow::Result<()> {
             let config = TelemetryConfig::load().unwrap_or_default();
             let effective = config.is_enabled();
 
-            println!("{}", "Telemetry Status".cyan().bold());
+            println!("{}", t!("cli.telemetry_status").cyan().bold());
             println!();
             println!(
                 "  {} {}",
-                "Configured:".dimmed(),
+                t!("cli.telemetry_configured").dimmed(),
                 if config.enabled {
-                    "enabled"
+                    t!("cli.telemetry_enabled")
                 } else {
-                    "disabled"
+                    t!("cli.telemetry_disabled")
                 }
             );
             println!(
                 "  {} {}",
-                "Effective:".dimmed(),
-                if effective { "enabled" } else { "disabled" }
+                t!("cli.telemetry_effective").dimmed(),
+                if effective { t!("cli.telemetry_enabled") } else { t!("cli.telemetry_disabled") }
             );
 
             if config.enabled && !effective {
                 println!();
                 println!(
-                    "  {} Telemetry is disabled due to environment (CI, DO_NOT_TRACK, etc.)",
-                    "note:".yellow()
+                    "  {} {}",
+                    t!("cli.note_label").yellow(),
+                    t!("cli.telemetry_env_note")
                 );
             }
 
             if let Some(id) = &config.installation_id {
                 // Show only first 8 chars for privacy
                 let short_id = if id.len() > 8 { &id[..8] } else { id };
-                println!("  {} {}...", "Installation ID:".dimmed(), short_id);
+                println!("  {} {}...", t!("cli.telemetry_installation_id").dimmed(), short_id);
             }
 
             if let Some(ts) = &config.consent_timestamp {
-                println!("  {} {}", "Consent given:".dimmed(), ts);
+                println!("  {} {}", t!("cli.telemetry_consent_given").dimmed(), ts);
             }
 
             println!();
-            println!("{}", "Privacy Guarantees".cyan().bold());
-            println!("  - Opt-in only (disabled by default)");
-            println!("  - No file paths or contents ever collected");
-            println!("  - No user identity collected");
-            println!("  - Only aggregate counts (file types, rule triggers)");
-            println!("  - Respects DO_NOT_TRACK, CI environments");
+            println!("{}", t!("cli.telemetry_privacy").cyan().bold());
+            println!("{}", t!("cli.telemetry_privacy_1"));
+            println!("{}", t!("cli.telemetry_privacy_2"));
+            println!("{}", t!("cli.telemetry_privacy_3"));
+            println!("{}", t!("cli.telemetry_privacy_4"));
+            println!("{}", t!("cli.telemetry_privacy_5"));
 
             if let Ok(path) = TelemetryConfig::config_path() {
                 println!();
-                println!("  {} {}", "Config file:".dimmed(), path.display());
+                println!("  {} {}", t!("cli.telemetry_config_file").dimmed(), path.display());
             }
         }
 
@@ -875,27 +885,27 @@ fn telemetry_command(action: TelemetryAction) -> anyhow::Result<()> {
             let mut config = TelemetryConfig::load().unwrap_or_default();
 
             if config.enabled {
-                println!("{} Telemetry is already enabled.", "note:".cyan());
+                println!("{} {}", t!("cli.note_label").cyan(), t!("cli.telemetry_already_enabled"));
             } else {
                 config.enable()?;
-                println!("{} Telemetry enabled.", "OK".green().bold());
+                println!("{} {}", "OK".green().bold(), t!("cli.telemetry_ok_enabled"));
                 println!();
-                println!("Thank you for helping improve agnix!");
+                println!("{}", t!("cli.telemetry_thanks"));
                 println!();
-                println!("{}", "What we collect:".cyan());
-                println!("  - File type counts (e.g., 5 skills, 2 MCP configs)");
-                println!("  - Rule trigger counts (e.g., AS-001: 3 times)");
-                println!("  - Error/warning counts");
-                println!("  - Validation duration");
+                println!("{}", t!("cli.telemetry_collect").cyan());
+                println!("{}", t!("cli.telemetry_collect_1"));
+                println!("{}", t!("cli.telemetry_collect_2"));
+                println!("{}", t!("cli.telemetry_collect_3"));
+                println!("{}", t!("cli.telemetry_collect_4"));
                 println!();
-                println!("{}", "What we never collect:".cyan());
-                println!("  - File paths or names");
-                println!("  - File contents or code");
-                println!("  - User identity");
+                println!("{}", t!("cli.telemetry_never_collect").cyan());
+                println!("{}", t!("cli.telemetry_never_1"));
+                println!("{}", t!("cli.telemetry_never_2"));
+                println!("{}", t!("cli.telemetry_never_3"));
                 println!();
                 println!(
-                    "You can disable telemetry at any time with: {}",
-                    "agnix telemetry disable".bold()
+                    "{}",
+                    t!("cli.telemetry_disable_hint", cmd = "agnix telemetry disable".bold())
                 );
             }
         }
@@ -904,10 +914,10 @@ fn telemetry_command(action: TelemetryAction) -> anyhow::Result<()> {
             let mut config = TelemetryConfig::load().unwrap_or_default();
 
             if !config.enabled {
-                println!("{} Telemetry is already disabled.", "note:".cyan());
+                println!("{} {}", t!("cli.note_label").cyan(), t!("cli.telemetry_already_disabled"));
             } else {
                 config.disable()?;
-                println!("{} Telemetry disabled.", "OK".green().bold());
+                println!("{} {}", "OK".green().bold(), t!("cli.telemetry_ok_disabled"));
             }
         }
     }
