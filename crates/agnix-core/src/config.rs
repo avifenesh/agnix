@@ -50,6 +50,201 @@ pub struct SpecRevisions {
     pub agents_md_spec: Option<String>,
 }
 
+// =============================================================================
+// Internal Composition Types (Facade Pattern)
+// =============================================================================
+//
+// LintConfig uses internal composition to separate concerns while maintaining
+// a stable public API. These types are private implementation details:
+//
+// - RuntimeContext: Groups non-serialized runtime state (root_dir, import_cache, fs)
+// - DefaultRuleFilter: Encapsulates rule filtering logic (~100 lines)
+//
+// This pattern provides:
+// 1. Better code organization without breaking changes
+// 2. Easier testing of individual components
+// 3. Clear separation between serialized config and runtime state
+// =============================================================================
+
+/// Runtime context for validation operations (not serialized).
+///
+/// Groups non-serialized state that is set up at runtime and shared during
+/// validation. This includes the project root, import cache, and filesystem
+/// abstraction.
+///
+/// # Thread Safety
+///
+/// `RuntimeContext` is `Send + Sync` because:
+/// - `PathBuf` and `Option<T>` are `Send + Sync`
+/// - `ImportCache` uses interior mutability with thread-safe types
+/// - `Arc<dyn FileSystem>` shares the filesystem without deep-cloning
+///
+/// # Clone Behavior
+///
+/// When cloned, the `Arc<dyn FileSystem>` is shared (not deep-cloned),
+/// maintaining the same filesystem instance across clones.
+#[derive(Clone)]
+struct RuntimeContext {
+    /// Runtime-only validation root directory
+    root_dir: Option<PathBuf>,
+
+    /// Shared import cache for project-level validation.
+    ///
+    /// When set, validators can use this cache to share parsed import data
+    /// across files, avoiding redundant parsing during import chain traversal.
+    import_cache: Option<crate::parsers::ImportCache>,
+
+    /// File system abstraction for testability.
+    ///
+    /// Validators use this to perform file system operations. Defaults to
+    /// `RealFileSystem` which delegates to `std::fs` and `file_utils`.
+    fs: Arc<dyn FileSystem>,
+}
+
+impl Default for RuntimeContext {
+    fn default() -> Self {
+        Self {
+            root_dir: None,
+            import_cache: None,
+            fs: Arc::new(RealFileSystem),
+        }
+    }
+}
+
+impl std::fmt::Debug for RuntimeContext {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("RuntimeContext")
+            .field("root_dir", &self.root_dir)
+            .field("import_cache", &self.import_cache.as_ref().map(|_| "..."))
+            .field("fs", &"Arc<dyn FileSystem>")
+            .finish()
+    }
+}
+
+/// Rule filtering logic encapsulated for clarity.
+///
+/// This trait and its implementation extract the rule enablement logic
+/// from LintConfig, making it easier to test and maintain.
+trait RuleFilter {
+    /// Check if a specific rule is enabled based on config.
+    fn is_rule_enabled(&self, rule_id: &str) -> bool;
+}
+
+/// Default implementation of rule filtering logic.
+///
+/// Determines whether a rule is enabled based on:
+/// 1. Explicit disabled_rules list
+/// 2. Target tool or tools array filtering
+/// 3. Category enablement flags
+struct DefaultRuleFilter<'a> {
+    rules: &'a RuleConfig,
+    target: TargetTool,
+    tools: &'a [String],
+}
+
+impl<'a> DefaultRuleFilter<'a> {
+    fn new(rules: &'a RuleConfig, target: TargetTool, tools: &'a [String]) -> Self {
+        Self {
+            rules,
+            target,
+            tools,
+        }
+    }
+
+    /// Check if a rule applies to the current target tool(s)
+    fn is_rule_for_target(&self, rule_id: &str) -> bool {
+        // If tools array is specified, use it for filtering
+        if !self.tools.is_empty() {
+            return self.is_rule_for_tools(rule_id);
+        }
+
+        // Legacy: CC-* rules only apply to ClaudeCode or Generic targets
+        if rule_id.starts_with("CC-") {
+            return matches!(self.target, TargetTool::ClaudeCode | TargetTool::Generic);
+        }
+        // All other rules (AS-*, XML-*, REF-*) apply to all targets
+        true
+    }
+
+    /// Check if a rule applies based on the tools array
+    fn is_rule_for_tools(&self, rule_id: &str) -> bool {
+        // Use TOOL_RULE_PREFIXES derived from rules.json at compile time.
+        // Note: TOOL_RULE_PREFIXES is small (~6 entries), so linear search is acceptable.
+        // If this grows significantly larger, consider using a HashMap for O(1) lookups.
+        for (prefix, tool) in agnix_rules::TOOL_RULE_PREFIXES {
+            if rule_id.starts_with(prefix) {
+                // Check if the required tool is in the tools list (case-insensitive)
+                // Also accept backward-compat aliases (e.g., "copilot" for "github-copilot")
+                return self
+                    .tools
+                    .iter()
+                    .any(|t| t.eq_ignore_ascii_case(tool) || Self::is_tool_alias(t, tool));
+            }
+        }
+
+        // Generic rules (AS-*, XML-*, REF-*, XP-*, AGM-*, MCP-*, PE-*) apply to all tools
+        true
+    }
+
+    /// Check if a user-provided tool name is a backward-compatible alias
+    /// for the canonical tool name from rules.json.
+    ///
+    /// Currently only "github-copilot" has an alias ("copilot"). This exists for
+    /// backward compatibility: early versions of agnix used the shorter "copilot"
+    /// name in configs, and we need to continue supporting that for existing users.
+    /// The canonical names in rules.json use the full "github-copilot" to match
+    /// the official tool name from GitHub's documentation.
+    ///
+    /// Note: This function does NOT treat canonical names as aliases of themselves.
+    /// For example, "github-copilot" is NOT an alias for "github-copilot" - that's
+    /// handled by the direct eq_ignore_ascii_case comparison in is_rule_for_tools().
+    fn is_tool_alias(user_tool: &str, canonical_tool: &str) -> bool {
+        // Backward compatibility: accept short names as aliases
+        match canonical_tool {
+            "github-copilot" => user_tool.eq_ignore_ascii_case("copilot"),
+            _ => false,
+        }
+    }
+
+    /// Check if a rule's category is enabled
+    fn is_category_enabled(&self, rule_id: &str) -> bool {
+        match rule_id {
+            s if s.starts_with("AS-") || s.starts_with("CC-SK-") => self.rules.skills,
+            s if s.starts_with("CC-HK-") => self.rules.hooks,
+            s if s.starts_with("CC-AG-") => self.rules.agents,
+            s if s.starts_with("CC-MEM-") => self.rules.memory,
+            s if s.starts_with("CC-PL-") => self.rules.plugins,
+            s if s.starts_with("XML-") => self.rules.xml,
+            s if s.starts_with("MCP-") => self.rules.mcp,
+            s if s.starts_with("REF-") || s.starts_with("imports::") => self.rules.imports,
+            s if s.starts_with("XP-") => self.rules.cross_platform,
+            s if s.starts_with("AGM-") => self.rules.agents_md,
+            s if s.starts_with("COP-") => self.rules.copilot,
+            s if s.starts_with("CUR-") => self.rules.cursor,
+            s if s.starts_with("PE-") => self.rules.prompt_engineering,
+            // Unknown rules are enabled by default
+            _ => true,
+        }
+    }
+}
+
+impl RuleFilter for DefaultRuleFilter<'_> {
+    fn is_rule_enabled(&self, rule_id: &str) -> bool {
+        // Check if explicitly disabled
+        if self.rules.disabled_rules.iter().any(|r| r == rule_id) {
+            return false;
+        }
+
+        // Check if rule applies to target
+        if !self.is_rule_for_target(rule_id) {
+            return false;
+        }
+
+        // Check if category is enabled
+        self.is_category_enabled(rule_id)
+    }
+}
+
 /// Configuration for the linter
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(default)]
@@ -86,26 +281,12 @@ pub struct LintConfig {
     #[serde(default)]
     pub spec_revisions: SpecRevisions,
 
-    /// Runtime-only validation root directory (not serialized)
-    #[serde(skip)]
-    pub root_dir: Option<PathBuf>,
-
-    /// Shared import cache for project-level validation (not serialized).
+    /// Runtime context for validation operations (not serialized).
     ///
-    /// When set, validators can use this cache to share parsed import data
-    /// across files, avoiding redundant parsing during import chain traversal.
-    /// This is typically initialized by `validate_project_with_registry` and
-    /// shared across all file validations in a project.
+    /// Groups runtime-only state: root_dir, import_cache, and filesystem.
+    /// These are set up at runtime and not persisted to configuration files.
     #[serde(skip)]
-    pub import_cache: Option<crate::parsers::ImportCache>,
-
-    /// File system abstraction for testability (not serialized).
-    ///
-    /// Validators use this to perform file system operations. Defaults to
-    /// `RealFileSystem` which delegates to `std::fs` and `file_utils`.
-    /// For testing, this can be replaced with `MockFileSystem`.
-    #[serde(skip)]
-    fs: Arc<dyn FileSystem>,
+    runtime: RuntimeContext,
 }
 
 impl Default for LintConfig {
@@ -123,9 +304,7 @@ impl Default for LintConfig {
             mcp_protocol_version: None,
             tool_versions: ToolVersions::default(),
             spec_revisions: SpecRevisions::default(),
-            root_dir: None,
-            import_cache: None,
-            fs: Arc::new(RealFileSystem),
+            runtime: RuntimeContext::default(),
         }
     }
 }
@@ -285,9 +464,21 @@ impl LintConfig {
         }
     }
 
+    // =========================================================================
+    // Runtime Context Accessors
+    // =========================================================================
+    //
+    // These methods delegate to RuntimeContext, maintaining the same public API.
+    // =========================================================================
+
+    /// Get the runtime validation root directory, if set.
+    pub fn root_dir(&self) -> Option<&PathBuf> {
+        self.runtime.root_dir.as_ref()
+    }
+
     /// Set the runtime validation root directory (not persisted)
     pub fn set_root_dir(&mut self, root_dir: PathBuf) {
-        self.root_dir = Some(root_dir);
+        self.runtime.root_dir = Some(root_dir);
     }
 
     /// Set the shared import cache for project-level validation (not persisted).
@@ -296,7 +487,7 @@ impl LintConfig {
     /// import data across files, improving performance by avoiding redundant
     /// parsing during import chain traversal.
     pub fn set_import_cache(&mut self, cache: crate::parsers::ImportCache) {
-        self.import_cache = Some(cache);
+        self.runtime.import_cache = Some(cache);
     }
 
     /// Get the shared import cache, if one has been set.
@@ -305,7 +496,7 @@ impl LintConfig {
     /// been initialized. Returns `Some(&ImportCache)` during project-level
     /// validation where import results are shared across files.
     pub fn import_cache(&self) -> Option<&crate::parsers::ImportCache> {
-        self.import_cache.as_ref()
+        self.runtime.import_cache.as_ref()
     }
 
     /// Get the file system abstraction.
@@ -314,7 +505,7 @@ impl LintConfig {
     /// directly calling `std::fs` functions. This enables unit testing
     /// with `MockFileSystem`.
     pub fn fs(&self) -> &Arc<dyn FileSystem> {
-        &self.fs
+        &self.runtime.fs
     }
 
     /// Set the file system abstraction (not persisted).
@@ -327,7 +518,7 @@ impl LintConfig {
     /// begins. Changing the filesystem during validation may cause inconsistent
     /// results if validators have already cached file state.
     pub fn set_fs(&mut self, fs: Arc<dyn FileSystem>) {
-        self.fs = fs;
+        self.runtime.fs = fs;
     }
 
     /// Get the expected MCP protocol version
@@ -356,60 +547,21 @@ impl LintConfig {
         self.tool_versions.claude_code.as_deref()
     }
 
+    // =========================================================================
+    // Rule Filtering (delegates to DefaultRuleFilter)
+    // =========================================================================
+
     /// Check if a specific rule is enabled based on config
     ///
     /// A rule is enabled if:
     /// 1. It's not in the disabled_rules list
     /// 2. It's applicable to the current target tool
     /// 3. Its category is enabled
+    ///
+    /// This delegates to `DefaultRuleFilter` which encapsulates the filtering logic.
     pub fn is_rule_enabled(&self, rule_id: &str) -> bool {
-        // Check if explicitly disabled
-        if self.rules.disabled_rules.iter().any(|r| r == rule_id) {
-            return false;
-        }
-
-        // Check if rule applies to target
-        if !self.is_rule_for_target(rule_id) {
-            return false;
-        }
-
-        // Check if category is enabled
-        self.is_category_enabled(rule_id)
-    }
-
-    /// Check if a rule applies to the current target tool(s)
-    fn is_rule_for_target(&self, rule_id: &str) -> bool {
-        // If tools array is specified, use it for filtering
-        if !self.tools.is_empty() {
-            return self.is_rule_for_tools(rule_id);
-        }
-
-        // Legacy: CC-* rules only apply to ClaudeCode or Generic targets
-        if rule_id.starts_with("CC-") {
-            return matches!(self.target, TargetTool::ClaudeCode | TargetTool::Generic);
-        }
-        // All other rules (AS-*, XML-*, REF-*) apply to all targets
-        true
-    }
-
-    /// Check if a rule applies based on the tools array
-    fn is_rule_for_tools(&self, rule_id: &str) -> bool {
-        // Use TOOL_RULE_PREFIXES derived from rules.json at compile time.
-        // Note: TOOL_RULE_PREFIXES is small (~6 entries), so linear search is acceptable.
-        // If this grows significantly larger, consider using a HashMap for O(1) lookups.
-        for (prefix, tool) in agnix_rules::TOOL_RULE_PREFIXES {
-            if rule_id.starts_with(prefix) {
-                // Check if the required tool is in the tools list (case-insensitive)
-                // Also accept backward-compat aliases (e.g., "copilot" for "github-copilot")
-                return self
-                    .tools
-                    .iter()
-                    .any(|t| t.eq_ignore_ascii_case(tool) || Self::is_tool_alias(t, tool));
-            }
-        }
-
-        // Generic rules (AS-*, XML-*, REF-*, XP-*, AGM-*, MCP-*, PE-*) apply to all tools
-        true
+        let filter = DefaultRuleFilter::new(&self.rules, self.target, &self.tools);
+        filter.is_rule_enabled(rule_id)
     }
 
     /// Check if a user-provided tool name is a backward-compatible alias
@@ -424,33 +576,8 @@ impl LintConfig {
     /// Note: This function does NOT treat canonical names as aliases of themselves.
     /// For example, "github-copilot" is NOT an alias for "github-copilot" - that's
     /// handled by the direct eq_ignore_ascii_case comparison in is_rule_for_tools().
-    fn is_tool_alias(user_tool: &str, canonical_tool: &str) -> bool {
-        // Backward compatibility: accept short names as aliases
-        match canonical_tool {
-            "github-copilot" => user_tool.eq_ignore_ascii_case("copilot"),
-            _ => false,
-        }
-    }
-
-    /// Check if a rule's category is enabled
-    fn is_category_enabled(&self, rule_id: &str) -> bool {
-        match rule_id {
-            s if s.starts_with("AS-") || s.starts_with("CC-SK-") => self.rules.skills,
-            s if s.starts_with("CC-HK-") => self.rules.hooks,
-            s if s.starts_with("CC-AG-") => self.rules.agents,
-            s if s.starts_with("CC-MEM-") => self.rules.memory,
-            s if s.starts_with("CC-PL-") => self.rules.plugins,
-            s if s.starts_with("XML-") => self.rules.xml,
-            s if s.starts_with("MCP-") => self.rules.mcp,
-            s if s.starts_with("REF-") || s.starts_with("imports::") => self.rules.imports,
-            s if s.starts_with("XP-") => self.rules.cross_platform,
-            s if s.starts_with("AGM-") => self.rules.agents_md,
-            s if s.starts_with("COP-") => self.rules.copilot,
-            s if s.starts_with("CUR-") => self.rules.cursor,
-            s if s.starts_with("PE-") => self.rules.prompt_engineering,
-            // Unknown rules are enabled by default
-            _ => true,
-        }
+    pub fn is_tool_alias(user_tool: &str, canonical_tool: &str) -> bool {
+        DefaultRuleFilter::is_tool_alias(user_tool, canonical_tool)
     }
 }
 
@@ -2323,5 +2450,203 @@ disabled_rules = []
 
         // Both should point to the same Arc
         assert!(Arc::ptr_eq(fs1, fs2));
+    }
+
+    // ===== RuntimeContext Tests =====
+    //
+    // These tests verify the internal RuntimeContext type works correctly.
+    // RuntimeContext is private, but we test it through LintConfig's public API.
+
+    #[test]
+    fn test_runtime_context_default_values() {
+        let config = LintConfig::default();
+
+        // Default RuntimeContext should have:
+        // - root_dir: None
+        // - import_cache: None
+        // - fs: RealFileSystem
+        assert!(config.root_dir().is_none());
+        assert!(config.import_cache().is_none());
+        // fs should work with real files
+        assert!(config.fs().exists(Path::new("Cargo.toml")));
+    }
+
+    #[test]
+    fn test_runtime_context_root_dir_accessor() {
+        let mut config = LintConfig::default();
+        assert!(config.root_dir().is_none());
+
+        config.set_root_dir(PathBuf::from("/test/path"));
+        assert_eq!(config.root_dir(), Some(&PathBuf::from("/test/path")));
+    }
+
+    #[test]
+    fn test_runtime_context_clone_shares_fs() {
+        use crate::fs::{FileSystem, MockFileSystem};
+
+        let mut config = LintConfig::default();
+        let mock_fs = Arc::new(MockFileSystem::new());
+        mock_fs.add_file("/shared/file.md", "content");
+
+        let fs_arc: Arc<dyn FileSystem> = Arc::clone(&mock_fs) as Arc<dyn FileSystem>;
+        config.set_fs(fs_arc);
+
+        // Clone the config
+        let cloned = config.clone();
+
+        // Both should share the same filesystem Arc
+        assert!(Arc::ptr_eq(config.fs(), cloned.fs()));
+
+        // Both can access the same file
+        assert!(config.fs().exists(Path::new("/shared/file.md")));
+        assert!(cloned.fs().exists(Path::new("/shared/file.md")));
+    }
+
+    #[test]
+    fn test_runtime_context_not_serialized() {
+        let mut config = LintConfig::default();
+        config.set_root_dir(PathBuf::from("/test/root"));
+
+        // Serialize
+        let serialized = toml::to_string(&config).unwrap();
+
+        // The serialized TOML should NOT contain root_dir
+        assert!(!serialized.contains("root_dir"));
+        assert!(!serialized.contains("/test/root"));
+
+        // Deserialize
+        let deserialized: LintConfig = toml::from_str(&serialized).unwrap();
+
+        // Deserialized config should have default RuntimeContext (root_dir = None)
+        assert!(deserialized.root_dir().is_none());
+    }
+
+    // ===== DefaultRuleFilter Tests =====
+    //
+    // These tests verify the internal DefaultRuleFilter logic through
+    // LintConfig's public is_rule_enabled() method.
+
+    #[test]
+    fn test_rule_filter_disabled_rules_checked_first() {
+        let mut config = LintConfig::default();
+        config.rules.disabled_rules = vec!["AS-001".to_string()];
+
+        // Rule should be disabled regardless of category or target
+        assert!(!config.is_rule_enabled("AS-001"));
+
+        // Other AS-* rules should still be enabled
+        assert!(config.is_rule_enabled("AS-002"));
+    }
+
+    #[test]
+    fn test_rule_filter_target_checked_second() {
+        let mut config = LintConfig::default();
+        config.target = TargetTool::Cursor;
+
+        // CC-* rules should be disabled for Cursor target
+        assert!(!config.is_rule_enabled("CC-SK-001"));
+
+        // But AS-* rules (generic) should still work
+        assert!(config.is_rule_enabled("AS-001"));
+    }
+
+    #[test]
+    fn test_rule_filter_category_checked_third() {
+        let mut config = LintConfig::default();
+        config.rules.skills = false;
+
+        // Skills category disabled
+        assert!(!config.is_rule_enabled("AS-001"));
+        assert!(!config.is_rule_enabled("CC-SK-001"));
+
+        // Other categories still enabled
+        assert!(config.is_rule_enabled("CC-HK-001"));
+        assert!(config.is_rule_enabled("MCP-001"));
+    }
+
+    #[test]
+    fn test_rule_filter_order_of_checks() {
+        let mut config = LintConfig::default();
+        config.target = TargetTool::ClaudeCode;
+        config.rules.skills = true;
+        config.rules.disabled_rules = vec!["CC-SK-001".to_string()];
+
+        // disabled_rules takes precedence over everything
+        assert!(!config.is_rule_enabled("CC-SK-001"));
+
+        // Other CC-SK-* rules are enabled (category enabled + target matches)
+        assert!(config.is_rule_enabled("CC-SK-002"));
+    }
+
+    #[test]
+    fn test_rule_filter_is_tool_alias_works_through_config() {
+        // Test that is_tool_alias is properly exposed
+        assert!(LintConfig::is_tool_alias("copilot", "github-copilot"));
+        assert!(!LintConfig::is_tool_alias("unknown", "github-copilot"));
+    }
+
+    // ===== Serde Round-Trip Tests =====
+
+    #[test]
+    fn test_serde_roundtrip_preserves_all_public_fields() {
+        let mut config = LintConfig::default();
+        config.severity = SeverityLevel::Error;
+        config.target = TargetTool::ClaudeCode;
+        config.tools = vec!["claude-code".to_string(), "cursor".to_string()];
+        config.exclude = vec!["custom/**".to_string()];
+        config.mcp_protocol_version = Some("2024-11-05".to_string());
+        config.tool_versions.claude_code = Some("1.0.0".to_string());
+        config.spec_revisions.mcp_protocol = Some("2025-06-18".to_string());
+        config.rules.skills = false;
+        config.rules.disabled_rules = vec!["MCP-001".to_string()];
+
+        // Also set runtime values (should NOT be serialized)
+        config.set_root_dir(PathBuf::from("/test/root"));
+
+        // Serialize
+        let serialized = toml::to_string(&config).unwrap();
+
+        // Deserialize
+        let deserialized: LintConfig = toml::from_str(&serialized).unwrap();
+
+        // All public fields should be preserved
+        assert_eq!(deserialized.severity, SeverityLevel::Error);
+        assert_eq!(deserialized.target, TargetTool::ClaudeCode);
+        assert_eq!(deserialized.tools, vec!["claude-code", "cursor"]);
+        assert_eq!(deserialized.exclude, vec!["custom/**"]);
+        assert_eq!(
+            deserialized.mcp_protocol_version,
+            Some("2024-11-05".to_string())
+        );
+        assert_eq!(
+            deserialized.tool_versions.claude_code,
+            Some("1.0.0".to_string())
+        );
+        assert_eq!(
+            deserialized.spec_revisions.mcp_protocol,
+            Some("2025-06-18".to_string())
+        );
+        assert!(!deserialized.rules.skills);
+        assert_eq!(deserialized.rules.disabled_rules, vec!["MCP-001"]);
+
+        // Runtime values should be reset to defaults
+        assert!(deserialized.root_dir().is_none());
+    }
+
+    #[test]
+    fn test_serde_runtime_fields_not_included() {
+        use crate::fs::MockFileSystem;
+
+        let mut config = LintConfig::default();
+        config.set_root_dir(PathBuf::from("/test"));
+        config.set_fs(Arc::new(MockFileSystem::new()));
+
+        let serialized = toml::to_string(&config).unwrap();
+
+        // Runtime fields should not appear in serialized output
+        assert!(!serialized.contains("runtime"));
+        assert!(!serialized.contains("root_dir"));
+        assert!(!serialized.contains("import_cache"));
+        assert!(!serialized.contains("fs"));
     }
 }

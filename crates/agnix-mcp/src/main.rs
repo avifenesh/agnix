@@ -224,10 +224,8 @@ impl AgnixServer {
         &self,
         Parameters(input): Parameters<ValidateFileInput>,
     ) -> Result<CallToolResult, McpError> {
-        let config = LintConfig {
-            target: parse_target(input.target),
-            ..Default::default()
-        };
+        let mut config = LintConfig::default();
+        config.target = parse_target(input.target);
 
         let file_path = Path::new(&input.path);
 
@@ -249,10 +247,8 @@ impl AgnixServer {
         &self,
         Parameters(input): Parameters<ValidateProjectInput>,
     ) -> Result<CallToolResult, McpError> {
-        let config = LintConfig {
-            target: parse_target(input.target),
-            ..Default::default()
-        };
+        let mut config = LintConfig::default();
+        config.target = parse_target(input.target);
 
         let validation_result = core_validate_project(Path::new(&input.path), &config)
             .map_err(|e| make_error(format!("Failed to validate project: {}", e)))?;
