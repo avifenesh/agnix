@@ -8,7 +8,7 @@ db-urls = ["https://github.com/rustsec/advisory-db"]
 # Temporary ignore for unmaintained crates (tracked in #227)
 ignore = [
     "RUSTSEC-2024-0384", # instant (via notify) - waiting for notify update
-    "RUSTSEC-2024-0404", # bincode (via criterion) - dev dependency only
+    "RUSTSEC-2025-0141", # bincode (via iai-callgrind) - dev dependency only
 ]
 
 [licenses]
