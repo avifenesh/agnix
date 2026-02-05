@@ -164,13 +164,10 @@ fn parse_timestamp(ts: &str) -> Option<u64> {
     let minute: u32 = ts.get(14..16)?.parse().ok()?;
     let second: u32 = ts.get(17..19)?.parse().ok()?;
 
-    if year < 1970 {
+    if !(1970..=9999).contains(&year) {
         return None;
     }
     if !(1..=12).contains(&month) {
-        return None;
-    }
-    if !(1..=31).contains(&day) {
         return None;
     }
     if hour > 23 {
@@ -183,20 +180,22 @@ fn parse_timestamp(ts: &str) -> Option<u64> {
         return None;
     }
 
-    // Convert to Unix timestamp (simplified calculation)
-    let mut days = 0i64;
-
-    // Years since 1970
-    for y in 1970..year {
-        days += if is_leap_year(y) { 366 } else { 365 };
-    }
-
-    // Months in current year
     let days_in_months: [u32; 12] = if is_leap_year(year) {
         [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
     } else {
         [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
     };
+
+    if day == 0 || day > days_in_months[(month - 1) as usize] {
+        return None;
+    }
+
+    // Convert to Unix timestamp (simplified calculation)
+    let mut days = 0i64;
+
+    for y in 1970..year {
+        days += if is_leap_year(y) { 366 } else { 365 };
+    }
 
     for days_in_month in days_in_months.iter().take(month.saturating_sub(1) as usize) {
         days += *days_in_month as i64;
@@ -398,6 +397,17 @@ mod tests {
         assert!(parse_timestamp("2024-01-01T24:00:00Z").is_none());
         assert!(parse_timestamp("2024-01-01T00:60:00Z").is_none());
         assert!(parse_timestamp("2024-01-01T00:00:60Z").is_none());
+
+        // Month-specific day validation
+        assert!(parse_timestamp("2024-02-30T00:00:00Z").is_none());
+        assert!(parse_timestamp("2023-02-29T00:00:00Z").is_none()); // non-leap year
+        assert!(parse_timestamp("2024-04-31T00:00:00Z").is_none());
+        assert!(parse_timestamp("2024-06-31T00:00:00Z").is_none());
+        assert!(parse_timestamp("2100-02-29T00:00:00Z").is_none()); // century non-leap
+
+        // Year upper bound
+        assert!(parse_timestamp("2024-01-01T00:00:00Z").is_some());
+        assert!(parse_timestamp("9999-12-31T23:59:59Z").is_some());
     }
 
     #[test]
