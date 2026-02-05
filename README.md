@@ -184,6 +184,7 @@ cargo install agnix-lsp
 Real-time diagnostics as you type, quick-fix code actions, hover documentation.
 
 ![VS Code validation example](assets/vscode-validation.png)
+![JetBrains validation example](editors/jetbrains/assets/jetbrains-validation.png)
 
 **VS Code extension** includes a comprehensive settings UI for configuring all validation options. Changes apply immediately without server restart. See [VS Code extension](editors/vscode/README.md) for details.
 
