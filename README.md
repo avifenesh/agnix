@@ -255,6 +255,11 @@ cargo install agnix-mcp
 
 The server follows MCP best practices with rich parameter schemas and structured JSON output.
 
+`validate_file` and `validate_project` support multi-tool filtering via `tools`:
+- `tools` (preferred): comma-separated string (`"claude-code,cursor"`) or string array (`["claude-code","cursor"]`)
+- `target` (legacy fallback): used only when `tools` is missing or empty
+- tool names follow agnix canonical tool metadata (for example `windsurf`), with compatibility aliases accepted (`copilot`, `claudecode`)
+
 ## Configuration
 
 ```toml

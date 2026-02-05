@@ -28,7 +28,13 @@ use rmcp::{
 };
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use std::collections::HashSet;
 use std::path::Path;
+
+const TOOL_ALIASES: &[(&str, &str)] =
+    &[("copilot", "github-copilot"), ("claudecode", "claude-code")];
+
+const COMPAT_TOOL_NAMES: &[&str] = &["generic", "codex"];
 
 /// Input for validate_file tool
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
@@ -39,9 +45,14 @@ pub struct ValidateFileInput {
         description = "Absolute or relative path to the agent configuration file (e.g., 'SKILL.md', '.claude/settings.json', 'mcp-config.json')"
     )]
     pub path: String,
+    /// Tools to validate for (preferred over legacy target)
+    #[schemars(
+        description = "Tools to validate for. Accepts comma-separated string (e.g., 'claude-code,cursor,windsurf') or array (e.g., ['claude-code','cursor']). Uses canonical agnix tool names (case-insensitive), plus compatibility aliases (e.g., 'copilot', 'claudecode'). When non-empty, this overrides legacy target."
+    )]
+    pub tools: Option<ToolsInput>,
     /// Target tool for validation rules
     #[schemars(
-        description = "Target AI tool for validation rules. Options: 'generic' (default), 'claude-code', 'cursor', 'codex'"
+        description = "Legacy single target for validation rules (deprecated). Options: 'generic' (default), 'claude-code', 'cursor', 'codex'. Used only when 'tools' is missing or empty."
     )]
     pub target: Option<String>,
 }
@@ -55,11 +66,26 @@ pub struct ValidateProjectInput {
         description = "Path to the project directory to validate (e.g., '.' for current directory)"
     )]
     pub path: String,
+    /// Tools to validate for (preferred over legacy target)
+    #[schemars(
+        description = "Tools to validate for. Accepts comma-separated string (e.g., 'claude-code,cursor,windsurf') or array (e.g., ['claude-code','cursor']). Uses canonical agnix tool names (case-insensitive), plus compatibility aliases (e.g., 'copilot', 'claudecode'). When non-empty, this overrides legacy target."
+    )]
+    pub tools: Option<ToolsInput>,
     /// Target tool for validation rules
     #[schemars(
-        description = "Target AI tool for validation rules. Options: 'generic' (default), 'claude-code', 'cursor', 'codex'"
+        description = "Legacy single target for validation rules (deprecated). Options: 'generic' (default), 'claude-code', 'cursor', 'codex'. Used only when 'tools' is missing or empty."
     )]
     pub target: Option<String>,
+}
+
+/// Tools input for MCP validate tools.
+///
+/// Supports either comma-separated string or array syntax.
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+#[serde(untagged)]
+pub enum ToolsInput {
+    Csv(String),
+    List(Vec<String>),
 }
 
 /// Input for get_rule_docs tool
@@ -160,6 +186,96 @@ fn parse_target(target: Option<String>) -> agnix_core::config::TargetTool {
     }
 }
 
+fn normalize_tool_entry(value: &str) -> Option<String> {
+    let trimmed = value.trim();
+    if trimmed.is_empty() {
+        None
+    } else {
+        Some(trimmed.to_ascii_lowercase())
+    }
+}
+
+fn canonicalize_tool(value: &str) -> Option<&'static str> {
+    match value {
+        v if v.eq_ignore_ascii_case("generic") => Some("generic"),
+        v if v.eq_ignore_ascii_case("codex") => Some("codex"),
+        _ => TOOL_ALIASES
+            .iter()
+            .find(|(alias, _)| value.eq_ignore_ascii_case(alias))
+            .map(|(_, canonical)| *canonical)
+            .or_else(|| agnix_rules::normalize_tool_name(value)),
+    }
+}
+
+fn supported_tool_names() -> Vec<&'static str> {
+    let mut tools = agnix_rules::valid_tools().to_vec();
+    for compat in COMPAT_TOOL_NAMES {
+        if !tools.contains(compat) {
+            tools.push(compat);
+        }
+    }
+    tools.sort_unstable();
+    tools
+}
+
+fn alias_help() -> String {
+    TOOL_ALIASES
+        .iter()
+        .map(|(alias, canonical)| format!("{} -> {}", alias, canonical))
+        .collect::<Vec<_>>()
+        .join(", ")
+}
+
+fn parse_tools(tools: Option<ToolsInput>) -> Result<Vec<String>, McpError> {
+    let raw: Vec<String> = match tools {
+        None => Vec::new(),
+        Some(ToolsInput::Csv(csv)) => csv.split(',').filter_map(normalize_tool_entry).collect(),
+        Some(ToolsInput::List(list)) => list
+            .into_iter()
+            .filter_map(|entry| normalize_tool_entry(&entry))
+            .collect(),
+    };
+
+    if raw.is_empty() {
+        return Ok(Vec::new());
+    }
+
+    let mut seen = HashSet::new();
+    let mut normalized = Vec::new();
+    for tool in raw {
+        let canonical = canonicalize_tool(&tool).ok_or_else(|| {
+            make_invalid_params(format!(
+                "Unknown tool '{}'. Valid values: {}. Aliases: {}.",
+                tool,
+                supported_tool_names().join(", "),
+                alias_help()
+            ))
+        })?;
+        if seen.insert(canonical) {
+            normalized.push(canonical.to_string());
+        }
+    }
+
+    Ok(normalized)
+}
+
+fn apply_tool_selection(
+    config: &mut LintConfig,
+    tools: Option<ToolsInput>,
+    target: Option<String>,
+) -> Result<(), McpError> {
+    let parsed_tools = parse_tools(tools)?;
+    if parsed_tools.is_empty() {
+        config.tools.clear();
+        config.target = parse_target(target);
+    } else {
+        config.target = agnix_core::config::TargetTool::Generic;
+        config.tools = parsed_tools;
+    }
+
+    Ok(())
+}
+
 fn diagnostics_to_result(
     path: &str,
     diagnostics: Vec<Diagnostic>,
@@ -225,7 +341,7 @@ impl AgnixServer {
         Parameters(input): Parameters<ValidateFileInput>,
     ) -> Result<CallToolResult, McpError> {
         let mut config = LintConfig::default();
-        config.target = parse_target(input.target);
+        apply_tool_selection(&mut config, input.tools, input.target)?;
 
         let file_path = Path::new(&input.path);
 
@@ -248,7 +364,7 @@ impl AgnixServer {
         Parameters(input): Parameters<ValidateProjectInput>,
     ) -> Result<CallToolResult, McpError> {
         let mut config = LintConfig::default();
-        config.target = parse_target(input.target);
+        apply_tool_selection(&mut config, input.tools, input.target)?;
 
         let validation_result = core_validate_project(Path::new(&input.path), &config)
             .map_err(|e| make_error(format!("Failed to validate project: {}", e)))?;
@@ -335,7 +451,9 @@ impl ServerHandler for AgnixServer {
                  - validate_file: Validate a single config file\n\
                  - get_rules: List all 100 validation rules\n\
                  - get_rule_docs: Get details about a specific rule\n\n\
-                 Target options: generic, claude-code, cursor, codex"
+                 Preferred input: tools (CSV string or array)\n\
+                 Legacy fallback: target\n\
+                 Supported tools are derived from agnix rule metadata"
                     .to_string(),
             ),
         }
@@ -361,4 +479,208 @@ async fn main() -> anyhow::Result<()> {
     service.waiting().await?;
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{
+        apply_tool_selection, parse_tools, ToolsInput, ValidateFileInput, ValidateProjectInput,
+    };
+    use agnix_core::config::TargetTool;
+    use agnix_core::LintConfig;
+    use serde_json::json;
+
+    #[test]
+    fn test_parse_tools_csv_trims_and_discards_empty_entries() {
+        let tools = parse_tools(Some(ToolsInput::Csv(
+            "claude-code, cursor, ,codex,, ".to_string(),
+        )))
+        .expect("valid tools should parse");
+        assert_eq!(tools, vec!["claude-code", "cursor", "codex"]);
+    }
+
+    #[test]
+    fn test_parse_tools_array_trims_and_discards_empty_entries() {
+        let tools = parse_tools(Some(ToolsInput::List(vec![
+            " claude-code ".to_string(),
+            "".to_string(),
+            " cursor".to_string(),
+            "   ".to_string(),
+        ])))
+        .expect("valid tools should parse");
+        assert_eq!(tools, vec!["claude-code", "cursor"]);
+    }
+
+    #[test]
+    fn test_parse_tools_canonicalizes_and_deduplicates_entries() {
+        let tools = parse_tools(Some(ToolsInput::List(vec![
+            "copilot".to_string(),
+            "github-copilot".to_string(),
+            "claudecode".to_string(),
+            "claude-code".to_string(),
+            "cursor".to_string(),
+            "CURSOR".to_string(),
+        ])))
+        .expect("valid tools should parse");
+        assert_eq!(tools, vec!["github-copilot", "claude-code", "cursor"]);
+    }
+
+    #[test]
+    fn test_parse_tools_allows_compat_tool_names() {
+        let tools = parse_tools(Some(ToolsInput::Csv("generic,codex".to_string())))
+            .expect("generic and codex should be accepted for compatibility");
+        assert_eq!(tools, vec!["generic", "codex"]);
+    }
+
+    #[test]
+    fn test_parse_tools_rejects_unknown_tools() {
+        let result = parse_tools(Some(ToolsInput::List(vec!["claud-code".to_string()])));
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_apply_tool_selection_falls_back_to_target_when_tools_empty() {
+        let mut config = LintConfig::default();
+        apply_tool_selection(
+            &mut config,
+            Some(ToolsInput::Csv(" , ".to_string())),
+            Some("cursor".to_string()),
+        )
+        .expect("empty tools should fall back to target");
+
+        assert!(config.tools.is_empty());
+        assert_eq!(config.target, TargetTool::Cursor);
+    }
+
+    #[test]
+    fn test_apply_tool_selection_falls_back_to_target_when_tools_missing() {
+        let mut config = LintConfig::default();
+        apply_tool_selection(&mut config, None, Some("claude-code".to_string()))
+            .expect("missing tools should fall back to target");
+
+        assert!(config.tools.is_empty());
+        assert_eq!(config.target, TargetTool::ClaudeCode);
+    }
+
+    #[test]
+    fn test_apply_tool_selection_falls_back_to_target_when_tools_empty_list() {
+        let mut config = LintConfig::default();
+        apply_tool_selection(
+            &mut config,
+            Some(ToolsInput::List(vec![])),
+            Some("codex".to_string()),
+        )
+        .expect("empty list should fall back to target");
+
+        assert!(config.tools.is_empty());
+        assert_eq!(config.target, TargetTool::Codex);
+    }
+
+    #[test]
+    fn test_apply_tool_selection_clears_existing_tools_on_fallback() {
+        let mut config = LintConfig::default();
+        config.tools = vec!["cursor".to_string()];
+
+        apply_tool_selection(
+            &mut config,
+            Some(ToolsInput::Csv(" ".to_string())),
+            Some("claude-code".to_string()),
+        )
+        .expect("empty tools should trigger fallback and clear stale tools");
+
+        assert!(config.tools.is_empty());
+        assert_eq!(config.target, TargetTool::ClaudeCode);
+    }
+
+    #[test]
+    fn test_apply_tool_selection_prefers_tools_over_target() {
+        let mut config = LintConfig::default();
+        config.target = TargetTool::Cursor;
+        apply_tool_selection(
+            &mut config,
+            Some(ToolsInput::Csv("claude-code,cursor".to_string())),
+            Some("codex".to_string()),
+        )
+        .expect("valid tools should override target");
+
+        assert_eq!(config.tools, vec!["claude-code", "cursor"]);
+        // target remains default; tools array drives filtering precedence in core.
+        assert_eq!(config.target, TargetTool::Generic);
+    }
+
+    #[test]
+    fn test_apply_tool_selection_rejects_unknown_tools() {
+        let mut config = LintConfig::default();
+        let result = apply_tool_selection(
+            &mut config,
+            Some(ToolsInput::Csv("unknown-tool".to_string())),
+            Some("claude-code".to_string()),
+        );
+        assert!(result.is_err());
+        assert!(config.tools.is_empty());
+        assert_eq!(config.target, TargetTool::Generic);
+    }
+
+    #[test]
+    fn test_validate_file_input_deserializes_csv_tools_payload() {
+        let input: ValidateFileInput = serde_json::from_value(json!({
+            "path": "SKILL.md",
+            "tools": "claude-code,cursor",
+            "target": "codex"
+        }))
+        .expect("tools CSV payload should deserialize");
+
+        match input.tools {
+            Some(ToolsInput::Csv(value)) => assert_eq!(value, "claude-code,cursor"),
+            _ => panic!("expected CSV tools variant"),
+        }
+        assert_eq!(input.target.as_deref(), Some("codex"));
+    }
+
+    #[test]
+    fn test_validate_file_input_deserializes_array_tools_payload() {
+        let input: ValidateFileInput = serde_json::from_value(json!({
+            "path": "SKILL.md",
+            "tools": ["claude-code", "cursor"]
+        }))
+        .expect("tools array payload should deserialize");
+
+        match input.tools {
+            Some(ToolsInput::List(values)) => {
+                assert_eq!(values, vec!["claude-code", "cursor"]);
+            }
+            _ => panic!("expected array tools variant"),
+        }
+        assert!(input.target.is_none());
+    }
+
+    #[test]
+    fn test_validate_project_input_deserializes_csv_tools_payload() {
+        let input: ValidateProjectInput = serde_json::from_value(json!({
+            "path": ".",
+            "tools": "claude-code,cursor"
+        }))
+        .expect("project CSV tools payload should deserialize");
+
+        match input.tools {
+            Some(ToolsInput::Csv(value)) => assert_eq!(value, "claude-code,cursor"),
+            _ => panic!("expected CSV tools variant"),
+        }
+    }
+
+    #[test]
+    fn test_validate_project_input_deserializes_array_tools_payload() {
+        let input: ValidateProjectInput = serde_json::from_value(json!({
+            "path": ".",
+            "tools": ["claude-code", "cursor"]
+        }))
+        .expect("project array tools payload should deserialize");
+
+        match input.tools {
+            Some(ToolsInput::List(values)) => {
+                assert_eq!(values, vec!["claude-code", "cursor"]);
+            }
+            _ => panic!("expected array tools variant"),
+        }
+    }
 }
