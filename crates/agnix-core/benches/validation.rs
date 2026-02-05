@@ -348,21 +348,13 @@ fn bench_import_cache(c: &mut Criterion) {
 
     // Create main files that each import all shared files
     for i in 0..10 {
-        let imports: Vec<String> = (0..5)
-            .map(|j| format!("@shared{}.md", j))
-            .collect();
-        let content = format!(
-            "# Main Doc {}\n\nReferences: {}\n",
-            i,
-            imports.join(", ")
-        );
+        let imports: Vec<String> = (0..5).map(|j| format!("@shared{}.md", j)).collect();
+        let content = format!("# Main Doc {}\n\nReferences: {}\n", i, imports.join(", "));
         fs::write(temp.path().join(format!("main{}.md", i)), content).unwrap();
     }
 
     // Create a CLAUDE.md that references all main files (to trigger import traversal)
-    let main_imports: Vec<String> = (0..10)
-        .map(|i| format!("@main{}.md", i))
-        .collect();
+    let main_imports: Vec<String> = (0..10).map(|i| format!("@main{}.md", i)).collect();
     fs::write(
         temp.path().join("CLAUDE.md"),
         format!("# Project\n\nFiles: {}\n", main_imports.join(", ")),

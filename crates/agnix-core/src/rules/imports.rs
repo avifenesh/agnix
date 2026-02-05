@@ -1098,7 +1098,11 @@ mod tests {
         {
             let guard = cache.read().unwrap();
             // Should have at least the root file and target file
-            assert!(guard.len() >= 2, "Expected at least 2 entries, got {}", guard.len());
+            assert!(
+                guard.len() >= 2,
+                "Expected at least 2 entries, got {}",
+                guard.len()
+            );
         }
     }
 
@@ -1189,7 +1193,10 @@ mod tests {
         // Cache should have entries
         {
             let guard = cache.read().unwrap();
-            assert!(!guard.is_empty(), "Cache should have entries after concurrent access");
+            assert!(
+                !guard.is_empty(),
+                "Cache should have entries after concurrent access"
+            );
         }
     }
 }
