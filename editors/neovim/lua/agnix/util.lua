@@ -110,6 +110,8 @@ function M.is_agnix_file(path)
   end
 
   -- Hook settings: .claude/settings.json, .claude/settings.local.json
+  -- Note: Intentionally more restrictive than agnix-core (which matches any settings.json)
+  -- to avoid attaching LSP to unrelated settings.json files (e.g. VS Code settings).
   if (name == 'settings.json' or name == 'settings.local.json') and parent == '.claude' then
     return true
   end
