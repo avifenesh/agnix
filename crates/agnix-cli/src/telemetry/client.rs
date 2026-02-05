@@ -27,10 +27,7 @@ impl TelemetryClient {
             .user_agent(format!("agnix/{}", env!("CARGO_PKG_VERSION")))
             .build()
             .map_err(|e| {
-                io::Error::new(
-                    io::ErrorKind::Other,
-                    format!("Failed to create HTTP client: {}", e),
-                )
+                io::Error::other(format!("Failed to create HTTP client: {}", e))
             })?;
 
         Ok(Self {
@@ -73,10 +70,7 @@ impl TelemetryClient {
         if response.status().is_success() {
             Ok(())
         } else {
-            Err(io::Error::new(
-                io::ErrorKind::Other,
-                format!("Telemetry server returned error: {}", response.status()),
-            ))
+            Err(io::Error::other(format!("Telemetry server returned error: {}", response.status())))
         }
     }
 }

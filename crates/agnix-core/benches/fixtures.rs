@@ -355,7 +355,7 @@ fn create_mcp_tool(index: usize) -> String {
   }},
   "requiresApproval": {approval}
 }}"#,
-        approval = index % 2 == 0
+        approval = index.is_multiple_of(2)
     )
 }
 

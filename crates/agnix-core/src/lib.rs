@@ -3674,7 +3674,7 @@ mod i18n_tests {
         // Rule IDs should always be in English format
         for diag in &diagnostics {
             assert!(
-                diag.rule.chars().all(|c| c.is_ascii()),
+                diag.rule.is_ascii(),
                 "Rule ID should be ASCII: {}",
                 diag.rule
             );
