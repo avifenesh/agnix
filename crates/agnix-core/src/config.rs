@@ -681,9 +681,23 @@ impl LintConfig {
         let mut warnings = Vec::new();
 
         // Validate disabled_rules match known patterns
+        // Note: imports:: is a legacy prefix used in some internal diagnostics
         let known_prefixes = [
-            "AS-", "CC-SK-", "CC-HK-", "CC-AG-", "CC-MEM-", "CC-PL-", "XML-", "MCP-", "REF-",
-            "XP-", "AGM-", "COP-", "CUR-", "PE-",
+            "AS-",
+            "CC-SK-",
+            "CC-HK-",
+            "CC-AG-",
+            "CC-MEM-",
+            "CC-PL-",
+            "XML-",
+            "MCP-",
+            "REF-",
+            "XP-",
+            "AGM-",
+            "COP-",
+            "CUR-",
+            "PE-",
+            "imports::",
         ];
         for rule_id in &self.rules.disabled_rules {
             let matches_known = known_prefixes
@@ -733,6 +747,11 @@ impl LintConfig {
         if self.target != TargetTool::Generic && self.tools.is_empty() {
             // Only warn if target is non-default and tools is empty
             // (if both are set, tools takes precedence silently)
+            warnings.push(ConfigWarning {
+                field: "target".to_string(),
+                message: "Field 'target' is deprecated".to_string(),
+                suggestion: Some("Use the 'tools' array instead".to_string()),
+            });
         }
         if self.mcp_protocol_version.is_some() {
             warnings.push(ConfigWarning {
@@ -3100,5 +3119,33 @@ disabled_rules = []
         // Empty string is not a valid tool
         assert_eq!(warnings.len(), 1);
         assert!(warnings[0].message.contains("Unknown tool ''"));
+    }
+
+    #[test]
+    fn test_validate_deprecated_target_field() {
+        let mut config = LintConfig::default();
+        config.target = TargetTool::ClaudeCode;
+        // tools is empty, so target deprecation warning should fire
+
+        let warnings = config.validate();
+
+        assert_eq!(warnings.len(), 1);
+        assert_eq!(warnings[0].field, "target");
+        assert!(warnings[0].message.contains("deprecated"));
+        assert!(warnings[0].suggestion.as_ref().unwrap().contains("tools"));
+    }
+
+    #[test]
+    fn test_validate_target_with_tools_no_warning() {
+        // When both target and tools are set, don't warn about target
+        // because tools takes precedence
+        let mut config = LintConfig::default();
+        config.target = TargetTool::ClaudeCode;
+        config.tools = vec!["claude-code".to_string()];
+
+        let warnings = config.validate();
+
+        // No warning because tools is set
+        assert!(warnings.is_empty());
     }
 }
