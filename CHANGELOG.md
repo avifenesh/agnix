@@ -30,6 +30,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Reduced main validate() method from ~480 to ~210 lines
   - Organized validation into clear phases with documentation
   - Improved maintainability and testability without changing validation behavior
+
+### Performance
+- Benchmark infrastructure with iai-callgrind for deterministic CI testing (#202)
+  - Instruction count benchmarks immune to system load variance
+  - Helper script (./scripts/bench.sh) for iai/criterion/bloat workflows
+  - Scale testing with 100 and 1000 file projects
+  - Memory usage tracking with tracking-allocator
+  - CI job blocks merge on performance regressions
+  - Cross-platform support (Linux/macOS with Valgrind, Windows uses Criterion only)
+
 ## [0.7.2] - 2026-02-05
 
 ### Fixed
