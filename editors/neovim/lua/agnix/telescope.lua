@@ -141,7 +141,7 @@ end
 
 --- Register as a Telescope extension (called by telescope.load_extension('agnix')).
 if has_telescope then
-  return telescope.register_extension({
+  telescope.register_extension({
     exports = {
       rules = M.pick_rules,
       diagnostics = M.pick_diagnostics,
