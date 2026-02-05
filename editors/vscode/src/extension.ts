@@ -11,6 +11,7 @@ import {
 let client: LanguageClient | undefined;
 let statusBarItem: vscode.StatusBarItem;
 let outputChannel: vscode.OutputChannel;
+let codeLensProvider: AgnixCodeLensProvider | undefined;
 
 const AGNIX_FILE_PATTERNS = [
   '**/SKILL.md',
@@ -53,7 +54,32 @@ export async function activate(
     vscode.commands.registerCommand('agnix.showRules', () => showRules()),
     vscode.commands.registerCommand('agnix.fixAll', () => fixAllInFile()),
     vscode.commands.registerCommand('agnix.previewFixes', () => previewFixes()),
-    vscode.commands.registerCommand('agnix.fixAllSafe', () => fixAllSafeInFile())
+    vscode.commands.registerCommand('agnix.fixAllSafe', () => fixAllSafeInFile()),
+    vscode.commands.registerCommand('agnix.ignoreRule', (ruleId: string) => ignoreRule(ruleId)),
+    vscode.commands.registerCommand('agnix.showRuleDoc', (ruleId: string) => showRuleDoc(ruleId))
+  );
+
+  // Register CodeLens provider
+  codeLensProvider = new AgnixCodeLensProvider();
+  context.subscriptions.push(
+    vscode.languages.registerCodeLensProvider(
+      [
+        { scheme: 'file', language: 'markdown' },
+        { scheme: 'file', language: 'skill-markdown' },
+        { scheme: 'file', language: 'json' },
+        { scheme: 'file', pattern: '**/*.mdc' },
+      ],
+      codeLensProvider
+    )
+  );
+
+  // Update CodeLens when diagnostics change
+  context.subscriptions.push(
+    vscode.languages.onDidChangeDiagnostics((e) => {
+      if (codeLensProvider) {
+        codeLensProvider.refresh();
+      }
+    })
   );
 
   context.subscriptions.push(
@@ -671,6 +697,200 @@ async function fixAllSafeInFile(): Promise<void> {
     );
   } else {
     vscode.window.showInformationMessage(`Applied ${fixCount} safe fixes`);
+  }
+}
+
+/**
+ * CodeLens provider for agnix diagnostics.
+ * Shows rule info inline above lines with issues.
+ */
+class AgnixCodeLensProvider implements vscode.CodeLensProvider {
+  private _onDidChangeCodeLenses = new vscode.EventEmitter<void>();
+  public readonly onDidChangeCodeLenses = this._onDidChangeCodeLenses.event;
+
+  refresh(): void {
+    this._onDidChangeCodeLenses.fire();
+  }
+
+  provideCodeLenses(
+    document: vscode.TextDocument,
+    _token: vscode.CancellationToken
+  ): vscode.CodeLens[] {
+    const config = vscode.workspace.getConfiguration('agnix');
+    if (!config.get<boolean>('codeLens.enable', true)) {
+      return [];
+    }
+
+    const diagnostics = vscode.languages.getDiagnostics(document.uri);
+    const agnixDiagnostics = diagnostics.filter(
+      (d) =>
+        d.source === 'agnix' ||
+        d.code?.toString().match(/^(AS|CC|PE|MCP|AGM|COP|CUR|XML|XP)-/)
+    );
+
+    if (agnixDiagnostics.length === 0) {
+      return [];
+    }
+
+    // Group diagnostics by line
+    const byLine = new Map<number, vscode.Diagnostic[]>();
+    for (const diag of agnixDiagnostics) {
+      const line = diag.range.start.line;
+      if (!byLine.has(line)) {
+        byLine.set(line, []);
+      }
+      byLine.get(line)!.push(diag);
+    }
+
+    const codeLenses: vscode.CodeLens[] = [];
+
+    for (const [line, diags] of byLine) {
+      const range = new vscode.Range(line, 0, line, 0);
+
+      // Create summary CodeLens
+      const errors = diags.filter(
+        (d) => d.severity === vscode.DiagnosticSeverity.Error
+      ).length;
+      const warnings = diags.filter(
+        (d) => d.severity === vscode.DiagnosticSeverity.Warning
+      ).length;
+
+      const parts: string[] = [];
+      if (errors > 0) parts.push(`${errors} error${errors > 1 ? 's' : ''}`);
+      if (warnings > 0) parts.push(`${warnings} warning${warnings > 1 ? 's' : ''}`);
+
+      const ruleIds = diags.map((d) => d.code?.toString() || '').filter(Boolean);
+      const rulesText = ruleIds.length <= 2 ? ruleIds.join(', ') : `${ruleIds.length} rules`;
+
+      codeLenses.push(
+        new vscode.CodeLens(range, {
+          title: `$(warning) ${parts.join(', ')} (${rulesText})`,
+          command: 'agnix.previewFixes',
+          tooltip: `Click to preview fixes for: ${ruleIds.join(', ')}`,
+        })
+      );
+
+      // Add individual rule CodeLenses for quick actions
+      for (const diag of diags.slice(0, 3)) {
+        const ruleId = diag.code?.toString() || '';
+        if (ruleId) {
+          codeLenses.push(
+            new vscode.CodeLens(range, {
+              title: `$(info) ${ruleId}`,
+              command: 'agnix.showRuleDoc',
+              arguments: [ruleId],
+              tooltip: `${diag.message} - Click for rule documentation`,
+            })
+          );
+        }
+      }
+    }
+
+    return codeLenses;
+  }
+}
+
+/**
+ * Show documentation for a specific rule.
+ */
+async function showRuleDoc(ruleId: string): Promise<void> {
+  const ruleCategories: Record<string, string> = {
+    AS: 'agent-skills',
+    'CC-SK': 'claude-skills',
+    'CC-HK': 'claude-hooks',
+    'CC-AG': 'claude-agents',
+    'CC-PL': 'claude-plugins',
+    'CC-MEM': 'claude-memory',
+    PE: 'prompt-engineering',
+    MCP: 'mcp',
+    AGM: 'agents-md',
+    COP: 'copilot',
+    CUR: 'cursor',
+    XML: 'xml',
+    XP: 'cross-platform',
+  };
+
+  // Find category for rule
+  let category = 'agent-skills';
+  for (const [prefix, cat] of Object.entries(ruleCategories)) {
+    if (ruleId.startsWith(prefix)) {
+      category = cat;
+      break;
+    }
+  }
+
+  const url = `https://github.com/avifenesh/agnix/blob/main/knowledge-base/VALIDATION-RULES.md#${ruleId.toLowerCase()}`;
+  vscode.env.openExternal(vscode.Uri.parse(url));
+}
+
+/**
+ * Ignore a rule (add to disabled_rules in .agnix.toml).
+ */
+async function ignoreRule(ruleId: string): Promise<void> {
+  const workspaceFolders = vscode.workspace.workspaceFolders;
+  if (!workspaceFolders) {
+    vscode.window.showWarningMessage('No workspace folder open');
+    return;
+  }
+
+  const configPath = path.join(workspaceFolders[0].uri.fsPath, '.agnix.toml');
+
+  const choice = await vscode.window.showQuickPick(
+    [
+      { label: 'Disable in project', description: 'Add to .agnix.toml', value: 'project' },
+      { label: 'Cancel', description: '', value: 'cancel' },
+    ],
+    {
+      title: `Ignore rule ${ruleId}`,
+      placeHolder: 'How do you want to ignore this rule?',
+    }
+  );
+
+  if (!choice || choice.value === 'cancel') {
+    return;
+  }
+
+  // Read or create .agnix.toml
+  let content = '';
+  try {
+    content = fs.readFileSync(configPath, 'utf-8');
+  } catch {
+    content = '# agnix configuration\n\n[rules]\ndisabled_rules = []\n';
+  }
+
+  // Check if rule already disabled
+  if (content.includes(`"${ruleId}"`)) {
+    vscode.window.showInformationMessage(`Rule ${ruleId} is already disabled`);
+    return;
+  }
+
+  // Add rule to disabled_rules
+  if (content.includes('disabled_rules = [')) {
+    // Add to existing array
+    content = content.replace(
+      /disabled_rules = \[([^\]]*)\]/,
+      (match, rules) => {
+        const existingRules = rules.trim();
+        if (existingRules === '') {
+          return `disabled_rules = ["${ruleId}"]`;
+        }
+        return `disabled_rules = [${existingRules}, "${ruleId}"]`;
+      }
+    );
+  } else if (content.includes('[rules]')) {
+    // Add after [rules] section
+    content = content.replace('[rules]', `[rules]\ndisabled_rules = ["${ruleId}"]`);
+  } else {
+    // Add new [rules] section
+    content += `\n[rules]\ndisabled_rules = ["${ruleId}"]\n`;
+  }
+
+  fs.writeFileSync(configPath, content);
+  vscode.window.showInformationMessage(`Rule ${ruleId} disabled in .agnix.toml`);
+
+  // Trigger revalidation
+  if (client) {
+    await restartClient();
   }
 }
 

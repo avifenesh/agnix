@@ -2,7 +2,7 @@
   "name": "agnix",
   "displayName": "agnix - Agent Config Linter",
   "description": "Real-time validation for AI agent configuration files. Validates SKILL.md, CLAUDE.md, AGENTS.md, MCP configs, hooks, and more against 100 rules.",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "publisher": "avifenesh",
   "repository": {
     "type": "git",
@@ -92,6 +92,11 @@
           ],
           "default": "off",
           "description": "Traces the communication between VS Code and the agnix language server"
+        },
+        "agnix.codeLens.enable": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show CodeLens with rule info above lines with issues"
         }
       }
     },
@@ -164,6 +169,18 @@
         "title": "Fix All Safe Issues",
         "category": "agnix",
         "icon": "$(shield)"
+      },
+      {
+        "command": "agnix.showRuleDoc",
+        "title": "Show Rule Documentation",
+        "category": "agnix",
+        "icon": "$(book)"
+      },
+      {
+        "command": "agnix.ignoreRule",
+        "title": "Ignore Rule in Project",
+        "category": "agnix",
+        "icon": "$(eye-closed)"
       }
     ],
     "keybindings": [

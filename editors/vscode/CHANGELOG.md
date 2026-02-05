@@ -2,6 +2,22 @@
 
 All notable changes to the "agnix" extension will be documented in this file.
 
+## [0.6.0] - 2026-02-05
+
+### Added
+
+- **CodeLens support** - Rule info shown inline above lines with issues
+  - Shows error/warning count and rule IDs
+  - Click rule ID to view documentation
+  - Configurable via `agnix.codeLens.enable` setting
+- **Ignore rule command** - `agnix: Ignore Rule in Project` adds rule to `.agnix.toml`
+- **Rule documentation** - `agnix: Show Rule Documentation` opens rule docs
+
+### Changed
+
+- CodeLens links directly to rule documentation
+- Improved diagnostic grouping by line
+
 ## [0.5.0] - 2026-02-05
 
 ### Added

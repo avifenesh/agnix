@@ -8,10 +8,11 @@ Real-time validation for AI agent configuration files in VS Code.
 
 - **Real-time validation** - Diagnostics as you type
 - **Validates 100 rules** - From official specs and best practices
+- **CodeLens** - Rule info shown inline above problematic lines
 - **Quick-fix preview** - See diff before applying fixes
 - **Safe fixes** - Apply only high-confidence fixes automatically
+- **Ignore rules** - Disable rules directly from the editor
 - **Multi-tool** - Claude Code, Cursor, GitHub Copilot, Codex CLI
-- **Status bar** - See validation status at a glance
 
 ## Supported File Types
 
@@ -37,6 +38,8 @@ Access via Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`):
 | `agnix: Preview Fixes` | - | Browse fixes with diff preview |
 | `agnix: Fix All Safe Issues` | `Ctrl+Alt+.` | Apply only safe fixes |
 | `agnix: Show All Rules` | - | Browse 100 rules by category |
+| `agnix: Show Rule Documentation` | - | Open docs for a rule (via CodeLens) |
+| `agnix: Ignore Rule in Project` | - | Add rule to `.agnix.toml` disabled list |
 | `agnix: Restart Language Server` | - | Restart the LSP server |
 | `agnix: Show Output Channel` | - | View server logs |
 
@@ -66,6 +69,7 @@ brew tap avifenesh/agnix && brew install agnix
 |---------|---------|-------------|
 | `agnix.lspPath` | `agnix-lsp` | Path to LSP binary |
 | `agnix.enable` | `true` | Enable/disable validation |
+| `agnix.codeLens.enable` | `true` | Show CodeLens with rule info |
 | `agnix.trace.server` | `off` | Server communication tracing |
 
 ## Configuration
