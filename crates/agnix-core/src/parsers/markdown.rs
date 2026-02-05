@@ -110,7 +110,8 @@ fn extract_xml_tags_inner(content: &str) -> Vec<XmlTag> {
 /// extraction (`extract_xml_tags`).
 pub fn extract_markdown_links(content: &str) -> Vec<MarkdownLink> {
     // Catch upstream parser panics (e.g., pulldown-cmark bugs) gracefully
-    panic::catch_unwind(AssertUnwindSafe(|| extract_markdown_links_inner(content))).unwrap_or_default()
+    panic::catch_unwind(AssertUnwindSafe(|| extract_markdown_links_inner(content)))
+        .unwrap_or_default()
 }
 
 fn extract_markdown_links_inner(content: &str) -> Vec<MarkdownLink> {
