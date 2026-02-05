@@ -132,7 +132,10 @@ fn looks_like_path(s: &str) -> bool {
 }
 
 /// Check if a string is a valid rule ID format.
-fn is_valid_rule_id(s: &str) -> bool {
+///
+/// Rule IDs are in format: XX-NNN or XX-YY-NNN
+/// Examples: AS-001, CC-HK-001, MCP-002
+pub fn is_valid_rule_id(s: &str) -> bool {
     // Rule IDs are in format: XX-NNN or XX-YY-NNN
     // Examples: AS-001, CC-HK-001, MCP-002
 
@@ -281,5 +284,74 @@ mod tests {
             event.validate_privacy(),
             Err(PrivacyViolation::InvalidRuleId(_))
         ));
+    }
+
+    #[test]
+    fn test_privacy_validation_with_empty_hashmaps() {
+        let event = TelemetryEvent::ValidationRun(ValidationRunEvent {
+            file_type_counts: HashMap::new(),
+            rule_trigger_counts: HashMap::new(),
+            error_count: 0,
+            warning_count: 0,
+            info_count: 0,
+            duration_ms: 0,
+            timestamp: "2024-01-01T00:00:00Z".to_string(),
+        });
+
+        assert!(event.validate_privacy().is_ok(), "Empty hashmaps should pass validation");
+    }
+
+    #[test]
+    fn test_looks_like_path_edge_cases() {
+        // Windows UNC paths
+        assert!(looks_like_path("\\\\server\\share"));
+        // Backslash paths
+        assert!(looks_like_path("path\\to\\file"));
+        // Single drive letter without path
+        assert!(looks_like_path("C:"));
+        // Hidden files (starts with .)
+        assert!(looks_like_path(".gitignore"));
+
+        // Valid file type names that should NOT trigger
+        assert!(!looks_like_path("rust"));
+        assert!(!looks_like_path("typescript"));
+        assert!(!looks_like_path("json_schema"));
+        assert!(!looks_like_path("markdown_file"));
+        // Note: "file.tar.gz" would contain ".gz" but our detector doesn't catch that
+        // This is acceptable as .gz isn't a path, it's an extension
+    }
+
+    #[test]
+    fn test_is_valid_rule_id_edge_cases() {
+        // Single character prefix
+        assert!(is_valid_rule_id("A-001"));
+        // Very long ID
+        assert!(is_valid_rule_id("ABCDEF-12345"));
+        // Three-part ID
+        assert!(is_valid_rule_id("CC-SK-001"));
+
+        // Invalid: no number part
+        assert!(!is_valid_rule_id("AS"));
+        // Invalid: leading zero is still valid format
+        assert!(is_valid_rule_id("AS-001")); // 001 is valid
+        // Invalid: too many dashes
+        assert!(!is_valid_rule_id("A-B-C-001"));
+        // Invalid: empty parts
+        assert!(!is_valid_rule_id("--001"));
+        assert!(!is_valid_rule_id("AS--001"));
+    }
+
+    #[test]
+    fn test_event_type_method() {
+        let validation_event = TelemetryEvent::ValidationRun(ValidationRunEvent {
+            file_type_counts: HashMap::new(),
+            rule_trigger_counts: HashMap::new(),
+            error_count: 0,
+            warning_count: 0,
+            info_count: 0,
+            duration_ms: 0,
+            timestamp: "".to_string(),
+        });
+        assert_eq!(validation_event.event_type(), "validation_run");
     }
 }

@@ -295,4 +295,96 @@ mod tests {
         assert_eq!(parsed.enabled, config.enabled);
         assert_eq!(parsed.installation_id, config.installation_id);
     }
+
+    #[test]
+    fn test_do_not_track_disables_telemetry() {
+        // Save current env state
+        let original = std::env::var("DO_NOT_TRACK").ok();
+
+        // Set DO_NOT_TRACK and verify telemetry is disabled
+        std::env::set_var("DO_NOT_TRACK", "1");
+        let config = TelemetryConfig {
+            enabled: true,
+            installation_id: Some(generate_uuid()),
+            ..Default::default()
+        };
+        assert!(!config.is_enabled(), "DO_NOT_TRACK should disable telemetry");
+
+        // Restore original state
+        match original {
+            Some(val) => std::env::set_var("DO_NOT_TRACK", val),
+            None => std::env::remove_var("DO_NOT_TRACK"),
+        }
+    }
+
+    #[test]
+    fn test_agnix_telemetry_env_overrides() {
+        // Save current env state
+        let original = std::env::var("AGNIX_TELEMETRY").ok();
+        let original_dnt = std::env::var("DO_NOT_TRACK").ok();
+
+        // Clear DO_NOT_TRACK to isolate this test
+        std::env::remove_var("DO_NOT_TRACK");
+
+        let config = TelemetryConfig {
+            enabled: true,
+            installation_id: Some(generate_uuid()),
+            ..Default::default()
+        };
+
+        // Test various override values
+        for val in &["0", "false", "no", "off"] {
+            std::env::set_var("AGNIX_TELEMETRY", val);
+            assert!(
+                !config.is_enabled(),
+                "AGNIX_TELEMETRY={} should disable telemetry",
+                val
+            );
+        }
+
+        // Restore original state
+        match original {
+            Some(val) => std::env::set_var("AGNIX_TELEMETRY", val),
+            None => std::env::remove_var("AGNIX_TELEMETRY"),
+        }
+        match original_dnt {
+            Some(val) => std::env::set_var("DO_NOT_TRACK", val),
+            None => std::env::remove_var("DO_NOT_TRACK"),
+        }
+    }
+
+    #[test]
+    fn test_enable_generates_installation_id() {
+        let mut config = TelemetryConfig::default();
+        assert!(config.installation_id.is_none());
+
+        let _ = config.enable();
+        assert!(config.enabled);
+        assert!(config.installation_id.is_some());
+        assert!(config.consent_timestamp.is_some());
+
+        // Second enable should preserve the ID
+        let id = config.installation_id.clone();
+        let _ = config.enable();
+        assert_eq!(config.installation_id, id, "enable() should preserve existing ID");
+    }
+
+    #[test]
+    fn test_disable_preserves_installation_id() {
+        let mut config = TelemetryConfig::default();
+        let _ = config.enable();
+        let id = config.installation_id.clone();
+
+        let _ = config.disable();
+        assert!(!config.enabled);
+        assert_eq!(
+            config.installation_id, id,
+            "disable() should preserve installation_id"
+        );
+        // Note: disable() clears consent_timestamp by design
+        assert!(
+            config.consent_timestamp.is_none(),
+            "disable() should clear consent_timestamp"
+        );
+    }
 }

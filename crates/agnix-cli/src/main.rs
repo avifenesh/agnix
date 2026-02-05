@@ -728,7 +728,11 @@ fn record_telemetry_event(diagnostics: &[agnix_core::Diagnostic], duration: std:
             DiagnosticLevel::Info => info_count += 1,
         }
 
-        *rule_trigger_counts.entry(diag.rule.clone()).or_insert(0) += 1;
+        // Validate rule ID format before including (defense-in-depth)
+        // This prevents any bugs in validators from leaking paths/sensitive data
+        if telemetry::is_valid_rule_id(&diag.rule) {
+            *rule_trigger_counts.entry(diag.rule.clone()).or_insert(0) += 1;
+        }
     }
 
     // File type counts would require exposing file type info from agnix-core

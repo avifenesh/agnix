@@ -266,4 +266,93 @@ mod tests {
         let parsed: EventQueue = serde_json::from_str(&json).unwrap();
         assert_eq!(parsed.len(), 1);
     }
+
+    #[test]
+    fn test_take_batch_edge_cases() {
+        let mut queue = EventQueue::default();
+
+        // Empty queue
+        assert!(queue.take_batch(10).is_empty());
+
+        // Add 3 events
+        for i in 0..3 {
+            queue.events.push_back(make_event(&format!("2024-01-0{}T00:00:00Z", i + 1)));
+        }
+
+        // Take 0 should return empty
+        assert!(queue.take_batch(0).is_empty());
+
+        // Take more than queue size should return all
+        let batch = queue.take_batch(100);
+        assert_eq!(batch.len(), 3);
+    }
+
+    #[test]
+    fn test_remove_batch_edge_cases() {
+        let mut queue = EventQueue::default();
+
+        // Remove from empty queue shouldn't panic
+        queue.remove_batch(10);
+        assert!(queue.is_empty());
+
+        // Add 5 events
+        for i in 0..5 {
+            queue.events.push_back(make_event(&format!("2024-01-0{}T00:00:00Z", i + 1)));
+        }
+
+        // Remove 0 should do nothing
+        queue.remove_batch(0);
+        assert_eq!(queue.len(), 5);
+
+        // Remove more than available should remove all
+        queue.remove_batch(100);
+        assert!(queue.is_empty());
+    }
+
+    #[test]
+    fn test_parse_timestamp_edge_cases() {
+        // Leap year date
+        let ts = parse_timestamp("2024-02-29T12:00:00Z");
+        assert!(ts.is_some());
+
+        // End of month
+        let ts = parse_timestamp("2024-01-31T23:59:59Z");
+        assert!(ts.is_some());
+
+        // Note: parse_timestamp does minimal validation (parses positions only)
+        // It doesn't validate separators or month/day ranges - acceptable for pruning
+
+        // Too short
+        assert!(parse_timestamp("2024-01-01").is_none());
+
+        // Empty string
+        assert!(parse_timestamp("").is_none());
+
+        // Non-numeric values fail
+        assert!(parse_timestamp("abcd-01-01T00:00:00Z").is_none());
+    }
+
+    #[test]
+    fn test_prune_old_events() {
+        let mut queue = EventQueue::default();
+
+        // Add an old event (2020) and a recent event
+        queue.events.push_back(make_event("2020-01-01T00:00:00Z"));
+        queue.events.push_back(make_event("2025-01-01T00:00:00Z"));
+
+        assert_eq!(queue.len(), 2);
+
+        // Prune should remove the old event
+        queue.prune_old_events();
+
+        // Note: depending on current date, the 2025 event may or may not be pruned
+        // The old 2020 event should definitely be removed
+        assert!(queue.len() <= 2);
+
+        // Verify no events from 2020 remain
+        for event in &queue.events {
+            let TelemetryEvent::ValidationRun(run) = event;
+            assert!(!run.timestamp.starts_with("2020"));
+        }
+    }
 }
