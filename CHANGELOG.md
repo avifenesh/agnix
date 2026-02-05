@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- JetBrains plugin: archive extraction tests for AgnixBinaryDownloader (#255)
+  - 19 tests covering TAR.GZ/ZIP extraction, binary selection, path traversal protection
+  - Refactored extraction methods to companion object for testability
+  - Switched path verification to `java.nio.file.Path` API for robustness
 - Internationalization (i18n) support with rust-i18n (#207)
   - Support for multiple languages: English (en), Spanish (es), Chinese Simplified (zh-CN)
   - CLI flag `--locale` to set output language

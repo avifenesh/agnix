@@ -78,13 +78,13 @@ class AgnixBinaryDownloader {
 
         /**
          * Verify that an output file path is within the destination directory.
-         * Appends separator to prevent prefix matching issues (e.g., /tmp/agnix vs /tmp/agnix-other).
+         * Uses Path.normalize() for lexical path resolution without I/O.
          */
         internal fun verifyPathWithinDestination(outFile: File, destination: File) {
-            val canonicalDest = destination.canonicalPath + File.separator
-            val canonicalOut = outFile.canonicalPath
-            if (!canonicalOut.startsWith(canonicalDest) && canonicalOut != destination.canonicalPath) {
-                throw SecurityException("Output path escapes destination directory: $canonicalOut")
+            val normalizedDest = destination.toPath().toAbsolutePath().normalize()
+            val normalizedOut = outFile.toPath().toAbsolutePath().normalize()
+            if (!normalizedOut.startsWith(normalizedDest)) {
+                throw SecurityException("Output path escapes destination directory: $normalizedOut")
             }
         }
 
