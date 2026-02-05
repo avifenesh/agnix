@@ -274,33 +274,18 @@ impl MockFileSystem {
             _ => None,
         }
     }
-}
 
-/// Normalize a path for mock file system storage.
-/// Converts backslashes to forward slashes for cross-platform consistency.
-fn normalize_mock_path(path: &Path) -> PathBuf {
-    let path_str = path.to_string_lossy();
-    PathBuf::from(path_str.replace('\\', "/"))
-}
+    /// Maximum depth for symlink resolution to prevent infinite loops
+    const MAX_SYMLINK_DEPTH: u32 = 40;
 
-impl FileSystem for MockFileSystem {
-    fn exists(&self, path: &Path) -> bool {
-        self.get_entry(path).is_some()
-    }
+    /// Internal helper for metadata with depth tracking
+    fn metadata_with_depth(&self, path: &Path, depth: u32) -> io::Result<FileMetadata> {
+        if depth > Self::MAX_SYMLINK_DEPTH {
+            return Err(io::Error::other(
+                "too many levels of symbolic links",
+            ));
+        }
 
-    fn is_file(&self, path: &Path) -> bool {
-        matches!(self.get_entry(path), Some(MockEntry::File { .. }))
-    }
-
-    fn is_dir(&self, path: &Path) -> bool {
-        matches!(self.get_entry(path), Some(MockEntry::Directory))
-    }
-
-    fn is_symlink(&self, path: &Path) -> bool {
-        matches!(self.get_entry(path), Some(MockEntry::Symlink { .. }))
-    }
-
-    fn metadata(&self, path: &Path) -> io::Result<FileMetadata> {
         // Follow symlinks - use an enum to handle the result outside the lock
         enum MetaResult {
             Found(FileMetadata),
@@ -328,8 +313,62 @@ impl FileSystem for MockFileSystem {
 
         match result? {
             MetaResult::Found(meta) => Ok(meta),
-            MetaResult::FollowSymlink(target) => self.metadata(&target),
+            MetaResult::FollowSymlink(target) => self.metadata_with_depth(&target, depth + 1),
         }
+    }
+
+    /// Internal helper for canonicalize with depth tracking
+    fn canonicalize_with_depth(&self, path: &Path, depth: u32) -> io::Result<PathBuf> {
+        if depth > Self::MAX_SYMLINK_DEPTH {
+            return Err(io::Error::other(
+                "too many levels of symbolic links",
+            ));
+        }
+
+        let path_normalized = normalize_mock_path(path);
+
+        if !self.exists(&path_normalized) {
+            return Err(io::Error::new(
+                io::ErrorKind::NotFound,
+                format!("path not found: {}", path.display()),
+            ));
+        }
+
+        // Follow symlinks if present
+        if let Some(target) = self.resolve_symlink(&path_normalized) {
+            self.canonicalize_with_depth(&target, depth + 1)
+        } else {
+            Ok(path_normalized)
+        }
+    }
+}
+
+/// Normalize a path for mock file system storage.
+/// Converts backslashes to forward slashes for cross-platform consistency.
+fn normalize_mock_path(path: &Path) -> PathBuf {
+    let path_str = path.to_string_lossy();
+    PathBuf::from(path_str.replace('\\', "/"))
+}
+
+impl FileSystem for MockFileSystem {
+    fn exists(&self, path: &Path) -> bool {
+        self.get_entry(path).is_some()
+    }
+
+    fn is_file(&self, path: &Path) -> bool {
+        matches!(self.get_entry(path), Some(MockEntry::File { .. }))
+    }
+
+    fn is_dir(&self, path: &Path) -> bool {
+        matches!(self.get_entry(path), Some(MockEntry::Directory))
+    }
+
+    fn is_symlink(&self, path: &Path) -> bool {
+        matches!(self.get_entry(path), Some(MockEntry::Symlink { .. }))
+    }
+
+    fn metadata(&self, path: &Path) -> io::Result<FileMetadata> {
+        self.metadata_with_depth(path, 0)
     }
 
     fn symlink_metadata(&self, path: &Path) -> io::Result<FileMetadata> {
@@ -395,22 +434,7 @@ impl FileSystem for MockFileSystem {
     }
 
     fn canonicalize(&self, path: &Path) -> io::Result<PathBuf> {
-        let path_normalized = normalize_mock_path(path);
-
-        if !self.exists(&path_normalized) {
-            return Err(io::Error::new(
-                io::ErrorKind::NotFound,
-                format!("path not found: {}", path.display()),
-            ));
-        }
-
-        // For mock, just return the normalized path
-        // Follow symlinks if present
-        if let Some(target) = self.resolve_symlink(&path_normalized) {
-            self.canonicalize(&target)
-        } else {
-            Ok(path_normalized)
-        }
+        self.canonicalize_with_depth(path, 0)
     }
 
     fn read_dir(&self, path: &Path) -> io::Result<Vec<DirEntry>> {
@@ -758,5 +782,56 @@ mod tests {
             let path = format!("/test/file{}.txt", i);
             assert!(fs.exists(Path::new(&path)));
         }
+    }
+
+    #[test]
+    fn test_mock_fs_circular_symlink_metadata() {
+        let fs = MockFileSystem::new();
+        // Create circular symlinks: a -> b -> a
+        fs.add_symlink("/test/a", "/test/b");
+        fs.add_symlink("/test/b", "/test/a");
+
+        // metadata() follows symlinks and should detect the cycle
+        let result = fs.metadata(Path::new("/test/a"));
+        assert!(result.is_err());
+        assert!(result
+            .unwrap_err()
+            .to_string()
+            .contains("too many levels of symbolic links"));
+    }
+
+    #[test]
+    fn test_mock_fs_circular_symlink_canonicalize() {
+        let fs = MockFileSystem::new();
+        // Create circular symlinks: a -> b -> a
+        fs.add_symlink("/test/a", "/test/b");
+        fs.add_symlink("/test/b", "/test/a");
+
+        // canonicalize() follows symlinks and should detect the cycle
+        let result = fs.canonicalize(Path::new("/test/a"));
+        assert!(result.is_err());
+        assert!(result
+            .unwrap_err()
+            .to_string()
+            .contains("too many levels of symbolic links"));
+    }
+
+    #[test]
+    fn test_mock_fs_chained_symlinks() {
+        let fs = MockFileSystem::new();
+        // Create chain: link1 -> link2 -> link3 -> file
+        fs.add_file("/test/file.txt", "content");
+        fs.add_symlink("/test/link3", "/test/file.txt");
+        fs.add_symlink("/test/link2", "/test/link3");
+        fs.add_symlink("/test/link1", "/test/link2");
+
+        // metadata() should follow the chain and return file metadata
+        let meta = fs.metadata(Path::new("/test/link1")).unwrap();
+        assert!(meta.is_file);
+        assert_eq!(meta.len, 7); // "content".len()
+
+        // canonicalize() should return the final target
+        let canonical = fs.canonicalize(Path::new("/test/link1")).unwrap();
+        assert_eq!(canonical, PathBuf::from("/test/file.txt"));
     }
 }

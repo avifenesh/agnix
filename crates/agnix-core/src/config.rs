@@ -320,6 +320,12 @@ impl LintConfig {
     /// Set the file system abstraction (not persisted).
     ///
     /// This is primarily used for testing with `MockFileSystem`.
+    ///
+    /// # Important
+    ///
+    /// This should only be called during configuration setup, before validation
+    /// begins. Changing the filesystem during validation may cause inconsistent
+    /// results if validators have already cached file state.
     pub fn set_fs(&mut self, fs: Arc<dyn FileSystem>) {
         self.fs = fs;
     }
