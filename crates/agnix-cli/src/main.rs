@@ -10,7 +10,7 @@ use agnix_core::{
     config::{LintConfig, TargetTool},
     diagnostics::DiagnosticLevel,
     eval::{evaluate_manifest_file, EvalFormat},
-    validate_project, ValidationResult,
+    generate_schema, validate_project, ValidationResult,
 };
 use clap::{Parser, Subcommand, ValueEnum};
 use colored::*;
@@ -175,6 +175,13 @@ enum Commands {
         #[arg(value_enum, default_value_t = TelemetryAction::Status)]
         action: TelemetryAction,
     },
+
+    /// Output JSON Schema for configuration files
+    Schema {
+        /// Output file path (defaults to stdout)
+        #[arg(short, long)]
+        output: Option<PathBuf>,
+    },
 }
 
 fn main() {
@@ -210,6 +217,7 @@ fn main() {
             verbose,
         }) => eval_command(path, *format, filter.as_deref(), *verbose),
         Some(Commands::Telemetry { action }) => telemetry_command(*action),
+        Some(Commands::Schema { output }) => schema_command(output.as_ref()),
         None => validate_command(&cli.path, &cli),
     };
 
@@ -260,6 +268,25 @@ fn validate_command(path: &Path, cli: &Cli) -> anyhow::Result<()> {
         eprintln!();
     }
     config.target = cli.target.into();
+
+    // Validate config semantics and display warnings (only for text output)
+    if matches!(cli.format, OutputFormat::Text) {
+        let config_warnings = config.validate();
+        if !config_warnings.is_empty() {
+            for warning in &config_warnings {
+                eprintln!(
+                    "{} [{}] {}",
+                    "Config warning:".yellow().bold(),
+                    warning.field.dimmed(),
+                    warning.message
+                );
+                if let Some(suggestion) = &warning.suggestion {
+                    eprintln!("  {} {}", "hint:".cyan(), suggestion);
+                }
+            }
+            eprintln!();
+        }
+    }
 
     let should_fix = cli.fix || cli.fix_safe || cli.dry_run;
     if should_fix && !matches!(cli.format, OutputFormat::Text) {
@@ -614,6 +641,23 @@ fn init_command(output: &PathBuf) -> anyhow::Result<()> {
     std::fs::write(output, toml_content)?;
 
     println!("{} {}", "Created:".green().bold(), output.display());
+
+    Ok(())
+}
+
+fn schema_command(output: Option<&PathBuf>) -> anyhow::Result<()> {
+    let schema = generate_schema();
+    let json = serde_json::to_string_pretty(&schema)?;
+
+    match output {
+        Some(path) => {
+            std::fs::write(path, &json)?;
+            println!("{} {}", "Schema written to:".green().bold(), path.display());
+        }
+        None => {
+            println!("{}", json);
+        }
+    }
 
     Ok(())
 }

@@ -107,6 +107,10 @@ agnix --strict .
 # Target specific tool
 agnix --target claude-code .
 
+# Generate JSON Schema for config
+agnix schema                     # Output to stdout
+agnix schema --output schema.json  # Save to file
+
 # Telemetry (opt-in usage analytics)
 agnix telemetry status   # Check status
 agnix telemetry enable   # Enable (opt-in)

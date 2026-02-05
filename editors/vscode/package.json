@@ -276,6 +276,12 @@
         }
       }
     ],
+    "jsonValidation": [
+      {
+        "fileMatch": [".agnix.toml", "agnix.toml"],
+        "url": "./schemas/agnix.json"
+      }
+    ],
     "viewsContainers": {
       "activitybar": [
         {

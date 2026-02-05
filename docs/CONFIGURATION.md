@@ -65,6 +65,30 @@ disabled_rules = ["CC-MEM-006", "PE-003"]
 # mcp_protocol = "2025-06-18"
 ```
 
+## Schema Validation
+
+agnix automatically validates `.agnix.toml` files for:
+
+- **Invalid rule IDs**: Warns if `disabled_rules` contains IDs that don't match known patterns (AS-, CC-SK-, CC-HK-, etc.)
+- **Unknown tools**: Warns if `tools` array contains tool names that aren't recognized
+- **Deprecated fields**: Warns when using `mcp_protocol_version` (use `spec_revisions.mcp_protocol` instead)
+
+These warnings appear before validation output and include suggestions for fixes.
+
+### Generate Schema
+
+Output JSON Schema for `.agnix.toml` validation:
+
+```bash
+# Output to stdout
+agnix schema
+
+# Save to file
+agnix schema --output schemas/agnix.json
+```
+
+The VS Code extension automatically uses this schema for autocomplete and validation.
+
 ## Rule Categories
 
 | Category | Rules | Description |

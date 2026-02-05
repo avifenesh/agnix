@@ -1,0 +1,19 @@
+# Valid agnix configuration file
+severity = "Warning"
+target = "ClaudeCode"
+exclude = ["node_modules/**", "dist/**"]
+tools = ["claude-code", "cursor"]
+
+[rules]
+skills = true
+hooks = true
+agents = true
+mcp = true
+disabled_rules = ["CC-MEM-006", "AS-001"]
+
+[tool_versions]
+claude_code = "1.0.0"
+cursor = "0.45.0"
+
+[spec_revisions]
+mcp_protocol = "2025-06-18"

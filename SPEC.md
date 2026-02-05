@@ -165,6 +165,16 @@ disabled_rules = []  # e.g., ["CC-AG-001", "AS-005"]
 "target/**"
 ```
 
+### Config Validation
+
+agnix validates `.agnix.toml` files semantically before running validation:
+
+- **Rule ID validation**: `disabled_rules` must match known patterns (AS-, CC-SK-, CC-HK-, CC-AG-, CC-MEM-, CC-PL-, XML-, MCP-, REF-, XP-, AGM-, COP-, CUR-, PE-)
+- **Tool validation**: `tools` array must contain valid tool names (claude-code, cursor, codex, copilot, github-copilot, generic)
+- **Deprecation warnings**: `mcp_protocol_version` is deprecated (use `spec_revisions.mcp_protocol`)
+
+Warnings are displayed before validation output with suggestions for fixes.
+
 ### Target Tool Filtering
 
 When `target` is set to a specific tool, only relevant rules run:
