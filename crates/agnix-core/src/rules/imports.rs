@@ -62,7 +62,7 @@ impl Validator for ImportsValidator {
 
         // Use shared cache if available (project-level validation),
         // otherwise create a local cache (single-file validation)
-        let shared_cache = config.import_cache();
+        let shared_cache = config.get_import_cache();
         let mut local_cache: HashMap<PathBuf, Vec<Import>> = HashMap::new();
         let mut visited_depth: HashMap<PathBuf, usize> = HashMap::new();
         let mut stack = Vec::new();
@@ -406,7 +406,7 @@ fn normalize_existing_path(path: &Path, fs: &dyn FileSystem) -> PathBuf {
 }
 
 fn resolve_project_root(path: &Path, config: &LintConfig, fs: &dyn FileSystem) -> PathBuf {
-    if let Some(root) = config.root_dir.as_deref() {
+    if let Some(root) = config.get_root_dir() {
         return normalize_existing_path(root, fs);
     }
 
@@ -770,7 +770,7 @@ mod tests {
         fs::write(&file_path, "See @../../outside.md").unwrap();
 
         let mut config = LintConfig::default();
-        config.root_dir = Some(root);
+        config.set_root_dir(root);
 
         let validator = ImportsValidator;
         let diagnostics = validator.validate(&file_path, "See @../../outside.md", &config);
@@ -801,7 +801,7 @@ mod tests {
         fs::write(&file_path, "See @../link/secret.md").unwrap();
 
         let mut config = LintConfig::default();
-        config.root_dir = Some(root);
+        config.set_root_dir(root);
 
         let validator = ImportsValidator;
         let diagnostics = validator.validate(&file_path, "See @../link/secret.md", &config);
@@ -1078,7 +1078,7 @@ mod tests {
 
         let config = LintConfig::default();
         // No shared cache set - should use local cache
-        assert!(config.import_cache().is_none());
+        assert!(config.get_import_cache().is_none());
 
         let validator = ImportsValidator;
         let diagnostics = validator.validate(&file_path, "See @target.md", &config);

@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Refactored LintConfig internal structure for better maintainability (#214)
+  - Introduced RuntimeContext struct to group non-serialized state
+  - Introduced RuleFilter trait to encapsulate rule filtering logic
+  - Public API remains fully backward compatible
+
 ### Added
 - FileSystem trait for abstracting file system operations (#213)
   - Enables unit testing validators with MockFileSystem instead of requiring real temp files
