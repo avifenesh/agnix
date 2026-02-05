@@ -73,7 +73,7 @@ To find the next available number for a prefix, check `knowledge-base/rules.json
 
 Step-by-step process for adding a new validation rule:
 
-1. **Add the rule to `knowledge-base/rules.json`** -- Include all required fields: `id`, `name`, `severity`, `category`, `message`, `detection`, `fix`, and complete `evidence` metadata. Copy `rules.json` to `crates/agnix-rules/rules.json` to keep them in sync.
+1. **Add the rule to `knowledge-base/rules.json`** -- Include all required fields: `id`, `name`, `severity`, `category`, `message`, `detection`, `fix`, and complete `evidence` metadata. The `crates/agnix-rules/rules.json` file is automatically synchronized during the build process.
 
 2. **Add documentation to `knowledge-base/VALIDATION-RULES.md`** -- Document the rule following the existing format with detection logic, fix description, and source citation. CI parity tests will fail if the rule exists in one file but not the other.
 
@@ -115,7 +115,7 @@ agnix organizes tool support into tiers based on community adoption and maintena
 | **D** | No active support, nice to have | Can try once in a while, mainly if users request |
 | **E** | No support, community contributions only | Full community support and contributions |
 
-Current tier assignments are documented in `CLAUDE.md`. When proposing a tier change, open a GitHub issue with adoption data to support the change.
+Current tier assignments are documented in [`knowledge-base/RESEARCH-TRACKING.md`](./knowledge-base/RESEARCH-TRACKING.md). When proposing a tier change, open a GitHub issue with adoption data to support the change.
 
 ## Community Feedback
 

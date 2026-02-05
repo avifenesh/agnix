@@ -73,10 +73,7 @@ fn test_research_tracking_exists() {
 fn test_monthly_review_exists() {
     let root = workspace_root();
     let path = root.join("knowledge-base/MONTHLY-REVIEW.md");
-    assert!(
-        path.exists(),
-        "knowledge-base/MONTHLY-REVIEW.md must exist"
-    );
+    assert!(path.exists(), "knowledge-base/MONTHLY-REVIEW.md must exist");
 
     let content = fs::read_to_string(&path).expect("Failed to read MONTHLY-REVIEW.md");
 

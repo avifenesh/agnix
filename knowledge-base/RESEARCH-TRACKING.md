@@ -10,7 +10,7 @@
 
 ## Tool Inventory
 
-Tools are organized by support tier (see CLAUDE.md for definitions). Each entry tracks the config format, documentation source, monitoring approach, review frequency, and rule coverage.
+Tools are organized by support tier (see [../CONTRIBUTING.md#tool-tier-system](../CONTRIBUTING.md#tool-tier-system) for definitions). Each entry tracks the config format, documentation source, monitoring approach, review frequency, and rule coverage.
 
 ### S Tier (test always)
 
