@@ -2,6 +2,13 @@
 
 All notable changes to the "agnix" extension will be documented in this file.
 
+## [0.3.0] - 2026-02-05
+
+### Changed
+
+- Version bump to match CLI v0.3.0
+- Now validates 100 rules (up from initial release)
+
 ## [0.1.0] - 2025-02-04
 
 ### Added

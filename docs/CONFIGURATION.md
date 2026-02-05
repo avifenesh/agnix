@@ -216,3 +216,46 @@ Full SARIF 2.1.0 compliance for GitHub Code Scanning.
     echo "Found ${{ steps.validate.outputs.errors }} errors"
     exit 1
 ```
+
+---
+
+## Pre-commit Hook
+
+Integrate agnix into your pre-commit workflow.
+
+### Installation
+
+Add to `.pre-commit-config.yaml`:
+
+```yaml
+repos:
+  - repo: https://github.com/avifenesh/agnix
+    rev: v0.3.0
+    hooks:
+      - id: agnix
+```
+
+### Available Hooks
+
+| Hook ID | Description |
+|---------|-------------|
+| `agnix` | Validate configs (strict mode) |
+| `agnix-fix` | Validate and auto-fix |
+
+### With Auto-fix
+
+```yaml
+repos:
+  - repo: https://github.com/avifenesh/agnix
+    rev: v0.3.0
+    hooks:
+      - id: agnix-fix
+```
+
+### Requirements
+
+The `agnix` binary must be installed and available in PATH:
+
+```bash
+cargo install agnix-cli
+```

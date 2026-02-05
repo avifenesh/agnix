@@ -46,12 +46,12 @@ agnix validates configs against 100 rules derived from official specs, research 
 ## Installation
 
 ```bash
-# From crates.io
-cargo install agnix-cli
+# Homebrew (macOS/Linux)
+brew tap avifenesh/agnix
+brew install agnix
 
-# From source
-git clone https://github.com/avifenesh/agnix && cd agnix
-cargo install --path crates/agnix-cli
+# Cargo (all platforms)
+cargo install agnix-cli
 
 # Pre-built binaries
 # Download from https://github.com/avifenesh/agnix/releases
@@ -119,6 +119,17 @@ With SARIF upload to GitHub Code Scanning:
 ```
 
 See [full action documentation](docs/CONFIGURATION.md#github-action) for all inputs and outputs.
+
+## Pre-commit Hook
+
+```yaml
+# .pre-commit-config.yaml
+repos:
+  - repo: https://github.com/avifenesh/agnix
+    rev: v0.3.0
+    hooks:
+      - id: agnix
+```
 
 ## Editor Integration
 

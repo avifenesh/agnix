@@ -27,6 +27,9 @@ toml = "0.8"
 similar = "2"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+notify = { version = "7", features = ["macos_fsevent"] }
+notify-debouncer-mini = "0.5"
+ctrlc = "3"
 
 [dev-dependencies]
 assert_cmd = "2"

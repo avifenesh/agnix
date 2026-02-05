@@ -1,0 +1,47 @@
+- id: agnix
+  name: agnix
+  description: Lint AI agent configuration files
+  entry: agnix
+  language: system
+  types: [file]
+  files: |
+    (?x)^(
+      SKILL\.md|
+      CLAUDE\.md|
+      CLAUDE\.local\.md|
+      AGENTS\.md|
+      AGENTS\.local\.md|
+      AGENTS\.override\.md|
+      \.claude/settings\.json|
+      \.claude/settings\.local\.json|
+      \.claude/agents/.*\.md|
+      .*\.mcp\.json|
+      \.github/copilot-instructions\.md|
+      \.cursor/rules/.*\.mdc
+    )$
+  pass_filenames: false
+  args: [--strict, .]
+
+- id: agnix-fix
+  name: agnix (with auto-fix)
+  description: Lint and auto-fix AI agent configuration files
+  entry: agnix
+  language: system
+  types: [file]
+  files: |
+    (?x)^(
+      SKILL\.md|
+      CLAUDE\.md|
+      CLAUDE\.local\.md|
+      AGENTS\.md|
+      AGENTS\.local\.md|
+      AGENTS\.override\.md|
+      \.claude/settings\.json|
+      \.claude/settings\.local\.json|
+      \.claude/agents/.*\.md|
+      .*\.mcp\.json|
+      \.github/copilot-instructions\.md|
+      \.cursor/rules/.*\.mdc
+    )$
+  pass_filenames: false
+  args: [--fix, .]

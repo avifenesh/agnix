@@ -2,6 +2,7 @@
 
 mod json;
 mod sarif;
+mod watch;
 
 use agnix_core::{
     apply_fixes,
@@ -94,6 +95,10 @@ struct Cli {
     /// Output format (text, json, or sarif)
     #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
     format: OutputFormat,
+
+    /// Watch mode - re-validate on file changes
+    #[arg(short, long)]
+    watch: bool,
 }
 
 /// Output format for evaluation results
@@ -194,6 +199,32 @@ fn main() {
 #[tracing::instrument(skip(cli), fields(path = %path.display()))]
 fn validate_command(path: &Path, cli: &Cli) -> anyhow::Result<()> {
     tracing::debug!("Starting validation");
+
+    // Watch mode validation
+    if cli.watch {
+        if !matches!(cli.format, OutputFormat::Text) {
+            return Err(anyhow::anyhow!(
+                "Watch mode is only supported with text output."
+            ));
+        }
+        let should_fix = cli.fix || cli.fix_safe || cli.dry_run;
+        if should_fix {
+            return Err(anyhow::anyhow!(
+                "Watch mode cannot be combined with fix flags."
+            ));
+        }
+
+        let path = path.to_path_buf();
+        let path_for_watch = path.clone();
+        let strict = cli.strict;
+        let verbose = cli.verbose;
+        let target = cli.target;
+        let config_override = cli.config.clone();
+
+        return watch::watch_and_validate(&path_for_watch, move || {
+            run_single_validation(&path, strict, verbose, target, config_override.as_ref())
+        });
+    }
 
     let config_path = resolve_config_path(path, cli);
     tracing::debug!(config_path = ?config_path, "Resolved config path");
@@ -402,6 +433,110 @@ fn validate_command(path: &Path, cli: &Cli) -> anyhow::Result<()> {
     }
 
     Ok(())
+}
+
+/// Run a single validation pass (for watch mode)
+/// Returns true if there are errors
+fn run_single_validation(
+    path: &Path,
+    strict: bool,
+    verbose: bool,
+    target: TargetArg,
+    config_override: Option<&PathBuf>,
+) -> anyhow::Result<bool> {
+    let config_path = if let Some(c) = config_override {
+        Some(c.clone())
+    } else {
+        resolve_config_path_simple(path)
+    };
+
+    let (mut config, config_warning) = LintConfig::load_or_default(config_path.as_ref());
+
+    if let Some(warning) = config_warning {
+        eprintln!("{} {}", "Warning:".yellow().bold(), warning);
+        eprintln!();
+    }
+    config.target = target.into();
+
+    let ValidationResult {
+        diagnostics,
+        files_checked: _,
+    } = validate_project(path, &config)?;
+
+    println!("{} {}", "Validating:".cyan().bold(), path.display());
+    println!();
+
+    if diagnostics.is_empty() {
+        println!("{}", "No issues found".green().bold());
+        return Ok(false);
+    }
+
+    let errors = diagnostics
+        .iter()
+        .filter(|d| d.level == DiagnosticLevel::Error)
+        .count();
+    let warnings = diagnostics
+        .iter()
+        .filter(|d| d.level == DiagnosticLevel::Warning)
+        .count();
+
+    for diag in &diagnostics {
+        let level_str = match diag.level {
+            DiagnosticLevel::Error => "error".red().bold(),
+            DiagnosticLevel::Warning => "warning".yellow().bold(),
+            DiagnosticLevel::Info => "info".blue().bold(),
+        };
+
+        println!(
+            "{}:{}:{} {}: {}",
+            diag.file.display().to_string().dimmed(),
+            diag.line,
+            diag.column,
+            level_str,
+            diag.message,
+        );
+
+        if verbose {
+            println!("  {} {}", "rule:".dimmed(), diag.rule.dimmed());
+            if let Some(suggestion) = &diag.suggestion {
+                println!("  {} {}", "help:".cyan(), suggestion);
+            }
+        }
+        println!();
+    }
+
+    println!("{}", "-".repeat(60).dimmed());
+    println!(
+        "Found {} {}, {} {}",
+        errors,
+        if errors == 1 { "error" } else { "errors" },
+        warnings,
+        if warnings == 1 { "warning" } else { "warnings" }
+    );
+
+    Ok(errors > 0 || (strict && warnings > 0))
+}
+
+fn resolve_config_path_simple(path: &Path) -> Option<PathBuf> {
+    let mut candidates = Vec::new();
+    if path.is_dir() {
+        candidates.push(path.to_path_buf());
+    } else if let Some(parent) = path.parent() {
+        candidates.push(parent.to_path_buf());
+    }
+
+    if let Ok(cwd) = env::current_dir() {
+        candidates.push(cwd);
+    }
+
+    for dir in candidates {
+        let candidate = dir.join(".agnix.toml");
+        if candidate.exists() {
+            return Some(candidate);
+        }
+    }
+
+    None
 }
 
 fn resolve_config_path(path: &Path, cli: &Cli) -> Option<PathBuf> {
