@@ -29,7 +29,7 @@ agnix is a **local linting tool** that validates agent configuration files. Its 
 
 - **Trusted input files**: Files being validated are from the user's own codebase
 - **Local execution**: The tool runs locally, not as a service
-- **No network access**: agnix does not make network requests
+- **Opt-in telemetry only**: Network access is disabled by default (see Telemetry section)
 
 ### Security Measures
 
@@ -60,6 +60,60 @@ The codebase follows these error handling patterns to maintain security:
 3. **UTF-8 Boundary Safety**: Fix application validates UTF-8 character boundaries before modifying content
 4. **Bounded Iteration**: Regex matches and file walks use limits to prevent resource exhaustion
 5. **Early Validation**: Invalid inputs are rejected at parsing stage before deeper processing
+
+## Telemetry
+
+agnix includes **opt-in** telemetry to help improve the tool. Telemetry is disabled by default.
+
+### Privacy Guarantees
+
+When telemetry is enabled, we collect only aggregate statistics:
+
+**What we collect:**
+- File type counts (e.g., "5 skills, 2 MCP configs") - NOT file paths or names
+- Rule trigger counts (e.g., "AS-001: 3 times") - NOT diagnostic messages
+- Error/warning/info counts
+- Validation duration
+- Random installation ID (not tied to user identity)
+
+**What we NEVER collect:**
+- File paths or directory structure
+- File contents or code
+- User identity, email, or system information
+- IP addresses (telemetry server does not log IPs)
+
+### Environment-Aware Disable
+
+Telemetry is automatically disabled in:
+- CI environments (CI, GITHUB_ACTIONS, GITLAB_CI, TRAVIS, etc.)
+- When DO_NOT_TRACK environment variable is set (any value)
+- When AGNIX_TELEMETRY=0 or AGNIX_TELEMETRY=false
+
+### Controlling Telemetry
+
+```bash
+# Check current status
+agnix telemetry status
+
+# Enable telemetry (opt-in)
+agnix telemetry enable
+
+# Disable telemetry
+agnix telemetry disable
+```
+
+### Data Storage
+
+- Config: `~/.config/agnix/telemetry.json` (or platform equivalent)
+- Queue: `~/.local/share/agnix/telemetry_queue.json` (for offline storage)
+
+### Compile-Time Feature Gate
+
+Telemetry HTTP submission is also gated by a Cargo feature. By default, events are only stored locally. To enable HTTP submission:
+
+```bash
+cargo install agnix-cli --features telemetry
+```
 
 ## Security Updates
 

@@ -93,6 +93,11 @@ agnix --strict .
 
 # Target specific tool
 agnix --target claude-code .
+
+# Telemetry (opt-in usage analytics)
+agnix telemetry status   # Check status
+agnix telemetry enable   # Enable (opt-in)
+agnix telemetry disable  # Disable
 ```
 
 See [Configuration Reference](docs/CONFIGURATION.md) for all options.
