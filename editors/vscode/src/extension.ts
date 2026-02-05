@@ -74,7 +74,7 @@ interface LspConfig {
  *
  * @returns LspConfig object ready to send to the LSP server
  */
-function buildLspConfig(): LspConfig {
+export function buildLspConfig(): LspConfig {
   const config = vscode.workspace.getConfiguration('agnix');
 
   // Helper to convert undefined to null (Rust Option<String> expects null)
@@ -189,7 +189,9 @@ function downloadFile(url: string, destPath: string): Promise<void> {
           file.close();
           try {
             fs.unlinkSync(destPath);
-          } catch {}
+          } catch {
+            // Error ignored during cleanup
+          }
           downloadFile(redirectUrl, destPath).then(resolve).catch(reject);
           return;
         }
@@ -213,14 +215,18 @@ function downloadFile(url: string, destPath: string): Promise<void> {
       file.close();
       try {
         fs.unlinkSync(destPath);
-      } catch {}
+      } catch {
+        // Error ignored during cleanup
+      }
       reject(err);
     });
 
     file.on('error', (err) => {
       try {
         fs.unlinkSync(destPath);
-      } catch {}
+      } catch {
+        // Error ignored during cleanup
+      }
       reject(err);
     });
   });
@@ -288,7 +294,9 @@ async function downloadAndInstallLsp(): Promise<string | null> {
         // Clean up archive
         try {
           fs.unlinkSync(downloadPath);
-        } catch {}
+        } catch {
+          // Error ignored during cleanup
+        }
       }
     );
 
