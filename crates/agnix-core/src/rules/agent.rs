@@ -1563,7 +1563,7 @@ Body"#;
 
     #[test]
     fn test_cc_ag_004_all_valid_permission_modes() {
-        let valid_modes = ["default", "acceptEdits", "bypassPermissions", "plan"];
+        let valid_modes = ["default", "acceptEdits", "dontAsk", "bypassPermissions", "plan"];
 
         for mode in valid_modes {
             let content = format!(

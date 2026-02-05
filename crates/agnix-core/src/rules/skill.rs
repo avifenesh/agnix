@@ -3202,7 +3202,9 @@ Body"#;
     // ===== Additional AS-016 Parse Error Tests =====
 
     #[test]
-    fn test_as_016_missing_frontmatter_delimiter() {
+    fn test_as_001_missing_closing_delimiter_treated_as_no_frontmatter() {
+        // When opening --- exists but closing --- is missing, the entire content
+        // is treated as body without frontmatter, triggering AS-001
         let content = r#"---
 name: test
 description: A test skill
@@ -3212,9 +3214,12 @@ Body content"#;
         let validator = SkillValidator;
         let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
 
-        // Missing closing --- should produce AS-001 (no frontmatter), not parse error
         let as_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-001").collect();
         assert_eq!(as_001.len(), 1);
+
+        // Should NOT be treated as parse error since no frontmatter was detected
+        let as_016: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-016").collect();
+        assert!(as_016.is_empty());
     }
 
     #[test]
