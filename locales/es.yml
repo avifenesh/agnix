@@ -1,0 +1,488 @@
+# ===========================================================================
+# Reglas - Mensajes de diagnostico del validador, sugerencias, supuestos, correcciones
+# ===========================================================================
+rules:
+  # --- Agent Skills (skill.rs) ---
+  as_001:
+    message: "SKILL.md debe tener frontmatter YAML entre marcadores ---"
+    suggestion: "Agrega frontmatter entre marcadores ---"
+  as_002:
+    message: "Al frontmatter del skill le falta el campo requerido 'name'"
+    suggestion: "Agrega 'name: nombre-del-skill' al frontmatter"
+  as_003:
+    message: "Al frontmatter del skill le falta el campo requerido 'description'"
+    suggestion: "Agrega 'description: Usar cuando...' al frontmatter"
+  as_004:
+    message: "El nombre '%{name}' debe tener 1-64 caracteres de letras minusculas, digitos y guiones"
+    suggestion: "Convierte a minusculas, recorta el nombre, reemplaza espacios y '_' con '-', colapsa multiples '-' en uno, elimina caracteres invalidos y trunca a 64 caracteres"
+    fix: "Convertir nombre a kebab-case: '%{name}'"
+  as_005:
+    message: "El nombre '%{name}' no puede comenzar ni terminar con guion"
+    suggestion: "Elimina los guiones iniciales/finales del nombre"
+  as_006:
+    message: "El nombre '%{name}' no puede contener guiones consecutivos"
+    suggestion: "Reemplaza '--' con '-' en el nombre"
+  as_007:
+    message: "El nombre '%{name}' esta reservado y no puede usarse"
+    suggestion: "Elige un nombre de skill diferente"
+  as_008:
+    message: "La descripcion debe tener 1-1024 caracteres, tiene %{len}"
+    suggestion: "Recorta la descripcion a 1024 caracteres o menos"
+  as_009:
+    message: "La descripcion no debe contener etiquetas XML"
+    suggestion: "Elimina las etiquetas XML de la descripcion"
+  as_010:
+    message: "La descripcion deberia incluir una frase de activacion 'Use when...'"
+    suggestion: "Agrega 'Use when [condicion]' para ayudar a Claude a entender cuando invocar este skill"
+    fix: "Anteponer 'Use when user wants to ' a la descripcion"
+  as_011:
+    message: "La compatibilidad debe tener 1-500 caracteres, tiene %{len}"
+    suggestion: "Recorta la compatibilidad a 500 caracteres o menos"
+  as_012:
+    message: "El contenido del skill excede 500 lineas (tiene %{count})"
+    suggestion: "Mueve contenido extra a references/"
+  as_013:
+    message: "La referencia de archivo '%{path}' tiene mas de un nivel de profundidad"
+    suggestion: "Aplana la estructura del directorio references/"
+  as_014:
+    message: "Se detecto separador de ruta de Windows en '%{path}'; usa barras diagonales"
+    suggestion: "Reemplaza '\\\\' con '/' en las rutas de archivo"
+  as_015:
+    message: "El directorio del skill excede 8MB (%{size} bytes)"
+    suggestion: "Elimina recursos grandes o divide el skill en partes mas pequenas"
+  as_016:
+    message: "Error al analizar SKILL.md: %{error}"
+
+  # --- Claude Code Skills (skill.rs) ---
+  cc_sk_001:
+    message: "Modelo invalido '%{model}'. Debe ser uno de: %{valid}"
+    suggestion: "Usa uno de los valores de modelo validos: %{valid}"
+  cc_sk_002:
+    message: "Contexto invalido '%{context}'. Debe ser 'fork' u omitido"
+    suggestion: "Establece context a 'fork' o elimina el campo"
+  cc_sk_003:
+    message: "El contexto 'fork' requiere un campo 'agent'"
+    suggestion: "Agrega 'agent: general-purpose' u otro tipo de agente valido"
+  cc_sk_004:
+    message: "El campo agent requiere 'context: fork'"
+    suggestion: "Agrega 'context: fork' al frontmatter"
+  cc_sk_005:
+    message: "Tipo de agente invalido '%{agent}'. Debe ser Explore, Plan, general-purpose, o un nombre kebab-case personalizado (1-64 caracteres)"
+    suggestion: "Usa un agente integrado (Explore, Plan, general-purpose) o un nombre kebab-case personalizado"
+  cc_sk_006:
+    message: "El skill peligroso '%{name}' debe establecer 'disable-model-invocation: true' para prevenir invocacion accidental"
+    suggestion: "Agrega 'disable-model-invocation: true' al frontmatter"
+  cc_sk_007:
+    message: "Se detecto acceso irrestricto a Bash. Considera usar una version con alcance para mejor seguridad."
+    suggestion: "Usa Bash con alcance como 'Bash(git:*)' o 'Bash(npm:*)' en lugar de 'Bash' simple"
+    fix: "Reemplazar Bash sin restricciones con Bash(git:*) con alcance"
+  cc_sk_008:
+    message: "Herramienta desconocida '%{tool}'. Herramientas conocidas: %{known}"
+    suggestion: "Usa una de las herramientas conocidas de Claude Code: %{known}"
+  cc_sk_009:
+    message: "Demasiadas inyecciones dinamicas (%{count}). Limite de %{max} para mejor rendimiento"
+    suggestion: "Considera mover logica compleja a un directorio scripts/ o reducir las inyecciones"
+
+  # --- Hooks (hooks.rs) ---
+  cc_hk_001:
+    message: "Evento de hook invalido '%{event}', eventos validos: %{valid}"
+    fix: "Reemplazar '%{old}' con '%{new}'"
+  cc_hk_002:
+    message: "Hook de prompt en %{location} solo esta permitido para eventos Stop y SubagentStop, no '%{event}'"
+    suggestion: "Usa 'type': 'command' en su lugar, o mueve este hook a Stop/SubagentStop"
+  cc_hk_003:
+    message: "El evento de herramienta '%{event}' en %{location} requiere un campo matcher"
+    suggestion: "Agrega 'matcher': '*' para todas las herramientas o especifica un nombre de herramienta"
+  cc_hk_004:
+    message: "El evento que no es de herramienta '%{event}' en %{location} no debe tener un campo matcher"
+    suggestion: "Elimina el campo 'matcher'"
+  cc_hk_005:
+    message: "Al hook en %{location} le falta el campo requerido 'type'"
+    suggestion: "Agrega 'type': 'command' o 'type': 'prompt'"
+  cc_hk_006:
+    message: "Al hook de comando en %{location} le falta el campo requerido 'command'"
+    suggestion: "Agrega un campo 'command' con el comando a ejecutar"
+  cc_hk_007:
+    message: "Al hook de prompt en %{location} le falta el campo requerido 'prompt'"
+    suggestion: "Agrega un campo 'prompt' con el texto del prompt"
+  cc_hk_008:
+    message: "Archivo de script no encontrado en '%{script}' (resuelto a '%{resolved}')"
+    suggestion: "Crea el archivo de script o corrige la ruta"
+  cc_hk_009:
+    message: "Patron de comando potencialmente peligroso detectado: %{reason}"
+    suggestion: "Revisa el comando por seguridad. Patron coincidente: %{pattern}"
+  cc_hk_010:
+    command_no_timeout: "Hook de comando en %{location} no tiene timeout especificado"
+    command_no_timeout_suggestion: "Agrega un campo \"timeout\" (ej., 600 para hooks de comando)"
+    command_exceeds: "Hook de comando en %{location} tiene timeout %{timeout}s excediendo el predeterminado de %{default}s"
+    command_exceeds_suggestion: "Considera timeout <= %{default}s (limite predeterminado de 10 minutos)"
+    prompt_no_timeout: "Hook de prompt en %{location} no tiene timeout especificado"
+    prompt_no_timeout_suggestion: "Agrega un campo \"timeout\" (ej., 30 para hooks de prompt)"
+    prompt_exceeds: "Hook de prompt en %{location} tiene timeout %{timeout}s excediendo el predeterminado de %{default}s"
+    prompt_exceeds_suggestion: "Considera timeout <= %{default}s (limite predeterminado de 30 segundos)"
+    assumption: "Asume comportamiento de timeout predeterminado de Claude Code. Fija la version de claude_code en .agnix.toml [tool_versions] para validacion especifica de version."
+  cc_hk_011:
+    message: "Valor de timeout invalido en %{location}: debe ser un entero positivo"
+    suggestion: "Establece timeout a un entero positivo como 30"
+  cc_hk_012:
+    message: "Error al analizar la configuracion de hooks: %{error}"
+
+  # --- MCP (mcp.rs) ---
+  mcp_001:
+    invalid_version: "Version JSON-RPC invalida '%{version}', debe ser '2.0'"
+    not_string: "La version JSON-RPC debe ser una cadena"
+    suggestion: "Establece \"jsonrpc\": \"2.0\""
+  mcp_002:
+    missing_name: "%{prefix}Falta el campo requerido 'name'"
+    missing_name_suggestion: "Agrega el campo 'name' a la definicion de herramienta"
+    missing_description: "%{prefix}Falta el campo requerido 'description'"
+    missing_description_suggestion: "Agrega el campo 'description' a la definicion de herramienta"
+    missing_schema: "%{prefix}Falta el campo requerido 'inputSchema'"
+    missing_schema_suggestion: "Agrega el campo 'inputSchema' con definicion JSON Schema"
+  mcp_003:
+    message: "%{prefix}inputSchema invalido: %{error}"
+    suggestion: "Corrige la estructura JSON Schema"
+  mcp_004:
+    message: "%{prefix}La descripcion de la herramienta es muy corta (%{len} caracteres), debe tener al menos 10 caracteres"
+    suggestion: "Agrega una descripcion significativa explicando que hace la herramienta"
+  mcp_005:
+    message: "%{prefix}La herramienta carece de mecanismo de consentimiento (no tiene campo 'requiresApproval' ni 'confirmation')"
+    suggestion: "Considera agregar 'requiresApproval: true' para herramientas que modifican datos o tienen efectos secundarios"
+  mcp_006:
+    message: "%{prefix}La herramienta tiene anotaciones que deben validarse antes de confiar"
+    suggestion: "Asegurate de que las anotaciones sean de una fuente confiable antes de depender de ellas"
+  mcp_007:
+    message: "Error al analizar la configuracion MCP: %{error}"
+  mcp_008:
+    message: "Desajuste de version de protocolo: encontrado '%{found}', esperado '%{expected}'"
+    request_suggestion: "Considera actualizar a la version de protocolo '%{expected}' para compatibilidad"
+    response_suggestion: "El servidor negocio la version '%{found}', esperado '%{expected}'. Verifica compatibilidad."
+    assumption: "Usando version predeterminada del protocolo MCP. Fija mcp_protocol en .agnix.toml [spec_revisions] para control explicito."
+  invalid_tool: "Herramienta #%{num}: Definicion de herramienta invalida: %{error}"
+  invalid_tool_single: "Definicion de herramienta invalida: %{error}"
+  invalid_tool_suggestion: "Asegurate de que la herramienta tenga tipos de campo validos (name: string, description: string, inputSchema: object)"
+
+  # --- Agent (agent.rs) ---
+  cc_ag_001:
+    message: "Al frontmatter del agente le falta el campo requerido 'name'"
+    suggestion: "Agrega 'name: nombre-del-agente' al frontmatter"
+  cc_ag_002:
+    message: "Al frontmatter del agente le falta el campo requerido 'description'"
+    suggestion: "Agrega 'description: Describe que hace este agente' al frontmatter"
+  cc_ag_003:
+    message: "Modelo invalido '%{model}'. Valores validos: %{valid}"
+    suggestion: "Cambia el modelo a uno de: %{valid}"
+  cc_ag_004:
+    message: "permissionMode invalido '%{mode}'. Valores validos: %{valid}"
+    suggestion: "Cambia permissionMode a uno de: %{valid}"
+  cc_ag_005:
+    message: "Skill referenciado '%{skill}' no encontrado en .claude/skills/%{skill}/SKILL.md"
+    suggestion: "Crea el skill en .claude/skills/%{skill}/SKILL.md o elimina la referencia"
+  cc_ag_006:
+    message: "Herramienta(s) aparecen en ambos 'tools' y 'disallowedTools': %{conflicts}"
+    suggestion: "Elimina las herramientas en conflicto de 'tools' o 'disallowedTools'"
+  cc_ag_007:
+    message: "El archivo de agente debe tener frontmatter YAML"
+    suggestion: "Agrega frontmatter entre marcadores ---"
+    parse_error: "Error al analizar el frontmatter del agente: %{error}"
+
+  # --- Claude MD (claude_md.rs) ---
+  cc_mem_004:
+    message: "Script npm '%{script}' no encontrado en package.json"
+    suggestion_no_scripts: "No hay scripts definidos en package.json."
+    suggestion_available: "Scripts disponibles: %{scripts}"
+  cc_mem_005:
+    message: "Instruccion generica '%{text}' - Claude ya sabe esto"
+    suggestion: "Elimina instrucciones genericas. Enfocate en contexto especifico del proyecto."
+    fix: "Eliminar linea de instruccion generica"
+  cc_mem_006:
+    message: "Instruccion negativa '%{text}' sin alternativa positiva"
+    suggestion: "Agrega una alternativa positiva: 'En su lugar, haz...' o 'Usa X en su lugar.'"
+  cc_mem_007:
+    message: "Restriccion debil '%{text}' en seccion critica '%{section}'"
+    suggestion: "Usa lenguaje fuerte en secciones criticas: 'must', 'always', 'required'."
+    fix: "Reemplazar '%{text}' con lenguaje mas fuerte"
+  cc_mem_008:
+    message: "Palabra clave critica '%{keyword}' al %{percent}%% del documento (zona media)"
+    suggestion: "Mueve contenido critico al inicio o final del documento para mejor recuerdo."
+  cc_mem_009:
+    message: "El archivo excede el limite recomendado de tokens (~%{tokens} tokens, limite es %{limit})"
+    suggestion: "Considera usar @import para dividir contenido en multiples archivos."
+  cc_mem_010:
+    message: "CLAUDE.md tiene %{overlap}%% de superposicion con README.md (umbral: %{threshold}%%)"
+    suggestion: "CLAUDE.md debe complementar README, no duplicarlo. Elimina secciones duplicadas."
+
+  # --- AGENTS.md (agents_md.rs) ---
+  agm_001:
+    message: "Markdown invalido: %{description}"
+    suggestion: "Corrige el error de sintaxis markdown"
+  agm_003:
+    message: "%{filename} excede el limite de caracteres (%{chars} caracteres, maximo %{limit} para compatibilidad con Windsurf)"
+    suggestion: "Divide el contenido en multiples archivos o reduce la longitud del contenido"
+  agm_005:
+    suggestion: "Agrega un encabezado de seccion de guardia de plataforma como '## %{platform} Specific' antes del contenido especifico de plataforma"
+
+  # --- XML (xml.rs) ---
+  xml_001:
+    message: "Etiqueta XML sin cerrar '<%{tag}>'"
+    suggestion: "Agrega etiqueta de cierre '</%{tag}>'"
+    fix: "Insertar etiqueta de cierre '</%{tag}>'"
+  xml_002:
+    message: "Se esperaba '</%{expected}>' pero se encontro '</%{found}>'"
+    suggestion: "Reemplaza '</%{found}>' con '</%{expected}>'"
+  xml_003:
+    message: "Etiqueta de cierre sin par '</%{tag}>'"
+    suggestion: "Elimina '</%{tag}>' o agrega la etiqueta de apertura correspondiente '<%{tag}>'"
+
+  # --- Imports (imports.rs) ---
+  cc_mem_001:
+    not_found: "Destino de importacion no encontrado: @%{path}"
+    absolute: "Rutas de importacion absolutas no permitidas: @%{path}"
+    escapes: "La ruta de importacion escapa de la raiz del proyecto: @%{path}"
+    absolute_suggestion: "Usa solo rutas relativas"
+    escapes_suggestion: "Usa rutas relativas que permanezcan dentro de la raiz del proyecto"
+  cc_mem_002:
+    message: "Importacion circular detectada: %{chain}"
+    suggestion: "Rompe la cadena de importacion circular para prevenir recursion infinita"
+  cc_mem_003:
+    message: "Profundidad de importacion excedida (%{depth} niveles, maximo %{max})"
+    suggestion: "Aplana la jerarquia de importacion para reducir la profundidad"
+  ref_001:
+    not_found: "Destino de importacion no encontrado: @%{path}"
+  ref_002:
+    message: "Enlace markdown roto: '%{url}' (archivo no encontrado: %{resolved})"
+    suggestion: "Corrige el destino del enlace o elimina el enlace roto"
+
+  # --- Cross-platform (cross_platform.rs) ---
+  xp_001:
+    message: "Caracteristica especifica de Claude '%{feature}' en %{filename}: %{description}"
+    suggestion: "Mueve a CLAUDE.md o envuelve en una seccion especifica de Claude (ej., '## Claude Code Specific')"
+  xp_002:
+    message: "Problema de estructura en %{filename}: %{issue}"
+  xp_003:
+    message: "Ruta de %{platform} codificada '%{path}' puede causar problemas de portabilidad"
+    suggestion: "Usa variables de entorno o rutas relativas para mejor portabilidad"
+  xp_004:
+    message: "Gestores de paquetes en conflicto: %{file1} usa %{mgr1} pero %{file2} usa %{mgr2} para comandos %{cmd_type}"
+    suggestion: "Estandariza en un solo gestor de paquetes en todos los archivos de instrucciones"
+  xp_005:
+    message: "Restricciones de herramienta en conflicto: '%{tool}' esta permitido en %{allow_file} pero no permitido en %{disallow_file}"
+    suggestion: "Resuelve el conflicto permitiendo o prohibiendo la herramienta consistentemente"
+  xp_006:
+    suggestion: "Documenta que archivo tiene precedencia (ej., 'CLAUDE.md tiene precedencia sobre AGENTS.md')"
+
+  # --- Copilot (copilot.rs) ---
+  cop_001:
+    message_empty: "El archivo de instrucciones de Copilot esta vacio"
+    message_no_content: "El archivo de instrucciones de Copilot no tiene contenido despues del frontmatter"
+    suggestion_empty: "Agrega instrucciones significativas para que Copilot las siga"
+    suggestion_scoped_empty: "Agrega frontmatter con campo applyTo e instrucciones"
+  cop_002:
+    message_missing: "Archivo de instrucciones de Copilot con alcance falta frontmatter requerido"
+    message_invalid_yaml: "Frontmatter YAML invalido: %{error}"
+    message_missing_apply_to: "Archivo de instrucciones de Copilot con alcance falta campo requerido 'applyTo'"
+    suggestion_add_frontmatter: "Agrega frontmatter YAML con marcadores --- y campo applyTo"
+    suggestion_fix_yaml: "Corrige la sintaxis YAML en el frontmatter"
+    suggestion_add_apply_to: "Agrega 'applyTo: \"**/*.ts\"' o un patron glob similar"
+  cop_003:
+    message: "Patron glob invalido '%{pattern}': %{error}"
+    suggestion: "Usa sintaxis glob valida como '**/*.ts' o 'src/**/*.js'"
+  cop_004:
+    message: "Clave de frontmatter desconocida '%{key}' en archivo de instrucciones de Copilot"
+    suggestion: "Elimina la clave desconocida '%{key}'. Solo se reconoce 'applyTo'."
+
+  # --- Cursor (cursor.rs) ---
+  cur_001:
+    message_empty: "El archivo de reglas de Cursor esta vacio"
+    message_no_content: "El archivo de reglas de Cursor no tiene contenido despues del frontmatter"
+    suggestion_empty: "Agrega frontmatter con descripcion y contenido de reglas"
+    suggestion_no_content: "Agrega contenido de reglas despues del frontmatter"
+    suggestion_legacy_empty: "Agrega contenido de reglas al archivo"
+  cur_002:
+    message: "Archivo .mdc de Cursor sin frontmatter recomendado"
+    suggestion: "Agrega frontmatter YAML con marcadores --- y campos description/globs"
+  cur_003:
+    message: "Frontmatter YAML invalido: %{error}"
+    suggestion: "Corrige la sintaxis YAML en el frontmatter"
+  cur_004:
+    message: "Patron glob invalido '%{pattern}': %{error}"
+    suggestion: "Usa sintaxis glob valida como '**/*.ts' o 'src/**/*.js'"
+  cur_005:
+    message: "Clave de frontmatter desconocida '%{key}' en archivo de reglas de Cursor"
+    suggestion: "Elimina la clave desconocida '%{key}'. Claves validas son: description, globs, alwaysApply."
+  cur_006:
+    message: "Archivo .cursorrules heredado detectado - considera migrar al formato .cursor/rules/*.mdc"
+    suggestion: "Crea el directorio .cursor/rules/ y agrega archivos .mdc con frontmatter para mejor organizacion"
+    legacy_empty: "El archivo de reglas de Cursor esta vacio"
+
+  # --- Prompt engineering (prompt.rs) ---
+  pe_001:
+    message: "Palabra clave critica '%{keyword}' al %{percent}%% del documento (40-60%% es la zona 'perdido en el medio')"
+    suggestion: "Mueve contenido critico al inicio o final del documento para mejor recuerdo"
+  pe_002:
+    message: "Frase de cadena de pensamiento '%{phrase}' usada con tarea simple '%{task}'"
+    suggestion: "Elimina instrucciones de cadena de pensamiento para tareas simples; CoT puede perjudicar el rendimiento en operaciones directas"
+  pe_003:
+    message: "Lenguaje debil '%{term}' en seccion critica '%{section}'"
+    suggestion: "Usa lenguaje fuerte (must/always/never) en secciones criticas para mejor cumplimiento"
+  pe_004:
+    message: "Termino ambiguo '%{term}' crea instruccion poco clara"
+    suggestion: "Reemplaza con criterios especificos o elimina la ambiguedad (ej., 'always' en lugar de 'usually')"
+
+  # --- Plugin (plugin.rs) ---
+  cc_pl_001:
+    message: "plugin.json debe estar ubicado en el directorio .claude-plugin/"
+    suggestion: "Mueve plugin.json a .claude-plugin/plugin.json"
+  cc_pl_002:
+    message: "El componente '%{component}' no debe estar dentro de .claude-plugin/"
+    suggestion: "Mueve los componentes al directorio raiz del plugin"
+  cc_pl_003:
+    message: "Formato semver invalido: '%{version}'"
+    suggestion: "Usa formato semver: 1.0.0, 1.0.0-rc.1, 1.0.0+build"
+  cc_pl_004:
+    message: "Falta campo requerido: %{field}"
+    suggestion: "Agrega el campo '%{field}' a plugin.json"
+  cc_pl_005:
+    message: "El nombre del plugin no debe estar vacio"
+    suggestion: "Establece un nombre de plugin no vacio"
+  cc_pl_006:
+    message: "Error al analizar plugin.json: %{error}"
+
+  # --- Version (lib.rs) ---
+  ver_001:
+    message: "No hay versiones de herramienta o especificacion fijadas. Las reglas dependientes de version usaran supuestos predeterminados."
+    suggestion: "Fija versiones en .agnix.toml [tool_versions] o [spec_revisions] para validacion determinista."
+
+  # --- File-level errors (lib.rs) ---
+  file_read_error: "Error al validar archivo: %{error}"
+  xp_004_read_error: "Error al leer archivo de instrucciones: %{error}"
+
+# ===========================================================================
+# Core - Advertencias de configuracion
+# ===========================================================================
+core:
+  error:
+    file_read: "Error al leer archivo: %{path}"
+    file_write: "Error al escribir archivo: %{path}"
+    file_symlink: "Se rehusa a leer enlace simbolico: %{path}"
+    file_too_big: "Archivo demasiado grande: %{path} (%{size} bytes, limite %{limit} bytes)"
+    file_not_regular: "No es un archivo regular: %{path}"
+    invalid_exclude: "Patron de exclusion invalido: %{pattern} (%{message})"
+  config:
+    unknown_rule: "Patron de ID de regla desconocido '%{rule}'. Prefijo esperado: %{prefixes}"
+    unknown_rule_suggestion: "Verifica la ortografia del ID de regla o eliminalo si es invalido"
+    unknown_tool: "Herramienta desconocida '%{tool}'. Herramientas validas: %{valid}"
+    unknown_tool_suggestion: "Usa uno de los nombres de herramienta soportados"
+    deprecated_target: "El campo 'target' esta obsoleto"
+    deprecated_target_suggestion: "Usa el arreglo 'tools' en su lugar"
+    deprecated_mcp_version: "El campo 'mcp_protocol_version' esta obsoleto"
+    deprecated_mcp_version_suggestion: "Usa 'spec_revisions.mcp_protocol' en su lugar"
+    load_warning: "Error al analizar configuracion '%{path}': %{error}. Usando valores predeterminados."
+
+# ===========================================================================
+# CLI - Cadenas de la interfaz de linea de comandos
+# ===========================================================================
+cli:
+  validating: "Validando:"
+  no_issues_found: "No se encontraron problemas"
+  found_errors_warnings: "Encontrados %{errors} %{error_word}, %{warnings} %{warning_word}"
+  info_messages: "  %{count} mensajes informativos"
+  fixable_issues: "  %{count} %{word} corregibles automaticamente"
+  issue_is: "problema es"
+  issues_are: "problemas son"
+  error_singular: "error"
+  error_plural: "errores"
+  warning_singular: "advertencia"
+  warning_plural: "advertencias"
+  hint_run_fix: "Ejecuta con %{flag} para aplicar correcciones"
+  applying_fixes: "%{mode} correcciones%{safe_mode}..."
+  no_fixes: "  No hay correcciones para aplicar"
+  would_fix: "Corregiria:"
+  fixed: "Corregido:"
+  diff_label: "Diferencias"
+  fix_summary: "%{action} %{count} %{word}"
+  file_singular: "archivo"
+  file_plural: "archivos"
+  preview: "Vista previa"
+  applying: "Aplicando"
+  safe_only: " (solo seguras)"
+  created: "Creado:"
+  schema_written: "Esquema escrito en:"
+  error_label: "Error:"
+  warning_label: "Advertencia:"
+  config_warning_label: "Advertencia de config:"
+  hint_label: "pista:"
+  rule_label: "regla:"
+  help_label: "ayuda:"
+  note_label: "nota:"
+  fix_label: "correccion:"
+  safe: "segura"
+  unsafe: "insegura"
+  fixable: "[corregible]"
+  watch_error_text_only: "El modo observador solo es compatible con salida de texto."
+  watch_error_fix: "El modo observador no puede combinarse con opciones de correccion."
+  fix_error_text_only: "Las opciones de correccion solo son compatibles con salida de texto. Elimina --format o usa --format text."
+  evaluating: "Evaluando:"
+  filter_label: "  filtro:"
+  per_case_results: "Resultados por Caso"
+  pass: "PASA"
+  fail: "FALLA"
+  unexpected_label: "inesperado:"
+  missing_label: "faltante:"
+  success: "EXITO"
+  failed: "FALLIDO"
+  all_cases_passed: "Todos los %{count} casos pasaron"
+  cases_failed: "%{failed}/%{total} casos fallaron"
+  telemetry_status: "Estado de Telemetria"
+  telemetry_configured: "Configurado:"
+  telemetry_effective: "Efectivo:"
+  telemetry_enabled: "habilitado"
+  telemetry_disabled: "deshabilitado"
+  telemetry_env_note: "La telemetria esta deshabilitada debido al entorno (CI, DO_NOT_TRACK, etc.)"
+  telemetry_installation_id: "ID de Instalacion:"
+  telemetry_consent_given: "Consentimiento dado:"
+  telemetry_privacy: "Garantias de Privacidad"
+  telemetry_privacy_1: "  - Solo por eleccion (deshabilitado por defecto)"
+  telemetry_privacy_2: "  - Nunca se recopilan rutas o contenidos de archivos"
+  telemetry_privacy_3: "  - No se recopila identidad del usuario"
+  telemetry_privacy_4: "  - Solo conteos agregados (tipos de archivo, activaciones de reglas)"
+  telemetry_privacy_5: "  - Respeta DO_NOT_TRACK, entornos CI"
+  telemetry_config_file: "Archivo de config:"
+  telemetry_already_enabled: "La telemetria ya esta habilitada."
+  telemetry_ok_enabled: "Telemetria habilitada."
+  telemetry_thanks: "Gracias por ayudar a mejorar agnix!"
+  telemetry_collect: "Lo que recopilamos:"
+  telemetry_collect_1: "  - Conteos de tipos de archivo (ej., 5 skills, 2 configs MCP)"
+  telemetry_collect_2: "  - Conteos de activacion de reglas (ej., AS-001: 3 veces)"
+  telemetry_collect_3: "  - Conteos de errores/advertencias"
+  telemetry_collect_4: "  - Duracion de validacion"
+  telemetry_never_collect: "Lo que nunca recopilamos:"
+  telemetry_never_1: "  - Rutas o nombres de archivos"
+  telemetry_never_2: "  - Contenidos o codigo de archivos"
+  telemetry_never_3: "  - Identidad del usuario"
+  telemetry_disable_hint: "Puedes deshabilitar la telemetria en cualquier momento con: %{cmd}"
+  telemetry_already_disabled: "La telemetria ya esta deshabilitada."
+  telemetry_ok_disabled: "Telemetria deshabilitada."
+  locale_unsupported: "Advertencia: locale no soportado '%{locale}', usando 'en' por defecto"
+  watch_starting: "Iniciando modo observador. Presiona Ctrl+C para detener."
+  watch_changes_detected: "Cambios detectados. Re-validando..."
+  watch_error: "Error del observador: %{error}"
+  watch_stopped: "Modo observador detenido."
+
+# ===========================================================================
+# LSP - Cadenas del protocolo de servidor de lenguaje
+# ===========================================================================
+lsp:
+  suggestion_label: "Sugerencia:"
+  hover:
+    name: "Nombre"
+    description: "Descripcion"
+    model: "Modelo"
+    context: "Contexto"
+    agent: "Agente"
+    allowed_tools: "Herramientas Permitidas"
+    argument_hint: "Pista de Argumento"
+    user_invocable: "Invocable por Usuario"
+    disable_model_invocation: "Deshabilitar Invocacion de Modelo"
+    license: "Licencia"
+    compatibility: "Compatibilidad"
