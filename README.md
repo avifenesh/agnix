@@ -212,14 +212,43 @@ See [Configuration Reference](docs/CONFIGURATION.md) for full options.
 
 ## Performance
 
-Benchmarks (run with `cargo bench`):
+agnix uses deterministic benchmarking with iai-callgrind to ensure consistent CI performance testing.
 
-| Metric | Result |
-|--------|--------|
-| File type detection | ~85ns/file |
-| Single file validation | ~15-50μs |
-| Project validation | 5,000+ files/second |
-| Registry caching | 7x speedup |
+### Targets
+
+| Metric | Target | Typical |
+|--------|--------|---------|
+| Single file | < 100ms | < 10ms |
+| 1000 files | < 5s | ~2s |
+| Peak memory | < 100MB | ~50MB |
+
+### Running Benchmarks
+
+```bash
+# Fast feedback during development (wall-clock)
+./scripts/bench.sh criterion
+
+# Pre-PR validation (instruction counts, matches CI)
+./scripts/bench.sh iai
+
+# Check binary size
+./scripts/bench.sh bloat
+```
+
+### CI Integration
+
+- PRs automatically run iai-callgrind benchmarks
+- Regressions block merge (instruction count increase above threshold)
+- Zero false positives from system load variance
+
+### Requirements
+
+- **iai-callgrind**: Requires Valgrind (Linux/macOS)
+  - Linux: `sudo apt-get install valgrind`
+  - macOS: `brew install valgrind` (experimental on ARM)
+- **Windows**: Use Criterion only; CI benchmarks run on Linux
+
+See [SPEC.md](SPEC.md#performance-characteristics) for detailed methodology and interpretation.
 
 ## Supported Tools
 
