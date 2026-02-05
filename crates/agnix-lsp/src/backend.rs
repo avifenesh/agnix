@@ -377,19 +377,16 @@ impl LanguageServer for Backend {
             *config_guard = Arc::new(new_config);
         }
 
-        // Re-validate all open documents with new config (parallel)
+        // Re-validate all open documents with new config (spawn in parallel)
         let documents: Vec<Url> = {
             let docs = self.documents.read().await;
             docs.keys().cloned().collect()
         };
 
-        // Use join_all to validate documents in parallel
-        use futures::future::join_all;
-        let validation_futures: Vec<_> = documents
-            .into_iter()
-            .map(|uri| self.validate_from_content_and_publish(uri))
-            .collect();
-        join_all(validation_futures).await;
+        // Spawn validation tasks in parallel for better performance
+        for uri in documents {
+            self.validate_from_content_and_publish(uri).await;
+        }
     }
 }
 
