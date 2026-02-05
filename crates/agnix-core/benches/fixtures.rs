@@ -335,6 +335,10 @@ fn create_mcp_tool(index: usize) -> String {
     ];
     let (name, desc) = tools[index % tools.len()];
 
+    // Use manual modulo instead of is_multiple_of to avoid i18n PR scope creep
+    #[allow(clippy::manual_is_multiple_of)]
+    let approval = index % 2 == 0;
+
     format!(
         r#"{{
   "name": "{name}-{index}",
@@ -354,8 +358,7 @@ fn create_mcp_tool(index: usize) -> String {
     "required": ["path"]
   }},
   "requiresApproval": {approval}
-}}"#,
-        approval = index.is_multiple_of(2)
+}}"#
     )
 }
 

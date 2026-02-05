@@ -7,10 +7,11 @@
 //! 4. System locale detection via `sys-locale`
 //! 5. Fallback to "en" (English)
 
+use agnix_core::i18n::{is_supported, normalize_locale};
 use rust_i18n::set_locale;
 
-/// Supported locales with their display names.
-pub const SUPPORTED_LOCALES: &[(&str, &str)] = &[
+/// Supported locales with their display names (for CLI display only).
+const SUPPORTED_LOCALES_DISPLAY: &[(&str, &str)] = &[
     ("en", "English"),
     ("es", "Spanish / Espanol"),
     ("zh-CN", "Chinese Simplified / Zhongwen"),
@@ -78,56 +79,10 @@ pub fn init(cli_locale: Option<&str>, config_locale: Option<&str>) {
     set_locale(&locale);
 }
 
-/// Normalize a locale string to match our supported locale codes.
-///
-/// Examples:
-/// - "en_US.UTF-8" -> "en"
-/// - "es_ES" -> "es"
-/// - "zh_CN.UTF-8" -> "zh-CN"
-/// - "zh-Hans" -> "zh-CN"
-fn normalize_locale(locale: &str) -> String {
-    // Strip encoding suffix (e.g., ".UTF-8")
-    let base = locale.split('.').next().unwrap_or(locale);
-
-    // Handle zh variants
-    let lower = base.to_lowercase();
-    if lower.starts_with("zh") {
-        // zh_CN, zh-CN, zh-Hans, zh_Hans -> zh-CN
-        if lower.contains("cn") || lower.contains("hans") || lower.contains("simplified") {
-            return "zh-CN".to_string();
-        }
-        // Other zh variants fall through to language-only matching
-    }
-
-    // Try exact match first (case-insensitive)
-    for &(code, _) in SUPPORTED_LOCALES {
-        if base.eq_ignore_ascii_case(code) {
-            return code.to_string();
-        }
-    }
-
-    // Try language-only match (e.g., "es_ES" -> "es")
-    let lang = base.split(&['_', '-'][..]).next().unwrap_or(base);
-    for &(code, _) in SUPPORTED_LOCALES {
-        let code_lang = code.split('-').next().unwrap_or(code);
-        if lang.eq_ignore_ascii_case(code_lang) {
-            return code.to_string();
-        }
-    }
-
-    // Not supported, return as-is for the caller to handle
-    lang.to_lowercase()
-}
-
-/// Check if a locale code is supported.
-fn is_supported(locale: &str) -> bool {
-    SUPPORTED_LOCALES.iter().any(|&(code, _)| code == locale)
-}
-
 /// Print the list of supported locales.
 pub fn print_supported_locales() {
     println!("Supported locales:");
-    for &(code, name) in SUPPORTED_LOCALES {
+    for &(code, name) in SUPPORTED_LOCALES_DISPLAY {
         println!("  {:<8} {}", code, name);
     }
 }

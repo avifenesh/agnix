@@ -229,6 +229,20 @@ fn main() {
         tracing::debug!("Verbose mode enabled");
     }
 
+    // Load config early for watch mode to apply config-based locale
+    // Watch mode doesn't allow format or fix flags, so we can safely load config here
+    if cli.watch {
+        let config_path = resolve_config_path(&cli.path, &cli);
+        let (config, _) = LintConfig::load_or_default(config_path.as_ref());
+
+        // Re-initialize locale if config specifies one and no --locale flag was given
+        if cli.locale.is_none() {
+            if let Some(ref config_locale) = config.locale {
+                locale::init(None, Some(config_locale));
+            }
+        }
+    }
+
     let result = match &cli.command {
         Some(Commands::Validate { path }) => validate_command(path, &cli),
         Some(Commands::Init { output }) => init_command(output),

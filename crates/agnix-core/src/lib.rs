@@ -28,6 +28,7 @@ pub mod eval;
 mod file_utils;
 pub mod fixes;
 pub mod fs;
+pub mod i18n;
 pub mod parsers;
 mod rules;
 mod schemas;

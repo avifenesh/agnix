@@ -497,14 +497,13 @@ fn validate_markdown_links(
 
         // Check if file exists
         if !fs.exists(&resolved) {
-            let link_type = if link.is_image { "Image" } else { "Link" };
             diagnostics.push(
                 Diagnostic::error(
                     path.to_path_buf(),
                     link.line,
                     link.column,
                     "REF-002",
-                    t!("rules.ref_002.message", url = format!("{} target: {}", link_type, link.url), resolved = resolved.display().to_string()),
+                    t!("rules.ref_002.message", url = link.url.as_str(), resolved = resolved.display().to_string()),
                 )
                 .with_suggestion(t!("rules.ref_002.suggestion")),
             );

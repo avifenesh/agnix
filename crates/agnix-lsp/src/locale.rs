@@ -6,10 +6,8 @@
 //! 3. System locale via `sys-locale`
 //! 4. Fallback to "en" (English)
 
+use agnix_core::i18n::{is_supported, normalize_locale};
 use rust_i18n::set_locale;
-
-/// Supported locales (must match CLI's SUPPORTED_LOCALES).
-const SUPPORTED_LOCALES: &[&str] = &["en", "es", "zh-CN"];
 
 /// Initialize locale from environment variables.
 ///
@@ -58,43 +56,6 @@ fn detect_locale() -> String {
 
     // 4. Fallback
     "en".to_string()
-}
-
-/// Normalize a locale string to match supported locale codes.
-fn normalize_locale(locale: &str) -> String {
-    // Strip encoding suffix (e.g., ".UTF-8")
-    let base = locale.split('.').next().unwrap_or(locale);
-
-    // Handle zh variants
-    let lower = base.to_lowercase();
-    if lower.starts_with("zh")
-        && (lower.contains("cn") || lower.contains("hans") || lower.contains("simplified"))
-    {
-        return "zh-CN".to_string();
-    }
-
-    // Try exact match (case-insensitive)
-    for &code in SUPPORTED_LOCALES {
-        if base.eq_ignore_ascii_case(code) {
-            return code.to_string();
-        }
-    }
-
-    // Try language-only match (e.g., "es_ES" -> "es")
-    let lang = base.split(&['_', '-'][..]).next().unwrap_or(base);
-    for &code in SUPPORTED_LOCALES {
-        let code_lang = code.split('-').next().unwrap_or(code);
-        if lang.eq_ignore_ascii_case(code_lang) {
-            return code.to_string();
-        }
-    }
-
-    lang.to_lowercase()
-}
-
-/// Check if a locale code is supported.
-fn is_supported(locale: &str) -> bool {
-    SUPPORTED_LOCALES.contains(&locale)
 }
 
 #[cfg(test)]
