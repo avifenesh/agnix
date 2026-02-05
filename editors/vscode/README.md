@@ -7,6 +7,7 @@ Real-time validation for AI agent configuration files in VS Code.
 ## Features
 
 - **Real-time validation** - Diagnostics as you type
+- **JSON Schema validation and autocomplete for `.agnix.toml` config files**
 - **Validates 100 rules** - From official specs and best practices
 - **Diagnostics panel** - Sidebar tree view of all issues by file
 - **CodeLens** - Rule info shown inline above problematic lines
@@ -70,16 +71,85 @@ brew tap avifenesh/agnix && brew install agnix
 
 ## Settings
 
+All settings can be configured via VS Code's Settings UI or `settings.json`. Changes take effect immediately without restarting the LSP server.
+
+### General Settings
+
 | Setting | Default | Description |
 |---------|---------|-------------|
 | `agnix.lspPath` | `agnix-lsp` | Path to LSP binary |
 | `agnix.enable` | `true` | Enable/disable validation |
 | `agnix.codeLens.enable` | `true` | Show CodeLens with rule info |
 | `agnix.trace.server` | `off` | Server communication tracing |
+| `agnix.severity` | `Warning` | Minimum severity level (Error, Warning, Info) |
+| `agnix.target` | `Generic` | Target tool (deprecated, use `tools` instead) |
+| `agnix.tools` | `[]` | Tools to validate for (e.g., `["claude-code", "cursor"]`) |
 
-## Configuration
+### Rule Categories
 
-Create `.agnix.toml` in your workspace:
+Enable or disable validation rule categories. All default to `true`.
+
+| Setting | Rules | Description |
+|---------|-------|-------------|
+| `agnix.rules.skills` | AS-*, CC-SK-* | Skills validation |
+| `agnix.rules.hooks` | CC-HK-* | Hooks configuration |
+| `agnix.rules.agents` | CC-AG-* | Agent definitions |
+| `agnix.rules.memory` | CC-MEM-* | Memory validation |
+| `agnix.rules.plugins` | CC-PL-* | Plugin manifests |
+| `agnix.rules.xml` | XML-* | XML balance checking |
+| `agnix.rules.mcp` | MCP-* | MCP validation |
+| `agnix.rules.imports` | REF-* | Import references |
+| `agnix.rules.crossPlatform` | XP-* | Cross-platform compatibility |
+| `agnix.rules.agentsMd` | AGM-* | AGENTS.md validation |
+| `agnix.rules.copilot` | COP-* | GitHub Copilot instructions |
+| `agnix.rules.cursor` | CUR-* | Cursor project rules |
+| `agnix.rules.promptEngineering` | PE-* | Prompt engineering |
+| `agnix.rules.disabledRules` | - | Specific rule IDs to disable |
+
+### Version Pinning
+
+Pin tool versions for version-aware validation. All default to `null` (use defaults).
+
+| Setting | Example | Description |
+|---------|---------|-------------|
+| `agnix.versions.claudeCode` | `"1.0.0"` | Claude Code version |
+| `agnix.versions.codex` | `"0.1.0"` | Codex CLI version |
+| `agnix.versions.cursor` | `"0.45.0"` | Cursor version |
+| `agnix.versions.copilot` | `"1.0.0"` | GitHub Copilot version |
+
+### Spec Revisions
+
+Pin specification revisions. All default to `null` (use latest).
+
+| Setting | Example | Description |
+|---------|---------|-------------|
+| `agnix.specs.mcpProtocol` | `"2025-06-18"` | MCP protocol version |
+| `agnix.specs.agentSkills` | `"1.0"` | Agent Skills spec revision |
+| `agnix.specs.agentsMd` | `"1.0"` | AGENTS.md spec revision |
+
+### Example settings.json
+
+```json
+{
+  "agnix.severity": "Error",
+  "agnix.tools": ["claude-code", "cursor"],
+  "agnix.rules.promptEngineering": false,
+  "agnix.rules.disabledRules": ["PE-003"],
+  "agnix.versions.claudeCode": "1.0.0"
+}
+```
+
+### Configuration Priority
+
+VS Code settings take priority over `.agnix.toml`:
+
+1. VS Code settings (highest priority)
+2. `.agnix.toml` in workspace root
+3. Default values (lowest priority)
+
+## File-Based Configuration
+
+Create `.agnix.toml` in your workspace for team-shared config:
 
 ```toml
 target = "ClaudeCode"

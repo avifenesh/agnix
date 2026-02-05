@@ -78,6 +78,23 @@ cargo test -p agnix-core
 cargo test -- --nocapture
 ```
 
+### Security Tests
+
+```bash
+# Security integration tests
+cargo test --test security_integration
+
+# Fuzz testing (requires nightly)
+cd crates/agnix-core
+cargo +nightly fuzz run fuzz_markdown -- -max_total_time=300
+cargo +nightly fuzz run fuzz_frontmatter -- -max_total_time=300
+cargo +nightly fuzz run fuzz_json -- -max_total_time=300
+
+# Dependency audit
+cargo audit
+cargo deny check
+```
+
 ## Project Structure
 
 ```

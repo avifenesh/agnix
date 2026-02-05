@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+- ReDoS protection via regex input size limits (MAX_REGEX_INPUT_SIZE = 64KB)
+  - Markdown XML tag extraction skips oversized content
+  - Cross-platform and prompt engineering validators protected
+- File count limits to prevent DoS attacks
+  - Default limit of 10,000 files (configurable via max_files_to_validate)
+  - CLI flag --max-files to override or disable (--max-files 0)
+- Fuzz testing infrastructure with cargo-fuzz
+  - Three fuzz targets: fuzz_frontmatter, fuzz_markdown, fuzz_json
+  - CI runs 5-minute fuzzing on PRs, 30-minute weekly fuzzing
+  - UTF-8 boundary validation for markdown parsing
+- Enhanced symlink handling documentation and tests
+  - Comprehensive tests for Unix and Windows symlink behavior
+  - MAX_SYMLINK_DEPTH = 40 to prevent circular symlink loops
+- Security integration test suite (crates/agnix-core/tests/security_integration.rs)
+  - Symlink rejection, file size limits, path traversal, file count limits
+  - ReDoS protection validation, concurrent validation safety
+- Hardened dependency management
+  - cargo-audit integration (pinned to v0.21.0) in CI
+  - cargo-deny policy with multiple-versions = deny
+  - audit.toml and deny.toml configuration files
+- Security documentation
+  - SECURITY.md with reporting policy and security configuration
+  - knowledge-base/SECURITY-MODEL.md with threat model and implementation details
+  - Audit history tracking and incident response procedures
+
 ### Added
 - JetBrains IDE plugin with LSP integration (#196)
   - Supports IntelliJ IDEA, WebStorm, PyCharm, and all JetBrains IDEs (2023.2+)
@@ -15,6 +41,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Settings UI with LSP path configuration, auto-download toggle, trace level
   - Context menu actions: Validate File, Restart Server, Settings
   - Uses LSP4IJ for standard LSP client support
+- `agnix schema` command for JSON Schema generation (#206)
+  - Outputs JSON Schema for `.agnix.toml` to stdout or file
+  - Generated from Rust types using schemars
+- Config validation with helpful warnings (#206)
+  - Validates `disabled_rules` against known rule ID patterns
+  - Validates `tools` array contains recognized tool names
+  - Warns on deprecated fields (`mcp_protocol_version`)
+- VS Code schema association for `.agnix.toml` autocomplete (#206)
 - Opt-in telemetry module with privacy-first design (#209)
   - Disabled by default, requires explicit `agnix telemetry enable`
   - Tracks aggregate metrics: rule trigger counts, error/warning counts, duration
@@ -37,6 +71,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Reduced main validate() method from ~480 to ~210 lines
   - Organized validation into clear phases with documentation
   - Improved maintainability and testability without changing validation behavior
+
+### Performance
+- Benchmark infrastructure with iai-callgrind for deterministic CI testing (#202)
+  - Instruction count benchmarks immune to system load variance
+  - Helper script (./scripts/bench.sh) for iai/criterion/bloat workflows
+  - Scale testing with 100 and 1000 file projects
+  - Memory usage tracking with tracking-allocator
+  - CI job blocks merge on performance regressions
+  - Cross-platform support (Linux/macOS with Valgrind, Windows uses Criterion only)
+
 ## [0.7.2] - 2026-02-05
 
 ### Fixed

@@ -4,14 +4,14 @@
 
 | Version | Supported          |
 | ------- | ------------------ |
-| 0.1.x   | :white_check_mark: |
+| 0.0.x   | :white_check_mark: |
 
 ## Reporting a Vulnerability
 
 If you discover a security vulnerability in agnix, please report it responsibly:
 
 1. **Do NOT open a public issue** for security vulnerabilities
-2. Email the maintainer directly at: avifenesh@gmail.com
+2. Email the maintainer directly at: aviarchi1994@gmail.com
 3. Include:
    - Description of the vulnerability
    - Steps to reproduce
@@ -19,6 +19,7 @@ If you discover a security vulnerability in agnix, please report it responsibly:
    - Suggested fix (if any)
 
 You can expect:
+
 - Acknowledgment within 48 hours
 - Status update within 7 days
 - Credit in release notes (unless you prefer anonymity)
@@ -42,6 +43,7 @@ agnix is a **local linting tool** that validates agent configuration files. Its 
 ### Dependency Security
 
 We use `cargo-audit` in CI to check for known vulnerabilities in dependencies. The security workflow runs:
+
 - On every push to main
 - On every pull request
 - Weekly on schedule
@@ -70,6 +72,7 @@ agnix includes **opt-in** telemetry to help improve the tool. Telemetry is disab
 When telemetry is enabled, we collect only aggregate statistics:
 
 **What we collect:**
+
 - File type counts (e.g., "5 skills, 2 MCP configs") - NOT file paths or names
 - Rule trigger counts (e.g., "AS-001: 3 times") - NOT diagnostic messages
 - Error/warning/info counts
@@ -77,6 +80,7 @@ When telemetry is enabled, we collect only aggregate statistics:
 - Random installation ID (not tied to user identity)
 
 **What we NEVER collect:**
+
 - File paths or directory structure
 - File contents or code
 - User identity, email, or system information
@@ -85,6 +89,7 @@ When telemetry is enabled, we collect only aggregate statistics:
 ### Environment-Aware Disable
 
 Telemetry is automatically disabled in:
+
 - CI environments (CI, GITHUB_ACTIONS, GITLAB_CI, TRAVIS, etc.)
 - When DO_NOT_TRACK environment variable is set (any value)
 - When AGNIX_TELEMETRY=0 or AGNIX_TELEMETRY=false
@@ -118,5 +123,6 @@ cargo install agnix-cli --features telemetry
 ## Security Updates
 
 Security fixes are released as patch versions (e.g., 0.1.1) and announced in:
+
 - GitHub Releases
 - CHANGELOG.md

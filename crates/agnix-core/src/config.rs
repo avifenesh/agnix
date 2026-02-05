@@ -3,6 +3,7 @@
 use crate::file_utils::safe_read_file;
 use crate::fs::{FileSystem, RealFileSystem};
 use crate::schemas::mcp::DEFAULT_MCP_PROTOCOL_VERSION;
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -12,22 +13,28 @@ use std::sync::Arc;
 /// When tool versions are pinned, validators can apply version-specific
 /// behavior instead of using default assumptions. When not pinned,
 /// validators will use sensible defaults and add assumption notes.
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
 pub struct ToolVersions {
     /// Claude Code version (e.g., "1.0.0")
     #[serde(default)]
+    #[schemars(description = "Claude Code version for version-aware validation (e.g., \"1.0.0\")")]
     pub claude_code: Option<String>,
 
     /// Codex CLI version (e.g., "0.1.0")
     #[serde(default)]
+    #[schemars(description = "Codex CLI version for version-aware validation (e.g., \"0.1.0\")")]
     pub codex: Option<String>,
 
     /// Cursor version (e.g., "0.45.0")
     #[serde(default)]
+    #[schemars(description = "Cursor version for version-aware validation (e.g., \"0.45.0\")")]
     pub cursor: Option<String>,
 
     /// GitHub Copilot version (e.g., "1.0.0")
     #[serde(default)]
+    #[schemars(
+        description = "GitHub Copilot version for version-aware validation (e.g., \"1.0.0\")"
+    )]
     pub copilot: Option<String>,
 }
 
@@ -35,18 +42,23 @@ pub struct ToolVersions {
 ///
 /// When spec revisions are pinned, validators can apply revision-specific
 /// rules. When not pinned, validators use the latest known revision.
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
 pub struct SpecRevisions {
     /// MCP protocol version (e.g., "2025-06-18", "2024-11-05")
     #[serde(default)]
+    #[schemars(
+        description = "MCP protocol version for revision-specific validation (e.g., \"2025-06-18\", \"2024-11-05\")"
+    )]
     pub mcp_protocol: Option<String>,
 
     /// Agent Skills specification revision
     #[serde(default)]
+    #[schemars(description = "Agent Skills specification revision")]
     pub agent_skills_spec: Option<String>,
 
     /// AGENTS.md specification revision
     #[serde(default)]
+    #[schemars(description = "AGENTS.md specification revision")]
     pub agents_md_spec: Option<String>,
 }
 
@@ -236,20 +248,26 @@ impl RuleFilter for DefaultRuleFilter<'_> {
 }
 
 /// Configuration for the linter
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(default)]
 pub struct LintConfig {
     /// Severity level threshold
+    #[schemars(description = "Minimum severity level to report (Error, Warning, Info)")]
     pub severity: SeverityLevel,
 
     /// Rules to enable/disable
+    #[schemars(description = "Configuration for enabling/disabling validation rules by category")]
     pub rules: RuleConfig,
 
     /// Paths to exclude
+    #[schemars(
+        description = "Glob patterns for paths to exclude from validation (e.g., [\"node_modules/**\", \"dist/**\"])"
+    )]
     pub exclude: Vec<String>,
 
     /// Target tool (claude-code, cursor, codex, generic)
     /// Deprecated: Use `tools` array instead for multi-tool support
+    #[schemars(description = "Target tool for validation (deprecated: use 'tools' array instead)")]
     pub target: TargetTool,
 
     /// Tools to validate for (e.g., ["claude-code", "cursor"])
@@ -257,18 +275,26 @@ pub struct LintConfig {
     /// and disables rules for tools not in the list.
     /// Valid values: "claude-code", "cursor", "codex", "copilot", "generic"
     #[serde(default)]
+    #[schemars(
+        description = "Tools to validate for. Valid values: \"claude-code\", \"cursor\", \"codex\", \"copilot\", \"generic\""
+    )]
     pub tools: Vec<String>,
 
     /// Expected MCP protocol version for validation (MCP-008)
     /// Deprecated: Use spec_revisions.mcp_protocol instead
+    #[schemars(
+        description = "Expected MCP protocol version (deprecated: use spec_revisions.mcp_protocol instead)"
+    )]
     pub mcp_protocol_version: Option<String>,
 
     /// Tool version pinning for version-aware validation
     #[serde(default)]
+    #[schemars(description = "Pin specific tool versions for version-aware validation")]
     pub tool_versions: ToolVersions,
 
     /// Specification revision pinning for version-aware validation
     #[serde(default)]
+    #[schemars(description = "Pin specific specification revisions for revision-aware validation")]
     pub spec_revisions: SpecRevisions,
 
     /// Project root directory for validation (not serialized).
@@ -276,6 +302,7 @@ pub struct LintConfig {
     /// When set, validators can use this to resolve relative paths and
     /// detect project-escape attempts in import validation.
     #[serde(skip)]
+    #[schemars(skip)]
     pub root_dir: Option<PathBuf>,
 
     /// Shared import cache for project-level validation (not serialized).
@@ -283,6 +310,7 @@ pub struct LintConfig {
     /// When set, validators can use this cache to share parsed import data
     /// across files, avoiding redundant parsing during import chain traversal.
     #[serde(skip)]
+    #[schemars(skip)]
     pub import_cache: Option<crate::parsers::ImportCache>,
 
     /// Internal runtime context for validation operations (not serialized).
@@ -290,6 +318,7 @@ pub struct LintConfig {
     /// Groups the filesystem abstraction. The `root_dir` and `import_cache`
     /// fields are kept separate for backward compatibility.
     #[serde(skip)]
+    #[schemars(skip)]
     runtime: RuntimeContext,
 }
 
@@ -315,10 +344,16 @@ impl Default for LintConfig {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
+)]
+#[schemars(description = "Severity level for filtering diagnostics")]
 pub enum SeverityLevel {
+    /// Only show errors
     Error,
+    /// Show errors and warnings
     Warning,
+    /// Show all diagnostics including info
     Info,
 }
 
@@ -327,78 +362,99 @@ fn default_true() -> bool {
     true
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[schemars(description = "Configuration for enabling/disabling validation rules by category")]
 pub struct RuleConfig {
     /// Enable skills validation (AS-*, CC-SK-*)
     #[serde(default = "default_true")]
+    #[schemars(description = "Enable Agent Skills validation rules (AS-*, CC-SK-*)")]
     pub skills: bool,
 
     /// Enable hooks validation (CC-HK-*)
     #[serde(default = "default_true")]
+    #[schemars(description = "Enable Claude Code hooks validation rules (CC-HK-*)")]
     pub hooks: bool,
 
     /// Enable agents validation (CC-AG-*)
     #[serde(default = "default_true")]
+    #[schemars(description = "Enable Claude Code agents validation rules (CC-AG-*)")]
     pub agents: bool,
 
     /// Enable memory validation (CC-MEM-*)
     #[serde(default = "default_true")]
+    #[schemars(description = "Enable Claude Code memory validation rules (CC-MEM-*)")]
     pub memory: bool,
 
     /// Enable plugins validation (CC-PL-*)
     #[serde(default = "default_true")]
+    #[schemars(description = "Enable Claude Code plugins validation rules (CC-PL-*)")]
     pub plugins: bool,
 
     /// Enable XML balance checking (XML-*)
     #[serde(default = "default_true")]
+    #[schemars(description = "Enable XML tag balance validation rules (XML-*)")]
     pub xml: bool,
 
     /// Enable MCP validation (MCP-*)
     #[serde(default = "default_true")]
+    #[schemars(description = "Enable Model Context Protocol validation rules (MCP-*)")]
     pub mcp: bool,
 
     /// Enable import reference validation (REF-*)
     #[serde(default = "default_true")]
+    #[schemars(description = "Enable import reference validation rules (REF-*)")]
     pub imports: bool,
 
     /// Enable cross-platform validation (XP-*)
     #[serde(default = "default_true")]
+    #[schemars(description = "Enable cross-platform validation rules (XP-*)")]
     pub cross_platform: bool,
 
     /// Enable AGENTS.md validation (AGM-*)
     #[serde(default = "default_true")]
+    #[schemars(description = "Enable AGENTS.md validation rules (AGM-*)")]
     pub agents_md: bool,
 
     /// Enable GitHub Copilot validation (COP-*)
     #[serde(default = "default_true")]
+    #[schemars(description = "Enable GitHub Copilot validation rules (COP-*)")]
     pub copilot: bool,
 
     /// Enable Cursor project rules validation (CUR-*)
     #[serde(default = "default_true")]
+    #[schemars(description = "Enable Cursor project rules validation (CUR-*)")]
     pub cursor: bool,
 
     /// Enable prompt engineering validation (PE-*)
     #[serde(default = "default_true")]
+    #[schemars(description = "Enable prompt engineering validation rules (PE-*)")]
     pub prompt_engineering: bool,
 
     /// Detect generic instructions in CLAUDE.md
     #[serde(default = "default_true")]
+    #[schemars(description = "Detect generic placeholder instructions in CLAUDE.md")]
     pub generic_instructions: bool,
 
     /// Validate YAML frontmatter
     #[serde(default = "default_true")]
+    #[schemars(description = "Validate YAML frontmatter in skill files")]
     pub frontmatter_validation: bool,
 
     /// Check XML tag balance (legacy - use xml instead)
     #[serde(default = "default_true")]
+    #[schemars(description = "Check XML tag balance (legacy: use 'xml' instead)")]
     pub xml_balance: bool,
 
     /// Validate @import references (legacy - use imports instead)
     #[serde(default = "default_true")]
+    #[schemars(description = "Validate @import references (legacy: use 'imports' instead)")]
     pub import_references: bool,
 
     /// Explicitly disabled rules by ID (e.g., ["CC-AG-001", "AS-005"])
     #[serde(default)]
+    #[schemars(
+        description = "List of rule IDs to explicitly disable (e.g., [\"CC-AG-001\", \"AS-005\"])"
+    )]
     pub disabled_rules: Vec<String>,
 }
 
@@ -427,7 +483,10 @@ impl Default for RuleConfig {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[schemars(
+    description = "Target tool for validation (deprecated: use 'tools' array for multi-tool support)"
+)]
 pub enum TargetTool {
     /// Generic Agent Skills standard
     Generic,
@@ -611,6 +670,131 @@ impl LintConfig {
     pub fn is_tool_alias(user_tool: &str, canonical_tool: &str) -> bool {
         DefaultRuleFilter::is_tool_alias(user_tool, canonical_tool)
     }
+
+    /// Validate the configuration and return any warnings.
+    ///
+    /// This performs semantic validation beyond what TOML parsing can check:
+    /// - Validates that disabled_rules match known rule ID patterns
+    /// - Validates that tools array contains known tool names
+    /// - Warns on deprecated fields
+    pub fn validate(&self) -> Vec<ConfigWarning> {
+        let mut warnings = Vec::new();
+
+        // Validate disabled_rules match known patterns
+        // Note: imports:: is a legacy prefix used in some internal diagnostics
+        let known_prefixes = [
+            "AS-",
+            "CC-SK-",
+            "CC-HK-",
+            "CC-AG-",
+            "CC-MEM-",
+            "CC-PL-",
+            "XML-",
+            "MCP-",
+            "REF-",
+            "XP-",
+            "AGM-",
+            "COP-",
+            "CUR-",
+            "PE-",
+            "imports::",
+        ];
+        for rule_id in &self.rules.disabled_rules {
+            let matches_known = known_prefixes
+                .iter()
+                .any(|prefix| rule_id.starts_with(prefix));
+            if !matches_known {
+                warnings.push(ConfigWarning {
+                    field: "rules.disabled_rules".to_string(),
+                    message: format!(
+                        "Unknown rule ID pattern '{}'. Expected prefix: {}",
+                        rule_id,
+                        known_prefixes.join(", ")
+                    ),
+                    suggestion: Some("Check the rule ID spelling or remove if invalid".to_string()),
+                });
+            }
+        }
+
+        // Validate tools array contains known tools
+        let known_tools = [
+            "claude-code",
+            "cursor",
+            "codex",
+            "copilot",
+            "github-copilot",
+            "generic",
+        ];
+        for tool in &self.tools {
+            let tool_lower = tool.to_lowercase();
+            if !known_tools
+                .iter()
+                .any(|k| k.eq_ignore_ascii_case(&tool_lower))
+            {
+                warnings.push(ConfigWarning {
+                    field: "tools".to_string(),
+                    message: format!(
+                        "Unknown tool '{}'. Valid tools: {}",
+                        tool,
+                        known_tools.join(", ")
+                    ),
+                    suggestion: Some("Use one of the supported tool names".to_string()),
+                });
+            }
+        }
+
+        // Warn on deprecated fields
+        if self.target != TargetTool::Generic && self.tools.is_empty() {
+            // Only warn if target is non-default and tools is empty
+            // (if both are set, tools takes precedence silently)
+            warnings.push(ConfigWarning {
+                field: "target".to_string(),
+                message: "Field 'target' is deprecated".to_string(),
+                suggestion: Some("Use the 'tools' array instead".to_string()),
+            });
+        }
+        if self.mcp_protocol_version.is_some() {
+            warnings.push(ConfigWarning {
+                field: "mcp_protocol_version".to_string(),
+                message: "Field 'mcp_protocol_version' is deprecated".to_string(),
+                suggestion: Some("Use 'spec_revisions.mcp_protocol' instead".to_string()),
+            });
+        }
+
+        warnings
+    }
+}
+
+/// Warning from configuration validation.
+///
+/// These warnings indicate potential issues with the configuration that
+/// don't prevent validation from running but may indicate user mistakes.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ConfigWarning {
+    /// The field path that has the issue (e.g., "rules.disabled_rules")
+    pub field: String,
+    /// Description of the issue
+    pub message: String,
+    /// Optional suggestion for how to fix the issue
+    pub suggestion: Option<String>,
+}
+
+/// Generate a JSON Schema for the LintConfig type.
+///
+/// This can be used to provide editor autocompletion and validation
+/// for `.agnix.toml` configuration files.
+///
+/// # Example
+///
+/// ```rust
+/// use agnix_core::config::generate_schema;
+///
+/// let schema = generate_schema();
+/// let json = serde_json::to_string_pretty(&schema).unwrap();
+/// println!("{}", json);
+/// ```
+pub fn generate_schema() -> schemars::schema::RootSchema {
+    schemars::schema_for!(LintConfig)
 }
 
 #[cfg(test)]
@@ -2680,5 +2864,288 @@ disabled_rules = []
         assert!(!serialized.contains("root_dir"));
         assert!(!serialized.contains("import_cache"));
         assert!(!serialized.contains("fs"));
+    }
+
+    // ===== JSON Schema Generation Tests =====
+
+    #[test]
+    fn test_generate_schema_produces_valid_json() {
+        let schema = super::generate_schema();
+        let json = serde_json::to_string_pretty(&schema).unwrap();
+
+        // Verify it's valid JSON by parsing it back
+        let _: serde_json::Value = serde_json::from_str(&json).unwrap();
+
+        // Verify basic schema structure
+        assert!(json.contains("\"$schema\""));
+        assert!(json.contains("\"title\": \"LintConfig\""));
+        assert!(json.contains("\"type\": \"object\""));
+    }
+
+    #[test]
+    fn test_generate_schema_includes_all_fields() {
+        let schema = super::generate_schema();
+        let json = serde_json::to_string(&schema).unwrap();
+
+        // Check main config fields
+        assert!(json.contains("\"severity\""));
+        assert!(json.contains("\"rules\""));
+        assert!(json.contains("\"exclude\""));
+        assert!(json.contains("\"target\""));
+        assert!(json.contains("\"tools\""));
+        assert!(json.contains("\"tool_versions\""));
+        assert!(json.contains("\"spec_revisions\""));
+
+        // Check runtime fields are NOT included
+        assert!(!json.contains("\"root_dir\""));
+        assert!(!json.contains("\"import_cache\""));
+        assert!(!json.contains("\"runtime\""));
+    }
+
+    #[test]
+    fn test_generate_schema_includes_definitions() {
+        let schema = super::generate_schema();
+        let json = serde_json::to_string(&schema).unwrap();
+
+        // Check definitions for nested types
+        assert!(json.contains("\"RuleConfig\""));
+        assert!(json.contains("\"SeverityLevel\""));
+        assert!(json.contains("\"TargetTool\""));
+        assert!(json.contains("\"ToolVersions\""));
+        assert!(json.contains("\"SpecRevisions\""));
+    }
+
+    #[test]
+    fn test_generate_schema_includes_descriptions() {
+        let schema = super::generate_schema();
+        let json = serde_json::to_string(&schema).unwrap();
+
+        // Check that descriptions are present
+        assert!(json.contains("\"description\""));
+        assert!(json.contains("Minimum severity level to report"));
+        assert!(json.contains("Glob patterns for paths to exclude"));
+        assert!(json.contains("Enable Agent Skills validation rules"));
+    }
+
+    // ===== Config Validation Tests =====
+
+    #[test]
+    fn test_validate_empty_config_no_warnings() {
+        let config = LintConfig::default();
+        let warnings = config.validate();
+
+        // Default config should have no warnings
+        assert!(warnings.is_empty());
+    }
+
+    #[test]
+    fn test_validate_valid_disabled_rules() {
+        let mut config = LintConfig::default();
+        config.rules.disabled_rules = vec![
+            "AS-001".to_string(),
+            "CC-SK-007".to_string(),
+            "MCP-001".to_string(),
+            "PE-003".to_string(),
+            "XP-001".to_string(),
+            "AGM-001".to_string(),
+            "COP-001".to_string(),
+            "CUR-001".to_string(),
+            "XML-001".to_string(),
+            "REF-001".to_string(),
+        ];
+
+        let warnings = config.validate();
+
+        // All these are valid rule IDs
+        assert!(warnings.is_empty());
+    }
+
+    #[test]
+    fn test_validate_invalid_disabled_rule_pattern() {
+        let mut config = LintConfig::default();
+        config.rules.disabled_rules = vec!["INVALID-001".to_string(), "UNKNOWN-999".to_string()];
+
+        let warnings = config.validate();
+
+        assert_eq!(warnings.len(), 2);
+        assert!(warnings[0].field.contains("disabled_rules"));
+        assert!(warnings[0].message.contains("Unknown rule ID pattern"));
+        assert!(warnings[1].message.contains("UNKNOWN-999"));
+    }
+
+    #[test]
+    fn test_validate_valid_tools() {
+        let mut config = LintConfig::default();
+        config.tools = vec![
+            "claude-code".to_string(),
+            "cursor".to_string(),
+            "codex".to_string(),
+            "copilot".to_string(),
+            "github-copilot".to_string(),
+            "generic".to_string(),
+        ];
+
+        let warnings = config.validate();
+
+        // All these are valid tool names
+        assert!(warnings.is_empty());
+    }
+
+    #[test]
+    fn test_validate_invalid_tool() {
+        let mut config = LintConfig::default();
+        config.tools = vec!["unknown-tool".to_string(), "invalid".to_string()];
+
+        let warnings = config.validate();
+
+        assert_eq!(warnings.len(), 2);
+        assert!(warnings[0].field == "tools");
+        assert!(warnings[0].message.contains("Unknown tool"));
+        assert!(warnings[0].message.contains("unknown-tool"));
+    }
+
+    #[test]
+    fn test_validate_deprecated_mcp_protocol_version() {
+        let mut config = LintConfig::default();
+        config.mcp_protocol_version = Some("2024-11-05".to_string());
+
+        let warnings = config.validate();
+
+        assert_eq!(warnings.len(), 1);
+        assert!(warnings[0].field == "mcp_protocol_version");
+        assert!(warnings[0].message.contains("deprecated"));
+        assert!(warnings[0]
+            .suggestion
+            .as_ref()
+            .unwrap()
+            .contains("spec_revisions.mcp_protocol"));
+    }
+
+    #[test]
+    fn test_validate_mixed_valid_invalid() {
+        let mut config = LintConfig::default();
+        config.rules.disabled_rules = vec![
+            "AS-001".to_string(),    // Valid
+            "INVALID-1".to_string(), // Invalid
+            "CC-SK-001".to_string(), // Valid
+        ];
+        config.tools = vec![
+            "claude-code".to_string(), // Valid
+            "bad-tool".to_string(),    // Invalid
+        ];
+
+        let warnings = config.validate();
+
+        // Should have exactly 2 warnings: one for invalid rule, one for invalid tool
+        assert_eq!(warnings.len(), 2);
+    }
+
+    #[test]
+    fn test_config_warning_has_suggestion() {
+        let mut config = LintConfig::default();
+        config.rules.disabled_rules = vec!["INVALID-001".to_string()];
+
+        let warnings = config.validate();
+
+        assert!(!warnings.is_empty());
+        assert!(warnings[0].suggestion.is_some());
+    }
+
+    #[test]
+    fn test_validate_case_insensitive_tools() {
+        // Tools should be validated case-insensitively
+        let mut config = LintConfig::default();
+        config.tools = vec![
+            "CLAUDE-CODE".to_string(),
+            "CuRsOr".to_string(),
+            "COPILOT".to_string(),
+        ];
+
+        let warnings = config.validate();
+
+        // All should be valid (case-insensitive)
+        assert!(
+            warnings.is_empty(),
+            "Expected no warnings for valid tools with different cases, got: {:?}",
+            warnings
+        );
+    }
+
+    #[test]
+    fn test_validate_multiple_warnings_same_category() {
+        // Test that multiple invalid items of the same type are all reported
+        let mut config = LintConfig::default();
+        config.rules.disabled_rules = vec![
+            "INVALID-001".to_string(),
+            "FAKE-RULE".to_string(),
+            "NOT-A-RULE".to_string(),
+        ];
+
+        let warnings = config.validate();
+
+        // Should have 3 warnings, one for each invalid rule
+        assert_eq!(warnings.len(), 3, "Expected 3 warnings for 3 invalid rules");
+
+        // Verify each invalid rule is mentioned
+        let warning_messages: Vec<&str> = warnings.iter().map(|w| w.message.as_str()).collect();
+        assert!(warning_messages.iter().any(|m| m.contains("INVALID-001")));
+        assert!(warning_messages.iter().any(|m| m.contains("FAKE-RULE")));
+        assert!(warning_messages.iter().any(|m| m.contains("NOT-A-RULE")));
+    }
+
+    #[test]
+    fn test_validate_multiple_invalid_tools() {
+        let mut config = LintConfig::default();
+        config.tools = vec![
+            "unknown-tool".to_string(),
+            "bad-editor".to_string(),
+            "claude-code".to_string(), // This one is valid
+        ];
+
+        let warnings = config.validate();
+
+        // Should have 2 warnings for the 2 invalid tools
+        assert_eq!(warnings.len(), 2, "Expected 2 warnings for 2 invalid tools");
+    }
+
+    #[test]
+    fn test_validate_empty_string_in_tools() {
+        // Empty strings should be flagged as invalid
+        let mut config = LintConfig::default();
+        config.tools = vec!["".to_string(), "claude-code".to_string()];
+
+        let warnings = config.validate();
+
+        // Empty string is not a valid tool
+        assert_eq!(warnings.len(), 1);
+        assert!(warnings[0].message.contains("Unknown tool ''"));
+    }
+
+    #[test]
+    fn test_validate_deprecated_target_field() {
+        let mut config = LintConfig::default();
+        config.target = TargetTool::ClaudeCode;
+        // tools is empty, so target deprecation warning should fire
+
+        let warnings = config.validate();
+
+        assert_eq!(warnings.len(), 1);
+        assert_eq!(warnings[0].field, "target");
+        assert!(warnings[0].message.contains("deprecated"));
+        assert!(warnings[0].suggestion.as_ref().unwrap().contains("tools"));
+    }
+
+    #[test]
+    fn test_validate_target_with_tools_no_warning() {
+        // When both target and tools are set, don't warn about target
+        // because tools takes precedence
+        let mut config = LintConfig::default();
+        config.target = TargetTool::ClaudeCode;
+        config.tools = vec!["claude-code".to_string()];
+
+        let warnings = config.validate();
+
+        // No warning because tools is set
+        assert!(warnings.is_empty());
     }
 }

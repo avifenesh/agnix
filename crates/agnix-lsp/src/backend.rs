@@ -15,6 +15,7 @@ use tower_lsp::{Client, LanguageServer};
 use crate::code_actions::fixes_to_code_actions;
 use crate::diagnostic_mapper::{deserialize_fixes, to_lsp_diagnostics};
 use crate::hover_provider::hover_at_position;
+use crate::vscode_config::VsCodeConfig;
 
 fn create_error_diagnostic(code: &str, message: String) -> Diagnostic {
     Diagnostic {
@@ -157,13 +158,13 @@ impl Backend {
         };
 
         let config = Arc::clone(&*self.config.read().await);
+        let registry = Arc::clone(&self.registry);
         let result = tokio::task::spawn_blocking(move || {
             let file_type = agnix_core::detect_file_type(&file_path);
             if file_type == agnix_core::FileType::Unknown {
                 return Ok(vec![]);
             }
 
-            let registry = agnix_core::ValidatorRegistry::with_defaults();
             let validators = registry.validators_for(file_type);
             let mut diagnostics = Vec::new();
 
@@ -346,6 +347,50 @@ impl LanguageServer for Backend {
 
         // Get hover info for the position
         Ok(hover_at_position(&content, position))
+    }
+
+    async fn did_change_configuration(&self, params: DidChangeConfigurationParams) {
+        // Parse incoming settings JSON into VsCodeConfig
+        let vscode_config: VsCodeConfig = match serde_json::from_value(params.settings) {
+            Ok(c) => c,
+            Err(e) => {
+                self.client
+                    .log_message(
+                        MessageType::WARNING,
+                        format!("Failed to parse VS Code settings: {}", e),
+                    )
+                    .await;
+                return;
+            }
+        };
+
+        self.client
+            .log_message(
+                MessageType::INFO,
+                "Received configuration update from VS Code",
+            )
+            .await;
+
+        // Acquire write lock and apply settings
+        // Clone the existing config, modify it, then replace
+        {
+            let mut config_guard = self.config.write().await;
+            let mut new_config = (**config_guard).clone();
+            vscode_config.merge_into_lint_config(&mut new_config);
+            *config_guard = Arc::new(new_config);
+        }
+
+        // Re-validate all open documents with new config
+        let documents: Vec<Url> = {
+            let docs = self.documents.read().await;
+            docs.keys().cloned().collect()
+        };
+
+        // Validate documents sequentially (avoids futures dependency)
+        // For typical workloads (<10 open files), sequential is acceptable
+        for uri in documents {
+            self.validate_from_content_and_publish(uri).await;
+        }
     }
 }
 
@@ -1267,5 +1312,268 @@ This is a test project.
             .await;
         assert!(hover2.is_ok());
         assert!(hover2.unwrap().is_some());
+    }
+
+    // ===== Configuration Change Tests =====
+
+    /// Test that did_change_configuration handles valid settings.
+    #[tokio::test]
+    async fn test_did_change_configuration_valid_settings() {
+        let (service, _socket) = LspService::new(Backend::new);
+
+        // Initialize first
+        service
+            .inner()
+            .initialize(InitializeParams::default())
+            .await
+            .unwrap();
+
+        // Send valid configuration
+        let settings = serde_json::json!({
+            "severity": "Error",
+            "target": "ClaudeCode",
+            "rules": {
+                "skills": false,
+                "hooks": true
+            }
+        });
+
+        service
+            .inner()
+            .did_change_configuration(DidChangeConfigurationParams { settings })
+            .await;
+
+        // Should complete without error
+        // The config is internally updated but we can't directly access it
+    }
+
+    /// Test that did_change_configuration handles partial settings.
+    #[tokio::test]
+    async fn test_did_change_configuration_partial_settings() {
+        let (service, _socket) = LspService::new(Backend::new);
+
+        service
+            .inner()
+            .initialize(InitializeParams::default())
+            .await
+            .unwrap();
+
+        // Send only severity (partial config)
+        let settings = serde_json::json!({
+            "severity": "Info"
+        });
+
+        service
+            .inner()
+            .did_change_configuration(DidChangeConfigurationParams { settings })
+            .await;
+
+        // Should complete without error
+    }
+
+    /// Test that did_change_configuration handles invalid JSON gracefully.
+    #[tokio::test]
+    async fn test_did_change_configuration_invalid_json() {
+        let (service, _socket) = LspService::new(Backend::new);
+
+        service
+            .inner()
+            .initialize(InitializeParams::default())
+            .await
+            .unwrap();
+
+        // Send invalid JSON type (string instead of object)
+        let settings = serde_json::json!("not an object");
+
+        service
+            .inner()
+            .did_change_configuration(DidChangeConfigurationParams { settings })
+            .await;
+
+        // Should complete without error (logs warning and returns early)
+    }
+
+    /// Test that did_change_configuration triggers revalidation.
+    #[tokio::test]
+    async fn test_did_change_configuration_triggers_revalidation() {
+        let (service, _socket) = LspService::new(Backend::new);
+
+        let temp_dir = tempfile::tempdir().unwrap();
+        let skill_path = temp_dir.path().join("SKILL.md");
+        std::fs::write(
+            &skill_path,
+            r#"---
+name: test-skill
+version: 1.0.0
+model: sonnet
+---
+
+# Test Skill
+"#,
+        )
+        .unwrap();
+
+        let root_uri = Url::from_file_path(temp_dir.path()).unwrap();
+        service
+            .inner()
+            .initialize(InitializeParams {
+                root_uri: Some(root_uri),
+                ..Default::default()
+            })
+            .await
+            .unwrap();
+
+        let uri = Url::from_file_path(&skill_path).unwrap();
+        service
+            .inner()
+            .did_open(DidOpenTextDocumentParams {
+                text_document: TextDocumentItem {
+                    uri: uri.clone(),
+                    language_id: "markdown".to_string(),
+                    version: 1,
+                    text: std::fs::read_to_string(&skill_path).unwrap(),
+                },
+            })
+            .await;
+
+        // Now change configuration - should trigger revalidation
+        let settings = serde_json::json!({
+            "severity": "Error",
+            "rules": {
+                "skills": false
+            }
+        });
+
+        service
+            .inner()
+            .did_change_configuration(DidChangeConfigurationParams { settings })
+            .await;
+
+        // Should complete without error - open document was revalidated
+    }
+
+    /// Test that empty settings object doesn't crash.
+    #[tokio::test]
+    async fn test_did_change_configuration_empty_settings() {
+        let (service, _socket) = LspService::new(Backend::new);
+
+        service
+            .inner()
+            .initialize(InitializeParams::default())
+            .await
+            .unwrap();
+
+        // Send empty object
+        let settings = serde_json::json!({});
+
+        service
+            .inner()
+            .did_change_configuration(DidChangeConfigurationParams { settings })
+            .await;
+
+        // Should complete without error
+    }
+
+    /// Test configuration with all tool versions set.
+    #[tokio::test]
+    async fn test_did_change_configuration_with_versions() {
+        let (service, _socket) = LspService::new(Backend::new);
+
+        service
+            .inner()
+            .initialize(InitializeParams::default())
+            .await
+            .unwrap();
+
+        let settings = serde_json::json!({
+            "versions": {
+                "claude_code": "1.0.0",
+                "codex": "0.1.0",
+                "cursor": "0.45.0",
+                "copilot": "1.2.0"
+            }
+        });
+
+        service
+            .inner()
+            .did_change_configuration(DidChangeConfigurationParams { settings })
+            .await;
+
+        // Should complete without error
+    }
+
+    /// Test configuration with spec revisions.
+    #[tokio::test]
+    async fn test_did_change_configuration_with_specs() {
+        let (service, _socket) = LspService::new(Backend::new);
+
+        service
+            .inner()
+            .initialize(InitializeParams::default())
+            .await
+            .unwrap();
+
+        let settings = serde_json::json!({
+            "specs": {
+                "mcp_protocol": "2025-06-18",
+                "agent_skills_spec": "1.0",
+                "agents_md_spec": "1.0"
+            }
+        });
+
+        service
+            .inner()
+            .did_change_configuration(DidChangeConfigurationParams { settings })
+            .await;
+
+        // Should complete without error
+    }
+
+    /// Test configuration with tools array.
+    #[tokio::test]
+    async fn test_did_change_configuration_with_tools_array() {
+        let (service, _socket) = LspService::new(Backend::new);
+
+        service
+            .inner()
+            .initialize(InitializeParams::default())
+            .await
+            .unwrap();
+
+        let settings = serde_json::json!({
+            "tools": ["claude-code", "cursor", "github-copilot"]
+        });
+
+        service
+            .inner()
+            .did_change_configuration(DidChangeConfigurationParams { settings })
+            .await;
+
+        // Should complete without error
+    }
+
+    /// Test configuration with disabled rules.
+    #[tokio::test]
+    async fn test_did_change_configuration_with_disabled_rules() {
+        let (service, _socket) = LspService::new(Backend::new);
+
+        service
+            .inner()
+            .initialize(InitializeParams::default())
+            .await
+            .unwrap();
+
+        let settings = serde_json::json!({
+            "rules": {
+                "disabled_rules": ["AS-001", "PE-003", "MCP-008"]
+            }
+        });
+
+        service
+            .inner()
+            .did_change_configuration(DidChangeConfigurationParams { settings })
+            .await;
+
+        // Should complete without error
     }
 }

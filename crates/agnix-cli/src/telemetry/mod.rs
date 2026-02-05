@@ -199,7 +199,7 @@ mod tests {
         assert!(ts.contains('T'));
         // Year should be reasonable (between 2020 and 2100)
         let year: i32 = ts[0..4].parse().unwrap();
-        assert!(year >= 2020 && year <= 2100);
+        assert!((2020..=2100).contains(&year));
     }
 
     #[test]

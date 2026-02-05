@@ -97,6 +97,159 @@
           "type": "boolean",
           "default": true,
           "description": "Show CodeLens with rule info above lines with issues"
+        },
+        "agnix.severity": {
+          "type": "string",
+          "enum": ["Error", "Warning", "Info"],
+          "default": "Warning",
+          "description": "Minimum severity level for diagnostics",
+          "scope": "resource"
+        },
+        "agnix.target": {
+          "type": "string",
+          "enum": ["Generic", "ClaudeCode", "Cursor", "Codex"],
+          "default": "Generic",
+          "description": "Target tool for validation (deprecated: use agnix.tools instead)",
+          "scope": "resource"
+        },
+        "agnix.tools": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["claude-code", "cursor", "codex", "github-copilot", "generic"]
+          },
+          "default": [],
+          "description": "Tools to validate for. When specified, enables rules for these tools only.",
+          "scope": "resource"
+        },
+        "agnix.rules.skills": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable skills validation (AS-*, CC-SK-* rules)",
+          "scope": "resource"
+        },
+        "agnix.rules.hooks": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable hooks validation (CC-HK-* rules)",
+          "scope": "resource"
+        },
+        "agnix.rules.agents": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable agents validation (CC-AG-* rules)",
+          "scope": "resource"
+        },
+        "agnix.rules.memory": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable memory validation (CC-MEM-* rules)",
+          "scope": "resource"
+        },
+        "agnix.rules.plugins": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable plugins validation (CC-PL-* rules)",
+          "scope": "resource"
+        },
+        "agnix.rules.xml": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable XML balance checking (XML-* rules)",
+          "scope": "resource"
+        },
+        "agnix.rules.mcp": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable MCP validation (MCP-* rules)",
+          "scope": "resource"
+        },
+        "agnix.rules.imports": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable import reference validation (REF-* rules)",
+          "scope": "resource"
+        },
+        "agnix.rules.crossPlatform": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable cross-platform validation (XP-* rules)",
+          "scope": "resource"
+        },
+        "agnix.rules.agentsMd": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable AGENTS.md validation (AGM-* rules)",
+          "scope": "resource"
+        },
+        "agnix.rules.copilot": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable GitHub Copilot validation (COP-* rules)",
+          "scope": "resource"
+        },
+        "agnix.rules.cursor": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable Cursor project rules validation (CUR-* rules)",
+          "scope": "resource"
+        },
+        "agnix.rules.promptEngineering": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable prompt engineering validation (PE-* rules)",
+          "scope": "resource"
+        },
+        "agnix.rules.disabledRules": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Specific rule IDs to disable (e.g., [\"AS-004\", \"PE-003\"])",
+          "scope": "resource"
+        },
+        "agnix.versions.claudeCode": {
+          "type": ["string", "null"],
+          "default": null,
+          "description": "Claude Code version pin (e.g., \"1.0.0\")",
+          "scope": "resource"
+        },
+        "agnix.versions.codex": {
+          "type": ["string", "null"],
+          "default": null,
+          "description": "Codex CLI version pin (e.g., \"0.1.0\")",
+          "scope": "resource"
+        },
+        "agnix.versions.cursor": {
+          "type": ["string", "null"],
+          "default": null,
+          "description": "Cursor version pin (e.g., \"0.45.0\")",
+          "scope": "resource"
+        },
+        "agnix.versions.copilot": {
+          "type": ["string", "null"],
+          "default": null,
+          "description": "GitHub Copilot version pin (e.g., \"1.0.0\")",
+          "scope": "resource"
+        },
+        "agnix.specs.mcpProtocol": {
+          "type": ["string", "null"],
+          "default": null,
+          "description": "MCP protocol version pin (e.g., \"2025-06-18\")",
+          "scope": "resource"
+        },
+        "agnix.specs.agentSkills": {
+          "type": ["string", "null"],
+          "default": null,
+          "description": "Agent Skills specification revision pin",
+          "scope": "resource"
+        },
+        "agnix.specs.agentsMd": {
+          "type": ["string", "null"],
+          "default": null,
+          "description": "AGENTS.md specification revision pin",
+          "scope": "resource"
         }
       }
     },
@@ -121,6 +274,12 @@
           "meta.embedded.block.yaml": "yaml",
           "meta.embedded.block.markdown": "markdown"
         }
+      }
+    ],
+    "jsonValidation": [
+      {
+        "fileMatch": [".agnix.toml", "agnix.toml"],
+        "url": "./schemas/agnix.json"
       }
     ],
     "viewsContainers": {

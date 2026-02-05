@@ -8,6 +8,13 @@
 //! - Single file validation (various file types)
 //! - Project validation throughput
 //! - Frontmatter parsing speed
+//! - Scale testing (100, 1000 files)
+//! - Memory usage tracking
+//!
+//! For deterministic CI benchmarks, use iai_validation.rs instead.
+//! This file provides wall-clock timing for local development iteration.
+
+mod fixtures;
 
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use std::path::Path;
@@ -17,6 +24,8 @@ use agnix_core::{
     detect_file_type, validate_file, validate_file_with_registry, validate_project, LintConfig,
     ValidatorRegistry,
 };
+
+use fixtures::{create_memory_test_project, create_scale_project};
 
 /// Benchmark file type detection - the first step in validation dispatch.
 fn bench_detect_file_type(c: &mut Criterion) {
@@ -384,6 +393,88 @@ fn bench_import_cache(c: &mut Criterion) {
     group.finish();
 }
 
+/// Benchmark scale testing with 100 files.
+///
+/// Measures parallelization efficiency with a realistic project distribution:
+/// 70% SKILL.md, 15% hooks, 10% MCP, 5% misc.
+fn bench_scale_100_files(c: &mut Criterion) {
+    let temp = create_scale_project(100);
+    let config = LintConfig::default();
+
+    let mut group = c.benchmark_group("scale_testing");
+    group.sample_size(20); // Reduce sample size for large tests
+    group.throughput(Throughput::Elements(100));
+    group.bench_function("100_files", |b| {
+        b.iter(|| validate_project(black_box(temp.path()), &config))
+    });
+    group.finish();
+}
+
+/// Benchmark scale testing with 1000 files.
+///
+/// Target: < 5 seconds wall-clock time.
+/// This validates the linear scaling behavior of the validation pipeline.
+fn bench_scale_1000_files(c: &mut Criterion) {
+    let temp = create_scale_project(1000);
+    let config = LintConfig::default();
+
+    let mut group = c.benchmark_group("scale_testing");
+    group.sample_size(10); // Reduce sample size for very large tests
+    group.throughput(Throughput::Elements(1000));
+    group.bench_function("1000_files", |b| {
+        b.iter(|| validate_project(black_box(temp.path()), &config))
+    });
+    group.finish();
+}
+
+/// Benchmark memory usage during validation.
+///
+/// Tests validation performance with a project optimized for memory stress:
+/// - Deep import chains between files
+/// - Multiple files referencing shared documentation
+/// - Stresses the ImportCache and diagnostic collection
+///
+/// Target: < 100MB peak for large repos.
+///
+/// Note: Full memory tracking requires setting up a global allocator with
+/// tracking-allocator. This benchmark uses the project structure to stress
+/// memory-intensive code paths.
+fn bench_memory_usage(c: &mut Criterion) {
+    // Create test project optimized for memory testing (deep import chains)
+    let temp = create_memory_test_project();
+    let config = LintConfig::default();
+
+    let mut group = c.benchmark_group("memory_usage");
+    group.sample_size(10);
+
+    group.bench_function("import_chain_project", |b| {
+        b.iter(|| {
+            let result = validate_project(black_box(temp.path()), &config);
+            black_box(result)
+        });
+    });
+
+    group.finish();
+}
+
+/// Benchmark single file validation against performance target.
+///
+/// Target: < 100ms (typically < 10ms).
+fn bench_single_file_target(c: &mut Criterion) {
+    use fixtures::create_single_skill_file;
+
+    let temp = create_single_skill_file();
+    let config = LintConfig::default();
+    let registry = ValidatorRegistry::with_defaults();
+    let skill_path = temp.path().join("SKILL.md");
+
+    let mut group = c.benchmark_group("performance_targets");
+    group.bench_function("single_file_under_100ms", |b| {
+        b.iter(|| validate_file_with_registry(black_box(&skill_path), &config, &registry))
+    });
+    group.finish();
+}
+
 criterion_group!(
     benches,
     bench_detect_file_type,
@@ -393,5 +484,9 @@ criterion_group!(
     bench_registry_caching,
     bench_frontmatter_parsing,
     bench_import_cache,
+    bench_scale_100_files,
+    bench_scale_1000_files,
+    bench_memory_usage,
+    bench_single_file_target,
 );
 criterion_main!(benches);
