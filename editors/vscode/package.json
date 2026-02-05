@@ -2,7 +2,7 @@
   "name": "agnix",
   "displayName": "agnix - Agent Config Linter",
   "description": "Real-time validation for AI agent configuration files. Validates SKILL.md, CLAUDE.md, AGENTS.md, MCP configs, hooks, and more against 100 rules.",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "publisher": "avifenesh",
   "repository": {
     "type": "git",
@@ -123,6 +123,30 @@
         }
       }
     ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "agnix",
+          "title": "agnix",
+          "icon": "$(checklist)"
+        }
+      ]
+    },
+    "views": {
+      "agnix": [
+        {
+          "id": "agnixDiagnostics",
+          "name": "Diagnostics",
+          "contextualTitle": "agnix Diagnostics"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "agnixDiagnostics",
+        "contents": "No agent config files open.\n[Validate Workspace](command:agnix.validateWorkspace)"
+      }
+    ],
     "commands": [
       {
         "command": "agnix.restart",
@@ -181,6 +205,17 @@
         "title": "Ignore Rule in Project",
         "category": "agnix",
         "icon": "$(eye-closed)"
+      },
+      {
+        "command": "agnix.refreshDiagnostics",
+        "title": "Refresh Diagnostics",
+        "category": "agnix",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "agnix.goToDiagnostic",
+        "title": "Go to Diagnostic",
+        "category": "agnix"
       }
     ],
     "keybindings": [
@@ -261,6 +296,22 @@
         {
           "command": "agnix.fixAllSafe",
           "when": "editorIsOpen"
+        },
+        {
+          "command": "agnix.goToDiagnostic",
+          "when": "false"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "agnix.refreshDiagnostics",
+          "when": "view == agnixDiagnostics",
+          "group": "navigation"
+        },
+        {
+          "command": "agnix.validateWorkspace",
+          "when": "view == agnixDiagnostics",
+          "group": "navigation"
         }
       ]
     }

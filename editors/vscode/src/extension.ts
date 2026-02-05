@@ -12,6 +12,7 @@ let client: LanguageClient | undefined;
 let statusBarItem: vscode.StatusBarItem;
 let outputChannel: vscode.OutputChannel;
 let codeLensProvider: AgnixCodeLensProvider | undefined;
+let diagnosticsTreeProvider: AgnixDiagnosticsTreeProvider | undefined;
 
 const AGNIX_FILE_PATTERNS = [
   '**/SKILL.md',
@@ -78,6 +79,32 @@ export async function activate(
     vscode.languages.onDidChangeDiagnostics((e) => {
       if (codeLensProvider) {
         codeLensProvider.refresh();
+      }
+      if (diagnosticsTreeProvider) {
+        diagnosticsTreeProvider.refresh();
+      }
+    })
+  );
+
+  // Register Tree View for diagnostics
+  diagnosticsTreeProvider = new AgnixDiagnosticsTreeProvider();
+  context.subscriptions.push(
+    vscode.window.createTreeView('agnixDiagnostics', {
+      treeDataProvider: diagnosticsTreeProvider,
+      showCollapseAll: true,
+    })
+  );
+
+  // Register tree view commands
+  context.subscriptions.push(
+    vscode.commands.registerCommand('agnix.refreshDiagnostics', () => {
+      diagnosticsTreeProvider?.refresh();
+    }),
+    vscode.commands.registerCommand('agnix.goToDiagnostic', (item: DiagnosticItem) => {
+      if (item.diagnostic && item.uri) {
+        vscode.window.showTextDocument(item.uri, {
+          selection: item.diagnostic.range,
+        });
       }
     })
   );
@@ -787,6 +814,126 @@ class AgnixCodeLensProvider implements vscode.CodeLensProvider {
     }
 
     return codeLenses;
+  }
+}
+
+/**
+ * Tree item for diagnostics tree view.
+ */
+class DiagnosticItem extends vscode.TreeItem {
+  constructor(
+    public readonly label: string,
+    public readonly collapsibleState: vscode.TreeItemCollapsibleState,
+    public readonly uri?: vscode.Uri,
+    public readonly diagnostic?: vscode.Diagnostic,
+    public readonly children?: DiagnosticItem[]
+  ) {
+    super(label, collapsibleState);
+
+    if (diagnostic && uri) {
+      this.description = `Line ${diagnostic.range.start.line + 1}`;
+      this.tooltip = diagnostic.message;
+      this.command = {
+        command: 'agnix.goToDiagnostic',
+        title: 'Go to Diagnostic',
+        arguments: [this],
+      };
+
+      // Set icon based on severity
+      if (diagnostic.severity === vscode.DiagnosticSeverity.Error) {
+        this.iconPath = new vscode.ThemeIcon('error', new vscode.ThemeColor('errorForeground'));
+      } else if (diagnostic.severity === vscode.DiagnosticSeverity.Warning) {
+        this.iconPath = new vscode.ThemeIcon('warning', new vscode.ThemeColor('editorWarning.foreground'));
+      } else {
+        this.iconPath = new vscode.ThemeIcon('info', new vscode.ThemeColor('editorInfo.foreground'));
+      }
+    }
+  }
+}
+
+/**
+ * Tree data provider for agnix diagnostics.
+ * Shows diagnostics organized by file.
+ */
+class AgnixDiagnosticsTreeProvider implements vscode.TreeDataProvider<DiagnosticItem> {
+  private _onDidChangeTreeData = new vscode.EventEmitter<DiagnosticItem | undefined>();
+  public readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
+
+  refresh(): void {
+    this._onDidChangeTreeData.fire(undefined);
+  }
+
+  getTreeItem(element: DiagnosticItem): vscode.TreeItem {
+    return element;
+  }
+
+  getChildren(element?: DiagnosticItem): DiagnosticItem[] {
+    if (element) {
+      return element.children || [];
+    }
+
+    // Root level: show files with diagnostics
+    const allDiagnostics = vscode.languages.getDiagnostics();
+    const fileItems: DiagnosticItem[] = [];
+
+    for (const [uri, diagnostics] of allDiagnostics) {
+      const agnixDiagnostics = diagnostics.filter(
+        (d) =>
+          d.source === 'agnix' ||
+          d.code?.toString().match(/^(AS|CC|PE|MCP|AGM|COP|CUR|XML|XP)-/)
+      );
+
+      if (agnixDiagnostics.length === 0) {
+        continue;
+      }
+
+      const errors = agnixDiagnostics.filter(
+        (d) => d.severity === vscode.DiagnosticSeverity.Error
+      ).length;
+      const warnings = agnixDiagnostics.filter(
+        (d) => d.severity === vscode.DiagnosticSeverity.Warning
+      ).length;
+
+      // Create children for this file
+      const children = agnixDiagnostics.map((diag) => {
+        const ruleId = diag.code?.toString() || '';
+        return new DiagnosticItem(
+          `${ruleId}: ${diag.message}`,
+          vscode.TreeItemCollapsibleState.None,
+          uri,
+          diag
+        );
+      });
+
+      const fileName = path.basename(uri.fsPath);
+      const counts: string[] = [];
+      if (errors > 0) counts.push(`${errors} error${errors > 1 ? 's' : ''}`);
+      if (warnings > 0) counts.push(`${warnings} warning${warnings > 1 ? 's' : ''}`);
+
+      const fileItem = new DiagnosticItem(
+        fileName,
+        vscode.TreeItemCollapsibleState.Expanded,
+        uri,
+        undefined,
+        children
+      );
+      fileItem.description = counts.join(', ');
+      fileItem.iconPath = vscode.ThemeIcon.File;
+      fileItem.resourceUri = uri;
+
+      fileItems.push(fileItem);
+    }
+
+    if (fileItems.length === 0) {
+      const noIssues = new DiagnosticItem(
+        'No issues found',
+        vscode.TreeItemCollapsibleState.None
+      );
+      noIssues.iconPath = new vscode.ThemeIcon('check', new vscode.ThemeColor('testing.iconPassed'));
+      return [noIssues];
+    }
+
+    return fileItems;
   }
 }
 

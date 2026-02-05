@@ -2,6 +2,22 @@
 
 All notable changes to the "agnix" extension will be documented in this file.
 
+## [0.7.0] - 2026-02-05
+
+### Added
+
+- **Diagnostics Tree View** - Sidebar panel showing all issues
+  - Organized by file with expand/collapse
+  - Click to navigate to issue location
+  - Error/warning icons with counts
+  - Refresh button in title bar
+- **Activity Bar Icon** - agnix now has its own sidebar icon
+
+### Changed
+
+- Tree view auto-refreshes when diagnostics change
+- Shows "No issues found" with checkmark when clean
+
 ## [0.6.0] - 2026-02-05
 
 ### Added

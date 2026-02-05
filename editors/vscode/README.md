@@ -8,6 +8,7 @@ Real-time validation for AI agent configuration files in VS Code.
 
 - **Real-time validation** - Diagnostics as you type
 - **Validates 100 rules** - From official specs and best practices
+- **Diagnostics panel** - Sidebar tree view of all issues by file
 - **CodeLens** - Rule info shown inline above problematic lines
 - **Quick-fix preview** - See diff before applying fixes
 - **Safe fixes** - Apply only high-confidence fixes automatically
