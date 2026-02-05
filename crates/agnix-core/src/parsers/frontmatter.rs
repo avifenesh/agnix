@@ -5,7 +5,7 @@
 //! While this module doesn't implement explicit depth limits, YAML bombs (deeply
 //! nested structures) are mitigated by:
 //!
-//! 1. **File Size Limit**: MAX_FILE_SIZE (1 MiB) in file_utils.rs prevents
+//! 1. **File Size Limit**: DEFAULT_MAX_FILE_SIZE (1 MiB) in file_utils.rs prevents
 //!    extremely large YAML payloads from being read.
 //!
 //! 2. **Parser Library**: `serde_yaml` has internal protections against excessive

@@ -51,12 +51,12 @@ The following are explicitly NOT addressed:
 
 **Property**: agnix never follows symbolic links when reading files.
 
-**Implementation**: `crates/agnix-core/src/file_utils.rs:41-43`
+**Implementation**: `crates/agnix-core/src/file_utils.rs:safe_read_file_with_limit()`
 
 ```rust
 pub fn safe_read_file(path: &Path) -> LintResult<String> {
-    // Check symlink BEFORE reading
-    if path.is_symlink() {
+    let metadata = std::fs::symlink_metadata(path)?;
+    if metadata.file_type().is_symlink() {
         return Err(LintError::FileSymlink { path: path.to_path_buf() });
     }
     // ...
@@ -65,7 +65,7 @@ pub fn safe_read_file(path: &Path) -> LintResult<String> {
 
 **Rationale**: Prevents path traversal attacks where a symlink could redirect reads to sensitive files outside the project (e.g., `/etc/passwd`).
 
-**Limitation**: TOCTOU window exists between `is_symlink()` check and file read.
+**Limitation**: TOCTOU window exists between `symlink_metadata()` check and file read.
 
 **Platform-Specific Atomic Alternatives**: On Unix, `open()` with `O_NOFOLLOW` flag provides atomic symlink rejection. On Windows, `CreateFile()` with `FILE_FLAG_OPEN_REPARSE_POINT` provides similar protection. These would eliminate the TOCTOU window but require platform-specific code. The current cross-platform implementation using `symlink_metadata()` provides equivalent security for the linter's threat model.
 
@@ -73,15 +73,15 @@ pub fn safe_read_file(path: &Path) -> LintResult<String> {
 
 **Property**: No single file larger than 1 MiB is processed.
 
-**Implementation**: `crates/agnix-core/src/file_utils.rs:56-63`
+**Implementation**: `crates/agnix-core/src/file_utils.rs:safe_read_file_with_limit()`
 
 ```rust
 pub const DEFAULT_MAX_FILE_SIZE: u64 = 1024 * 1024; // 1 MiB
 
-// In safe_read_file():
-let metadata = symlink_metadata(path)?;
+// In safe_read_file_with_limit():
+let metadata = std::fs::symlink_metadata(path)?;
 if metadata.len() > DEFAULT_MAX_FILE_SIZE {
-    return Err(LintError::FileTooBig { path, size: metadata.len() });
+    return Err(LintError::FileTooBig { path: path.to_path_buf(), size: metadata.len() });
 }
 ```
 
@@ -91,17 +91,17 @@ if metadata.len() > DEFAULT_MAX_FILE_SIZE {
 
 **Property**: Validation stops after processing a configurable maximum number of files.
 
-**Implementation**: `crates/agnix-core/src/lib.rs:441-457`, `crates/agnix-core/src/config.rs:274-312`
+**Implementation**: `crates/agnix-core/src/lib.rs:validate_project_with_registry()`, `crates/agnix-core/src/config.rs:274-312`
 
 ```rust
 // Default limit
 pub const DEFAULT_MAX_FILES: usize = 10_000;
 
 // Atomic counter during parallel walk - only counts lintable files
-if let Some(limit) = max_files {
-    if file_type != FileType::Unknown {
-        let prev_count = total_files_seen.fetch_add(1, Ordering::SeqCst);
-        if prev_count >= limit {
+if file_type != FileType::Unknown {
+    let count = files_checked.fetch_add(1, Ordering::SeqCst);
+    if let Some(limit) = max_files {
+        if count >= limit {
             limit_exceeded.store(true, Ordering::SeqCst);
             return Vec::new();
         }
@@ -319,7 +319,7 @@ cargo test --lib
 ### CI Security Checks
 
 Defined in `.github/workflows/security.yml`:
-- `cargo audit`: Known vulnerability scanning (pinned to v0.21.0)
+- `cargo audit`: Known vulnerability scanning
 - `cargo deny`: License and duplicate checking (multiple-versions = deny)
 - CodeQL: Static analysis (security-extended queries)
 
@@ -328,7 +328,7 @@ Defined in `.github/workflows/security.yml`:
 ### Reporting
 
 1. Do NOT open public GitHub issues for vulnerabilities
-2. Email: avifenesh@gmail.com (subject: SECURITY)
+2. Email: aviarchi1994@gmail.com (subject: SECURITY)
 3. Include reproduction steps
 
 ### Response Timeline
@@ -365,7 +365,7 @@ Defined in `.github/workflows/security.yml`:
 
 | Date | Scope | Findings |
 |------|-------|----------|
-| 2025-02-05 | Initial security hardening | ReDoS protection, file limits, fuzz testing |
+| 2026-02-05 | Initial security hardening | ReDoS protection, file limits, fuzz testing |
 
 ## References
 

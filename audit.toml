@@ -11,8 +11,6 @@ unmaintained = "deny"
 severity_threshold = "low"
 
 # Informational advisories are reported but don't fail the build
-# Note: unmaintained is set to "deny" above, so it will fail the build
-# despite being listed here as informational. The "deny" setting takes precedence.
 informational_warnings = ["unsound"]
 
 [database]

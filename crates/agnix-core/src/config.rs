@@ -338,7 +338,7 @@ pub struct LintConfig {
 /// - Large enough for realistic projects (Linux kernel has ~70k files, but most are not validated)
 /// - Small enough to prevent DoS from projects with millions of tiny files
 /// - Completes validation in reasonable time (seconds to low minutes on typical hardware)
-/// - Atomic counter with relaxed ordering provides thread-safe counting during parallel validation
+/// - Atomic counter with SeqCst ordering provides thread-safe counting during parallel validation
 ///
 /// Users can override with `--max-files N` or disable with `--max-files 0` (not recommended).
 /// Set to `None` to disable the limit entirely (use with caution).

@@ -35,7 +35,7 @@ use std::path::{Path, PathBuf};
 
 use rayon::iter::ParallelBridge;
 use rayon::prelude::*;
-use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::Mutex;
 
 pub use config::{generate_schema, ConfigWarning, LintConfig};
@@ -376,7 +376,6 @@ pub fn validate_project_with_registry(
     registry: &ValidatorRegistry,
 ) -> LintResult<ValidationResult> {
     use ignore::WalkBuilder;
-    use std::sync::atomic::AtomicBool;
     use std::sync::Arc;
 
     let root_dir = resolve_validation_root(path);
@@ -399,7 +398,6 @@ pub fn validate_project_with_registry(
 
     // Shared state for streaming validation
     let files_checked = Arc::new(AtomicUsize::new(0));
-    let total_files_seen = Arc::new(AtomicUsize::new(0));
     let limit_exceeded = Arc::new(AtomicBool::new(false));
     let agents_md_paths: Arc<Mutex<Vec<PathBuf>>> = Arc::new(Mutex::new(Vec::new()));
     let instruction_file_paths: Arc<Mutex<Vec<PathBuf>>> = Arc::new(Mutex::new(Vec::new()));
@@ -448,17 +446,10 @@ pub fn validate_project_with_registry(
             // Count recognized files (detect_file_type is string-only, no I/O)
             let file_type = detect_file_type(&file_path);
             if file_type != FileType::Unknown {
-                files_checked.fetch_add(1, Ordering::SeqCst);
-            }
-
-            // Atomically check and increment file count to prevent race condition
-            // Use SeqCst ordering to ensure all threads see consistent state
-            // Only count lintable files toward the limit
-            if let Some(limit) = max_files {
-                if file_type != FileType::Unknown {
-                    let prev_count = total_files_seen.fetch_add(1, Ordering::SeqCst);
-                    if prev_count >= limit {
-                        // Exceeded limit - set flag and skip this file
+                let count = files_checked.fetch_add(1, Ordering::SeqCst);
+                // Security: Enforce file count limit to prevent DoS
+                if let Some(limit) = max_files {
+                    if count >= limit {
                         limit_exceeded.store(true, Ordering::SeqCst);
                         return Vec::new();
                     }
@@ -498,7 +489,7 @@ pub fn validate_project_with_registry(
     if limit_exceeded.load(Ordering::Relaxed) {
         if let Some(limit) = max_files {
             return Err(LintError::TooManyFiles {
-                count: total_files_seen.load(Ordering::Relaxed),
+                count: files_checked.load(Ordering::Relaxed),
                 limit,
             });
         }

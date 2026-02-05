@@ -9,7 +9,7 @@
 use pulldown_cmark::{Event, Options, Parser, Tag, TagEnd};
 use regex::Regex;
 use std::ops::Range;
-use std::panic;
+use std::panic::{self, AssertUnwindSafe};
 use std::sync::OnceLock;
 
 static XML_TAG_REGEX: OnceLock<Regex> = OnceLock::new();
@@ -25,7 +25,7 @@ static XML_TAG_REGEX: OnceLock<Regex> = OnceLock::new();
 /// - 2^16 is a clean power-of-2 boundary
 ///
 /// This limit applies to XML tag extraction, import detection, and link parsing.
-/// Files larger than 1 MiB are rejected earlier by `MAX_FILE_SIZE` in file_utils.rs.
+/// Files larger than 1 MiB are rejected earlier by `DEFAULT_MAX_FILE_SIZE` in file_utils.rs.
 pub const MAX_REGEX_INPUT_SIZE: usize = 65536; // 64KB
 
 /// Extract @import references from markdown content (excluding code blocks/spans)
@@ -37,8 +37,7 @@ pub const MAX_REGEX_INPUT_SIZE: usize = 65536; // 64KB
 /// extraction functions (`extract_xml_tags`, `extract_markdown_links`).
 pub fn extract_imports(content: &str) -> Vec<Import> {
     // Catch upstream parser panics (e.g., pulldown-cmark bugs) gracefully
-    let content_owned = content.to_string();
-    panic::catch_unwind(move || extract_imports_inner(&content_owned)).unwrap_or_default()
+    panic::catch_unwind(AssertUnwindSafe(|| extract_imports_inner(content))).unwrap_or_default()
 }
 
 fn extract_imports_inner(content: &str) -> Vec<Import> {
@@ -75,8 +74,7 @@ pub fn extract_xml_tags(content: &str) -> Vec<XmlTag> {
     }
 
     // Catch upstream parser panics (e.g., pulldown-cmark bugs) gracefully
-    let content_owned = content.to_string();
-    panic::catch_unwind(move || extract_xml_tags_inner(&content_owned)).unwrap_or_default()
+    panic::catch_unwind(AssertUnwindSafe(|| extract_xml_tags_inner(content))).unwrap_or_default()
 }
 
 fn extract_xml_tags_inner(content: &str) -> Vec<XmlTag> {
@@ -112,8 +110,7 @@ fn extract_xml_tags_inner(content: &str) -> Vec<XmlTag> {
 /// extraction (`extract_xml_tags`).
 pub fn extract_markdown_links(content: &str) -> Vec<MarkdownLink> {
     // Catch upstream parser panics (e.g., pulldown-cmark bugs) gracefully
-    let content_owned = content.to_string();
-    panic::catch_unwind(move || extract_markdown_links_inner(&content_owned)).unwrap_or_default()
+    panic::catch_unwind(AssertUnwindSafe(|| extract_markdown_links_inner(content))).unwrap_or_default()
 }
 
 fn extract_markdown_links_inner(content: &str) -> Vec<MarkdownLink> {
