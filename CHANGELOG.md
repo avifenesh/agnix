@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Refactored Validator trait to use ValidatorContext for dependency injection (#215)
+  - New `ValidatorContext` struct bundles config, filesystem, root_dir, and import_cache
+  - New `FileSystem` trait abstracts filesystem operations for testability
+  - `RealFileSystem` implementation for production use
+  - `MockFileSystem` implementation for unit tests
+  - All 13 validators updated to use new signature
+  - Breaking API change for custom validator implementations
+
 ### Performance
 - Shared import cache at project validation level reduces redundant parsing (#216)
 

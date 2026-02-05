@@ -66,7 +66,22 @@ tests/fixtures/     # Test cases by category
 ```rust
 // Primary extension point - implement for custom validators
 pub trait Validator {
-    fn validate(&self, path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic>;
+    fn validate(&self, path: &Path, content: &str, ctx: &ValidatorContext) -> Vec<Diagnostic>;
+}
+
+// Dependency injection context for validators
+pub struct ValidatorContext<'a> {
+    pub config: &'a LintConfig,
+    pub fs: &'a dyn FileSystem,
+    pub root_dir: Option<&'a Path>,
+    pub import_cache: Option<&'a ImportCache>,
+}
+
+// Filesystem abstraction for testability
+pub trait FileSystem: Send + Sync {
+    fn read_file(&self, path: &Path) -> LintResult<String>;
+    fn exists(&self, path: &Path) -> bool;
+    fn is_file(&self, path: &Path) -> bool;
 }
 
 // Registry pattern - multiple validators per FileType
