@@ -14,6 +14,8 @@
 | **Find patterns** | [PATTERNS-CATALOG.md](./PATTERNS-CATALOG.md) - 70 patterns from awesome-slash |
 | **Get platform context** | [agent-docs/](#agent-docs) - 10 reference docs |
 | **Cross-platform support** | [standards/multi-platform-HARD-RULES.md](./standards/multi-platform-HARD-RULES.md) |
+| **Track tools/research** | [RESEARCH-TRACKING.md](./RESEARCH-TRACKING.md) - Tool inventory and monitoring |
+| **Monthly review** | [MONTHLY-REVIEW.md](./MONTHLY-REVIEW.md) - Review checklist and completed reviews |
 
 ---
 
@@ -25,6 +27,8 @@ knowledge-base/
 ├── README.md                       # Detailed navigation guide
 ├── VALIDATION-RULES.md             # ⭐ Master validation reference (100 rules)
 ├── PATTERNS-CATALOG.md             # 70 production-tested patterns
+├── RESEARCH-TRACKING.md            # Tool inventory and monitoring process
+├── MONTHLY-REVIEW.md               # Monthly review checklist and history
 │
 ├── standards/                      # 12 files, 9,884 lines, 266KB
 │   ├── README.md                   # Standards navigation
@@ -241,12 +245,16 @@ Update knowledge base when:
 5. Implement new validators
 6. Update this index
 
+### Monthly Review
+
+Follow the structured monthly review process in [MONTHLY-REVIEW.md](./MONTHLY-REVIEW.md) to check for upstream changes across all monitored tools and research sources. The review cadence is the 1st week of each month, with per-tier checklists ensuring S-tier tools get the most attention.
+
 ---
 
 ## Statistics
 
 ```
-Total Documents:       26 files
+Total Documents:       28 files
 Total Lines:          17,647 lines
 Total Size:           492KB
 Standards Covered:     5 (Agent Skills, MCP, Claude Code, Multi-Platform, Prompt Eng)
