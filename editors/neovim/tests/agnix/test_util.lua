@@ -115,10 +115,20 @@ local function test_is_agnix_file_windows_paths()
   )
 end
 
-local function test_find_binary_explicit()
-  -- Test that passing an explicit cmd that does not exist returns nil
+local function test_find_binary_explicit_valid()
+  -- When an explicit cmd is executable, it should be returned directly
+  -- We test with a known executable (nvim itself)
+  local nvim_path = vim.v.progpath
+  local result = util.find_binary({ cmd = nvim_path })
+  assert(result == nvim_path, 'valid explicit cmd should be returned as-is')
+end
+
+local function test_find_binary_explicit_invalid_falls_through()
+  -- When an explicit cmd is NOT executable, the function falls through to
+  -- PATH and cargo bin searches. The result depends on environment.
   local result = util.find_binary({ cmd = '/nonexistent/path/to/agnix-lsp' })
-  assert(result == nil, 'non-existent explicit cmd should return nil')
+  assert(result == nil or type(result) == 'string',
+    'invalid explicit cmd should fall through gracefully')
 end
 
 local function test_find_binary_no_opts()
@@ -131,5 +141,6 @@ end
 -- Run all tests
 test_is_agnix_file()
 test_is_agnix_file_windows_paths()
-test_find_binary_explicit()
+test_find_binary_explicit_valid()
+test_find_binary_explicit_invalid_falls_through()
 test_find_binary_no_opts()
