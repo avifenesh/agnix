@@ -1,0 +1,72 @@
+[
+  {
+    "file": "crates/agnix-core/src/fs.rs",
+    "line": 192,
+    "severity": "low",
+    "description": "MockFileSystem.normalize_path() uses Component::ParentDir with result.pop() without bounds checking. For deeply nested '../../../' sequences, this could normalize to an empty path or unexpected location. While this is test-only code, it could allow mock tests to simulate path traversal incorrectly.",
+    "suggestion": "Add bounds checking to prevent popping beyond the root. Track depth and prevent negative traversal: `if result.components().count() > 0 { result.pop(); }` or maintain a depth counter to ensure the path never escapes the intended root."
+  },
+  {
+    "file": "crates/agnix-core/src/rules/imports.rs",
+    "line": 365,
+    "severity": "medium",
+    "description": "resolve_import_path() uses base_dir.join(raw) without canonicalization or path traversal validation. While later checks validate the result, the join operation itself could construct paths outside base_dir if 'raw' contains '..' components. The subsequent validation at lines 181-198 catches this, but the initial construction is unsafe.",
+    "suggestion": "Add early validation before joining paths. Consider using normalize_join() (defined at line 380) instead of direct base_dir.join() to prevent constructing potentially dangerous paths. Alternatively, validate that raw_path doesn't contain '..' before joining."
+  },
+  {
+    "file": "crates/agnix-core/src/rules/imports.rs",
+    "line": 490,
+    "severity": "low",
+    "description": "Path traversal check uses std::fs::canonicalize() which can fail silently (Ok/Err pattern). If canonicalize fails for both resolved and base_dir paths, the validation is skipped entirely (lines 490-497 use if-let with continue). This means non-existent or inaccessible paths bypass security checks.",
+    "suggestion": "Make canonicalization failure more explicit. Either: (1) Return an error if canonicalize fails for security-critical paths, or (2) Add a comment explaining why it's safe to skip validation for non-canonicalizable paths. Consider logging when canonicalization fails."
+  },
+  {
+    "file": "crates/agnix-core/src/eval.rs",
+    "line": 354,
+    "severity": "medium",
+    "description": "validate_path_within_base() has a TOCTOU (Time-Of-Check-Time-Of-Use) vulnerability. The path is canonicalized and validated at lines 354-366, but then returned for later use at line 374. Between the check and use, the filesystem could change (symlink race, file replacement). While the comment at file_utils.rs:12-16 acknowledges TOCTOU is acceptable for a linter, this function is used in eval.rs for test case validation where stricter security might be warranted.",
+    "suggestion": "Document the TOCTOU acceptance in this context. Consider returning a file descriptor or handle instead of a path if stronger guarantees are needed. For eval cases specifically, re-validate the path immediately before use, or accept the risk with clear documentation."
+  },
+  {
+    "file": "crates/agnix-core/src/file_utils.rs",
+    "line": 166,
+    "severity": "low",
+    "description": "safe_read_file_with_limit() uses symlink_metadata() to detect symlinks, but there's a TOCTOU window between the metadata check (line 169) and the actual read (line 199). An attacker with local filesystem access could replace a regular file with a symlink between these operations. The comments acknowledge this at lines 12-16, but it's worth highlighting in security review.",
+    "suggestion": "Document this TOCTOU limitation more prominently in the function's doc comment. For higher security scenarios, consider platform-specific APIs (O_NOFOLLOW on Unix, FILE_FLAG_OPEN_REPARSE_POINT on Windows) to prevent symlink following atomically. However, for a linter, the current approach is likely sufficient."
+  },
+  {
+    "file": "crates/agnix-core/src/fs.rs",
+    "line": 66,
+    "severity": "critical",
+    "description": "RealFileSystem.read_file() delegates to safe_read_file() which correctly rejects symlinks and enforces size limits. However, there's no explicit verification that the FileSystem trait contract is maintained. A malicious implementation of FileSystem could bypass security checks. While RealFileSystem is correct, the abstraction could be misused.",
+    "suggestion": "Add trait documentation emphasizing that implementations MUST enforce security checks. Consider adding a default test suite that any FileSystem implementation must pass to verify security properties. Add #[doc(notable_trait)] to make security requirements prominent. Consider making FileSystem a sealed trait to prevent external implementations."
+  },
+  {
+    "file": "crates/agnix-core/src/context.rs",
+    "line": 133,
+    "severity": "low",
+    "description": "ValidatorContext.get_root_dir() falls back from context to config without validating that both refer to the same logical root. If context.root_dir and config.root_dir point to different directories, security checks could be inconsistent across validators.",
+    "suggestion": "Add validation that context.root_dir and config.root_dir, when both are set, point to the same canonical directory. Either: (1) Require they match exactly, or (2) Document which takes precedence and why. Consider logging a warning if they differ."
+  },
+  {
+    "file": "crates/agnix-core/src/lib.rs",
+    "line": 299,
+    "severity": "medium",
+    "description": "validate_file_with_registry() creates a ValidatorContext without setting root_dir or import_cache (line 299). This means single-file validation may not have proper project root boundaries for path traversal checks. Validators expecting ctx.root_dir may get None and fall back to less secure behavior.",
+    "suggestion": "Set root_dir when creating the context. Use path.parent() or find the project root similar to validate_project_with_registry(). Document that single-file validation may have weaker path boundary enforcement, or ensure all validators handle None root_dir securely."
+  },
+  {
+    "file": "crates/agnix-lsp/src/backend.rs",
+    "line": 168,
+    "severity": "medium",
+    "description": "LSP backend creates ValidatorContext without workspace_root when validating files (line 168 uses only config and RealFileSystem). The workspace_root is stored in Backend but not passed to the context. This means LSP validation may not enforce proper path boundaries for imports and references.",
+    "suggestion": "Pass workspace_root to the ValidatorContext. After reading workspace_root at line 59, use it when creating the context: `let ctx = ValidatorContext::new(&config, &RealFileSystem).with_root_dir(workspace_root?)`. This ensures LSP validation has the same security boundaries as CLI validation."
+  },
+  {
+    "file": "crates/agnix-core/src/rules/imports.rs",
+    "line": 380,
+    "severity": "low",
+    "description": "normalize_join() function manually processes path components (lines 382-394) to prevent path traversal. However, it allows ParentDir components to pop the path (lines 385-386) without checking if we've popped below the base_dir. This could normalize 'base/../../etc/passwd' to '/etc/passwd' if base is shallow.",
+    "suggestion": "Track depth to ensure we never pop beyond the base directory. Maintain a counter that increments for Normal components and decrements for ParentDir. If the counter goes negative, reject the path or clip it at the base. See the eval.rs path validation pattern for reference."
+  }
+]

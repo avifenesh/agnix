@@ -39,7 +39,7 @@ impl Validator for PluginValidator {
             if let Some(plugin_dir) = plugin_dir {
                 let disallowed = ["skills", "agents", "hooks", "commands"];
                 for entry in disallowed {
-                    if plugin_dir.join(entry).exists() {
+                    if ctx.fs.exists(&plugin_dir.join(entry)) {
                         diagnostics.push(
                             Diagnostic::error(
                                 path.to_path_buf(),

@@ -483,7 +483,7 @@ impl Validator for HooksValidator {
                                         if !self.has_unresolved_env_vars(&script_path) {
                                             let resolved =
                                                 self.resolve_script_path(&script_path, project_dir);
-                                            if !resolved.exists() {
+                                            if !ctx.fs.exists(&resolved) {
                                                 diagnostics.push(
                                                     Diagnostic::error(
                                                         path.to_path_buf(),

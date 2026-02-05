@@ -197,7 +197,7 @@ fn visit_imports(
             continue;
         }
 
-        let normalized = if resolved.exists() {
+        let normalized = if ctx.fs.exists(&resolved) {
             let canonical_resolved = normalize_existing_path(&resolved);
             if !canonical_resolved.starts_with(normalized_root) {
                 if check_not_found {
@@ -221,7 +221,7 @@ fn visit_imports(
             resolved
         };
 
-        if !normalized.exists() {
+        if !ctx.fs.exists(&normalized) {
             if check_not_found {
                 diagnostics.push(
                     Diagnostic::error(
@@ -497,7 +497,7 @@ fn validate_markdown_links(
         }
 
         // Check if file exists
-        if !resolved.exists() {
+        if !ctx.fs.exists(&resolved) {
             let link_type = if link.is_image { "Image" } else { "Link" };
             diagnostics.push(
                 Diagnostic::error(
