@@ -228,8 +228,18 @@ function M._ignore_rule(rule_id)
     return
   end
 
+  -- Check if there is an uncommented disabled_rules line
+  local has_disabled_rules = false
+  for line in content:gmatch('[^\n]+') do
+    local stripped = line:match('^%s*(.*)')
+    if stripped and not stripped:match('^#') and stripped:find('disabled_rules', 1, true) then
+      has_disabled_rules = true
+      break
+    end
+  end
+
   local ok, write_err = pcall(function()
-    if content:find('disabled_rules', 1, true) then
+    if has_disabled_rules then
       local new_content = content:gsub('(disabled_rules%s*=%s*%[)', '%1"' .. rule_id .. '", ')
       local out = io.open(toml_path, 'w')
       if not out then error('Cannot write to ' .. toml_path) end

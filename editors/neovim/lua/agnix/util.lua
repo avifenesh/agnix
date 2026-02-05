@@ -163,11 +163,13 @@ function M.is_agnix_file(path)
 end
 
 --- Find the project root directory by walking up from the given path.
---- Looks for .git, .agnix.toml, CLAUDE.md, AGENTS.md.
+--- Uses config.root_markers if available, else defaults.
 --- @param path string Starting file path
 --- @return string|nil root The project root directory, or nil
 function M.get_root_dir(path)
-  local markers = { '.git', '.agnix.toml', 'CLAUDE.md', 'AGENTS.md' }
+  local cfg = package.loaded['agnix.config']
+  local markers = (cfg and cfg.current and cfg.current.root_markers)
+    or { '.git', '.agnix.toml', 'CLAUDE.md', 'AGENTS.md' }
   local found = vim.fs.find(markers, {
     path = path,
     upward = true,
