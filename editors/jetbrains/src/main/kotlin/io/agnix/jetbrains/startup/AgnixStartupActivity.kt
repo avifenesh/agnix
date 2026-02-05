@@ -31,9 +31,8 @@ class AgnixStartupActivity : ProjectActivity {
 
         logger.info("agnix startup activity running for project: ${project.name}")
 
-        // Check for LSP binary
-        val resolver = AgnixBinaryResolver()
-        val existingBinary = resolver.resolve()
+        // Check for LSP binary using cached resolver
+        val existingBinary = AgnixBinaryResolver.resolve()
 
         if (existingBinary != null) {
             logger.info("agnix-lsp binary found at: $existingBinary")

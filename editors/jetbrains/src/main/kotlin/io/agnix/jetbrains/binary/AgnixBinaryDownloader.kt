@@ -134,6 +134,10 @@ class AgnixBinaryDownloader {
 
             indicator?.fraction = 1.0
             logger.info("Successfully downloaded agnix-lsp to: ${binaryPath.absolutePath}")
+
+            // Clear resolver cache so it picks up the new binary
+            AgnixBinaryResolver.clearCache()
+
             return binaryPath.absolutePath
 
         } finally {
@@ -192,15 +196,22 @@ class AgnixBinaryDownloader {
                 break
             }
 
-            val contentLength = connection?.contentLength?.toLong() ?: -1L
-            inputStream = connection?.inputStream
+            if (connection == null) {
+                throw IOException("Failed to establish connection after redirects")
+            }
+
+            val contentLength = connection.contentLength.toLong()
+            inputStream = connection.inputStream
             outputStream = FileOutputStream(destination)
 
             val buffer = ByteArray(BUFFER_SIZE)
             var totalBytesRead = 0L
             var bytesRead: Int
 
-            while (inputStream?.read(buffer).also { bytesRead = it ?: -1 } != -1) {
+            while (true) {
+                bytesRead = inputStream.read(buffer)
+                if (bytesRead == -1) break
+
                 outputStream.write(buffer, 0, bytesRead)
                 totalBytesRead += bytesRead
 
@@ -217,18 +228,29 @@ class AgnixBinaryDownloader {
     }
 
     /**
-     * Extract a .tar.gz archive.
+     * Extract a .tar.gz archive with path traversal protection.
      */
     private fun extractTarGz(archive: File, destination: File, binaryName: String) {
+        val canonicalDestination = destination.canonicalPath
         FileInputStream(archive).use { fis ->
             GZIPInputStream(fis).use { gzis ->
                 TarInputStream(gzis).use { tis ->
                     var entry = tis.nextEntry
                     while (entry != null) {
                         val name = entry.name
+                        // Security: Reject path traversal attempts
+                        if (name.contains("..")) {
+                            logger.warn("Skipping suspicious archive entry with path traversal: $name")
+                            entry = tis.nextEntry
+                            continue
+                        }
                         // Look for the binary file (may be in root or subdirectory)
                         if (name.endsWith(binaryName) || name == binaryName) {
                             val outFile = File(destination, binaryName)
+                            // Security: Verify output path is within destination
+                            if (!outFile.canonicalPath.startsWith(canonicalDestination)) {
+                                throw SecurityException("Archive entry would write outside destination: $name")
+                            }
                             FileOutputStream(outFile).use { fos ->
                                 tis.copyTo(fos)
                             }
@@ -239,19 +261,31 @@ class AgnixBinaryDownloader {
                 }
             }
         }
+        logger.error("Binary $binaryName not found in tar.gz archive")
     }
 
     /**
-     * Extract a .zip archive.
+     * Extract a .zip archive with path traversal protection.
      */
     private fun extractZip(archive: File, destination: File, binaryName: String) {
+        val canonicalDestination = destination.canonicalPath
         ZipInputStream(FileInputStream(archive)).use { zis ->
             var entry = zis.nextEntry
             while (entry != null) {
                 val name = entry.name
+                // Security: Reject path traversal attempts
+                if (name.contains("..")) {
+                    logger.warn("Skipping suspicious archive entry with path traversal: $name")
+                    entry = zis.nextEntry
+                    continue
+                }
                 // Look for the binary file (may be in root or subdirectory)
                 if (name.endsWith(binaryName) || name == binaryName) {
                     val outFile = File(destination, binaryName)
+                    // Security: Verify output path is within destination
+                    if (!outFile.canonicalPath.startsWith(canonicalDestination)) {
+                        throw SecurityException("Archive entry would write outside destination: $name")
+                    }
                     FileOutputStream(outFile).use { fos ->
                         zis.copyTo(fos)
                     }
@@ -260,6 +294,7 @@ class AgnixBinaryDownloader {
                 entry = zis.nextEntry
             }
         }
+        logger.error("Binary $binaryName not found in zip archive")
     }
 
     /**

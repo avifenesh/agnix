@@ -1,6 +1,7 @@
 package io.agnix.jetbrains.binary
 
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.io.TempDir
 import java.io.File
@@ -11,10 +12,15 @@ import java.nio.file.Path
  */
 class AgnixBinaryResolverTest {
 
+    @BeforeEach
+    fun setUp() {
+        // Clear cache before each test
+        AgnixBinaryResolver.clearCache()
+    }
+
     @Test
     fun `getStorageDirectory returns valid path`() {
-        val resolver = AgnixBinaryResolver()
-        val storageDir = resolver.getStorageDirectory()
+        val storageDir = AgnixBinaryResolver.getStorageDirectory()
 
         assertNotNull(storageDir)
         assertTrue(storageDir.absolutePath.isNotBlank())
@@ -23,10 +29,8 @@ class AgnixBinaryResolverTest {
 
     @Test
     fun `getDownloadedBinaryPath returns null when binary does not exist`() {
-        val resolver = AgnixBinaryResolver()
-
         // Delete the binary if it exists (clean state)
-        val storageDir = resolver.getStorageDirectory()
+        val storageDir = AgnixBinaryResolver.getStorageDirectory()
         val binaryInfo = PlatformInfo.getBinaryInfo()
         if (binaryInfo != null) {
             val binaryFile = File(storageDir, binaryInfo.binaryName)
@@ -37,7 +41,7 @@ class AgnixBinaryResolverTest {
 
         // Now getDownloadedBinaryPath should return null
         // (unless the binary was installed separately)
-        val path = resolver.getDownloadedBinaryPath()
+        val path = AgnixBinaryResolver.getDownloadedBinaryPath()
 
         // This is a weak assertion since the binary might exist from a real installation
         // but we're testing the code path
@@ -46,37 +50,31 @@ class AgnixBinaryResolverTest {
 
     @Test
     fun `isValidBinary returns false for non-existent file`() {
-        val resolver = AgnixBinaryResolver()
-
-        val result = resolver.isValidBinary("/non/existent/path/agnix-lsp")
+        val result = AgnixBinaryResolver.isValidBinary("/non/existent/path/agnix-lsp")
 
         assertFalse(result)
     }
 
     @Test
     fun `isValidBinary returns true for existing executable`(@TempDir tempDir: Path) {
-        val resolver = AgnixBinaryResolver()
-
         // Create a mock executable
         val mockBinary = tempDir.resolve("test-binary").toFile()
         mockBinary.createNewFile()
         mockBinary.setExecutable(true)
 
-        val result = resolver.isValidBinary(mockBinary.absolutePath)
+        val result = AgnixBinaryResolver.isValidBinary(mockBinary.absolutePath)
 
         assertTrue(result)
     }
 
     @Test
     fun `isValidBinary returns false for non-executable file`(@TempDir tempDir: Path) {
-        val resolver = AgnixBinaryResolver()
-
         // Create a non-executable file
         val mockFile = tempDir.resolve("test-file").toFile()
         mockFile.createNewFile()
         mockFile.setExecutable(false)
 
-        val result = resolver.isValidBinary(mockFile.absolutePath)
+        val result = AgnixBinaryResolver.isValidBinary(mockFile.absolutePath)
 
         // On some systems, canExecute might return true even without explicit permission
         // So we just verify the method doesn't throw
@@ -85,13 +83,9 @@ class AgnixBinaryResolverTest {
 
     @Test
     fun `findInPath returns null when binary is not in PATH`() {
-        // Save original PATH
-        val originalPath = System.getenv("PATH")
-
         // This test is tricky because we can't easily modify the PATH
         // We just verify the method doesn't throw and returns a reasonable result
-        val resolver = AgnixBinaryResolver()
-        val result = resolver.findInPath()
+        val result = AgnixBinaryResolver.findInPath()
 
         // Result should be null if agnix-lsp is not installed, or a valid path if it is
         assertTrue(result == null || File(result).exists())
@@ -99,8 +93,7 @@ class AgnixBinaryResolverTest {
 
     @Test
     fun `findInCommonLocations returns null when binary is not in common locations`() {
-        val resolver = AgnixBinaryResolver()
-        val result = resolver.findInCommonLocations()
+        val result = AgnixBinaryResolver.findInCommonLocations()
 
         // Result should be null if agnix-lsp is not installed, or a valid path if it is
         assertTrue(result == null || File(result).exists())
@@ -108,12 +101,28 @@ class AgnixBinaryResolverTest {
 
     @Test
     fun `resolve returns existing binary path or null`() {
-        val resolver = AgnixBinaryResolver()
-        val result = resolver.resolve()
+        val result = AgnixBinaryResolver.resolve()
 
         // If result is not null, it should be a valid executable
         if (result != null) {
-            assertTrue(resolver.isValidBinary(result))
+            assertTrue(AgnixBinaryResolver.isValidBinary(result))
+        }
+    }
+
+    @Test
+    fun `clearCache invalidates cached path`() {
+        // First resolve to populate cache
+        AgnixBinaryResolver.resolve()
+
+        // Clear cache
+        AgnixBinaryResolver.clearCache()
+
+        // Resolve again - should recheck file system
+        val result = AgnixBinaryResolver.resolve()
+
+        // If result is not null, it should be a valid executable
+        if (result != null) {
+            assertTrue(AgnixBinaryResolver.isValidBinary(result))
         }
     }
 
@@ -121,5 +130,25 @@ class AgnixBinaryResolverTest {
     fun `BINARY_NAME constants are correct`() {
         assertEquals("agnix-lsp", AgnixBinaryResolver.BINARY_NAME)
         assertEquals("agnix-lsp.exe", AgnixBinaryResolver.BINARY_NAME_WINDOWS)
+    }
+
+    @Test
+    fun `getBinaryName returns platform-appropriate name`() {
+        val binaryName = AgnixBinaryResolver.getBinaryName()
+
+        assertNotNull(binaryName)
+        assertTrue(binaryName == "agnix-lsp" || binaryName == "agnix-lsp.exe")
+    }
+
+    // Instance method tests for backwards compatibility
+    @Test
+    fun `instance methods delegate to companion object`() {
+        val resolver = AgnixBinaryResolver()
+
+        // Verify instance methods work and return same results as companion object
+        assertEquals(AgnixBinaryResolver.getStorageDirectory().absolutePath,
+            resolver.getStorageDirectory().absolutePath)
+        assertEquals(AgnixBinaryResolver.getDownloadedBinaryPath(),
+            resolver.getDownloadedBinaryPath())
     }
 }

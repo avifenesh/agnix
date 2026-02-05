@@ -25,7 +25,8 @@ class AgnixLspServerDescriptor(
     private var process: Process? = null
 
     init {
-        val binaryPath = resolveBinaryPath()
+        // Resolve binary path without blocking download - only check existing locations
+        val binaryPath = resolveBinaryPathNonBlocking()
         if (binaryPath != null) {
             val commands = mutableListOf(binaryPath)
             setCommands(commands)
@@ -34,14 +35,12 @@ class AgnixLspServerDescriptor(
     }
 
     /**
-     * Resolve the path to the agnix-lsp binary.
+     * Resolve the path to the agnix-lsp binary without blocking.
      *
-     * Checks in order:
-     * 1. User-configured path in settings
-     * 2. Previously downloaded binary in plugin storage
-     * 3. System PATH
+     * Checks existing locations only - does NOT trigger download.
+     * Download is handled asynchronously by AgnixStartupActivity.
      */
-    private fun resolveBinaryPath(): String? {
+    private fun resolveBinaryPathNonBlocking(): String? {
         val settings = AgnixSettings.getInstance()
 
         // Check user-configured path first
@@ -54,41 +53,29 @@ class AgnixLspServerDescriptor(
             }
         }
 
-        // Check for downloaded binary
-        val resolver = AgnixBinaryResolver()
-        val downloadedPath = resolver.getDownloadedBinaryPath()
+        // Use cached resolver to check existing binary locations
+        val downloadedPath = AgnixBinaryResolver.getDownloadedBinaryPath()
         if (downloadedPath != null) {
             logger.info("Using downloaded LSP binary: $downloadedPath")
             return downloadedPath
         }
 
-        // Check system PATH
-        val systemPath = resolver.findInPath()
+        val systemPath = AgnixBinaryResolver.findInPath()
         if (systemPath != null) {
             logger.info("Using system PATH LSP binary: $systemPath")
             return systemPath
         }
 
-        // Binary not found - trigger download
-        logger.warn("agnix-lsp binary not found, triggering download")
-        AgnixNotifications.notifyBinaryNotFound(project)
-
-        // Attempt download synchronously for first start
-        val downloader = AgnixBinaryDownloader()
-        val downloaded = downloader.downloadSync()
-        if (downloaded != null) {
-            logger.info("Downloaded LSP binary to: $downloaded")
-            return downloaded
-        }
-
-        logger.error("Failed to find or download agnix-lsp binary")
+        // Binary not found - notify user but do NOT block with download
+        logger.warn("agnix-lsp binary not found")
         return null
     }
 
     override fun start() {
         val commands = getCommands()
         if (commands.isEmpty()) {
-            logger.error("No LSP command configured")
+            logger.error("No LSP command configured - binary not found")
+            AgnixNotifications.notifyBinaryNotFound(project)
             return
         }
 
