@@ -174,8 +174,88 @@ When `target` is set to a specific tool, only relevant rules run:
 
 ## Performance Characteristics
 
-- File I/O is parallelized across all CPU cores
-- Directory walking remains sequential to maintain compatibility with `ignore` crate
-- Memory usage scales with number of files (diagnostics are collected and sorted)
-- Deterministic output guarantees same results across multiple runs
-- Import cache shared across files reduces redundant parsing during @import validation
+### Performance Targets
+
+| Metric | Target | Typical |
+|--------|--------|---------|
+| Single file validation | < 100ms | < 10ms |
+| 100-file project | < 500ms | ~200ms |
+| 1000-file project | < 5s | ~2s |
+| Peak memory | < 100MB | ~50MB |
+| Binary size | < 10MB | ~5MB |
+
+### Architecture Optimizations
+
+- **Parallel validation**: Uses rayon `par_bridge()` for file processing across all CPU cores
+- **Registry caching**: ValidatorRegistry is constructed once and shared (7x speedup vs per-file)
+- **Import cache**: Arc<RwLock<HashMap>> shared across files reduces redundant @import parsing
+- **Static regex patterns**: OnceLock for one-time initialization of regex patterns
+- **Directory walking**: Sequential via `ignore` crate (required for .gitignore compatibility)
+- **Deterministic output**: Results sorted by severity then path for reproducible runs
+
+### Release Build Optimizations
+
+```toml
+[profile.release]
+lto = "fat"          # Link-time optimization
+codegen-units = 1    # Single codegen unit for better optimization
+strip = true         # Strip symbols from binary
+opt-level = 3        # Maximum optimization
+panic = "abort"      # Smaller binary, no unwinding
+```
+
+### Measurement Methodology
+
+agnix uses a dual-methodology approach for performance measurement:
+
+**CI (blocking on regression)**: iai-callgrind
+- Measures CPU instruction counts (100% deterministic)
+- Immune to system load, CPU frequency scaling, background processes
+- Results are reproducible across CI runs with zero variance
+- Blocks merge on regression above configurable threshold
+
+**Development (fast feedback)**: Criterion
+- Wall-clock timing for intuitive performance understanding
+- Statistical sampling for reliable measurements
+- HTML reports with historical comparison
+
+### Running Benchmarks
+
+```bash
+# Fast feedback during development (wall-clock)
+./scripts/bench.sh criterion
+
+# Pre-PR validation (instruction counts, matches CI)
+./scripts/bench.sh iai
+
+# Check binary size breakdown
+./scripts/bench.sh bloat
+
+# Run all benchmarks
+./scripts/bench.sh all
+```
+
+### Interpreting iai-callgrind Results
+
+iai-callgrind reports several metrics:
+
+| Metric | Description | What It Tells You |
+|--------|-------------|-------------------|
+| Instructions | CPU instructions executed | Primary performance metric |
+| L1 Hits/Misses | Level 1 cache performance | Memory access efficiency |
+| L2 Hits/Misses | Level 2 cache performance | Working set size |
+| RAM Hits | Main memory accesses | Cache effectiveness |
+| Estimated Cycles | Weighted cycle estimate | Overall CPU cost |
+
+Instruction counts directly correlate with wall-clock time but without noise from:
+- Background processes
+- CPU frequency scaling
+- VM/container overhead
+- Disk I/O variance
+
+### Platform Considerations
+
+- **Linux**: Full support for both iai-callgrind and Criterion
+- **macOS x86**: Full support for both iai-callgrind and Criterion
+- **macOS ARM**: Valgrind support is experimental; use Criterion for local development
+- **Windows**: No Valgrind support; use Criterion only (CI runs iai on Linux)
