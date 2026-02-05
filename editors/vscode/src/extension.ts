@@ -77,41 +77,104 @@ interface LspConfig {
 export function buildLspConfig(): LspConfig {
   const config = vscode.workspace.getConfiguration('agnix');
 
-  // Helper to convert undefined to null (Rust Option<String> expects null)
-  const toNull = <T>(value: T | undefined): T | null => value === undefined ? null : value;
-
-  return {
-    severity: config.get<string>('severity'),
-    target: config.get<string>('target'),
-    tools: config.get<string[]>('tools'),
-    rules: {
-      skills: config.get<boolean>('rules.skills'),
-      hooks: config.get<boolean>('rules.hooks'),
-      agents: config.get<boolean>('rules.agents'),
-      memory: config.get<boolean>('rules.memory'),
-      plugins: config.get<boolean>('rules.plugins'),
-      xml: config.get<boolean>('rules.xml'),
-      mcp: config.get<boolean>('rules.mcp'),
-      imports: config.get<boolean>('rules.imports'),
-      cross_platform: config.get<boolean>('rules.crossPlatform'),
-      agents_md: config.get<boolean>('rules.agentsMd'),
-      copilot: config.get<boolean>('rules.copilot'),
-      cursor: config.get<boolean>('rules.cursor'),
-      prompt_engineering: config.get<boolean>('rules.promptEngineering'),
-      disabled_rules: config.get<string[]>('rules.disabledRules'),
-    },
-    versions: {
-      claude_code: toNull(config.get<string | null>('versions.claudeCode')),
-      codex: toNull(config.get<string | null>('versions.codex')),
-      cursor: toNull(config.get<string | null>('versions.cursor')),
-      copilot: toNull(config.get<string | null>('versions.copilot')),
-    },
-    specs: {
-      mcp_protocol: toNull(config.get<string | null>('specs.mcpProtocol')),
-      agent_skills_spec: toNull(config.get<string | null>('specs.agentSkills')),
-      agents_md_spec: toNull(config.get<string | null>('specs.agentsMd')),
-    },
+  // Helper to get user-set value (not schema default)
+  const getUserValue = <T>(key: string): T | undefined => {
+    const inspected = config.inspect<T>(key);
+    if (!inspected) return undefined;
+    // Priority: workspaceFolder > workspace > global > undefined (skip defaults)
+    return inspected.workspaceFolderValue ?? inspected.workspaceValue ?? inspected.globalValue;
   };
+
+  const result: LspConfig = {};
+
+  // Only include fields explicitly set by user (preserves .agnix.toml defaults)
+  const severity = getUserValue<string>('severity');
+  if (severity !== undefined) result.severity = severity;
+
+  const target = getUserValue<string>('target');
+  if (target !== undefined) result.target = target;
+
+  const tools = getUserValue<string[]>('tools');
+  if (tools !== undefined) result.tools = tools;
+
+  // Rules - only include if user set them
+  const rulesObj: any = {};
+  let hasRules = false;
+
+  const addRule = (key: string, field: string) => {
+    const value = getUserValue<boolean>(key);
+    if (value !== undefined) {
+      rulesObj[field] = value;
+      hasRules = true;
+    }
+  };
+
+  addRule('rules.skills', 'skills');
+  addRule('rules.hooks', 'hooks');
+  addRule('rules.agents', 'agents');
+  addRule('rules.memory', 'memory');
+  addRule('rules.plugins', 'plugins');
+  addRule('rules.xml', 'xml');
+  addRule('rules.mcp', 'mcp');
+  addRule('rules.imports', 'imports');
+  addRule('rules.crossPlatform', 'cross_platform');
+  addRule('rules.agentsMd', 'agents_md');
+  addRule('rules.copilot', 'copilot');
+  addRule('rules.cursor', 'cursor');
+  addRule('rules.promptEngineering', 'prompt_engineering');
+
+  const disabledRules = getUserValue<string[]>('rules.disabledRules');
+  if (disabledRules !== undefined) {
+    rulesObj.disabled_rules = disabledRules;
+    hasRules = true;
+  }
+
+  if (hasRules) result.rules = rulesObj;
+
+  // Versions - support explicit null to clear pins
+  const versionsObj: any = {};
+  let hasVersions = false;
+
+  const addVersion = (key: string, field: string) => {
+    const inspected = config.inspect<string | null>(key);
+    if (inspected && (inspected.workspaceFolderValue !== undefined ||
+                      inspected.workspaceValue !== undefined ||
+                      inspected.globalValue !== undefined)) {
+      const value = inspected.workspaceFolderValue ?? inspected.workspaceValue ?? inspected.globalValue;
+      versionsObj[field] = value; // null is valid (clears pin)
+      hasVersions = true;
+    }
+  };
+
+  addVersion('versions.claudeCode', 'claude_code');
+  addVersion('versions.codex', 'codex');
+  addVersion('versions.cursor', 'cursor');
+  addVersion('versions.copilot', 'copilot');
+
+  if (hasVersions) result.versions = versionsObj;
+
+  // Specs - support explicit null to clear pins
+  const specsObj: any = {};
+  let hasSpecs = false;
+
+  const addSpec = (key: string, field: string) => {
+    const inspected = config.inspect<string | null>(key);
+    if (inspected && (inspected.workspaceFolderValue !== undefined ||
+                      inspected.workspaceValue !== undefined ||
+                      inspected.globalValue !== undefined)) {
+      const value = inspected.workspaceFolderValue ?? inspected.workspaceValue ?? inspected.globalValue;
+      specsObj[field] = value; // null is valid (clears pin)
+      hasSpecs = true;
+    }
+  };
+
+  addSpec('specs.mcpProtocol', 'mcp_protocol');
+  addSpec('specs.agentSkills', 'agent_skills_spec');
+  addSpec('specs.agentsMd', 'agents_md_spec');
+
+  if (hasSpecs) result.specs = specsObj;
+
+  return result;
 }
 
 const AGNIX_FILE_PATTERNS = [

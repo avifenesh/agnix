@@ -115,43 +115,51 @@ pub struct VsCodeRules {
 /// Tool version pins from VS Code settings.
 ///
 /// Maps to ToolVersions in agnix-core.
+/// Uses Option<Option<String>> to distinguish:
+/// - None = field not in JSON (preserve .agnix.toml value)
+/// - Some(None) = field in JSON as null (clear pin)
+/// - Some(Some(v)) = field in JSON with value (set pin to v)
 #[derive(Debug, Default, Clone, Deserialize, Serialize)]
 #[serde(default)]
 pub struct VsCodeVersions {
     /// Claude Code version (e.g., "1.0.0")
-    #[serde(default)]
-    pub claude_code: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub claude_code: Option<Option<String>>,
 
     /// Codex CLI version (e.g., "0.1.0")
-    #[serde(default)]
-    pub codex: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub codex: Option<Option<String>>,
 
     /// Cursor version (e.g., "0.45.0")
-    #[serde(default)]
-    pub cursor: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub cursor: Option<Option<String>>,
 
     /// GitHub Copilot version (e.g., "1.0.0")
-    #[serde(default)]
-    pub copilot: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub copilot: Option<Option<String>>,
 }
 
 /// Spec revision pins from VS Code settings.
 ///
 /// Maps to SpecRevisions in agnix-core.
+/// Uses Option<Option<String>> to distinguish:
+/// - None = field not in JSON (preserve .agnix.toml value)
+/// - Some(None) = field in JSON as null (clear pin)
+/// - Some(Some(v)) = field in JSON with value (set pin to v)
 #[derive(Debug, Default, Clone, Deserialize, Serialize)]
 #[serde(default)]
 pub struct VsCodeSpecs {
     /// MCP protocol version (e.g., "2025-06-18")
-    #[serde(default)]
-    pub mcp_protocol: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub mcp_protocol: Option<Option<String>>,
 
     /// Agent Skills specification revision
-    #[serde(default)]
-    pub agent_skills_spec: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub agent_skills_spec: Option<Option<String>>,
 
     /// AGENTS.md specification revision
-    #[serde(default)]
-    pub agents_md_spec: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub agents_md_spec: Option<Option<String>>,
 }
 
 impl VsCodeConfig {
@@ -251,37 +259,41 @@ impl VsCodeRules {
 
 impl VsCodeVersions {
     /// Merge VS Code version pins into ToolVersions.
+    /// Uses Option<Option<String>> pattern:
+    /// - None = not in JSON (skip, preserve .agnix.toml)
+    /// - Some(None) = in JSON as null (apply None, clear pin)
+    /// - Some(Some(v)) = in JSON with value (apply value)
     fn merge_into_tool_versions(&self, config: &mut ToolVersions) {
-        // For version pins, we need to handle Option<String> carefully:
-        // - Some(value) means the user set a version
-        // - None means no version pin (use defaults)
-        // Since these fields are already Option<String>, we can assign directly
-        if self.claude_code.is_some() {
-            config.claude_code = self.claude_code.clone();
+        if let Some(ref value) = self.claude_code {
+            config.claude_code = value.clone();
         }
-        if self.codex.is_some() {
-            config.codex = self.codex.clone();
+        if let Some(ref value) = self.codex {
+            config.codex = value.clone();
         }
-        if self.cursor.is_some() {
-            config.cursor = self.cursor.clone();
+        if let Some(ref value) = self.cursor {
+            config.cursor = value.clone();
         }
-        if self.copilot.is_some() {
-            config.copilot = self.copilot.clone();
+        if let Some(ref value) = self.copilot {
+            config.copilot = value.clone();
         }
     }
 }
 
 impl VsCodeSpecs {
     /// Merge VS Code spec pins into SpecRevisions.
+    /// Uses Option<Option<String>> pattern:
+    /// - None = not in JSON (skip, preserve .agnix.toml)
+    /// - Some(None) = in JSON as null (apply None, clear pin)
+    /// - Some(Some(v)) = in JSON with value (apply value)
     fn merge_into_spec_revisions(&self, config: &mut SpecRevisions) {
-        if self.mcp_protocol.is_some() {
-            config.mcp_protocol = self.mcp_protocol.clone();
+        if let Some(ref value) = self.mcp_protocol {
+            config.mcp_protocol = value.clone();
         }
-        if self.agent_skills_spec.is_some() {
-            config.agent_skills_spec = self.agent_skills_spec.clone();
+        if let Some(ref value) = self.agent_skills_spec {
+            config.agent_skills_spec = value.clone();
         }
-        if self.agents_md_spec.is_some() {
-            config.agents_md_spec = self.agents_md_spec.clone();
+        if let Some(ref value) = self.agents_md_spec {
+            config.agents_md_spec = value.clone();
         }
     }
 }
@@ -364,10 +376,10 @@ mod tests {
         );
 
         let versions = config.versions.expect("versions should be present");
-        assert_eq!(versions.claude_code, Some("1.0.0".to_string()));
+        assert_eq!(versions.claude_code, Some(Some("1.0.0".to_string())));
 
         let specs = config.specs.expect("specs should be present");
-        assert_eq!(specs.mcp_protocol, Some("2025-06-18".to_string()));
+        assert_eq!(specs.mcp_protocol, Some(Some("2025-06-18".to_string())));
     }
 
     #[test]
@@ -463,8 +475,8 @@ mod tests {
 
         let vscode_config = VsCodeConfig {
             versions: Some(VsCodeVersions {
-                claude_code: Some("1.0.0".to_string()),
-                codex: Some("0.1.0".to_string()),
+                claude_code: Some(Some("1.0.0".to_string())),
+                codex: Some(Some("0.1.0".to_string())),
                 ..Default::default()
             }),
             ..Default::default()
@@ -486,7 +498,7 @@ mod tests {
 
         let vscode_config = VsCodeConfig {
             specs: Some(VsCodeSpecs {
-                mcp_protocol: Some("2025-06-18".to_string()),
+                mcp_protocol: Some(Some("2025-06-18".to_string())),
                 ..Default::default()
             }),
             ..Default::default()
@@ -557,4 +569,59 @@ mod tests {
             vec!["claude-code".to_string(), "cursor".to_string()]
         );
     }
+}
+
+#[test]
+fn test_version_pin_clearing_with_null() {
+    // Start with a config that has version pins from .agnix.toml
+    let mut lint_config = LintConfig::default();
+    lint_config.tool_versions.claude_code = Some("0.9.0".to_string());
+    lint_config.tool_versions.codex = Some("0.5.0".to_string());
+
+    // User explicitly sets claude_code to null in VS Code (clears pin)
+    // but doesn't touch codex (preserves .agnix.toml value)
+    let vscode_config = VsCodeConfig {
+        versions: Some(VsCodeVersions {
+            claude_code: Some(None), // Explicitly null - clear the pin
+            codex: None,             // Not specified - preserve .agnix.toml
+            ..Default::default()
+        }),
+        ..Default::default()
+    };
+
+    vscode_config.merge_into_lint_config(&mut lint_config);
+
+    // claude_code should be cleared (None)
+    assert!(lint_config.tool_versions.claude_code.is_none());
+    // codex should still have the .agnix.toml value
+    assert_eq!(lint_config.tool_versions.codex, Some("0.5.0".to_string()));
+}
+
+#[test]
+fn test_spec_pin_clearing_with_null() {
+    // Start with a config that has spec pins from .agnix.toml
+    let mut lint_config = LintConfig::default();
+    lint_config.spec_revisions.mcp_protocol = Some("2025-01-01".to_string());
+    lint_config.spec_revisions.agent_skills_spec = Some("v1".to_string());
+
+    // User explicitly sets mcp_protocol to null (clears pin)
+    // but doesn't touch agent_skills_spec (preserves .agnix.toml)
+    let vscode_config = VsCodeConfig {
+        specs: Some(VsCodeSpecs {
+            mcp_protocol: Some(None), // Explicitly null - clear the pin
+            agent_skills_spec: None,  // Not specified - preserve .agnix.toml
+            ..Default::default()
+        }),
+        ..Default::default()
+    };
+
+    vscode_config.merge_into_lint_config(&mut lint_config);
+
+    // mcp_protocol should be cleared (None)
+    assert!(lint_config.spec_revisions.mcp_protocol.is_none());
+    // agent_skills_spec should still have the .agnix.toml value
+    assert_eq!(
+        lint_config.spec_revisions.agent_skills_spec,
+        Some("v1".to_string())
+    );
 }
