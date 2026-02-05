@@ -15,12 +15,30 @@ use crate::{
     parsers::{Import, ImportCache},
     rules::Validator,
 };
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::path::{Component, Path, PathBuf};
 
 pub struct ImportsValidator;
 
 const MAX_IMPORT_DEPTH: usize = 5;
+type DiagnosticKey = (PathBuf, usize, usize, String, String);
+
+fn push_unique_diagnostic(
+    diagnostics: &mut Vec<Diagnostic>,
+    seen_diagnostics: &mut HashSet<DiagnosticKey>,
+    diagnostic: Diagnostic,
+) {
+    let key = (
+        diagnostic.file.clone(),
+        diagnostic.line,
+        diagnostic.column,
+        diagnostic.rule.clone(),
+        diagnostic.message.clone(),
+    );
+    if seen_diagnostics.insert(key) {
+        diagnostics.push(diagnostic);
+    }
+}
 
 /// Check if a URL is a local file link (not external or anchor-only)
 fn is_local_file_link(url: &str) -> bool {
@@ -66,14 +84,16 @@ impl Validator for ImportsValidator {
         let mut local_cache: HashMap<PathBuf, Vec<Import>> = HashMap::new();
         let mut visited_depth: HashMap<PathBuf, usize> = HashMap::new();
         let mut stack = Vec::new();
+        let mut seen_diagnostics: HashSet<DiagnosticKey> = HashSet::new();
 
         // Insert the root file's imports into the appropriate cache (if not already present)
         let root_imports = extract_imports(content);
         if let Some(cache) = shared_cache {
             // Write to shared cache only if not already present
-            let mut guard = cache
-                .write()
-                .expect("ImportCache lock poisoned - this indicates a panic in another thread");
+            let mut guard = match cache.write() {
+                Ok(guard) => guard,
+                Err(poisoned) => poisoned.into_inner(),
+            };
             guard.entry(root_path.clone()).or_insert(root_imports);
         } else {
             // Write to local cache
@@ -88,6 +108,7 @@ impl Validator for ImportsValidator {
             &mut visited_depth,
             &mut stack,
             &mut diagnostics,
+            &mut seen_diagnostics,
             config,
             is_claude_md,
             &project_root,
@@ -110,6 +131,7 @@ fn visit_imports(
     visited_depth: &mut HashMap<PathBuf, usize>,
     stack: &mut Vec<PathBuf>,
     diagnostics: &mut Vec<Diagnostic>,
+    seen_diagnostics: &mut HashSet<DiagnosticKey>,
     config: &LintConfig,
     root_is_claude_md: bool,
     project_root: &Path,
@@ -117,7 +139,10 @@ fn visit_imports(
 ) {
     let depth = stack.len();
     if let Some(prev_depth) = visited_depth.get(file_path) {
-        if *prev_depth >= depth {
+        // Skip only when we have already visited this file at an equal or
+        // shallower depth. If we discover a shallower path later, revisit it
+        // so traversal can continue with the tighter depth budget.
+        if *prev_depth <= depth {
             return;
         }
     }
@@ -167,7 +192,9 @@ fn visit_imports(
             || import.path.starts_with('~')
         {
             if check_not_found {
-                diagnostics.push(
+                push_unique_diagnostic(
+                    diagnostics,
+                    seen_diagnostics,
                     Diagnostic::error(
                         file_path.clone(),
                         import.line,
@@ -184,7 +211,9 @@ fn visit_imports(
         let normalized_resolved = normalize_join(&normalized_base, &import.path);
         if !normalized_resolved.starts_with(normalized_root) {
             if check_not_found {
-                diagnostics.push(
+                push_unique_diagnostic(
+                    diagnostics,
+                    seen_diagnostics,
                     Diagnostic::error(
                         file_path.clone(),
                         import.line,
@@ -204,7 +233,9 @@ fn visit_imports(
             let canonical_resolved = normalize_existing_path(&resolved, fs);
             if !canonical_resolved.starts_with(normalized_root) {
                 if check_not_found {
-                    diagnostics.push(
+                    push_unique_diagnostic(
+                        diagnostics,
+                        seen_diagnostics,
                         Diagnostic::error(
                             file_path.clone(),
                             import.line,
@@ -226,7 +257,9 @@ fn visit_imports(
 
         if !fs.exists(&normalized) {
             if check_not_found {
-                diagnostics.push(
+                push_unique_diagnostic(
+                    diagnostics,
+                    seen_diagnostics,
                     Diagnostic::error(
                         file_path.clone(),
                         import.line,
@@ -250,7 +283,9 @@ fn visit_imports(
         // Emit diagnostics if rules are enabled for this file type
         if check_cycle && has_cycle {
             let cycle = format_cycle(stack, &normalized);
-            diagnostics.push(
+            push_unique_diagnostic(
+                diagnostics,
+                seen_diagnostics,
                 Diagnostic::error(
                     file_path.clone(),
                     import.line,
@@ -264,7 +299,9 @@ fn visit_imports(
         }
 
         if check_depth && exceeds_depth {
-            diagnostics.push(
+            push_unique_diagnostic(
+                diagnostics,
+                seen_diagnostics,
                 Diagnostic::error(
                     file_path.clone(),
                     import.line,
@@ -290,6 +327,7 @@ fn visit_imports(
                 visited_depth,
                 stack,
                 diagnostics,
+                seen_diagnostics,
                 config,
                 root_is_claude_md,
                 project_root,
@@ -325,9 +363,10 @@ fn get_imports_for_file(
     if let Some(cache) = shared_cache {
         // Read lock - check if already cached
         {
-            let guard = cache
-                .read()
-                .expect("ImportCache lock poisoned - this indicates a panic in another thread");
+            let guard = match cache.read() {
+                Ok(guard) => guard,
+                Err(poisoned) => poisoned.into_inner(),
+            };
             if let Some(imports) = guard.get(file_path) {
                 return Some(imports.clone());
             }
@@ -346,9 +385,10 @@ fn get_imports_for_file(
 
         // Write lock - use entry() to handle race condition where another thread
         // may have already inserted while we were parsing
-        let mut guard = cache
-            .write()
-            .expect("ImportCache lock poisoned - this indicates a panic in another thread");
+        let mut guard = match cache.write() {
+            Ok(guard) => guard,
+            Err(poisoned) => poisoned.into_inner(),
+        };
         guard
             .entry(file_path.to_path_buf())
             .or_insert_with(|| imports.clone());
@@ -1218,5 +1258,137 @@ mod tests {
                 "Cache should have entries after concurrent access"
             );
         }
+    }
+
+    #[test]
+    fn test_shared_cache_poisoned_lock_does_not_panic() {
+        use std::collections::HashMap;
+        use std::sync::{Arc, RwLock};
+        use std::thread;
+
+        let temp = TempDir::new().unwrap();
+        let target = temp.path().join("target.md");
+        let file_path = temp.path().join("test.md");
+        fs::write(&target, "Target content").unwrap();
+        fs::write(&file_path, "See @target.md").unwrap();
+
+        let cache: crate::parsers::ImportCache = Arc::new(RwLock::new(HashMap::new()));
+
+        let cache_for_poison = cache.clone();
+        let _ = thread::spawn(move || {
+            let _guard = cache_for_poison.write().unwrap();
+            panic!("poison import cache lock");
+        })
+        .join();
+        assert!(cache.read().is_err(), "Cache lock should be poisoned");
+
+        let mut config = LintConfig::default();
+        config.set_import_cache(cache);
+
+        let validator = ImportsValidator;
+        let diagnostics = validator.validate(&file_path, "See @target.md", &config);
+        assert!(
+            diagnostics.is_empty(),
+            "Validation should continue with a poisoned shared cache lock"
+        );
+    }
+
+    #[test]
+    fn test_shared_cache_poisoned_lock_still_reports_missing_import() {
+        use std::collections::HashMap;
+        use std::sync::{Arc, RwLock};
+        use std::thread;
+
+        let temp = TempDir::new().unwrap();
+        let file_path = temp.path().join("test.md");
+        fs::write(&file_path, "See @missing.md").unwrap();
+
+        let cache: crate::parsers::ImportCache = Arc::new(RwLock::new(HashMap::new()));
+
+        let cache_for_poison = cache.clone();
+        let _ = thread::spawn(move || {
+            let _guard = cache_for_poison.write().unwrap();
+            panic!("poison import cache lock");
+        })
+        .join();
+        assert!(cache.read().is_err(), "Cache lock should be poisoned");
+
+        let mut config = LintConfig::default();
+        config.set_import_cache(cache);
+
+        let validator = ImportsValidator;
+        let diagnostics = validator.validate(&file_path, "See @missing.md", &config);
+        assert!(
+            diagnostics
+                .iter()
+                .any(|d| d.rule == "REF-001" && d.message.contains("@missing.md")),
+            "Validation should still report missing imports with a poisoned shared cache lock"
+        );
+    }
+
+    #[test]
+    fn test_revisits_file_when_later_seen_at_shallower_depth() {
+        let temp = TempDir::new().unwrap();
+        let root = temp.path().join("CLAUDE.md");
+        let a = temp.path().join("a.md");
+        let b = temp.path().join("b.md");
+        let c = temp.path().join("c.md");
+        let d = temp.path().join("d.md");
+        let shared = temp.path().join("shared.md");
+        let leaf = temp.path().join("leaf.md");
+
+        fs::write(&root, "@a.md\n@shared.md").unwrap();
+        fs::write(&a, "@b.md").unwrap();
+        fs::write(&b, "@c.md").unwrap();
+        fs::write(&c, "@d.md").unwrap();
+        fs::write(&d, "@shared.md").unwrap();
+        fs::write(&shared, "@leaf.md").unwrap();
+        fs::write(&leaf, "@missing.md").unwrap();
+
+        let mut config = LintConfig::default();
+        config.set_root_dir(temp.path().to_path_buf());
+
+        let validator = ImportsValidator;
+        let content = fs::read_to_string(&root).unwrap();
+        let diagnostics = validator.validate(&root, &content, &config);
+
+        assert!(
+            diagnostics
+                .iter()
+                .any(|d| d.rule == "REF-001" && d.message.contains("@missing.md")),
+            "Traversal should revisit shared.md at shallower depth and report downstream missing imports"
+        );
+    }
+
+    #[test]
+    fn test_shallower_revisit_does_not_duplicate_missing_import_diagnostics() {
+        let temp = TempDir::new().unwrap();
+        let root = temp.path().join("CLAUDE.md");
+        let a = temp.path().join("a.md");
+        let b = temp.path().join("b.md");
+        let shared = temp.path().join("shared.md");
+
+        fs::write(&root, "@a.md\n@shared.md").unwrap();
+        fs::write(&a, "@b.md").unwrap();
+        fs::write(&b, "@shared.md").unwrap();
+        fs::write(&shared, "@missing.md").unwrap();
+
+        let mut config = LintConfig::default();
+        config.set_root_dir(temp.path().to_path_buf());
+
+        let validator = ImportsValidator;
+        let content = fs::read_to_string(&root).unwrap();
+        let diagnostics = validator.validate(&root, &content, &config);
+
+        let missing: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "REF-001" && d.message.contains("@missing.md"))
+            .collect();
+        assert_eq!(
+            missing.len(),
+            1,
+            "Expected a single REF-001 diagnostic for @missing.md, got {}",
+            missing.len()
+        );
     }
 }

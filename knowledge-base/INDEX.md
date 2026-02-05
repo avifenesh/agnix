@@ -14,6 +14,8 @@
 | **Find patterns** | [PATTERNS-CATALOG.md](./PATTERNS-CATALOG.md) - 70 patterns from awesome-slash |
 | **Get platform context** | [agent-docs/](#agent-docs) - 10 reference docs |
 | **Cross-platform support** | [standards/multi-platform-HARD-RULES.md](./standards/multi-platform-HARD-RULES.md) |
+| **Track tools/research** | [RESEARCH-TRACKING.md](./RESEARCH-TRACKING.md) - Tool inventory and monitoring |
+| **Monthly review** | [MONTHLY-REVIEW.md](./MONTHLY-REVIEW.md) - Review checklist and completed reviews |
 
 ---
 
@@ -25,6 +27,8 @@ knowledge-base/
 ├── README.md                       # Detailed navigation guide
 ├── VALIDATION-RULES.md             # ⭐ Master validation reference (100 rules)
 ├── PATTERNS-CATALOG.md             # 70 production-tested patterns
+├── RESEARCH-TRACKING.md            # Tool inventory and monitoring process
+├── MONTHLY-REVIEW.md               # Monthly review checklist and history
 │
 ├── standards/                      # HARD-RULES and OPINIONS by topic
 │   ├── README.md                   # Standards navigation
@@ -241,14 +245,18 @@ Update knowledge base when:
 5. Implement new validators
 6. Update this index
 
+### Monthly Review
+
+Follow the structured monthly review process in [MONTHLY-REVIEW.md](./MONTHLY-REVIEW.md) to check for upstream changes across all monitored tools and research sources. The review cadence is the 1st week of each month, with per-tier checklists ensuring S-tier tools get the most attention.
+
 ---
 
 ## Statistics
 
 ```
-Total Documents:       29 files
-Total Lines:          18,534 lines
-Total Size:           636KB
+Total Documents:       31 files
+Total Lines:          18,900 lines
+Total Size:           650KB
 Standards Covered:     5 (Agent Skills, MCP, Claude Code, Multi-Platform, Prompt Eng)
 Sources Consulted:    75+ (specs, docs, research papers, repos)
 Research Agents:       5 (10+ sources each)
@@ -262,4 +270,4 @@ Platforms Analyzed:   9 (Claude Code, Codex CLI, OpenCode, Copilot, Cursor, Clin
 
 **Status**: Knowledge base integrated with the active validation engine
 **Next**: Keep `rules.json` and `VALIDATION-RULES.md` synchronized as rules evolve
-**Confidence**: HIGH - rules are mapped to source evidence and covered by tests
+**Confidence**: HIGH - all rules sourced from official specs or research
