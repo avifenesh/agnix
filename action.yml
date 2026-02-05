@@ -1,4 +1,4 @@
-name: 'agnix'
+name: 'agnix-ci'
 description: 'Validate agent configurations (Skills, Hooks, MCP, Memory, Plugins)'
 author: 'avifenesh'
 branding:
