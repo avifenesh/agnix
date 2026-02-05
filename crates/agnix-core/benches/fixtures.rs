@@ -9,6 +9,9 @@
 //! - MCP tool definitions with input schemas
 //! - CLAUDE.md memory files with @imports
 
+// Allow dead code since different benchmark targets use different functions
+#![allow(dead_code)]
+
 use std::fs;
 use tempfile::TempDir;
 
@@ -345,7 +348,7 @@ fn create_mcp_tool(index: usize) -> String {
   }},
   "requiresApproval": {approval}
 }}"#,
-        approval = index % 2 == 0
+        approval = index.is_multiple_of(2)
     )
 }
 
@@ -427,7 +430,9 @@ Invoke this agent for {role}-related tasks.
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    #![allow(unused_imports)]
+    use super::{create_memory_test_project, create_scale_project, create_single_skill_file};
+    use std::fs;
 
     #[test]
     fn test_create_single_skill_file() {
@@ -445,7 +450,7 @@ mod tests {
         assert!(skills_dir.exists());
         // Should have ~70 skill directories
         let skill_count = fs::read_dir(&skills_dir).unwrap().count();
-        assert!(skill_count >= 60 && skill_count <= 80);
+        assert!((60..=80).contains(&skill_count));
     }
 
     #[test]

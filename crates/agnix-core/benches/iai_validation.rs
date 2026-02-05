@@ -25,51 +25,10 @@ mod fixtures;
 use iai_callgrind::{library_benchmark, library_benchmark_group, main};
 use std::hint::black_box;
 use std::path::PathBuf;
-use tempfile::TempDir;
 
 use agnix_core::{validate_file_with_registry, validate_project, LintConfig, ValidatorRegistry};
 
 use fixtures::{create_scale_project, create_single_skill_file};
-
-// We need to store TempDir in a static to prevent cleanup during benchmark.
-// iai-callgrind runs benchmarks in a subprocess, so we use setup functions.
-
-/// Benchmark single file validation (instruction count).
-///
-/// This measures the core validation path for a realistic SKILL.md file.
-/// Instruction count directly correlates to CPU time without noise.
-#[library_benchmark]
-#[bench::single_skill(setup_single_file())]
-fn iai_validate_single_file(setup: (PathBuf, LintConfig, ValidatorRegistry)) {
-    let (skill_path, config, registry) = setup;
-    let _ = black_box(validate_file_with_registry(
-        black_box(&skill_path),
-        &config,
-        &registry,
-    ));
-}
-
-/// Benchmark 100-file project validation.
-///
-/// Tests parallelization efficiency with a medium-sized project.
-/// Distribution: 70% SKILL.md, 15% hooks, 10% MCP, 5% misc.
-#[library_benchmark]
-#[bench::project_100(setup_100_files())]
-fn iai_validate_100_files(setup: (PathBuf, LintConfig)) {
-    let (project_path, config) = setup;
-    let _ = black_box(validate_project(black_box(&project_path), &config));
-}
-
-/// Benchmark 1000-file project validation.
-///
-/// Target: instruction count should scale linearly with file count.
-/// Wall-clock equivalent target: < 5 seconds.
-#[library_benchmark]
-#[bench::project_1000(setup_1000_files())]
-fn iai_validate_1000_files(setup: (PathBuf, LintConfig)) {
-    let (project_path, config) = setup;
-    let _ = black_box(validate_project(black_box(&project_path), &config));
-}
 
 // Setup functions create the test data before benchmarking.
 // These run once per benchmark, not during measurement.
@@ -106,12 +65,46 @@ fn setup_1000_files() -> (PathBuf, LintConfig) {
     (project_path, config)
 }
 
+// Benchmark single file validation (instruction count).
+// Measures the core validation path for a realistic SKILL.md file.
+// Instruction count directly correlates to CPU time without noise.
+#[library_benchmark]
+#[bench::single_skill(setup_single_file())]
+fn bench_validate_single_file(setup: (PathBuf, LintConfig, ValidatorRegistry)) {
+    let (skill_path, config, registry) = setup;
+    let _ = black_box(validate_file_with_registry(
+        black_box(&skill_path),
+        &config,
+        &registry,
+    ));
+}
+
+// Benchmark 100-file project validation.
+// Tests parallelization efficiency with a medium-sized project.
+// Distribution: 70% SKILL.md, 15% hooks, 10% MCP, 5% misc.
+#[library_benchmark]
+#[bench::project_100(setup_100_files())]
+fn bench_validate_100_files(setup: (PathBuf, LintConfig)) {
+    let (project_path, config) = setup;
+    let _ = black_box(validate_project(black_box(&project_path), &config));
+}
+
+// Benchmark 1000-file project validation.
+// Target: instruction count should scale linearly with file count.
+// Wall-clock equivalent target: < 5 seconds.
+#[library_benchmark]
+#[bench::project_1000(setup_1000_files())]
+fn bench_validate_1000_files(setup: (PathBuf, LintConfig)) {
+    let (project_path, config) = setup;
+    let _ = black_box(validate_project(black_box(&project_path), &config));
+}
+
 library_benchmark_group!(
     name = validation_benches;
     benchmarks =
-        iai_validate_single_file,
-        iai_validate_100_files,
-        iai_validate_1000_files
+        bench_validate_single_file,
+        bench_validate_100_files,
+        bench_validate_1000_files
 );
 
 main!(library_benchmark_groups = validation_benches);
