@@ -1711,4 +1711,462 @@ exclude = []
         assert!(!LintConfig::is_tool_alias("cc", "claude-code"));
         assert!(!LintConfig::is_tool_alias("cur", "cursor"));
     }
+
+    // ===== Partial Config Tests =====
+
+    #[test]
+    fn test_partial_config_only_rules_section() {
+        let toml_str = r#"
+[rules]
+disabled_rules = ["CC-MEM-006"]
+"#;
+        let config: LintConfig = toml::from_str(toml_str).unwrap();
+
+        // Should use defaults for unspecified fields
+        assert_eq!(config.severity, SeverityLevel::Warning);
+        assert_eq!(config.target, TargetTool::Generic);
+        assert!(config.rules.skills);
+        assert!(config.rules.hooks);
+
+        // disabled_rules should be set
+        assert_eq!(config.rules.disabled_rules, vec!["CC-MEM-006"]);
+        assert!(!config.is_rule_enabled("CC-MEM-006"));
+    }
+
+    #[test]
+    fn test_partial_config_only_severity() {
+        let toml_str = r#"severity = "Error""#;
+        let config: LintConfig = toml::from_str(toml_str).unwrap();
+
+        assert_eq!(config.severity, SeverityLevel::Error);
+        assert_eq!(config.target, TargetTool::Generic);
+        assert!(config.rules.skills);
+    }
+
+    #[test]
+    fn test_partial_config_only_target() {
+        let toml_str = r#"target = "ClaudeCode""#;
+        let config: LintConfig = toml::from_str(toml_str).unwrap();
+
+        assert_eq!(config.target, TargetTool::ClaudeCode);
+        assert_eq!(config.severity, SeverityLevel::Warning);
+    }
+
+    #[test]
+    fn test_partial_config_only_exclude() {
+        let toml_str = r#"exclude = ["vendor/**", "dist/**"]"#;
+        let config: LintConfig = toml::from_str(toml_str).unwrap();
+
+        assert_eq!(config.exclude, vec!["vendor/**", "dist/**"]);
+        assert_eq!(config.severity, SeverityLevel::Warning);
+    }
+
+    #[test]
+    fn test_partial_config_only_disabled_rules() {
+        let toml_str = r#"
+[rules]
+disabled_rules = ["AS-001", "CC-SK-007", "PE-003"]
+"#;
+        let config: LintConfig = toml::from_str(toml_str).unwrap();
+
+        assert!(!config.is_rule_enabled("AS-001"));
+        assert!(!config.is_rule_enabled("CC-SK-007"));
+        assert!(!config.is_rule_enabled("PE-003"));
+        // Other rules should still be enabled
+        assert!(config.is_rule_enabled("AS-002"));
+        assert!(config.is_rule_enabled("CC-SK-001"));
+    }
+
+    #[test]
+    fn test_partial_config_disable_single_category() {
+        let toml_str = r#"
+[rules]
+skills = false
+"#;
+        let config: LintConfig = toml::from_str(toml_str).unwrap();
+
+        assert!(!config.rules.skills);
+        // Other categories should still be enabled (default true)
+        assert!(config.rules.hooks);
+        assert!(config.rules.agents);
+        assert!(config.rules.memory);
+    }
+
+    #[test]
+    fn test_partial_config_tools_array() {
+        let toml_str = r#"tools = ["claude-code", "cursor"]"#;
+        let config: LintConfig = toml::from_str(toml_str).unwrap();
+
+        assert_eq!(config.tools, vec!["claude-code", "cursor"]);
+        assert!(config.is_rule_enabled("CC-SK-001")); // Claude Code rule
+        assert!(config.is_rule_enabled("CUR-001")); // Cursor rule
+    }
+
+    #[test]
+    fn test_partial_config_combined_options() {
+        let toml_str = r#"
+severity = "Error"
+target = "ClaudeCode"
+
+[rules]
+xml = false
+disabled_rules = ["CC-MEM-006"]
+"#;
+        let config: LintConfig = toml::from_str(toml_str).unwrap();
+
+        assert_eq!(config.severity, SeverityLevel::Error);
+        assert_eq!(config.target, TargetTool::ClaudeCode);
+        assert!(!config.rules.xml);
+        assert!(!config.is_rule_enabled("CC-MEM-006"));
+        // exclude should use default
+        assert!(config.exclude.contains(&"node_modules/**".to_string()));
+    }
+
+    // ===== Disabled Rules Edge Cases =====
+
+    #[test]
+    fn test_disabled_rules_empty_array() {
+        let toml_str = r#"
+[rules]
+disabled_rules = []
+"#;
+        let config: LintConfig = toml::from_str(toml_str).unwrap();
+
+        assert!(config.rules.disabled_rules.is_empty());
+        assert!(config.is_rule_enabled("AS-001"));
+        assert!(config.is_rule_enabled("CC-SK-001"));
+    }
+
+    #[test]
+    fn test_disabled_rules_case_sensitive() {
+        let toml_str = r#"
+[rules]
+disabled_rules = ["as-001"]
+"#;
+        let config: LintConfig = toml::from_str(toml_str).unwrap();
+
+        // Rule IDs are case-sensitive
+        assert!(config.is_rule_enabled("AS-001")); // Not disabled (different case)
+        assert!(!config.is_rule_enabled("as-001")); // Disabled
+    }
+
+    #[test]
+    fn test_disabled_rules_multiple_from_same_category() {
+        let toml_str = r#"
+[rules]
+disabled_rules = ["AS-001", "AS-002", "AS-003", "AS-004"]
+"#;
+        let config: LintConfig = toml::from_str(toml_str).unwrap();
+
+        assert!(!config.is_rule_enabled("AS-001"));
+        assert!(!config.is_rule_enabled("AS-002"));
+        assert!(!config.is_rule_enabled("AS-003"));
+        assert!(!config.is_rule_enabled("AS-004"));
+        // AS-005 should still be enabled
+        assert!(config.is_rule_enabled("AS-005"));
+    }
+
+    #[test]
+    fn test_disabled_rules_across_categories() {
+        let toml_str = r#"
+[rules]
+disabled_rules = ["AS-001", "CC-SK-007", "MCP-001", "PE-003", "XP-001"]
+"#;
+        let config: LintConfig = toml::from_str(toml_str).unwrap();
+
+        assert!(!config.is_rule_enabled("AS-001"));
+        assert!(!config.is_rule_enabled("CC-SK-007"));
+        assert!(!config.is_rule_enabled("MCP-001"));
+        assert!(!config.is_rule_enabled("PE-003"));
+        assert!(!config.is_rule_enabled("XP-001"));
+    }
+
+    #[test]
+    fn test_disabled_rules_nonexistent_rule() {
+        let toml_str = r#"
+[rules]
+disabled_rules = ["FAKE-001", "NONEXISTENT-999"]
+"#;
+        let config: LintConfig = toml::from_str(toml_str).unwrap();
+
+        // Should parse without error, nonexistent rules just have no effect
+        assert!(!config.is_rule_enabled("FAKE-001"));
+        assert!(!config.is_rule_enabled("NONEXISTENT-999"));
+        // Real rules still work
+        assert!(config.is_rule_enabled("AS-001"));
+    }
+
+    #[test]
+    fn test_disabled_rules_with_category_disabled() {
+        let toml_str = r#"
+[rules]
+skills = false
+disabled_rules = ["AS-001"]
+"#;
+        let config: LintConfig = toml::from_str(toml_str).unwrap();
+
+        // Both category disabled AND individual rule disabled
+        assert!(!config.is_rule_enabled("AS-001"));
+        assert!(!config.is_rule_enabled("AS-002")); // Category disabled
+    }
+
+    // ===== Config File Loading Edge Cases =====
+
+    #[test]
+    fn test_config_file_empty() {
+        let dir = tempfile::tempdir().unwrap();
+        let config_path = dir.path().join(".agnix.toml");
+        std::fs::write(&config_path, "").unwrap();
+
+        let (config, warning) = LintConfig::load_or_default(Some(&config_path));
+
+        // Empty file should use all defaults
+        assert_eq!(config.severity, SeverityLevel::Warning);
+        assert_eq!(config.target, TargetTool::Generic);
+        assert!(config.rules.skills);
+        assert!(warning.is_none());
+    }
+
+    #[test]
+    fn test_config_file_only_comments() {
+        let dir = tempfile::tempdir().unwrap();
+        let config_path = dir.path().join(".agnix.toml");
+        std::fs::write(
+            &config_path,
+            r#"
+# This is a comment
+# Another comment
+"#,
+        )
+        .unwrap();
+
+        let (config, warning) = LintConfig::load_or_default(Some(&config_path));
+
+        // Comments-only file should use all defaults
+        assert_eq!(config.severity, SeverityLevel::Warning);
+        assert!(warning.is_none());
+    }
+
+    #[test]
+    fn test_config_file_with_comments() {
+        let dir = tempfile::tempdir().unwrap();
+        let config_path = dir.path().join(".agnix.toml");
+        std::fs::write(
+            &config_path,
+            r#"
+# Severity level
+severity = "Error"
+
+# Disable specific rules
+[rules]
+# Disable negative instruction warnings
+disabled_rules = ["CC-MEM-006"]
+"#,
+        )
+        .unwrap();
+
+        let (config, warning) = LintConfig::load_or_default(Some(&config_path));
+
+        assert_eq!(config.severity, SeverityLevel::Error);
+        assert!(!config.is_rule_enabled("CC-MEM-006"));
+        assert!(warning.is_none());
+    }
+
+    #[test]
+    fn test_config_invalid_severity_value() {
+        let dir = tempfile::tempdir().unwrap();
+        let config_path = dir.path().join(".agnix.toml");
+        std::fs::write(&config_path, r#"severity = "InvalidLevel""#).unwrap();
+
+        let (config, warning) = LintConfig::load_or_default(Some(&config_path));
+
+        // Should fall back to defaults with warning
+        assert_eq!(config.severity, SeverityLevel::Warning);
+        assert!(warning.is_some());
+    }
+
+    #[test]
+    fn test_config_invalid_target_value() {
+        let dir = tempfile::tempdir().unwrap();
+        let config_path = dir.path().join(".agnix.toml");
+        std::fs::write(&config_path, r#"target = "InvalidTool""#).unwrap();
+
+        let (config, warning) = LintConfig::load_or_default(Some(&config_path));
+
+        // Should fall back to defaults with warning
+        assert_eq!(config.target, TargetTool::Generic);
+        assert!(warning.is_some());
+    }
+
+    #[test]
+    fn test_config_wrong_type_for_disabled_rules() {
+        let dir = tempfile::tempdir().unwrap();
+        let config_path = dir.path().join(".agnix.toml");
+        std::fs::write(
+            &config_path,
+            r#"
+[rules]
+disabled_rules = "AS-001"
+"#,
+        )
+        .unwrap();
+
+        let (config, warning) = LintConfig::load_or_default(Some(&config_path));
+
+        // Should fall back to defaults with warning (wrong type)
+        assert!(config.rules.disabled_rules.is_empty());
+        assert!(warning.is_some());
+    }
+
+    #[test]
+    fn test_config_wrong_type_for_exclude() {
+        let dir = tempfile::tempdir().unwrap();
+        let config_path = dir.path().join(".agnix.toml");
+        std::fs::write(&config_path, r#"exclude = "node_modules""#).unwrap();
+
+        let (config, warning) = LintConfig::load_or_default(Some(&config_path));
+
+        // Should fall back to defaults with warning (wrong type)
+        assert!(warning.is_some());
+        // Config should have default exclude values
+        assert!(config.exclude.contains(&"node_modules/**".to_string()));
+    }
+
+    // ===== Config Interaction Tests =====
+
+    #[test]
+    fn test_target_and_tools_interaction() {
+        // When both target and tools are set, tools takes precedence
+        let toml_str = r#"
+target = "Cursor"
+tools = ["claude-code"]
+"#;
+        let config: LintConfig = toml::from_str(toml_str).unwrap();
+
+        // Claude Code rules should be enabled (from tools)
+        assert!(config.is_rule_enabled("CC-SK-001"));
+        // Cursor rules should be disabled (not in tools)
+        assert!(!config.is_rule_enabled("CUR-001"));
+    }
+
+    #[test]
+    fn test_category_disabled_overrides_target() {
+        let toml_str = r#"
+target = "ClaudeCode"
+
+[rules]
+skills = false
+"#;
+        let config: LintConfig = toml::from_str(toml_str).unwrap();
+
+        // Even with ClaudeCode target, skills category is disabled
+        assert!(!config.is_rule_enabled("AS-001"));
+        assert!(!config.is_rule_enabled("CC-SK-001"));
+    }
+
+    #[test]
+    fn test_disabled_rules_overrides_category_enabled() {
+        let toml_str = r#"
+[rules]
+skills = true
+disabled_rules = ["AS-001"]
+"#;
+        let config: LintConfig = toml::from_str(toml_str).unwrap();
+
+        // Category is enabled but specific rule is disabled
+        assert!(!config.is_rule_enabled("AS-001"));
+        assert!(config.is_rule_enabled("AS-002"));
+    }
+
+    // ===== Serialization Round-Trip Tests =====
+
+    #[test]
+    fn test_config_serialize_deserialize_roundtrip() {
+        let mut config = LintConfig::default();
+        config.severity = SeverityLevel::Error;
+        config.target = TargetTool::ClaudeCode;
+        config.rules.skills = false;
+        config.rules.disabled_rules = vec!["CC-MEM-006".to_string()];
+
+        let serialized = toml::to_string(&config).unwrap();
+        let deserialized: LintConfig = toml::from_str(&serialized).unwrap();
+
+        assert_eq!(deserialized.severity, SeverityLevel::Error);
+        assert_eq!(deserialized.target, TargetTool::ClaudeCode);
+        assert!(!deserialized.rules.skills);
+        assert_eq!(deserialized.rules.disabled_rules, vec!["CC-MEM-006"]);
+    }
+
+    #[test]
+    fn test_default_config_serializes_cleanly() {
+        let config = LintConfig::default();
+        let serialized = toml::to_string(&config).unwrap();
+
+        // Should be valid TOML
+        let _: LintConfig = toml::from_str(&serialized).unwrap();
+    }
+
+    // ===== Real-World Config Scenarios =====
+
+    #[test]
+    fn test_minimal_disable_warnings_config() {
+        // Common use case: user just wants to disable some noisy warnings
+        let toml_str = r#"
+[rules]
+disabled_rules = [
+    "CC-MEM-006",  # Negative instructions
+    "PE-003",      # Weak language
+    "XP-001",      # Hard-coded paths
+]
+"#;
+        let config: LintConfig = toml::from_str(toml_str).unwrap();
+
+        assert!(!config.is_rule_enabled("CC-MEM-006"));
+        assert!(!config.is_rule_enabled("PE-003"));
+        assert!(!config.is_rule_enabled("XP-001"));
+        // Everything else should work normally
+        assert!(config.is_rule_enabled("AS-001"));
+        assert!(config.is_rule_enabled("MCP-001"));
+    }
+
+    #[test]
+    fn test_multi_tool_project_config() {
+        // Project that targets both Claude Code and Cursor
+        let toml_str = r#"
+tools = ["claude-code", "cursor"]
+exclude = ["node_modules/**", ".git/**", "dist/**"]
+
+[rules]
+disabled_rules = ["VER-001"]  # Don't warn about version pinning
+"#;
+        let config: LintConfig = toml::from_str(toml_str).unwrap();
+
+        assert!(config.is_rule_enabled("CC-SK-001"));
+        assert!(config.is_rule_enabled("CUR-001"));
+        assert!(!config.is_rule_enabled("VER-001"));
+    }
+
+    #[test]
+    fn test_strict_ci_config() {
+        // Strict config for CI pipeline
+        let toml_str = r#"
+severity = "Error"
+target = "ClaudeCode"
+
+[rules]
+# Enable everything
+skills = true
+hooks = true
+memory = true
+xml = true
+mcp = true
+disabled_rules = []
+"#;
+        let config: LintConfig = toml::from_str(toml_str).unwrap();
+
+        assert_eq!(config.severity, SeverityLevel::Error);
+        assert!(config.rules.skills);
+        assert!(config.rules.hooks);
+        assert!(config.rules.disabled_rules.is_empty());
+    }
 }
