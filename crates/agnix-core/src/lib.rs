@@ -3559,6 +3559,46 @@ Use idiomatic Rust patterns.
         }
     }
 
+    #[test]
+    fn test_validate_project_with_poisoned_import_cache_does_not_panic() {
+        use std::collections::HashMap;
+        use std::sync::{Arc, RwLock};
+        use std::thread;
+
+        let temp = tempfile::TempDir::new().unwrap();
+        std::fs::write(temp.path().join("README.md"), "See @target.md").unwrap();
+        std::fs::write(temp.path().join("target.md"), "Target content").unwrap();
+
+        let cache: crate::parsers::ImportCache = Arc::new(RwLock::new(HashMap::new()));
+        let cache_for_assert = cache.clone();
+
+        let cache_for_poison = cache.clone();
+        let _ = thread::spawn(move || {
+            let _guard = cache_for_poison.write().unwrap();
+            panic!("poison import cache lock");
+        })
+        .join();
+        assert!(cache.read().is_err(), "Cache lock should be poisoned");
+
+        let mut config = LintConfig::default();
+        config.set_import_cache(cache);
+
+        let result = validate_project(temp.path(), &config);
+        assert!(
+            result.is_ok(),
+            "Project validation should continue with a poisoned import cache lock"
+        );
+
+        let cache_guard = cache_for_assert
+            .read()
+            .expect_err("Poisoned cache should remain poisoned")
+            .into_inner();
+        assert!(
+            !cache_guard.is_empty(),
+            "Project validation should reuse and populate the provided import cache"
+        );
+    }
+
     // ===== Security: File Count Limit Tests =====
 
     #[test]

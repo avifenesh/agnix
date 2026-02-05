@@ -1222,4 +1222,37 @@ mod tests {
             );
         }
     }
+
+    #[test]
+    fn test_shared_cache_poisoned_lock_does_not_panic() {
+        use std::collections::HashMap;
+        use std::sync::{Arc, RwLock};
+        use std::thread;
+
+        let temp = TempDir::new().unwrap();
+        let target = temp.path().join("target.md");
+        let file_path = temp.path().join("test.md");
+        fs::write(&target, "Target content").unwrap();
+        fs::write(&file_path, "See @target.md").unwrap();
+
+        let cache: crate::parsers::ImportCache = Arc::new(RwLock::new(HashMap::new()));
+
+        let cache_for_poison = cache.clone();
+        let _ = thread::spawn(move || {
+            let _guard = cache_for_poison.write().unwrap();
+            panic!("poison import cache lock");
+        })
+        .join();
+        assert!(cache.read().is_err(), "Cache lock should be poisoned");
+
+        let mut config = LintConfig::default();
+        config.set_import_cache(cache);
+
+        let validator = ImportsValidator;
+        let diagnostics = validator.validate(&file_path, "See @target.md", &config);
+        assert!(
+            diagnostics.is_empty(),
+            "Validation should continue with a poisoned shared cache lock"
+        );
+    }
 }
