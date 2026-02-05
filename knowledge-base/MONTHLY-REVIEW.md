@@ -3,7 +3,7 @@
 > Structured process for reviewing AI tool ecosystem changes and maintaining rule accuracy.
 
 **Cadence**: Monthly, 1st week of each month
-**Related**: [RESEARCH-TRACKING.md](./RESEARCH-TRACKING.md) | [VALIDATION-RULES.md](./VALIDATION-RULES.md)
+**Related**: [RESEARCH-TRACKING.md](./RESEARCH-TRACKING.md) | [VALIDATION-RULES.md](./VALIDATION-RULES.md) | [INDEX.md](./INDEX.md)
 
 ---
 
