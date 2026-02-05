@@ -15,6 +15,8 @@ Real-time validation for AI agent configuration files in VS Code.
 - **Ignore rules** - Disable rules directly from the editor
 - **Multi-tool** - Claude Code, Cursor, GitHub Copilot, Codex CLI
 
+![Validation in action](../../assets/vscode-validation.png)
+
 ## Supported File Types
 
 | File | Tool | Description |

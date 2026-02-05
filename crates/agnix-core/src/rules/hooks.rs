@@ -1,4 +1,4 @@
-//! Hooks validation rules (CC-HK-001 to CC-HK-011)
+//! Hooks validation rules (CC-HK-001 to CC-HK-012)
 
 use crate::{
     config::LintConfig,
@@ -101,59 +101,503 @@ static SCRIPT_PATTERNS: Lazy<Vec<Regex>> = Lazy::new(|| {
     .collect()
 });
 
-impl HooksValidator {
-    fn check_dangerous_patterns(&self, command: &str) -> Option<(&'static str, &'static str)> {
-        for dp in DANGEROUS_PATTERNS.iter() {
-            if dp.regex.is_match(command) {
-                return Some((dp.pattern, dp.reason));
-            }
-        }
-        None
-    }
-
-    fn extract_script_paths(&self, command: &str) -> Vec<String> {
-        let mut paths = Vec::new();
-        for re in SCRIPT_PATTERNS.iter() {
-            for caps in re.captures_iter(command) {
-                if let Some(m) = caps.get(1) {
-                    let path = m.as_str().trim_matches(|c| c == '"' || c == '\'');
-                    if path.contains("://") || path.starts_with("http") {
-                        continue;
+/// CC-HK-005: Missing type field
+fn validate_cc_hk_005_missing_type_field(
+    raw_value: &serde_json::Value,
+    path: &Path,
+    diagnostics: &mut Vec<Diagnostic>,
+) {
+    if let Some(hooks_obj) = raw_value.get("hooks").and_then(|h| h.as_object()) {
+        for (event, matchers) in hooks_obj {
+            if let Some(matchers_arr) = matchers.as_array() {
+                for (matcher_idx, matcher) in matchers_arr.iter().enumerate() {
+                    if let Some(hooks_arr) = matcher.get("hooks").and_then(|h| h.as_array()) {
+                        for (hook_idx, hook) in hooks_arr.iter().enumerate() {
+                            if hook.get("type").is_none() {
+                                let hook_location =
+                                    format!("hooks.{}[{}].hooks[{}]", event, matcher_idx, hook_idx);
+                                diagnostics.push(
+                                    Diagnostic::error(
+                                        path.to_path_buf(),
+                                        1,
+                                        0,
+                                        "CC-HK-005",
+                                        format!(
+                                            "Hook at {} is missing required 'type' field",
+                                            hook_location
+                                        ),
+                                    )
+                                    .with_suggestion(
+                                        "Add 'type': 'command' or 'type': 'prompt'".to_string(),
+                                    ),
+                                );
+                            }
+                        }
                     }
-                    paths.push(path.to_string());
                 }
             }
         }
-        paths
+    }
+}
+
+/// CC-HK-011: Invalid timeout value
+fn validate_cc_hk_011_invalid_timeout_values(
+    raw_value: &serde_json::Value,
+    path: &Path,
+    diagnostics: &mut Vec<Diagnostic>,
+) {
+    if let Some(hooks_obj) = raw_value.get("hooks").and_then(|h| h.as_object()) {
+        for (event, matchers) in hooks_obj {
+            if let Some(matchers_arr) = matchers.as_array() {
+                for (matcher_idx, matcher) in matchers_arr.iter().enumerate() {
+                    if let Some(hooks_arr) = matcher.get("hooks").and_then(|h| h.as_array()) {
+                        for (hook_idx, hook) in hooks_arr.iter().enumerate() {
+                            if let Some(timeout_val) = hook.get("timeout") {
+                                let is_invalid = match timeout_val {
+                                    serde_json::Value::Number(n) => {
+                                        // A valid timeout must be a positive integer.
+                                        // as_u64() returns Some only for non-negative integer
+                                        // JSON numbers within the u64 range; it returns None
+                                        // for negatives, any floats (including 30.0), or
+                                        // out-of-range values.
+                                        if let Some(val) = n.as_u64() {
+                                            val == 0 // Zero is invalid
+                                        } else {
+                                            true // Negative, float, or out of range
+                                        }
+                                    }
+                                    _ => true, // String, bool, null, object, array are invalid
+                                };
+                                if is_invalid {
+                                    let hook_location = format!(
+                                        "hooks.{}[{}].hooks[{}]",
+                                        event, matcher_idx, hook_idx
+                                    );
+                                    diagnostics.push(
+                                        Diagnostic::error(
+                                            path.to_path_buf(),
+                                            1,
+                                            0,
+                                            "CC-HK-011",
+                                            format!(
+                                                "Invalid timeout value at {}: must be a positive integer",
+                                                hook_location
+                                            ),
+                                        )
+                                        .with_suggestion(
+                                            "Set timeout to a positive integer like 30".to_string(),
+                                        ),
+                                    );
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// CC-HK-001: Invalid event name with auto-fix support
+fn validate_cc_hk_001_event_name(
+    event: &str,
+    path: &Path,
+    content: &str,
+    diagnostics: &mut Vec<Diagnostic>,
+) -> bool {
+    if HooksSchema::VALID_EVENTS.contains(&event) {
+        return true;
     }
 
-    fn resolve_script_path(&self, script_path: &str, project_dir: &Path) -> std::path::PathBuf {
-        let resolved = script_path
-            .replace("$CLAUDE_PROJECT_DIR", &project_dir.display().to_string())
-            .replace("${CLAUDE_PROJECT_DIR}", &project_dir.display().to_string());
+    let closest = find_closest_event(event);
+    let mut diagnostic = Diagnostic::error(
+        path.to_path_buf(),
+        1,
+        0,
+        "CC-HK-001",
+        format!(
+            "Invalid hook event '{}', valid events: {:?}",
+            event,
+            HooksSchema::VALID_EVENTS
+        ),
+    )
+    .with_suggestion(closest.suggestion);
 
-        let path = std::path::PathBuf::from(&resolved);
-
-        if path.is_relative() {
-            project_dir.join(path)
-        } else {
-            path
+    // Add auto-fix if we found a matching event
+    if let Some(corrected) = closest.corrected_event {
+        if let Some((start, end)) = find_event_key_position(content, event) {
+            let replacement = format!("\"{}\"", corrected);
+            let description = format!("Replace '{}' with '{}'", event, corrected);
+            // Case-only fixes are safe (high confidence)
+            let fix = Fix::replace(start, end, replacement, description, closest.is_case_fix);
+            diagnostic = diagnostic.with_fix(fix);
         }
     }
 
+    diagnostics.push(diagnostic);
+    false
+}
+
+/// CC-HK-003: Missing matcher for tool events
+fn validate_cc_hk_003_matcher_required(
+    event: &str,
+    matcher: &Option<String>,
+    matcher_idx: usize,
+    path: &Path,
+    diagnostics: &mut Vec<Diagnostic>,
+) {
+    if HooksSchema::is_tool_event(event) && matcher.is_none() {
+        let hook_location = format!("hooks.{}[{}]", event, matcher_idx);
+        diagnostics.push(
+            Diagnostic::error(
+                path.to_path_buf(),
+                1,
+                0,
+                "CC-HK-003",
+                format!(
+                    "Tool event '{}' at {} requires a matcher field",
+                    event, hook_location
+                ),
+            )
+            .with_suggestion("Add 'matcher': '*' for all tools or specify a tool name".to_string()),
+        );
+    }
+}
+
+/// CC-HK-004: Matcher on non-tool event
+fn validate_cc_hk_004_matcher_forbidden(
+    event: &str,
+    matcher: &Option<String>,
+    matcher_idx: usize,
+    path: &Path,
+    diagnostics: &mut Vec<Diagnostic>,
+) {
+    if !HooksSchema::is_tool_event(event) && matcher.is_some() {
+        let hook_location = format!("hooks.{}[{}]", event, matcher_idx);
+        diagnostics.push(
+            Diagnostic::error(
+                path.to_path_buf(),
+                1,
+                0,
+                "CC-HK-004",
+                format!(
+                    "Non-tool event '{}' at {} must not have a matcher field",
+                    event, hook_location
+                ),
+            )
+            .with_suggestion("Remove the 'matcher' field".to_string()),
+        );
+    }
+}
+
+fn check_dangerous_patterns(command: &str) -> Option<(&'static str, &'static str)> {
+    for dp in DANGEROUS_PATTERNS.iter() {
+        if dp.regex.is_match(command) {
+            return Some((dp.pattern, dp.reason));
+        }
+    }
+    None
+}
+
+fn extract_script_paths(command: &str) -> Vec<String> {
+    let mut paths = Vec::new();
+    for re in SCRIPT_PATTERNS.iter() {
+        for caps in re.captures_iter(command) {
+            if let Some(m) = caps.get(1) {
+                let path = m.as_str().trim_matches(|c| c == '"' || c == '\'');
+                if path.contains("://") || path.starts_with("http") {
+                    continue;
+                }
+                paths.push(path.to_string());
+            }
+        }
+    }
+    paths
+}
+
+fn resolve_script_path(script_path: &str, project_dir: &Path) -> std::path::PathBuf {
+    let resolved = script_path
+        .replace("$CLAUDE_PROJECT_DIR", &project_dir.display().to_string())
+        .replace("${CLAUDE_PROJECT_DIR}", &project_dir.display().to_string());
+
+    let path = std::path::PathBuf::from(&resolved);
+
+    if path.is_relative() {
+        project_dir.join(path)
+    } else {
+        path
+    }
+}
+
+fn has_unresolved_env_vars(path: &str) -> bool {
+    let after_claude = path
+        .replace("$CLAUDE_PROJECT_DIR", "")
+        .replace("${CLAUDE_PROJECT_DIR}", "");
+    after_claude.contains('$')
+}
+
+/// CC-HK-006: Missing command field
+fn validate_cc_hk_006_command_field(
+    command: &Option<String>,
+    hook_location: &str,
+    path: &Path,
+    diagnostics: &mut Vec<Diagnostic>,
+) {
+    if command.is_none() {
+        diagnostics.push(
+            Diagnostic::error(
+                path.to_path_buf(),
+                1,
+                0,
+                "CC-HK-006",
+                format!(
+                    "Command hook at {} is missing required 'command' field",
+                    hook_location
+                ),
+            )
+            .with_suggestion("Add a 'command' field with the command to execute".to_string()),
+        );
+    }
+}
+
+/// CC-HK-008: Script file not found
+fn validate_cc_hk_008_script_exists(
+    command: &str,
+    project_dir: &Path,
+    config: &LintConfig,
+    path: &Path,
+    diagnostics: &mut Vec<Diagnostic>,
+) {
+    let fs = config.fs();
+    for script_path in extract_script_paths(command) {
+        if !has_unresolved_env_vars(&script_path) {
+            let resolved = resolve_script_path(&script_path, project_dir);
+            if !fs.exists(&resolved) {
+                diagnostics.push(
+                    Diagnostic::error(
+                        path.to_path_buf(),
+                        1,
+                        0,
+                        "CC-HK-008",
+                        format!(
+                            "Script file not found at '{}' (resolved to '{}')",
+                            script_path,
+                            resolved.display()
+                        ),
+                    )
+                    .with_suggestion("Create the script file or correct the path".to_string()),
+                );
+            }
+        }
+    }
+}
+
+/// CC-HK-009: Dangerous command patterns
+fn validate_cc_hk_009_dangerous_patterns(
+    command: &str,
+    path: &Path,
+    diagnostics: &mut Vec<Diagnostic>,
+) {
+    if let Some((pattern, reason)) = check_dangerous_patterns(command) {
+        diagnostics.push(
+            Diagnostic::warning(
+                path.to_path_buf(),
+                1,
+                0,
+                "CC-HK-009",
+                format!("Potentially dangerous command pattern detected: {}", reason),
+            )
+            .with_suggestion(format!(
+                "Review the command for safety. Pattern matched: {}",
+                pattern
+            )),
+        );
+    }
+}
+
+/// CC-HK-010: Command hook timeout policy
+fn validate_cc_hk_010_command_timeout(
+    timeout: &Option<u64>,
+    hook_location: &str,
+    version_pinned: bool,
+    path: &Path,
+    diagnostics: &mut Vec<Diagnostic>,
+) {
+    if timeout.is_none() {
+        let mut diag = Diagnostic::warning(
+            path.to_path_buf(),
+            1,
+            0,
+            "CC-HK-010",
+            format!("Command hook at {} has no timeout specified", hook_location),
+        )
+        .with_suggestion("Add a \"timeout\" field (e.g., 600 for command hooks)".to_string());
+
+        if !version_pinned {
+            diag = diag.with_assumption(CC_HK_010_ASSUMPTION);
+        }
+
+        diagnostics.push(diag);
+    }
+    if let Some(t) = timeout {
+        if *t > COMMAND_HOOK_DEFAULT_TIMEOUT {
+            let mut diag = Diagnostic::warning(
+                path.to_path_buf(),
+                1,
+                0,
+                "CC-HK-010",
+                format!(
+                    "Command hook at {} has timeout {}s exceeding {}s default",
+                    hook_location, t, COMMAND_HOOK_DEFAULT_TIMEOUT
+                ),
+            )
+            .with_suggestion(format!(
+                "Consider timeout <= {}s (10-minute default limit)",
+                COMMAND_HOOK_DEFAULT_TIMEOUT
+            ));
+
+            if !version_pinned {
+                diag = diag.with_assumption(CC_HK_010_ASSUMPTION);
+            }
+
+            diagnostics.push(diag);
+        }
+    }
+}
+
+/// CC-HK-002: Prompt hook on wrong event
+fn validate_cc_hk_002_prompt_event_type(
+    event: &str,
+    hook_location: &str,
+    path: &Path,
+    diagnostics: &mut Vec<Diagnostic>,
+) {
+    if !HooksSchema::is_prompt_event(event) {
+        diagnostics.push(
+            Diagnostic::error(
+                path.to_path_buf(),
+                1,
+                0,
+                "CC-HK-002",
+                format!(
+                    "Prompt hook at {} is only allowed for Stop and SubagentStop events, not '{}'",
+                    hook_location, event
+                ),
+            )
+            .with_suggestion(
+                "Use 'type': 'command' instead, or move this hook to Stop/SubagentStop".to_string(),
+            ),
+        );
+    }
+}
+
+/// CC-HK-007: Missing prompt field
+fn validate_cc_hk_007_prompt_field(
+    prompt: &Option<String>,
+    hook_location: &str,
+    path: &Path,
+    diagnostics: &mut Vec<Diagnostic>,
+) {
+    if prompt.is_none() {
+        diagnostics.push(
+            Diagnostic::error(
+                path.to_path_buf(),
+                1,
+                0,
+                "CC-HK-007",
+                format!(
+                    "Prompt hook at {} is missing required 'prompt' field",
+                    hook_location
+                ),
+            )
+            .with_suggestion("Add a 'prompt' field with the prompt text".to_string()),
+        );
+    }
+}
+
+/// CC-HK-010: Prompt hook timeout policy
+fn validate_cc_hk_010_prompt_timeout(
+    timeout: &Option<u64>,
+    hook_location: &str,
+    version_pinned: bool,
+    path: &Path,
+    diagnostics: &mut Vec<Diagnostic>,
+) {
+    if timeout.is_none() {
+        let mut diag = Diagnostic::warning(
+            path.to_path_buf(),
+            1,
+            0,
+            "CC-HK-010",
+            format!("Prompt hook at {} has no timeout specified", hook_location),
+        )
+        .with_suggestion("Add a \"timeout\" field (e.g., 30 for prompt hooks)".to_string());
+
+        if !version_pinned {
+            diag = diag.with_assumption(CC_HK_010_ASSUMPTION);
+        }
+
+        diagnostics.push(diag);
+    }
+    if let Some(t) = timeout {
+        if *t > PROMPT_HOOK_DEFAULT_TIMEOUT {
+            let mut diag = Diagnostic::warning(
+                path.to_path_buf(),
+                1,
+                0,
+                "CC-HK-010",
+                format!(
+                    "Prompt hook at {} has timeout {}s exceeding {}s default",
+                    hook_location, t, PROMPT_HOOK_DEFAULT_TIMEOUT
+                ),
+            )
+            .with_suggestion(format!(
+                "Consider timeout <= {}s (30-second default limit)",
+                PROMPT_HOOK_DEFAULT_TIMEOUT
+            ));
+
+            if !version_pinned {
+                diag = diag.with_assumption(CC_HK_010_ASSUMPTION);
+            }
+
+            diagnostics.push(diag);
+        }
+    }
+}
+
+#[cfg(test)]
+#[allow(dead_code)]
+impl HooksValidator {
+    fn check_dangerous_patterns(&self, command: &str) -> Option<(&'static str, &'static str)> {
+        check_dangerous_patterns(command)
+    }
+
+    fn extract_script_paths(&self, command: &str) -> Vec<String> {
+        extract_script_paths(command)
+    }
+
+    fn resolve_script_path(&self, script_path: &str, project_dir: &Path) -> std::path::PathBuf {
+        resolve_script_path(script_path, project_dir)
+    }
+
     fn has_unresolved_env_vars(&self, path: &str) -> bool {
-        let after_claude = path
-            .replace("$CLAUDE_PROJECT_DIR", "")
-            .replace("${CLAUDE_PROJECT_DIR}", "");
-        after_claude.contains('$')
+        has_unresolved_env_vars(path)
     }
 }
 
 impl Validator for HooksValidator {
+    /// Main validation entry point for hooks configuration.
+    ///
+    /// ## Validation Phases
+    ///
+    /// 1. **Category check** - Early return if hooks category disabled
+    /// 2. **JSON parsing** - Parse raw JSON, report CC-HK-012 on failure
+    /// 3. **Pre-parse validation** - Raw JSON checks (CC-HK-005, CC-HK-011)
+    /// 4. **Typed parsing** - Parse into SettingsSchema
+    /// 5. **Event iteration** - Validate each event and hook
     fn validate(&self, path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic> {
         let mut diagnostics = Vec::new();
 
-        // Early return if hooks category is entirely disabled
         if !config.rules.hooks {
             return diagnostics;
         }
@@ -174,104 +618,17 @@ impl Validator for HooksValidator {
             }
         };
 
-        // CC-HK-005: Missing type field (pre-parse check)
+        // CC-HK-005: Missing type field (early return on failure)
         if config.is_rule_enabled("CC-HK-005") {
-            if let Some(hooks_obj) = raw_value.get("hooks").and_then(|h| h.as_object()) {
-                for (event, matchers) in hooks_obj {
-                    if let Some(matchers_arr) = matchers.as_array() {
-                        for (matcher_idx, matcher) in matchers_arr.iter().enumerate() {
-                            if let Some(hooks_arr) = matcher.get("hooks").and_then(|h| h.as_array())
-                            {
-                                for (hook_idx, hook) in hooks_arr.iter().enumerate() {
-                                    if hook.get("type").is_none() {
-                                        let hook_location = format!(
-                                            "hooks.{}[{}].hooks[{}]",
-                                            event, matcher_idx, hook_idx
-                                        );
-                                        diagnostics.push(
-                                            Diagnostic::error(
-                                                path.to_path_buf(),
-                                                1,
-                                                0,
-                                                "CC-HK-005",
-                                                format!(
-                                                    "Hook at {} is missing required 'type' field",
-                                                    hook_location
-                                                ),
-                                            )
-                                            .with_suggestion(
-                                                "Add 'type': 'command' or 'type': 'prompt'"
-                                                    .to_string(),
-                                            ),
-                                        );
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+            validate_cc_hk_005_missing_type_field(&raw_value, path, &mut diagnostics);
+            if diagnostics.iter().any(|d| d.rule == "CC-HK-005") {
+                return diagnostics;
             }
         }
 
-        if diagnostics.iter().any(|d| d.rule == "CC-HK-005") {
-            return diagnostics;
-        }
-
-        // CC-HK-011: Invalid timeout value (pre-parse check for negative/zero/non-integer values)
-        // Must check raw JSON before serde deserializes to Option<u64> which can't represent negatives
+        // CC-HK-011: Invalid timeout value
         if config.is_rule_enabled("CC-HK-011") {
-            if let Some(hooks_obj) = raw_value.get("hooks").and_then(|h| h.as_object()) {
-                for (event, matchers) in hooks_obj {
-                    if let Some(matchers_arr) = matchers.as_array() {
-                        for (matcher_idx, matcher) in matchers_arr.iter().enumerate() {
-                            if let Some(hooks_arr) = matcher.get("hooks").and_then(|h| h.as_array())
-                            {
-                                for (hook_idx, hook) in hooks_arr.iter().enumerate() {
-                                    if let Some(timeout_val) = hook.get("timeout") {
-                                        let is_invalid = match timeout_val {
-                                            serde_json::Value::Number(n) => {
-                                                // A valid timeout must be a positive integer.
-                                                // as_u64() returns Some only for non-negative integer
-                                                // JSON numbers within the u64 range; it returns None
-                                                // for negatives, any floats (including 30.0), or
-                                                // out-of-range values.
-                                                if let Some(val) = n.as_u64() {
-                                                    val == 0 // Zero is invalid
-                                                } else {
-                                                    true // Negative, float, or out of range
-                                                }
-                                            }
-                                            _ => true, // String, bool, null, object, array are invalid
-                                        };
-                                        if is_invalid {
-                                            let hook_location = format!(
-                                                "hooks.{}[{}].hooks[{}]",
-                                                event, matcher_idx, hook_idx
-                                            );
-                                            diagnostics.push(
-                                                Diagnostic::error(
-                                                    path.to_path_buf(),
-                                                    1,
-                                                    0,
-                                                    "CC-HK-011",
-                                                    format!(
-                                                        "Invalid timeout value at {}: must be a positive integer",
-                                                        hook_location
-                                                    ),
-                                                )
-                                                .with_suggestion(
-                                                    "Set timeout to a positive integer like 30"
-                                                        .to_string(),
-                                                ),
-                                            );
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            validate_cc_hk_011_invalid_timeout_values(&raw_value, path, &mut diagnostics);
         }
 
         let settings: SettingsSchema = match serde_json::from_str(content) {
@@ -302,93 +659,41 @@ impl Validator for HooksValidator {
             .unwrap_or_else(|| Path::new("."));
 
         for (event, matchers) in &settings.hooks {
+            // --- Event-level validation ---
             // CC-HK-001: Invalid event name
             if config.is_rule_enabled("CC-HK-001") {
-                if !HooksSchema::VALID_EVENTS.contains(&event.as_str()) {
-                    let closest = find_closest_event(event);
-                    let mut diagnostic = Diagnostic::error(
-                        path.to_path_buf(),
-                        1,
-                        0,
-                        "CC-HK-001",
-                        format!(
-                            "Invalid hook event '{}', valid events: {:?}",
-                            event,
-                            HooksSchema::VALID_EVENTS
-                        ),
-                    )
-                    .with_suggestion(closest.suggestion);
-
-                    // Add auto-fix if we found a matching event
-                    if let Some(corrected) = closest.corrected_event {
-                        if let Some((start, end)) = find_event_key_position(content, event) {
-                            let replacement = format!("\"{}\"", corrected);
-                            let description = format!("Replace '{}' with '{}'", event, corrected);
-                            // Case-only fixes are safe (high confidence)
-                            let fix = Fix::replace(
-                                start,
-                                end,
-                                replacement,
-                                description,
-                                closest.is_case_fix,
-                            );
-                            diagnostic = diagnostic.with_fix(fix);
-                        }
-                    }
-
-                    diagnostics.push(diagnostic);
-                    continue; // Skip further validation for invalid events
+                if !validate_cc_hk_001_event_name(event, path, content, &mut diagnostics) {
+                    continue;
                 }
             } else if !HooksSchema::VALID_EVENTS.contains(&event.as_str()) {
-                // Even if rule is disabled, skip invalid events to avoid runtime errors
-                continue;
+                continue; // Skip invalid events even if rule disabled
             }
 
             for (matcher_idx, matcher) in matchers.iter().enumerate() {
+                // --- Matcher-level validation ---
                 // CC-HK-003: Missing matcher for tool events
-                if config.is_rule_enabled("CC-HK-003")
-                    && HooksSchema::is_tool_event(event)
-                    && matcher.matcher.is_none()
-                {
-                    let hook_location = format!("hooks.{}[{}]", event, matcher_idx);
-                    diagnostics.push(
-                        Diagnostic::error(
-                            path.to_path_buf(),
-                            1,
-                            0,
-                            "CC-HK-003",
-                            format!(
-                                "Tool event '{}' at {} requires a matcher field",
-                                event, hook_location
-                            ),
-                        )
-                        .with_suggestion(
-                            "Add 'matcher': '*' for all tools or specify a tool name".to_string(),
-                        ),
+                if config.is_rule_enabled("CC-HK-003") {
+                    validate_cc_hk_003_matcher_required(
+                        event,
+                        &matcher.matcher,
+                        matcher_idx,
+                        path,
+                        &mut diagnostics,
                     );
                 }
 
                 // CC-HK-004: Matcher on non-tool event
-                if config.is_rule_enabled("CC-HK-004")
-                    && !HooksSchema::is_tool_event(event)
-                    && matcher.matcher.is_some()
-                {
-                    let hook_location = format!("hooks.{}[{}]", event, matcher_idx);
-                    diagnostics.push(
-                        Diagnostic::error(
-                            path.to_path_buf(),
-                            1,
-                            0,
-                            "CC-HK-004",
-                            format!(
-                                "Non-tool event '{}' at {} must not have a matcher field",
-                                event, hook_location
-                            ),
-                        )
-                        .with_suggestion("Remove the 'matcher' field".to_string()),
+                if config.is_rule_enabled("CC-HK-004") {
+                    validate_cc_hk_004_matcher_forbidden(
+                        event,
+                        &matcher.matcher,
+                        matcher_idx,
+                        path,
+                        &mut diagnostics,
                     );
                 }
 
+                // --- Hook-level validation ---
                 for (hook_idx, hook) in matcher.hooks.iter().enumerate() {
                     let hook_location = format!(
                         "hooks.{}{}.hooks[{}]",
@@ -405,224 +710,80 @@ impl Validator for HooksValidator {
                         Hook::Command {
                             command, timeout, ..
                         } => {
-                            // CC-HK-010: Timeout policy for command hooks (600s default)
+                            // CC-HK-010: Command timeout policy
                             if config.is_rule_enabled("CC-HK-010") {
-                                let version_pinned = config.is_claude_code_version_pinned();
-
-                                if timeout.is_none() {
-                                    let mut diag = Diagnostic::warning(
-                                        path.to_path_buf(),
-                                        1,
-                                        0,
-                                        "CC-HK-010",
-                                        format!(
-                                            "Command hook at {} has no timeout specified",
-                                            hook_location
-                                        ),
-                                    )
-                                    .with_suggestion(
-                                        "Add a \"timeout\" field (e.g., 600 for command hooks)"
-                                            .to_string(),
-                                    );
-
-                                    if !version_pinned {
-                                        diag = diag.with_assumption(CC_HK_010_ASSUMPTION);
-                                    }
-
-                                    diagnostics.push(diag);
-                                }
-                                if let Some(t) = timeout {
-                                    if *t > COMMAND_HOOK_DEFAULT_TIMEOUT {
-                                        let mut diag = Diagnostic::warning(
-                                            path.to_path_buf(),
-                                            1,
-                                            0,
-                                            "CC-HK-010",
-                                            format!(
-                                                "Command hook at {} has timeout {}s exceeding {}s default",
-                                                hook_location, t, COMMAND_HOOK_DEFAULT_TIMEOUT
-                                            ),
-                                        )
-                                        .with_suggestion(
-                                            format!("Consider timeout <= {}s (10-minute default limit)", COMMAND_HOOK_DEFAULT_TIMEOUT),
-                                        );
-
-                                        if !version_pinned {
-                                            diag = diag.with_assumption(CC_HK_010_ASSUMPTION);
-                                        }
-
-                                        diagnostics.push(diag);
-                                    }
-                                }
+                                validate_cc_hk_010_command_timeout(
+                                    timeout,
+                                    &hook_location,
+                                    config.is_claude_code_version_pinned(),
+                                    path,
+                                    &mut diagnostics,
+                                );
                             }
 
                             // CC-HK-006: Missing command field
-                            if config.is_rule_enabled("CC-HK-006") && command.is_none() {
-                                diagnostics.push(
-                                        Diagnostic::error(
-                                            path.to_path_buf(),
-                                            1,
-                                            0,
-                                            "CC-HK-006",
-                                            format!(
-                                                "Command hook at {} is missing required 'command' field",
-                                                hook_location
-                                            ),
-                                        )
-                                        .with_suggestion(
-                                            "Add a 'command' field with the command to execute"
-                                                .to_string(),
-                                        ),
-                                    );
+                            if config.is_rule_enabled("CC-HK-006") {
+                                validate_cc_hk_006_command_field(
+                                    command,
+                                    &hook_location,
+                                    path,
+                                    &mut diagnostics,
+                                );
                             }
 
                             if let Some(cmd) = command {
                                 // CC-HK-008: Script file not found
                                 if config.is_rule_enabled("CC-HK-008") {
-                                    let fs = config.fs();
-                                    for script_path in self.extract_script_paths(cmd) {
-                                        if !self.has_unresolved_env_vars(&script_path) {
-                                            let resolved =
-                                                self.resolve_script_path(&script_path, project_dir);
-                                            if !fs.exists(&resolved) {
-                                                diagnostics.push(
-                                                    Diagnostic::error(
-                                                        path.to_path_buf(),
-                                                        1,
-                                                        0,
-                                                        "CC-HK-008",
-                                                        format!(
-                                                            "Script file not found at '{}' (resolved to '{}')",
-                                                            script_path,
-                                                            resolved.display()
-                                                        ),
-                                                    )
-                                                    .with_suggestion(
-                                                        "Create the script file or correct the path"
-                                                            .to_string(),
-                                                    ),
-                                                );
-                                            }
-                                        }
-                                    }
+                                    validate_cc_hk_008_script_exists(
+                                        cmd,
+                                        project_dir,
+                                        config,
+                                        path,
+                                        &mut diagnostics,
+                                    );
                                 }
 
                                 // CC-HK-009: Dangerous command patterns
                                 if config.is_rule_enabled("CC-HK-009") {
-                                    if let Some((pattern, reason)) =
-                                        self.check_dangerous_patterns(cmd)
-                                    {
-                                        diagnostics.push(
-                                            Diagnostic::warning(
-                                                path.to_path_buf(),
-                                                1,
-                                                0,
-                                                "CC-HK-009",
-                                                format!(
-                                                    "Potentially dangerous command pattern detected: {}",
-                                                    reason
-                                                ),
-                                            )
-                                            .with_suggestion(format!(
-                                                "Review the command for safety. Pattern matched: {}",
-                                                pattern
-                                            )),
-                                        );
-                                    }
+                                    validate_cc_hk_009_dangerous_patterns(
+                                        cmd,
+                                        path,
+                                        &mut diagnostics,
+                                    );
                                 }
                             }
                         }
                         Hook::Prompt {
                             prompt, timeout, ..
                         } => {
-                            // CC-HK-010: Timeout policy for prompt hooks (30s default)
+                            // CC-HK-010: Prompt timeout policy
                             if config.is_rule_enabled("CC-HK-010") {
-                                let version_pinned = config.is_claude_code_version_pinned();
-
-                                if timeout.is_none() {
-                                    let mut diag = Diagnostic::warning(
-                                        path.to_path_buf(),
-                                        1,
-                                        0,
-                                        "CC-HK-010",
-                                        format!(
-                                            "Prompt hook at {} has no timeout specified",
-                                            hook_location
-                                        ),
-                                    )
-                                    .with_suggestion(
-                                        "Add a \"timeout\" field (e.g., 30 for prompt hooks)"
-                                            .to_string(),
-                                    );
-
-                                    if !version_pinned {
-                                        diag = diag.with_assumption(CC_HK_010_ASSUMPTION);
-                                    }
-
-                                    diagnostics.push(diag);
-                                }
-                                if let Some(t) = timeout {
-                                    if *t > PROMPT_HOOK_DEFAULT_TIMEOUT {
-                                        let mut diag = Diagnostic::warning(
-                                            path.to_path_buf(),
-                                            1,
-                                            0,
-                                            "CC-HK-010",
-                                            format!(
-                                                "Prompt hook at {} has timeout {}s exceeding {}s default",
-                                                hook_location, t, PROMPT_HOOK_DEFAULT_TIMEOUT
-                                            ),
-                                        )
-                                        .with_suggestion(
-                                            format!("Consider timeout <= {}s (30-second default limit)", PROMPT_HOOK_DEFAULT_TIMEOUT),
-                                        );
-
-                                        if !version_pinned {
-                                            diag = diag.with_assumption(CC_HK_010_ASSUMPTION);
-                                        }
-
-                                        diagnostics.push(diag);
-                                    }
-                                }
+                                validate_cc_hk_010_prompt_timeout(
+                                    timeout,
+                                    &hook_location,
+                                    config.is_claude_code_version_pinned(),
+                                    path,
+                                    &mut diagnostics,
+                                );
                             }
 
                             // CC-HK-002: Prompt on wrong event
-                            if config.is_rule_enabled("CC-HK-002")
-                                && !HooksSchema::is_prompt_event(event)
-                            {
-                                diagnostics.push(
-                                        Diagnostic::error(
-                                            path.to_path_buf(),
-                                            1,
-                                            0,
-                                            "CC-HK-002",
-                                            format!(
-                                                "Prompt hook at {} is only allowed for Stop and SubagentStop events, not '{}'",
-                                                hook_location, event
-                                            ),
-                                        )
-                                        .with_suggestion(
-                                            "Use 'type': 'command' instead, or move this hook to Stop/SubagentStop".to_string(),
-                                        ),
-                                    );
+                            if config.is_rule_enabled("CC-HK-002") {
+                                validate_cc_hk_002_prompt_event_type(
+                                    event,
+                                    &hook_location,
+                                    path,
+                                    &mut diagnostics,
+                                );
                             }
 
                             // CC-HK-007: Missing prompt field
-                            if config.is_rule_enabled("CC-HK-007") && prompt.is_none() {
-                                diagnostics.push(
-                                    Diagnostic::error(
-                                        path.to_path_buf(),
-                                        1,
-                                        0,
-                                        "CC-HK-007",
-                                        format!(
-                                            "Prompt hook at {} is missing required 'prompt' field",
-                                            hook_location
-                                        ),
-                                    )
-                                    .with_suggestion(
-                                        "Add a 'prompt' field with the prompt text".to_string(),
-                                    ),
+                            if config.is_rule_enabled("CC-HK-007") {
+                                validate_cc_hk_007_prompt_field(
+                                    prompt,
+                                    &hook_location,
+                                    path,
+                                    &mut diagnostics,
                                 );
                             }
                         }
