@@ -2,7 +2,7 @@
 
 All notable changes to the "agnix" extension will be documented in this file.
 
-## [Unreleased]
+## [0.6.0] - 2026-02-05
 
 ### Added
 
@@ -11,11 +11,6 @@ All notable changes to the "agnix" extension will be documented in this file.
   - Downloads from GitHub releases
   - Extracts and installs to extension storage
   - No manual installation required
-
-## [0.5.0] - 2026-02-05
-
-### Added
-
 - **Diagnostics Tree View** - Sidebar panel showing all issues
   - Organized by file with expand/collapse
   - Click to navigate to issue location

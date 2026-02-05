@@ -3,6 +3,7 @@
   <h1>agnix</h1>
   <p><strong>Lint agent configurations before they break your workflow</strong></p>
   <p>
+    <a href="https://www.npmjs.com/package/agnix"><img src="https://img.shields.io/npm/v/agnix.svg" alt="npm"></a>
     <a href="https://crates.io/crates/agnix-cli"><img src="https://img.shields.io/crates/v/agnix-cli.svg" alt="Crates.io"></a>
     <a href="https://github.com/avifenesh/agnix/releases"><img src="https://img.shields.io/github/v/release/avifenesh/agnix" alt="Release"></a>
     <a href="https://github.com/avifenesh/agnix/actions/workflows/ci.yml"><img src="https://github.com/avifenesh/agnix/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
@@ -46,6 +47,9 @@ agnix validates configs against 100 rules derived from official specs, research 
 ## Installation
 
 ```bash
+# npm (easiest - all platforms)
+npm install -g agnix
+
 # Homebrew (macOS/Linux)
 brew tap avifenesh/agnix
 brew install agnix

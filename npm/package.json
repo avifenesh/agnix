@@ -1,0 +1,55 @@
+{
+  "name": "agnix",
+  "version": "0.6.0",
+  "description": "Linter for AI agent configurations. Validates SKILL.md, CLAUDE.md, hooks, MCP, and more.",
+  "keywords": [
+    "agent",
+    "linter",
+    "claude",
+    "claude-code",
+    "mcp",
+    "model-context-protocol",
+    "skills",
+    "validation",
+    "cursor",
+    "copilot",
+    "codex",
+    "ai"
+  ],
+  "homepage": "https://github.com/avifenesh/agnix",
+  "bugs": {
+    "url": "https://github.com/avifenesh/agnix/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/avifenesh/agnix.git"
+  },
+  "license": "MIT OR Apache-2.0",
+  "author": "Avi Fenesh <avifenesh@gmail.com>",
+  "bin": {
+    "agnix": "bin/agnix"
+  },
+  "main": "index.js",
+  "files": [
+    "bin/",
+    "install.js",
+    "index.js",
+    "README.md"
+  ],
+  "scripts": {
+    "postinstall": "node install.js",
+    "test": "node test/test.js"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ],
+  "cpu": [
+    "x64",
+    "arm64"
+  ]
+}

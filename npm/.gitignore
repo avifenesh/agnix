@@ -1,0 +1,9 @@
+# Downloaded binaries (added during install)
+bin/agnix
+bin/agnix.exe
+bin/*.tar.gz
+bin/*.zip
+
+# npm artifacts
+node_modules/
+*.tgz
