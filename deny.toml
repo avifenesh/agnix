@@ -8,6 +8,7 @@ db-urls = ["https://github.com/rustsec/advisory-db"]
 # Temporary ignore for unmaintained crates (tracked in #227)
 ignore = [
     "RUSTSEC-2024-0384", # instant (via notify) - waiting for notify update
+    "RUSTSEC-2024-0404", # bincode (via criterion) - dev dependency only
 ]
 
 [licenses]
@@ -58,6 +59,7 @@ skip = [
     { name = "schemars_derive", version = "=0.8.22" },
     { name = "thiserror", version = "=1.0.69" }, # many crates use v1
     { name = "thiserror-impl", version = "=1.0.69" },
+    { name = "tower", version = "=0.4.13" }, # tower-lsp uses v0.4, rmcp uses v0.5
     { name = "windows-sys", version = "=0.48.0" }, # dirs use v0.48
     { name = "windows-sys", version = "=0.52.0" }, # notify use v0.52
     { name = "windows-sys", version = "=0.60.2" }, # tokio/socket2 use v0.60
