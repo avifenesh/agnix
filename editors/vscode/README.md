@@ -1,95 +1,104 @@
 # agnix - Agent Config Linter
 
-Real-time validation for agent configuration files in VS Code.
+Real-time validation for AI agent configuration files in VS Code.
+
+**100 rules** | **Real-time diagnostics** | **Auto-fix** | **Multi-tool support**
 
 ## Features
 
-- Real-time diagnostics for agent configuration files
-- Validates 100 rules across multiple configuration types
-- Status bar indicator showing validation status
-- Syntax highlighting for SKILL.md frontmatter
+- **Real-time validation** - Diagnostics as you type
+- **100 validation rules** - From official specs and best practices
+- **Auto-fix support** - One-click fixes for common issues
+- **Multi-tool** - Claude Code, Cursor, GitHub Copilot, Codex CLI
+- **Status bar** - See validation status at a glance
 
 ## Supported File Types
 
-- `SKILL.md` - Agent skill definitions (agentskills.io spec)
-- `CLAUDE.md`, `AGENTS.md` - Claude Code memory files
-- `.claude/settings.json` - Hook configurations
-- `plugin.json` - Plugin manifests
-- `*.mcp.json` - MCP tool configurations
-- `.github/copilot-instructions.md` - GitHub Copilot instructions
-- `.cursor/rules/*.mdc` - Cursor project rules
-
-## Requirements
-
-This extension requires the `agnix-lsp` binary to be installed:
-
-```bash
-# From the agnix repository
-cargo install --path crates/agnix-lsp
-
-# Or from crates.io (when published)
-cargo install agnix-lsp
-```
-
-## Extension Settings
-
-This extension contributes the following settings:
-
-- `agnix.lspPath`: Path to the agnix-lsp executable (default: `agnix-lsp`)
-- `agnix.enable`: Enable/disable agnix validation (default: `true`)
-- `agnix.trace.server`: Traces communication between VS Code and the language server
+| File | Tool | Description |
+|------|------|-------------|
+| `SKILL.md` | Claude Code | Agent skill definitions |
+| `CLAUDE.md`, `AGENTS.md` | Claude Code, Codex | Memory files |
+| `.claude/settings.json` | Claude Code | Hook configurations |
+| `plugin.json` | Claude Code | Plugin manifests |
+| `*.mcp.json` | All | MCP tool configurations |
+| `.github/copilot-instructions.md` | GitHub Copilot | Custom instructions |
+| `.cursor/rules/*.mdc` | Cursor | Project rules |
 
 ## Commands
 
-- `agnix: Restart Language Server` - Restart the agnix language server
-- `agnix: Show Output Channel` - Show the agnix output channel for debugging
+Access via Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`):
+
+| Command | Shortcut | Description |
+|---------|----------|-------------|
+| `agnix: Validate Current File` | `Ctrl+Shift+V` | Validate active file |
+| `agnix: Validate Workspace` | - | Validate all agent configs |
+| `agnix: Fix All Issues in File` | `Ctrl+Shift+.` | Apply all available fixes |
+| `agnix: Show All Rules` | - | Browse 100 rules by category |
+| `agnix: Restart Language Server` | - | Restart the LSP server |
+| `agnix: Show Output Channel` | - | View server logs |
+
+## Context Menu
+
+Right-click on agent config files to:
+- Validate Current File
+- Fix All Issues
+
+## Requirements
+
+Install the `agnix-lsp` binary:
+
+```bash
+# From crates.io
+cargo install agnix-lsp
+
+# Or via Homebrew
+brew tap avifenesh/agnix && brew install agnix
+```
+
+## Settings
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `agnix.lspPath` | `agnix-lsp` | Path to LSP binary |
+| `agnix.enable` | `true` | Enable/disable validation |
+| `agnix.trace.server` | `off` | Server communication tracing |
 
 ## Configuration
 
-The extension respects `.agnix.toml` configuration files in your workspace:
+Create `.agnix.toml` in your workspace:
 
 ```toml
-severity = "Warning"
 target = "ClaudeCode"
 
 [rules]
-skills = true
-hooks = true
-agents = true
-mcp = true
-
-exclude = [
-  "node_modules/**",
-  ".git/**"
-]
+disabled_rules = ["PE-003"]
 ```
 
-See the [agnix documentation](https://github.com/avifenesh/agnix) for full configuration options.
+See [configuration docs](https://github.com/avifenesh/agnix/blob/main/docs/CONFIGURATION.md) for all options.
 
 ## Troubleshooting
 
 ### agnix-lsp not found
-
-If you see "agnix-lsp not found", ensure the binary is installed and in your PATH:
 
 ```bash
 # Check if installed
 which agnix-lsp  # Unix
 where agnix-lsp  # Windows
 
-# Or specify the full path in settings
+# Or specify full path in settings
 "agnix.lspPath": "/path/to/agnix-lsp"
 ```
 
 ### No diagnostics appearing
 
-1. Check that the file is a supported type (see above)
-2. Verify the language server is running (check status bar)
-3. Open the output channel (`agnix: Show Output Channel`) for errors
+1. Check file type is supported (see table above)
+2. Verify status bar shows "agnix" (not "agnix (error)")
+3. Run `agnix: Show Output Channel` for error details
 
 ## Links
 
 - [agnix on GitHub](https://github.com/avifenesh/agnix)
+- [Validation Rules Reference](https://github.com/avifenesh/agnix/blob/main/knowledge-base/VALIDATION-RULES.md)
 - [Agent Skills Specification](https://agentskills.io)
 - [Model Context Protocol](https://modelcontextprotocol.io)
 
