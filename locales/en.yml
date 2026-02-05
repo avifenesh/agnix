@@ -242,38 +242,33 @@ en:
       suggestion: "Remove '</%{tag}>' or add matching opening tag '<%{tag}>'"
 
     # --- Imports (imports.rs) ---
-    ref_001:
-      message: "Import target not found: '%{path}'"
-      suggestion: "Create the file or correct the import path"
-    ref_002:
+    cc_mem_001:
+      not_found: "Import target not found: @%{path}"
+      absolute: "Absolute import paths not allowed: @%{path}"
+      escapes: "Import path escapes project root: @%{path}"
+      absolute_suggestion: "Use relative paths only"
+      escapes_suggestion: "Use relative paths that stay within the project root"
+    cc_mem_002:
       message: "Circular import detected: %{chain}"
-      suggestion: "Remove the circular reference"
-    ref_003:
-      message: "Import path escapes project root: '%{path}'"
-      suggestion: "Keep imports within the project directory"
-    ref_004:
-      message: "Import reference too deep (depth %{depth}, max %{max})"
-      suggestion: "Flatten the import chain"
-    ref_005:
-      message: "Ambiguous import target: '%{path}' matches multiple files"
-      suggestion: "Use a more specific path"
-    ref_006:
-      message: "Import path uses absolute path: '%{path}'"
-      suggestion: "Use relative paths for imports"
-    ref_007:
-      message: "Import references non-markdown file: '%{path}'"
-      suggestion: "Only import .md files"
+      suggestion: "Break the circular import chain to prevent infinite recursion"
+    cc_mem_003:
+      message: "Import depth exceeded (%{depth} levels, max %{max})"
+      suggestion: "Flatten the import hierarchy to reduce depth"
+    ref_001:
+      not_found: "Import target not found: @%{path}"
+    ref_002:
+      message: "Broken markdown link: '%{url}' (file not found: %{resolved})"
+      suggestion: "Fix the link target or remove the broken link"
 
     # --- Cross-platform (cross_platform.rs) ---
     xp_001:
-      message: "OS-specific path detected: '%{path}'"
-      suggestion: "Use platform-independent paths"
+      message: "Claude-specific feature '%{feature}' in %{filename}: %{description}"
+      suggestion: "Move to CLAUDE.md or wrap in a Claude-specific section (e.g., '## Claude Code Specific')"
     xp_002:
-      message: "OS-specific command detected: '%{cmd}'"
-      suggestion: "Use cross-platform alternatives or conditional logic"
+      message: "%{filename} structure issue: %{issue}"
     xp_003:
-      message: "Hardcoded absolute path detected: '%{path}'"
-      suggestion: "Use relative paths or environment variables"
+      message: "Hard-coded %{platform} path '%{path}' may cause portability issues"
+      suggestion: "Use environment variables or relative paths for better portability"
     xp_004:
       message: "Conflicting package managers: %{file1} uses %{mgr1} but %{file2} uses %{mgr2} for %{cmd_type} commands"
       suggestion: "Standardize on a single package manager across all instruction files"
@@ -329,17 +324,17 @@ en:
 
     # --- Prompt engineering (prompt.rs) ---
     pe_001:
-      message: "Ambiguous instruction detected: '%{text}'"
-      suggestion: "Replace vague language with specific, actionable instructions"
+      message: "Critical keyword '%{keyword}' at %{percent}%% of document (40-60%% is the 'lost in the middle' zone)"
+      suggestion: "Move critical content to the start or end of the document for better recall"
     pe_002:
-      message: "Conflicting instructions detected: '%{text1}' conflicts with '%{text2}'"
-      suggestion: "Resolve the contradiction between these instructions"
+      message: "Chain-of-thought phrase '%{phrase}' used with simple task '%{task}'"
+      suggestion: "Remove chain-of-thought instructions for simple tasks; CoT can hurt performance on direct operations"
     pe_003:
-      message: "Instruction exceeds recommended complexity"
-      suggestion: "Break complex instructions into smaller, focused directives"
+      message: "Weak language '%{term}' in critical section '%{section}'"
+      suggestion: "Use strong language (must/always/never) in critical sections for better compliance"
     pe_004:
-      message: "Missing context for instruction: '%{text}'"
-      suggestion: "Add context about when and how this instruction applies"
+      message: "Ambiguous term '%{term}' creates unclear instruction"
+      suggestion: "Replace with specific criteria or remove ambiguity (e.g., 'always' instead of 'usually')"
 
     # --- Plugin (plugin.rs) ---
     cc_pl_001:

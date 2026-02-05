@@ -13,6 +13,7 @@ use crate::{
         check_markdown_structure, find_claude_specific_features, find_hard_coded_paths,
     },
 };
+use rust_i18n::t;
 use std::path::Path;
 
 pub struct CrossPlatformValidator;
@@ -38,14 +39,10 @@ impl Validator for CrossPlatformValidator {
                         feature.line,
                         feature.column,
                         "XP-001",
-                        format!(
-                            "Claude-specific feature '{}' in {}: {}",
-                            feature.feature, filename, feature.description
-                        ),
+                        t!("rules.xp_001.message", feature = feature.feature.as_str(), filename = filename, description = feature.description.as_str()),
                     )
                     .with_suggestion(
-                        "Move to CLAUDE.md or wrap in a Claude-specific section (e.g., '## Claude Code Specific')"
-                            .to_string(),
+                        t!("rules.xp_001.suggestion"),
                     ),
                 );
             }
@@ -62,7 +59,7 @@ impl Validator for CrossPlatformValidator {
                         issue.line,
                         issue.column,
                         "XP-002",
-                        format!("{} structure issue: {}", filename, issue.issue),
+                        t!("rules.xp_002.message", filename = filename, issue = issue.issue.as_str()),
                     )
                     .with_suggestion(issue.suggestion),
                 );
@@ -80,14 +77,10 @@ impl Validator for CrossPlatformValidator {
                         path_issue.line,
                         path_issue.column,
                         "XP-003",
-                        format!(
-                            "Hard-coded {} path '{}' may cause portability issues",
-                            path_issue.platform, path_issue.path
-                        ),
+                        t!("rules.xp_003.message", platform = path_issue.platform.as_str(), path = path_issue.path.as_str()),
                     )
                     .with_suggestion(
-                        "Use environment variables or relative paths for better portability"
-                            .to_string(),
+                        t!("rules.xp_003.suggestion"),
                     ),
                 );
             }
