@@ -27,6 +27,93 @@ interface PlatformInfo {
   binary: string;
 }
 
+/**
+ * LSP configuration structure sent to the language server.
+ *
+ * Maps VS Code settings to the Rust LintConfig structure.
+ * Uses snake_case for Rust compatibility.
+ */
+interface LspConfig {
+  severity?: string;
+  target?: string;
+  tools?: string[];
+  rules?: {
+    skills?: boolean;
+    hooks?: boolean;
+    agents?: boolean;
+    memory?: boolean;
+    plugins?: boolean;
+    xml?: boolean;
+    mcp?: boolean;
+    imports?: boolean;
+    cross_platform?: boolean;
+    agents_md?: boolean;
+    copilot?: boolean;
+    cursor?: boolean;
+    prompt_engineering?: boolean;
+    disabled_rules?: string[];
+  };
+  versions?: {
+    claude_code?: string | null;
+    codex?: string | null;
+    cursor?: string | null;
+    copilot?: string | null;
+  };
+  specs?: {
+    mcp_protocol?: string | null;
+    agent_skills_spec?: string | null;
+    agents_md_spec?: string | null;
+  };
+}
+
+/**
+ * Build LSP configuration from VS Code settings.
+ *
+ * Reads all agnix.* settings and maps them to the Rust LintConfig structure.
+ * Handles the camelCase to snake_case conversion for Rust compatibility.
+ *
+ * @returns LspConfig object ready to send to the LSP server
+ */
+function buildLspConfig(): LspConfig {
+  const config = vscode.workspace.getConfiguration('agnix');
+
+  // Helper to convert undefined to null (Rust Option<String> expects null)
+  const toNull = <T>(value: T | undefined): T | null => value === undefined ? null : value;
+
+  return {
+    severity: config.get<string>('severity'),
+    target: config.get<string>('target'),
+    tools: config.get<string[]>('tools'),
+    rules: {
+      skills: config.get<boolean>('rules.skills'),
+      hooks: config.get<boolean>('rules.hooks'),
+      agents: config.get<boolean>('rules.agents'),
+      memory: config.get<boolean>('rules.memory'),
+      plugins: config.get<boolean>('rules.plugins'),
+      xml: config.get<boolean>('rules.xml'),
+      mcp: config.get<boolean>('rules.mcp'),
+      imports: config.get<boolean>('rules.imports'),
+      cross_platform: config.get<boolean>('rules.crossPlatform'),
+      agents_md: config.get<boolean>('rules.agentsMd'),
+      copilot: config.get<boolean>('rules.copilot'),
+      cursor: config.get<boolean>('rules.cursor'),
+      prompt_engineering: config.get<boolean>('rules.promptEngineering'),
+      disabled_rules: config.get<string[]>('rules.disabledRules'),
+    },
+    versions: {
+      claude_code: toNull(config.get<string | null>('versions.claudeCode')),
+      codex: toNull(config.get<string | null>('versions.codex')),
+      cursor: toNull(config.get<string | null>('versions.cursor')),
+      copilot: toNull(config.get<string | null>('versions.copilot')),
+    },
+    specs: {
+      mcp_protocol: toNull(config.get<string | null>('specs.mcpProtocol')),
+      agent_skills_spec: toNull(config.get<string | null>('specs.agentSkills')),
+      agents_md_spec: toNull(config.get<string | null>('specs.agentsMd')),
+    },
+  };
+}
+
 const AGNIX_FILE_PATTERNS = [
   '**/SKILL.md',
   '**/CLAUDE.md',
@@ -336,7 +423,18 @@ export async function activate(
         const config = vscode.workspace.getConfiguration('agnix');
         if (!config.get<boolean>('enable', true)) {
           await stopClient();
+        } else if (e.affectsConfiguration('agnix.lspPath')) {
+          // LSP path changed, need full restart
+          await restartClient();
+        } else if (client && client.isRunning()) {
+          // Other settings changed, send to server without restart
+          const lspConfig = buildLspConfig();
+          outputChannel.appendLine('Sending configuration update to LSP server');
+          client.sendNotification('workspace/didChangeConfiguration', {
+            settings: lspConfig,
+          });
         } else {
+          // Client not running but enable is true, start it
           await restartClient();
         }
       }
@@ -430,6 +528,13 @@ async function startClient(): Promise<void> {
     await client.start();
     outputChannel.appendLine('agnix-lsp started successfully');
     updateStatusBar('ready', 'agnix');
+
+    // Send initial configuration to the LSP server
+    const lspConfig = buildLspConfig();
+    outputChannel.appendLine('Sending initial configuration to LSP server');
+    client.sendNotification('workspace/didChangeConfiguration', {
+      settings: lspConfig,
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     outputChannel.appendLine(`Failed to start agnix-lsp: ${message}`);
