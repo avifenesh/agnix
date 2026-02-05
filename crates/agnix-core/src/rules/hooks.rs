@@ -539,6 +539,116 @@ fn validate_cc_hk_010_command_timeout(
     }
 }
 
+// =============================================================================
+// Prompt Hook Validation Functions (CC-HK-002, CC-HK-007, CC-HK-010)
+// =============================================================================
+
+/// CC-HK-002: Prompt hook on wrong event
+///
+/// Prompt hooks are only allowed for Stop and SubagentStop events.
+fn validate_cc_hk_002_prompt_event_type(
+    event: &str,
+    hook_location: &str,
+    path: &Path,
+    diagnostics: &mut Vec<Diagnostic>,
+) {
+    if !HooksSchema::is_prompt_event(event) {
+        diagnostics.push(
+            Diagnostic::error(
+                path.to_path_buf(),
+                1,
+                0,
+                "CC-HK-002",
+                format!(
+                    "Prompt hook at {} is only allowed for Stop and SubagentStop events, not '{}'",
+                    hook_location, event
+                ),
+            )
+            .with_suggestion(
+                "Use 'type': 'command' instead, or move this hook to Stop/SubagentStop".to_string(),
+            ),
+        );
+    }
+}
+
+/// CC-HK-007: Missing prompt field
+///
+/// Prompt hooks must have a 'prompt' field specifying the prompt text.
+fn validate_cc_hk_007_prompt_field(
+    prompt: &Option<String>,
+    hook_location: &str,
+    path: &Path,
+    diagnostics: &mut Vec<Diagnostic>,
+) {
+    if prompt.is_none() {
+        diagnostics.push(
+            Diagnostic::error(
+                path.to_path_buf(),
+                1,
+                0,
+                "CC-HK-007",
+                format!(
+                    "Prompt hook at {} is missing required 'prompt' field",
+                    hook_location
+                ),
+            )
+            .with_suggestion("Add a 'prompt' field with the prompt text".to_string()),
+        );
+    }
+}
+
+/// CC-HK-010: Prompt hook timeout policy
+///
+/// Warns if timeout is missing or exceeds the 30s default for prompt hooks.
+fn validate_cc_hk_010_prompt_timeout(
+    timeout: &Option<u64>,
+    hook_location: &str,
+    version_pinned: bool,
+    path: &Path,
+    diagnostics: &mut Vec<Diagnostic>,
+) {
+    if timeout.is_none() {
+        let mut diag = Diagnostic::warning(
+            path.to_path_buf(),
+            1,
+            0,
+            "CC-HK-010",
+            format!("Prompt hook at {} has no timeout specified", hook_location),
+        )
+        .with_suggestion("Add a \"timeout\" field (e.g., 30 for prompt hooks)".to_string());
+
+        if !version_pinned {
+            diag = diag.with_assumption(CC_HK_010_ASSUMPTION);
+        }
+
+        diagnostics.push(diag);
+    }
+    if let Some(t) = timeout {
+        if *t > PROMPT_HOOK_DEFAULT_TIMEOUT {
+            let mut diag = Diagnostic::warning(
+                path.to_path_buf(),
+                1,
+                0,
+                "CC-HK-010",
+                format!(
+                    "Prompt hook at {} has timeout {}s exceeding {}s default",
+                    hook_location, t, PROMPT_HOOK_DEFAULT_TIMEOUT
+                ),
+            )
+            .with_suggestion(format!(
+                "Consider timeout <= {}s (30-second default limit)",
+                PROMPT_HOOK_DEFAULT_TIMEOUT
+            ));
+
+            if !version_pinned {
+                diag = diag.with_assumption(CC_HK_010_ASSUMPTION);
+            }
+
+            diagnostics.push(diag);
+        }
+    }
+}
+
 // Keep HooksValidator impl for backward compatibility with existing tests
 impl HooksValidator {
     fn check_dangerous_patterns(&self, command: &str) -> Option<(&'static str, &'static str)> {
@@ -723,92 +833,32 @@ impl Validator for HooksValidator {
                         } => {
                             // CC-HK-010: Timeout policy for prompt hooks (30s default)
                             if config.is_rule_enabled("CC-HK-010") {
-                                let version_pinned = config.is_claude_code_version_pinned();
-
-                                if timeout.is_none() {
-                                    let mut diag = Diagnostic::warning(
-                                        path.to_path_buf(),
-                                        1,
-                                        0,
-                                        "CC-HK-010",
-                                        format!(
-                                            "Prompt hook at {} has no timeout specified",
-                                            hook_location
-                                        ),
-                                    )
-                                    .with_suggestion(
-                                        "Add a \"timeout\" field (e.g., 30 for prompt hooks)"
-                                            .to_string(),
-                                    );
-
-                                    if !version_pinned {
-                                        diag = diag.with_assumption(CC_HK_010_ASSUMPTION);
-                                    }
-
-                                    diagnostics.push(diag);
-                                }
-                                if let Some(t) = timeout {
-                                    if *t > PROMPT_HOOK_DEFAULT_TIMEOUT {
-                                        let mut diag = Diagnostic::warning(
-                                            path.to_path_buf(),
-                                            1,
-                                            0,
-                                            "CC-HK-010",
-                                            format!(
-                                                "Prompt hook at {} has timeout {}s exceeding {}s default",
-                                                hook_location, t, PROMPT_HOOK_DEFAULT_TIMEOUT
-                                            ),
-                                        )
-                                        .with_suggestion(
-                                            format!("Consider timeout <= {}s (30-second default limit)", PROMPT_HOOK_DEFAULT_TIMEOUT),
-                                        );
-
-                                        if !version_pinned {
-                                            diag = diag.with_assumption(CC_HK_010_ASSUMPTION);
-                                        }
-
-                                        diagnostics.push(diag);
-                                    }
-                                }
+                                validate_cc_hk_010_prompt_timeout(
+                                    timeout,
+                                    &hook_location,
+                                    config.is_claude_code_version_pinned(),
+                                    path,
+                                    &mut diagnostics,
+                                );
                             }
 
                             // CC-HK-002: Prompt on wrong event
-                            if config.is_rule_enabled("CC-HK-002")
-                                && !HooksSchema::is_prompt_event(event)
-                            {
-                                diagnostics.push(
-                                        Diagnostic::error(
-                                            path.to_path_buf(),
-                                            1,
-                                            0,
-                                            "CC-HK-002",
-                                            format!(
-                                                "Prompt hook at {} is only allowed for Stop and SubagentStop events, not '{}'",
-                                                hook_location, event
-                                            ),
-                                        )
-                                        .with_suggestion(
-                                            "Use 'type': 'command' instead, or move this hook to Stop/SubagentStop".to_string(),
-                                        ),
-                                    );
+                            if config.is_rule_enabled("CC-HK-002") {
+                                validate_cc_hk_002_prompt_event_type(
+                                    event,
+                                    &hook_location,
+                                    path,
+                                    &mut diagnostics,
+                                );
                             }
 
                             // CC-HK-007: Missing prompt field
-                            if config.is_rule_enabled("CC-HK-007") && prompt.is_none() {
-                                diagnostics.push(
-                                    Diagnostic::error(
-                                        path.to_path_buf(),
-                                        1,
-                                        0,
-                                        "CC-HK-007",
-                                        format!(
-                                            "Prompt hook at {} is missing required 'prompt' field",
-                                            hook_location
-                                        ),
-                                    )
-                                    .with_suggestion(
-                                        "Add a 'prompt' field with the prompt text".to_string(),
-                                    ),
+                            if config.is_rule_enabled("CC-HK-007") {
+                                validate_cc_hk_007_prompt_field(
+                                    prompt,
+                                    &hook_location,
+                                    path,
+                                    &mut diagnostics,
                                 );
                             }
                         }
