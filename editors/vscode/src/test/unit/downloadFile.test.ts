@@ -13,14 +13,14 @@ class FakeWriteStream extends EventEmitter {
 class FakeResponse extends EventEmitter {
   public statusCode = 200;
   public headers: Record<string, string | string[] | undefined> = {};
-  private readonly onPipe: (dest: any) => void;
+  private readonly onPipe: (dest: { emit?: (event: string, ...args: unknown[]) => boolean }) => void;
 
-  constructor(onPipe: (dest: any) => void) {
+  constructor(onPipe: (dest: { emit?: (event: string, ...args: unknown[]) => boolean }) => void) {
     super();
     this.onPipe = onPipe;
   }
 
-  pipe(dest: any): void {
+  pipe(dest: { emit?: (event: string, ...args: unknown[]) => boolean }): void {
     this.onPipe(dest);
   }
 
@@ -81,7 +81,9 @@ describe('downloadFile', () => {
       get: (_url, cb) => {
         const response = new FakeResponse((dest) => {
           setImmediate(() => {
-            dest.emit('error', new Error('disk full'));
+            if (dest.emit) {
+              dest.emit('error', new Error('disk full'));
+            }
           });
         });
         setImmediate(() => cb(response));
@@ -112,7 +114,9 @@ describe('downloadFile', () => {
       get: (_url, cb) => {
         const response = new FakeResponse((dest) => {
           setImmediate(() => {
-            dest.emit('finish');
+            if (dest.emit) {
+              dest.emit('finish');
+            }
           });
         });
         setImmediate(() => cb(response));

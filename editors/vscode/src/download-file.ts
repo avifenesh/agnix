@@ -4,6 +4,7 @@ import * as https from 'https';
 type WritableFile = {
   close: () => void;
   on: (event: string, listener: (...args: unknown[]) => void) => unknown;
+  emit?: (event: string, ...args: unknown[]) => boolean;
 };
 
 type ResponseLike = {
