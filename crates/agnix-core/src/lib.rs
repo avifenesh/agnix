@@ -37,6 +37,7 @@ use std::path::{Path, PathBuf};
 
 use rayon::iter::ParallelBridge;
 use rayon::prelude::*;
+use rust_i18n::t;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Mutex;
 
@@ -681,10 +682,10 @@ pub fn validate_project_with_registry(
                     1,
                     0,
                     "VER-001",
-                    "No tool or spec versions pinned. Version-dependent rules will use default assumptions.".to_string(),
+                    t!("rules.ver_001.message"),
                 )
                 .with_suggestion(
-                    "Pin versions in .agnix.toml [tool_versions] or [spec_revisions] for deterministic validation.".to_string(),
+                    t!("rules.ver_001.suggestion"),
                 ),
             );
         }
