@@ -157,12 +157,19 @@ fn is_valid_agent(agent: &str) -> bool {
 /// Validation context holding shared state for skill validation.
 /// Groups related validation methods and avoids passing many parameters.
 struct ValidationContext<'a> {
+    /// Path to the skill file being validated
     path: &'a Path,
+    /// Raw file content
     content: &'a str,
+    /// Lint configuration (rule enablement, filesystem access)
     config: &'a LintConfig,
+    /// Parsed frontmatter sections (header, body, byte positions)
     parts: FrontmatterParts,
+    /// Byte offsets of line starts for position tracking
     line_starts: Vec<usize>,
+    /// Parsed frontmatter YAML (populated by validate_frontmatter_structure, consumed after)
     frontmatter: Option<SkillFrontmatter>,
+    /// Accumulated diagnostics (errors, warnings)
     diagnostics: Vec<Diagnostic>,
 }
 
@@ -651,6 +658,11 @@ impl<'a> ValidationContext<'a> {
         // CC-SK-008: Unknown tool name
         if self.config.is_rule_enabled("CC-SK-008") {
             if let Some(ref tools) = tool_list {
+                // Compute known tools list once outside loop
+                static KNOWN_TOOLS_LIST: OnceLock<String> = OnceLock::new();
+                let known_tools_str =
+                    KNOWN_TOOLS_LIST.get_or_init(|| KNOWN_TOOLS.join(", "));
+
                 for tool in tools {
                     let base_name = tool.split('(').next().unwrap_or(tool);
                     if !KNOWN_TOOLS.contains(&base_name) {
@@ -663,12 +675,12 @@ impl<'a> ValidationContext<'a> {
                                 format!(
                                     "Unknown tool '{}'. Known tools: {}",
                                     base_name,
-                                    KNOWN_TOOLS.join(", ")
+                                    known_tools_str
                                 ),
                             )
                             .with_suggestion(format!(
                                 "Use one of the known Claude Code tools: {}",
-                                KNOWN_TOOLS.join(", ")
+                                known_tools_str
                             )),
                         );
                     }
@@ -1077,7 +1089,7 @@ fn line_col_at(offset: usize, line_starts: &[usize]) -> (usize, usize) {
         }
     }
     let line_start = line_starts[low];
-    (low + 1, offset - line_start + 1)
+    (low + 1, offset.saturating_sub(line_start) + 1)
 }
 
 fn frontmatter_key_line_col(
