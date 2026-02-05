@@ -106,4 +106,104 @@ Body content here"#;
         let result: LintResult<(TestFrontmatter, String)> = parse_frontmatter(content);
         assert!(result.is_err()); // Should fail to deserialize empty frontmatter
     }
+
+    #[test]
+    fn test_split_frontmatter_basic() {
+        let content = "---\nname: test\n---\nbody";
+        let parts = split_frontmatter(content);
+        assert!(parts.has_frontmatter);
+        assert!(parts.has_closing);
+        // Frontmatter excludes the \n before closing --- (it's part of the delimiter)
+        assert_eq!(parts.frontmatter, "\nname: test");
+        assert_eq!(parts.body, "\nbody");
+    }
+
+    #[test]
+    fn test_split_frontmatter_no_closing() {
+        let content = "---\nname: test";
+        let parts = split_frontmatter(content);
+        assert!(parts.has_frontmatter);
+        assert!(!parts.has_closing);
+        assert!(parts.frontmatter.is_empty());
+    }
+
+    #[test]
+    fn test_split_frontmatter_empty() {
+        let content = "";
+        let parts = split_frontmatter(content);
+        assert!(!parts.has_frontmatter);
+        assert!(!parts.has_closing);
+    }
+
+    #[test]
+    fn test_split_frontmatter_whitespace_prefix() {
+        let content = "  \n---\nkey: val\n---\nbody";
+        let parts = split_frontmatter(content);
+        assert!(parts.has_frontmatter);
+        assert!(parts.has_closing);
+    }
+
+    #[test]
+    fn test_split_frontmatter_multiple_dashes() {
+        let content = "---\nfirst: 1\n---\nmiddle\n---\nlast";
+        let parts = split_frontmatter(content);
+        assert!(parts.has_frontmatter);
+        assert!(parts.has_closing);
+        // Should split at first closing ---
+        assert!(parts.body.contains("middle"));
+    }
+}
+
+#[cfg(test)]
+mod proptests {
+    use super::*;
+    use proptest::prelude::*;
+
+    proptest! {
+        #![proptest_config(ProptestConfig::with_cases(100))]
+
+        #[test]
+        fn split_frontmatter_never_panics(content in ".*") {
+            // split_frontmatter should never panic on any input
+            let _ = split_frontmatter(&content);
+        }
+
+        #[test]
+        fn split_frontmatter_valid_offsets(content in ".*") {
+            let parts = split_frontmatter(&content);
+            // Offsets should be within content bounds
+            prop_assert!(parts.frontmatter_start <= content.len());
+            prop_assert!(parts.body_start <= content.len());
+        }
+
+        #[test]
+        fn frontmatter_with_dashes_detected(
+            yaml in "[a-z]+: [a-z]+",
+        ) {
+            let content = format!("---\n{}\n---\nbody", yaml);
+            let parts = split_frontmatter(&content);
+            prop_assert!(parts.has_frontmatter);
+            prop_assert!(parts.has_closing);
+        }
+
+        #[test]
+        fn no_frontmatter_without_leading_dashes(
+            content in "[^-].*"
+        ) {
+            let parts = split_frontmatter(&content);
+            prop_assert!(!parts.has_frontmatter);
+        }
+
+        #[test]
+        fn unclosed_frontmatter_has_empty_frontmatter(
+            yaml in "[a-z]+: [a-z]+"
+        ) {
+            // Content with --- but no closing ---
+            let content = format!("---\n{}", yaml);
+            let parts = split_frontmatter(&content);
+            prop_assert!(parts.has_frontmatter);
+            prop_assert!(!parts.has_closing);
+            prop_assert!(parts.frontmatter.is_empty());
+        }
+    }
 }

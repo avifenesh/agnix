@@ -27,13 +27,86 @@
 
 ## Architecture
 
+### Crate Dependency Graph
+
+```
+agnix-rules (data-only, generated from rules.json)
+    ↓
+agnix-core (validation engine)
+    ↓
+├── agnix-cli (command-line interface)
+└── agnix-lsp (language server protocol)
+```
+
+### Project Layout
+
 ```
 crates/
-├── agnix-core/     # Parsers, schemas, rules, diagnostics
-└── agnix-cli/      # CLI with clap
-knowledge-base/     # 100 rules, 75+ sources
-tests/fixtures/     # Test cases
+├── agnix-rules/    # Rule definitions (build-time generated)
+├── agnix-core/     # Core: parsers, schemas, validators, diagnostics
+├── agnix-cli/      # CLI binary (clap)
+└── agnix-lsp/      # LSP server (tower-lsp, tokio)
+editors/
+└── vscode/         # VS Code extension
+knowledge-base/     # 100 rules, 75+ sources, rules.json
+tests/fixtures/     # Test cases by category
 ```
+
+### Core Modules (agnix-core)
+
+- `parsers/` - Frontmatter, JSON, Markdown parsing
+- `schemas/` - Type definitions (12 schemas: skill, hooks, agent, mcp, etc.)
+- `rules/` - Validators implementing Validator trait (13 validators)
+- `config.rs` - LintConfig, ToolVersions, SpecRevisions
+- `diagnostics.rs` - Diagnostic, Fix, DiagnosticLevel
+- `fixes.rs` - Auto-fix application engine
+
+### Key Abstractions
+
+```rust
+// Primary extension point - implement for custom validators
+pub trait Validator {
+    fn validate(&self, path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic>;
+}
+
+// Registry pattern - multiple validators per FileType
+pub struct ValidatorRegistry {
+    validators: HashMap<FileType, Vec<ValidatorFactory>>
+}
+
+// Diagnostic with optional auto-fix
+pub struct Diagnostic {
+    pub level: DiagnosticLevel,
+    pub rule: String,        // "AS-004", "CC-SK-001"
+    pub fixes: Vec<Fix>,     // Byte-range replacements
+}
+```
+
+### Validation Flow
+
+```
+CLI args → LintConfig → validate_project()
+    → Directory walk (ignore crate, respects .gitignore)
+    → detect_file_type() per file (path-based, no I/O)
+    → Parallel validation (rayon)
+    → Validators from registry run sequentially per file
+    → Post-processing (AGM-006, XP-004/005/006)
+    → Output (text/JSON/SARIF)
+```
+
+### LSP Architecture
+
+```rust
+// Backend caches config and registry for performance
+pub struct Backend {
+    config: RwLock<Arc<LintConfig>>,
+    registry: Arc<ValidatorRegistry>,  // Immutable, shared
+    documents: RwLock<HashMap<Url, String>>,  // Content cache
+}
+```
+
+- Validation runs in `spawn_blocking()` (CPU-bound, sync)
+- Events: `did_open`, `did_change`, `did_save`, `codeAction`, `hover`
 
 ## Commands
 
@@ -56,10 +129,11 @@ Format: `[CATEGORY]-[NUMBER]` (AS-004, CC-HK-001, etc.)
 
 ## Current State
 
-- Compiles and runs with full validation pipeline
-- `validate_project()` walks directories, detects file types, dispatches validators
-- 663 passing tests
-- See GitHub issues for remaining tasks
+- v0.2.0 - Production-ready with full validation pipeline
+- 100 validation rules across 13 validators
+- 1250+ passing tests
+- LSP server with VS Code extension
+- See GitHub issues for roadmap
 
 ## Top tier tools support:
 
