@@ -1,3 +1,0 @@
-Testing edge case: what happens when name is all special characters?
-Input: "!!@@##"
-Expected: empty string after conversion
