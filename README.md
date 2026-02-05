@@ -44,6 +44,41 @@ agnix validates configs against 100 rules derived from official specs, research 
 
 **Integration**: LSP server, VS Code extension, GitHub Action, auto-fix (`--fix`)
 
+**Localization**: English, Spanish, Chinese (Simplified) with `--locale` flag
+
+## Internationalization (i18n)
+
+agnix supports multiple languages for diagnostic messages and CLI output.
+
+### Supported Languages
+
+| Code | Language |
+|------|----------|
+| `en` | English (default) |
+| `es` | Spanish |
+| `zh-CN` | Chinese (Simplified) |
+
+### Setting the Locale
+
+```bash
+# CLI flag (highest priority)
+agnix --locale es .
+
+# Environment variable
+AGNIX_LOCALE=zh-CN agnix .
+
+# List available locales
+agnix --list-locales
+```
+
+You can also set the locale in `.agnix.toml`:
+
+```toml
+locale = "es"
+```
+
+See [docs/TRANSLATING.md](docs/TRANSLATING.md) for contributing translations.
+
 ## Security
 
 agnix implements multiple security measures:
