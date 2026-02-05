@@ -5,8 +5,13 @@ rust_i18n::i18n!("../../locales", fallback = "en");
 mod json;
 mod locale;
 mod sarif;
+#[cfg(feature = "telemetry")]
 pub mod telemetry;
+#[cfg(not(feature = "telemetry"))]
+mod telemetry_stub;
 mod watch;
+#[cfg(not(feature = "telemetry"))]
+use telemetry_stub as telemetry;
 
 use agnix_core::{
     apply_fixes,
