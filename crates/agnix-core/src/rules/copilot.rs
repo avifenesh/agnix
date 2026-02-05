@@ -486,4 +486,135 @@ Always use strict mode and explicit types.
             .collect();
         assert!(errors.is_empty(), "Expected no errors, got: {:?}", errors);
     }
+
+    // ===== Additional COP rule tests =====
+
+    #[test]
+    fn test_cop_001_newlines_only() {
+        let content = "\n\n\n";
+        let diagnostics = validate_global(content);
+        assert!(diagnostics.iter().any(|d| d.rule == "COP-001"));
+    }
+
+    #[test]
+    fn test_cop_001_spaces_and_tabs() {
+        let content = "   \t\t   ";
+        let diagnostics = validate_global(content);
+        assert!(diagnostics.iter().any(|d| d.rule == "COP-001"));
+    }
+
+    #[test]
+    fn test_cop_002_yaml_with_tabs() {
+        // YAML doesn't allow tabs for indentation
+        let content = "---\n\tapplyTo: \"**/*.ts\"\n---\nBody";
+        let diagnostics = validate_scoped(content);
+        assert!(diagnostics.iter().any(|d| d.rule == "COP-002"));
+    }
+
+    #[test]
+    fn test_cop_002_valid_frontmatter_no_error() {
+        // Test that valid frontmatter doesn't trigger COP-002
+        let content = r#"---
+applyTo: "**/*.ts"
+---
+Body content"#;
+        let diagnostics = validate_scoped(content);
+        // Valid frontmatter should not trigger COP-002
+        let cop_002: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "COP-002")
+            .collect();
+        assert!(cop_002.is_empty(), "Valid frontmatter should not trigger COP-002");
+    }
+
+    #[test]
+    fn test_cop_003_all_valid_patterns() {
+        let valid_patterns = [
+            "**/*.ts",
+            "*.rs",
+            "src/**/*.py",
+            "tests/*.test.js",
+            "{src,lib}/**/*.ts",
+        ];
+
+        for pattern in valid_patterns {
+            let content = format!("---\napplyTo: \"{}\"\n---\nBody", pattern);
+            let diagnostics = validate_scoped(&content);
+            let cop_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "COP-003").collect();
+            assert!(
+                cop_003.is_empty(),
+                "Pattern '{}' should be valid",
+                pattern
+            );
+        }
+    }
+
+    #[test]
+    fn test_cop_003_invalid_patterns() {
+        let invalid_patterns = ["[invalid", "***", "**["];
+
+        for pattern in invalid_patterns {
+            let content = format!("---\napplyTo: \"{}\"\n---\nBody", pattern);
+            let diagnostics = validate_scoped(&content);
+            let cop_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "COP-003").collect();
+            assert!(
+                !cop_003.is_empty(),
+                "Pattern '{}' should be invalid",
+                pattern
+            );
+        }
+    }
+
+    #[test]
+    fn test_cop_004_all_known_keys() {
+        let content = r#"---
+applyTo: "**/*.ts"
+---
+Body"#;
+        let diagnostics = validate_scoped(content);
+        assert!(!diagnostics.iter().any(|d| d.rule == "COP-004"));
+    }
+
+    #[test]
+    fn test_cop_004_multiple_unknown_keys() {
+        let content = r#"---
+applyTo: "**/*.ts"
+unknownKey1: value1
+unknownKey2: value2
+---
+Body"#;
+        let diagnostics = validate_scoped(content);
+        let cop_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "COP-004").collect();
+        // Should report at least one unknown key warning
+        assert!(!cop_004.is_empty());
+    }
+
+    #[test]
+    fn test_all_cop_rules_can_be_disabled() {
+        let rules = ["COP-001", "COP-002", "COP-003", "COP-004"];
+
+        for rule in rules {
+            let mut config = LintConfig::default();
+            config.rules.disabled_rules = vec![rule.to_string()];
+
+            // Content that could trigger each rule
+            let content = match rule {
+                "COP-001" => "",
+                _ => "---\nunknown: value\n---\n",
+            };
+
+            let validator = CopilotValidator;
+            let diagnostics = validator.validate(
+                Path::new(".github/copilot-instructions.md"),
+                content,
+                &config,
+            );
+
+            assert!(
+                !diagnostics.iter().any(|d| d.rule == rule),
+                "Rule {} should be disabled",
+                rule
+            );
+        }
+    }
 }

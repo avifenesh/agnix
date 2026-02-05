@@ -576,4 +576,140 @@ agent: some-agent
             "Expected 1 XP-001 error for hooks outside Claude section"
         );
     }
+
+    // ===== Additional XP rule tests =====
+
+    #[test]
+    fn test_xp_001_claude_code_features() {
+        // Test all known Claude Code-specific features
+        let features = [
+            "context: fork",
+            "agent: reviewer",
+            "allowed-tools: Read Write",
+            "- type: PreToolExecution",
+        ];
+
+        for feature in features {
+            let content = format!("# Project\n\n{}", feature);
+            let validator = CrossPlatformValidator;
+            let diagnostics =
+                validator.validate(Path::new("AGENTS.md"), &content, &LintConfig::default());
+
+            let xp_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XP-001").collect();
+            assert!(
+                !xp_001.is_empty(),
+                "Feature '{}' should trigger XP-001 in AGENTS.md",
+                feature
+            );
+        }
+    }
+
+    #[test]
+    fn test_xp_001_allowed_in_claude_local() {
+        // Claude-specific features are allowed in CLAUDE.local.md
+        let content = "# Project\n\ncontext: fork\nagent: reviewer";
+        let validator = CrossPlatformValidator;
+        let diagnostics =
+            validator.validate(Path::new("CLAUDE.local.md"), content, &LintConfig::default());
+
+        let xp_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XP-001").collect();
+        assert!(xp_001.is_empty(), "CLAUDE.local.md should allow Claude features");
+    }
+
+    #[test]
+    fn test_xp_002_valid_markdown_structure() {
+        let content = r#"# Project Name
+
+## Overview
+
+Description here.
+
+## Tech Stack
+
+- Rust
+- TypeScript
+"#;
+        let validator = CrossPlatformValidator;
+        let diagnostics =
+            validator.validate(Path::new("AGENTS.md"), content, &LintConfig::default());
+
+        let xp_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XP-002").collect();
+        assert!(xp_002.is_empty());
+    }
+
+    #[test]
+    fn test_xp_003_dot_claude_dir_path() {
+        // Test with .claude directory path (without tilde)
+        let content = "# Project\n\nCheck the .claude/settings.json file.";
+        let validator = CrossPlatformValidator;
+        let diagnostics =
+            validator.validate(Path::new("AGENTS.md"), content, &LintConfig::default());
+
+        let xp_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XP-003").collect();
+        // .claude/ path should trigger XP-003
+        assert!(!xp_003.is_empty());
+    }
+
+    #[test]
+    fn test_xp_003_dot_cursor_dir_path() {
+        let content = "# Project\n\nSee .cursor/rules for configuration.";
+        let validator = CrossPlatformValidator;
+        let diagnostics =
+            validator.validate(Path::new("AGENTS.md"), content, &LintConfig::default());
+
+        let xp_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XP-003").collect();
+        // .cursor/ path should trigger XP-003
+        assert!(!xp_003.is_empty());
+    }
+
+    #[test]
+    fn test_xp_003_relative_paths_ok() {
+        let content = "# Project\n\nSee ./src/main.rs and ../docs/README.md.";
+        let validator = CrossPlatformValidator;
+        let diagnostics =
+            validator.validate(Path::new("AGENTS.md"), content, &LintConfig::default());
+
+        let xp_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XP-003").collect();
+        assert!(xp_003.is_empty(), "Relative paths should be OK");
+    }
+
+    #[test]
+    fn test_xp_001_guarded_with_claude_code_section() {
+        let content = r#"# Project
+
+## Claude Code
+
+Use context: fork for subagents.
+"#;
+        let validator = CrossPlatformValidator;
+        let diagnostics =
+            validator.validate(Path::new("AGENTS.md"), content, &LintConfig::default());
+
+        let xp_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XP-001").collect();
+        assert!(xp_001.is_empty(), "Guarded features should not trigger XP-001");
+    }
+
+    #[test]
+    fn test_all_xp_rules_can_be_disabled() {
+        let rules = ["XP-001", "XP-002", "XP-003"];
+
+        for rule in rules {
+            let mut config = LintConfig::default();
+            config.rules.disabled_rules = vec![rule.to_string()];
+
+            // Content that could trigger each rule
+            let content = r#"# Project
+context: fork
+/etc/hosts"#;
+
+            let validator = CrossPlatformValidator;
+            let diagnostics = validator.validate(Path::new("AGENTS.md"), content, &config);
+
+            assert!(
+                !diagnostics.iter().any(|d| d.rule == rule),
+                "Rule {} should be disabled",
+                rule
+            );
+        }
+    }
 }
