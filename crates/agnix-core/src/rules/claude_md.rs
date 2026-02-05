@@ -10,6 +10,7 @@ use crate::{
         find_generic_instructions, find_negative_without_positive, find_weak_constraints,
     },
 };
+use rust_i18n::t;
 use std::path::Path;
 
 pub struct ClaudeMdValidator;
@@ -36,19 +37,15 @@ impl Validator for ClaudeMdValidator {
                         inst.line,
                         inst.column,
                         "CC-MEM-005",
-                        format!(
-                            "Generic instruction '{}' - Claude already knows this",
-                            inst.text
-                        ),
+                        t!("rules.cc_mem_005.message", text = inst.text.as_str()),
                     )
                     .with_suggestion(
-                        "Remove generic instructions. Focus on project-specific context."
-                            .to_string(),
+                        t!("rules.cc_mem_005.suggestion"),
                     )
                     .with_fix(Fix::delete(
                         inst.start_byte,
                         inst.end_byte,
-                        "Remove generic instruction line",
+                        t!("rules.cc_mem_005.fix"),
                         true,
                     )),
                 );
@@ -64,13 +61,10 @@ impl Validator for ClaudeMdValidator {
                         1,
                         0,
                         "CC-MEM-009",
-                        format!(
-                            "File exceeds recommended token limit (~{} tokens, limit is {})",
-                            exceeded.estimated_tokens, exceeded.limit
-                        ),
+                        t!("rules.cc_mem_009.message", tokens = exceeded.estimated_tokens, limit = exceeded.limit),
                     )
                     .with_suggestion(
-                        "Consider using @import to split content into multiple files.".to_string(),
+                        t!("rules.cc_mem_009.suggestion"),
                     ),
                 );
             }
@@ -86,14 +80,10 @@ impl Validator for ClaudeMdValidator {
                         neg.line,
                         neg.column,
                         "CC-MEM-006",
-                        format!(
-                            "Negative instruction '{}' without positive alternative",
-                            neg.text
-                        ),
+                        t!("rules.cc_mem_006.message", text = neg.text.as_str()),
                     )
                     .with_suggestion(
-                        "Add a positive alternative: 'Instead, do...' or 'Use X instead.'"
-                            .to_string(),
+                        t!("rules.cc_mem_006.suggestion"),
                     ),
                 );
             }
@@ -110,14 +100,10 @@ impl Validator for ClaudeMdValidator {
                     w.line,
                     w.column,
                     "CC-MEM-007",
-                    format!(
-                        "Weak constraint '{}' in critical section '{}'",
-                        w.text, w.section
-                    ),
+                    t!("rules.cc_mem_007.message", text = w.text.as_str(), section = w.section.as_str()),
                 )
                 .with_suggestion(
-                    "Use strong language in critical sections: 'must', 'always', 'required'."
-                        .to_string(),
+                    t!("rules.cc_mem_007.suggestion"),
                 );
 
                 // Add fix if we have a replacement
@@ -126,7 +112,7 @@ impl Validator for ClaudeMdValidator {
                         w.start_byte,
                         w.end_byte,
                         repl,
-                        format!("Replace '{}' with stronger language", w.text),
+                        t!("rules.cc_mem_007.fix", text = w.text.as_str()),
                         safe,
                     ));
                 }
@@ -145,14 +131,10 @@ impl Validator for ClaudeMdValidator {
                         c.line,
                         c.column,
                         "CC-MEM-008",
-                        format!(
-                            "Critical keyword '{}' at {:.0}% of document (middle zone)",
-                            c.keyword, c.position_percent
-                        ),
+                        t!("rules.cc_mem_008.message", keyword = c.keyword.as_str(), percent = format!("{:.0}", c.position_percent)),
                     )
                     .with_suggestion(
-                        "Move critical content to the top or bottom of the document for better recall."
-                            .to_string(),
+                        t!("rules.cc_mem_008.suggestion"),
                     ),
                 );
             }
@@ -180,12 +162,12 @@ impl Validator for ClaudeMdValidator {
                             for npm_ref in npm_refs {
                                 if !available_scripts.contains(&npm_ref.script_name) {
                                     let suggestion = if available_scripts.is_empty() {
-                                        "No scripts defined in package.json.".to_string()
+                                        t!("rules.cc_mem_004.suggestion_no_scripts").to_string()
                                     } else {
-                                        format!(
-                                            "Available scripts: {}",
-                                            available_scripts.join(", ")
-                                        )
+                                        t!(
+                                            "rules.cc_mem_004.suggestion_available",
+                                            scripts = available_scripts.join(", ")
+                                        ).to_string()
                                     };
 
                                     diagnostics.push(
@@ -194,10 +176,7 @@ impl Validator for ClaudeMdValidator {
                                             npm_ref.line,
                                             npm_ref.column,
                                             "CC-MEM-004",
-                                            format!(
-                                                "npm script '{}' not found in package.json",
-                                                npm_ref.script_name
-                                            ),
+                                            t!("rules.cc_mem_004.message", script = npm_ref.script_name.as_str()),
                                         )
                                         .with_suggestion(suggestion),
                                     );
@@ -222,14 +201,10 @@ impl Validator for ClaudeMdValidator {
                                 1,
                                 0,
                                 "CC-MEM-010",
-                                format!(
-                                    "CLAUDE.md has {:.0}% overlap with README.md (threshold: {:.0}%)",
-                                    dup.overlap_percent, dup.threshold
-                                ),
+                                t!("rules.cc_mem_010.message", overlap = format!("{:.0}", dup.overlap_percent), threshold = format!("{:.0}", dup.threshold)),
                             )
                             .with_suggestion(
-                                "CLAUDE.md should complement README, not duplicate it. Remove duplicated sections."
-                                    .to_string(),
+                                t!("rules.cc_mem_010.suggestion"),
                             ),
                         );
                     }

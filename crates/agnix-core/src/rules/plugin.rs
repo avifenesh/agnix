@@ -3,6 +3,7 @@
 use crate::{
     config::LintConfig, diagnostics::Diagnostic, rules::Validator, schemas::plugin::PluginSchema,
 };
+use rust_i18n::t;
 use std::path::Path;
 
 pub struct PluginValidator;
@@ -29,9 +30,9 @@ impl Validator for PluginValidator {
                     1,
                     0,
                     "CC-PL-001",
-                    "plugin.json must be located in .claude-plugin/ directory".to_string(),
+                    t!("rules.cc_pl_001.message"),
                 )
-                .with_suggestion("Move plugin.json to .claude-plugin/plugin.json".to_string()),
+                .with_suggestion(t!("rules.cc_pl_001.suggestion")),
             );
         }
 
@@ -47,10 +48,10 @@ impl Validator for PluginValidator {
                                 1,
                                 0,
                                 "CC-PL-002",
-                                format!("Component '{}' must not be inside .claude-plugin/", entry),
+                                t!("rules.cc_pl_002.message", component = entry),
                             )
                             .with_suggestion(
-                                "Move components to the plugin root directory".to_string(),
+                                t!("rules.cc_pl_002.suggestion"),
                             ),
                         );
                     }
@@ -67,7 +68,7 @@ impl Validator for PluginValidator {
                         1,
                         0,
                         "CC-PL-006",
-                        format!("Failed to parse plugin.json: {}", e),
+                        t!("rules.cc_pl_006.message", error = e.to_string()),
                     ));
                 }
                 return diagnostics;
@@ -89,9 +90,9 @@ impl Validator for PluginValidator {
                             1,
                             0,
                             "CC-PL-005",
-                            "Plugin name must not be empty".to_string(),
+                            t!("rules.cc_pl_005.message"),
                         )
-                        .with_suggestion("Set a non-empty plugin name".to_string()),
+                        .with_suggestion(t!("rules.cc_pl_005.suggestion")),
                     );
                 }
             }
@@ -113,10 +114,10 @@ impl Validator for PluginValidator {
                         1,
                         0,
                         "CC-PL-003",
-                        format!("Invalid semver format: '{}'", schema.version),
+                        t!("rules.cc_pl_003.message", version = schema.version.as_str()),
                     )
                     .with_suggestion(
-                        "Use semver format: 1.0.0, 1.0.0-rc.1, 1.0.0+build".to_string(),
+                        t!("rules.cc_pl_003.suggestion"),
                     ),
                 );
             }
@@ -144,9 +145,9 @@ fn check_required_field(
                 1,
                 0,
                 "CC-PL-004",
-                format!("Missing required field: {}", field),
+                t!("rules.cc_pl_004.message", field = field),
             )
-            .with_suggestion(format!("Add '{}' field to plugin.json", field)),
+            .with_suggestion(t!("rules.cc_pl_004.suggestion", field = field)),
         );
     }
 }

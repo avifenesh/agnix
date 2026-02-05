@@ -18,6 +18,7 @@ use crate::{
         WINDSURF_CHAR_LIMIT,
     },
 };
+use rust_i18n::t;
 use std::path::Path;
 
 pub struct AgentsMdValidator;
@@ -49,9 +50,9 @@ impl Validator for AgentsMdValidator {
                         issue.line,
                         issue.column,
                         "AGM-001",
-                        format!("Invalid markdown: {}", issue.description),
+                        t!("rules.agm_001.message", description = issue.description.as_str()),
                     )
-                    .with_suggestion("Fix the markdown syntax error".to_string()),
+                    .with_suggestion(t!("rules.agm_001.suggestion")),
                 );
             }
         }
@@ -81,13 +82,10 @@ impl Validator for AgentsMdValidator {
                         1,
                         0,
                         "AGM-003",
-                        format!(
-                            "{} exceeds character limit ({} chars, max {} for Windsurf compatibility)",
-                            filename, exceeded.char_count, exceeded.limit
-                        ),
+                        t!("rules.agm_003.message", filename = filename, chars = exceeded.char_count, limit = exceeded.limit),
                     )
                     .with_suggestion(
-                        "Split content into multiple files or reduce content length".to_string(),
+                        t!("rules.agm_003.suggestion"),
                     ),
                 );
             }
@@ -121,9 +119,8 @@ impl Validator for AgentsMdValidator {
                         "AGM-005",
                         feature.description,
                     )
-                    .with_suggestion(format!(
-                        "Add a platform guard section header like '## {} Specific' before platform-specific content",
-                        feature.platform
+                    .with_suggestion(t!(
+                        "rules.agm_005.suggestion", platform = feature.platform.as_str()
                     )),
                 );
             }

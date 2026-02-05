@@ -130,93 +130,104 @@ en:
 
     # --- MCP (mcp.rs) ---
     mcp_001:
-      message: "MCP tool '%{tool}' is missing required 'name' field"
-      suggestion: "Add a 'name' field to the tool definition"
+      invalid_version: "Invalid JSON-RPC version '%{version}', must be '2.0'"
+      not_string: "JSON-RPC version must be a string"
+      suggestion: "Set \"jsonrpc\": \"2.0\""
     mcp_002:
-      message: "MCP tool '%{tool}' is missing required 'description' field"
-      suggestion: "Add a 'description' field to the tool definition"
+      missing_name: "%{prefix}Missing required field 'name'"
+      missing_name_suggestion: "Add 'name' field to tool definition"
+      missing_description: "%{prefix}Missing required field 'description'"
+      missing_description_suggestion: "Add 'description' field to tool definition"
+      missing_schema: "%{prefix}Missing required field 'inputSchema'"
+      missing_schema_suggestion: "Add 'inputSchema' field with JSON Schema definition"
     mcp_003:
-      message: "MCP tool '%{tool}' has empty input schema"
-      suggestion: "Add a valid JSON Schema for the tool's input parameters"
+      message: "%{prefix}Invalid inputSchema: %{error}"
+      suggestion: "Fix JSON Schema structure"
     mcp_004:
-      message: "MCP server '%{server}' is missing required 'command' field"
-      suggestion: "Add a 'command' field specifying how to start the MCP server"
+      message: "%{prefix}Tool description is too short (%{len} chars), should be at least 10 characters"
+      suggestion: "Add a meaningful description explaining what the tool does"
     mcp_005:
-      message: "Invalid JSON Schema in tool '%{tool}' inputSchema: %{error}"
-      suggestion: "Fix the JSON Schema structure in the inputSchema field"
+      message: "%{prefix}Tool lacks consent mechanism (no 'requiresApproval' or 'confirmation' field)"
+      suggestion: "Consider adding 'requiresApproval: true' for tools that modify data or have side effects"
     mcp_006:
-      message: "MCP configuration has no servers defined"
-      suggestion: "Add at least one server under 'mcpServers'"
+      message: "%{prefix}Tool has annotations that should be validated before trusting"
+      suggestion: "Ensure annotations are from a trusted source before relying on them"
     mcp_007:
       message: "Failed to parse MCP configuration: %{error}"
     mcp_008:
-      message: "MCP protocol version '%{found}' does not match expected '%{expected}'"
-      suggestion: "Update the protocol version or pin the expected version in .agnix.toml"
+      message: "Protocol version mismatch: found '%{found}', expected '%{expected}'"
+      request_suggestion: "Consider updating to protocol version '%{expected}' for compatibility"
+      response_suggestion: "Server negotiated version '%{found}', expected '%{expected}'. Verify compatibility."
       assumption: "Using default MCP protocol version. Pin mcp_protocol in .agnix.toml [spec_revisions] for explicit control."
+    invalid_tool: "Tool #%{num}: Invalid tool definition: %{error}"
+    invalid_tool_single: "Invalid tool definition: %{error}"
+    invalid_tool_suggestion: "Ensure tool has valid field types (name: string, description: string, inputSchema: object)"
 
     # --- Agent (agent.rs) ---
     cc_ag_001:
-      message: "Agent file is missing required 'name' field"
-      suggestion: "Add 'name: agent-name' to frontmatter"
+      message: "Agent frontmatter is missing required 'name' field"
+      suggestion: "Add 'name: your-agent-name' to frontmatter"
     cc_ag_002:
-      message: "Agent file is missing required 'description' field"
-      suggestion: "Add 'description: Agent description' to frontmatter"
+      message: "Agent frontmatter is missing required 'description' field"
+      suggestion: "Add 'description: Describe what this agent does' to frontmatter"
     cc_ag_003:
-      message: "Invalid model '%{model}' in agent definition. Must be one of: %{valid}"
-      suggestion: "Use one of the valid model values: %{valid}"
+      message: "Invalid model '%{model}'. Valid values: %{valid}"
+      suggestion: "Change model to one of: %{valid}"
     cc_ag_004:
-      message: "Invalid permission mode '%{mode}'. Valid modes: %{valid}"
-      suggestion: "Use one of the valid permission modes"
+      message: "Invalid permissionMode '%{mode}'. Valid values: %{valid}"
+      suggestion: "Change permissionMode to one of: %{valid}"
     cc_ag_005:
-      message: "Referenced skill '%{skill}' not found"
-      suggestion: "Create the skill at .claude/skills/%{skill}/SKILL.md or correct the name"
+      message: "Referenced skill '%{skill}' not found at .claude/skills/%{skill}/SKILL.md"
+      suggestion: "Create the skill at .claude/skills/%{skill}/SKILL.md or remove the reference"
     cc_ag_006:
-      message: "Agent body is empty"
-      suggestion: "Add system prompt content after the frontmatter"
+      message: "Tool(s) appear in both 'tools' and 'disallowedTools': %{conflicts}"
+      suggestion: "Remove conflicting tool(s) from either 'tools' or 'disallowedTools'"
     cc_ag_007:
       message: "Agent file must have YAML frontmatter"
       suggestion: "Add frontmatter between --- markers"
-    cc_ag_008:
-      message: "Failed to parse agent frontmatter: %{error}"
-      suggestion: "Fix the YAML syntax in the frontmatter"
+      parse_error: "Failed to parse agent frontmatter: %{error}"
 
     # --- Claude MD (claude_md.rs) ---
-    cc_mem_001:
-      message: "CLAUDE.md exceeds recommended size (%{size} bytes, limit %{limit})"
-      suggestion: "Split large CLAUDE.md into smaller files using @import"
-    cc_mem_002:
-      message: "CLAUDE.md contains generic/placeholder instructions"
-      suggestion: "Replace generic instructions with project-specific content"
-    cc_mem_003:
-      message: "Section '%{section}' exceeds recommended length (%{len} characters)"
-      suggestion: "Break this section into smaller, focused sections"
     cc_mem_004:
-      message: "CLAUDE.md is empty or contains only whitespace"
-      suggestion: "Add project-specific instructions to guide Claude"
+      message: "npm script '%{script}' not found in package.json"
+      suggestion_no_scripts: "No scripts defined in package.json."
+      suggestion_available: "Available scripts: %{scripts}"
     cc_mem_005:
-      message: "CLAUDE.md has no markdown structure (headings)"
-      suggestion: "Organize content with markdown headings (## Section Name)"
+      message: "Generic instruction '%{text}' - Claude already knows this"
+      suggestion: "Remove generic instructions. Focus on project-specific context."
+      fix: "Remove generic instruction line"
+    cc_mem_006:
+      message: "Negative instruction '%{text}' without positive alternative"
+      suggestion: "Add a positive alternative: 'Instead, do...' or 'Use X instead.'"
+    cc_mem_007:
+      message: "Weak constraint '%{text}' in critical section '%{section}'"
+      suggestion: "Use strong language in critical sections: 'must', 'always', 'required'."
+      fix: "Replace '%{text}' with stronger language"
+    cc_mem_008:
+      message: "Critical keyword '%{keyword}' at %{percent}%% of document (middle zone)"
+      suggestion: "Move critical content to the top or bottom of the document for better recall."
+    cc_mem_009:
+      message: "File exceeds recommended token limit (~%{tokens} tokens, limit is %{limit})"
+      suggestion: "Consider using @import to split content into multiple files."
+    cc_mem_010:
+      message: "CLAUDE.md has %{overlap}%% overlap with README.md (threshold: %{threshold}%%)"
+      suggestion: "CLAUDE.md should complement README, not duplicate it. Remove duplicated sections."
 
     # --- AGENTS.md (agents_md.rs) ---
     agm_001:
-      message: "AGENTS.md should have structured sections"
-      suggestion: "Add headings to organize agent instructions"
+      message: "Invalid markdown: %{description}"
+      suggestion: "Fix the markdown syntax error"
     agm_002:
-      message: "AGENTS.md is empty or contains only whitespace"
-      suggestion: "Add team-specific agent instructions"
+      # messages come from schemas::agents_md, not the validator directly
     agm_003:
-      message: "AGENTS.md appears identical to CLAUDE.md"
-      suggestion: "AGENTS.md should contain team-specific instructions different from CLAUDE.md"
+      message: "%{filename} exceeds character limit (%{chars} chars, max %{limit} for Windsurf compatibility)"
+      suggestion: "Split content into multiple files or reduce content length"
     agm_004:
-      message: "AGENTS.md does not match CLAUDE.md - files should be identical if both exist"
-      suggestion: "Synchronize the files or document why they differ"
+      # messages come from schemas::agents_md, not the validator directly
     agm_005:
-      message: "AGENTS.md exceeds recommended size (%{size} bytes, limit %{limit})"
-      suggestion: "Split large AGENTS.md into smaller files"
+      suggestion: "Add a platform guard section header like '## %{platform} Specific' before platform-specific content"
     agm_006:
-      message_nested: "Nested AGENTS.md detected - parent AGENTS.md files exist at: %{paths}"
-      message_multiple: "Multiple AGENTS.md files detected - other AGENTS.md files exist at: %{paths}"
-      suggestion: "Some tools load AGENTS.md hierarchically. Document inheritance behavior or consolidate files."
+      # post-processing rule in lib.rs
 
     # --- XML (xml.rs) ---
     xml_001:
@@ -274,55 +285,47 @@ en:
 
     # --- Copilot (copilot.rs) ---
     cop_001:
-      message: "Copilot instructions file is empty"
-      suggestion: "Add instructions content to the file"
+      message_empty: "Copilot instruction file is empty"
+      message_no_content: "Copilot instruction file has no content after frontmatter"
+      suggestion_empty: "Add meaningful instructions for Copilot to follow"
+      suggestion_scoped_empty: "Add frontmatter with applyTo field and instructions"
     cop_002:
-      message: "Copilot instructions exceed recommended size (%{size} bytes, limit %{limit})"
-      suggestion: "Reduce instructions to stay within the recommended limit"
+      message_missing: "Scoped Copilot instruction file missing required frontmatter"
+      message_invalid_yaml: "Invalid YAML frontmatter: %{error}"
+      message_missing_apply_to: "Scoped Copilot instruction file missing required 'applyTo' field"
+      suggestion_add_frontmatter: "Add YAML frontmatter with --- markers and applyTo field"
+      suggestion_fix_yaml: "Fix the YAML syntax in frontmatter"
+      suggestion_add_apply_to: "Add 'applyTo: \"**/*.ts\"' or similar glob pattern"
     cop_003:
-      message: "Copilot instructions file has no markdown structure"
-      suggestion: "Organize content with markdown headings"
+      message: "Invalid glob pattern '%{pattern}': %{error}"
+      suggestion: "Use valid glob syntax like '**/*.ts' or 'src/**/*.js'"
     cop_004:
-      message: "Copilot scoped instructions missing required frontmatter"
-      suggestion: "Add YAML frontmatter with 'applyTo' field between --- markers"
-    cop_005:
-      message: "Copilot scoped instructions missing required 'applyTo' field"
-      suggestion: "Add 'applyTo: \"**/*.ext\"' to specify which files these instructions apply to"
-    cop_006:
-      message: "Invalid 'applyTo' glob pattern: '%{pattern}'"
-      suggestion: "Use a valid glob pattern (e.g., '**/*.ts', 'src/**')"
-    cop_007:
-      message: "Copilot instructions contain generic placeholder content"
-      suggestion: "Replace generic instructions with project-specific content"
-    cop_008:
-      message: "Failed to parse Copilot scoped instructions frontmatter: %{error}"
-      suggestion: "Fix the YAML syntax in the frontmatter"
+      message: "Unknown frontmatter key '%{key}' in Copilot instruction file"
+      suggestion: "Remove unknown key '%{key}'. Only 'applyTo' is recognized."
 
     # --- Cursor (cursor.rs) ---
     cur_001:
-      message: "Cursor rule file is empty"
-      suggestion: "Add rule content to the file"
+      message_empty: "Cursor rule file is empty"
+      message_no_content: "Cursor rule file has no content after frontmatter"
+      suggestion_empty: "Add frontmatter with description and rules content"
+      suggestion_no_content: "Add rules content after the frontmatter"
+      suggestion_legacy_empty: "Add rules content to the file"
     cur_002:
-      message: "Cursor rule exceeds recommended size (%{size} bytes, limit %{limit})"
-      suggestion: "Break the rule into smaller, more focused rules"
+      message: "Cursor .mdc file missing recommended frontmatter"
+      suggestion: "Add YAML frontmatter with --- markers and description/globs fields"
     cur_003:
-      message: "Cursor rule file has no markdown structure"
-      suggestion: "Organize content with markdown headings"
+      message: "Invalid YAML frontmatter: %{error}"
+      suggestion: "Fix the YAML syntax in frontmatter"
     cur_004:
-      message: "Legacy .cursorrules file detected"
-      suggestion: "Migrate to .cursor/rules/*.mdc format for better organization"
+      message: "Invalid glob pattern '%{pattern}': %{error}"
+      suggestion: "Use valid glob syntax like '**/*.ts' or 'src/**/*.js'"
     cur_005:
-      message: "Cursor rule missing required frontmatter"
-      suggestion: "Add YAML frontmatter between --- markers"
+      message: "Unknown frontmatter key '%{key}' in Cursor rule file"
+      suggestion: "Remove unknown key '%{key}'. Valid keys are: description, globs, alwaysApply."
     cur_006:
-      message: "Cursor rule missing 'description' in frontmatter"
-      suggestion: "Add 'description: Rule description' to frontmatter"
-    cur_007:
-      message: "Cursor rule contains generic placeholder content"
-      suggestion: "Replace generic content with project-specific rules"
-    cur_008:
-      message: "Failed to parse Cursor rule frontmatter: %{error}"
-      suggestion: "Fix the YAML syntax in the frontmatter"
+      message: "Legacy .cursorrules file detected - consider migrating to .cursor/rules/*.mdc format"
+      suggestion: "Create .cursor/rules/ directory and add .mdc files with frontmatter for better organization"
+      legacy_empty: "Cursor rules file is empty"
 
     # --- Prompt engineering (prompt.rs) ---
     pe_001:
@@ -340,22 +343,22 @@ en:
 
     # --- Plugin (plugin.rs) ---
     cc_pl_001:
-      message: "Plugin manifest must be inside .claude-plugin/ directory"
+      message: "plugin.json must be located in .claude-plugin/ directory"
       suggestion: "Move plugin.json to .claude-plugin/plugin.json"
     cc_pl_002:
-      message: "Plugin manifest is missing required 'name' field"
-      suggestion: "Add 'name' to the plugin manifest"
+      message: "Component '%{component}' must not be inside .claude-plugin/"
+      suggestion: "Move components to the plugin root directory"
     cc_pl_003:
-      message: "Plugin manifest is missing required 'version' field"
-      suggestion: "Add 'version' to the plugin manifest"
+      message: "Invalid semver format: '%{version}'"
+      suggestion: "Use semver format: 1.0.0, 1.0.0-rc.1, 1.0.0+build"
     cc_pl_004:
-      message: "Plugin manifest is missing required 'description' field"
-      suggestion: "Add 'description' to the plugin manifest"
+      message: "Missing required field: %{field}"
+      suggestion: "Add '%{field}' field to plugin.json"
     cc_pl_005:
-      message: "Invalid plugin version '%{version}': not a valid semver"
-      suggestion: "Use semantic versioning (e.g., '1.0.0')"
+      message: "Plugin name must not be empty"
+      suggestion: "Set a non-empty plugin name"
     cc_pl_006:
-      message: "Failed to parse plugin manifest: %{error}"
+      message: "Failed to parse plugin.json: %{error}"
 
     # --- Version (lib.rs) ---
     ver_001:

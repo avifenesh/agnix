@@ -13,6 +13,7 @@ use crate::{
     schemas::copilot::{is_body_empty, is_content_empty, parse_frontmatter, validate_glob_pattern},
     FileType,
 };
+use rust_i18n::t;
 use std::path::Path;
 
 pub struct CopilotValidator;
@@ -37,11 +38,10 @@ impl Validator for CopilotValidator {
                                 parsed.end_line + 1,
                                 0,
                                 "COP-001",
-                                "Copilot instruction file has no content after frontmatter"
-                                    .to_string(),
+                                t!("rules.cop_001.message_no_content"),
                             )
                             .with_suggestion(
-                                "Add meaningful instructions for Copilot to follow".to_string(),
+                                t!("rules.cop_001.suggestion_empty"),
                             ),
                         );
                     }
@@ -53,10 +53,10 @@ impl Validator for CopilotValidator {
                             1,
                             0,
                             "COP-001",
-                            "Copilot instruction file is empty".to_string(),
+                            t!("rules.cop_001.message_empty"),
                         )
                         .with_suggestion(
-                            "Add frontmatter with applyTo field and instructions".to_string(),
+                            t!("rules.cop_001.suggestion_scoped_empty"),
                         ),
                     );
                 }
@@ -69,10 +69,10 @@ impl Validator for CopilotValidator {
                             1,
                             0,
                             "COP-001",
-                            "Copilot instruction file is empty".to_string(),
+                            t!("rules.cop_001.message_empty"),
                         )
                         .with_suggestion(
-                            "Add meaningful instructions for Copilot to follow".to_string(),
+                            t!("rules.cop_001.suggestion_empty"),
                         ),
                     );
                 }
@@ -96,11 +96,10 @@ impl Validator for CopilotValidator {
                             1,
                             0,
                             "COP-002",
-                            "Scoped Copilot instruction file missing required frontmatter"
-                                .to_string(),
+                            t!("rules.cop_002.message_missing"),
                         )
                         .with_suggestion(
-                            "Add YAML frontmatter with --- markers and applyTo field".to_string(),
+                            t!("rules.cop_002.suggestion_add_frontmatter"),
                         ),
                     );
                 }
@@ -117,9 +116,9 @@ impl Validator for CopilotValidator {
                         parsed.start_line,
                         0,
                         "COP-002",
-                        format!("Invalid YAML frontmatter: {}", error),
+                        t!("rules.cop_002.message_invalid_yaml", error = error.as_str()),
                     )
-                    .with_suggestion("Fix the YAML syntax in frontmatter".to_string()),
+                    .with_suggestion(t!("rules.cop_002.suggestion_fix_yaml")),
                 );
                 // Can't continue validating if YAML is broken
                 return diagnostics;
@@ -134,11 +133,10 @@ impl Validator for CopilotValidator {
                             parsed.start_line,
                             0,
                             "COP-002",
-                            "Scoped Copilot instruction file missing required 'applyTo' field"
-                                .to_string(),
+                            t!("rules.cop_002.message_missing_apply_to"),
                         )
                         .with_suggestion(
-                            "Add 'applyTo: \"**/*.ts\"' or similar glob pattern".to_string(),
+                            t!("rules.cop_002.suggestion_add_apply_to"),
                         ),
                     );
                 }
@@ -157,14 +155,10 @@ impl Validator for CopilotValidator {
                                 parsed.start_line + 1, // applyTo is typically on line 2
                                 0,
                                 "COP-003",
-                                format!(
-                                    "Invalid glob pattern '{}': {}",
-                                    apply_to,
-                                    validation.error.unwrap_or_default()
-                                ),
+                                t!("rules.cop_003.message", pattern = apply_to.as_str(), error = validation.error.unwrap_or_default()),
                             )
                             .with_suggestion(
-                                "Use valid glob syntax like '**/*.ts' or 'src/**/*.js'".to_string(),
+                                t!("rules.cop_003.suggestion"),
                             ),
                         );
                     }
@@ -181,14 +175,10 @@ impl Validator for CopilotValidator {
                         unknown.line,
                         unknown.column,
                         "COP-004",
-                        format!(
-                            "Unknown frontmatter key '{}' in Copilot instruction file",
-                            unknown.key
-                        ),
+                        t!("rules.cop_004.message", key = unknown.key.as_str()),
                     )
-                    .with_suggestion(format!(
-                        "Remove unknown key '{}'. Only 'applyTo' is recognized.",
-                        unknown.key
+                    .with_suggestion(t!(
+                        "rules.cop_004.suggestion", key = unknown.key.as_str()
                     )),
                 );
             }
