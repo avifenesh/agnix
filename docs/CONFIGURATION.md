@@ -70,7 +70,7 @@ disabled_rules = ["CC-MEM-006", "PE-003"]
 
 agnix automatically validates `.agnix.toml` files for:
 
-- **Invalid rule IDs**: Warns if `disabled_rules` contains IDs that don't match known patterns (AS-, CC-SK-, CC-HK-, CC-AG-, CC-MEM-, CC-PL-, XML-, MCP-, REF-, XP-, AGM-, COP-, CUR-, PE-, imports::)
+- **Invalid rule IDs**: Warns if `disabled_rules` contains IDs that don't match known patterns (AS-, CC-SK-, CC-HK-, CC-AG-, CC-MEM-, CC-PL-, XML-, MCP-, REF-, XP-, AGM-, COP-, CUR-, PE-, VER-, imports::)
 - **Unknown tools**: Warns if `tools` array contains tool names that aren't recognized
 - **Deprecated fields**: Warns when using `mcp_protocol_version` (use `spec_revisions.mcp_protocol` instead)
 

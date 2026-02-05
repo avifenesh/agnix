@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Supports explicit null to revert to auto-detection
 
 ### Fixed
+- Config validation: accept VER-* prefix in disabled_rules (#233)
 - VS Code extension: harden `downloadFile()` cleanup for stream and HTTP failure paths (#240)
   - Closes file/request handles on failure
   - Removes temporary download artifacts on failed downloads

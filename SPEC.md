@@ -178,7 +178,7 @@ exclude = ["node_modules/**", ".git/**", "target/**"]
 
 agnix validates `.agnix.toml` files semantically before running validation:
 
-- **Rule ID validation**: `disabled_rules` must match known patterns (AS-, CC-SK-, CC-HK-, CC-AG-, CC-MEM-, CC-PL-, XML-, MCP-, REF-, XP-, AGM-, COP-, CUR-, PE-, imports::)
+- **Rule ID validation**: `disabled_rules` must match known patterns (AS-, CC-SK-, CC-HK-, CC-AG-, CC-MEM-, CC-PL-, XML-, MCP-, REF-, XP-, AGM-, COP-, CUR-, PE-, VER-, imports::)
 - **Tool validation**: `tools` array must contain valid tool names (claude-code, cursor, codex, copilot, github-copilot, generic)
 - **Deprecation warnings**: `mcp_protocol_version` is deprecated (use `spec_revisions.mcp_protocol`)
 
