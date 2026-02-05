@@ -1,0 +1,6 @@
+# Config using deprecated fields
+severity = "Warning"
+mcp_protocol_version = "2024-11-05"
+
+[rules]
+skills = true

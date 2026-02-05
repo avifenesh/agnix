@@ -1,0 +1,5 @@
+# Config with invalid disabled rule IDs
+severity = "Warning"
+
+[rules]
+disabled_rules = ["INVALID-001", "FAKE-RULE", "AS-001"]

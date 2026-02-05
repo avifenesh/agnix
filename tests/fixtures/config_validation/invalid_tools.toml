@@ -1,0 +1,3 @@
+# Config with unknown tool names
+severity = "Warning"
+tools = ["unknown-tool", "claude-code", "bad-editor"]
