@@ -201,8 +201,10 @@ telescope ~
 6. COMMANDS                                              *agnix-commands*
 
                                                          *:AgnixSetup*
-:AgnixSetup [opts]
-    Initialize the plugin. Equivalent to calling `require('agnix').setup()`.
+:AgnixSetup
+    Initialize the plugin with default configuration. Equivalent to calling
+    `require('agnix').setup({})`. For custom configuration, call
+    `require('agnix').setup(opts)` from your init.lua instead.
     Registered before setup is called; all other commands require setup.
 
                                                          *:AgnixStart*
