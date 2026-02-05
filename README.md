@@ -9,7 +9,9 @@
 
 A production-ready linter for AI agent configurations. Validates specifications across Claude Code, Cursor, GitHub Copilot, Codex CLI, and more.
 
-**100 validation rules** covering: Skills • MCP • Hooks • Memory • Agents • Plugins
+**100 validation rules** • **1000+ tests** • **Parallel validation** • **LSP server**
+
+Covers: Skills • MCP • Hooks • Memory • Agents • Plugins • Prompt Engineering
 
 ```bash
 # Install from crates.io
@@ -145,7 +147,7 @@ Features:
 Example JSON output structure:
 ```json
 {
-  "version": "0.x.x",
+  "version": "0.2.0",
   "files_checked": 5,
   "diagnostics": [
     {
@@ -191,7 +193,7 @@ Example SARIF output structure:
     "tool": {
       "driver": {
         "name": "agnix",
-        "version": "0.x.x",
+        "version": "0.2.0",
         "informationUri": "https://github.com/avifenesh/agnix",
         "rules": [...]
       }
@@ -384,6 +386,12 @@ See [`editors/vscode/README.md`](editors/vscode/README.md) for full documentatio
 
 agnix validates files in parallel using [rayon](https://github.com/rayon-rs/rayon) for optimal performance on large projects. Results are sorted deterministically (errors first, then by file path) to ensure consistent output across runs.
 
+Benchmarks (run with `cargo bench`):
+- **File type detection**: ~85ns per file
+- **Single file validation**: ~15-50μs depending on file type
+- **Project validation**: 5,000+ files/second
+- **Registry caching**: 7x speedup for repeated validations
+
 ## Quality Assurance
 
 This project uses comprehensive CI to ensure code quality:
@@ -394,53 +402,70 @@ This project uses comprehensive CI to ensure code quality:
 
 ## Configuration
 
-Create `.agnix.toml` in your project:
+Create `.agnix.toml` in your project. **Only specify what you want to customize** - all fields have sensible defaults:
+
+### Minimal Config (disable specific rules)
 
 ```toml
-severity = "Warning"
-target = "Generic"  # Options: Generic, ClaudeCode, Cursor, Codex
+[rules]
+disabled_rules = ["CC-MEM-006", "PE-003", "XP-001"]
+```
+
+### Target a Specific Tool
+
+```toml
+target = "ClaudeCode"  # Options: Generic, ClaudeCode, Cursor, Codex
+```
+
+### Multi-Tool Project
+
+```toml
+tools = ["claude-code", "cursor"]
 
 [rules]
-# Category toggles - enable/disable entire rule categories
-skills = true       # AS-*, CC-SK-* rules
-hooks = true        # CC-HK-* rules
-agents = true       # CC-AG-* rules
-copilot = true        # COP-* rules
-memory = true       # CC-MEM-* rules
-plugins = true      # CC-PL-* rules
-mcp = true          # MCP-* rules
-prompt_engineering = true  # PE-* rules
-xml = true          # XML-* rules
-imports = true      # REF-*, imports::* rules
+disabled_rules = ["VER-001"]  # Don't warn about version pinning
+```
 
-# Legacy flags (still supported)
-generic_instructions = true
-frontmatter_validation = true
-xml_balance = true
-import_references = true
+### Full Config Reference
 
-# Disable specific rules by ID
-disabled_rules = []  # e.g., ["CC-AG-001", "AS-005"]
+```toml
+severity = "Warning"  # Warning, Error, Info
+target = "Generic"    # Generic, ClaudeCode, Cursor, Codex
+
+# Multi-tool support (overrides target)
+tools = ["claude-code", "cursor"]
 
 exclude = [
   "node_modules/**",
   ".git/**",
-  "target/**"
+  "target/**",
 ]
+
+[rules]
+# Category toggles - all default to true
+skills = true              # AS-*, CC-SK-* rules
+hooks = true               # CC-HK-* rules
+agents = true              # CC-AG-* rules
+copilot = true             # COP-* rules
+memory = true              # CC-MEM-* rules
+plugins = true             # CC-PL-* rules
+mcp = true                 # MCP-* rules
+prompt_engineering = true  # PE-* rules
+xml = true                 # XML-* rules
+imports = true             # REF-* rules
+cross_platform = true      # XP-* rules
+agents_md = true           # AGM-* rules
+
+# Disable specific rules by ID
+disabled_rules = ["CC-MEM-006", "PE-003"]
 
 # Version-aware validation (optional)
 [tool_versions]
-# Pin tool versions for version-specific validation
 # claude_code = "1.0.0"
-# codex = "0.1.0"
 # cursor = "0.45.0"
-# copilot = "1.0.0"
 
 [spec_revisions]
-# Pin specification revisions for explicit version control
 # mcp_protocol = "2025-06-18"
-# agent_skills_spec = "1.0.0"
-# agents_md_spec = "1.0.0"
 ```
 
 ### Version-Aware Validation
@@ -526,26 +551,29 @@ Pre-release versions (e.g., `v0.1.0-beta`) are marked as pre-release automatical
 ```
 agnix/
 ├── crates/
-│   ├── agnix-core/        # Core validation engine
+│   ├── agnix-core/        # Core validation engine (1000+ tests)
 │   ├── agnix-cli/         # CLI binary
-│   ├── agnix-lsp/         # LSP server
-│   └── agnix-wasm/        # WASM for VS Code (coming)
+│   ├── agnix-lsp/         # LSP server with code actions
+│   └── agnix-rules/       # Rule metadata and tool mappings
+├── knowledge-base/        # 100 rules documentation
 ├── tests/
 │   └── fixtures/          # Test configs
 └── editors/
     └── vscode/            # VS Code extension
 ```
 
-## What's Included (v0.1.0)
+## What's Included (v0.2.0)
 
-- **100 validation rules** across 10 categories
+- **100 validation rules** across 10+ categories
+- **1000+ tests** ensuring reliability
 - **CLI** with colored output, JSON/SARIF formats
 - **LSP server** for real-time editor diagnostics
-- **VS Code extension** with syntax highlighting
+- **VS Code extension** with syntax highlighting and code actions
 - **GitHub Action** for CI/CD integration
 - **Auto-fix** infrastructure (--fix, --dry-run, --fix-safe)
-- **Parallel validation** for large projects
+- **Parallel validation** using rayon for large projects
 - **Cross-platform** support (Linux, macOS, Windows)
+- **Flexible config** - partial configs work, only specify what you need
 
 ## Roadmap
 
