@@ -2756,4 +2756,322 @@ mod tests {
         // Warning about exceeding default should also have assumption when unpinned
         assert!(cc_hk_010[0].assumption.is_some());
     }
+
+    // ===== CC-HK-012: Hooks Parse Error =====
+
+    #[test]
+    fn test_cc_hk_012_invalid_json_syntax() {
+        let content = r#"{ "hooks": { invalid syntax } }"#;
+
+        let diagnostics = validate(content);
+
+        let parse_errors: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-HK-012")
+            .collect();
+        assert_eq!(parse_errors.len(), 1);
+        assert!(parse_errors[0].message.contains("Failed to parse"));
+    }
+
+    #[test]
+    fn test_cc_hk_012_truncated_json() {
+        let content = r#"{"hooks": {"Stop": [{"hooks": [{"type":"command""#;
+
+        let diagnostics = validate(content);
+
+        let parse_errors: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-HK-012")
+            .collect();
+        assert_eq!(parse_errors.len(), 1);
+    }
+
+    #[test]
+    fn test_cc_hk_012_empty_file() {
+        let content = "";
+
+        let diagnostics = validate(content);
+
+        let parse_errors: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-HK-012")
+            .collect();
+        assert_eq!(parse_errors.len(), 1);
+    }
+
+    #[test]
+    fn test_cc_hk_012_valid_json_no_error() {
+        let content = r#"{
+            "hooks": {
+                "Stop": [
+                    {
+                        "hooks": [
+                            { "type": "command", "command": "echo done" }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+        let diagnostics = validate(content);
+
+        let parse_errors: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-HK-012")
+            .collect();
+        assert_eq!(parse_errors.len(), 0);
+    }
+
+    #[test]
+    fn test_cc_hk_012_disabled() {
+        let mut config = LintConfig::default();
+        config.rules.disabled_rules = vec!["CC-HK-012".to_string()];
+
+        let content = r#"{ invalid json }"#;
+        let validator = HooksValidator;
+        let diagnostics = validator.validate(Path::new("settings.json"), content, &config);
+
+        assert!(!diagnostics.iter().any(|d| d.rule == "CC-HK-012"));
+    }
+
+    #[test]
+    fn test_cc_hk_012_missing_required_field_hooks_key() {
+        // Valid JSON but missing the "hooks" key entirely - should NOT be CC-HK-012
+        let content = r#"{"model": "sonnet"}"#;
+
+        let diagnostics = validate(content);
+
+        // This is valid JSON, just doesn't have hooks - no parse error
+        assert!(!diagnostics.iter().any(|d| d.rule == "CC-HK-012"));
+    }
+
+    #[test]
+    fn test_cc_hk_012_null_value() {
+        let content = r#"{"hooks": null}"#;
+
+        let diagnostics = validate(content);
+
+        // null for hooks triggers parse error since HooksSchema expects an object
+        let parse_errors: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-HK-012")
+            .collect();
+        assert_eq!(parse_errors.len(), 1);
+    }
+
+    #[test]
+    fn test_cc_hk_012_array_instead_of_object() {
+        let content = r#"["hooks", "array"]"#;
+
+        let diagnostics = validate(content);
+
+        // This is valid JSON but wrong structure - should trigger parse error
+        // because SettingsSchema expects an object
+        let parse_errors: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-HK-012")
+            .collect();
+        assert_eq!(parse_errors.len(), 1);
+    }
+
+    // ===== Additional CC-HK edge case tests =====
+
+    #[test]
+    fn test_cc_hk_001_all_valid_events() {
+        // Tool events that require matcher
+        let tool_events = ["PreToolUse", "PostToolUse", "PermissionRequest"];
+        // Non-tool events that don't require matcher
+        let non_tool_events = ["Stop", "SubagentStop", "SessionStart"];
+
+        // Test tool events WITH matcher (should be valid)
+        for event in tool_events {
+            let content = format!(
+                r#"{{
+                    "hooks": {{
+                        "{}": [
+                            {{
+                                "matcher": "Bash",
+                                "hooks": [{{ "type": "command", "command": "echo test" }}]
+                            }}
+                        ]
+                    }}
+                }}"#,
+                event
+            );
+
+            let diagnostics = validate(&content);
+            let hk_001: Vec<_> = diagnostics
+                .iter()
+                .filter(|d| d.rule == "CC-HK-001")
+                .collect();
+            assert!(
+                hk_001.is_empty(),
+                "Tool event '{}' with matcher should be valid",
+                event
+            );
+        }
+
+        // Test non-tool events WITHOUT matcher (should be valid)
+        for event in non_tool_events {
+            let content = format!(
+                r#"{{
+                    "hooks": {{
+                        "{}": [
+                            {{
+                                "hooks": [{{ "type": "command", "command": "echo test" }}]
+                            }}
+                        ]
+                    }}
+                }}"#,
+                event
+            );
+
+            let diagnostics = validate(&content);
+            let hk_001: Vec<_> = diagnostics
+                .iter()
+                .filter(|d| d.rule == "CC-HK-001")
+                .collect();
+            assert!(
+                hk_001.is_empty(),
+                "Non-tool event '{}' without matcher should be valid",
+                event
+            );
+        }
+    }
+
+    #[test]
+    fn test_cc_hk_003_all_tool_events_require_matcher() {
+        // Must match HooksSchema::TOOL_EVENTS constant
+        let tool_events = HooksSchema::TOOL_EVENTS;
+
+        for event in tool_events {
+            let content = format!(
+                r#"{{
+                    "hooks": {{
+                        "{}": [
+                            {{
+                                "hooks": [{{ "type": "command", "command": "echo test" }}]
+                            }}
+                        ]
+                    }}
+                }}"#,
+                event
+            );
+
+            let diagnostics = validate(&content);
+            let hk_003: Vec<_> = diagnostics
+                .iter()
+                .filter(|d| d.rule == "CC-HK-003")
+                .collect();
+            assert_eq!(
+                hk_003.len(),
+                1,
+                "Event '{}' should require matcher but didn't get CC-HK-003",
+                event
+            );
+        }
+    }
+
+    #[test]
+    fn test_cc_hk_004_non_tool_events_reject_matcher() {
+        let non_tool_events = ["Stop", "SubagentStop", "SessionStart"];
+
+        for event in non_tool_events {
+            let content = format!(
+                r#"{{
+                    "hooks": {{
+                        "{}": [
+                            {{
+                                "matcher": "Bash",
+                                "hooks": [{{ "type": "command", "command": "echo test" }}]
+                            }}
+                        ]
+                    }}
+                }}"#,
+                event
+            );
+
+            let diagnostics = validate(&content);
+            let hk_004: Vec<_> = diagnostics
+                .iter()
+                .filter(|d| d.rule == "CC-HK-004")
+                .collect();
+            assert_eq!(
+                hk_004.len(),
+                1,
+                "Event '{}' should reject matcher but didn't get CC-HK-004",
+                event
+            );
+        }
+    }
+
+    #[test]
+    fn test_cc_hk_002_prompt_allowed_events() {
+        // Must match HooksSchema::PROMPT_EVENTS constant
+        let prompt_allowed = HooksSchema::PROMPT_EVENTS;
+
+        for event in prompt_allowed {
+            let content = format!(
+                r#"{{
+                    "hooks": {{
+                        "{}": [
+                            {{
+                                "hooks": [{{ "type": "prompt", "prompt": "Summarize" }}]
+                            }}
+                        ]
+                    }}
+                }}"#,
+                event
+            );
+
+            let diagnostics = validate(&content);
+            let hk_002: Vec<_> = diagnostics
+                .iter()
+                .filter(|d| d.rule == "CC-HK-002")
+                .collect();
+            assert!(
+                hk_002.is_empty(),
+                "Prompt on '{}' should be valid but got CC-HK-002",
+                event
+            );
+        }
+    }
+
+    #[test]
+    fn test_cc_hk_002_prompt_disallowed_events() {
+        let prompt_disallowed = [
+            "PreToolUse",
+            "PostToolUse",
+            "SessionStart",
+            "PermissionRequest",
+        ];
+
+        for event in prompt_disallowed {
+            let content = format!(
+                r#"{{
+                    "hooks": {{
+                        "{}": [
+                            {{
+                                "matcher": "Bash",
+                                "hooks": [{{ "type": "prompt", "prompt": "Test" }}]
+                            }}
+                        ]
+                    }}
+                }}"#,
+                event
+            );
+
+            let diagnostics = validate(&content);
+            let hk_002: Vec<_> = diagnostics
+                .iter()
+                .filter(|d| d.rule == "CC-HK-002")
+                .collect();
+            assert_eq!(
+                hk_002.len(),
+                1,
+                "Prompt on '{}' should be invalid but didn't get CC-HK-002",
+                event
+            );
+        }
+    }
 }

@@ -3198,4 +3198,435 @@ Body"#;
             as_015_errors
         );
     }
+
+    // ===== Additional AS-016 Parse Error Tests =====
+
+    #[test]
+    fn test_as_001_missing_closing_delimiter_treated_as_no_frontmatter() {
+        // When opening --- exists but closing --- is missing, the entire content
+        // is treated as body without frontmatter, triggering AS-001
+        let content = r#"---
+name: test
+description: A test skill
+Missing closing delimiter
+Body content"#;
+
+        let validator = SkillValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+        let as_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-001").collect();
+        assert_eq!(as_001.len(), 1);
+
+        // Should NOT be treated as parse error since no frontmatter was detected
+        let as_016: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-016").collect();
+        assert!(as_016.is_empty());
+    }
+
+    #[test]
+    fn test_as_016_invalid_yaml_colon_in_value() {
+        let content = r#"---
+name: test:value:with:colons
+description: A test skill
+---
+Body"#;
+
+        let validator = SkillValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+        // This should parse OK as YAML handles colons in values
+        let parse_errors: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-016").collect();
+        assert!(parse_errors.is_empty());
+    }
+
+    #[test]
+    fn test_as_016_invalid_yaml_tabs() {
+        let content = "---\nname: test\n\tdescription: bad indent\n---\nBody";
+
+        let validator = SkillValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+        // Tabs in YAML can cause parse errors
+        let parse_errors: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-016").collect();
+        assert_eq!(
+            parse_errors.len(),
+            1,
+            "Tab indentation should cause parse error"
+        );
+    }
+
+    #[test]
+    fn test_as_016_valid_yaml_no_error() {
+        let content = r#"---
+name: valid-skill
+description: A properly formatted skill
+model: sonnet
+---
+Body content"#;
+
+        let validator = SkillValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+        let parse_errors: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-016").collect();
+        assert!(parse_errors.is_empty());
+    }
+
+    #[test]
+    fn test_as_016_disabled() {
+        let mut config = LintConfig::default();
+        config.rules.disabled_rules = vec!["AS-016".to_string()];
+
+        let content = r#"---
+name: test
+description
+invalid yaml syntax
+---
+Body"#;
+
+        let validator = SkillValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &config);
+
+        assert!(!diagnostics.iter().any(|d| d.rule == "AS-016"));
+    }
+
+    // ===== Additional edge case tests for comprehensive coverage =====
+
+    #[test]
+    fn test_as_001_empty_file() {
+        let content = "";
+        let validator = SkillValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+        assert!(diagnostics.iter().any(|d| d.rule == "AS-001"));
+    }
+
+    #[test]
+    fn test_as_001_only_body_no_frontmatter() {
+        let content = "This is just body content without any frontmatter.";
+        let validator = SkillValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+        assert!(diagnostics.iter().any(|d| d.rule == "AS-001"));
+    }
+
+    #[test]
+    fn test_as_002_no_name_field() {
+        let content = r#"---
+description: A test skill without name field
+---
+Body"#;
+
+        let validator = SkillValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+        // Missing name field should trigger AS-002
+        assert!(diagnostics.iter().any(|d| d.rule == "AS-002"));
+    }
+
+    #[test]
+    fn test_as_004_whitespace_only_name() {
+        let content = r#"---
+name: "   "
+description: A test skill
+---
+Body"#;
+
+        let validator = SkillValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+        // Whitespace-only name should trigger AS-004 (invalid format)
+        assert!(diagnostics.iter().any(|d| d.rule == "AS-004"));
+    }
+
+    #[test]
+    fn test_as_003_whitespace_description() {
+        let content = r#"---
+name: test-skill
+description: "   "
+---
+Body"#;
+
+        let validator = SkillValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+        // Whitespace-only description should be treated as short (AS-008)
+        let as_008: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-008").collect();
+        assert!(
+            !as_008.is_empty(),
+            "Whitespace description should trigger AS-008"
+        );
+    }
+
+    #[test]
+    fn test_as_004_uppercase_in_name() {
+        let content = r#"---
+name: TestSkill
+description: Use when testing skill names
+---
+Body"#;
+
+        let validator = SkillValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+        let as_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-004").collect();
+        assert_eq!(as_004.len(), 1);
+    }
+
+    #[test]
+    fn test_as_004_valid_lowercase_hyphen_name() {
+        let content = r#"---
+name: valid-skill-name
+description: Use when testing valid names
+---
+Body"#;
+
+        let validator = SkillValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+        assert!(!diagnostics.iter().any(|d| d.rule == "AS-004"));
+    }
+
+    #[test]
+    fn test_as_007_all_reserved_names() {
+        // Reserved names hardcoded in AS-007 validation logic
+        // No constant exists for these in the codebase
+        let reserved = ["anthropic", "claude", "skill"];
+
+        for name in reserved {
+            let content = format!(
+                "---\nname: {}\ndescription: Use when testing reserved names\n---\nBody",
+                name
+            );
+
+            let validator = SkillValidator;
+            let diagnostics =
+                validator.validate(Path::new("test.md"), &content, &LintConfig::default());
+
+            let as_007: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-007").collect();
+            assert_eq!(
+                as_007.len(),
+                1,
+                "Reserved name '{}' should trigger AS-007",
+                name
+            );
+        }
+    }
+
+    #[test]
+    fn test_as_007_non_reserved_name_ok() {
+        let content = r#"---
+name: my-custom-skill
+description: Use when testing non-reserved names
+---
+Body"#;
+
+        let validator = SkillValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+        assert!(!diagnostics.iter().any(|d| d.rule == "AS-007"));
+    }
+
+    #[test]
+    fn test_as_011_exactly_500_chars() {
+        let long_compat = "a".repeat(500);
+        let content = format!(
+            "---\nname: test\ndescription: Use when testing\ncompatibility: {}\n---\nBody",
+            long_compat
+        );
+
+        let validator = SkillValidator;
+        let diagnostics =
+            validator.validate(Path::new("test.md"), &content, &LintConfig::default());
+
+        // Exactly 500 should be OK (limit is >500)
+        assert!(!diagnostics.iter().any(|d| d.rule == "AS-011"));
+    }
+
+    #[test]
+    fn test_as_011_501_chars_triggers() {
+        let long_compat = "a".repeat(501);
+        let content = format!(
+            "---\nname: test\ndescription: Use when testing\ncompatibility: {}\n---\nBody",
+            long_compat
+        );
+
+        let validator = SkillValidator;
+        let diagnostics =
+            validator.validate(Path::new("test.md"), &content, &LintConfig::default());
+
+        assert!(diagnostics.iter().any(|d| d.rule == "AS-011"));
+    }
+
+    #[test]
+    fn test_as_012_exactly_500_lines_ok() {
+        let body_lines = (0..470)
+            .map(|i| format!("Line {}", i))
+            .collect::<Vec<_>>()
+            .join("\n");
+        let content = format!(
+            "---\nname: test\ndescription: Use when testing line limits\n---\n{}",
+            body_lines
+        );
+
+        let validator = SkillValidator;
+        let diagnostics =
+            validator.validate(Path::new("test.md"), &content, &LintConfig::default());
+
+        // Around 500 lines should be OK
+        assert!(!diagnostics.iter().any(|d| d.rule == "AS-012"));
+    }
+
+    #[test]
+    fn test_cc_sk_001_all_valid_models() {
+        // Must match VALID_MODELS constant in skill.rs
+        let valid_models = VALID_MODELS;
+
+        for model in valid_models {
+            let content = format!(
+                "---\nname: test\ndescription: Use when testing models\nmodel: {}\n---\nBody",
+                model
+            );
+
+            let validator = SkillValidator;
+            let diagnostics =
+                validator.validate(Path::new("test.md"), &content, &LintConfig::default());
+
+            let cc_sk_001: Vec<_> = diagnostics
+                .iter()
+                .filter(|d| d.rule == "CC-SK-001")
+                .collect();
+            assert!(
+                cc_sk_001.is_empty(),
+                "Model '{}' should be valid but got CC-SK-001",
+                model
+            );
+        }
+    }
+
+    #[test]
+    fn test_cc_sk_001_invalid_model_exhaustive() {
+        let content = r#"---
+name: test
+description: Use when testing
+model: invalid-model
+---
+Body"#;
+
+        let validator = SkillValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+        assert!(diagnostics.iter().any(|d| d.rule == "CC-SK-001"));
+    }
+
+    #[test]
+    fn test_cc_sk_002_fork_context_valid() {
+        // Context can only be "fork", and requires an agent field
+        let content = r#"---
+name: test
+description: Use when testing contexts
+context: fork
+agent: general-purpose
+---
+Body"#;
+
+        let validator = SkillValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+        let cc_sk_002: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-SK-002")
+            .collect();
+        assert!(
+            cc_sk_002.is_empty(),
+            "Context 'fork' with agent should be valid"
+        );
+    }
+
+    #[test]
+    fn test_cc_sk_002_invalid_context_exhaustive() {
+        let content = r#"---
+name: test
+description: Use when testing contexts
+context: invalid
+agent: general-purpose
+---
+Body"#;
+
+        let validator = SkillValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+        assert!(diagnostics.iter().any(|d| d.rule == "CC-SK-002"));
+    }
+
+    #[test]
+    fn test_cc_sk_003_fork_without_agent_exhaustive() {
+        let content = r#"---
+name: test
+description: Use when testing
+context: fork
+---
+Body"#;
+
+        let validator = SkillValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+        assert!(diagnostics.iter().any(|d| d.rule == "CC-SK-003"));
+    }
+
+    #[test]
+    fn test_cc_sk_004_agent_without_context_exhaustive() {
+        let content = r#"---
+name: test
+description: Use when testing
+agent: general-purpose
+---
+Body"#;
+
+        let validator = SkillValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+        assert!(diagnostics.iter().any(|d| d.rule == "CC-SK-004"));
+    }
+
+    #[test]
+    fn test_cc_sk_005_builtin_agents_valid() {
+        // Must match BUILTIN_AGENTS constant in skill.rs
+        let builtin_agents = BUILTIN_AGENTS;
+
+        for agent in builtin_agents {
+            let content = format!(
+                "---\nname: test\ndescription: Use when testing\ncontext: fork\nagent: {}\n---\nBody",
+                agent
+            );
+
+            let validator = SkillValidator;
+            let diagnostics =
+                validator.validate(Path::new("test.md"), &content, &LintConfig::default());
+
+            let cc_sk_005: Vec<_> = diagnostics
+                .iter()
+                .filter(|d| d.rule == "CC-SK-005")
+                .collect();
+            assert!(
+                cc_sk_005.is_empty(),
+                "Built-in agent '{}' should be valid",
+                agent
+            );
+        }
+    }
+
+    #[test]
+    fn test_cc_sk_005_custom_kebab_agent_valid() {
+        let content = r#"---
+name: test
+description: Use when testing
+context: fork
+agent: my-custom-agent
+---
+Body"#;
+
+        let validator = SkillValidator;
+        let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+        assert!(!diagnostics.iter().any(|d| d.rule == "CC-SK-005"));
+    }
 }

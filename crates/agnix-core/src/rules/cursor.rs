@@ -570,4 +570,150 @@ Always use strict mode and explicit types.
             .collect();
         assert!(errors.is_empty(), "Expected no errors, got: {:?}", errors);
     }
+
+    // ===== Additional CUR rule tests =====
+
+    #[test]
+    fn test_cur_001_newlines_only() {
+        let content = "\n\n\n";
+        let diagnostics = validate_mdc(content);
+        assert!(diagnostics.iter().any(|d| d.rule == "CUR-001"));
+    }
+
+    #[test]
+    fn test_cur_001_frontmatter_only() {
+        // File with just frontmatter and no body
+        let content = "---\ndescription: test\n---\n";
+        let diagnostics = validate_mdc(content);
+        assert!(diagnostics.iter().any(|d| d.rule == "CUR-001"));
+    }
+
+    #[test]
+    fn test_cur_002_no_frontmatter_in_cursorrules() {
+        // .cursorrules should NOT require frontmatter (CUR-002 is for .mdc files)
+        let content = "Just plain text rules without frontmatter.";
+        let validator = CursorValidator;
+        let diagnostics =
+            validator.validate(Path::new(".cursorrules"), content, &LintConfig::default());
+        assert!(!diagnostics.iter().any(|d| d.rule == "CUR-002"));
+    }
+
+    #[test]
+    fn test_cur_003_yaml_with_tabs() {
+        // YAML doesn't allow tabs for indentation
+        let content = "---\n\tdescription: test\n---\nBody";
+        let diagnostics = validate_mdc(content);
+        assert!(diagnostics.iter().any(|d| d.rule == "CUR-003"));
+    }
+
+    #[test]
+    fn test_cur_004_all_valid_patterns() {
+        let valid_patterns = ["**/*.ts", "*.rs", "src/**/*.py", "{src,lib}/**/*.tsx"];
+
+        for pattern in valid_patterns {
+            let content = format!("---\nglobs: \"{}\"\n---\nBody", pattern);
+            let diagnostics = validate_mdc(&content);
+            let cur_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CUR-004").collect();
+            assert!(cur_004.is_empty(), "Pattern '{}' should be valid", pattern);
+        }
+    }
+
+    #[test]
+    fn test_cur_004_invalid_patterns() {
+        let invalid_patterns = ["[invalid", "***", "**["];
+
+        for pattern in invalid_patterns {
+            let content = format!("---\nglobs: \"{}\"\n---\nBody", pattern);
+            let diagnostics = validate_mdc(&content);
+            let cur_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CUR-004").collect();
+            assert!(
+                !cur_004.is_empty(),
+                "Pattern '{}' should be invalid",
+                pattern
+            );
+        }
+    }
+
+    #[test]
+    fn test_cur_004_globs_as_array() {
+        let content = r#"---
+globs:
+  - "**/*.ts"
+  - "**/*.tsx"
+---
+Body"#;
+        let diagnostics = validate_mdc(content);
+        let cur_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CUR-004").collect();
+        assert!(cur_004.is_empty(), "Array globs should be valid");
+    }
+
+    #[test]
+    fn test_cur_005_all_known_keys() {
+        let content = r#"---
+description: Test rule
+globs: "**/*.ts"
+alwaysApply: false
+---
+Body"#;
+        let diagnostics = validate_mdc(content);
+        assert!(!diagnostics.iter().any(|d| d.rule == "CUR-005"));
+    }
+
+    #[test]
+    fn test_cur_005_multiple_unknown_keys() {
+        let content = r#"---
+description: test
+unknownKey1: value1
+unknownKey2: value2
+---
+Body"#;
+        let diagnostics = validate_mdc(content);
+        let cur_005: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CUR-005").collect();
+        assert!(!cur_005.is_empty());
+    }
+
+    #[test]
+    fn test_cur_006_legacy_file_with_content() {
+        let content = "Some legacy cursor rules.";
+        let validator = CursorValidator;
+        let diagnostics =
+            validator.validate(Path::new(".cursorrules"), content, &LintConfig::default());
+        assert!(diagnostics.iter().any(|d| d.rule == "CUR-006"));
+    }
+
+    #[test]
+    fn test_mdc_file_no_cur_006_warning() {
+        // .mdc files should not trigger CUR-006 (legacy warning)
+        let content = "---\ndescription: test\n---\nRules content";
+        let diagnostics = validate_mdc(content);
+        assert!(!diagnostics.iter().any(|d| d.rule == "CUR-006"));
+    }
+
+    #[test]
+    fn test_all_cur_rules_can_be_disabled() {
+        let rules = [
+            "CUR-001", "CUR-002", "CUR-003", "CUR-004", "CUR-005", "CUR-006",
+        ];
+
+        for rule in rules {
+            let mut config = LintConfig::default();
+            config.rules.disabled_rules = vec![rule.to_string()];
+
+            // Content that could trigger each rule
+            let (content, path) = match rule {
+                "CUR-001" => ("", ".cursor/rules/test.mdc"),
+                "CUR-006" => ("content", ".cursorrules"),
+                _ => ("---\nunknown: value\n---\n", ".cursor/rules/test.mdc"),
+            };
+
+            let validator = CursorValidator;
+            let diagnostics = validator.validate(Path::new(path), content, &config);
+
+            assert!(
+                !diagnostics.iter().any(|d| d.rule == rule),
+                "Rule {} should be disabled",
+                rule
+            );
+        }
+    }
 }

@@ -875,4 +875,160 @@ You should consider this approach.
             assert!(d.has_fixes());
         }
     }
+
+    // ===== Additional CC-MEM rule tests =====
+
+    #[test]
+    fn test_cc_mem_004_all_known_commands() {
+        // Test that known Claude commands don't trigger CC-MEM-004
+        let known_commands = [
+            "/help", "/compact", "/resume", "/memory", "/config", "/doctor",
+        ];
+        let validator = ClaudeMdValidator;
+
+        for cmd in known_commands {
+            let content = format!("# Commands\n\nUse {} for assistance.", cmd);
+            let diagnostics =
+                validator.validate(Path::new("CLAUDE.md"), &content, &LintConfig::default());
+
+            let mem004: Vec<_> = diagnostics
+                .iter()
+                .filter(|d| d.rule == "CC-MEM-004")
+                .collect();
+            assert!(
+                mem004.is_empty(),
+                "Known command '{}' should not trigger CC-MEM-004",
+                cmd
+            );
+        }
+    }
+
+    #[test]
+    fn test_cc_mem_005_be_helpful_pattern() {
+        // "Be helpful and accurate" is a known generic pattern
+        let content = "Be helpful and accurate when responding.";
+        let validator = ClaudeMdValidator;
+        let diagnostics =
+            validator.validate(Path::new("CLAUDE.md"), &content, &LintConfig::default());
+
+        let mem005: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-MEM-005")
+            .collect();
+        assert!(
+            !mem005.is_empty(),
+            "Generic 'Be helpful and accurate' should trigger CC-MEM-005"
+        );
+    }
+
+    #[test]
+    fn test_cc_mem_006_all_negative_patterns() {
+        let negative_patterns = [
+            "Don't write bad code.",
+            "Never use deprecated APIs.",
+            "Avoid global variables.",
+            "Do not skip tests.",
+        ];
+        let validator = ClaudeMdValidator;
+
+        for pattern in negative_patterns {
+            let content = format!("# Rules\n\n{}", pattern);
+            let diagnostics =
+                validator.validate(Path::new("CLAUDE.md"), &content, &LintConfig::default());
+
+            let mem006: Vec<_> = diagnostics
+                .iter()
+                .filter(|d| d.rule == "CC-MEM-006")
+                .collect();
+            assert!(
+                !mem006.is_empty(),
+                "Negative pattern '{}' should trigger CC-MEM-006",
+                pattern
+            );
+        }
+    }
+
+    #[test]
+    fn test_cc_mem_008_edge_at_boundary() {
+        // Test content with exactly 10 lines (boundary case)
+        let lines: Vec<String> = (1..=10).map(|i| format!("Line {}", i)).collect();
+        let content = lines.join("\n");
+
+        let validator = ClaudeMdValidator;
+        let diagnostics =
+            validator.validate(Path::new("CLAUDE.md"), &content, &LintConfig::default());
+
+        // 10 lines is at boundary, CC-MEM-008 checks for critical in middle
+        let mem008: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-MEM-008")
+            .collect();
+        // No critical section, so no error
+        assert!(mem008.is_empty());
+    }
+
+    #[test]
+    fn test_cc_mem_009_exact_token_limit() {
+        // Create content close to 4000 tokens (rough estimate: ~4 chars per token)
+        let long_content = "word ".repeat(3900);
+        let content = format!("# Project\n\n{}", long_content);
+
+        let validator = ClaudeMdValidator;
+        let diagnostics =
+            validator.validate(Path::new("CLAUDE.md"), &content, &LintConfig::default());
+
+        let mem009: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-MEM-009")
+            .collect();
+        // Should trigger token exceeded warning
+        assert!(!mem009.is_empty());
+    }
+
+    #[test]
+    fn test_cc_mem_010_unique_content_no_error() {
+        // Content that doesn't duplicate README
+        let content = "# Project Memory\n\nThis contains unique project-specific instructions.";
+
+        let validator = ClaudeMdValidator;
+        let diagnostics =
+            validator.validate(Path::new("CLAUDE.md"), &content, &LintConfig::default());
+
+        let mem010: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-MEM-010")
+            .collect();
+        // No README duplication without access to README
+        assert!(mem010.is_empty());
+    }
+
+    #[test]
+    fn test_all_cc_mem_rules_can_be_disabled() {
+        let rules = [
+            "CC-MEM-004",
+            "CC-MEM-005",
+            "CC-MEM-006",
+            "CC-MEM-007",
+            "CC-MEM-008",
+            "CC-MEM-009",
+            "CC-MEM-010",
+        ];
+
+        for rule in rules {
+            let mut config = LintConfig::default();
+            config.rules.disabled_rules = vec![rule.to_string()];
+
+            // Content that could trigger each rule
+            let content = "# Critical Rules\n\nAlways follow best practices. Don't write bad code.\nRun /unknown-cmd.\nYou should do this.";
+
+            let validator = ClaudeMdValidator;
+            let diagnostics = validator.validate(Path::new("CLAUDE.md"), content, &config);
+
+            assert!(
+                !diagnostics.iter().any(|d| d.rule == rule),
+                "Rule {} should be disabled",
+                rule
+            );
+        }
+    }
 }

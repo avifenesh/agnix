@@ -20,6 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - MockFileSystem provides HashMap-based in-memory storage with RwLock for thread safety
   - Support for symlink handling and circular symlink detection
   - Integrated into LintConfig via fs() accessor for dependency injection
+- Comprehensive test suite for validation rule coverage (#221)
+  - Added exhaustive tests for all valid values in enums and constants
+  - Improved test coverage for edge cases and error conditions
+  - Fixed test logic to properly reflect tool event requirements
 
 ### Performance
 - Shared import cache at project validation level reduces redundant parsing (#216)
