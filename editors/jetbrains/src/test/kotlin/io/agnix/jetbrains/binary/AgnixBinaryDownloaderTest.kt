@@ -26,6 +26,12 @@ class AgnixBinaryDownloaderTest {
     }
 
     @Test
+    fun `trusted download URL rejects malformed uri content`() {
+        assertFalse(AgnixBinaryDownloader.isTrustedDownloadUrl("https://github.com/invalid path"))
+        assertFalse(AgnixBinaryDownloader.isTrustedDownloadUrl("https://github.com/\nagnix"))
+    }
+
+    @Test
     fun `resolve trusted redirect handles absolute and relative locations`() {
         val absolute = AgnixBinaryDownloader.resolveTrustedRedirectUrl(
             "https://github.com/avifenesh/agnix/releases/latest/download/agnix-lsp.tar.gz",

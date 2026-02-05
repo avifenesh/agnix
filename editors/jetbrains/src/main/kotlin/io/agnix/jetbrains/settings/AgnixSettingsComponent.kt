@@ -1,6 +1,8 @@
 package io.agnix.jetbrains.settings
 
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
+import com.intellij.openapi.fileChooser.FileChooser
+import com.intellij.openapi.fileChooser.FileChooserDescriptor
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBLabel
@@ -22,15 +24,18 @@ class AgnixSettingsComponent {
     private val autoDownloadCheckBox = JBCheckBox("Automatically download LSP binary if not found")
     private val traceLevelComboBox = JComboBox(AgnixSettings.TraceLevel.entries.toTypedArray())
     private val codeLensCheckBox = JBCheckBox("Show CodeLens annotations")
+    private val lspPathChooserDescriptor = FileChooserDescriptor(
+        true,
+        false,
+        false,
+        false,
+        false,
+        false
+    ).withTitle("Select agnix-lsp Binary")
+        .withDescription("Choose the path to the agnix-lsp executable")
 
     init {
-        // Configure file chooser for LSP path
-        lspPathField.addBrowseFolderListener(
-            "Select agnix-lsp Binary",
-            "Choose the path to the agnix-lsp executable",
-            null,
-            FileChooserDescriptorFactory.createSingleFileDescriptor()
-        )
+        configureLspPathFileChooser()
 
         // Build the form
         mainPanel = FormBuilder.createFormBuilder()
@@ -45,6 +50,22 @@ class AgnixSettingsComponent {
             .addComponent(codeLensCheckBox)
             .addComponentFillVertically(JPanel(), 0)
             .panel
+    }
+
+    private fun configureLspPathFileChooser() {
+        lspPathField.addActionListener {
+            val initialSelection = lspPathField.text
+                .takeIf { it.isNotBlank() }
+                ?.let { LocalFileSystem.getInstance().findFileByPath(it) }
+            val selectedFile = FileChooser.chooseFile(
+                lspPathChooserDescriptor,
+                null,
+                initialSelection
+            )
+            if (selectedFile != null) {
+                lspPathField.text = selectedFile.path
+            }
+        }
     }
 
     fun getPanel(): JComponent = mainPanel

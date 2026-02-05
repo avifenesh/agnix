@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.3] - 2026-02-05
+
+### Fixed
+
+- Replace deprecated URL constructors with URI-based parsing and resolution in binary downloader.
+- Replace deprecated settings file chooser APIs to remove scheduled-for-removal usage.
+- Use the same plugin icon asset as VS Code in JetBrains plugin metadata.
+
 ## [0.1.1] - 2026-02-05
 
 ### Fixed

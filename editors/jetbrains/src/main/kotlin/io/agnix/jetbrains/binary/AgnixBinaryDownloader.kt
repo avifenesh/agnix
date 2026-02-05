@@ -10,7 +10,7 @@ import io.agnix.jetbrains.notifications.AgnixNotifications
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import java.io.*
 import java.net.HttpURLConnection
-import java.net.URL
+import java.net.URI
 import java.nio.file.Files
 import java.nio.file.attribute.PosixFilePermission
 import java.util.zip.GZIPInputStream
@@ -40,7 +40,7 @@ class AgnixBinaryDownloader {
 
         internal fun isTrustedDownloadUrl(urlString: String): Boolean {
             val url = try {
-                URL(urlString)
+                URI(urlString).toURL()
             } catch (_: Exception) {
                 return false
             }
@@ -55,7 +55,7 @@ class AgnixBinaryDownloader {
                 throw IOException("Redirect location header missing")
             }
 
-            val resolvedUrl = URL(URL(currentUrl), redirectLocation).toString()
+            val resolvedUrl = URI(currentUrl).resolve(redirectLocation).toString()
             if (!isTrustedDownloadUrl(resolvedUrl)) {
                 throw IOException("Redirect to untrusted URL not allowed: $resolvedUrl")
             }
@@ -214,7 +214,7 @@ class AgnixBinaryDownloader {
                     throw IOException("Refusing to download from untrusted URL: $currentUrl")
                 }
 
-                val url = URL(currentUrl)
+                val url = URI(currentUrl).toURL()
                 connection = url.openConnection() as HttpURLConnection
                 connection.connectTimeout = DOWNLOAD_TIMEOUT
                 connection.readTimeout = DOWNLOAD_TIMEOUT
