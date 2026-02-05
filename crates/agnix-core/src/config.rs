@@ -2224,4 +2224,98 @@ disabled_rules = []
         assert!(config.rules.hooks);
         assert!(config.rules.disabled_rules.is_empty());
     }
+
+    // ===== FileSystem Abstraction Tests =====
+
+    #[test]
+    fn test_default_config_uses_real_filesystem() {
+        let config = LintConfig::default();
+
+        // Default fs() should be RealFileSystem
+        let fs = config.fs();
+
+        // Verify it works by checking a file that should exist
+        assert!(fs.exists(Path::new("Cargo.toml")));
+        assert!(!fs.exists(Path::new("nonexistent_xyz_abc.txt")));
+    }
+
+    #[test]
+    fn test_set_fs_replaces_filesystem() {
+        use crate::fs::{FileSystem, MockFileSystem};
+
+        let mut config = LintConfig::default();
+
+        // Create a mock filesystem with a test file
+        let mock_fs = Arc::new(MockFileSystem::new());
+        mock_fs.add_file("/mock/test.md", "mock content");
+
+        // Replace the filesystem (coerce to trait object)
+        let fs_arc: Arc<dyn FileSystem> = Arc::clone(&mock_fs) as Arc<dyn FileSystem>;
+        config.set_fs(fs_arc);
+
+        // Verify fs() returns the mock
+        let fs = config.fs();
+        assert!(fs.exists(Path::new("/mock/test.md")));
+        assert!(!fs.exists(Path::new("Cargo.toml"))); // Real file shouldn't exist in mock
+
+        // Verify we can read from the mock
+        let content = fs.read_to_string(Path::new("/mock/test.md")).unwrap();
+        assert_eq!(content, "mock content");
+    }
+
+    #[test]
+    fn test_set_fs_is_not_serialized() {
+        use crate::fs::MockFileSystem;
+
+        let mut config = LintConfig::default();
+        config.set_fs(Arc::new(MockFileSystem::new()));
+
+        // Serialize and deserialize
+        let serialized = toml::to_string(&config).unwrap();
+        let deserialized: LintConfig = toml::from_str(&serialized).unwrap();
+
+        // Deserialized config should have RealFileSystem (default)
+        // because fs is marked with #[serde(skip)]
+        let fs = deserialized.fs();
+        // RealFileSystem can see Cargo.toml, MockFileSystem cannot
+        assert!(fs.exists(Path::new("Cargo.toml")));
+    }
+
+    #[test]
+    fn test_fs_can_be_shared_across_threads() {
+        use crate::fs::{FileSystem, MockFileSystem};
+        use std::thread;
+
+        let mut config = LintConfig::default();
+        let mock_fs = Arc::new(MockFileSystem::new());
+        mock_fs.add_file("/test/file.md", "content");
+
+        // Coerce to trait object and set
+        let fs_arc: Arc<dyn FileSystem> = mock_fs;
+        config.set_fs(fs_arc);
+
+        // Get fs reference
+        let fs = Arc::clone(config.fs());
+
+        // Spawn a thread that uses the filesystem
+        let handle = thread::spawn(move || {
+            assert!(fs.exists(Path::new("/test/file.md")));
+            let content = fs.read_to_string(Path::new("/test/file.md")).unwrap();
+            assert_eq!(content, "content");
+        });
+
+        handle.join().unwrap();
+    }
+
+    #[test]
+    fn test_config_fs_returns_arc_ref() {
+        let config = LintConfig::default();
+
+        // fs() returns &Arc<dyn FileSystem>
+        let fs1 = config.fs();
+        let fs2 = config.fs();
+
+        // Both should point to the same Arc
+        assert!(Arc::ptr_eq(fs1, fs2));
+    }
 }
