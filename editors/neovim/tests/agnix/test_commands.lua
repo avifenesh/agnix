@@ -173,14 +173,12 @@ end
 
 local function test_ignore_rule_no_duplicate()
   -- When the rule is already disabled, it should not be added again.
-  -- Note: _ignore_rule uses string.find() with pattern matching (not plain),
-  -- so we use a rule ID without Lua-special characters to test the
-  -- duplicate-detection logic path correctly.
+  -- Uses hyphenated rule ID to verify plain text matching works correctly.
   local tmp = vim.fn.tempname()
   vim.fn.mkdir(tmp, 'p')
   local toml_path = tmp .. util.path_sep .. '.agnix.toml'
 
-  local original_content = '[rules]\ndisabled_rules = ["XML001"]\n'
+  local original_content = '[rules]\ndisabled_rules = ["XML-001"]\n'
   local f = io.open(toml_path, 'w')
   f:write(original_content)
   f:close()
@@ -197,7 +195,7 @@ local function test_ignore_rule_no_duplicate()
     notify_messages[#notify_messages + 1] = msg
   end
 
-  commands._ignore_rule('XML001')
+  commands._ignore_rule('XML-001')
 
   vim.notify = orig_notify
   util.get_root_dir = orig_get_root_dir

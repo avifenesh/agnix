@@ -133,8 +133,9 @@ local function test_setup_autocommands_creates_augroup()
 end
 
 local function test_mdc_filetype_registered()
-  -- After requiring agnix.lsp, .mdc should be registered as markdown.
-  -- We test by creating a temp .mdc file, opening it in a buffer, and checking filetype.
+  -- After calling setup_autocommands(), .mdc should be registered as markdown.
+  config.setup({})
+  lsp.setup_autocommands()
   local tmp = vim.fn.tempname() .. '.mdc'
   local f = io.open(tmp, 'w')
   if f then
