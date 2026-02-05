@@ -154,9 +154,9 @@ This is skill variant {index} with unique configuration.
 pub fn create_scale_project(file_count: usize) -> TempDir {
     let temp = TempDir::new().expect("Failed to create temp directory");
 
-    let skill_count = (file_count as f64 * 0.70) as usize;
-    let hooks_count = (file_count as f64 * 0.15) as usize;
-    let mcp_count = (file_count as f64 * 0.10) as usize;
+    let skill_count = file_count * 70 / 100;
+    let hooks_count = file_count * 15 / 100;
+    let mcp_count = file_count * 10 / 100;
     let misc_count = file_count - skill_count - hooks_count - mcp_count;
 
     // Create skills (70%)
@@ -173,12 +173,19 @@ pub fn create_scale_project(file_count: usize) -> TempDir {
 
     for i in 0..hooks_count {
         let content = create_hooks_config(i);
-        let filename = if i == 0 {
-            "settings.json".to_string()
+        // Use settings.json and settings.local.json (recognized by detect_file_type)
+        // For additional files beyond those two, create subdirectories
+        let filepath = if i == 0 {
+            hooks_dir.join("settings.json")
+        } else if i == 1 {
+            hooks_dir.join("settings.local.json")
         } else {
-            format!("settings-{}.json", i)
+            // Create subdirectory for additional hooks files
+            let subdir = hooks_dir.join(format!("hooks-{}", i));
+            fs::create_dir_all(&subdir).expect("Failed to create hooks subdir");
+            subdir.join("settings.json")
         };
-        fs::write(hooks_dir.join(filename), content).expect("Failed to write hooks");
+        fs::write(filepath, content).expect("Failed to write hooks");
     }
 
     // Create MCP tools (10%)

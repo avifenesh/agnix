@@ -64,11 +64,12 @@ check_cargo_bloat() {
 }
 
 # Run iai-callgrind benchmarks (deterministic, CI-equivalent)
+# Returns: 0=success, 1=valgrind missing, 2=benchmark failed
 run_iai() {
     print_header "Running iai-callgrind benchmarks (deterministic)"
 
     if ! check_valgrind; then
-        return 1
+        return 1  # Valgrind not available
     fi
 
     # Check if iai-callgrind-runner is installed
@@ -80,7 +81,9 @@ run_iai() {
     echo "This matches what CI runs. Results are 100% reproducible."
     echo ""
 
-    cargo bench --bench iai_validation --package agnix-core
+    if ! cargo bench --bench iai_validation --package agnix-core; then
+        return 2  # Benchmark failed (regression or error)
+    fi
 
     print_success "iai-callgrind benchmarks complete"
 }
@@ -157,13 +160,20 @@ run_all() {
     local criterion_failed=0
     local bloat_failed=0
 
-    # Try iai (may fail if Valgrind not available)
+    # Try iai (may fail if Valgrind not available or benchmark regression)
     echo "1. iai-callgrind (deterministic)"
-    if run_iai; then
+    local iai_result
+    run_iai
+    iai_result=$?
+    if [ $iai_result -eq 0 ]; then
         print_success "iai-callgrind: passed"
-    else
+    elif [ $iai_result -eq 1 ]; then
         print_warning "iai-callgrind: skipped (Valgrind not available)"
         iai_failed=1
+    else
+        print_error "iai-callgrind: FAILED (regression or error)"
+        iai_failed=2
+        return 1  # Exit run_all immediately on benchmark failure
     fi
 
     # Run criterion

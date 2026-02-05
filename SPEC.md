@@ -188,7 +188,7 @@ When `target` is set to a specific tool, only relevant rules run:
 
 - **Parallel validation**: Uses rayon `par_bridge()` for file processing across all CPU cores
 - **Registry caching**: ValidatorRegistry is constructed once and shared (7x speedup vs per-file)
-- **Import cache**: Arc<RwLock<HashMap>> shared across files reduces redundant @import parsing
+- **Import cache**: `Arc<RwLock<HashMap>>` shared across files reduces redundant @import parsing
 - **Static regex patterns**: OnceLock for one-time initialization of regex patterns
 - **Directory walking**: Sequential via `ignore` crate (required for .gitignore compatibility)
 - **Deterministic output**: Results sorted by severity then path for reproducible runs
