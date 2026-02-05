@@ -182,10 +182,8 @@ mod validation_tests {
         let temp = create_temp_project();
         let skill_path = temp.path().join("SKILL.md");
 
-        let config = LintConfig {
-            target: agnix_core::config::TargetTool::ClaudeCode,
-            ..Default::default()
-        };
+        let mut config = LintConfig::default();
+        config.target = agnix_core::config::TargetTool::ClaudeCode;
         let result = validate_file(&skill_path, &config);
 
         assert!(result.is_ok());
