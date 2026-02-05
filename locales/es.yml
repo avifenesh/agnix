@@ -1,5 +1,5 @@
 # ===========================================================================
-# Reglas - Mensajes de diagnostico del validador, sugerencias, supuestos, correcciones
+# Reglas - Mensajes de diagnóstico del validador, sugerencias, supuestos, correcciones
 # ===========================================================================
 rules:
   # --- Agent Skills (skill.rs) ---

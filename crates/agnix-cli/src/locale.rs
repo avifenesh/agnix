@@ -8,7 +8,7 @@
 //! 5. Fallback to "en" (English)
 
 use agnix_core::i18n::{is_supported, normalize_locale};
-use rust_i18n::set_locale;
+use rust_i18n::{set_locale, t};
 
 /// Supported locales with their display names (for CLI display only).
 const SUPPORTED_LOCALES_DISPLAY: &[(&str, &str)] = &[
@@ -66,7 +66,7 @@ pub fn init(cli_locale: Option<&str>, config_locale: Option<&str>) {
         if is_supported(&normalized) {
             normalized
         } else {
-            eprintln!("Warning: unsupported locale '{}', falling back to 'en'", l);
+            eprintln!("{}", t!("cli.locale_unsupported", locale = l));
             "en".to_string()
         }
     } else {

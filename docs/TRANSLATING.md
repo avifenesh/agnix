@@ -20,9 +20,16 @@ agnix supports multiple languages for diagnostic messages, CLI output, and LSP l
 
 2. **Translate all string values** in the new file. Keep the YAML keys unchanged; only modify the values.
 
-3. **Register the locale** in `crates/agnix-cli/src/locale.rs`:
+3. **Register the locale** in two places:
+
+   a. Add to `SUPPORTED_LOCALES` in `crates/agnix-core/src/i18n.rs`:
    ```rust
-   pub const SUPPORTED_LOCALES: &[(&str, &str)] = &[
+   pub const SUPPORTED_LOCALES: &[&str] = &["en", "es", "zh-CN", "fr"];
+   ```
+
+   b. Add display info to `SUPPORTED_LOCALES_DISPLAY` in `crates/agnix-cli/src/locale.rs`:
+   ```rust
+   const SUPPORTED_LOCALES_DISPLAY: &[(&str, &str)] = &[
        ("en", "English"),
        ("es", "Spanish / Espanol"),
        ("zh-CN", "Chinese Simplified / Zhongwen"),
