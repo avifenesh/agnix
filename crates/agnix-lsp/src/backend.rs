@@ -4,7 +4,7 @@
 //! real-time validation of agent configuration files.
 
 use std::collections::HashMap;
-use std::path::PathBuf;
+use std::path::{Component, Path, PathBuf};
 use std::sync::Arc;
 
 use tokio::sync::RwLock;
@@ -38,6 +38,30 @@ fn create_error_diagnostic(code: &str, message: String) -> Diagnostic {
         tags: None,
         data: None,
     }
+}
+
+/// Normalize path components without filesystem access.
+/// Resolves `.` and `..` logically -- used when `canonicalize()` fails.
+/// Expects absolute paths (LSP URIs always produce absolute paths).
+fn normalize_path(path: &Path) -> PathBuf {
+    let mut components: Vec<Component<'_>> = Vec::new();
+    for component in path.components() {
+        match component {
+            Component::CurDir => {}
+            Component::ParentDir => {
+                match components.last() {
+                    Some(Component::Normal(_)) => {
+                        components.pop();
+                    }
+                    // Cannot traverse above root or prefix -- silently drop
+                    Some(Component::RootDir) | Some(Component::Prefix(_)) => {}
+                    _ => components.push(component),
+                }
+            }
+            _ => components.push(component),
+        }
+    }
+    components.iter().collect()
 }
 
 /// LSP backend that handles validation requests.
@@ -123,11 +147,11 @@ impl Backend {
         if let Some(ref workspace_root) = *self.workspace_root.read().await {
             let canonical_path = match file_path.canonicalize() {
                 Ok(p) => p,
-                Err(_) => file_path.clone(),
+                Err(_) => normalize_path(&file_path),
             };
             let canonical_root = workspace_root
                 .canonicalize()
-                .unwrap_or_else(|_| workspace_root.clone());
+                .unwrap_or_else(|_| normalize_path(workspace_root));
 
             if !canonical_path.starts_with(&canonical_root) {
                 self.client
@@ -1575,5 +1599,254 @@ model: sonnet
             .await;
 
         // Should complete without error
+    }
+
+    // ===== normalize_path() Unit Tests =====
+
+    /// Test that '..' components are resolved by removing the preceding normal component.
+    #[test]
+    fn test_normalize_path_resolves_parent() {
+        let result = normalize_path(Path::new("/a/b/../c"));
+        assert_eq!(result, PathBuf::from("/a/c"));
+    }
+
+    /// Test that '.' components are removed entirely.
+    #[test]
+    fn test_normalize_path_removes_curdir() {
+        let result = normalize_path(Path::new("/a/./b/./c"));
+        assert_eq!(result, PathBuf::from("/a/b/c"));
+    }
+
+    /// Test that multiple '..' components are resolved correctly.
+    #[test]
+    fn test_normalize_path_multiple_parent() {
+        let result = normalize_path(Path::new("/a/b/../../c"));
+        assert_eq!(result, PathBuf::from("/c"));
+    }
+
+    /// Test that a path without special components is returned unchanged.
+    #[test]
+    fn test_normalize_path_already_clean() {
+        let result = normalize_path(Path::new("/a/b/c"));
+        assert_eq!(result, PathBuf::from("/a/b/c"));
+    }
+
+    /// Test that '..' cannot traverse above root.
+    #[test]
+    fn test_normalize_path_cannot_escape_root() {
+        let result = normalize_path(Path::new("/../a"));
+        assert_eq!(result, PathBuf::from("/a"));
+    }
+
+    /// Test that root alone is preserved.
+    #[test]
+    fn test_normalize_path_root_only() {
+        let result = normalize_path(Path::new("/"));
+        assert_eq!(result, PathBuf::from("/"));
+    }
+
+    /// Test excessive '..' beyond root is clamped.
+    #[test]
+    fn test_normalize_path_excessive_parent_traversal() {
+        let result = normalize_path(Path::new("/a/../../../b"));
+        assert_eq!(result, PathBuf::from("/b"));
+    }
+
+    /// Test mixed '.' and '..' components together.
+    #[test]
+    fn test_normalize_path_mixed_special_components() {
+        let result = normalize_path(Path::new("/a/./b/../c/./d"));
+        assert_eq!(result, PathBuf::from("/a/c/d"));
+    }
+
+    // ===== Path Traversal Regression Tests =====
+
+    /// Regression: a URI with '..' that escapes the workspace must be rejected
+    /// even when the file does not exist on disk (so canonicalize() fails).
+    #[tokio::test]
+    async fn test_path_traversal_outside_workspace_rejected() {
+        let (service, _socket) = LspService::new(Backend::new);
+
+        let workspace_dir = tempfile::tempdir().unwrap();
+        let outside_dir = tempfile::tempdir().unwrap();
+
+        // Extract the outside directory name for the traversal path
+        let outside_name = outside_dir
+            .path()
+            .file_name()
+            .expect("should have a file name")
+            .to_str()
+            .expect("should be valid UTF-8");
+
+        // Initialize with workspace root
+        let root_uri = Url::from_file_path(workspace_dir.path()).unwrap();
+        service
+            .inner()
+            .initialize(InitializeParams {
+                root_uri: Some(root_uri),
+                ..Default::default()
+            })
+            .await
+            .unwrap();
+
+        // Construct a path that uses '..' to escape the workspace.
+        // The file does not exist, so canonicalize() will fail and
+        // the code must fall back to normalize_path().
+        let traversal_path = workspace_dir
+            .path()
+            .join("..")
+            .join("..")
+            .join(outside_name)
+            .join("SKILL.md");
+        let uri = Url::from_file_path(&traversal_path).unwrap();
+        service
+            .inner()
+            .did_open(DidOpenTextDocumentParams {
+                text_document: TextDocumentItem {
+                    uri,
+                    language_id: "markdown".to_string(),
+                    version: 1,
+                    text: "---\nname: evil\n---\n# Evil".to_string(),
+                },
+            })
+            .await;
+
+        // Should complete without panic -- the file is outside the workspace
+        // so it is silently rejected (warning logged, no diagnostics published).
+    }
+
+    /// Regression: a URI with '..' that resolves *inside* the workspace must
+    /// still be accepted for validation.
+    #[tokio::test]
+    async fn test_path_traversal_inside_workspace_accepted() {
+        let (service, _socket) = LspService::new(Backend::new);
+
+        let workspace_dir = tempfile::tempdir().unwrap();
+
+        // Create subdir and a SKILL.md at the workspace root
+        let subdir = workspace_dir.path().join("subdir");
+        std::fs::create_dir(&subdir).unwrap();
+        let skill_path = workspace_dir.path().join("SKILL.md");
+        std::fs::write(
+            &skill_path,
+            "---\nname: test-skill\nversion: 1.0.0\nmodel: sonnet\n---\n\n# Test Skill\n",
+        )
+        .unwrap();
+
+        // Initialize with workspace root
+        let root_uri = Url::from_file_path(workspace_dir.path()).unwrap();
+        service
+            .inner()
+            .initialize(InitializeParams {
+                root_uri: Some(root_uri),
+                ..Default::default()
+            })
+            .await
+            .unwrap();
+
+        // URI with '..' that resolves back into the workspace
+
+        // URI with '..' that resolves back into the workspace
+        let traversal_path = workspace_dir
+            .path()
+            .join("subdir")
+            .join("..")
+            .join("SKILL.md");
+        let uri = Url::from_file_path(&traversal_path).unwrap();
+        service
+            .inner()
+            .did_open(DidOpenTextDocumentParams {
+                text_document: TextDocumentItem {
+                    uri,
+                    language_id: "markdown".to_string(),
+                    version: 1,
+                    text: std::fs::read_to_string(&skill_path).unwrap(),
+                },
+            })
+            .await;
+
+        // Should complete without error -- file resolves inside workspace
+    }
+
+    /// Regression: a non-existent file within the workspace boundary
+    /// (without any '..' components) must not be rejected.
+    #[tokio::test]
+    async fn test_nonexistent_file_in_workspace_accepted() {
+        let (service, _socket) = LspService::new(Backend::new);
+
+        let workspace_dir = tempfile::tempdir().unwrap();
+
+        // Initialize with workspace root
+        let root_uri = Url::from_file_path(workspace_dir.path()).unwrap();
+        service
+            .inner()
+            .initialize(InitializeParams {
+                root_uri: Some(root_uri),
+                ..Default::default()
+            })
+            .await
+            .unwrap();
+
+        // Non-existent file inside workspace (no '..' components)
+        let nonexistent = workspace_dir.path().join("SKILL.md");
+        let uri = Url::from_file_path(&nonexistent).unwrap();
+
+        service
+            .inner()
+            .did_open(DidOpenTextDocumentParams {
+                text_document: TextDocumentItem {
+                    uri,
+                    language_id: "markdown".to_string(),
+                    version: 1,
+                    text: "---\nname: ghost\n---\n# Ghost".to_string(),
+                },
+            })
+            .await;
+
+        // Should pass boundary check -- path is inside workspace
+    }
+
+    /// Regression: a URI with '.' components (current-dir markers) must be
+    /// accepted when the file is inside the workspace.
+    #[tokio::test]
+    async fn test_dot_components_in_path_accepted() {
+        let (service, _socket) = LspService::new(Backend::new);
+
+        let workspace_dir = tempfile::tempdir().unwrap();
+        let skill_path = workspace_dir.path().join("SKILL.md");
+        std::fs::write(
+            &skill_path,
+            "---\nname: test-skill\nversion: 1.0.0\nmodel: sonnet\n---\n\n# Test Skill\n",
+        )
+        .unwrap();
+
+        // Initialize with workspace root
+        let root_uri = Url::from_file_path(workspace_dir.path()).unwrap();
+        service
+            .inner()
+            .initialize(InitializeParams {
+                root_uri: Some(root_uri),
+                ..Default::default()
+            })
+            .await
+            .unwrap();
+
+        // URI with '.' components
+        let dot_path = format!("{}/./SKILL.md", workspace_dir.path().display());
+        let uri = Url::parse(&format!("file://{}", dot_path)).unwrap();
+
+        service
+            .inner()
+            .did_open(DidOpenTextDocumentParams {
+                text_document: TextDocumentItem {
+                    uri,
+                    language_id: "markdown".to_string(),
+                    version: 1,
+                    text: std::fs::read_to_string(&skill_path).unwrap(),
+                },
+            })
+            .await;
+
+        // Should pass boundary check -- '.' resolves to the same directory
     }
 }
