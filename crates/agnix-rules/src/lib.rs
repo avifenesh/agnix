@@ -130,6 +130,7 @@ mod tests {
     use super::*;
 
     #[test]
+    #[allow(clippy::const_is_empty)]
     fn test_rules_data_not_empty() {
         assert!(!RULES_DATA.is_empty(), "RULES_DATA should not be empty");
     }
@@ -164,6 +165,7 @@ mod tests {
     // ===== VALID_TOOLS Tests =====
 
     #[test]
+    #[allow(clippy::const_is_empty)]
     fn test_valid_tools_not_empty() {
         assert!(!VALID_TOOLS.is_empty(), "VALID_TOOLS should not be empty");
     }
@@ -202,6 +204,7 @@ mod tests {
     // ===== TOOL_RULE_PREFIXES Tests =====
 
     #[test]
+    #[allow(clippy::const_is_empty)]
     fn test_tool_rule_prefixes_not_empty() {
         assert!(
             !TOOL_RULE_PREFIXES.is_empty(),

@@ -909,7 +909,7 @@ You should consider this approach.
         let content = "Be helpful and accurate when responding.";
         let validator = ClaudeMdValidator;
         let diagnostics =
-            validator.validate(Path::new("CLAUDE.md"), &content, &LintConfig::default());
+            validator.validate(Path::new("CLAUDE.md"), content, &LintConfig::default());
 
         let mem005: Vec<_> = diagnostics
             .iter()
@@ -992,7 +992,7 @@ You should consider this approach.
 
         let validator = ClaudeMdValidator;
         let diagnostics =
-            validator.validate(Path::new("CLAUDE.md"), &content, &LintConfig::default());
+            validator.validate(Path::new("CLAUDE.md"), content, &LintConfig::default());
 
         let mem010: Vec<_> = diagnostics
             .iter()

@@ -478,7 +478,10 @@ mod tests {
         // Another example
         let content2 = "Use const or let, never use var";
         let results2 = find_negative_without_positive(content2);
-        assert!(results2.is_empty(), "Should recognize positive before comma");
+        assert!(
+            results2.is_empty(),
+            "Should recognize positive before comma"
+        );
 
         // But standalone negative should still trigger
         let content3 = "Don't use var";
