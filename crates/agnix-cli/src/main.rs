@@ -2,6 +2,7 @@
 
 mod json;
 mod sarif;
+pub mod telemetry;
 mod watch;
 
 use agnix_core::{
@@ -14,9 +15,11 @@ use agnix_core::{
 use clap::{Parser, Subcommand, ValueEnum};
 use colored::*;
 use similar::{ChangeTag, TextDiff};
+use std::collections::HashMap;
 use std::env;
 use std::path::{Path, PathBuf};
 use std::process;
+use std::time::Instant;
 
 #[derive(Debug, Clone, Copy, Default, ValueEnum)]
 pub enum OutputFormat {
@@ -120,6 +123,18 @@ impl From<EvalOutputFormat> for EvalFormat {
     }
 }
 
+/// Telemetry action for the CLI subcommand.
+#[derive(Debug, Clone, Copy, Default, ValueEnum)]
+pub enum TelemetryAction {
+    /// Show current telemetry status
+    #[default]
+    Status,
+    /// Enable telemetry (opt-in)
+    Enable,
+    /// Disable telemetry
+    Disable,
+}
+
 #[derive(Subcommand)]
 enum Commands {
     /// Validate agent configs
@@ -152,6 +167,13 @@ enum Commands {
         /// Show detailed results for each case
         #[arg(long, short)]
         verbose: bool,
+    },
+
+    /// Manage telemetry settings (opt-in usage analytics)
+    Telemetry {
+        /// Action to perform (status, enable, disable)
+        #[arg(value_enum, default_value_t = TelemetryAction::Status)]
+        action: TelemetryAction,
     },
 }
 
@@ -187,6 +209,7 @@ fn main() {
             filter,
             verbose,
         }) => eval_command(path, *format, filter.as_deref(), *verbose),
+        Some(Commands::Telemetry { action }) => telemetry_command(*action),
         None => validate_command(&cli.path, &cli),
     };
 
@@ -248,16 +271,24 @@ fn validate_command(path: &Path, cli: &Cli) -> anyhow::Result<()> {
     // Resolve absolute path for consistent relative output (prefer repo root)
     let base_path = std::fs::canonicalize(".").unwrap_or_else(|_| PathBuf::from("."));
 
+    // Time the validation for telemetry
+    let validation_start = Instant::now();
+
     let ValidationResult {
         diagnostics,
         files_checked,
     } = validate_project(path, &config)?;
+
+    let validation_duration = validation_start.elapsed();
 
     tracing::debug!(
         files_checked = files_checked,
         diagnostics_count = diagnostics.len(),
         "Validation complete"
     );
+
+    // Record telemetry (non-blocking, respects opt-in)
+    record_telemetry_event(&diagnostics, validation_duration);
 
     // Handle JSON output format
     if matches!(cli.format, OutputFormat::Json) {
@@ -673,6 +704,140 @@ fn eval_command(
             summary.cases_run
         );
         process::exit(1);
+    }
+
+    Ok(())
+}
+
+/// Record telemetry event for a validation run (non-blocking, respects opt-in).
+fn record_telemetry_event(diagnostics: &[agnix_core::Diagnostic], duration: std::time::Duration) {
+    use agnix_core::DiagnosticLevel;
+
+    // Count diagnostics by level
+    let mut error_count = 0u32;
+    let mut warning_count = 0u32;
+    let mut info_count = 0u32;
+
+    // Count rule triggers (privacy-safe: only rule IDs, not paths or messages)
+    let mut rule_trigger_counts: HashMap<String, u32> = HashMap::new();
+
+    for diag in diagnostics {
+        match diag.level {
+            DiagnosticLevel::Error => error_count += 1,
+            DiagnosticLevel::Warning => warning_count += 1,
+            DiagnosticLevel::Info => info_count += 1,
+        }
+
+        *rule_trigger_counts.entry(diag.rule.clone()).or_insert(0) += 1;
+    }
+
+    // File type counts would require exposing file type info from agnix-core
+    // For now, we don't collect file type counts to avoid any path exposure
+    let file_type_counts: HashMap<String, u32> = HashMap::new();
+
+    // Record the event (spawns background thread, checks if enabled)
+    telemetry::record_validation(
+        file_type_counts,
+        rule_trigger_counts,
+        error_count,
+        warning_count,
+        info_count,
+        duration.as_millis() as u64,
+    );
+}
+
+fn telemetry_command(action: TelemetryAction) -> anyhow::Result<()> {
+    use telemetry::TelemetryConfig;
+
+    match action {
+        TelemetryAction::Status => {
+            let config = TelemetryConfig::load().unwrap_or_default();
+            let effective = config.is_enabled();
+
+            println!("{}", "Telemetry Status".cyan().bold());
+            println!();
+            println!(
+                "  {} {}",
+                "Configured:".dimmed(),
+                if config.enabled { "enabled" } else { "disabled" }
+            );
+            println!(
+                "  {} {}",
+                "Effective:".dimmed(),
+                if effective { "enabled" } else { "disabled" }
+            );
+
+            if config.enabled && !effective {
+                println!();
+                println!(
+                    "  {} Telemetry is disabled due to environment (CI, DO_NOT_TRACK, etc.)",
+                    "note:".yellow()
+                );
+            }
+
+            if let Some(id) = &config.installation_id {
+                // Show only first 8 chars for privacy
+                let short_id = if id.len() > 8 { &id[..8] } else { id };
+                println!("  {} {}...", "Installation ID:".dimmed(), short_id);
+            }
+
+            if let Some(ts) = &config.consent_timestamp {
+                println!("  {} {}", "Consent given:".dimmed(), ts);
+            }
+
+            println!();
+            println!("{}", "Privacy Guarantees".cyan().bold());
+            println!("  - Opt-in only (disabled by default)");
+            println!("  - No file paths or contents ever collected");
+            println!("  - No user identity collected");
+            println!("  - Only aggregate counts (file types, rule triggers)");
+            println!("  - Respects DO_NOT_TRACK, CI environments");
+
+            if let Ok(path) = TelemetryConfig::config_path() {
+                println!();
+                println!("  {} {}", "Config file:".dimmed(), path.display());
+            }
+        }
+
+        TelemetryAction::Enable => {
+            let mut config = TelemetryConfig::load().unwrap_or_default();
+
+            if config.enabled {
+                println!("{} Telemetry is already enabled.", "note:".cyan());
+            } else {
+                config.enable()?;
+                println!("{} Telemetry enabled.", "OK".green().bold());
+                println!();
+                println!("Thank you for helping improve agnix!");
+                println!();
+                println!("{}", "What we collect:".cyan());
+                println!("  - File type counts (e.g., 5 skills, 2 MCP configs)");
+                println!("  - Rule trigger counts (e.g., AS-001: 3 times)");
+                println!("  - Error/warning counts");
+                println!("  - Validation duration");
+                println!();
+                println!("{}", "What we never collect:".cyan());
+                println!("  - File paths or names");
+                println!("  - File contents or code");
+                println!("  - User identity");
+                println!();
+                println!(
+                    "You can disable telemetry at any time with: {}",
+                    "agnix telemetry disable".bold()
+                );
+            }
+        }
+
+        TelemetryAction::Disable => {
+            let mut config = TelemetryConfig::load().unwrap_or_default();
+
+            if !config.enabled {
+                println!("{} Telemetry is already disabled.", "note:".cyan());
+            } else {
+                config.disable()?;
+                println!("{} Telemetry disabled.", "OK".green().bold());
+            }
+        }
     }
 
     Ok(())
