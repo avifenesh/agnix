@@ -62,8 +62,8 @@ function M.find_binary(opts)
 
   -- 2. On PATH
   local name = is_windows and 'agnix-lsp.exe' or 'agnix-lsp'
-  if vim.fn.executable('agnix-lsp') == 1 then
-    return 'agnix-lsp'
+  if vim.fn.executable(name) == 1 then
+    return name
   end
 
   -- 3. Cargo install location
@@ -87,9 +87,13 @@ function M.is_agnix_file(path)
     return false
   end
 
-  local name = basename(path)
-  local parent = parent_dir_name(path)
-  local grandparent = grandparent_dir_name(path)
+  -- Normalize once to avoid repeated gsub in each helper call.
+  local p = normalize(path)
+  local name = p:match('[^/]+$') or p
+  local parent_path = p:match('(.+)/[^/]+$')
+  local parent = parent_path and parent_path:match('[^/]+$') or nil
+  local gp_path = p:match('(.+)/[^/]+/[^/]+$')
+  local grandparent = gp_path and gp_path:match('[^/]+$') or nil
 
   -- SKILL.md
   if name == 'SKILL.md' then

@@ -93,6 +93,10 @@ function M.setup()
       vim.notify('[agnix] Usage: AgnixIgnoreRule <rule_id>', vim.log.levels.WARN)
       return
     end
+    if not rule_id:match('^[A-Z]+%-[A-Z]*%-?%d+$') then
+      vim.notify('[agnix] Invalid rule ID format: ' .. rule_id, vim.log.levels.ERROR)
+      return
+    end
     M._ignore_rule(rule_id)
   end, { nargs = 1, desc = 'Add a rule to disabled_rules in .agnix.toml' })
 
@@ -102,9 +106,12 @@ function M.setup()
       vim.notify('[agnix] Usage: AgnixShowRuleDoc <rule_id>', vim.log.levels.WARN)
       return
     end
+    if not rule_id:match('^[A-Z]+%-[A-Z]*%-?%d+$') then
+      vim.notify('[agnix] Invalid rule ID format: ' .. rule_id, vim.log.levels.ERROR)
+      return
+    end
     local url = 'https://github.com/avifenesh/agnix/blob/main/knowledge-base/VALIDATION-RULES.md#'
       .. rule_id:lower()
-    -- Use vim.ui.open (Neovim 0.10+) or fall back to system open
     if vim.ui.open then
       vim.ui.open(url)
     else
@@ -112,7 +119,7 @@ function M.setup()
       if vim.fn.has('mac') == 1 then
         cmd = { 'open', url }
       elseif vim.fn.has('win32') == 1 then
-        cmd = { 'cmd', '/c', 'start', '', url }
+        cmd = { 'cmd', '/c', 'start', '""', url }
       else
         cmd = { 'xdg-open', url }
       end
@@ -166,7 +173,10 @@ function M._apply_code_actions(preferred_only)
 
   local params = vim.lsp.util.make_range_params()
   params.context = {
-    diagnostics = vim.diagnostic.get(bufnr, { namespace = nil }),
+    diagnostics = vim.tbl_filter(
+      function(d) return d.source == 'agnix' end,
+      vim.diagnostic.get(bufnr)
+    ),
     only = { 'quickfix' },
   }
 
@@ -212,31 +222,33 @@ function M._ignore_rule(rule_id)
     f:close()
   end
 
-  -- Check if the rule is already disabled
-  if content:find('"' .. rule_id .. '"') or content:find("'" .. rule_id .. "'") then
+  -- Check if the rule is already disabled (plain text search, not pattern)
+  if content:find('"' .. rule_id .. '"', 1, true) or content:find("'" .. rule_id .. "'", 1, true) then
     vim.notify('[agnix] Rule ' .. rule_id .. ' is already disabled', vim.log.levels.INFO)
     return
   end
 
-  -- Check if disabled_rules key exists
-  if content:find('disabled_rules') then
-    -- Append to the existing array
-    local new_content = content:gsub('(disabled_rules%s*=%s*%[)', '%1"' .. rule_id .. '", ')
-    local out = io.open(toml_path, 'w')
-    if out then
+  local ok, write_err = pcall(function()
+    if content:find('disabled_rules', 1, true) then
+      local new_content = content:gsub('(disabled_rules%s*=%s*%[)', '%1"' .. rule_id .. '", ')
+      local out = io.open(toml_path, 'w')
+      if not out then error('Cannot write to ' .. toml_path) end
       out:write(new_content)
       out:close()
-    end
-  else
-    -- Add the key under [rules] section, or create [rules] section
-    local out = io.open(toml_path, 'a')
-    if out then
-      if not content:find('%[rules%]') then
+    else
+      local out = io.open(toml_path, 'a')
+      if not out then error('Cannot write to ' .. toml_path) end
+      if not content:find('[rules]', 1, true) then
         out:write('\n[rules]\n')
       end
       out:write('disabled_rules = ["' .. rule_id .. '"]\n')
       out:close()
     end
+  end)
+
+  if not ok then
+    vim.notify('[agnix] Failed to update .agnix.toml: ' .. tostring(write_err), vim.log.levels.ERROR)
+    return
   end
 
   vim.notify('[agnix] Disabled rule ' .. rule_id .. ' in .agnix.toml', vim.log.levels.INFO)

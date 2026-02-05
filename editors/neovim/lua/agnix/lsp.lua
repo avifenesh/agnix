@@ -11,7 +11,10 @@ local util = require('agnix.util')
 M.client_id = nil
 
 --- Register .mdc as a markdown filetype so LSP attaches to Cursor rule files.
-vim.filetype.add({ extension = { mdc = 'markdown' } })
+--- Called from setup_autocommands() to avoid side effects on module load.
+local function register_mdc_filetype()
+  vim.filetype.add({ extension = { mdc = 'markdown' } })
+end
 
 --- Build the settings table sent to the LSP server.
 --- Filters out nil values so the server only sees explicitly set options.
@@ -112,10 +115,12 @@ function M.setup_autocommands()
   local cfg = config.current or config.defaults
   local group = vim.api.nvim_create_augroup('agnix', { clear = true })
 
-  vim.api.nvim_create_autocmd({ 'BufReadPost', 'FileType' }, {
+  register_mdc_filetype()
+
+  -- Use FileType event with specific filetypes to avoid running is_agnix_file on every buffer.
+  vim.api.nvim_create_autocmd('FileType', {
     group = group,
-    -- Match all patterns; the callback filters by is_agnix_file.
-    pattern = { '*' },
+    pattern = cfg.filetypes or { 'markdown', 'json' },
     callback = function(ev)
       if not cfg.autostart then
         return
@@ -124,13 +129,32 @@ function M.setup_autocommands()
       if bufname == '' then
         return
       end
-      -- Only attach when the file is actually an agnix-relevant file.
       if not util.is_agnix_file(bufname) then
         return
       end
       M.start(ev.buf)
     end,
     desc = 'Attach agnix LSP to supported files',
+  })
+
+  -- Also handle BufReadPost for files that may already have their filetype set.
+  vim.api.nvim_create_autocmd('BufReadPost', {
+    group = group,
+    pattern = {
+      '*/SKILL.md', '*/CLAUDE.md', '*/CLAUDE.local.md',
+      '*/AGENTS.md', '*/AGENTS.local.md', '*/AGENTS.override.md',
+      '*/.claude/settings.json', '*/.claude/settings.local.json',
+      '*/plugin.json', '*.mcp.json', '*/mcp.json', '*/mcp-*.json',
+      '*/.github/copilot-instructions.md', '*/.github/instructions/*.instructions.md',
+      '*/.cursor/rules/*.mdc', '*/.cursorrules',
+    },
+    callback = function(ev)
+      if not cfg.autostart then
+        return
+      end
+      M.start(ev.buf)
+    end,
+    desc = 'Attach agnix LSP to known file patterns',
   })
 end
 
