@@ -145,6 +145,9 @@ mod tests {
 
     #[test]
     fn test_init_from_config_supported_and_unsupported() {
+        // Ensure known starting state
+        set_locale("en");
+
         // Test supported locale application
         init_from_config("es");
         let current = rust_i18n::locale();
