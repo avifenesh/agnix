@@ -13,8 +13,8 @@ rules:
     message: "Al frontmatter del skill le falta el campo requerido 'description'"
     suggestion: "Agrega 'description: Usar cuando...' al frontmatter"
   as_004:
-    message: "El nombre '%{name}' debe tener 1-64 caracteres de letras minusculas, digitos y guiones"
-    suggestion: "Convierte a minusculas, recorta el nombre, reemplaza espacios y '_' con '-', colapsa multiples '-' en uno, elimina caracteres invalidos y trunca a 64 caracteres"
+    message: "El nombre '%{name}' debe tener 1-64 caracteres de letras minúsculas, dígitos y guiones"
+    suggestion: "Convierte a minúsculas, recorta el nombre, reemplaza espacios y '_' con '-', colapsa multiples '-' en uno, elimina caracteres inválidos y trunca a 64 caracteres"
     fix: "Convertir nombre a kebab-case: '%{name}'"
   as_005:
     message: "El nombre '%{name}' no puede comenzar ni terminar con guion"
@@ -26,15 +26,15 @@ rules:
     message: "El nombre '%{name}' esta reservado y no puede usarse"
     suggestion: "Elige un nombre de skill diferente"
   as_008:
-    message: "La descripcion debe tener 1-1024 caracteres, tiene %{len}"
-    suggestion: "Recorta la descripcion a 1024 caracteres o menos"
+    message: "La descripción debe tener 1-1024 caracteres, tiene %{len}"
+    suggestion: "Recorta la descripción a 1024 caracteres o menos"
   as_009:
-    message: "La descripcion no debe contener etiquetas XML"
-    suggestion: "Elimina las etiquetas XML de la descripcion"
+    message: "La descripción no debe contener etiquetas XML"
+    suggestion: "Elimina las etiquetas XML de la descripción"
   as_010:
-    message: "La descripcion deberia incluir una frase de activacion 'Use when...'"
-    suggestion: "Agrega 'Use when [condicion]' para ayudar a Claude a entender cuando invocar este skill"
-    fix: "Anteponer 'Use when user wants to ' a la descripcion"
+    message: "La descripción deberia incluir una frase de activación 'Use when...'"
+    suggestion: "Agrega 'Use when [condición]' para ayudar a Claude a entender cuando invocar este skill"
+    fix: "Anteponer 'Use when user wants to ' a la descripción"
   as_011:
     message: "La compatibilidad debe tener 1-500 caracteres, tiene %{len}"
     suggestion: "Recorta la compatibilidad a 500 caracteres o menos"
@@ -143,8 +143,8 @@ rules:
     message: "%{prefix}inputSchema invalido: %{error}"
     suggestion: "Corrige la estructura JSON Schema"
   mcp_004:
-    message: "%{prefix}La descripcion de la herramienta es muy corta (%{len} caracteres), debe tener al menos 10 caracteres"
-    suggestion: "Agrega una descripcion significativa explicando que hace la herramienta"
+    message: "%{prefix}La descripción de la herramienta es muy corta (%{len} caracteres), debe tener al menos 10 caracteres"
+    suggestion: "Agrega una descripción significativa explicando que hace la herramienta"
   mcp_005:
     message: "%{prefix}La herramienta carece de mecanismo de consentimiento (no tiene campo 'requiresApproval' ni 'confirmation')"
     suggestion: "Considera agregar 'requiresApproval: true' para herramientas que modifican datos o tienen efectos secundarios"
@@ -301,7 +301,7 @@ rules:
   cur_001:
     message_empty: "El archivo de reglas de Cursor esta vacio"
     message_no_content: "El archivo de reglas de Cursor no tiene contenido despues del frontmatter"
-    suggestion_empty: "Agrega frontmatter con descripcion y contenido de reglas"
+    suggestion_empty: "Agrega frontmatter con descripción y contenido de reglas"
     suggestion_no_content: "Agrega contenido de reglas despues del frontmatter"
     suggestion_legacy_empty: "Agrega contenido de reglas al archivo"
   cur_002:
@@ -451,7 +451,7 @@ cli:
   telemetry_privacy_1: "  - Solo por eleccion (deshabilitado por defecto)"
   telemetry_privacy_2: "  - Nunca se recopilan rutas o contenidos de archivos"
   telemetry_privacy_3: "  - No se recopila identidad del usuario"
-  telemetry_privacy_4: "  - Solo conteos agregados (tipos de archivo, activaciones de reglas)"
+  telemetry_privacy_4: "  - Solo conteos agregados (tipos de archivo, activaciónes de reglas)"
   telemetry_privacy_5: "  - Respeta DO_NOT_TRACK, entornos CI"
   telemetry_config_file: "Archivo de config:"
   telemetry_already_enabled: "La telemetria ya esta habilitada."
@@ -459,7 +459,7 @@ cli:
   telemetry_thanks: "Gracias por ayudar a mejorar agnix!"
   telemetry_collect: "Lo que recopilamos:"
   telemetry_collect_1: "  - Conteos de tipos de archivo (ej., 5 skills, 2 configs MCP)"
-  telemetry_collect_2: "  - Conteos de activacion de reglas (ej., AS-001: 3 veces)"
+  telemetry_collect_2: "  - Conteos de activación de reglas (ej., AS-001: 3 veces)"
   telemetry_collect_3: "  - Conteos de errores/advertencias"
   telemetry_collect_4: "  - Duracion de validacion"
   telemetry_never_collect: "Lo que nunca recopilamos:"
