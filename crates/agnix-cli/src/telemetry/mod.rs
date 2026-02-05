@@ -39,13 +39,19 @@ pub use queue::EventQueue;
 pub use client::TelemetryClient;
 
 use std::collections::HashMap;
-use std::thread;
 use std::time::Duration;
+
+#[cfg(feature = "telemetry")]
+use std::thread;
 
 /// Record a validation run event (non-blocking).
 ///
 /// This function is safe to call even when telemetry is disabled -
 /// it will simply return early without doing anything.
+///
+/// Events are saved to a local queue synchronously (fast file write),
+/// then HTTP submission is attempted in a background thread. This ensures
+/// events are never lost even if the CLI exits immediately.
 pub fn record_validation(
     file_type_counts: HashMap<String, u32>,
     rule_trigger_counts: HashMap<String, u32>,
@@ -75,16 +81,8 @@ pub fn record_validation(
         timestamp: chrono_timestamp(),
     });
 
-    // Submit in background thread to not block the CLI
-    thread::spawn(move || {
-        submit_event(event, &config);
-    });
-}
-
-/// Submit an event (called from background thread).
-#[allow(unused_variables)]
-fn submit_event(event: TelemetryEvent, config: &TelemetryConfig) {
-    // First, queue the event locally
+    // IMPORTANT: Save to queue synchronously to prevent event loss on CLI exit.
+    // This is a fast file write (~1ms), so it won't noticeably block the CLI.
     let mut queue = match EventQueue::load() {
         Ok(q) => q,
         Err(_) => return,
@@ -94,31 +92,34 @@ fn submit_event(event: TelemetryEvent, config: &TelemetryConfig) {
         return;
     }
 
-    // Try to submit queued events
+    // HTTP submission happens in background thread (only with telemetry feature).
+    // If CLI exits before this completes, events remain safely queued for next run.
     #[cfg(feature = "telemetry")]
     {
-        if let Ok(client) = TelemetryClient::new(config) {
-            let events = queue.take_batch(10);
-            if !events.is_empty() {
-                match client.submit_batch(&events) {
-                    Ok(_) => {
-                        // Successfully submitted, remove events from queue
-                        queue.remove_batch(events.len());
-                        let _ = queue.save();
-                    }
-                    Err(_) => {
-                        // Failed to submit, events stay in queue for retry
-                        let _ = queue.save();
-                    }
+        thread::spawn(move || {
+            try_submit_queued_events(&config, &mut queue);
+        });
+    }
+}
+
+/// Try to submit queued events via HTTP (called from background thread).
+/// Events are already safely persisted to the queue before this is called.
+#[cfg(feature = "telemetry")]
+fn try_submit_queued_events(config: &TelemetryConfig, queue: &mut EventQueue) {
+    if let Ok(client) = TelemetryClient::new(config) {
+        let events = queue.take_batch(10);
+        if !events.is_empty() {
+            match client.submit_batch(&events) {
+                Ok(_) => {
+                    // Successfully submitted, remove events from queue
+                    queue.remove_batch(events.len());
+                    let _ = queue.save();
+                }
+                Err(_) => {
+                    // Failed to submit, events stay in queue for retry on next run
                 }
             }
         }
-    }
-
-    #[cfg(not(feature = "telemetry"))]
-    {
-        // Without the telemetry feature, just save locally for later
-        let _ = queue.save();
     }
 }
 

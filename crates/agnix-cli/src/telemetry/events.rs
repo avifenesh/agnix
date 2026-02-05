@@ -125,14 +125,22 @@ impl std::error::Error for PrivacyViolation {}
 
 /// Check if a string looks like a file path.
 fn looks_like_path(s: &str) -> bool {
-    // Check for common path indicators
+    // Check for path separators (strongest indicators)
     s.contains('/')
         || s.contains('\\')
-        || s.contains(".md")
-        || s.contains(".json")
+        // Check for file extensions at end of string (not contains, to avoid false positives
+        // like "claude_md_parser" being flagged as a path)
+        || s.ends_with(".md")
+        || s.ends_with(".json")
+        || s.ends_with(".toml")
+        || s.ends_with(".yaml")
+        || s.ends_with(".yml")
+        // Hidden files/directories
         || s.starts_with('.')
+        // Home directory reference
         || s.starts_with('~')
-        || (s.len() > 1 && s.chars().nth(1) == Some(':')) // Windows drive letter
+        // Windows drive letter (e.g., "C:")
+        || (s.len() > 1 && s.chars().nth(1) == Some(':'))
 }
 
 /// Check if a string is a valid rule ID format.
@@ -317,13 +325,15 @@ mod tests {
         // Hidden files (starts with .)
         assert!(looks_like_path(".gitignore"));
 
-        // Valid file type names that should NOT trigger
+        // Valid file type names that should NOT trigger (false positive prevention)
         assert!(!looks_like_path("rust"));
         assert!(!looks_like_path("typescript"));
-        assert!(!looks_like_path("json_schema"));
-        assert!(!looks_like_path("markdown_file"));
-        // Note: "file.tar.gz" would contain ".gz" but our detector doesn't catch that
-        // This is acceptable as .gz isn't a path, it's an extension
+        assert!(!looks_like_path("json_schema")); // Contains "json" but doesn't end with .json
+        assert!(!looks_like_path("markdown_file")); // Contains "md" but doesn't end with .md
+        assert!(!looks_like_path("claude_md_parser")); // Contains ".md" but doesn't END with it
+        assert!(!looks_like_path("my_json_handler")); // Contains "json" substring
+                                                      // Note: "file.tar.gz" would contain ".gz" but our detector doesn't catch that
+                                                      // This is acceptable as .gz isn't a path, it's an extension
     }
 
     #[test]
