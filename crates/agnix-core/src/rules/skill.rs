@@ -660,8 +660,7 @@ impl<'a> ValidationContext<'a> {
             if let Some(ref tools) = tool_list {
                 // Compute known tools list once outside loop
                 static KNOWN_TOOLS_LIST: OnceLock<String> = OnceLock::new();
-                let known_tools_str =
-                    KNOWN_TOOLS_LIST.get_or_init(|| KNOWN_TOOLS.join(", "));
+                let known_tools_str = KNOWN_TOOLS_LIST.get_or_init(|| KNOWN_TOOLS.join(", "));
 
                 for tool in tools {
                     let base_name = tool.split('(').next().unwrap_or(tool);
@@ -674,8 +673,7 @@ impl<'a> ValidationContext<'a> {
                                 "CC-SK-008",
                                 format!(
                                     "Unknown tool '{}'. Known tools: {}",
-                                    base_name,
-                                    known_tools_str
+                                    base_name, known_tools_str
                                 ),
                             )
                             .with_suggestion(format!(
