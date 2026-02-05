@@ -25,17 +25,21 @@ class AgnixLspServerDescriptor(
         // Resolve binary path without blocking download - only check existing locations
         val binaryPath = resolveBinaryPathNonBlocking()
         if (binaryPath != null) {
-            val commandLine = GeneralCommandLine(binaryPath)
-                .withWorkDirectory(project.basePath ?: System.getProperty("user.home"))
-            setCommandLine(commandLine)
+            configureCommandLine(binaryPath)
         }
+    }
+
+    private fun configureCommandLine(binaryPath: String) {
+        val commandLine = GeneralCommandLine(binaryPath)
+            .withWorkDirectory(project.basePath ?: System.getProperty("user.home"))
+        setCommandLine(commandLine)
     }
 
     /**
      * Resolve the path to the agnix-lsp binary without blocking.
      *
      * Checks existing locations only - does NOT trigger download.
-     * Download is handled asynchronously by AgnixStartupActivity.
+     * Download is handled by the LSP4IJ server installer flow.
      */
     private fun resolveBinaryPathNonBlocking(): String? {
         val settings = AgnixSettings.getInstance()
@@ -69,7 +73,18 @@ class AgnixLspServerDescriptor(
     }
 
     override fun start() {
-        val commandLine = getCommandLine()
+        var commandLine = getCommandLine()
+
+        // On first run, LSP4IJ installer may download agnix-lsp after descriptor init.
+        // Re-resolve here so the freshly installed binary can be used immediately.
+        if (commandLine == null || !File(commandLine.exePath).exists()) {
+            val resolvedPath = resolveBinaryPathNonBlocking()
+            if (resolvedPath != null) {
+                configureCommandLine(resolvedPath)
+                commandLine = getCommandLine()
+            }
+        }
+
         if (commandLine == null) {
             logger.error("No LSP command configured - binary not found")
             AgnixNotifications.notifyBinaryNotFound(project)

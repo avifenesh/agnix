@@ -54,8 +54,7 @@ object AgnixFileTypes {
     )
 
     private val GITHUB_FILE_NAMES = setOf(
-        "copilot-instructions.md",
-        ".cursorrules"
+        "copilot-instructions.md"
     )
 
     /**

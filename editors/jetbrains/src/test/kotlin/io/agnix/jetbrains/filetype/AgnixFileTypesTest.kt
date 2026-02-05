@@ -44,6 +44,13 @@ class AgnixFileTypesTest {
     }
 
     @Test
+    fun `matches cursorrules at any path level`() {
+        assertTrue(AgnixFileTypes.isAgnixFilePath("/project/.cursorrules"))
+        assertTrue(AgnixFileTypes.isAgnixFilePath("/project/subdir/.cursorrules"))
+        assertTrue(AgnixFileTypes.isAgnixFilePath("C:\\project\\.cursorrules"))
+    }
+
+    @Test
     fun `supports windows paths`() {
         assertTrue(AgnixFileTypes.isAgnixFilePath("C:\\project\\SKILL.md"))
         assertTrue(AgnixFileTypes.isAgnixFilePath("C:\\project\\.claude\\settings.json"))
