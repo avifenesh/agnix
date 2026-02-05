@@ -1,6 +1,7 @@
-# Downloaded binaries (added during install)
-bin/agnix
-bin/agnix.exe
+# Downloaded binaries (added during postinstall)
+# Note: bin/agnix (the wrapper script) is tracked
+bin/agnix-binary
+bin/agnix-binary.exe
 bin/*.tar.gz
 bin/*.zip
 

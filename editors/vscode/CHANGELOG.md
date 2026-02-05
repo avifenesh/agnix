@@ -2,7 +2,7 @@
 
 All notable changes to the "agnix" extension will be documented in this file.
 
-## [0.6.0] - 2026-02-05
+## [0.7.0] - 2026-02-05
 
 ### Added
 

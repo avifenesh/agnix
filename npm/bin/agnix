@@ -1,0 +1,28 @@
+#!/usr/bin/env node
+
+const { spawn } = require('child_process');
+const path = require('path');
+const os = require('os');
+
+const binDir = __dirname;
+const binaryName = os.platform() === 'win32' ? 'agnix-binary.exe' : 'agnix-binary';
+const binaryPath = path.join(binDir, binaryName);
+
+const child = spawn(binaryPath, process.argv.slice(2), {
+  stdio: 'inherit',
+  shell: false,
+});
+
+child.on('error', (err) => {
+  if (err.code === 'ENOENT') {
+    console.error('agnix binary not found. Try reinstalling:');
+    console.error('  npm install -g agnix');
+  } else {
+    console.error(`Failed to run agnix: ${err.message}`);
+  }
+  process.exit(1);
+});
+
+child.on('exit', (code) => {
+  process.exit(code || 0);
+});

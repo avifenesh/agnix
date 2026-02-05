@@ -19,25 +19,30 @@ function getPlatformInfo() {
   const mapping = {
     'darwin-arm64': {
       asset: 'agnix-aarch64-apple-darwin.tar.gz',
-      binary: 'agnix',
+      extractedName: 'agnix',
+      binary: 'agnix-binary',
     },
     'darwin-x64': {
       // x64 Mac uses ARM binary via Rosetta 2
       asset: 'agnix-aarch64-apple-darwin.tar.gz',
-      binary: 'agnix',
+      extractedName: 'agnix',
+      binary: 'agnix-binary',
     },
     'linux-x64': {
       asset: 'agnix-x86_64-unknown-linux-gnu.tar.gz',
-      binary: 'agnix',
+      extractedName: 'agnix',
+      binary: 'agnix-binary',
     },
     'linux-arm64': {
       // ARM Linux not yet available, try x64 with emulation
       asset: 'agnix-x86_64-unknown-linux-gnu.tar.gz',
-      binary: 'agnix',
+      extractedName: 'agnix',
+      binary: 'agnix-binary',
     },
     'win32-x64': {
       asset: 'agnix-x86_64-pc-windows-msvc.zip',
-      binary: 'agnix.exe',
+      extractedName: 'agnix.exe',
+      binary: 'agnix-binary.exe',
     },
   };
 
@@ -120,6 +125,7 @@ async function main() {
   const platformInfo = getPlatformInfo();
   const binDir = path.join(__dirname, 'bin');
   const binaryPath = path.join(binDir, platformInfo.binary);
+  const extractedPath = path.join(binDir, platformInfo.extractedName);
 
   // Skip if binary already exists
   if (fs.existsSync(binaryPath)) {
@@ -144,6 +150,11 @@ async function main() {
 
     // Clean up archive
     fs.unlinkSync(archivePath);
+
+    // Rename extracted binary to avoid conflict with wrapper script
+    if (fs.existsSync(extractedPath) && extractedPath !== binaryPath) {
+      fs.renameSync(extractedPath, binaryPath);
+    }
 
     // Make binary executable on Unix
     if (os.platform() !== 'win32') {

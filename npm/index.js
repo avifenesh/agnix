@@ -9,7 +9,7 @@ const path = require('path');
 const os = require('os');
 
 const binDir = path.join(__dirname, 'bin');
-const binaryName = os.platform() === 'win32' ? 'agnix.exe' : 'agnix';
+const binaryName = os.platform() === 'win32' ? 'agnix-binary.exe' : 'agnix-binary';
 const binaryPath = path.join(binDir, binaryName);
 
 /**
