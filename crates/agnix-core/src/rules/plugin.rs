@@ -50,9 +50,7 @@ impl Validator for PluginValidator {
                                 "CC-PL-002",
                                 t!("rules.cc_pl_002.message", component = entry),
                             )
-                            .with_suggestion(
-                                t!("rules.cc_pl_002.suggestion"),
-                            ),
+                            .with_suggestion(t!("rules.cc_pl_002.suggestion")),
                         );
                     }
                 }
@@ -116,9 +114,7 @@ impl Validator for PluginValidator {
                         "CC-PL-003",
                         t!("rules.cc_pl_003.message", version = schema.version.as_str()),
                     )
-                    .with_suggestion(
-                        t!("rules.cc_pl_003.suggestion"),
-                    ),
+                    .with_suggestion(t!("rules.cc_pl_003.suggestion")),
                 );
             }
         }

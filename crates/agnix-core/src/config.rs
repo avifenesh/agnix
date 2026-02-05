@@ -301,7 +301,9 @@ pub struct LintConfig {
     /// Output locale for translated messages (e.g., "en", "es", "zh-CN").
     /// When not set, the CLI locale detection is used.
     #[serde(default)]
-    #[schemars(description = "Output locale for translated messages (e.g., \"en\", \"es\", \"zh-CN\")")]
+    #[schemars(
+        description = "Output locale for translated messages (e.g., \"en\", \"es\", \"zh-CN\")"
+    )]
     pub locale: Option<String>,
 
     /// Maximum number of files to validate before stopping.
@@ -553,7 +555,9 @@ impl LintConfig {
                 Ok(config) => (config, None),
                 Err(e) => {
                     let warning = t!(
-                        "core.config.load_warning", path = p.display().to_string(), error = e.to_string()
+                        "core.config.load_warning",
+                        path = p.display().to_string(),
+                        error = e.to_string()
                     );
                     (Self::default(), Some(warning.to_string()))
                 }
@@ -739,7 +743,12 @@ impl LintConfig {
             if !matches_known {
                 warnings.push(ConfigWarning {
                     field: "rules.disabled_rules".to_string(),
-                    message: t!("core.config.unknown_rule", rule = rule_id.as_str(), prefixes = known_prefixes.join(", ")).to_string(),
+                    message: t!(
+                        "core.config.unknown_rule",
+                        rule = rule_id.as_str(),
+                        prefixes = known_prefixes.join(", ")
+                    )
+                    .to_string(),
                     suggestion: Some(t!("core.config.unknown_rule_suggestion").to_string()),
                 });
             }
@@ -762,7 +771,12 @@ impl LintConfig {
             {
                 warnings.push(ConfigWarning {
                     field: "tools".to_string(),
-                    message: t!("core.config.unknown_tool", tool = tool.as_str(), valid = known_tools.join(", ")).to_string(),
+                    message: t!(
+                        "core.config.unknown_tool",
+                        tool = tool.as_str(),
+                        valid = known_tools.join(", ")
+                    )
+                    .to_string(),
                     suggestion: Some(t!("core.config.unknown_tool_suggestion").to_string()),
                 });
             }

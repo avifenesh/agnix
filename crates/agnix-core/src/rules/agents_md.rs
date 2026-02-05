@@ -50,7 +50,10 @@ impl Validator for AgentsMdValidator {
                         issue.line,
                         issue.column,
                         "AGM-001",
-                        t!("rules.agm_001.message", description = issue.description.as_str()),
+                        t!(
+                            "rules.agm_001.message",
+                            description = issue.description.as_str()
+                        ),
                     )
                     .with_suggestion(t!("rules.agm_001.suggestion")),
                 );
@@ -82,11 +85,14 @@ impl Validator for AgentsMdValidator {
                         1,
                         0,
                         "AGM-003",
-                        t!("rules.agm_003.message", filename = filename, chars = exceeded.char_count, limit = exceeded.limit),
+                        t!(
+                            "rules.agm_003.message",
+                            filename = filename,
+                            chars = exceeded.char_count,
+                            limit = exceeded.limit
+                        ),
                     )
-                    .with_suggestion(
-                        t!("rules.agm_003.suggestion"),
-                    ),
+                    .with_suggestion(t!("rules.agm_003.suggestion")),
                 );
             }
         }
@@ -120,7 +126,8 @@ impl Validator for AgentsMdValidator {
                         feature.description,
                     )
                     .with_suggestion(t!(
-                        "rules.agm_005.suggestion", platform = feature.platform.as_str()
+                        "rules.agm_005.suggestion",
+                        platform = feature.platform.as_str()
                     )),
                 );
             }

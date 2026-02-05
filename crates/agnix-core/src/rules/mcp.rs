@@ -165,9 +165,7 @@ fn extract_tools(
                             "mcp::invalid_tool",
                             t!("rules.invalid_tool", num = idx + 1, error = e.to_string()),
                         )
-                        .with_suggestion(
-                            t!("rules.invalid_tool_suggestion"),
-                        ),
+                        .with_suggestion(t!("rules.invalid_tool_suggestion")),
                     );
                 }
             }
@@ -195,9 +193,7 @@ fn extract_tools(
                         "mcp::invalid_tool",
                         t!("rules.invalid_tool_single", error = e.to_string()),
                     )
-                    .with_suggestion(
-                        t!("rules.invalid_tool_suggestion"),
-                    ),
+                    .with_suggestion(t!("rules.invalid_tool_suggestion")),
                 );
             }
         }
@@ -267,10 +263,15 @@ fn validate_protocol_version(
                     line,
                     col,
                     "MCP-008",
-                    t!("rules.mcp_008.message", found = actual_version.as_str(), expected = expected_version),
+                    t!(
+                        "rules.mcp_008.message",
+                        found = actual_version.as_str(),
+                        expected = expected_version
+                    ),
                 )
                 .with_suggestion(t!(
-                    "rules.mcp_008.request_suggestion", expected = expected_version
+                    "rules.mcp_008.request_suggestion",
+                    expected = expected_version
                 ));
 
                 if !version_pinned {
@@ -292,10 +293,16 @@ fn validate_protocol_version(
                     line,
                     col,
                     "MCP-008",
-                    t!("rules.mcp_008.message", found = actual_version.as_str(), expected = expected_version),
+                    t!(
+                        "rules.mcp_008.message",
+                        found = actual_version.as_str(),
+                        expected = expected_version
+                    ),
                 )
                 .with_suggestion(t!(
-                    "rules.mcp_008.response_suggestion", found = actual_version.as_str(), expected = expected_version
+                    "rules.mcp_008.response_suggestion",
+                    found = actual_version.as_str(),
+                    expected = expected_version
                 ));
 
                 if !version_pinned {
@@ -365,7 +372,10 @@ fn validate_tool(
                     line,
                     col,
                     "MCP-002",
-                    t!("rules.mcp_002.missing_description", prefix = tool_prefix.as_str()),
+                    t!(
+                        "rules.mcp_002.missing_description",
+                        prefix = tool_prefix.as_str()
+                    ),
                 )
                 .with_suggestion(t!("rules.mcp_002.missing_description_suggestion")),
             );
@@ -377,7 +387,10 @@ fn validate_tool(
                     tool_loc.0,
                     tool_loc.1,
                     "MCP-002",
-                    t!("rules.mcp_002.missing_schema", prefix = tool_prefix.as_str()),
+                    t!(
+                        "rules.mcp_002.missing_schema",
+                        prefix = tool_prefix.as_str()
+                    ),
                 )
                 .with_suggestion(t!("rules.mcp_002.missing_schema_suggestion")),
             );
@@ -396,7 +409,11 @@ fn validate_tool(
                         line,
                         col,
                         "MCP-003",
-                        t!("rules.mcp_003.message", prefix = tool_prefix.as_str(), error = error),
+                        t!(
+                            "rules.mcp_003.message",
+                            prefix = tool_prefix.as_str(),
+                            error = error
+                        ),
                     )
                     .with_suggestion(t!("rules.mcp_003.suggestion")),
                 );
@@ -414,11 +431,13 @@ fn validate_tool(
                 line,
                 col,
                 "MCP-004",
-                t!("rules.mcp_004.message", prefix = tool_prefix.as_str(), len = desc_len),
+                t!(
+                    "rules.mcp_004.message",
+                    prefix = tool_prefix.as_str(),
+                    len = desc_len
+                ),
             )
-            .with_suggestion(
-                t!("rules.mcp_004.suggestion"),
-            ),
+            .with_suggestion(t!("rules.mcp_004.suggestion")),
         );
     }
 
@@ -432,9 +451,7 @@ fn validate_tool(
                 "MCP-005",
                 t!("rules.mcp_005.message", prefix = tool_prefix.as_str()),
             )
-            .with_suggestion(
-                t!("rules.mcp_005.suggestion"),
-            ),
+            .with_suggestion(t!("rules.mcp_005.suggestion")),
         );
     }
 
@@ -449,9 +466,7 @@ fn validate_tool(
                 "MCP-006",
                 t!("rules.mcp_006.message", prefix = tool_prefix.as_str()),
             )
-            .with_suggestion(
-                t!("rules.mcp_006.suggestion"),
-            ),
+            .with_suggestion(t!("rules.mcp_006.suggestion")),
         );
     }
 }

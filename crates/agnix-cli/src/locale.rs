@@ -66,10 +66,7 @@ pub fn init(cli_locale: Option<&str>, config_locale: Option<&str>) {
         if is_supported(&normalized) {
             normalized
         } else {
-            eprintln!(
-                "Warning: unsupported locale '{}', falling back to 'en'",
-                l
-            );
+            eprintln!("Warning: unsupported locale '{}', falling back to 'en'", l);
             "en".to_string()
         }
     } else {

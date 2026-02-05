@@ -40,9 +40,7 @@ impl Validator for CopilotValidator {
                                 "COP-001",
                                 t!("rules.cop_001.message_no_content"),
                             )
-                            .with_suggestion(
-                                t!("rules.cop_001.suggestion_empty"),
-                            ),
+                            .with_suggestion(t!("rules.cop_001.suggestion_empty")),
                         );
                     }
                 } else if is_content_empty(content) {
@@ -55,9 +53,7 @@ impl Validator for CopilotValidator {
                             "COP-001",
                             t!("rules.cop_001.message_empty"),
                         )
-                        .with_suggestion(
-                            t!("rules.cop_001.suggestion_scoped_empty"),
-                        ),
+                        .with_suggestion(t!("rules.cop_001.suggestion_scoped_empty")),
                     );
                 }
             } else {
@@ -71,9 +67,7 @@ impl Validator for CopilotValidator {
                             "COP-001",
                             t!("rules.cop_001.message_empty"),
                         )
-                        .with_suggestion(
-                            t!("rules.cop_001.suggestion_empty"),
-                        ),
+                        .with_suggestion(t!("rules.cop_001.suggestion_empty")),
                     );
                 }
             }
@@ -98,9 +92,7 @@ impl Validator for CopilotValidator {
                             "COP-002",
                             t!("rules.cop_002.message_missing"),
                         )
-                        .with_suggestion(
-                            t!("rules.cop_002.suggestion_add_frontmatter"),
-                        ),
+                        .with_suggestion(t!("rules.cop_002.suggestion_add_frontmatter")),
                     );
                 }
                 return diagnostics;
@@ -135,9 +127,7 @@ impl Validator for CopilotValidator {
                             "COP-002",
                             t!("rules.cop_002.message_missing_apply_to"),
                         )
-                        .with_suggestion(
-                            t!("rules.cop_002.suggestion_add_apply_to"),
-                        ),
+                        .with_suggestion(t!("rules.cop_002.suggestion_add_apply_to")),
                     );
                 }
             }
@@ -155,11 +145,13 @@ impl Validator for CopilotValidator {
                                 parsed.start_line + 1, // applyTo is typically on line 2
                                 0,
                                 "COP-003",
-                                t!("rules.cop_003.message", pattern = apply_to.as_str(), error = validation.error.unwrap_or_default()),
+                                t!(
+                                    "rules.cop_003.message",
+                                    pattern = apply_to.as_str(),
+                                    error = validation.error.unwrap_or_default()
+                                ),
                             )
-                            .with_suggestion(
-                                t!("rules.cop_003.suggestion"),
-                            ),
+                            .with_suggestion(t!("rules.cop_003.suggestion")),
                         );
                     }
                 }
@@ -177,9 +169,7 @@ impl Validator for CopilotValidator {
                         "COP-004",
                         t!("rules.cop_004.message", key = unknown.key.as_str()),
                     )
-                    .with_suggestion(t!(
-                        "rules.cop_004.suggestion", key = unknown.key.as_str()
-                    )),
+                    .with_suggestion(t!("rules.cop_004.suggestion", key = unknown.key.as_str())),
                 );
             }
         }

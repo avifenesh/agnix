@@ -34,11 +34,13 @@ impl Validator for PromptValidator {
                         issue.line,
                         issue.column,
                         "PE-001",
-                        t!("rules.pe_001.message", keyword = issue.keyword.as_str(), percent = format!("{:.0}", issue.position_percent)),
+                        t!(
+                            "rules.pe_001.message",
+                            keyword = issue.keyword.as_str(),
+                            percent = format!("{:.0}", issue.position_percent)
+                        ),
                     )
-                    .with_suggestion(
-                        t!("rules.pe_001.suggestion"),
-                    ),
+                    .with_suggestion(t!("rules.pe_001.suggestion")),
                 );
             }
         }
@@ -53,11 +55,13 @@ impl Validator for PromptValidator {
                         issue.line,
                         issue.column,
                         "PE-002",
-                        t!("rules.pe_002.message", phrase = issue.phrase.as_str(), task = issue.task_indicator.as_str()),
+                        t!(
+                            "rules.pe_002.message",
+                            phrase = issue.phrase.as_str(),
+                            task = issue.task_indicator.as_str()
+                        ),
                     )
-                    .with_suggestion(
-                        t!("rules.pe_002.suggestion"),
-                    ),
+                    .with_suggestion(t!("rules.pe_002.suggestion")),
                 );
             }
         }
@@ -72,11 +76,13 @@ impl Validator for PromptValidator {
                         issue.line,
                         issue.column,
                         "PE-003",
-                        t!("rules.pe_003.message", term = issue.weak_term.as_str(), section = issue.section_name.as_str()),
+                        t!(
+                            "rules.pe_003.message",
+                            term = issue.weak_term.as_str(),
+                            section = issue.section_name.as_str()
+                        ),
                     )
-                    .with_suggestion(
-                        t!("rules.pe_003.suggestion"),
-                    ),
+                    .with_suggestion(t!("rules.pe_003.suggestion")),
                 );
             }
         }
@@ -93,9 +99,7 @@ impl Validator for PromptValidator {
                         "PE-004",
                         t!("rules.pe_004.message", term = issue.term.as_str()),
                     )
-                    .with_suggestion(
-                        t!("rules.pe_004.suggestion"),
-                    ),
+                    .with_suggestion(t!("rules.pe_004.suggestion")),
                 );
             }
         }

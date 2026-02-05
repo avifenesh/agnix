@@ -120,11 +120,12 @@ fn validate_cc_hk_005_missing_type_field(
                                         1,
                                         0,
                                         "CC-HK-005",
-                                        t!("rules.cc_hk_005.message", location = hook_location.as_str()),
+                                        t!(
+                                            "rules.cc_hk_005.message",
+                                            location = hook_location.as_str()
+                                        ),
                                     )
-                                    .with_suggestion(
-                                        t!("rules.cc_hk_005.suggestion"),
-                                    ),
+                                    .with_suggestion(t!("rules.cc_hk_005.suggestion")),
                                 );
                             }
                         }
@@ -174,11 +175,12 @@ fn validate_cc_hk_011_invalid_timeout_values(
                                             1,
                                             0,
                                             "CC-HK-011",
-                                            t!("rules.cc_hk_011.message", location = hook_location.as_str()),
+                                            t!(
+                                                "rules.cc_hk_011.message",
+                                                location = hook_location.as_str()
+                                            ),
                                         )
-                                        .with_suggestion(
-                                            t!("rules.cc_hk_011.suggestion"),
-                                        ),
+                                        .with_suggestion(t!("rules.cc_hk_011.suggestion")),
                                     );
                                 }
                             }
@@ -207,7 +209,11 @@ fn validate_cc_hk_001_event_name(
         1,
         0,
         "CC-HK-001",
-        t!("rules.cc_hk_001.message", event = event, valid = format!("{:?}", HooksSchema::VALID_EVENTS)),
+        t!(
+            "rules.cc_hk_001.message",
+            event = event,
+            valid = format!("{:?}", HooksSchema::VALID_EVENTS)
+        ),
     )
     .with_suggestion(closest.suggestion);
 
@@ -242,7 +248,11 @@ fn validate_cc_hk_003_matcher_required(
                 1,
                 0,
                 "CC-HK-003",
-                t!("rules.cc_hk_003.message", event = event, location = hook_location.as_str()),
+                t!(
+                    "rules.cc_hk_003.message",
+                    event = event,
+                    location = hook_location.as_str()
+                ),
             )
             .with_suggestion(t!("rules.cc_hk_003.suggestion")),
         );
@@ -265,7 +275,11 @@ fn validate_cc_hk_004_matcher_forbidden(
                 1,
                 0,
                 "CC-HK-004",
-                t!("rules.cc_hk_004.message", event = event, location = hook_location.as_str()),
+                t!(
+                    "rules.cc_hk_004.message",
+                    event = event,
+                    location = hook_location.as_str()
+                ),
             )
             .with_suggestion(t!("rules.cc_hk_004.suggestion")),
         );
@@ -358,7 +372,11 @@ fn validate_cc_hk_008_script_exists(
                         1,
                         0,
                         "CC-HK-008",
-                        t!("rules.cc_hk_008.message", script = script_path.as_str(), resolved = resolved.display().to_string()),
+                        t!(
+                            "rules.cc_hk_008.message",
+                            script = script_path.as_str(),
+                            resolved = resolved.display().to_string()
+                        ),
                     )
                     .with_suggestion(t!("rules.cc_hk_008.suggestion")),
                 );
@@ -382,9 +400,7 @@ fn validate_cc_hk_009_dangerous_patterns(
                 "CC-HK-009",
                 t!("rules.cc_hk_009.message", reason = reason),
             )
-            .with_suggestion(t!(
-                "rules.cc_hk_009.suggestion", pattern = pattern
-            )),
+            .with_suggestion(t!("rules.cc_hk_009.suggestion", pattern = pattern)),
         );
     }
 }
@@ -403,7 +419,10 @@ fn validate_cc_hk_010_command_timeout(
             1,
             0,
             "CC-HK-010",
-            t!("rules.cc_hk_010.command_no_timeout", location = hook_location),
+            t!(
+                "rules.cc_hk_010.command_no_timeout",
+                location = hook_location
+            ),
         )
         .with_suggestion(t!("rules.cc_hk_010.command_no_timeout_suggestion"));
 
@@ -420,10 +439,16 @@ fn validate_cc_hk_010_command_timeout(
                 1,
                 0,
                 "CC-HK-010",
-                t!("rules.cc_hk_010.command_exceeds", location = hook_location, timeout = t, default = COMMAND_HOOK_DEFAULT_TIMEOUT),
+                t!(
+                    "rules.cc_hk_010.command_exceeds",
+                    location = hook_location,
+                    timeout = t,
+                    default = COMMAND_HOOK_DEFAULT_TIMEOUT
+                ),
             )
             .with_suggestion(t!(
-                "rules.cc_hk_010.command_exceeds_suggestion", default = COMMAND_HOOK_DEFAULT_TIMEOUT
+                "rules.cc_hk_010.command_exceeds_suggestion",
+                default = COMMAND_HOOK_DEFAULT_TIMEOUT
             ));
 
             if !version_pinned {
@@ -449,11 +474,13 @@ fn validate_cc_hk_002_prompt_event_type(
                 1,
                 0,
                 "CC-HK-002",
-                t!("rules.cc_hk_002.message", location = hook_location, event = event),
+                t!(
+                    "rules.cc_hk_002.message",
+                    location = hook_location,
+                    event = event
+                ),
             )
-            .with_suggestion(
-                t!("rules.cc_hk_002.suggestion"),
-            ),
+            .with_suggestion(t!("rules.cc_hk_002.suggestion")),
         );
     }
 }
@@ -493,7 +520,10 @@ fn validate_cc_hk_010_prompt_timeout(
             1,
             0,
             "CC-HK-010",
-            t!("rules.cc_hk_010.prompt_no_timeout", location = hook_location),
+            t!(
+                "rules.cc_hk_010.prompt_no_timeout",
+                location = hook_location
+            ),
         )
         .with_suggestion(t!("rules.cc_hk_010.prompt_no_timeout_suggestion"));
 
@@ -510,10 +540,16 @@ fn validate_cc_hk_010_prompt_timeout(
                 1,
                 0,
                 "CC-HK-010",
-                t!("rules.cc_hk_010.prompt_exceeds", location = hook_location, timeout = t, default = PROMPT_HOOK_DEFAULT_TIMEOUT),
+                t!(
+                    "rules.cc_hk_010.prompt_exceeds",
+                    location = hook_location,
+                    timeout = t,
+                    default = PROMPT_HOOK_DEFAULT_TIMEOUT
+                ),
             )
             .with_suggestion(t!(
-                "rules.cc_hk_010.prompt_exceeds_suggestion", default = PROMPT_HOOK_DEFAULT_TIMEOUT
+                "rules.cc_hk_010.prompt_exceeds_suggestion",
+                default = PROMPT_HOOK_DEFAULT_TIMEOUT
             ));
 
             if !version_pinned {

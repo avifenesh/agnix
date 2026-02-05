@@ -40,9 +40,7 @@ impl Validator for CursorValidator {
                     "CUR-006",
                     t!("rules.cur_006.message"),
                 )
-                .with_suggestion(
-                    t!("rules.cur_006.suggestion"),
-                ),
+                .with_suggestion(t!("rules.cur_006.suggestion")),
             );
             // For legacy files, just check if empty and return
             if config.is_rule_enabled("CUR-001") && is_content_empty(content) {
@@ -86,9 +84,7 @@ impl Validator for CursorValidator {
                         "CUR-001",
                         t!("rules.cur_001.message_empty"),
                     )
-                    .with_suggestion(
-                        t!("rules.cur_001.suggestion_empty"),
-                    ),
+                    .with_suggestion(t!("rules.cur_001.suggestion_empty")),
                 );
             }
         }
@@ -107,9 +103,7 @@ impl Validator for CursorValidator {
                             "CUR-002",
                             t!("rules.cur_002.message"),
                         )
-                        .with_suggestion(
-                            t!("rules.cur_002.suggestion"),
-                        ),
+                        .with_suggestion(t!("rules.cur_002.suggestion")),
                     );
                 }
                 return diagnostics;
@@ -157,11 +151,13 @@ impl Validator for CursorValidator {
                                     globs_line,
                                     0,
                                     "CUR-004",
-                                    t!("rules.cur_004.message", pattern = pattern, error = validation.error.unwrap_or_default()),
+                                    t!(
+                                        "rules.cur_004.message",
+                                        pattern = pattern,
+                                        error = validation.error.unwrap_or_default()
+                                    ),
                                 )
-                                .with_suggestion(
-                                    t!("rules.cur_004.suggestion"),
-                                ),
+                                .with_suggestion(t!("rules.cur_004.suggestion")),
                             );
                         }
                     }
@@ -180,9 +176,7 @@ impl Validator for CursorValidator {
                         "CUR-005",
                         t!("rules.cur_005.message", key = unknown.key.as_str()),
                     )
-                    .with_suggestion(t!(
-                        "rules.cur_005.suggestion", key = unknown.key.as_str()
-                    )),
+                    .with_suggestion(t!("rules.cur_005.suggestion", key = unknown.key.as_str())),
                 );
             }
         }

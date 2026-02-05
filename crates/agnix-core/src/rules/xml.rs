@@ -69,7 +69,11 @@ impl Validator for XmlValidator {
                         continue;
                     }
                     let message = t!("rules.xml_002.message", expected = expected, found = found);
-                    let suggestion = t!("rules.xml_002.suggestion", found = found, expected = expected);
+                    let suggestion = t!(
+                        "rules.xml_002.suggestion",
+                        found = found,
+                        expected = expected
+                    );
 
                     let diagnostic =
                         Diagnostic::error(path.to_path_buf(), line, column, rule_id, message)

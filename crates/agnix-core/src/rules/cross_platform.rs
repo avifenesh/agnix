@@ -39,11 +39,14 @@ impl Validator for CrossPlatformValidator {
                         feature.line,
                         feature.column,
                         "XP-001",
-                        t!("rules.xp_001.message", feature = feature.feature.as_str(), filename = filename, description = feature.description.as_str()),
+                        t!(
+                            "rules.xp_001.message",
+                            feature = feature.feature.as_str(),
+                            filename = filename,
+                            description = feature.description.as_str()
+                        ),
                     )
-                    .with_suggestion(
-                        t!("rules.xp_001.suggestion"),
-                    ),
+                    .with_suggestion(t!("rules.xp_001.suggestion")),
                 );
             }
         }
@@ -59,7 +62,11 @@ impl Validator for CrossPlatformValidator {
                         issue.line,
                         issue.column,
                         "XP-002",
-                        t!("rules.xp_002.message", filename = filename, issue = issue.issue.as_str()),
+                        t!(
+                            "rules.xp_002.message",
+                            filename = filename,
+                            issue = issue.issue.as_str()
+                        ),
                     )
                     .with_suggestion(issue.suggestion),
                 );
@@ -77,11 +84,13 @@ impl Validator for CrossPlatformValidator {
                         path_issue.line,
                         path_issue.column,
                         "XP-003",
-                        t!("rules.xp_003.message", platform = path_issue.platform.as_str(), path = path_issue.path.as_str()),
+                        t!(
+                            "rules.xp_003.message",
+                            platform = path_issue.platform.as_str(),
+                            path = path_issue.path.as_str()
+                        ),
                     )
-                    .with_suggestion(
-                        t!("rules.xp_003.suggestion"),
-                    ),
+                    .with_suggestion(t!("rules.xp_003.suggestion")),
                 );
             }
         }

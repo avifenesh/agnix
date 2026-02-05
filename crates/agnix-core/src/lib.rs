@@ -707,16 +707,8 @@ pub fn validate_project_with_registry(
             };
 
             diagnostics.push(
-                Diagnostic::info(
-                    report_path,
-                    1,
-                    0,
-                    "VER-001",
-                    t!("rules.ver_001.message"),
-                )
-                .with_suggestion(
-                    t!("rules.ver_001.suggestion"),
-                ),
+                Diagnostic::info(report_path, 1, 0, "VER-001", t!("rules.ver_001.message"))
+                    .with_suggestion(t!("rules.ver_001.suggestion")),
             );
         }
     }
@@ -3807,7 +3799,11 @@ mod i18n_tests {
         rust_i18n::set_locale("fr"); // French not supported
 
         let msg = t!("cli.validating");
-        assert_eq!(msg, "Validating:", "Should fall back to English, got: {}", msg);
+        assert_eq!(
+            msg, "Validating:",
+            "Should fall back to English, got: {}",
+            msg
+        );
 
         rust_i18n::set_locale("en");
     }

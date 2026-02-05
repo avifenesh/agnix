@@ -293,9 +293,7 @@ impl<'a> ValidationContext<'a> {
                     "AS-004",
                     t!("rules.as_004.message", name = name_trimmed),
                 )
-                .with_suggestion(
-                    t!("rules.as_004.suggestion"),
-                );
+                .with_suggestion(t!("rules.as_004.suggestion"));
 
                 // Add auto-fix if we can find the byte range and the fixed name is valid
                 if !fixed_name.is_empty() && name_re.is_match(&fixed_name) {
@@ -388,9 +386,7 @@ impl<'a> ValidationContext<'a> {
                         "AS-008",
                         t!("rules.as_008.message", len = len),
                     )
-                    .with_suggestion(
-                        t!("rules.as_008.suggestion"),
-                    ),
+                    .with_suggestion(t!("rules.as_008.suggestion")),
                 );
             }
         }
@@ -423,9 +419,7 @@ impl<'a> ValidationContext<'a> {
                     "AS-010",
                     t!("rules.as_010.message"),
                 )
-                .with_suggestion(
-                    t!("rules.as_010.suggestion"),
-                );
+                .with_suggestion(t!("rules.as_010.suggestion"));
 
                 // Add auto-fix: prepend "Use when user wants to " to description
                 if let Some((start, end)) = self.frontmatter_value_byte_range("description") {
@@ -463,9 +457,7 @@ impl<'a> ValidationContext<'a> {
                             "AS-011",
                             t!("rules.as_011.message", len = len),
                         )
-                        .with_suggestion(
-                            t!("rules.as_011.suggestion"),
-                        ),
+                        .with_suggestion(t!("rules.as_011.suggestion")),
                     );
                 }
             }
@@ -488,10 +480,15 @@ impl<'a> ValidationContext<'a> {
                             model_line,
                             model_col,
                             "CC-SK-001",
-                            t!("rules.cc_sk_001.message", model = model.as_str(), valid = VALID_MODELS.join(", ")),
+                            t!(
+                                "rules.cc_sk_001.message",
+                                model = model.as_str(),
+                                valid = VALID_MODELS.join(", ")
+                            ),
                         )
                         .with_suggestion(t!(
-                            "rules.cc_sk_001.suggestion", valid = VALID_MODELS.join(", ")
+                            "rules.cc_sk_001.suggestion",
+                            valid = VALID_MODELS.join(", ")
                         )),
                     );
                 }
@@ -510,9 +507,7 @@ impl<'a> ValidationContext<'a> {
                             "CC-SK-002",
                             t!("rules.cc_sk_002.message", context = context.as_str()),
                         )
-                        .with_suggestion(
-                            t!("rules.cc_sk_002.suggestion"),
-                        ),
+                        .with_suggestion(t!("rules.cc_sk_002.suggestion")),
                     );
                 }
             }
@@ -531,9 +526,7 @@ impl<'a> ValidationContext<'a> {
                     "CC-SK-003",
                     t!("rules.cc_sk_003.message"),
                 )
-                .with_suggestion(
-                    t!("rules.cc_sk_003.suggestion"),
-                ),
+                .with_suggestion(t!("rules.cc_sk_003.suggestion")),
             );
         }
 
@@ -569,9 +562,7 @@ impl<'a> ValidationContext<'a> {
                             "CC-SK-005",
                             t!("rules.cc_sk_005.message", agent = agent.as_str()),
                         )
-                        .with_suggestion(
-                            t!("rules.cc_sk_005.suggestion")
-                        ),
+                        .with_suggestion(t!("rules.cc_sk_005.suggestion")),
                     );
                 }
             }
@@ -660,10 +651,15 @@ impl<'a> ValidationContext<'a> {
                                 allowed_tools_line,
                                 allowed_tools_col,
                                 "CC-SK-008",
-                                t!("rules.cc_sk_008.message", tool = base_name, known = known_tools_str.as_str()),
+                                t!(
+                                    "rules.cc_sk_008.message",
+                                    tool = base_name,
+                                    known = known_tools_str.as_str()
+                                ),
                             )
                             .with_suggestion(t!(
-                                "rules.cc_sk_008.suggestion", known = known_tools_str.as_str()
+                                "rules.cc_sk_008.suggestion",
+                                known = known_tools_str.as_str()
                             )),
                         );
                     }
@@ -693,9 +689,7 @@ impl<'a> ValidationContext<'a> {
                         "CC-SK-006",
                         t!("rules.cc_sk_006.message", name = schema.name.as_str()),
                     )
-                    .with_suggestion(
-                        t!("rules.cc_sk_006.suggestion"),
-                    ),
+                    .with_suggestion(t!("rules.cc_sk_006.suggestion")),
                 );
             }
         }
@@ -711,11 +705,13 @@ impl<'a> ValidationContext<'a> {
                         frontmatter_line,
                         frontmatter_col,
                         "CC-SK-009",
-                        t!("rules.cc_sk_009.message", count = injection_count, max = MAX_INJECTIONS),
+                        t!(
+                            "rules.cc_sk_009.message",
+                            count = injection_count,
+                            max = MAX_INJECTIONS
+                        ),
                     )
-                    .with_suggestion(
-                        t!("rules.cc_sk_009.suggestion"),
-                    ),
+                    .with_suggestion(t!("rules.cc_sk_009.suggestion")),
                 );
             }
         }
@@ -803,9 +799,7 @@ impl<'a> ValidationContext<'a> {
                             "AS-015",
                             t!("rules.as_015.message", size = size),
                         )
-                        .with_suggestion(
-                            t!("rules.as_015.suggestion"),
-                        ),
+                        .with_suggestion(t!("rules.as_015.suggestion")),
                     );
                 }
             }

@@ -44,7 +44,12 @@ pub fn to_lsp_diagnostic(diag: &Diagnostic) -> LspDiagnostic {
     let column = diag.column.saturating_sub(1) as u32;
 
     let message = if let Some(ref suggestion) = diag.suggestion {
-        format!("{}\n\n{} {}", diag.message, t!("lsp.suggestion_label"), suggestion)
+        format!(
+            "{}\n\n{} {}",
+            diag.message,
+            t!("lsp.suggestion_label"),
+            suggestion
+        )
     } else {
         diag.message.clone()
     };

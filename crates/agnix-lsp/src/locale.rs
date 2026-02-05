@@ -117,7 +117,10 @@ mod tests {
         // Test unsupported locale preserves current (which is now "es")
         init_from_config("xx-unsupported");
         let current = rust_i18n::locale();
-        assert_eq!(&*current, "es", "unsupported locale should not change current");
+        assert_eq!(
+            &*current, "es",
+            "unsupported locale should not change current"
+        );
 
         // Reset for other tests
         set_locale("en");

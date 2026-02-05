@@ -2604,7 +2604,10 @@ fn test_locale_flag_with_json_output_still_works() {
     );
 
     let json = json.unwrap();
-    assert!(json["version"].is_string(), "JSON should have version field");
+    assert!(
+        json["version"].is_string(),
+        "JSON should have version field"
+    );
     assert!(
         json["diagnostics"].is_array(),
         "JSON should have diagnostics array"
@@ -2661,7 +2664,9 @@ fn test_locale_es_translates_diagnostic_messages() {
     // Spanish AS-004 message contains "debe tener" (must have) or
     // the Spanish summary "Encontrados" (Found)
     assert!(
-        stdout.contains("Encontrados") || stdout.contains("debe tener") || stdout.contains("minusculas"),
+        stdout.contains("Encontrados")
+            || stdout.contains("debe tener")
+            || stdout.contains("minusculas"),
         "--locale es should produce Spanish diagnostic output, got: {}",
         stdout
     );

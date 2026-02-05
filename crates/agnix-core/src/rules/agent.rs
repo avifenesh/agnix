@@ -150,9 +150,7 @@ impl Validator for AgentValidator {
                     "CC-AG-002",
                     t!("rules.cc_ag_002.message"),
                 )
-                .with_suggestion(
-                    t!("rules.cc_ag_002.suggestion"),
-                ),
+                .with_suggestion(t!("rules.cc_ag_002.suggestion")),
             );
         }
 
@@ -166,10 +164,15 @@ impl Validator for AgentValidator {
                             1,
                             0,
                             "CC-AG-003",
-                            t!("rules.cc_ag_003.message", model = model.as_str(), valid = VALID_MODELS.join(", ")),
+                            t!(
+                                "rules.cc_ag_003.message",
+                                model = model.as_str(),
+                                valid = VALID_MODELS.join(", ")
+                            ),
                         )
                         .with_suggestion(t!(
-                            "rules.cc_ag_003.suggestion", valid = VALID_MODELS.join(", ")
+                            "rules.cc_ag_003.suggestion",
+                            valid = VALID_MODELS.join(", ")
                         )),
                     );
                 }
@@ -186,10 +189,15 @@ impl Validator for AgentValidator {
                             1,
                             0,
                             "CC-AG-004",
-                            t!("rules.cc_ag_004.message", mode = mode.as_str(), valid = VALID_PERMISSION_MODES.join(", ")),
+                            t!(
+                                "rules.cc_ag_004.message",
+                                mode = mode.as_str(),
+                                valid = VALID_PERMISSION_MODES.join(", ")
+                            ),
                         )
                         .with_suggestion(t!(
-                            "rules.cc_ag_004.suggestion", valid = VALID_PERMISSION_MODES.join(", ")
+                            "rules.cc_ag_004.suggestion",
+                            valid = VALID_PERMISSION_MODES.join(", ")
                         )),
                     );
                 }
@@ -212,7 +220,8 @@ impl Validator for AgentValidator {
                                     t!("rules.cc_ag_005.message", skill = skill_name.as_str()),
                                 )
                                 .with_suggestion(t!(
-                                    "rules.cc_ag_005.suggestion", skill = skill_name.as_str()
+                                    "rules.cc_ag_005.suggestion",
+                                    skill = skill_name.as_str()
                                 )),
                             );
                         }
@@ -239,9 +248,7 @@ impl Validator for AgentValidator {
                             "CC-AG-006",
                             t!("rules.cc_ag_006.message", conflicts = conflicts.join(", ")),
                         )
-                        .with_suggestion(
-                            t!("rules.cc_ag_006.suggestion"),
-                        ),
+                        .with_suggestion(t!("rules.cc_ag_006.suggestion")),
                     );
                 }
             }

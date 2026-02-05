@@ -193,9 +193,7 @@ fn visit_imports(
                         rule_not_found,
                         t!("rules.cc_mem_001.escapes", path = import.path.as_str()),
                     )
-                    .with_suggestion(
-                        t!("rules.cc_mem_001.escapes_suggestion"),
-                    ),
+                    .with_suggestion(t!("rules.cc_mem_001.escapes_suggestion")),
                 );
             }
             continue;
@@ -213,9 +211,7 @@ fn visit_imports(
                             rule_not_found,
                             t!("rules.cc_mem_001.escapes", path = import.path.as_str()),
                         )
-                        .with_suggestion(
-                            t!("rules.cc_mem_001.escapes_suggestion"),
-                        ),
+                        .with_suggestion(t!("rules.cc_mem_001.escapes_suggestion")),
                     );
                 }
                 continue;
@@ -271,7 +267,11 @@ fn visit_imports(
                     import.line,
                     import.column,
                     rule_depth,
-                    t!("rules.cc_mem_003.message", depth = depth + 1, max = MAX_IMPORT_DEPTH),
+                    t!(
+                        "rules.cc_mem_003.message",
+                        depth = depth + 1,
+                        max = MAX_IMPORT_DEPTH
+                    ),
                 )
                 .with_suggestion(t!("rules.cc_mem_003.suggestion")),
             );
@@ -503,7 +503,11 @@ fn validate_markdown_links(
                     link.line,
                     link.column,
                     "REF-002",
-                    t!("rules.ref_002.message", url = link.url.as_str(), resolved = resolved.display().to_string()),
+                    t!(
+                        "rules.ref_002.message",
+                        url = link.url.as_str(),
+                        resolved = resolved.display().to_string()
+                    ),
                 )
                 .with_suggestion(t!("rules.ref_002.suggestion")),
             );

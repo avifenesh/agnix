@@ -39,9 +39,7 @@ impl Validator for ClaudeMdValidator {
                         "CC-MEM-005",
                         t!("rules.cc_mem_005.message", text = inst.text.as_str()),
                     )
-                    .with_suggestion(
-                        t!("rules.cc_mem_005.suggestion"),
-                    )
+                    .with_suggestion(t!("rules.cc_mem_005.suggestion"))
                     .with_fix(Fix::delete(
                         inst.start_byte,
                         inst.end_byte,
@@ -61,11 +59,13 @@ impl Validator for ClaudeMdValidator {
                         1,
                         0,
                         "CC-MEM-009",
-                        t!("rules.cc_mem_009.message", tokens = exceeded.estimated_tokens, limit = exceeded.limit),
+                        t!(
+                            "rules.cc_mem_009.message",
+                            tokens = exceeded.estimated_tokens,
+                            limit = exceeded.limit
+                        ),
                     )
-                    .with_suggestion(
-                        t!("rules.cc_mem_009.suggestion"),
-                    ),
+                    .with_suggestion(t!("rules.cc_mem_009.suggestion")),
                 );
             }
         }
@@ -82,9 +82,7 @@ impl Validator for ClaudeMdValidator {
                         "CC-MEM-006",
                         t!("rules.cc_mem_006.message", text = neg.text.as_str()),
                     )
-                    .with_suggestion(
-                        t!("rules.cc_mem_006.suggestion"),
-                    ),
+                    .with_suggestion(t!("rules.cc_mem_006.suggestion")),
                 );
             }
         }
@@ -100,11 +98,13 @@ impl Validator for ClaudeMdValidator {
                     w.line,
                     w.column,
                     "CC-MEM-007",
-                    t!("rules.cc_mem_007.message", text = w.text.as_str(), section = w.section.as_str()),
+                    t!(
+                        "rules.cc_mem_007.message",
+                        text = w.text.as_str(),
+                        section = w.section.as_str()
+                    ),
                 )
-                .with_suggestion(
-                    t!("rules.cc_mem_007.suggestion"),
-                );
+                .with_suggestion(t!("rules.cc_mem_007.suggestion"));
 
                 // Add fix if we have a replacement
                 if let Some(repl) = replacement {
@@ -131,11 +131,13 @@ impl Validator for ClaudeMdValidator {
                         c.line,
                         c.column,
                         "CC-MEM-008",
-                        t!("rules.cc_mem_008.message", keyword = c.keyword.as_str(), percent = format!("{:.0}", c.position_percent)),
+                        t!(
+                            "rules.cc_mem_008.message",
+                            keyword = c.keyword.as_str(),
+                            percent = format!("{:.0}", c.position_percent)
+                        ),
                     )
-                    .with_suggestion(
-                        t!("rules.cc_mem_008.suggestion"),
-                    ),
+                    .with_suggestion(t!("rules.cc_mem_008.suggestion")),
                 );
             }
         }
@@ -167,7 +169,8 @@ impl Validator for ClaudeMdValidator {
                                         t!(
                                             "rules.cc_mem_004.suggestion_available",
                                             scripts = available_scripts.join(", ")
-                                        ).to_string()
+                                        )
+                                        .to_string()
                                     };
 
                                     diagnostics.push(
@@ -176,7 +179,10 @@ impl Validator for ClaudeMdValidator {
                                             npm_ref.line,
                                             npm_ref.column,
                                             "CC-MEM-004",
-                                            t!("rules.cc_mem_004.message", script = npm_ref.script_name.as_str()),
+                                            t!(
+                                                "rules.cc_mem_004.message",
+                                                script = npm_ref.script_name.as_str()
+                                            ),
                                         )
                                         .with_suggestion(suggestion),
                                     );
@@ -201,11 +207,13 @@ impl Validator for ClaudeMdValidator {
                                 1,
                                 0,
                                 "CC-MEM-010",
-                                t!("rules.cc_mem_010.message", overlap = format!("{:.0}", dup.overlap_percent), threshold = format!("{:.0}", dup.threshold)),
+                                t!(
+                                    "rules.cc_mem_010.message",
+                                    overlap = format!("{:.0}", dup.overlap_percent),
+                                    threshold = format!("{:.0}", dup.threshold)
+                                ),
                             )
-                            .with_suggestion(
-                                t!("rules.cc_mem_010.suggestion"),
-                            ),
+                            .with_suggestion(t!("rules.cc_mem_010.suggestion")),
                         );
                     }
                 }

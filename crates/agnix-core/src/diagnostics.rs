@@ -56,12 +56,7 @@ impl Fix {
     }
 
     /// Create a deletion fix (replacement is empty)
-    pub fn delete(
-        start: usize,
-        end: usize,
-        description: impl Into<String>,
-        safe: bool,
-    ) -> Self {
+    pub fn delete(start: usize, end: usize, description: impl Into<String>, safe: bool) -> Self {
         Self {
             start_byte: start,
             end_byte: end,
