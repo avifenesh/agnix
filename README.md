@@ -163,6 +163,8 @@ Real-time diagnostics as you type, quick-fix code actions, hover documentation.
 
 ![VS Code validation example](assets/vscode-validation.png)
 
+**VS Code extension** includes a comprehensive settings UI for configuring all validation options. Changes apply immediately without server restart. See [VS Code extension](editors/vscode/README.md) for details.
+
 See [Editor Setup](docs/EDITOR-SETUP.md) for VS Code, Neovim, Helix configuration.
 
 ## MCP Server
