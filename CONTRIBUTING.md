@@ -28,22 +28,7 @@ cargo clippy --all-targets
 4. **Add test fixtures** - `tests/fixtures/`
 5. **Run parity tests** - CI enforces rules.json and VALIDATION-RULES.md stay in sync
 
-Each rule in `rules.json` must include complete `evidence` metadata:
-
-```json
-{
-  "id": "XX-001",
-  "message": "...",
-  "evidence": {
-    "source_type": "spec|research|implementation",
-    "source_urls": ["..."],
-    "verified_on": "2026-01-01",
-    "applies_to": ["claude-code"],
-    "normative_level": "must|should|may",
-    "tests": ["test_name"]
-  }
-}
-```
+Each rule in `rules.json` must include complete `evidence` metadata. See [Rule Evidence Requirements](#rule-evidence-requirements) below for field details.
 
 ## Rule Evidence Requirements
 

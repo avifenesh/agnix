@@ -5,31 +5,32 @@
 //! and CONTRIBUTING.md expansions.
 
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
+use std::sync::OnceLock;
 
-fn find_workspace_root() -> Option<std::path::PathBuf> {
-    let manifest_dir = env!("CARGO_MANIFEST_DIR");
-    Path::new(manifest_dir)
-        .ancestors()
-        .find(|path| {
-            path.join("Cargo.toml")
-                .exists()
-                .then(|| fs::read_to_string(path.join("Cargo.toml")).ok())
-                .flatten()
-                .is_some_and(|content| {
-                    content.contains("[workspace]") || content.contains("[workspace.")
-                })
-        })
-        .map(|p| p.to_path_buf())
+fn workspace_root() -> &'static Path {
+    static ROOT: OnceLock<PathBuf> = OnceLock::new();
+    ROOT.get_or_init(|| {
+        let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        for ancestor in manifest_dir.ancestors() {
+            let cargo_toml = ancestor.join("Cargo.toml");
+            if let Ok(content) = fs::read_to_string(&cargo_toml) {
+                if content.contains("[workspace]") || content.contains("[workspace.") {
+                    return ancestor.to_path_buf();
+                }
+            }
+        }
+        panic!(
+            "Failed to locate workspace root from CARGO_MANIFEST_DIR={}",
+            manifest_dir.display()
+        );
+    })
+    .as_path()
 }
 
 #[test]
 fn test_research_tracking_exists() {
-    let Some(root) = find_workspace_root() else {
-        eprintln!("Skipping test: workspace root not found");
-        return;
-    };
-
+    let root = workspace_root();
     let path = root.join("knowledge-base/RESEARCH-TRACKING.md");
     assert!(
         path.exists(),
@@ -52,15 +53,21 @@ fn test_research_tracking_exists() {
             section
         );
     }
+
+    // Verify S-tier tools are listed
+    assert!(
+        content.contains("Claude Code"),
+        "RESEARCH-TRACKING.md must list Claude Code"
+    );
+    assert!(
+        content.contains("Codex CLI"),
+        "RESEARCH-TRACKING.md must list Codex CLI"
+    );
 }
 
 #[test]
 fn test_monthly_review_exists() {
-    let Some(root) = find_workspace_root() else {
-        eprintln!("Skipping test: workspace root not found");
-        return;
-    };
-
+    let root = workspace_root();
     let path = root.join("knowledge-base/MONTHLY-REVIEW.md");
     assert!(
         path.exists(),
@@ -69,19 +76,32 @@ fn test_monthly_review_exists() {
 
     let content = fs::read_to_string(&path).expect("Failed to read MONTHLY-REVIEW.md");
 
+    // Verify the review structure exists (not tied to a specific date)
     assert!(
-        content.contains("February 2026"),
-        "MONTHLY-REVIEW.md must contain the completed February 2026 review"
+        content.contains("## Completed Reviews"),
+        "MONTHLY-REVIEW.md must contain a Completed Reviews section"
+    );
+    assert!(
+        content.contains("#### Current State"),
+        "MONTHLY-REVIEW.md must contain a review with Current State subsection"
+    );
+    assert!(
+        content.contains("#### Coverage Analysis"),
+        "MONTHLY-REVIEW.md must contain a review with Coverage Analysis subsection"
+    );
+    assert!(
+        content.contains("#### Findings"),
+        "MONTHLY-REVIEW.md must contain a review with Findings subsection"
+    );
+    assert!(
+        content.contains("#### Actions Taken"),
+        "MONTHLY-REVIEW.md must contain a review with Actions Taken subsection"
     );
 }
 
 #[test]
 fn test_index_references_new_docs() {
-    let Some(root) = find_workspace_root() else {
-        eprintln!("Skipping test: workspace root not found");
-        return;
-    };
-
+    let root = workspace_root();
     let path = root.join("knowledge-base/INDEX.md");
     let content = fs::read_to_string(&path).expect("Failed to read INDEX.md");
 
@@ -97,27 +117,19 @@ fn test_index_references_new_docs() {
 
 #[test]
 fn test_issue_templates_exist_with_frontmatter() {
-    let Some(root) = find_workspace_root() else {
-        eprintln!("Skipping test: workspace root not found");
-        return;
-    };
+    let root = workspace_root();
 
-    let templates = [
-        ".github/ISSUE_TEMPLATE/rule_contribution.md",
-        ".github/ISSUE_TEMPLATE/tool_support_request.md",
-        ".github/ISSUE_TEMPLATE/config.yml",
-    ];
+    // Verify config.yml exists
+    let config_path = root.join(".github/ISSUE_TEMPLATE/config.yml");
+    assert!(
+        config_path.exists(),
+        ".github/ISSUE_TEMPLATE/config.yml must exist"
+    );
 
-    for template in &templates {
-        let path = root.join(template);
-        assert!(path.exists(), "{} must exist", template);
-    }
-
-    // Validate rule contribution template frontmatter and structure
-    let rule_template = fs::read_to_string(
-        root.join(".github/ISSUE_TEMPLATE/rule_contribution.md"),
-    )
-    .expect("Failed to read rule_contribution.md");
+    // Validate rule contribution template
+    let rule_template_path = root.join(".github/ISSUE_TEMPLATE/rule_contribution.md");
+    let rule_template =
+        fs::read_to_string(&rule_template_path).expect("Failed to read rule_contribution.md");
     assert!(
         rule_template.contains("name: Rule Contribution"),
         "rule_contribution.md must have correct name in frontmatter"
@@ -126,12 +138,15 @@ fn test_issue_templates_exist_with_frontmatter() {
         rule_template.contains("rule-proposal"),
         "rule_contribution.md must have rule-proposal label"
     );
+    assert!(
+        rule_template.contains("## Evidence"),
+        "rule_contribution.md must have an Evidence section"
+    );
 
-    // Validate tool support template frontmatter and structure
-    let tool_template = fs::read_to_string(
-        root.join(".github/ISSUE_TEMPLATE/tool_support_request.md"),
-    )
-    .expect("Failed to read tool_support_request.md");
+    // Validate tool support template
+    let tool_template_path = root.join(".github/ISSUE_TEMPLATE/tool_support_request.md");
+    let tool_template =
+        fs::read_to_string(&tool_template_path).expect("Failed to read tool_support_request.md");
     assert!(
         tool_template.contains("name: Tool Support Request"),
         "tool_support_request.md must have correct name in frontmatter"
@@ -140,15 +155,15 @@ fn test_issue_templates_exist_with_frontmatter() {
         tool_template.contains("tool-request"),
         "tool_support_request.md must have tool-request label"
     );
+    assert!(
+        tool_template.contains("## Tier Suggestion"),
+        "tool_support_request.md must have a Tier Suggestion section"
+    );
 }
 
 #[test]
 fn test_changelog_documents_research_tracking() {
-    let Some(root) = find_workspace_root() else {
-        eprintln!("Skipping test: workspace root not found");
-        return;
-    };
-
+    let root = workspace_root();
     let changelog =
         fs::read_to_string(root.join("CHANGELOG.md")).expect("Failed to read CHANGELOG.md");
 
@@ -168,18 +183,17 @@ fn test_changelog_documents_research_tracking() {
 
 #[test]
 fn test_contributing_expanded() {
-    let Some(root) = find_workspace_root() else {
-        eprintln!("Skipping test: workspace root not found");
-        return;
-    };
-
-    let path = root.join("CONTRIBUTING.md");
-    let content = fs::read_to_string(&path).expect("Failed to read CONTRIBUTING.md");
+    let root = workspace_root();
+    let content =
+        fs::read_to_string(root.join("CONTRIBUTING.md")).expect("Failed to read CONTRIBUTING.md");
 
     let required_sections = [
         "Rule Evidence Requirements",
         "Rule ID Conventions",
         "Tool Tier System",
+        "Implementing a Validator",
+        "Testing Requirements",
+        "Community Feedback",
     ];
 
     for section in &required_sections {
@@ -189,4 +203,18 @@ fn test_contributing_expanded() {
             section
         );
     }
+
+    // Verify key content within expanded sections
+    assert!(
+        content.contains("source_type"),
+        "Rule Evidence Requirements must document source_type field"
+    );
+    assert!(
+        content.contains("AS-"),
+        "Rule ID Conventions must document AS- prefix"
+    );
+    assert!(
+        content.contains("CC-SK-"),
+        "Rule ID Conventions must document CC-SK- prefix"
+    );
 }
