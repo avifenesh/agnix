@@ -1693,13 +1693,13 @@ model: sonnet
         // Construct a path that uses '..' to escape the workspace.
         // The file does not exist, so canonicalize() will fail and
         // the code must fall back to normalize_path().
-        let traversal_path = format!(
-            "{}/../../{}/SKILL.md",
-            workspace_dir.path().display(),
-            outside_name
-        );
-        let uri = Url::parse(&format!("file://{}", traversal_path)).unwrap();
-
+        let traversal_path = workspace_dir
+            .path()
+            .join("..")
+            .join("..")
+            .join(outside_name)
+            .join("SKILL.md");
+        let uri = Url::from_file_path(&traversal_path).unwrap();
         service
             .inner()
             .did_open(DidOpenTextDocumentParams {
@@ -1746,9 +1746,14 @@ model: sonnet
             .unwrap();
 
         // URI with '..' that resolves back into the workspace
-        let traversal_path = format!("{}/subdir/../SKILL.md", workspace_dir.path().display());
-        let uri = Url::parse(&format!("file://{}", traversal_path)).unwrap();
 
+        // URI with '..' that resolves back into the workspace
+        let traversal_path = workspace_dir
+            .path()
+            .join("subdir")
+            .join("..")
+            .join("SKILL.md");
+        let uri = Url::from_file_path(&traversal_path).unwrap();
         service
             .inner()
             .did_open(DidOpenTextDocumentParams {
