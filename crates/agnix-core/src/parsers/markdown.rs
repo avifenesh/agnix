@@ -38,10 +38,7 @@ pub const MAX_REGEX_INPUT_SIZE: usize = 65536; // 64KB
 pub fn extract_imports(content: &str) -> Vec<Import> {
     // Catch upstream parser panics (e.g., pulldown-cmark bugs) gracefully
     let content_owned = content.to_string();
-    match panic::catch_unwind(move || extract_imports_inner(&content_owned)) {
-        Ok(imports) => imports,
-        Err(_) => Vec::new(),
-    }
+    panic::catch_unwind(move || extract_imports_inner(&content_owned)).unwrap_or_default()
 }
 
 fn extract_imports_inner(content: &str) -> Vec<Import> {
@@ -79,10 +76,7 @@ pub fn extract_xml_tags(content: &str) -> Vec<XmlTag> {
 
     // Catch upstream parser panics (e.g., pulldown-cmark bugs) gracefully
     let content_owned = content.to_string();
-    match panic::catch_unwind(move || extract_xml_tags_inner(&content_owned)) {
-        Ok(tags) => tags,
-        Err(_) => Vec::new(),
-    }
+    panic::catch_unwind(move || extract_xml_tags_inner(&content_owned)).unwrap_or_default()
 }
 
 fn extract_xml_tags_inner(content: &str) -> Vec<XmlTag> {
@@ -119,10 +113,7 @@ fn extract_xml_tags_inner(content: &str) -> Vec<XmlTag> {
 pub fn extract_markdown_links(content: &str) -> Vec<MarkdownLink> {
     // Catch upstream parser panics (e.g., pulldown-cmark bugs) gracefully
     let content_owned = content.to_string();
-    match panic::catch_unwind(move || extract_markdown_links_inner(&content_owned)) {
-        Ok(links) => links,
-        Err(_) => Vec::new(),
-    }
+    panic::catch_unwind(move || extract_markdown_links_inner(&content_owned)).unwrap_or_default()
 }
 
 fn extract_markdown_links_inner(content: &str) -> Vec<MarkdownLink> {
