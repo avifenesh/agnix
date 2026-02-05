@@ -105,7 +105,8 @@ pub struct DirEntry {
 /// Trait for abstracting file system operations.
 ///
 /// This trait must be `Send + Sync` to support rayon parallel validation.
-pub trait FileSystem: Send + Sync {
+/// It also requires `Debug` for use in config structs that derive Debug.
+pub trait FileSystem: Send + Sync + std::fmt::Debug {
     /// Check if a path exists
     fn exists(&self, path: &Path) -> bool;
 

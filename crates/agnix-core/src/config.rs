@@ -1,9 +1,11 @@
 //! Linter configuration
 
 use crate::file_utils::safe_read_file;
+use crate::fs::{FileSystem, RealFileSystem};
 use crate::schemas::mcp::DEFAULT_MCP_PROTOCOL_VERSION;
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 
 /// Tool version pinning for version-aware validation
 ///
@@ -96,6 +98,14 @@ pub struct LintConfig {
     /// shared across all file validations in a project.
     #[serde(skip)]
     pub import_cache: Option<crate::parsers::ImportCache>,
+
+    /// File system abstraction for testability (not serialized).
+    ///
+    /// Validators use this to perform file system operations. Defaults to
+    /// `RealFileSystem` which delegates to `std::fs` and `file_utils`.
+    /// For testing, this can be replaced with `MockFileSystem`.
+    #[serde(skip)]
+    fs: Arc<dyn FileSystem>,
 }
 
 impl Default for LintConfig {
@@ -115,6 +125,7 @@ impl Default for LintConfig {
             spec_revisions: SpecRevisions::default(),
             root_dir: None,
             import_cache: None,
+            fs: Arc::new(RealFileSystem),
         }
     }
 }
@@ -295,6 +306,22 @@ impl LintConfig {
     /// validation where import results are shared across files.
     pub fn import_cache(&self) -> Option<&crate::parsers::ImportCache> {
         self.import_cache.as_ref()
+    }
+
+    /// Get the file system abstraction.
+    ///
+    /// Validators should use this for file system operations instead of
+    /// directly calling `std::fs` functions. This enables unit testing
+    /// with `MockFileSystem`.
+    pub fn fs(&self) -> &Arc<dyn FileSystem> {
+        &self.fs
+    }
+
+    /// Set the file system abstraction (not persisted).
+    ///
+    /// This is primarily used for testing with `MockFileSystem`.
+    pub fn set_fs(&mut self, fs: Arc<dyn FileSystem>) {
+        self.fs = fs;
     }
 
     /// Get the expected MCP protocol version
