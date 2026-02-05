@@ -1,6 +1,6 @@
 # agnix Knowledge Base - Master Index
 
-> 492KB knowledge, 75+ sources, 5 research agents, 100 validation rules
+> 100 validation rules across 15 categories, sourced from 75+ references
 
 ---
 
@@ -14,6 +14,8 @@
 | **Find patterns** | [PATTERNS-CATALOG.md](./PATTERNS-CATALOG.md) - 70 patterns from awesome-slash |
 | **Get platform context** | [agent-docs/](#agent-docs) - 10 reference docs |
 | **Cross-platform support** | [standards/multi-platform-HARD-RULES.md](./standards/multi-platform-HARD-RULES.md) |
+| **Track tools/research** | [RESEARCH-TRACKING.md](./RESEARCH-TRACKING.md) - Tool inventory and monitoring |
+| **Monthly review** | [MONTHLY-REVIEW.md](./MONTHLY-REVIEW.md) - Review checklist and completed reviews |
 
 ---
 
@@ -25,8 +27,10 @@ knowledge-base/
 ├── README.md                       # Detailed navigation guide
 ├── VALIDATION-RULES.md             # ⭐ Master validation reference (100 rules)
 ├── PATTERNS-CATALOG.md             # 70 production-tested patterns
+├── RESEARCH-TRACKING.md            # Tool inventory and monitoring process
+├── MONTHLY-REVIEW.md               # Monthly review checklist and history
 │
-├── standards/                      # 12 files, 9,884 lines, 266KB
+├── standards/                      # HARD-RULES and OPINIONS by topic
 │   ├── README.md                   # Standards navigation
 │   ├── RESEARCH-SUMMARY.md         # Research methodology
 │   │
@@ -67,7 +71,7 @@ knowledge-base/
 | **Agent Skills** | 12 | 19KB | 36KB | 15 rules |
 | **MCP** | 11 | 33KB | 36KB | 8 rules |
 | **Claude Code** | 10 | 34KB | 40KB | 42 rules |
-| **Multi-Platform** | 15 | 15KB | 27KB | 3 rules |
+| **Multi-Platform** | 15 | 15KB | 27KB | 6 rules |
 | **Prompt Eng** | 15 | 16KB | 21KB | 4 rules |
 | **AGENTS.md** | 5 | - | - | 6 rules |
 | **Cursor** | 2 | - | - | 6 rules |
@@ -241,25 +245,29 @@ Update knowledge base when:
 5. Implement new validators
 6. Update this index
 
+### Monthly Review
+
+Follow the structured monthly review process in [MONTHLY-REVIEW.md](./MONTHLY-REVIEW.md) to check for upstream changes across all monitored tools and research sources. The review cadence is the 1st week of each month, with per-tier checklists ensuring S-tier tools get the most attention.
+
 ---
 
 ## Statistics
 
 ```
-Total Documents:       26 files
-Total Lines:          17,647 lines
-Total Size:           492KB
+Total Documents:       31 files
+Total Lines:          18,900 lines
+Total Size:           650KB
 Standards Covered:     5 (Agent Skills, MCP, Claude Code, Multi-Platform, Prompt Eng)
 Sources Consulted:    75+ (specs, docs, research papers, repos)
 Research Agents:       5 (10+ sources each)
 Validation Rules:     100 rules
 Auto-Fixable Rules:   22 rules
-Test Fixtures:        11 files
+Test Fixtures:        116 files
 Platforms Analyzed:   9 (Claude Code, Codex CLI, OpenCode, Copilot, Cursor, Cline, Roo-Cline, Continue.dev, Aider)
 ```
 
 ---
 
-**Status**: Knowledge base complete, ready for implementation
-**Next**: Implement validators using VALIDATION-RULES.md
+**Status**: Knowledge base integrated with the active validation engine
+**Next**: Keep `rules.json` and `VALIDATION-RULES.md` synchronized as rules evolve
 **Confidence**: HIGH - all rules sourced from official specs or research

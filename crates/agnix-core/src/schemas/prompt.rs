@@ -5,9 +5,17 @@
 //! - PE-002: Chain-of-thought phrases on simple tasks
 //! - PE-003: Weak imperative language in critical sections
 //! - PE-004: Ambiguous instructions
+//!
+//! ## Security
+//!
+//! This module includes size limits to prevent ReDoS (Regular Expression Denial
+//! of Service) attacks. Functions that use regex will return early for oversized
+//! input.
 
 use regex::Regex;
 use std::sync::OnceLock;
+
+use crate::parsers::markdown::MAX_REGEX_INPUT_SIZE;
 
 // Static patterns initialized once
 static CRITICAL_KEYWORD_PATTERN: OnceLock<Regex> = OnceLock::new();
@@ -45,7 +53,16 @@ fn critical_keyword_pattern() -> &'static Regex {
 /// LLMs have lower recall for content in the middle of documents, but better
 /// recall for content at the START and END. The 40-60% range is specifically
 /// the "lost in the middle" zone.
+///
+/// # Security
+///
+/// Returns early for content exceeding `MAX_REGEX_INPUT_SIZE` to prevent ReDoS.
 pub fn find_critical_in_middle_pe(content: &str) -> Vec<CriticalInMiddle> {
+    // Security: Skip regex processing for oversized input to prevent ReDoS
+    if content.len() > MAX_REGEX_INPUT_SIZE {
+        return Vec::new();
+    }
+
     let mut results = Vec::new();
     let pattern = critical_keyword_pattern();
     let lines: Vec<&str> = content.lines().collect();
@@ -110,7 +127,16 @@ fn simple_task_indicator_pattern() -> &'static Regex {
 ///
 /// Only flags CoT phrases that are within proximity (5 lines) of a simple task indicator
 /// to avoid false positives when complex and simple tasks are in the same document.
+///
+/// # Security
+///
+/// Returns early for content exceeding `MAX_REGEX_INPUT_SIZE` to prevent ReDoS.
 pub fn find_cot_on_simple_tasks(content: &str) -> Vec<CotOnSimpleTask> {
+    // Security: Skip regex processing for oversized input to prevent ReDoS
+    if content.len() > MAX_REGEX_INPUT_SIZE {
+        return Vec::new();
+    }
+
     let mut results = Vec::new();
     let cot_pattern = cot_phrase_pattern();
     let simple_pattern = simple_task_indicator_pattern();
@@ -190,7 +216,16 @@ fn critical_section_pattern() -> &'static Regex {
 ///
 /// Critical sections should use strong language (must/always/never) rather than
 /// weak language (should/try/consider) to ensure compliance.
+///
+/// # Security
+///
+/// Returns early for content exceeding `MAX_REGEX_INPUT_SIZE` to prevent ReDoS.
 pub fn find_weak_imperative_language(content: &str) -> Vec<WeakLanguageInCritical> {
+    // Security: Skip regex processing for oversized input to prevent ReDoS
+    if content.len() > MAX_REGEX_INPUT_SIZE {
+        return Vec::new();
+    }
+
     let mut results = Vec::new();
     let weak_pattern = weak_language_pattern();
     let section_pattern = critical_section_pattern();
@@ -249,7 +284,16 @@ fn ambiguous_term_pattern() -> &'static Regex {
 ///
 /// Instructions should be specific and measurable. Terms like "usually" or
 /// "if possible" create ambiguity about when the instruction applies.
+///
+/// # Security
+///
+/// Returns early for content exceeding `MAX_REGEX_INPUT_SIZE` to prevent ReDoS.
 pub fn find_ambiguous_instructions(content: &str) -> Vec<AmbiguousInstruction> {
+    // Security: Skip regex processing for oversized input to prevent ReDoS
+    if content.len() > MAX_REGEX_INPUT_SIZE {
+        return Vec::new();
+    }
+
     let mut results = Vec::new();
     let pattern = ambiguous_term_pattern();
     let mut in_code_block = false;
@@ -707,5 +751,55 @@ Code could be cleaner.
         assert!(weak.is_empty());
         // No ambiguous terms in this specific line
         assert!(ambiguous.is_empty());
+    }
+
+    // ===== ReDoS Protection Tests =====
+
+    #[test]
+    fn test_find_critical_in_middle_oversized_input() {
+        // Create content larger than MAX_REGEX_INPUT_SIZE (65536 bytes)
+        let large_content = "a".repeat(MAX_REGEX_INPUT_SIZE + 1000);
+        let results = find_critical_in_middle_pe(&large_content);
+        // Should return empty to prevent ReDoS
+        assert!(
+            results.is_empty(),
+            "Oversized content should be skipped for ReDoS protection"
+        );
+    }
+
+    #[test]
+    fn test_find_cot_on_simple_tasks_oversized_input() {
+        // Create content larger than MAX_REGEX_INPUT_SIZE
+        let large_content = "a".repeat(MAX_REGEX_INPUT_SIZE + 1000);
+        let results = find_cot_on_simple_tasks(&large_content);
+        // Should return empty to prevent ReDoS
+        assert!(
+            results.is_empty(),
+            "Oversized content should be skipped for ReDoS protection"
+        );
+    }
+
+    #[test]
+    fn test_find_weak_imperative_language_oversized_input() {
+        // Create content larger than MAX_REGEX_INPUT_SIZE
+        let large_content = "a".repeat(MAX_REGEX_INPUT_SIZE + 1000);
+        let results = find_weak_imperative_language(&large_content);
+        // Should return empty to prevent ReDoS
+        assert!(
+            results.is_empty(),
+            "Oversized content should be skipped for ReDoS protection"
+        );
+    }
+
+    #[test]
+    fn test_find_ambiguous_instructions_oversized_input() {
+        // Create content larger than MAX_REGEX_INPUT_SIZE
+        let large_content = "a".repeat(MAX_REGEX_INPUT_SIZE + 1000);
+        let results = find_ambiguous_instructions(&large_content);
+        // Should return empty to prevent ReDoS
+        assert!(
+            results.is_empty(),
+            "Oversized content should be skipped for ReDoS protection"
+        );
     }
 }

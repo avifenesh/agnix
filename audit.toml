@@ -1,0 +1,19 @@
+# cargo-audit configuration
+# https://docs.rs/rustsec/latest/rustsec/
+
+[advisories]
+# Deny advisories for unmaintained crates
+unmaintained = "deny"
+
+# Treat warnings as errors
+# Severity threshold options: "low", "medium", "high", "critical"
+# "low" means all advisories are treated as failures
+severity_threshold = "low"
+
+# Informational advisories are reported but don't fail the build
+informational_warnings = ["unsound"]
+
+[database]
+# Fetch the advisory database from the default source
+path = "~/.cargo/advisory-db"
+url = "https://github.com/RustSec/advisory-db"

@@ -58,24 +58,40 @@ console.log(agnix.version());
 | File | Tool |
 |------|------|
 | `SKILL.md` | Claude Code |
-| `CLAUDE.md`, `AGENTS.md` | Claude Code, Codex |
-| `.claude/settings.json` | Claude Code |
+| `CLAUDE.md`, `CLAUDE.local.md`, `AGENTS.md`, `AGENTS.local.md`, `AGENTS.override.md` | Claude Code, Codex |
+| `.claude/settings.json`, `.claude/settings.local.json` | Claude Code |
 | `plugin.json` | Claude Code |
-| `*.mcp.json` | All |
-| `.github/copilot-instructions.md` | GitHub Copilot |
-| `.cursor/rules/*.mdc` | Cursor |
+| `*.mcp.json`, `mcp.json`, `mcp-*.json` | All |
+| `.github/copilot-instructions.md`, `.github/instructions/*.instructions.md` | GitHub Copilot |
+| `.cursor/rules/*.mdc`, `.cursorrules` | Cursor |
 
 ## Options
 
 ```
--t, --target <tool>    Target tool (ClaudeCode, Cursor, Copilot, CodexCli)
--f, --format <format>  Output format (text, json, sarif)
-    --fix              Auto-fix issues
--q, --quiet            Only show errors
--v, --verbose          Show detailed output
-    --version          Show version
--h, --help             Show help
+agnix [OPTIONS] [PATH] [COMMAND]
+
+Commands:
+  validate   Validate agent configs
+  init       Initialize config file
+  eval       Evaluate rule efficacy against labeled test cases
+  telemetry  Manage telemetry settings (opt-in usage analytics)
+  schema     Output JSON Schema for configuration files
+
+Common options:
+  -s, --strict
+  -t, --target <generic|claude-code|cursor|codex>
+  -c, --config <CONFIG>
+      --fix
+      --dry-run
+      --fix-safe
+      --format <text|json|sarif>
+  -w, --watch
+  -v, --verbose
+  -V, --version
+  -h, --help
 ```
+
+Run `agnix --help` for the full command reference.
 
 ## Links
 

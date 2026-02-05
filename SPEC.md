@@ -26,11 +26,15 @@
 ```
 agnix/
 ├── crates/
+│   ├── agnix-rules/    # Rule metadata generated from rules.json
 │   ├── agnix-core/     # Validation library
 │   │   ├── parsers/    # YAML, JSON, Markdown
 │   │   ├── schemas/    # Type definitions
 │   │   └── rules/      # Validators
-│   └── agnix-cli/      # CLI binary
+│   ├── agnix-cli/      # CLI binary
+│   ├── agnix-lsp/      # LSP server
+│   └── agnix-mcp/      # MCP server
+├── editors/            # VS Code + JetBrains scaffold
 ├── knowledge-base/     # 100 rules documented
 └── tests/fixtures/     # Test cases
 ```
@@ -53,7 +57,7 @@ agnix implements defense-in-depth security measures:
 | Feature | Implementation | Default |
 |---------|----------------|---------|
 | Symlink rejection | `file_utils::safe_read_file()` | Always on |
-| File size limits | `MAX_FILE_SIZE = 1 MiB` | Always on |
+| File size limits | `DEFAULT_MAX_FILE_SIZE = 1 MiB` | Always on |
 | File count limits | `max_files_to_validate` | 10,000 |
 | ReDoS protection | `MAX_REGEX_INPUT_SIZE = 64 KB` | Always on |
 | Path traversal detection | `normalize_join()` in imports validator | Always on |
@@ -140,18 +144,23 @@ agnix --list-locales       # Show available locales
 severity = "Warning"
 target = "Generic"  # Options: Generic, ClaudeCode, Cursor, Codex
 locale = "en"       # Options: en, es, zh-CN
+tools = ["claude-code", "cursor"]  # Preferred over target
 
 [rules]
 # Category toggles - enable/disable entire rule categories
 skills = true       # AS-*, CC-SK-* rules
 hooks = true        # CC-HK-* rules
 agents = true       # CC-AG-* rules
+copilot = true      # COP-* rules
+cursor = true       # CUR-* rules
 memory = true       # CC-MEM-* rules
 plugins = true      # CC-PL-* rules
 mcp = true          # MCP-* rules
 prompt_engineering = true  # PE-* rules
 xml = true          # XML-* rules
 imports = true      # REF-*, imports::* rules
+cross_platform = true  # XP-* rules
+agents_md = true       # AGM-* rules
 
 # Legacy flags (still supported)
 generic_instructions = true
@@ -162,17 +171,14 @@ import_references = true
 # Disable specific rules by ID
 disabled_rules = []  # e.g., ["CC-AG-001", "AS-005"]
 
-[[exclude]]
-"node_modules/**"
-".git/**"
-"target/**"
+exclude = ["node_modules/**", ".git/**", "target/**"]
 ```
 
 ### Config Validation
 
 agnix validates `.agnix.toml` files semantically before running validation:
 
-- **Rule ID validation**: `disabled_rules` must match known patterns (AS-, CC-SK-, CC-HK-, CC-AG-, CC-MEM-, CC-PL-, XML-, MCP-, REF-, XP-, AGM-, COP-, CUR-, PE-)
+- **Rule ID validation**: `disabled_rules` must match known patterns (AS-, CC-SK-, CC-HK-, CC-AG-, CC-MEM-, CC-PL-, XML-, MCP-, REF-, XP-, AGM-, COP-, CUR-, PE-, imports::)
 - **Tool validation**: `tools` array must contain valid tool names (claude-code, cursor, codex, copilot, github-copilot, generic)
 - **Deprecation warnings**: `mcp_protocol_version` is deprecated (use `spec_revisions.mcp_protocol`)
 
@@ -198,6 +204,11 @@ When `target` is set to a specific tool, only relevant rules run:
 | Prompt Engineering | `prompt_engineering` | PE-* | Prompt engineering best practices |
 | XML | `xml` | XML-* | XML tag balance |
 | Imports | `imports` | REF-* | Import reference validation |
+| Cross-Platform | `cross_platform` | XP-* | Cross-platform consistency checks |
+| AGENTS.md | `agents_md` | AGM-* | AGENTS.md-specific validation |
+| Cursor | `cursor` | CUR-* | Cursor project rule validation |
+
+Version awareness (`VER-*`) is always active and controlled through `tool_versions` / `spec_revisions` pins.
 
 ## Performance Characteristics
 

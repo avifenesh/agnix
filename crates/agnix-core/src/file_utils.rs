@@ -23,6 +23,15 @@ use std::path::Path;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 /// Default maximum file size (1 MiB = 1,048,576 bytes = 2^20 bytes)
+///
+/// **Design Decision**: 1 MiB was chosen as a balance between:
+/// - Large enough for realistic documentation files (most are <100KB)
+/// - Small enough to prevent memory exhaustion attacks
+/// - Prevents YAML bomb attacks (deeply nested structures within size limit)
+/// - 2^20 is a clean power-of-2 boundary for memory allocation
+///
+/// Files exactly at 1,048,576 bytes are accepted.
+/// Files at 1,048,577 bytes or larger are rejected.
 pub const DEFAULT_MAX_FILE_SIZE: u64 = 1_048_576;
 
 /// Safely read a file with security checks.
@@ -82,6 +91,9 @@ pub fn safe_write_file(path: &Path, content: &str) -> LintResult<()> {
         .and_then(|name| name.to_str())
         .unwrap_or("file");
 
+    // Create unique temporary file with retry logic
+    // Uniqueness is ensured by: nanosecond timestamp + attempt counter
+    // The probability of collision is negligible with up to 10 retries
     let (temp_path, mut temp_file) = {
         let mut attempt = 0u32;
         loop {
@@ -289,6 +301,49 @@ mod tests {
     }
 
     #[test]
+    fn test_default_max_file_size_is_1_mib() {
+        // Verify the constant is set to 1 MiB (1,048,576 bytes)
+        assert_eq!(DEFAULT_MAX_FILE_SIZE, 1_048_576);
+        assert_eq!(DEFAULT_MAX_FILE_SIZE, 1024 * 1024);
+    }
+
+    #[test]
+    fn test_file_at_1_mib_limit_accepted() {
+        let temp = TempDir::new().unwrap();
+        let file_path = temp.path().join("exactly_1mib.txt");
+
+        // Create a file of exactly 1 MiB
+        let content = vec![b'x'; DEFAULT_MAX_FILE_SIZE as usize];
+        fs::write(&file_path, &content).unwrap();
+
+        // Should succeed - files at exactly the limit are accepted
+        let result = safe_read_file(&file_path);
+        assert!(result.is_ok(), "1 MiB file should be accepted");
+        assert_eq!(result.unwrap().len(), DEFAULT_MAX_FILE_SIZE as usize);
+    }
+
+    #[test]
+    fn test_file_over_1_mib_limit_rejected() {
+        let temp = TempDir::new().unwrap();
+        let file_path = temp.path().join("over_1mib.txt");
+
+        // Create a file just over 1 MiB
+        let content = vec![b'x'; DEFAULT_MAX_FILE_SIZE as usize + 1];
+        fs::write(&file_path, &content).unwrap();
+
+        // Should fail
+        let result = safe_read_file(&file_path);
+        assert!(result.is_err(), "File over 1 MiB should be rejected");
+        match result.unwrap_err() {
+            LintError::FileTooBig { size, limit, .. } => {
+                assert_eq!(size, DEFAULT_MAX_FILE_SIZE + 1);
+                assert_eq!(limit, DEFAULT_MAX_FILE_SIZE);
+            }
+            other => panic!("Expected FileTooBig error, got: {:?}", other),
+        }
+    }
+
+    #[test]
     fn test_directory_rejected() {
         let temp = TempDir::new().unwrap();
         let dir_path = temp.path().join("subdir");
@@ -430,5 +485,36 @@ mod tests {
             }
             // If symlink creation fails due to privileges, skip the test
         }
+    }
+
+    // ===== TOCTOU Race Condition Tests =====
+
+    #[cfg(unix)]
+    #[test]
+    fn test_symlink_race_window_documented() {
+        // This test documents the TOCTOU (time-of-check-time-of-use) race condition
+        // between symlink_metadata check and read operation in safe_read_file.
+        //
+        // An attacker with local filesystem access could theoretically replace a
+        // regular file with a symlink between the check and read. This is acceptable
+        // for a linter because:
+        // 1. The attack requires local filesystem access
+        // 2. The impact is limited to reading unexpected content
+        // 3. Eliminating TOCTOU entirely would require platform-specific APIs
+        //    (O_NOFOLLOW on Unix, FILE_FLAG_OPEN_REPARSE_POINT on Windows)
+        //
+        // This test verifies that symlinks are rejected by the initial check.
+        use std::os::unix::fs::symlink;
+        let temp = TempDir::new().unwrap();
+        let target_path = temp.path().join("target.md");
+        let link_path = temp.path().join("link.md");
+
+        fs::write(&target_path, "Target content").unwrap();
+        symlink(&target_path, &link_path).unwrap();
+
+        // Verify symlink is rejected at check time
+        let result = safe_read_file(&link_path);
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), LintError::FileSymlink { .. }));
     }
 }

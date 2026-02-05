@@ -358,7 +358,8 @@ fn create_mcp_tool(index: usize) -> String {
     "required": ["path"]
   }},
   "requiresApproval": {approval}
-}}"#
+}}"#,
+        approval = index % 2 == 0
     )
 }
 

@@ -39,7 +39,7 @@ use std::path::{Path, PathBuf};
 use rayon::iter::ParallelBridge;
 use rayon::prelude::*;
 use rust_i18n::t;
-use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::Mutex;
 
 pub use config::{generate_schema, ConfigWarning, LintConfig};
@@ -402,8 +402,12 @@ pub fn validate_project_with_registry(
 
     // Shared state for streaming validation
     let files_checked = Arc::new(AtomicUsize::new(0));
+    let limit_exceeded = Arc::new(AtomicBool::new(false));
     let agents_md_paths: Arc<Mutex<Vec<PathBuf>>> = Arc::new(Mutex::new(Vec::new()));
     let instruction_file_paths: Arc<Mutex<Vec<PathBuf>>> = Arc::new(Mutex::new(Vec::new()));
+
+    // Get the file limit from config (None means no limit)
+    let max_files = config.max_files_to_validate;
 
     // Stream file walk directly into parallel validation (no intermediate Vec)
     // Note: hidden(false) includes .github directory for Copilot instruction files
@@ -436,9 +440,24 @@ pub fn validate_project_with_registry(
         .map(|entry| entry.path().to_path_buf())
         .par_bridge()
         .flat_map(|file_path| {
+            // Security: Check if file limit has been exceeded
+            // Once exceeded, skip processing additional files
+            // Use SeqCst ordering for consistency with store operations
+            if limit_exceeded.load(Ordering::SeqCst) {
+                return Vec::new();
+            }
+
             // Count recognized files (detect_file_type is string-only, no I/O)
-            if detect_file_type(&file_path) != FileType::Unknown {
-                files_checked.fetch_add(1, Ordering::Relaxed);
+            let file_type = detect_file_type(&file_path);
+            if file_type != FileType::Unknown {
+                let count = files_checked.fetch_add(1, Ordering::SeqCst);
+                // Security: Enforce file count limit to prevent DoS
+                if let Some(limit) = max_files {
+                    if count >= limit {
+                        limit_exceeded.store(true, Ordering::SeqCst);
+                        return Vec::new();
+                    }
+                }
             }
 
             // Collect AGENTS.md paths for AGM-006 check
@@ -469,6 +488,16 @@ pub fn validate_project_with_registry(
             }
         })
         .collect();
+
+    // Check if limit was exceeded and return error
+    if limit_exceeded.load(Ordering::Relaxed) {
+        if let Some(limit) = max_files {
+            return Err(LintError::TooManyFiles {
+                count: files_checked.load(Ordering::Relaxed),
+                limit,
+            });
+        }
+    }
 
     // AGM-006: Check for multiple AGENTS.md files in the directory tree (project-level check)
     if config.is_rule_enabled("AGM-006") {
@@ -3530,6 +3559,173 @@ Use idiomatic Rust patterns.
                 "Concurrent validations should produce identical results"
             );
         }
+    }
+
+    // ===== Security: File Count Limit Tests =====
+
+    #[test]
+    fn test_file_count_limit_enforced() {
+        let temp = tempfile::TempDir::new().unwrap();
+
+        // Create 15 markdown files
+        for i in 0..15 {
+            std::fs::write(temp.path().join(format!("file{}.md", i)), "# Content").unwrap();
+        }
+
+        // Set a limit of 10 files
+        let mut config = LintConfig::default();
+        config.max_files_to_validate = Some(10);
+
+        let result = validate_project(temp.path(), &config);
+
+        // Should return TooManyFiles error
+        assert!(result.is_err(), "Should error when file limit exceeded");
+        match result.unwrap_err() {
+            LintError::TooManyFiles { count, limit } => {
+                assert!(count > 10, "Count should exceed limit");
+                assert_eq!(limit, 10);
+            }
+            e => panic!("Expected TooManyFiles error, got: {:?}", e),
+        }
+    }
+
+    #[test]
+    fn test_file_count_limit_not_exceeded() {
+        let temp = tempfile::TempDir::new().unwrap();
+
+        // Create 5 markdown files
+        for i in 0..5 {
+            std::fs::write(temp.path().join(format!("file{}.md", i)), "# Content").unwrap();
+        }
+
+        // Set a limit of 10 files
+        let mut config = LintConfig::default();
+        config.max_files_to_validate = Some(10);
+
+        let result = validate_project(temp.path(), &config);
+
+        // Should succeed
+        assert!(
+            result.is_ok(),
+            "Should succeed when under file limit: {:?}",
+            result
+        );
+    }
+
+    #[test]
+    fn test_file_count_limit_disabled() {
+        let temp = tempfile::TempDir::new().unwrap();
+
+        // Create 15 markdown files
+        for i in 0..15 {
+            std::fs::write(temp.path().join(format!("file{}.md", i)), "# Content").unwrap();
+        }
+
+        // Disable the limit
+        let mut config = LintConfig::default();
+        config.max_files_to_validate = None;
+
+        let result = validate_project(temp.path(), &config);
+
+        // Should succeed even with many files
+        assert!(
+            result.is_ok(),
+            "Should succeed when file limit disabled: {:?}",
+            result
+        );
+    }
+
+    #[test]
+    fn test_default_file_count_limit() {
+        let config = LintConfig::default();
+        assert_eq!(
+            config.max_files_to_validate,
+            Some(config::DEFAULT_MAX_FILES)
+        );
+        assert_eq!(config::DEFAULT_MAX_FILES, 10_000);
+    }
+
+    #[test]
+    fn test_file_count_concurrent_validation() {
+        // Test that file counting is thread-safe during parallel validation
+        let temp = tempfile::TempDir::new().unwrap();
+
+        // Create enough files to trigger parallel validation (rayon will use multiple threads)
+        for i in 0..20 {
+            std::fs::write(temp.path().join(format!("file{}.md", i)), "# Content").unwrap();
+        }
+
+        // Set a limit that allows all files
+        let mut config = LintConfig::default();
+        config.max_files_to_validate = Some(25);
+
+        let result = validate_project(temp.path(), &config);
+
+        // Should succeed - no race condition in file counting
+        assert!(
+            result.is_ok(),
+            "Concurrent validation should handle file counting correctly"
+        );
+
+        // Verify the count is accurate
+        let validation_result = result.unwrap();
+        assert_eq!(
+            validation_result.files_checked, 20,
+            "Should count all validated files"
+        );
+    }
+
+    // ===== Performance Tests =====
+
+    #[test]
+    #[ignore] // Run with: cargo test --release -- --ignored test_validation_scales_to_10k_files
+    fn test_validation_scales_to_10k_files() {
+        // This test verifies that validation can handle 10,000 files (the default limit)
+        // in reasonable time. It's marked #[ignore] because it's slow.
+        use std::time::Instant;
+
+        let temp = tempfile::TempDir::new().unwrap();
+
+        // Create 10,000 small markdown files
+        for i in 0..10_000 {
+            std::fs::write(
+                temp.path().join(format!("file{:05}.md", i)),
+                format!("# File {}\n\nContent here.", i),
+            )
+            .unwrap();
+        }
+
+        let config = LintConfig::default();
+        let start = Instant::now();
+        let result = validate_project(temp.path(), &config);
+        let duration = start.elapsed();
+
+        // Should succeed
+        assert!(
+            result.is_ok(),
+            "Should handle 10,000 files: {:?}",
+            result.err()
+        );
+
+        // Should complete in reasonable time (adjust threshold based on CI performance)
+        // On typical hardware: ~2-10 seconds for 10k files
+        assert!(
+            duration.as_secs() < 60,
+            "10,000 file validation took too long: {:?}",
+            duration
+        );
+
+        let validation_result = result.unwrap();
+        assert_eq!(
+            validation_result.files_checked, 10_000,
+            "Should have checked all 10,000 files"
+        );
+
+        eprintln!(
+            "Performance: Validated 10,000 files in {:?} ({:.0} files/sec)",
+            duration,
+            10_000.0 / duration.as_secs_f64()
+        );
     }
 }
 

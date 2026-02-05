@@ -304,6 +304,15 @@ pub struct LintConfig {
     #[schemars(description = "Output locale for translated messages (e.g., \"en\", \"es\", \"zh-CN\")")]
     pub locale: Option<String>,
 
+    /// Maximum number of files to validate before stopping.
+    ///
+    /// This is a security feature to prevent DoS attacks via projects with
+    /// millions of small files. When the limit is reached, validation stops
+    /// with a `TooManyFiles` error.
+    ///
+    /// Default: 10,000 files. Set to `None` to disable the limit (not recommended).
+    #[serde(default = "default_max_files")]
+    pub max_files_to_validate: Option<usize>,
     /// Project root directory for validation (not serialized).
     ///
     /// When set, validators can use this to resolve relative paths and
@@ -329,6 +338,23 @@ pub struct LintConfig {
     runtime: RuntimeContext,
 }
 
+/// Default maximum files to validate (security limit)
+///
+/// **Design Decision**: 10,000 files was chosen as a balance between:
+/// - Large enough for realistic projects (Linux kernel has ~70k files, but most are not validated)
+/// - Small enough to prevent DoS from projects with millions of tiny files
+/// - Completes validation in reasonable time (seconds to low minutes on typical hardware)
+/// - Atomic counter with SeqCst ordering provides thread-safe counting during parallel validation
+///
+/// Users can override with `--max-files N` or disable with `--max-files 0` (not recommended).
+/// Set to `None` to disable the limit entirely (use with caution).
+pub const DEFAULT_MAX_FILES: usize = 10_000;
+
+/// Helper function for serde default
+fn default_max_files() -> Option<usize> {
+    Some(DEFAULT_MAX_FILES)
+}
+
 impl Default for LintConfig {
     fn default() -> Self {
         Self {
@@ -345,6 +371,7 @@ impl Default for LintConfig {
             tool_versions: ToolVersions::default(),
             spec_revisions: SpecRevisions::default(),
             locale: None,
+            max_files_to_validate: Some(DEFAULT_MAX_FILES),
             root_dir: None,
             import_cache: None,
             runtime: RuntimeContext::default(),

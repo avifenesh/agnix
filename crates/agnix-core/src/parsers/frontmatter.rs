@@ -1,4 +1,25 @@
 //! YAML frontmatter parser
+//!
+//! ## Security: YAML Bomb Protection
+//!
+//! While this module doesn't implement explicit depth limits, YAML bombs (deeply
+//! nested structures) are mitigated by:
+//!
+//! 1. **File Size Limit**: DEFAULT_MAX_FILE_SIZE (1 MiB) in file_utils.rs prevents
+//!    extremely large YAML payloads from being read.
+//!
+//! 2. **Parser Library**: `serde_yaml` has internal protections against excessive
+//!    memory usage and stack overflow from deeply nested structures.
+//!
+//! 3. **Memory Limit**: The entire file is bounded at 1 MiB, limiting total
+//!    memory consumption regardless of structure complexity.
+//!
+//! **Known Limitation**: Within the 1 MiB file size, deeply nested YAML (e.g.,
+//! 10,000 levels of nesting) could cause high memory usage or slow parsing.
+//! This is acceptable for a local linter with bounded input size.
+//!
+//! **Future Enhancement**: Consider adding explicit depth tracking if memory
+//! profiling reveals issues with pathological YAML structures.
 
 use crate::diagnostics::{LintError, LintResult};
 use serde::de::DeserializeOwned;
@@ -12,6 +33,11 @@ use serde::de::DeserializeOwned;
 /// ---
 /// body content
 /// ```
+///
+/// # Security
+///
+/// Protected against YAML bombs by file size limit (1 MiB) and serde_yaml's
+/// internal protections. See module documentation for details.
 pub fn parse_frontmatter<T: DeserializeOwned>(content: &str) -> LintResult<(T, String)> {
     let parts = split_frontmatter(content);
     let parsed: T =

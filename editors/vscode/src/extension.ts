@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
-import * as https from 'https';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import {
@@ -10,6 +9,7 @@ import {
   ServerOptions,
   TransportKind,
 } from 'vscode-languageclient/node';
+import { downloadFile } from './download-file';
 
 const execAsync = promisify(exec);
 
@@ -235,64 +235,6 @@ function getPlatformInfo(): PlatformInfo | null {
   }
 
   return null;
-}
-
-/**
- * Download a file from URL, following redirects.
- */
-function downloadFile(url: string, destPath: string): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const file = fs.createWriteStream(destPath);
-
-    const request = https.get(url, (response) => {
-      // Handle redirects (GitHub releases use them)
-      if (response.statusCode === 302 || response.statusCode === 301) {
-        const redirectUrl = response.headers.location;
-        if (redirectUrl) {
-          file.close();
-          try {
-            fs.unlinkSync(destPath);
-          } catch {
-            // Error ignored during cleanup
-          }
-          downloadFile(redirectUrl, destPath).then(resolve).catch(reject);
-          return;
-        }
-      }
-
-      if (response.statusCode !== 200) {
-        file.close();
-        reject(new Error(`Download failed with status ${response.statusCode}`));
-        return;
-      }
-
-      response.pipe(file);
-
-      file.on('finish', () => {
-        file.close();
-        resolve();
-      });
-    });
-
-    request.on('error', (err) => {
-      file.close();
-      try {
-        fs.unlinkSync(destPath);
-      } catch {
-        // Error ignored during cleanup
-      }
-      reject(err);
-    });
-
-    file.on('error', (err) => {
-      try {
-        fs.unlinkSync(destPath);
-      } catch {
-        // Error ignored during cleanup
-      }
-      reject(err);
-    });
-  });
 }
 
 /**
