@@ -64,11 +64,16 @@ docker run --rm -v $(pwd):/workspace ghcr.io/avifenesh/agnix .
 
 Use `/agnix` directly in Claude Code via [awesome-slash](https://github.com/avifenesh/awesome-slash) (300+ stars):
 
-```
-/install awesome-slash
+```bash
+# Claude Code
+/plugin marketplace add avifenesh/awesome-slash
+/plugin install agnix@awesome-slash
+
+# Or via npm (all platforms)
+npm install -g awesome-slash && awesome-slash
 ```
 
-Then run `/agnix` to validate your project, `/agnix fix` to auto-fix issues.
+Then run `/agnix` to validate your project, `/agnix --fix` to auto-fix issues.
 
 ## Quick Start
 
