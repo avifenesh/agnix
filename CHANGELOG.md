@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- VS Code extension: harden `downloadFile()` cleanup for stream and HTTP failure paths (#240)
+  - Closes file/request handles on failure
+  - Removes temporary download artifacts on failed downloads
+  - Adds regression tests for non-200, stream-error, and success branches
+
 ### Security
 - ReDoS protection via regex input size limits (MAX_REGEX_INPUT_SIZE = 64KB)
   - Markdown XML tag extraction skips oversized content
