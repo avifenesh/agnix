@@ -7,12 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Internationalization (i18n) support with rust-i18n (#207)
+  - Support for multiple languages: English (en), Spanish (es), Chinese Simplified (zh-CN)
+  - CLI flag `--locale` to set output language
+  - CLI flag `--list-locales` to display available locales
+  - Environment variable `AGNIX_LOCALE` for system-wide locale setting
+  - Config field `locale` in `.agnix.toml` for project-specific locale
+  - Automatic locale detection from system settings (LANG/LC_ALL)
+  - LSP server locale initialization for editor integration
+  - JSON and SARIF output always in English for CI/CD consistency
+  - Translation guide in docs/TRANSLATING.md for contributors
+  - Comprehensive test suite for locale detection and fallback behavior
+
 ### Fixed
 - VS Code extension: harden `downloadFile()` cleanup for stream and HTTP failure paths (#240)
   - Closes file/request handles on failure
   - Removes temporary download artifacts on failed downloads
   - Adds regression tests for non-200, stream-error, and success branches
-
 ### Security
 - ReDoS protection via regex input size limits (MAX_REGEX_INPUT_SIZE = 64KB)
   - Markdown XML tag extraction skips oversized content

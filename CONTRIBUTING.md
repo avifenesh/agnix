@@ -150,6 +150,13 @@ Use conventional commits:
 
 Reference issues when applicable: `fix: resolve timeout issue (#123)`
 
+## Contributing Translations
+
+agnix supports multiple languages. See [docs/TRANSLATING.md](docs/TRANSLATING.md) for:
+- Adding new locales
+- Translation guidelines
+- Testing translations
+
 ## Running Tests
 
 ```bash

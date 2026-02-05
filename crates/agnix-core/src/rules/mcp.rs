@@ -1,8 +1,5 @@
 //! MCP (Model Context Protocol) validation (MCP-001 to MCP-006)
 
-/// Version assumption note for MCP-008 when mcp_protocol is not pinned
-const MCP_008_ASSUMPTION: &str = "Using default MCP protocol version. Pin mcp_protocol in .agnix.toml [spec_revisions] for explicit control.";
-
 use crate::{
     config::LintConfig,
     diagnostics::Diagnostic,
@@ -12,6 +9,7 @@ use crate::{
         is_initialize_response, validate_json_schema_structure, McpConfigSchema, McpToolSchema,
     },
 };
+use rust_i18n::t;
 use std::path::Path;
 
 /// Find the line number (1-based) of a JSON field in the raw content
@@ -92,7 +90,7 @@ impl Validator for McpValidator {
                         1,
                         0,
                         "MCP-007",
-                        format!("Failed to parse MCP configuration: {}", e),
+                        t!("rules.mcp_007.message", error = e.to_string()),
                     ));
                 }
                 return diagnostics;
@@ -165,11 +163,9 @@ fn extract_tools(
                             line,
                             col,
                             "mcp::invalid_tool",
-                            format!("Tool #{}: Invalid tool definition: {}", idx + 1, e),
+                            t!("rules.invalid_tool", num = idx + 1, error = e.to_string()),
                         )
-                        .with_suggestion(
-                            "Ensure tool has valid field types (name: string, description: string, inputSchema: object)".to_string(),
-                        ),
+                        .with_suggestion(t!("rules.invalid_tool_suggestion")),
                     );
                 }
             }
@@ -195,11 +191,9 @@ fn extract_tools(
                         1,
                         0,
                         "mcp::invalid_tool",
-                        format!("Invalid tool definition: {}", e),
+                        t!("rules.invalid_tool_single", error = e.to_string()),
                     )
-                    .with_suggestion(
-                        "Ensure tool has valid field types (name: string, description: string, inputSchema: object)".to_string(),
-                    ),
+                    .with_suggestion(t!("rules.invalid_tool_suggestion")),
                 );
             }
         }
@@ -226,9 +220,9 @@ fn validate_jsonrpc_version(
                         line,
                         col,
                         "MCP-001",
-                        format!("Invalid JSON-RPC version '{}', must be '2.0'", version),
+                        t!("rules.mcp_001.invalid_version", version = version),
                     )
-                    .with_suggestion("Set \"jsonrpc\": \"2.0\"".to_string()),
+                    .with_suggestion(t!("rules.mcp_001.suggestion")),
                 );
             }
         } else {
@@ -238,9 +232,9 @@ fn validate_jsonrpc_version(
                     line,
                     col,
                     "MCP-001",
-                    "JSON-RPC version must be a string".to_string(),
+                    t!("rules.mcp_001.not_string"),
                 )
-                .with_suggestion("Set \"jsonrpc\": \"2.0\"".to_string()),
+                .with_suggestion(t!("rules.mcp_001.suggestion")),
             );
         }
     }
@@ -269,18 +263,19 @@ fn validate_protocol_version(
                     line,
                     col,
                     "MCP-008",
-                    format!(
-                        "Protocol version mismatch: found '{}', expected '{}'",
-                        actual_version, expected_version
+                    t!(
+                        "rules.mcp_008.message",
+                        found = actual_version.as_str(),
+                        expected = expected_version
                     ),
                 )
-                .with_suggestion(format!(
-                    "Consider updating to protocol version '{}' for compatibility",
-                    expected_version
+                .with_suggestion(t!(
+                    "rules.mcp_008.request_suggestion",
+                    expected = expected_version
                 ));
 
                 if !version_pinned {
-                    diag = diag.with_assumption(MCP_008_ASSUMPTION);
+                    diag = diag.with_assumption(t!("rules.mcp_008.assumption"));
                 }
 
                 diagnostics.push(diag);
@@ -298,18 +293,20 @@ fn validate_protocol_version(
                     line,
                     col,
                     "MCP-008",
-                    format!(
-                        "Protocol version mismatch: found '{}', expected '{}'",
-                        actual_version, expected_version
+                    t!(
+                        "rules.mcp_008.message",
+                        found = actual_version.as_str(),
+                        expected = expected_version
                     ),
                 )
-                .with_suggestion(format!(
-                    "Server negotiated version '{}', expected '{}'. Verify compatibility.",
-                    actual_version, expected_version
+                .with_suggestion(t!(
+                    "rules.mcp_008.response_suggestion",
+                    found = actual_version.as_str(),
+                    expected = expected_version
                 ));
 
                 if !version_pinned {
-                    diag = diag.with_assumption(MCP_008_ASSUMPTION);
+                    diag = diag.with_assumption(t!("rules.mcp_008.assumption"));
                 }
 
                 diagnostics.push(diag);
@@ -358,9 +355,9 @@ fn validate_tool(
                     line,
                     col,
                     "MCP-002",
-                    format!("{}Missing required field 'name'", tool_prefix),
+                    t!("rules.mcp_002.missing_name", prefix = tool_prefix.as_str()),
                 )
-                .with_suggestion("Add 'name' field to tool definition".to_string()),
+                .with_suggestion(t!("rules.mcp_002.missing_name_suggestion")),
             );
         }
         if !has_desc {
@@ -375,9 +372,12 @@ fn validate_tool(
                     line,
                     col,
                     "MCP-002",
-                    format!("{}Missing required field 'description'", tool_prefix),
+                    t!(
+                        "rules.mcp_002.missing_description",
+                        prefix = tool_prefix.as_str()
+                    ),
                 )
-                .with_suggestion("Add 'description' field to tool definition".to_string()),
+                .with_suggestion(t!("rules.mcp_002.missing_description_suggestion")),
             );
         }
         if !has_schema {
@@ -387,9 +387,12 @@ fn validate_tool(
                     tool_loc.0,
                     tool_loc.1,
                     "MCP-002",
-                    format!("{}Missing required field 'inputSchema'", tool_prefix),
+                    t!(
+                        "rules.mcp_002.missing_schema",
+                        prefix = tool_prefix.as_str()
+                    ),
                 )
-                .with_suggestion("Add 'inputSchema' field with JSON Schema definition".to_string()),
+                .with_suggestion(t!("rules.mcp_002.missing_schema_suggestion")),
             );
         }
     }
@@ -406,9 +409,13 @@ fn validate_tool(
                         line,
                         col,
                         "MCP-003",
-                        format!("{}Invalid inputSchema: {}", tool_prefix, error),
+                        t!(
+                            "rules.mcp_003.message",
+                            prefix = tool_prefix.as_str(),
+                            error = error
+                        ),
                     )
-                    .with_suggestion("Fix JSON Schema structure".to_string()),
+                    .with_suggestion(t!("rules.mcp_003.suggestion")),
                 );
             }
         }
@@ -424,14 +431,13 @@ fn validate_tool(
                 line,
                 col,
                 "MCP-004",
-                format!(
-                    "{}Tool description is too short ({} chars), should be at least 10 characters",
-                    tool_prefix, desc_len
+                t!(
+                    "rules.mcp_004.message",
+                    prefix = tool_prefix.as_str(),
+                    len = desc_len
                 ),
             )
-            .with_suggestion(
-                "Add a meaningful description explaining what the tool does".to_string(),
-            ),
+            .with_suggestion(t!("rules.mcp_004.suggestion")),
         );
     }
 
@@ -443,14 +449,9 @@ fn validate_tool(
                 tool_loc.0,
                 tool_loc.1,
                 "MCP-005",
-                format!(
-                    "{}Tool lacks consent mechanism (no 'requiresApproval' or 'confirmation' field)",
-                    tool_prefix
-                ),
+                t!("rules.mcp_005.message", prefix = tool_prefix.as_str()),
             )
-            .with_suggestion(
-                "Consider adding 'requiresApproval: true' for tools that modify data or have side effects".to_string(),
-            ),
+            .with_suggestion(t!("rules.mcp_005.suggestion")),
         );
     }
 
@@ -463,14 +464,9 @@ fn validate_tool(
                 line,
                 col,
                 "MCP-006",
-                format!(
-                    "{}Tool has annotations that should be validated before trusting",
-                    tool_prefix
-                ),
+                t!("rules.mcp_006.message", prefix = tool_prefix.as_str()),
             )
-            .with_suggestion(
-                "Ensure annotations are from a trusted source before relying on them".to_string(),
-            ),
+            .with_suggestion(t!("rules.mcp_006.suggestion")),
         );
     }
 }

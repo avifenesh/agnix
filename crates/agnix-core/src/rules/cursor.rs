@@ -17,6 +17,7 @@ use crate::{
     },
     FileType,
 };
+use rust_i18n::t;
 use std::path::Path;
 
 pub struct CursorValidator;
@@ -37,11 +38,9 @@ impl Validator for CursorValidator {
                     1,
                     0,
                     "CUR-006",
-                    "Legacy .cursorrules file detected - consider migrating to .cursor/rules/*.mdc format".to_string(),
+                    t!("rules.cur_006.message"),
                 )
-                .with_suggestion(
-                    "Create .cursor/rules/ directory and add .mdc files with frontmatter for better organization".to_string(),
-                ),
+                .with_suggestion(t!("rules.cur_006.suggestion")),
             );
             // For legacy files, just check if empty and return
             if config.is_rule_enabled("CUR-001") && is_content_empty(content) {
@@ -51,9 +50,9 @@ impl Validator for CursorValidator {
                         1,
                         0,
                         "CUR-001",
-                        "Cursor rules file is empty".to_string(),
+                        t!("rules.cur_006.legacy_empty"),
                     )
-                    .with_suggestion("Add rules content to the file".to_string()),
+                    .with_suggestion(t!("rules.cur_001.suggestion_legacy_empty")),
                 );
             }
             return diagnostics;
@@ -70,9 +69,9 @@ impl Validator for CursorValidator {
                             parsed.end_line + 1,
                             0,
                             "CUR-001",
-                            "Cursor rule file has no content after frontmatter".to_string(),
+                            t!("rules.cur_001.message_no_content"),
                         )
-                        .with_suggestion("Add rules content after the frontmatter".to_string()),
+                        .with_suggestion(t!("rules.cur_001.suggestion_no_content")),
                     );
                 }
             } else if is_content_empty(content) {
@@ -83,11 +82,9 @@ impl Validator for CursorValidator {
                         1,
                         0,
                         "CUR-001",
-                        "Cursor rule file is empty".to_string(),
+                        t!("rules.cur_001.message_empty"),
                     )
-                    .with_suggestion(
-                        "Add frontmatter with description and rules content".to_string(),
-                    ),
+                    .with_suggestion(t!("rules.cur_001.suggestion_empty")),
                 );
             }
         }
@@ -104,12 +101,9 @@ impl Validator for CursorValidator {
                             1,
                             0,
                             "CUR-002",
-                            "Cursor .mdc file missing recommended frontmatter".to_string(),
+                            t!("rules.cur_002.message"),
                         )
-                        .with_suggestion(
-                            "Add YAML frontmatter with --- markers and description/globs fields"
-                                .to_string(),
-                        ),
+                        .with_suggestion(t!("rules.cur_002.suggestion")),
                     );
                 }
                 return diagnostics;
@@ -125,9 +119,9 @@ impl Validator for CursorValidator {
                         parsed.start_line,
                         0,
                         "CUR-003",
-                        format!("Invalid YAML frontmatter: {}", error),
+                        t!("rules.cur_003.message", error = error.as_str()),
                     )
-                    .with_suggestion("Fix the YAML syntax in frontmatter".to_string()),
+                    .with_suggestion(t!("rules.cur_003.suggestion")),
                 );
                 // Can't continue validating if YAML is broken
                 return diagnostics;
@@ -157,16 +151,13 @@ impl Validator for CursorValidator {
                                     globs_line,
                                     0,
                                     "CUR-004",
-                                    format!(
-                                        "Invalid glob pattern '{}': {}",
-                                        pattern,
-                                        validation.error.unwrap_or_default()
+                                    t!(
+                                        "rules.cur_004.message",
+                                        pattern = pattern,
+                                        error = validation.error.unwrap_or_default()
                                     ),
                                 )
-                                .with_suggestion(
-                                    "Use valid glob syntax like '**/*.ts' or 'src/**/*.js'"
-                                        .to_string(),
-                                ),
+                                .with_suggestion(t!("rules.cur_004.suggestion")),
                             );
                         }
                     }
@@ -183,15 +174,9 @@ impl Validator for CursorValidator {
                         unknown.line,
                         unknown.column,
                         "CUR-005",
-                        format!(
-                            "Unknown frontmatter key '{}' in Cursor rule file",
-                            unknown.key
-                        ),
+                        t!("rules.cur_005.message", key = unknown.key.as_str()),
                     )
-                    .with_suggestion(format!(
-                        "Remove unknown key '{}'. Valid keys are: description, globs, alwaysApply.",
-                        unknown.key
-                    )),
+                    .with_suggestion(t!("rules.cur_005.suggestion", key = unknown.key.as_str())),
                 );
             }
         }

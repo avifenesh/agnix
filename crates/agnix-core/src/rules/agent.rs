@@ -6,6 +6,7 @@ use crate::{
     config::LintConfig, diagnostics::Diagnostic, fs::FileSystem,
     parsers::frontmatter::parse_frontmatter, rules::Validator, schemas::agent::AgentSchema,
 };
+use rust_i18n::t;
 use std::collections::HashSet;
 use std::path::Path;
 
@@ -91,9 +92,9 @@ impl Validator for AgentValidator {
                         1,
                         0,
                         "CC-AG-007",
-                        "Agent file must have YAML frontmatter".to_string(),
+                        t!("rules.cc_ag_007.message"),
                     )
-                    .with_suggestion("Add frontmatter between --- markers".to_string()),
+                    .with_suggestion(t!("rules.cc_ag_007.suggestion")),
                 );
             }
             return diagnostics;
@@ -109,7 +110,7 @@ impl Validator for AgentValidator {
                         1,
                         0,
                         "CC-AG-007",
-                        format!("Failed to parse agent frontmatter: {}", e),
+                        t!("rules.cc_ag_007.parse_error", error = e.to_string()),
                     ));
                 }
                 return diagnostics;
@@ -126,9 +127,9 @@ impl Validator for AgentValidator {
                     1,
                     0,
                     "CC-AG-001",
-                    "Agent frontmatter is missing required 'name' field".to_string(),
+                    t!("rules.cc_ag_001.message"),
                 )
-                .with_suggestion("Add 'name: your-agent-name' to frontmatter".to_string()),
+                .with_suggestion(t!("rules.cc_ag_001.suggestion")),
             );
         }
 
@@ -147,11 +148,9 @@ impl Validator for AgentValidator {
                     1,
                     0,
                     "CC-AG-002",
-                    "Agent frontmatter is missing required 'description' field".to_string(),
+                    t!("rules.cc_ag_002.message"),
                 )
-                .with_suggestion(
-                    "Add 'description: Describe what this agent does' to frontmatter".to_string(),
-                ),
+                .with_suggestion(t!("rules.cc_ag_002.suggestion")),
             );
         }
 
@@ -165,15 +164,15 @@ impl Validator for AgentValidator {
                             1,
                             0,
                             "CC-AG-003",
-                            format!(
-                                "Invalid model '{}'. Valid values: {}",
-                                model,
-                                VALID_MODELS.join(", ")
+                            t!(
+                                "rules.cc_ag_003.message",
+                                model = model.as_str(),
+                                valid = VALID_MODELS.join(", ")
                             ),
                         )
-                        .with_suggestion(format!(
-                            "Change model to one of: {}",
-                            VALID_MODELS.join(", ")
+                        .with_suggestion(t!(
+                            "rules.cc_ag_003.suggestion",
+                            valid = VALID_MODELS.join(", ")
                         )),
                     );
                 }
@@ -190,15 +189,15 @@ impl Validator for AgentValidator {
                             1,
                             0,
                             "CC-AG-004",
-                            format!(
-                                "Invalid permissionMode '{}'. Valid values: {}",
-                                mode,
-                                VALID_PERMISSION_MODES.join(", ")
+                            t!(
+                                "rules.cc_ag_004.message",
+                                mode = mode.as_str(),
+                                valid = VALID_PERMISSION_MODES.join(", ")
                             ),
                         )
-                        .with_suggestion(format!(
-                            "Change permissionMode to one of: {}",
-                            VALID_PERMISSION_MODES.join(", ")
+                        .with_suggestion(t!(
+                            "rules.cc_ag_004.suggestion",
+                            valid = VALID_PERMISSION_MODES.join(", ")
                         )),
                     );
                 }
@@ -218,14 +217,11 @@ impl Validator for AgentValidator {
                                     1,
                                     0,
                                     "CC-AG-005",
-                                    format!(
-                                        "Referenced skill '{}' not found at .claude/skills/{}/SKILL.md",
-                                        skill_name, skill_name
-                                    ),
+                                    t!("rules.cc_ag_005.message", skill = skill_name.as_str()),
                                 )
-                                .with_suggestion(format!(
-                                    "Create the skill at .claude/skills/{}/SKILL.md or remove the reference",
-                                    skill_name
+                                .with_suggestion(t!(
+                                    "rules.cc_ag_005.suggestion",
+                                    skill = skill_name.as_str()
                                 )),
                             );
                         }
@@ -250,15 +246,9 @@ impl Validator for AgentValidator {
                             1,
                             0,
                             "CC-AG-006",
-                            format!(
-                                "Tool(s) appear in both 'tools' and 'disallowedTools': {}",
-                                conflicts.join(", ")
-                            ),
+                            t!("rules.cc_ag_006.message", conflicts = conflicts.join(", ")),
                         )
-                        .with_suggestion(
-                            "Remove conflicting tool(s) from either 'tools' or 'disallowedTools'"
-                                .to_string(),
-                        ),
+                        .with_suggestion(t!("rules.cc_ag_006.suggestion")),
                     );
                 }
             }

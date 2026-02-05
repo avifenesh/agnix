@@ -15,6 +15,7 @@ use crate::{
     parsers::{Import, ImportCache},
     rules::Validator,
 };
+use rust_i18n::t;
 use std::collections::{HashMap, HashSet};
 use std::path::{Component, Path, PathBuf};
 
@@ -200,9 +201,9 @@ fn visit_imports(
                         import.line,
                         import.column,
                         rule_not_found,
-                        format!("Absolute import paths not allowed: @{}", import.path),
+                        t!("rules.cc_mem_001.absolute", path = import.path.as_str()),
                     )
-                    .with_suggestion("Use relative paths only".to_string()),
+                    .with_suggestion(t!("rules.cc_mem_001.absolute_suggestion")),
                 );
             }
             continue;
@@ -219,11 +220,9 @@ fn visit_imports(
                         import.line,
                         import.column,
                         rule_not_found,
-                        format!("Import path escapes project root: @{}", import.path),
+                        t!("rules.cc_mem_001.escapes", path = import.path.as_str()),
                     )
-                    .with_suggestion(
-                        "Use relative paths that stay within the project root".to_string(),
-                    ),
+                    .with_suggestion(t!("rules.cc_mem_001.escapes_suggestion")),
                 );
             }
             continue;
@@ -241,11 +240,9 @@ fn visit_imports(
                             import.line,
                             import.column,
                             rule_not_found,
-                            format!("Import path escapes project root: @{}", import.path),
+                            t!("rules.cc_mem_001.escapes", path = import.path.as_str()),
                         )
-                        .with_suggestion(
-                            "Use relative paths that stay within the project root".to_string(),
-                        ),
+                        .with_suggestion(t!("rules.cc_mem_001.escapes_suggestion")),
                     );
                 }
                 continue;
@@ -265,7 +262,7 @@ fn visit_imports(
                         import.line,
                         import.column,
                         rule_not_found,
-                        format!("Import not found: @{}", import.path),
+                        t!("rules.cc_mem_001.not_found", path = import.path.as_str()),
                     )
                     .with_suggestion(format!(
                         "Check that the file exists: {}",
@@ -291,9 +288,9 @@ fn visit_imports(
                     import.line,
                     import.column,
                     rule_cycle,
-                    format!("Circular @import detected: {}", cycle),
+                    t!("rules.cc_mem_002.message", chain = cycle),
                 )
-                .with_suggestion("Remove or break the circular @import chain".to_string()),
+                .with_suggestion(t!("rules.cc_mem_002.suggestion")),
             );
             continue;
         }
@@ -307,12 +304,13 @@ fn visit_imports(
                     import.line,
                     import.column,
                     rule_depth,
-                    format!(
-                        "Import depth exceeds {} hops at @{}",
-                        MAX_IMPORT_DEPTH, import.path
+                    t!(
+                        "rules.cc_mem_003.message",
+                        depth = depth + 1,
+                        max = MAX_IMPORT_DEPTH
                     ),
                 )
-                .with_suggestion("Flatten or shorten the @import chain".to_string()),
+                .with_suggestion(t!("rules.cc_mem_003.suggestion")),
             );
             continue;
         }
@@ -539,19 +537,19 @@ fn validate_markdown_links(
 
         // Check if file exists
         if !fs.exists(&resolved) {
-            let link_type = if link.is_image { "Image" } else { "Link" };
             diagnostics.push(
                 Diagnostic::error(
                     path.to_path_buf(),
                     link.line,
                     link.column,
                     "REF-002",
-                    format!("{} target not found: {}", link_type, link.url),
+                    t!(
+                        "rules.ref_002.message",
+                        url = link.url.as_str(),
+                        resolved = resolved.display().to_string()
+                    ),
                 )
-                .with_suggestion(format!(
-                    "Check that the file exists: {}",
-                    resolved.display()
-                )),
+                .with_suggestion(t!("rules.ref_002.suggestion")),
             );
         }
     }
@@ -948,7 +946,7 @@ mod tests {
 
         assert!(diagnostics.iter().any(|d| d.rule == "REF-002"));
         let ref_002 = diagnostics.iter().find(|d| d.rule == "REF-002").unwrap();
-        assert!(ref_002.message.contains("Link target not found"));
+        assert!(ref_002.message.contains("Broken markdown link"));
     }
 
     #[test]
@@ -1048,7 +1046,7 @@ mod tests {
 
         assert!(diagnostics.iter().any(|d| d.rule == "REF-002"));
         let ref_002 = diagnostics.iter().find(|d| d.rule == "REF-002").unwrap();
-        assert!(ref_002.message.contains("Image target not found"));
+        assert!(ref_002.message.contains("Broken markdown link"));
     }
 
     #[test]

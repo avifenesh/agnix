@@ -20,12 +20,15 @@
     )
 )]
 
+rust_i18n::i18n!("../../locales", fallback = "en");
+
 pub mod config;
 pub mod diagnostics;
 pub mod eval;
 mod file_utils;
 pub mod fixes;
 pub mod fs;
+pub mod i18n;
 pub mod parsers;
 mod rules;
 mod schemas;
@@ -35,6 +38,7 @@ use std::path::{Path, PathBuf};
 
 use rayon::iter::ParallelBridge;
 use rayon::prelude::*;
+use rust_i18n::t;
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::Mutex;
 
@@ -703,16 +707,8 @@ pub fn validate_project_with_registry(
             };
 
             diagnostics.push(
-                Diagnostic::info(
-                    report_path,
-                    1,
-                    0,
-                    "VER-001",
-                    "No tool or spec versions pinned. Version-dependent rules will use default assumptions.".to_string(),
-                )
-                .with_suggestion(
-                    "Pin versions in .agnix.toml [tool_versions] or [spec_revisions] for deterministic validation.".to_string(),
-                ),
+                Diagnostic::info(report_path, 1, 0, "VER-001", t!("rules.ver_001.message"))
+                    .with_suggestion(t!("rules.ver_001.suggestion")),
             );
         }
     }
@@ -3775,5 +3771,188 @@ Use idiomatic Rust patterns.
             duration,
             10_000.0 / duration.as_secs_f64()
         );
+    }
+}
+
+#[cfg(test)]
+mod i18n_tests {
+    use rust_i18n::t;
+    use std::sync::Mutex;
+
+    // Mutex to serialize i18n tests since set_locale is global state
+    static LOCALE_MUTEX: Mutex<()> = Mutex::new(());
+
+    /// Verify that English translations load correctly and are not raw keys.
+    #[test]
+    fn test_english_translations_load() {
+        let _lock = LOCALE_MUTEX.lock().unwrap();
+        rust_i18n::set_locale("en");
+
+        // Sample translations from each section
+        let xml_msg = t!("rules.xml_001.message", tag = "test");
+        assert!(
+            xml_msg.contains("Unclosed XML tag"),
+            "Expected English translation, got: {}",
+            xml_msg
+        );
+
+        let cli_validating = t!("cli.validating");
+        assert_eq!(cli_validating, "Validating:");
+
+        let lsp_label = t!("lsp.suggestion_label");
+        assert_eq!(lsp_label, "Suggestion:");
+    }
+
+    /// Verify that Spanish translations load correctly.
+    #[test]
+    fn test_spanish_translations_load() {
+        let _lock = LOCALE_MUTEX.lock().unwrap();
+        rust_i18n::set_locale("es");
+
+        let xml_msg = t!("rules.xml_001.message", tag = "test");
+        assert!(
+            xml_msg.contains("Etiqueta XML sin cerrar"),
+            "Expected Spanish translation, got: {}",
+            xml_msg
+        );
+
+        let cli_validating = t!("cli.validating");
+        assert_eq!(cli_validating, "Validando:");
+
+        rust_i18n::set_locale("en");
+    }
+
+    /// Verify that Chinese (Simplified) translations load correctly.
+    #[test]
+    fn test_chinese_translations_load() {
+        let _lock = LOCALE_MUTEX.lock().unwrap();
+        rust_i18n::set_locale("zh-CN");
+
+        let xml_msg = t!("rules.xml_001.message", tag = "test");
+        assert!(
+            xml_msg.contains("\u{672A}\u{5173}\u{95ED}"),
+            "Expected Chinese translation, got: {}",
+            xml_msg
+        );
+
+        let cli_validating = t!("cli.validating");
+        assert!(
+            cli_validating.contains("\u{6B63}\u{5728}\u{9A8C}\u{8BC1}"),
+            "Expected Chinese translation, got: {}",
+            cli_validating
+        );
+
+        rust_i18n::set_locale("en");
+    }
+
+    /// Verify that unsupported locale falls back to English.
+    #[test]
+    fn test_fallback_to_english() {
+        let _lock = LOCALE_MUTEX.lock().unwrap();
+        rust_i18n::set_locale("fr"); // French not supported
+
+        let msg = t!("cli.validating");
+        assert_eq!(
+            msg, "Validating:",
+            "Should fall back to English, got: {}",
+            msg
+        );
+
+        rust_i18n::set_locale("en");
+    }
+
+    /// Verify that translation keys with parameters resolve correctly.
+    #[test]
+    fn test_parameterized_translations() {
+        let _lock = LOCALE_MUTEX.lock().unwrap();
+        rust_i18n::set_locale("en");
+
+        let msg = t!("rules.as_004.message", name = "TestName");
+        assert!(
+            msg.contains("TestName"),
+            "Parameter should be interpolated, got: {}",
+            msg
+        );
+        assert!(
+            msg.contains("must be 1-64 characters"),
+            "Message template should be filled, got: {}",
+            msg
+        );
+    }
+
+    /// Verify that all supported locales have key sections.
+    #[test]
+    fn test_available_locales() {
+        let locales = rust_i18n::available_locales!();
+        assert!(
+            locales.contains(&"en"),
+            "English locale must be available, found: {:?}",
+            locales
+        );
+        assert!(
+            locales.contains(&"es"),
+            "Spanish locale must be available, found: {:?}",
+            locales
+        );
+        assert!(
+            locales.contains(&"zh-CN"),
+            "Chinese locale must be available, found: {:?}",
+            locales
+        );
+    }
+
+    /// Verify that rule IDs are never translated (they stay as-is in diagnostics).
+    #[test]
+    fn test_rule_ids_not_translated() {
+        use super::*;
+        use std::path::Path;
+
+        let _lock = LOCALE_MUTEX.lock().unwrap();
+        rust_i18n::set_locale("es"); // Spanish
+
+        let config = config::LintConfig::default();
+        let content = "---\nname: test\n---\nSome content";
+        let path = Path::new("test/.claude/skills/test/SKILL.md");
+
+        let validator = rules::skill::SkillValidator;
+        let diagnostics = validator.validate(path, content, &config);
+
+        // Rule IDs should always be in English format
+        for diag in &diagnostics {
+            assert!(
+                diag.rule.is_ascii(),
+                "Rule ID should be ASCII: {}",
+                diag.rule
+            );
+        }
+
+        rust_i18n::set_locale("en");
+    }
+
+    /// Verify that Spanish locale produces localized diagnostic messages.
+    #[test]
+    fn test_spanish_diagnostics() {
+        use super::*;
+        use std::path::Path;
+
+        let _lock = LOCALE_MUTEX.lock().unwrap();
+        rust_i18n::set_locale("es");
+
+        let config = config::LintConfig::default();
+        let content = "<unclosed>";
+        let path = Path::new("test/CLAUDE.md");
+
+        let validator = rules::xml::XmlValidator;
+        let diagnostics = validator.validate(path, content, &config);
+
+        assert!(!diagnostics.is_empty(), "Should produce diagnostics");
+        let xml_diag = diagnostics.iter().find(|d| d.rule == "XML-001").unwrap();
+        assert!(
+            xml_diag.message.contains("Etiqueta XML sin cerrar"),
+            "Message should be in Spanish, got: {}",
+            xml_diag.message
+        );
+
+        rust_i18n::set_locale("en");
     }
 }

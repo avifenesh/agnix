@@ -3,6 +3,7 @@
 use crate::file_utils::safe_read_file;
 use crate::fs::{FileSystem, RealFileSystem};
 use crate::schemas::mcp::DEFAULT_MCP_PROTOCOL_VERSION;
+use rust_i18n::t;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
@@ -297,6 +298,14 @@ pub struct LintConfig {
     #[schemars(description = "Pin specific specification revisions for revision-aware validation")]
     pub spec_revisions: SpecRevisions,
 
+    /// Output locale for translated messages (e.g., "en", "es", "zh-CN").
+    /// When not set, the CLI locale detection is used.
+    #[serde(default)]
+    #[schemars(
+        description = "Output locale for translated messages (e.g., \"en\", \"es\", \"zh-CN\")"
+    )]
+    pub locale: Option<String>,
+
     /// Maximum number of files to validate before stopping.
     ///
     /// This is a security feature to prevent DoS attacks via projects with
@@ -306,7 +315,6 @@ pub struct LintConfig {
     /// Default: 10,000 files. Set to `None` to disable the limit (not recommended).
     #[serde(default = "default_max_files")]
     pub max_files_to_validate: Option<usize>,
-
     /// Project root directory for validation (not serialized).
     ///
     /// When set, validators can use this to resolve relative paths and
@@ -364,6 +372,7 @@ impl Default for LintConfig {
             mcp_protocol_version: None,
             tool_versions: ToolVersions::default(),
             spec_revisions: SpecRevisions::default(),
+            locale: None,
             max_files_to_validate: Some(DEFAULT_MAX_FILES),
             root_dir: None,
             import_cache: None,
@@ -545,12 +554,12 @@ impl LintConfig {
             Some(p) => match Self::load(p) {
                 Ok(config) => (config, None),
                 Err(e) => {
-                    let warning = format!(
-                        "Failed to parse config '{}': {}. Using defaults.",
-                        p.display(),
-                        e
+                    let warning = t!(
+                        "core.config.load_warning",
+                        path = p.display().to_string(),
+                        error = e.to_string()
                     );
-                    (Self::default(), Some(warning))
+                    (Self::default(), Some(warning.to_string()))
                 }
             },
             None => (Self::default(), None),
@@ -734,12 +743,13 @@ impl LintConfig {
             if !matches_known {
                 warnings.push(ConfigWarning {
                     field: "rules.disabled_rules".to_string(),
-                    message: format!(
-                        "Unknown rule ID pattern '{}'. Expected prefix: {}",
-                        rule_id,
-                        known_prefixes.join(", ")
-                    ),
-                    suggestion: Some("Check the rule ID spelling or remove if invalid".to_string()),
+                    message: t!(
+                        "core.config.unknown_rule",
+                        rule = rule_id.as_str(),
+                        prefixes = known_prefixes.join(", ")
+                    )
+                    .to_string(),
+                    suggestion: Some(t!("core.config.unknown_rule_suggestion").to_string()),
                 });
             }
         }
@@ -761,12 +771,13 @@ impl LintConfig {
             {
                 warnings.push(ConfigWarning {
                     field: "tools".to_string(),
-                    message: format!(
-                        "Unknown tool '{}'. Valid tools: {}",
-                        tool,
-                        known_tools.join(", ")
-                    ),
-                    suggestion: Some("Use one of the supported tool names".to_string()),
+                    message: t!(
+                        "core.config.unknown_tool",
+                        tool = tool.as_str(),
+                        valid = known_tools.join(", ")
+                    )
+                    .to_string(),
+                    suggestion: Some(t!("core.config.unknown_tool_suggestion").to_string()),
                 });
             }
         }
@@ -777,15 +788,15 @@ impl LintConfig {
             // (if both are set, tools takes precedence silently)
             warnings.push(ConfigWarning {
                 field: "target".to_string(),
-                message: "Field 'target' is deprecated".to_string(),
-                suggestion: Some("Use the 'tools' array instead".to_string()),
+                message: t!("core.config.deprecated_target").to_string(),
+                suggestion: Some(t!("core.config.deprecated_target_suggestion").to_string()),
             });
         }
         if self.mcp_protocol_version.is_some() {
             warnings.push(ConfigWarning {
                 field: "mcp_protocol_version".to_string(),
-                message: "Field 'mcp_protocol_version' is deprecated".to_string(),
-                suggestion: Some("Use 'spec_revisions.mcp_protocol' instead".to_string()),
+                message: t!("core.config.deprecated_mcp_version").to_string(),
+                suggestion: Some(t!("core.config.deprecated_mcp_version_suggestion").to_string()),
             });
         }
 

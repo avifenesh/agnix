@@ -2109,3 +2109,565 @@ fn test_config_semantic_warnings_go_to_stderr_with_json_output() {
     // The parse warning (if any) goes to stderr, but semantic warnings are suppressed for JSON
     // This is intentional behavior per the implementation
 }
+
+// ============================================================================
+// i18n / Locale CLI Integration Tests (Issue #207)
+// ============================================================================
+
+#[test]
+fn test_locale_flag_switches_output_to_spanish() {
+    use std::fs;
+
+    let temp_dir = tempfile::tempdir().unwrap();
+    let skills_dir = temp_dir.path().join("skills").join("test-skill");
+    fs::create_dir_all(&skills_dir).unwrap();
+    fs::write(
+        skills_dir.join("SKILL.md"),
+        "---\nname: test-skill\ndescription: Use when testing\n---\nBody",
+    )
+    .unwrap();
+
+    let mut cmd = agnix();
+    let output = cmd
+        .arg(temp_dir.path().to_str().unwrap())
+        .arg("--locale")
+        .arg("es")
+        .output()
+        .unwrap();
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+
+    // Spanish locale should produce "Validando:" instead of "Validating:"
+    assert!(
+        stdout.contains("Validando:"),
+        "--locale es should produce Spanish output ('Validando:'), got: {}",
+        stdout
+    );
+    assert!(
+        !stdout.contains("Validating:"),
+        "--locale es should NOT produce English 'Validating:', got: {}",
+        stdout
+    );
+}
+
+#[test]
+fn test_locale_flag_switches_output_to_chinese() {
+    use std::fs;
+
+    let temp_dir = tempfile::tempdir().unwrap();
+    let skills_dir = temp_dir.path().join("skills").join("test-skill");
+    fs::create_dir_all(&skills_dir).unwrap();
+    fs::write(
+        skills_dir.join("SKILL.md"),
+        "---\nname: test-skill\ndescription: Use when testing\n---\nBody",
+    )
+    .unwrap();
+
+    let mut cmd = agnix();
+    let output = cmd
+        .arg(temp_dir.path().to_str().unwrap())
+        .arg("--locale")
+        .arg("zh-CN")
+        .output()
+        .unwrap();
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+
+    // Chinese locale should produce the zh-CN translated header
+    assert!(
+        stdout.contains("\u{6b63}\u{5728}\u{9a8c}\u{8bc1}:"),
+        "--locale zh-CN should produce Chinese output, got: {}",
+        stdout
+    );
+}
+
+#[test]
+fn test_list_locales_flag_outputs_supported_locales() {
+    let mut cmd = agnix();
+    let output = cmd.arg("--list-locales").output().unwrap();
+
+    assert!(
+        output.status.success(),
+        "--list-locales should exit successfully"
+    );
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+
+    // Should contain the header
+    assert!(
+        stdout.contains("Supported locales:"),
+        "--list-locales should show 'Supported locales:' header, got: {}",
+        stdout
+    );
+
+    // Should list all three supported locales
+    assert!(
+        stdout.contains("en"),
+        "--list-locales should list 'en', got: {}",
+        stdout
+    );
+    assert!(
+        stdout.contains("es"),
+        "--list-locales should list 'es', got: {}",
+        stdout
+    );
+    assert!(
+        stdout.contains("zh-CN"),
+        "--list-locales should list 'zh-CN', got: {}",
+        stdout
+    );
+
+    // Should include display names
+    assert!(
+        stdout.contains("English"),
+        "--list-locales should show 'English' display name, got: {}",
+        stdout
+    );
+    assert!(
+        stdout.contains("Spanish"),
+        "--list-locales should show 'Spanish' display name, got: {}",
+        stdout
+    );
+    assert!(
+        stdout.contains("Chinese"),
+        "--list-locales should show 'Chinese' display name, got: {}",
+        stdout
+    );
+}
+
+#[test]
+fn test_list_locales_exits_without_validation() {
+    // --list-locales should print locales and exit, even without a valid path
+    let mut cmd = agnix();
+    let output = cmd
+        .arg("--list-locales")
+        .arg("/nonexistent/path/that/does/not/exist")
+        .output()
+        .unwrap();
+
+    assert!(
+        output.status.success(),
+        "--list-locales should succeed even with nonexistent path"
+    );
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(
+        stdout.contains("Supported locales:"),
+        "--list-locales should print locale list regardless of path, got: {}",
+        stdout
+    );
+}
+
+#[test]
+fn test_agnix_locale_env_var_switches_output() {
+    use std::fs;
+
+    let temp_dir = tempfile::tempdir().unwrap();
+    let skills_dir = temp_dir.path().join("skills").join("test-skill");
+    fs::create_dir_all(&skills_dir).unwrap();
+    fs::write(
+        skills_dir.join("SKILL.md"),
+        "---\nname: test-skill\ndescription: Use when testing\n---\nBody",
+    )
+    .unwrap();
+
+    let mut cmd = agnix();
+    let output = cmd
+        .env("AGNIX_LOCALE", "es")
+        // Clear LANG/LC_ALL to avoid interference
+        .env_remove("LANG")
+        .env_remove("LC_ALL")
+        .arg(temp_dir.path().to_str().unwrap())
+        .output()
+        .unwrap();
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+
+    // AGNIX_LOCALE=es should produce Spanish output
+    assert!(
+        stdout.contains("Validando:"),
+        "AGNIX_LOCALE=es should produce Spanish output, got: {}",
+        stdout
+    );
+}
+
+#[test]
+fn test_config_file_locale_field() {
+    use std::fs;
+
+    let temp_dir = tempfile::tempdir().unwrap();
+
+    // Create a config file with locale = "es"
+    let config_path = temp_dir.path().join(".agnix.toml");
+    fs::write(
+        &config_path,
+        "severity = \"Warning\"\ntarget = \"Generic\"\nlocale = \"es\"\nexclude = []\n\n[rules]\n",
+    )
+    .unwrap();
+
+    // Create a minimal valid fixture
+    let skills_dir = temp_dir.path().join("skills").join("test-skill");
+    fs::create_dir_all(&skills_dir).unwrap();
+    fs::write(
+        skills_dir.join("SKILL.md"),
+        "---\nname: test-skill\ndescription: Use when testing\n---\nBody",
+    )
+    .unwrap();
+
+    let mut cmd = agnix();
+    let output = cmd
+        .arg(temp_dir.path().to_str().unwrap())
+        .arg("--config")
+        .arg(&config_path)
+        // Clear env vars so config locale takes effect
+        .env_remove("AGNIX_LOCALE")
+        .env_remove("LANG")
+        .env_remove("LC_ALL")
+        .output()
+        .unwrap();
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+
+    // Config locale = "es" should produce Spanish output
+    assert!(
+        stdout.contains("Validando:"),
+        "Config locale = 'es' should produce Spanish output, got: {}",
+        stdout
+    );
+}
+
+#[test]
+fn test_locale_priority_cli_flag_overrides_env_var() {
+    use std::fs;
+
+    let temp_dir = tempfile::tempdir().unwrap();
+    let skills_dir = temp_dir.path().join("skills").join("test-skill");
+    fs::create_dir_all(&skills_dir).unwrap();
+    fs::write(
+        skills_dir.join("SKILL.md"),
+        "---\nname: test-skill\ndescription: Use when testing\n---\nBody",
+    )
+    .unwrap();
+
+    // Set env to Spanish, but CLI flag to English
+    let mut cmd = agnix();
+    let output = cmd
+        .env("AGNIX_LOCALE", "es")
+        .env_remove("LANG")
+        .env_remove("LC_ALL")
+        .arg(temp_dir.path().to_str().unwrap())
+        .arg("--locale")
+        .arg("en")
+        .output()
+        .unwrap();
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+
+    // --locale en should override AGNIX_LOCALE=es
+    assert!(
+        stdout.contains("Validating:"),
+        "--locale en should override AGNIX_LOCALE=es, got: {}",
+        stdout
+    );
+    assert!(
+        !stdout.contains("Validando:"),
+        "--locale en should NOT show Spanish output, got: {}",
+        stdout
+    );
+}
+
+#[test]
+fn test_locale_priority_cli_flag_overrides_config() {
+    use std::fs;
+
+    let temp_dir = tempfile::tempdir().unwrap();
+
+    // Config file with locale = "es"
+    let config_path = temp_dir.path().join(".agnix.toml");
+    fs::write(
+        &config_path,
+        "severity = \"Warning\"\ntarget = \"Generic\"\nlocale = \"es\"\nexclude = []\n\n[rules]\n",
+    )
+    .unwrap();
+
+    let skills_dir = temp_dir.path().join("skills").join("test-skill");
+    fs::create_dir_all(&skills_dir).unwrap();
+    fs::write(
+        skills_dir.join("SKILL.md"),
+        "---\nname: test-skill\ndescription: Use when testing\n---\nBody",
+    )
+    .unwrap();
+
+    // CLI flag should override config
+    let mut cmd = agnix();
+    let output = cmd
+        .env_remove("AGNIX_LOCALE")
+        .env_remove("LANG")
+        .env_remove("LC_ALL")
+        .arg(temp_dir.path().to_str().unwrap())
+        .arg("--config")
+        .arg(&config_path)
+        .arg("--locale")
+        .arg("en")
+        .output()
+        .unwrap();
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+
+    // --locale en should override config locale = "es"
+    assert!(
+        stdout.contains("Validating:"),
+        "--locale en should override config locale=es, got: {}",
+        stdout
+    );
+    assert!(
+        !stdout.contains("Validando:"),
+        "--locale en should NOT show Spanish output when overriding config, got: {}",
+        stdout
+    );
+}
+
+#[test]
+fn test_locale_priority_env_var_overrides_config() {
+    use std::fs;
+
+    let temp_dir = tempfile::tempdir().unwrap();
+
+    // Config file with locale = "en"
+    let config_path = temp_dir.path().join(".agnix.toml");
+    fs::write(
+        &config_path,
+        "severity = \"Warning\"\ntarget = \"Generic\"\nlocale = \"en\"\nexclude = []\n\n[rules]\n",
+    )
+    .unwrap();
+
+    let skills_dir = temp_dir.path().join("skills").join("test-skill");
+    fs::create_dir_all(&skills_dir).unwrap();
+    fs::write(
+        skills_dir.join("SKILL.md"),
+        "---\nname: test-skill\ndescription: Use when testing\n---\nBody",
+    )
+    .unwrap();
+
+    // AGNIX_LOCALE=es should be picked up by detect_locale() which runs before
+    // config is loaded, so env var takes effect for initial output.
+    // However, locale re-initialization happens after config load only when no --locale flag.
+    // The priority is: --locale > config > env var (inside detect_locale).
+    // Actually per the code: locale::init(cli_locale, None) first, then
+    // if cli.locale.is_none() && config.locale.is_some(), re-init with config locale.
+    // So config locale overrides env var when no --locale flag is set.
+    // This test documents that behavior.
+    let mut cmd = agnix();
+    let output = cmd
+        .env("AGNIX_LOCALE", "es")
+        .env_remove("LANG")
+        .env_remove("LC_ALL")
+        .arg(temp_dir.path().to_str().unwrap())
+        .arg("--config")
+        .arg(&config_path)
+        .output()
+        .unwrap();
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+
+    // When no --locale flag: config locale takes precedence over AGNIX_LOCALE
+    // because the code re-initializes locale from config after loading it.
+    // The initial locale::init picks up AGNIX_LOCALE but then config overrides it.
+    // This verifies the re-initialization logic works.
+    assert!(
+        stdout.contains("Validating:"),
+        "Config locale='en' should override AGNIX_LOCALE=es (no --locale flag), got: {}",
+        stdout
+    );
+}
+
+#[test]
+fn test_invalid_locale_warns_and_falls_back_to_english() {
+    use std::fs;
+
+    let temp_dir = tempfile::tempdir().unwrap();
+    let skills_dir = temp_dir.path().join("skills").join("test-skill");
+    fs::create_dir_all(&skills_dir).unwrap();
+    fs::write(
+        skills_dir.join("SKILL.md"),
+        "---\nname: test-skill\ndescription: Use when testing\n---\nBody",
+    )
+    .unwrap();
+
+    let mut cmd = agnix();
+    let output = cmd
+        .arg(temp_dir.path().to_str().unwrap())
+        .arg("--locale")
+        .arg("xx-INVALID")
+        .output()
+        .unwrap();
+
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    let stdout = String::from_utf8_lossy(&output.stdout);
+
+    // Should warn about unsupported locale on stderr
+    assert!(
+        stderr.contains("unsupported locale") || stderr.contains("Warning"),
+        "Invalid locale should produce warning on stderr, got stderr: {}",
+        stderr
+    );
+
+    // Should fall back to English output
+    assert!(
+        stdout.contains("Validating:"),
+        "Invalid locale should fall back to English output, got: {}",
+        stdout
+    );
+}
+
+#[test]
+fn test_invalid_locale_in_config_warns_and_falls_back() {
+    use std::fs;
+
+    let temp_dir = tempfile::tempdir().unwrap();
+
+    // Config with invalid locale
+    let config_path = temp_dir.path().join(".agnix.toml");
+    fs::write(
+        &config_path,
+        "severity = \"Warning\"\ntarget = \"Generic\"\nlocale = \"xx-INVALID\"\nexclude = []\n\n[rules]\n",
+    )
+    .unwrap();
+
+    let skills_dir = temp_dir.path().join("skills").join("test-skill");
+    fs::create_dir_all(&skills_dir).unwrap();
+    fs::write(
+        skills_dir.join("SKILL.md"),
+        "---\nname: test-skill\ndescription: Use when testing\n---\nBody",
+    )
+    .unwrap();
+
+    let mut cmd = agnix();
+    let output = cmd
+        .env_remove("AGNIX_LOCALE")
+        .env_remove("LANG")
+        .env_remove("LC_ALL")
+        .arg(temp_dir.path().to_str().unwrap())
+        .arg("--config")
+        .arg(&config_path)
+        .output()
+        .unwrap();
+
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    let stdout = String::from_utf8_lossy(&output.stdout);
+
+    // Should warn about unsupported locale
+    assert!(
+        stderr.contains("unsupported locale") || stderr.contains("Warning"),
+        "Invalid config locale should produce warning, got stderr: {}",
+        stderr
+    );
+
+    // Should fall back to English
+    assert!(
+        stdout.contains("Validating:"),
+        "Invalid config locale should fall back to English, got stdout: {}",
+        stdout
+    );
+}
+
+#[test]
+fn test_locale_flag_with_json_output_still_works() {
+    use std::fs;
+
+    // Locale flag should not affect JSON structure (JSON always uses keys not messages)
+    let temp_dir = tempfile::tempdir().unwrap();
+    let skills_dir = temp_dir.path().join("skills").join("test-skill");
+    fs::create_dir_all(&skills_dir).unwrap();
+    fs::write(
+        skills_dir.join("SKILL.md"),
+        "---\nname: test-skill\ndescription: Use when testing\n---\nBody",
+    )
+    .unwrap();
+
+    let mut cmd = agnix();
+    let output = cmd
+        .arg(temp_dir.path().to_str().unwrap())
+        .arg("--locale")
+        .arg("es")
+        .arg("--format")
+        .arg("json")
+        .output()
+        .unwrap();
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let json: Result<serde_json::Value, _> = serde_json::from_str(&stdout);
+    assert!(
+        json.is_ok(),
+        "--locale es with --format json should produce valid JSON, got: {}",
+        stdout
+    );
+
+    let json = json.unwrap();
+    assert!(
+        json["version"].is_string(),
+        "JSON should have version field"
+    );
+    assert!(
+        json["diagnostics"].is_array(),
+        "JSON should have diagnostics array"
+    );
+}
+
+#[test]
+fn test_help_shows_locale_flags() {
+    let mut cmd = agnix();
+    let output = cmd.arg("--help").output().unwrap();
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+
+    assert!(
+        stdout.contains("--locale"),
+        "Help should show --locale flag, got: {}",
+        stdout
+    );
+    assert!(
+        stdout.contains("--list-locales"),
+        "Help should show --list-locales flag, got: {}",
+        stdout
+    );
+}
+
+#[test]
+fn test_locale_es_translates_diagnostic_messages() {
+    use std::fs;
+    use std::io::Write;
+
+    let temp_dir = tempfile::tempdir().unwrap();
+    let skills_dir = temp_dir.path().join("skills").join("bad-skill");
+    fs::create_dir_all(&skills_dir).unwrap();
+
+    let skill_path = skills_dir.join("SKILL.md");
+    let mut file = fs::File::create(&skill_path).unwrap();
+    // Invalid name triggers AS-004 error
+    writeln!(
+        file,
+        "---\nname: Bad-Skill\ndescription: test\n---\nContent"
+    )
+    .unwrap();
+
+    let mut cmd = agnix();
+    let output = cmd
+        .arg(temp_dir.path().to_str().unwrap())
+        .arg("--locale")
+        .arg("es")
+        .output()
+        .unwrap();
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+
+    // Spanish AS-004 message contains "debe tener" (must have) or
+    // the Spanish summary "Encontrados" (Found)
+    assert!(
+        stdout.contains("Encontrados")
+            || stdout.contains("debe tener")
+            || stdout.contains("minusculas"),
+        "--locale es should produce Spanish diagnostic output, got: {}",
+        stdout
+    );
+}

@@ -15,6 +15,7 @@ use crate::{
         find_weak_imperative_language,
     },
 };
+use rust_i18n::t;
 use std::path::Path;
 
 pub struct PromptValidator;
@@ -33,14 +34,13 @@ impl Validator for PromptValidator {
                         issue.line,
                         issue.column,
                         "PE-001",
-                        format!(
-                            "Critical keyword '{}' at {:.0}% of document (40-60% is the 'lost in the middle' zone)",
-                            issue.keyword, issue.position_percent
+                        t!(
+                            "rules.pe_001.message",
+                            keyword = issue.keyword.as_str(),
+                            percent = format!("{:.0}", issue.position_percent)
                         ),
                     )
-                    .with_suggestion(
-                        "Move critical content to the start or end of the document for better recall".to_string(),
-                    ),
+                    .with_suggestion(t!("rules.pe_001.suggestion")),
                 );
             }
         }
@@ -55,14 +55,13 @@ impl Validator for PromptValidator {
                         issue.line,
                         issue.column,
                         "PE-002",
-                        format!(
-                            "Chain-of-thought phrase '{}' used with simple task '{}'",
-                            issue.phrase, issue.task_indicator
+                        t!(
+                            "rules.pe_002.message",
+                            phrase = issue.phrase.as_str(),
+                            task = issue.task_indicator.as_str()
                         ),
                     )
-                    .with_suggestion(
-                        "Remove chain-of-thought instructions for simple tasks; CoT can hurt performance on direct operations".to_string(),
-                    ),
+                    .with_suggestion(t!("rules.pe_002.suggestion")),
                 );
             }
         }
@@ -77,14 +76,13 @@ impl Validator for PromptValidator {
                         issue.line,
                         issue.column,
                         "PE-003",
-                        format!(
-                            "Weak language '{}' in critical section '{}'",
-                            issue.weak_term, issue.section_name
+                        t!(
+                            "rules.pe_003.message",
+                            term = issue.weak_term.as_str(),
+                            section = issue.section_name.as_str()
                         ),
                     )
-                    .with_suggestion(
-                        "Use strong language (must/always/never) in critical sections for better compliance".to_string(),
-                    ),
+                    .with_suggestion(t!("rules.pe_003.suggestion")),
                 );
             }
         }
@@ -99,14 +97,9 @@ impl Validator for PromptValidator {
                         issue.line,
                         issue.column,
                         "PE-004",
-                        format!(
-                            "Ambiguous term '{}' creates unclear instruction",
-                            issue.term
-                        ),
+                        t!("rules.pe_004.message", term = issue.term.as_str()),
                     )
-                    .with_suggestion(
-                        "Replace with specific criteria or remove ambiguity (e.g., 'always' instead of 'usually')".to_string(),
-                    ),
+                    .with_suggestion(t!("rules.pe_004.suggestion")),
                 );
             }
         }
