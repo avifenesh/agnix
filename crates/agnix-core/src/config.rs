@@ -168,9 +168,6 @@ impl<'a> DefaultRuleFilter<'a> {
 
     /// Check if a rule applies based on the tools array
     fn is_rule_for_tools(&self, rule_id: &str) -> bool {
-        // Use TOOL_RULE_PREFIXES derived from rules.json at compile time.
-        // Note: TOOL_RULE_PREFIXES is small (~6 entries), so linear search is acceptable.
-        // If this grows significantly larger, consider using a HashMap for O(1) lookups.
         for (prefix, tool) in agnix_rules::TOOL_RULE_PREFIXES {
             if rule_id.starts_with(prefix) {
                 // Check if the required tool is in the tools list (case-insensitive)
