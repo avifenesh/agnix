@@ -1,6 +1,7 @@
 //! Maps agnix-core diagnostics to LSP diagnostics.
 
 use agnix_core::{Diagnostic, DiagnosticLevel, Fix};
+use rust_i18n::t;
 use serde_json::Value as JsonValue;
 use tower_lsp::lsp_types::{
     Diagnostic as LspDiagnostic, DiagnosticSeverity, NumberOrString, Position, Range,
@@ -43,7 +44,7 @@ pub fn to_lsp_diagnostic(diag: &Diagnostic) -> LspDiagnostic {
     let column = diag.column.saturating_sub(1) as u32;
 
     let message = if let Some(ref suggestion) = diag.suggestion {
-        format!("{}\n\nSuggestion: {}", diag.message, suggestion)
+        format!("{}\n\n{} {}", diag.message, t!("lsp.suggestion_label"), suggestion)
     } else {
         diag.message.clone()
     };

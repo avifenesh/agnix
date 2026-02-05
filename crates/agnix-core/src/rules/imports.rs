@@ -903,7 +903,7 @@ mod tests {
 
         assert!(diagnostics.iter().any(|d| d.rule == "REF-002"));
         let ref_002 = diagnostics.iter().find(|d| d.rule == "REF-002").unwrap();
-        assert!(ref_002.message.contains("Link target not found"));
+        assert!(ref_002.message.contains("Broken markdown link"));
     }
 
     #[test]
@@ -1003,7 +1003,7 @@ mod tests {
 
         assert!(diagnostics.iter().any(|d| d.rule == "REF-002"));
         let ref_002 = diagnostics.iter().find(|d| d.rule == "REF-002").unwrap();
-        assert!(ref_002.message.contains("Image target not found"));
+        assert!(ref_002.message.contains("Broken markdown link"));
     }
 
     #[test]

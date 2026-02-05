@@ -1,495 +1,494 @@
-en:
-  # ===========================================================================
-  # Rules - Validator diagnostic messages, suggestions, assumptions, fixes
-  # ===========================================================================
-  rules:
-    # --- Agent Skills (skill.rs) ---
-    as_001:
-      message: "SKILL.md must have YAML frontmatter between --- markers"
-      suggestion: "Add frontmatter between --- markers"
-    as_002:
-      message: "Skill frontmatter is missing required 'name' field"
-      suggestion: "Add 'name: your-skill-name' to frontmatter"
-    as_003:
-      message: "Skill frontmatter is missing required 'description' field"
-      suggestion: "Add 'description: Use when...' to frontmatter"
-    as_004:
-      message: "Name '%{name}' must be 1-64 characters of lowercase letters, digits, and hyphens"
-      suggestion: "Lowercase and trim the name, replace spaces and '_' with '-', collapse multiple '-' into one, remove invalid characters, and truncate to 64 characters"
-      fix: "Convert name to kebab-case: '%{name}'"
-    as_005:
-      message: "Name '%{name}' cannot start or end with hyphen"
-      suggestion: "Remove leading/trailing hyphens from the name"
-    as_006:
-      message: "Name '%{name}' cannot contain consecutive hyphens"
-      suggestion: "Replace '--' with '-' in the name"
-    as_007:
-      message: "Name '%{name}' is reserved and cannot be used"
-      suggestion: "Choose a different skill name"
-    as_008:
-      message: "Description must be 1-1024 characters, got %{len}"
-      suggestion: "Trim the description to 1024 characters or fewer"
-    as_009:
-      message: "Description must not contain XML tags"
-      suggestion: "Remove XML tags from the description"
-    as_010:
-      message: "Description should include a 'Use when...' trigger phrase"
-      suggestion: "Add 'Use when [condition]' to help Claude understand when to invoke this skill"
-      fix: "Prepend 'Use when user wants to ' to description"
-    as_011:
-      message: "Compatibility must be 1-500 characters, got %{len}"
-      suggestion: "Trim compatibility to 500 characters or fewer"
-    as_012:
-      message: "Skill content exceeds 500 lines (got %{count})"
-      suggestion: "Move extra content into references/"
-    as_013:
-      message: "File reference '%{path}' is deeper than one level"
-      suggestion: "Flatten the references/ directory structure"
-    as_014:
-      message: "Windows path separator detected in '%{path}'; use forward slashes"
-      suggestion: "Replace '\\\\' with '/' in file paths"
-    as_015:
-      message: "Skill directory exceeds 8MB (%{size} bytes)"
-      suggestion: "Remove large assets or split the skill into smaller parts"
-    as_016:
-      message: "Failed to parse SKILL.md: %{error}"
+# ===========================================================================
+# Rules - Validator diagnostic messages, suggestions, assumptions, fixes
+# ===========================================================================
+rules:
+  # --- Agent Skills (skill.rs) ---
+  as_001:
+    message: "SKILL.md must have YAML frontmatter between --- markers"
+    suggestion: "Add frontmatter between --- markers"
+  as_002:
+    message: "Skill frontmatter is missing required 'name' field"
+    suggestion: "Add 'name: your-skill-name' to frontmatter"
+  as_003:
+    message: "Skill frontmatter is missing required 'description' field"
+    suggestion: "Add 'description: Use when...' to frontmatter"
+  as_004:
+    message: "Name '%{name}' must be 1-64 characters of lowercase letters, digits, and hyphens"
+    suggestion: "Lowercase and trim the name, replace spaces and '_' with '-', collapse multiple '-' into one, remove invalid characters, and truncate to 64 characters"
+    fix: "Convert name to kebab-case: '%{name}'"
+  as_005:
+    message: "Name '%{name}' cannot start or end with hyphen"
+    suggestion: "Remove leading/trailing hyphens from the name"
+  as_006:
+    message: "Name '%{name}' cannot contain consecutive hyphens"
+    suggestion: "Replace '--' with '-' in the name"
+  as_007:
+    message: "Name '%{name}' is reserved and cannot be used"
+    suggestion: "Choose a different skill name"
+  as_008:
+    message: "Description must be 1-1024 characters, got %{len}"
+    suggestion: "Trim the description to 1024 characters or fewer"
+  as_009:
+    message: "Description must not contain XML tags"
+    suggestion: "Remove XML tags from the description"
+  as_010:
+    message: "Description should include a 'Use when...' trigger phrase"
+    suggestion: "Add 'Use when [condition]' to help Claude understand when to invoke this skill"
+    fix: "Prepend 'Use when user wants to ' to description"
+  as_011:
+    message: "Compatibility must be 1-500 characters, got %{len}"
+    suggestion: "Trim compatibility to 500 characters or fewer"
+  as_012:
+    message: "Skill content exceeds 500 lines (got %{count})"
+    suggestion: "Move extra content into references/"
+  as_013:
+    message: "File reference '%{path}' is deeper than one level"
+    suggestion: "Flatten the references/ directory structure"
+  as_014:
+    message: "Windows path separator detected in '%{path}'; use forward slashes"
+    suggestion: "Replace '\\\\' with '/' in file paths"
+  as_015:
+    message: "Skill directory exceeds 8MB (%{size} bytes)"
+    suggestion: "Remove large assets or split the skill into smaller parts"
+  as_016:
+    message: "Failed to parse SKILL.md: %{error}"
 
-    # --- Claude Code Skills (skill.rs) ---
-    cc_sk_001:
-      message: "Invalid model '%{model}'. Must be one of: %{valid}"
-      suggestion: "Use one of the valid model values: %{valid}"
-    cc_sk_002:
-      message: "Invalid context '%{context}'. Must be 'fork' or omitted"
-      suggestion: "Set context to 'fork' or remove the field entirely"
-    cc_sk_003:
-      message: "Context 'fork' requires an 'agent' field"
-      suggestion: "Add 'agent: general-purpose' or another valid agent type"
-    cc_sk_004:
-      message: "Agent field requires 'context: fork'"
-      suggestion: "Add 'context: fork' to the frontmatter"
-    cc_sk_005:
-      message: "Invalid agent type '%{agent}'. Must be Explore, Plan, general-purpose, or a custom kebab-case name (1-64 chars)"
-      suggestion: "Use a built-in agent (Explore, Plan, general-purpose) or a custom kebab-case name"
-    cc_sk_006:
-      message: "Dangerous skill '%{name}' must set 'disable-model-invocation: true' to prevent accidental invocation"
-      suggestion: "Add 'disable-model-invocation: true' to the frontmatter"
-    cc_sk_007:
-      message: "Unrestricted Bash access detected. Consider using scoped version for better security."
-      suggestion: "Use scoped Bash like 'Bash(git:*)' or 'Bash(npm:*)' instead of plain 'Bash'"
-      fix: "Replace unrestricted Bash with scoped Bash(git:*)"
-    cc_sk_008:
-      message: "Unknown tool '%{tool}'. Known tools: %{known}"
-      suggestion: "Use one of the known Claude Code tools: %{known}"
-    cc_sk_009:
-      message: "Too many dynamic injections (%{count}). Limit to %{max} for better performance"
-      suggestion: "Consider moving complex logic to a scripts/ directory or reducing injections"
+  # --- Claude Code Skills (skill.rs) ---
+  cc_sk_001:
+    message: "Invalid model '%{model}'. Must be one of: %{valid}"
+    suggestion: "Use one of the valid model values: %{valid}"
+  cc_sk_002:
+    message: "Invalid context '%{context}'. Must be 'fork' or omitted"
+    suggestion: "Set context to 'fork' or remove the field entirely"
+  cc_sk_003:
+    message: "Context 'fork' requires an 'agent' field"
+    suggestion: "Add 'agent: general-purpose' or another valid agent type"
+  cc_sk_004:
+    message: "Agent field requires 'context: fork'"
+    suggestion: "Add 'context: fork' to the frontmatter"
+  cc_sk_005:
+    message: "Invalid agent type '%{agent}'. Must be Explore, Plan, general-purpose, or a custom kebab-case name (1-64 chars)"
+    suggestion: "Use a built-in agent (Explore, Plan, general-purpose) or a custom kebab-case name"
+  cc_sk_006:
+    message: "Dangerous skill '%{name}' must set 'disable-model-invocation: true' to prevent accidental invocation"
+    suggestion: "Add 'disable-model-invocation: true' to the frontmatter"
+  cc_sk_007:
+    message: "Unrestricted Bash access detected. Consider using scoped version for better security."
+    suggestion: "Use scoped Bash like 'Bash(git:*)' or 'Bash(npm:*)' instead of plain 'Bash'"
+    fix: "Replace unrestricted Bash with scoped Bash(git:*)"
+  cc_sk_008:
+    message: "Unknown tool '%{tool}'. Known tools: %{known}"
+    suggestion: "Use one of the known Claude Code tools: %{known}"
+  cc_sk_009:
+    message: "Too many dynamic injections (%{count}). Limit to %{max} for better performance"
+    suggestion: "Consider moving complex logic to a scripts/ directory or reducing injections"
 
-    # --- Hooks (hooks.rs) ---
-    cc_hk_001:
-      message: "Invalid hook event '%{event}', valid events: %{valid}"
-      fix: "Replace '%{old}' with '%{new}'"
-    cc_hk_002:
-      message: "Prompt hook at %{location} is only allowed for Stop and SubagentStop events, not '%{event}'"
-      suggestion: "Use 'type': 'command' instead, or move this hook to Stop/SubagentStop"
-    cc_hk_003:
-      message: "Tool event '%{event}' at %{location} requires a matcher field"
-      suggestion: "Add 'matcher': '*' for all tools or specify a tool name"
-    cc_hk_004:
-      message: "Non-tool event '%{event}' at %{location} must not have a matcher field"
-      suggestion: "Remove the 'matcher' field"
-    cc_hk_005:
-      message: "Hook at %{location} is missing required 'type' field"
-      suggestion: "Add 'type': 'command' or 'type': 'prompt'"
-    cc_hk_006:
-      message: "Command hook at %{location} is missing required 'command' field"
-      suggestion: "Add a 'command' field with the command to execute"
-    cc_hk_007:
-      message: "Prompt hook at %{location} is missing required 'prompt' field"
-      suggestion: "Add a 'prompt' field with the prompt text"
-    cc_hk_008:
-      message: "Script file not found at '%{script}' (resolved to '%{resolved}')"
-      suggestion: "Create the script file or correct the path"
-    cc_hk_009:
-      message: "Potentially dangerous command pattern detected: %{reason}"
-      suggestion: "Review the command for safety. Pattern matched: %{pattern}"
-    cc_hk_010:
-      command_no_timeout: "Command hook at %{location} has no timeout specified"
-      command_no_timeout_suggestion: "Add a \"timeout\" field (e.g., 600 for command hooks)"
-      command_exceeds: "Command hook at %{location} has timeout %{timeout}s exceeding %{default}s default"
-      command_exceeds_suggestion: "Consider timeout <= %{default}s (10-minute default limit)"
-      prompt_no_timeout: "Prompt hook at %{location} has no timeout specified"
-      prompt_no_timeout_suggestion: "Add a \"timeout\" field (e.g., 30 for prompt hooks)"
-      prompt_exceeds: "Prompt hook at %{location} has timeout %{timeout}s exceeding %{default}s default"
-      prompt_exceeds_suggestion: "Consider timeout <= %{default}s (30-second default limit)"
-      assumption: "Assumes Claude Code default timeout behavior. Pin claude_code version in .agnix.toml [tool_versions] for version-specific validation."
-    cc_hk_011:
-      message: "Invalid timeout value at %{location}: must be a positive integer"
-      suggestion: "Set timeout to a positive integer like 30"
-    cc_hk_012:
-      message: "Failed to parse hooks configuration: %{error}"
+  # --- Hooks (hooks.rs) ---
+  cc_hk_001:
+    message: "Invalid hook event '%{event}', valid events: %{valid}"
+    fix: "Replace '%{old}' with '%{new}'"
+  cc_hk_002:
+    message: "Prompt hook at %{location} is only allowed for Stop and SubagentStop events, not '%{event}'"
+    suggestion: "Use 'type': 'command' instead, or move this hook to Stop/SubagentStop"
+  cc_hk_003:
+    message: "Tool event '%{event}' at %{location} requires a matcher field"
+    suggestion: "Add 'matcher': '*' for all tools or specify a tool name"
+  cc_hk_004:
+    message: "Non-tool event '%{event}' at %{location} must not have a matcher field"
+    suggestion: "Remove the 'matcher' field"
+  cc_hk_005:
+    message: "Hook at %{location} is missing required 'type' field"
+    suggestion: "Add 'type': 'command' or 'type': 'prompt'"
+  cc_hk_006:
+    message: "Command hook at %{location} is missing required 'command' field"
+    suggestion: "Add a 'command' field with the command to execute"
+  cc_hk_007:
+    message: "Prompt hook at %{location} is missing required 'prompt' field"
+    suggestion: "Add a 'prompt' field with the prompt text"
+  cc_hk_008:
+    message: "Script file not found at '%{script}' (resolved to '%{resolved}')"
+    suggestion: "Create the script file or correct the path"
+  cc_hk_009:
+    message: "Potentially dangerous command pattern detected: %{reason}"
+    suggestion: "Review the command for safety. Pattern matched: %{pattern}"
+  cc_hk_010:
+    command_no_timeout: "Command hook at %{location} has no timeout specified"
+    command_no_timeout_suggestion: "Add a \"timeout\" field (e.g., 600 for command hooks)"
+    command_exceeds: "Command hook at %{location} has timeout %{timeout}s exceeding %{default}s default"
+    command_exceeds_suggestion: "Consider timeout <= %{default}s (10-minute default limit)"
+    prompt_no_timeout: "Prompt hook at %{location} has no timeout specified"
+    prompt_no_timeout_suggestion: "Add a \"timeout\" field (e.g., 30 for prompt hooks)"
+    prompt_exceeds: "Prompt hook at %{location} has timeout %{timeout}s exceeding %{default}s default"
+    prompt_exceeds_suggestion: "Consider timeout <= %{default}s (30-second default limit)"
+    assumption: "Assumes Claude Code default timeout behavior. Pin claude_code version in .agnix.toml [tool_versions] for version-specific validation."
+  cc_hk_011:
+    message: "Invalid timeout value at %{location}: must be a positive integer"
+    suggestion: "Set timeout to a positive integer like 30"
+  cc_hk_012:
+    message: "Failed to parse hooks configuration: %{error}"
 
-    # --- MCP (mcp.rs) ---
-    mcp_001:
-      invalid_version: "Invalid JSON-RPC version '%{version}', must be '2.0'"
-      not_string: "JSON-RPC version must be a string"
-      suggestion: "Set \"jsonrpc\": \"2.0\""
-    mcp_002:
-      missing_name: "%{prefix}Missing required field 'name'"
-      missing_name_suggestion: "Add 'name' field to tool definition"
-      missing_description: "%{prefix}Missing required field 'description'"
-      missing_description_suggestion: "Add 'description' field to tool definition"
-      missing_schema: "%{prefix}Missing required field 'inputSchema'"
-      missing_schema_suggestion: "Add 'inputSchema' field with JSON Schema definition"
-    mcp_003:
-      message: "%{prefix}Invalid inputSchema: %{error}"
-      suggestion: "Fix JSON Schema structure"
-    mcp_004:
-      message: "%{prefix}Tool description is too short (%{len} chars), should be at least 10 characters"
-      suggestion: "Add a meaningful description explaining what the tool does"
-    mcp_005:
-      message: "%{prefix}Tool lacks consent mechanism (no 'requiresApproval' or 'confirmation' field)"
-      suggestion: "Consider adding 'requiresApproval: true' for tools that modify data or have side effects"
-    mcp_006:
-      message: "%{prefix}Tool has annotations that should be validated before trusting"
-      suggestion: "Ensure annotations are from a trusted source before relying on them"
-    mcp_007:
-      message: "Failed to parse MCP configuration: %{error}"
-    mcp_008:
-      message: "Protocol version mismatch: found '%{found}', expected '%{expected}'"
-      request_suggestion: "Consider updating to protocol version '%{expected}' for compatibility"
-      response_suggestion: "Server negotiated version '%{found}', expected '%{expected}'. Verify compatibility."
-      assumption: "Using default MCP protocol version. Pin mcp_protocol in .agnix.toml [spec_revisions] for explicit control."
-    invalid_tool: "Tool #%{num}: Invalid tool definition: %{error}"
-    invalid_tool_single: "Invalid tool definition: %{error}"
-    invalid_tool_suggestion: "Ensure tool has valid field types (name: string, description: string, inputSchema: object)"
+  # --- MCP (mcp.rs) ---
+  mcp_001:
+    invalid_version: "Invalid JSON-RPC version '%{version}', must be '2.0'"
+    not_string: "JSON-RPC version must be a string"
+    suggestion: "Set \"jsonrpc\": \"2.0\""
+  mcp_002:
+    missing_name: "%{prefix}Missing required field 'name'"
+    missing_name_suggestion: "Add 'name' field to tool definition"
+    missing_description: "%{prefix}Missing required field 'description'"
+    missing_description_suggestion: "Add 'description' field to tool definition"
+    missing_schema: "%{prefix}Missing required field 'inputSchema'"
+    missing_schema_suggestion: "Add 'inputSchema' field with JSON Schema definition"
+  mcp_003:
+    message: "%{prefix}Invalid inputSchema: %{error}"
+    suggestion: "Fix JSON Schema structure"
+  mcp_004:
+    message: "%{prefix}Tool description is too short (%{len} chars), should be at least 10 characters"
+    suggestion: "Add a meaningful description explaining what the tool does"
+  mcp_005:
+    message: "%{prefix}Tool lacks consent mechanism (no 'requiresApproval' or 'confirmation' field)"
+    suggestion: "Consider adding 'requiresApproval: true' for tools that modify data or have side effects"
+  mcp_006:
+    message: "%{prefix}Tool has annotations that should be validated before trusting"
+    suggestion: "Ensure annotations are from a trusted source before relying on them"
+  mcp_007:
+    message: "Failed to parse MCP configuration: %{error}"
+  mcp_008:
+    message: "Protocol version mismatch: found '%{found}', expected '%{expected}'"
+    request_suggestion: "Consider updating to protocol version '%{expected}' for compatibility"
+    response_suggestion: "Server negotiated version '%{found}', expected '%{expected}'. Verify compatibility."
+    assumption: "Using default MCP protocol version. Pin mcp_protocol in .agnix.toml [spec_revisions] for explicit control."
+  invalid_tool: "Tool #%{num}: Invalid tool definition: %{error}"
+  invalid_tool_single: "Invalid tool definition: %{error}"
+  invalid_tool_suggestion: "Ensure tool has valid field types (name: string, description: string, inputSchema: object)"
 
-    # --- Agent (agent.rs) ---
-    cc_ag_001:
-      message: "Agent frontmatter is missing required 'name' field"
-      suggestion: "Add 'name: your-agent-name' to frontmatter"
-    cc_ag_002:
-      message: "Agent frontmatter is missing required 'description' field"
-      suggestion: "Add 'description: Describe what this agent does' to frontmatter"
-    cc_ag_003:
-      message: "Invalid model '%{model}'. Valid values: %{valid}"
-      suggestion: "Change model to one of: %{valid}"
-    cc_ag_004:
-      message: "Invalid permissionMode '%{mode}'. Valid values: %{valid}"
-      suggestion: "Change permissionMode to one of: %{valid}"
-    cc_ag_005:
-      message: "Referenced skill '%{skill}' not found at .claude/skills/%{skill}/SKILL.md"
-      suggestion: "Create the skill at .claude/skills/%{skill}/SKILL.md or remove the reference"
-    cc_ag_006:
-      message: "Tool(s) appear in both 'tools' and 'disallowedTools': %{conflicts}"
-      suggestion: "Remove conflicting tool(s) from either 'tools' or 'disallowedTools'"
-    cc_ag_007:
-      message: "Agent file must have YAML frontmatter"
-      suggestion: "Add frontmatter between --- markers"
-      parse_error: "Failed to parse agent frontmatter: %{error}"
+  # --- Agent (agent.rs) ---
+  cc_ag_001:
+    message: "Agent frontmatter is missing required 'name' field"
+    suggestion: "Add 'name: your-agent-name' to frontmatter"
+  cc_ag_002:
+    message: "Agent frontmatter is missing required 'description' field"
+    suggestion: "Add 'description: Describe what this agent does' to frontmatter"
+  cc_ag_003:
+    message: "Invalid model '%{model}'. Valid values: %{valid}"
+    suggestion: "Change model to one of: %{valid}"
+  cc_ag_004:
+    message: "Invalid permissionMode '%{mode}'. Valid values: %{valid}"
+    suggestion: "Change permissionMode to one of: %{valid}"
+  cc_ag_005:
+    message: "Referenced skill '%{skill}' not found at .claude/skills/%{skill}/SKILL.md"
+    suggestion: "Create the skill at .claude/skills/%{skill}/SKILL.md or remove the reference"
+  cc_ag_006:
+    message: "Tool(s) appear in both 'tools' and 'disallowedTools': %{conflicts}"
+    suggestion: "Remove conflicting tool(s) from either 'tools' or 'disallowedTools'"
+  cc_ag_007:
+    message: "Agent file must have YAML frontmatter"
+    suggestion: "Add frontmatter between --- markers"
+    parse_error: "Failed to parse agent frontmatter: %{error}"
 
-    # --- Claude MD (claude_md.rs) ---
-    cc_mem_004:
-      message: "npm script '%{script}' not found in package.json"
-      suggestion_no_scripts: "No scripts defined in package.json."
-      suggestion_available: "Available scripts: %{scripts}"
-    cc_mem_005:
-      message: "Generic instruction '%{text}' - Claude already knows this"
-      suggestion: "Remove generic instructions. Focus on project-specific context."
-      fix: "Remove generic instruction line"
-    cc_mem_006:
-      message: "Negative instruction '%{text}' without positive alternative"
-      suggestion: "Add a positive alternative: 'Instead, do...' or 'Use X instead.'"
-    cc_mem_007:
-      message: "Weak constraint '%{text}' in critical section '%{section}'"
-      suggestion: "Use strong language in critical sections: 'must', 'always', 'required'."
-      fix: "Replace '%{text}' with stronger language"
-    cc_mem_008:
-      message: "Critical keyword '%{keyword}' at %{percent}%% of document (middle zone)"
-      suggestion: "Move critical content to the top or bottom of the document for better recall."
-    cc_mem_009:
-      message: "File exceeds recommended token limit (~%{tokens} tokens, limit is %{limit})"
-      suggestion: "Consider using @import to split content into multiple files."
-    cc_mem_010:
-      message: "CLAUDE.md has %{overlap}%% overlap with README.md (threshold: %{threshold}%%)"
-      suggestion: "CLAUDE.md should complement README, not duplicate it. Remove duplicated sections."
+  # --- Claude MD (claude_md.rs) ---
+  cc_mem_004:
+    message: "npm script '%{script}' not found in package.json"
+    suggestion_no_scripts: "No scripts defined in package.json."
+    suggestion_available: "Available scripts: %{scripts}"
+  cc_mem_005:
+    message: "Generic instruction '%{text}' - Claude already knows this"
+    suggestion: "Remove generic instructions. Focus on project-specific context."
+    fix: "Remove generic instruction line"
+  cc_mem_006:
+    message: "Negative instruction '%{text}' without positive alternative"
+    suggestion: "Add a positive alternative: 'Instead, do...' or 'Use X instead.'"
+  cc_mem_007:
+    message: "Weak constraint '%{text}' in critical section '%{section}'"
+    suggestion: "Use strong language in critical sections: 'must', 'always', 'required'."
+    fix: "Replace '%{text}' with stronger language"
+  cc_mem_008:
+    message: "Critical keyword '%{keyword}' at %{percent}%% of document (middle zone)"
+    suggestion: "Move critical content to the top or bottom of the document for better recall."
+  cc_mem_009:
+    message: "File exceeds recommended token limit (~%{tokens} tokens, limit is %{limit})"
+    suggestion: "Consider using @import to split content into multiple files."
+  cc_mem_010:
+    message: "CLAUDE.md has %{overlap}%% overlap with README.md (threshold: %{threshold}%%)"
+    suggestion: "CLAUDE.md should complement README, not duplicate it. Remove duplicated sections."
 
-    # --- AGENTS.md (agents_md.rs) ---
-    agm_001:
-      message: "Invalid markdown: %{description}"
-      suggestion: "Fix the markdown syntax error"
-    agm_002:
-      # messages come from schemas::agents_md, not the validator directly
-    agm_003:
-      message: "%{filename} exceeds character limit (%{chars} chars, max %{limit} for Windsurf compatibility)"
-      suggestion: "Split content into multiple files or reduce content length"
-    agm_004:
-      # messages come from schemas::agents_md, not the validator directly
-    agm_005:
-      suggestion: "Add a platform guard section header like '## %{platform} Specific' before platform-specific content"
-    agm_006:
-      # post-processing rule in lib.rs
+  # --- AGENTS.md (agents_md.rs) ---
+  agm_001:
+    message: "Invalid markdown: %{description}"
+    suggestion: "Fix the markdown syntax error"
+  agm_002:
+    # messages come from schemas::agents_md, not the validator directly
+  agm_003:
+    message: "%{filename} exceeds character limit (%{chars} chars, max %{limit} for Windsurf compatibility)"
+    suggestion: "Split content into multiple files or reduce content length"
+  agm_004:
+    # messages come from schemas::agents_md, not the validator directly
+  agm_005:
+    suggestion: "Add a platform guard section header like '## %{platform} Specific' before platform-specific content"
+  agm_006:
+    # post-processing rule in lib.rs
 
-    # --- XML (xml.rs) ---
-    xml_001:
-      message: "Unclosed XML tag '<%{tag}>'"
-      suggestion: "Add closing tag '</%{tag}>'"
-      fix: "Insert closing tag '</%{tag}>'"
-    xml_002:
-      message: "Expected '</%{expected}>' but found '</%{found}>'"
-      suggestion: "Replace '</%{found}>' with '</%{expected}>'"
-    xml_003:
-      message: "Unmatched closing tag '</%{tag}>'"
-      suggestion: "Remove '</%{tag}>' or add matching opening tag '<%{tag}>'"
+  # --- XML (xml.rs) ---
+  xml_001:
+    message: "Unclosed XML tag '<%{tag}>'"
+    suggestion: "Add closing tag '</%{tag}>'"
+    fix: "Insert closing tag '</%{tag}>'"
+  xml_002:
+    message: "Expected '</%{expected}>' but found '</%{found}>'"
+    suggestion: "Replace '</%{found}>' with '</%{expected}>'"
+  xml_003:
+    message: "Unmatched closing tag '</%{tag}>'"
+    suggestion: "Remove '</%{tag}>' or add matching opening tag '<%{tag}>'"
 
-    # --- Imports (imports.rs) ---
-    cc_mem_001:
-      not_found: "Import target not found: @%{path}"
-      absolute: "Absolute import paths not allowed: @%{path}"
-      escapes: "Import path escapes project root: @%{path}"
-      absolute_suggestion: "Use relative paths only"
-      escapes_suggestion: "Use relative paths that stay within the project root"
-    cc_mem_002:
-      message: "Circular import detected: %{chain}"
-      suggestion: "Break the circular import chain to prevent infinite recursion"
-    cc_mem_003:
-      message: "Import depth exceeded (%{depth} levels, max %{max})"
-      suggestion: "Flatten the import hierarchy to reduce depth"
-    ref_001:
-      not_found: "Import target not found: @%{path}"
-    ref_002:
-      message: "Broken markdown link: '%{url}' (file not found: %{resolved})"
-      suggestion: "Fix the link target or remove the broken link"
+  # --- Imports (imports.rs) ---
+  cc_mem_001:
+    not_found: "Import target not found: @%{path}"
+    absolute: "Absolute import paths not allowed: @%{path}"
+    escapes: "Import path escapes project root: @%{path}"
+    absolute_suggestion: "Use relative paths only"
+    escapes_suggestion: "Use relative paths that stay within the project root"
+  cc_mem_002:
+    message: "Circular import detected: %{chain}"
+    suggestion: "Break the circular import chain to prevent infinite recursion"
+  cc_mem_003:
+    message: "Import depth exceeded (%{depth} levels, max %{max})"
+    suggestion: "Flatten the import hierarchy to reduce depth"
+  ref_001:
+    not_found: "Import target not found: @%{path}"
+  ref_002:
+    message: "Broken markdown link: '%{url}' (file not found: %{resolved})"
+    suggestion: "Fix the link target or remove the broken link"
 
-    # --- Cross-platform (cross_platform.rs) ---
-    xp_001:
-      message: "Claude-specific feature '%{feature}' in %{filename}: %{description}"
-      suggestion: "Move to CLAUDE.md or wrap in a Claude-specific section (e.g., '## Claude Code Specific')"
-    xp_002:
-      message: "%{filename} structure issue: %{issue}"
-    xp_003:
-      message: "Hard-coded %{platform} path '%{path}' may cause portability issues"
-      suggestion: "Use environment variables or relative paths for better portability"
-    xp_004:
-      message: "Conflicting package managers: %{file1} uses %{mgr1} but %{file2} uses %{mgr2} for %{cmd_type} commands"
-      suggestion: "Standardize on a single package manager across all instruction files"
-    xp_005:
-      message: "Conflicting tool constraints: '%{tool}' is allowed in %{allow_file} but disallowed in %{disallow_file}"
-      suggestion: "Resolve the conflict by consistently allowing or disallowing the tool"
-    xp_006:
-      suggestion: "Document which file takes precedence (e.g., 'CLAUDE.md takes precedence over AGENTS.md')"
+  # --- Cross-platform (cross_platform.rs) ---
+  xp_001:
+    message: "Claude-specific feature '%{feature}' in %{filename}: %{description}"
+    suggestion: "Move to CLAUDE.md or wrap in a Claude-specific section (e.g., '## Claude Code Specific')"
+  xp_002:
+    message: "%{filename} structure issue: %{issue}"
+  xp_003:
+    message: "Hard-coded %{platform} path '%{path}' may cause portability issues"
+    suggestion: "Use environment variables or relative paths for better portability"
+  xp_004:
+    message: "Conflicting package managers: %{file1} uses %{mgr1} but %{file2} uses %{mgr2} for %{cmd_type} commands"
+    suggestion: "Standardize on a single package manager across all instruction files"
+  xp_005:
+    message: "Conflicting tool constraints: '%{tool}' is allowed in %{allow_file} but disallowed in %{disallow_file}"
+    suggestion: "Resolve the conflict by consistently allowing or disallowing the tool"
+  xp_006:
+    suggestion: "Document which file takes precedence (e.g., 'CLAUDE.md takes precedence over AGENTS.md')"
 
-    # --- Copilot (copilot.rs) ---
-    cop_001:
-      message_empty: "Copilot instruction file is empty"
-      message_no_content: "Copilot instruction file has no content after frontmatter"
-      suggestion_empty: "Add meaningful instructions for Copilot to follow"
-      suggestion_scoped_empty: "Add frontmatter with applyTo field and instructions"
-    cop_002:
-      message_missing: "Scoped Copilot instruction file missing required frontmatter"
-      message_invalid_yaml: "Invalid YAML frontmatter: %{error}"
-      message_missing_apply_to: "Scoped Copilot instruction file missing required 'applyTo' field"
-      suggestion_add_frontmatter: "Add YAML frontmatter with --- markers and applyTo field"
-      suggestion_fix_yaml: "Fix the YAML syntax in frontmatter"
-      suggestion_add_apply_to: "Add 'applyTo: \"**/*.ts\"' or similar glob pattern"
-    cop_003:
-      message: "Invalid glob pattern '%{pattern}': %{error}"
-      suggestion: "Use valid glob syntax like '**/*.ts' or 'src/**/*.js'"
-    cop_004:
-      message: "Unknown frontmatter key '%{key}' in Copilot instruction file"
-      suggestion: "Remove unknown key '%{key}'. Only 'applyTo' is recognized."
+  # --- Copilot (copilot.rs) ---
+  cop_001:
+    message_empty: "Copilot instruction file is empty"
+    message_no_content: "Copilot instruction file has no content after frontmatter"
+    suggestion_empty: "Add meaningful instructions for Copilot to follow"
+    suggestion_scoped_empty: "Add frontmatter with applyTo field and instructions"
+  cop_002:
+    message_missing: "Scoped Copilot instruction file missing required frontmatter"
+    message_invalid_yaml: "Invalid YAML frontmatter: %{error}"
+    message_missing_apply_to: "Scoped Copilot instruction file missing required 'applyTo' field"
+    suggestion_add_frontmatter: "Add YAML frontmatter with --- markers and applyTo field"
+    suggestion_fix_yaml: "Fix the YAML syntax in frontmatter"
+    suggestion_add_apply_to: "Add 'applyTo: \"**/*.ts\"' or similar glob pattern"
+  cop_003:
+    message: "Invalid glob pattern '%{pattern}': %{error}"
+    suggestion: "Use valid glob syntax like '**/*.ts' or 'src/**/*.js'"
+  cop_004:
+    message: "Unknown frontmatter key '%{key}' in Copilot instruction file"
+    suggestion: "Remove unknown key '%{key}'. Only 'applyTo' is recognized."
 
-    # --- Cursor (cursor.rs) ---
-    cur_001:
-      message_empty: "Cursor rule file is empty"
-      message_no_content: "Cursor rule file has no content after frontmatter"
-      suggestion_empty: "Add frontmatter with description and rules content"
-      suggestion_no_content: "Add rules content after the frontmatter"
-      suggestion_legacy_empty: "Add rules content to the file"
-    cur_002:
-      message: "Cursor .mdc file missing recommended frontmatter"
-      suggestion: "Add YAML frontmatter with --- markers and description/globs fields"
-    cur_003:
-      message: "Invalid YAML frontmatter: %{error}"
-      suggestion: "Fix the YAML syntax in frontmatter"
-    cur_004:
-      message: "Invalid glob pattern '%{pattern}': %{error}"
-      suggestion: "Use valid glob syntax like '**/*.ts' or 'src/**/*.js'"
-    cur_005:
-      message: "Unknown frontmatter key '%{key}' in Cursor rule file"
-      suggestion: "Remove unknown key '%{key}'. Valid keys are: description, globs, alwaysApply."
-    cur_006:
-      message: "Legacy .cursorrules file detected - consider migrating to .cursor/rules/*.mdc format"
-      suggestion: "Create .cursor/rules/ directory and add .mdc files with frontmatter for better organization"
-      legacy_empty: "Cursor rules file is empty"
+  # --- Cursor (cursor.rs) ---
+  cur_001:
+    message_empty: "Cursor rule file is empty"
+    message_no_content: "Cursor rule file has no content after frontmatter"
+    suggestion_empty: "Add frontmatter with description and rules content"
+    suggestion_no_content: "Add rules content after the frontmatter"
+    suggestion_legacy_empty: "Add rules content to the file"
+  cur_002:
+    message: "Cursor .mdc file missing recommended frontmatter"
+    suggestion: "Add YAML frontmatter with --- markers and description/globs fields"
+  cur_003:
+    message: "Invalid YAML frontmatter: %{error}"
+    suggestion: "Fix the YAML syntax in frontmatter"
+  cur_004:
+    message: "Invalid glob pattern '%{pattern}': %{error}"
+    suggestion: "Use valid glob syntax like '**/*.ts' or 'src/**/*.js'"
+  cur_005:
+    message: "Unknown frontmatter key '%{key}' in Cursor rule file"
+    suggestion: "Remove unknown key '%{key}'. Valid keys are: description, globs, alwaysApply."
+  cur_006:
+    message: "Legacy .cursorrules file detected - consider migrating to .cursor/rules/*.mdc format"
+    suggestion: "Create .cursor/rules/ directory and add .mdc files with frontmatter for better organization"
+    legacy_empty: "Cursor rules file is empty"
 
-    # --- Prompt engineering (prompt.rs) ---
-    pe_001:
-      message: "Critical keyword '%{keyword}' at %{percent}%% of document (40-60%% is the 'lost in the middle' zone)"
-      suggestion: "Move critical content to the start or end of the document for better recall"
-    pe_002:
-      message: "Chain-of-thought phrase '%{phrase}' used with simple task '%{task}'"
-      suggestion: "Remove chain-of-thought instructions for simple tasks; CoT can hurt performance on direct operations"
-    pe_003:
-      message: "Weak language '%{term}' in critical section '%{section}'"
-      suggestion: "Use strong language (must/always/never) in critical sections for better compliance"
-    pe_004:
-      message: "Ambiguous term '%{term}' creates unclear instruction"
-      suggestion: "Replace with specific criteria or remove ambiguity (e.g., 'always' instead of 'usually')"
+  # --- Prompt engineering (prompt.rs) ---
+  pe_001:
+    message: "Critical keyword '%{keyword}' at %{percent}%% of document (40-60%% is the 'lost in the middle' zone)"
+    suggestion: "Move critical content to the start or end of the document for better recall"
+  pe_002:
+    message: "Chain-of-thought phrase '%{phrase}' used with simple task '%{task}'"
+    suggestion: "Remove chain-of-thought instructions for simple tasks; CoT can hurt performance on direct operations"
+  pe_003:
+    message: "Weak language '%{term}' in critical section '%{section}'"
+    suggestion: "Use strong language (must/always/never) in critical sections for better compliance"
+  pe_004:
+    message: "Ambiguous term '%{term}' creates unclear instruction"
+    suggestion: "Replace with specific criteria or remove ambiguity (e.g., 'always' instead of 'usually')"
 
-    # --- Plugin (plugin.rs) ---
-    cc_pl_001:
-      message: "plugin.json must be located in .claude-plugin/ directory"
-      suggestion: "Move plugin.json to .claude-plugin/plugin.json"
-    cc_pl_002:
-      message: "Component '%{component}' must not be inside .claude-plugin/"
-      suggestion: "Move components to the plugin root directory"
-    cc_pl_003:
-      message: "Invalid semver format: '%{version}'"
-      suggestion: "Use semver format: 1.0.0, 1.0.0-rc.1, 1.0.0+build"
-    cc_pl_004:
-      message: "Missing required field: %{field}"
-      suggestion: "Add '%{field}' field to plugin.json"
-    cc_pl_005:
-      message: "Plugin name must not be empty"
-      suggestion: "Set a non-empty plugin name"
-    cc_pl_006:
-      message: "Failed to parse plugin.json: %{error}"
+  # --- Plugin (plugin.rs) ---
+  cc_pl_001:
+    message: "plugin.json must be located in .claude-plugin/ directory"
+    suggestion: "Move plugin.json to .claude-plugin/plugin.json"
+  cc_pl_002:
+    message: "Component '%{component}' must not be inside .claude-plugin/"
+    suggestion: "Move components to the plugin root directory"
+  cc_pl_003:
+    message: "Invalid semver format: '%{version}'"
+    suggestion: "Use semver format: 1.0.0, 1.0.0-rc.1, 1.0.0+build"
+  cc_pl_004:
+    message: "Missing required field: %{field}"
+    suggestion: "Add '%{field}' field to plugin.json"
+  cc_pl_005:
+    message: "Plugin name must not be empty"
+    suggestion: "Set a non-empty plugin name"
+  cc_pl_006:
+    message: "Failed to parse plugin.json: %{error}"
 
-    # --- Version (lib.rs) ---
-    ver_001:
-      message: "No tool or spec versions pinned. Version-dependent rules will use default assumptions."
-      suggestion: "Pin versions in .agnix.toml [tool_versions] or [spec_revisions] for deterministic validation."
+  # --- Version (lib.rs) ---
+  ver_001:
+    message: "No tool or spec versions pinned. Version-dependent rules will use default assumptions."
+    suggestion: "Pin versions in .agnix.toml [tool_versions] or [spec_revisions] for deterministic validation."
 
-    # --- File-level errors (lib.rs) ---
-    file_read_error: "Failed to validate file: %{error}"
-    xp_004_read_error: "Failed to read instruction file: %{error}"
+  # --- File-level errors (lib.rs) ---
+  file_read_error: "Failed to validate file: %{error}"
+  xp_004_read_error: "Failed to read instruction file: %{error}"
 
-  # ===========================================================================
-  # Core - Config warnings, eval output, LintError
-  # ===========================================================================
-  core:
-    error:
-      file_read: "Failed to read file: %{path}"
-      file_write: "Failed to write file: %{path}"
-      file_symlink: "Refusing to read symlink: %{path}"
-      file_too_big: "File too large: %{path} (%{size} bytes, limit %{limit} bytes)"
-      file_not_regular: "Not a regular file: %{path}"
-      invalid_exclude: "Invalid exclude pattern: %{pattern} (%{message})"
-    config:
-      unknown_rule: "Unknown rule ID pattern '%{rule}'. Expected prefix: %{prefixes}"
-      unknown_rule_suggestion: "Check the rule ID spelling or remove if invalid"
-      unknown_tool: "Unknown tool '%{tool}'. Valid tools: %{valid}"
-      unknown_tool_suggestion: "Use one of the supported tool names"
-      deprecated_target: "Field 'target' is deprecated"
-      deprecated_target_suggestion: "Use the 'tools' array instead"
-      deprecated_mcp_version: "Field 'mcp_protocol_version' is deprecated"
-      deprecated_mcp_version_suggestion: "Use 'spec_revisions.mcp_protocol' instead"
-      load_warning: "Failed to parse config '%{path}': %{error}. Using defaults."
+# ===========================================================================
+# Core - Config warnings, eval output, LintError
+# ===========================================================================
+core:
+  error:
+    file_read: "Failed to read file: %{path}"
+    file_write: "Failed to write file: %{path}"
+    file_symlink: "Refusing to read symlink: %{path}"
+    file_too_big: "File too large: %{path} (%{size} bytes, limit %{limit} bytes)"
+    file_not_regular: "Not a regular file: %{path}"
+    invalid_exclude: "Invalid exclude pattern: %{pattern} (%{message})"
+  config:
+    unknown_rule: "Unknown rule ID pattern '%{rule}'. Expected prefix: %{prefixes}"
+    unknown_rule_suggestion: "Check the rule ID spelling or remove if invalid"
+    unknown_tool: "Unknown tool '%{tool}'. Valid tools: %{valid}"
+    unknown_tool_suggestion: "Use one of the supported tool names"
+    deprecated_target: "Field 'target' is deprecated"
+    deprecated_target_suggestion: "Use the 'tools' array instead"
+    deprecated_mcp_version: "Field 'mcp_protocol_version' is deprecated"
+    deprecated_mcp_version_suggestion: "Use 'spec_revisions.mcp_protocol' instead"
+    load_warning: "Failed to parse config '%{path}': %{error}. Using defaults."
 
-  # ===========================================================================
-  # CLI - Command-line interface output strings
-  # ===========================================================================
-  cli:
-    validating: "Validating:"
-    no_issues_found: "No issues found"
-    found_errors_warnings: "Found %{errors} %{error_word}, %{warnings} %{warning_word}"
-    info_messages: "  %{count} info messages"
-    fixable_issues: "  %{count} %{word} automatically fixable"
-    issue_is: "issue is"
-    issues_are: "issues are"
-    error_singular: "error"
-    error_plural: "errors"
-    warning_singular: "warning"
-    warning_plural: "warnings"
-    hint_run_fix: "Run with %{flag} to apply fixes"
-    applying_fixes: "%{mode} fixes%{safe_mode}..."
-    no_fixes: "  No fixes to apply"
-    would_fix: "Would fix:"
-    fixed: "Fixed:"
-    diff_label: "Diff"
-    fix_summary: "%{action} %{count} %{word}"
-    file_singular: "file"
-    file_plural: "files"
-    preview: "Preview"
-    applying: "Applying"
-    safe_only: " (safe only)"
-    created: "Created:"
-    schema_written: "Schema written to:"
-    error_label: "Error:"
-    warning_label: "Warning:"
-    config_warning_label: "Config warning:"
-    hint_label: "hint:"
-    rule_label: "rule:"
-    help_label: "help:"
-    note_label: "note:"
-    fix_label: "fix:"
-    safe: "safe"
-    unsafe: "unsafe"
-    fixable: "[fixable]"
-    watch_error_text_only: "Watch mode is only supported with text output."
-    watch_error_fix: "Watch mode cannot be combined with fix flags."
-    fix_error_text_only: "Fix flags are only supported with text output. Remove --format or use --format text."
-    evaluating: "Evaluating:"
-    filter_label: "  filter:"
-    per_case_results: "Per-Case Results"
-    pass: "PASS"
-    fail: "FAIL"
-    unexpected_label: "unexpected:"
-    missing_label: "missing:"
-    success: "SUCCESS"
-    failed: "FAILED"
-    all_cases_passed: "All %{count} cases passed"
-    cases_failed: "%{failed}/%{total} cases failed"
-    telemetry_status: "Telemetry Status"
-    telemetry_configured: "Configured:"
-    telemetry_effective: "Effective:"
-    telemetry_enabled: "enabled"
-    telemetry_disabled: "disabled"
-    telemetry_env_note: "Telemetry is disabled due to environment (CI, DO_NOT_TRACK, etc.)"
-    telemetry_installation_id: "Installation ID:"
-    telemetry_consent_given: "Consent given:"
-    telemetry_privacy: "Privacy Guarantees"
-    telemetry_privacy_1: "  - Opt-in only (disabled by default)"
-    telemetry_privacy_2: "  - No file paths or contents ever collected"
-    telemetry_privacy_3: "  - No user identity collected"
-    telemetry_privacy_4: "  - Only aggregate counts (file types, rule triggers)"
-    telemetry_privacy_5: "  - Respects DO_NOT_TRACK, CI environments"
-    telemetry_config_file: "Config file:"
-    telemetry_already_enabled: "Telemetry is already enabled."
-    telemetry_ok_enabled: "Telemetry enabled."
-    telemetry_thanks: "Thank you for helping improve agnix!"
-    telemetry_collect: "What we collect:"
-    telemetry_collect_1: "  - File type counts (e.g., 5 skills, 2 MCP configs)"
-    telemetry_collect_2: "  - Rule trigger counts (e.g., AS-001: 3 times)"
-    telemetry_collect_3: "  - Error/warning counts"
-    telemetry_collect_4: "  - Validation duration"
-    telemetry_never_collect: "What we never collect:"
-    telemetry_never_1: "  - File paths or names"
-    telemetry_never_2: "  - File contents or code"
-    telemetry_never_3: "  - User identity"
-    telemetry_disable_hint: "You can disable telemetry at any time with: %{cmd}"
-    telemetry_already_disabled: "Telemetry is already disabled."
-    telemetry_ok_disabled: "Telemetry disabled."
-    locale_unsupported: "Warning: unsupported locale '%{locale}', falling back to 'en'"
-    watch_starting: "Starting watch mode. Press Ctrl+C to stop."
-    watch_changes_detected: "Changes detected. Re-validating..."
-    watch_error: "Watch error: %{error}"
-    watch_stopped: "Watch mode stopped."
+# ===========================================================================
+# CLI - Command-line interface output strings
+# ===========================================================================
+cli:
+  validating: "Validating:"
+  no_issues_found: "No issues found"
+  found_errors_warnings: "Found %{errors} %{error_word}, %{warnings} %{warning_word}"
+  info_messages: "  %{count} info messages"
+  fixable_issues: "  %{count} %{word} automatically fixable"
+  issue_is: "issue is"
+  issues_are: "issues are"
+  error_singular: "error"
+  error_plural: "errors"
+  warning_singular: "warning"
+  warning_plural: "warnings"
+  hint_run_fix: "Run with %{flag} to apply fixes"
+  applying_fixes: "%{mode} fixes%{safe_mode}..."
+  no_fixes: "  No fixes to apply"
+  would_fix: "Would fix:"
+  fixed: "Fixed:"
+  diff_label: "Diff"
+  fix_summary: "%{action} %{count} %{word}"
+  file_singular: "file"
+  file_plural: "files"
+  preview: "Preview"
+  applying: "Applying"
+  safe_only: " (safe only)"
+  created: "Created:"
+  schema_written: "Schema written to:"
+  error_label: "Error:"
+  warning_label: "Warning:"
+  config_warning_label: "Config warning:"
+  hint_label: "hint:"
+  rule_label: "rule:"
+  help_label: "help:"
+  note_label: "note:"
+  fix_label: "fix:"
+  safe: "safe"
+  unsafe: "unsafe"
+  fixable: "[fixable]"
+  watch_error_text_only: "Watch mode is only supported with text output."
+  watch_error_fix: "Watch mode cannot be combined with fix flags."
+  fix_error_text_only: "Fix flags are only supported with text output. Remove --format or use --format text."
+  evaluating: "Evaluating:"
+  filter_label: "  filter:"
+  per_case_results: "Per-Case Results"
+  pass: "PASS"
+  fail: "FAIL"
+  unexpected_label: "unexpected:"
+  missing_label: "missing:"
+  success: "SUCCESS"
+  failed: "FAILED"
+  all_cases_passed: "All %{count} cases passed"
+  cases_failed: "%{failed}/%{total} cases failed"
+  telemetry_status: "Telemetry Status"
+  telemetry_configured: "Configured:"
+  telemetry_effective: "Effective:"
+  telemetry_enabled: "enabled"
+  telemetry_disabled: "disabled"
+  telemetry_env_note: "Telemetry is disabled due to environment (CI, DO_NOT_TRACK, etc.)"
+  telemetry_installation_id: "Installation ID:"
+  telemetry_consent_given: "Consent given:"
+  telemetry_privacy: "Privacy Guarantees"
+  telemetry_privacy_1: "  - Opt-in only (disabled by default)"
+  telemetry_privacy_2: "  - No file paths or contents ever collected"
+  telemetry_privacy_3: "  - No user identity collected"
+  telemetry_privacy_4: "  - Only aggregate counts (file types, rule triggers)"
+  telemetry_privacy_5: "  - Respects DO_NOT_TRACK, CI environments"
+  telemetry_config_file: "Config file:"
+  telemetry_already_enabled: "Telemetry is already enabled."
+  telemetry_ok_enabled: "Telemetry enabled."
+  telemetry_thanks: "Thank you for helping improve agnix!"
+  telemetry_collect: "What we collect:"
+  telemetry_collect_1: "  - File type counts (e.g., 5 skills, 2 MCP configs)"
+  telemetry_collect_2: "  - Rule trigger counts (e.g., AS-001: 3 times)"
+  telemetry_collect_3: "  - Error/warning counts"
+  telemetry_collect_4: "  - Validation duration"
+  telemetry_never_collect: "What we never collect:"
+  telemetry_never_1: "  - File paths or names"
+  telemetry_never_2: "  - File contents or code"
+  telemetry_never_3: "  - User identity"
+  telemetry_disable_hint: "You can disable telemetry at any time with: %{cmd}"
+  telemetry_already_disabled: "Telemetry is already disabled."
+  telemetry_ok_disabled: "Telemetry disabled."
+  locale_unsupported: "Warning: unsupported locale '%{locale}', falling back to 'en'"
+  watch_starting: "Starting watch mode. Press Ctrl+C to stop."
+  watch_changes_detected: "Changes detected. Re-validating..."
+  watch_error: "Watch error: %{error}"
+  watch_stopped: "Watch mode stopped."
 
-  # ===========================================================================
-  # LSP - Language server protocol strings
-  # ===========================================================================
-  lsp:
-    suggestion_label: "Suggestion:"
-    hover:
-      name: "Name"
-      description: "Description"
-      model: "Model"
-      context: "Context"
-      agent: "Agent"
-      allowed_tools: "Allowed Tools"
-      argument_hint: "Argument Hint"
-      user_invocable: "User Invocable"
-      disable_model_invocation: "Disable Model Invocation"
-      license: "License"
-      compatibility: "Compatibility"
+# ===========================================================================
+# LSP - Language server protocol strings
+# ===========================================================================
+lsp:
+  suggestion_label: "Suggestion:"
+  hover:
+    name: "Name"
+    description: "Description"
+    model: "Model"
+    context: "Context"
+    agent: "Agent"
+    allowed_tools: "Allowed Tools"
+    argument_hint: "Argument Hint"
+    user_invocable: "User Invocable"
+    disable_model_invocation: "Disable Model Invocation"
+    license: "License"
+    compatibility: "Compatibility"
