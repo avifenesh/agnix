@@ -143,15 +143,29 @@ pub fn find_negative_without_positive(content: &str) -> Vec<NegativeInstruction>
 
     for (line_num, line) in lines.iter().enumerate() {
         if let Some(mat) = neg_pattern.find(line) {
-            // Check current line for positive alternative
-            let has_positive_same_line = pos_pattern.is_match(line);
+            // Check current line for positive alternative using transition words
+            let has_positive_transition = pos_pattern.is_match(line);
+
+            // Check if there's a positive imperative before the negative
+            // e.g., "Use X, don't use Y" or "Fetch fresh data, don't cache"
+            let has_positive_before = if mat.start() > 0 {
+                let before_negative = &line[..mat.start()].trim();
+                // Look for imperative verb patterns before the negative
+                // Match: starts with verb, contains comma or semicolon before negative
+                before_negative.len() > 5
+                    && (before_negative.contains(',') || before_negative.contains(';'))
+                    && !before_negative.starts_with("//")
+                    && !before_negative.starts_with('#')
+            } else {
+                false
+            };
 
             // Check next line for positive alternative
             let has_positive_next_line = lines
                 .get(line_num + 1)
                 .is_some_and(|next| pos_pattern.is_match(next));
 
-            if !has_positive_same_line && !has_positive_next_line {
+            if !has_positive_transition && !has_positive_before && !has_positive_next_line {
                 results.push(NegativeInstruction {
                     line: line_num + 1,
                     column: mat.start() + 1,
@@ -452,6 +466,24 @@ mod tests {
         let content = "Don't use var.\nUse const instead of var.";
         let results = find_negative_without_positive(content);
         assert!(results.is_empty());
+    }
+
+    #[test]
+    fn test_negative_with_positive_before_comma() {
+        // Pattern: "DO X, don't do Y" should be accepted
+        let content = "Fetch web resources fresh, don't rely on cached data";
+        let results = find_negative_without_positive(content);
+        assert!(results.is_empty(), "Should recognize positive before comma");
+
+        // Another example
+        let content2 = "Use const or let, never use var";
+        let results2 = find_negative_without_positive(content2);
+        assert!(results2.is_empty(), "Should recognize positive before comma");
+
+        // But standalone negative should still trigger
+        let content3 = "Don't use var";
+        let results3 = find_negative_without_positive(content3);
+        assert_eq!(results3.len(), 1, "Standalone negative should trigger");
     }
 
     // CC-MEM-007 tests
