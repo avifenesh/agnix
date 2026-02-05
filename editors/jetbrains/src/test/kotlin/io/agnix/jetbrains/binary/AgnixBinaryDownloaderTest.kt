@@ -109,6 +109,12 @@ class AgnixBinaryDownloaderTest {
         assertFalse(AgnixBinaryDownloader.isTargetBinaryEntry("not-agnix-lsp", "agnix-lsp"))
     }
 
+    @Test
+    fun `isTargetBinaryEntry is case sensitive`() {
+        assertFalse(AgnixBinaryDownloader.isTargetBinaryEntry("Agnix-Lsp", "agnix-lsp"))
+        assertFalse(AgnixBinaryDownloader.isTargetBinaryEntry("release/AGNIX-LSP", "agnix-lsp"))
+    }
+
     // ---- verifyPathWithinDestination tests ----
 
     @Test
@@ -178,6 +184,25 @@ class AgnixBinaryDownloaderTest {
 
         val extracted = File(dest, "agnix-lsp")
         assertFalse(extracted.exists())
+    }
+
+    @Test
+    fun `extractTarGz extracts first matching entry`(@TempDir tempDir: Path) {
+        val dest = tempDir.toFile()
+        val archive = File(dest, "test.tar.gz")
+        val firstContent = "first-match".toByteArray()
+        val secondContent = "second-match".toByteArray()
+
+        createTarGzArchive(archive, mapOf(
+            "agnix-lsp" to firstContent,
+            "release/agnix-lsp" to secondContent
+        ))
+
+        AgnixBinaryDownloader.extractTarGz(archive, dest, "agnix-lsp")
+
+        val extracted = File(dest, "agnix-lsp")
+        assertTrue(extracted.exists())
+        assertTrue(extracted.readBytes().contentEquals(firstContent))
     }
 
     @Test
