@@ -3,6 +3,7 @@
 use crate::{
     config::LintConfig,
     diagnostics::{Diagnostic, Fix},
+    fs::FileSystem,
     parsers::frontmatter::{split_frontmatter, FrontmatterParts},
     rules::Validator,
     schemas::skill::SkillSchema,
@@ -10,7 +11,6 @@ use crate::{
 use regex::Regex;
 use serde::Deserialize;
 use std::collections::{HashMap, HashSet};
-use std::fs;
 use std::path::Path;
 use std::sync::OnceLock;
 
@@ -798,7 +798,7 @@ impl Validator for SkillValidator {
         if config.is_rule_enabled("AS-015") && path.is_file() {
             if let Some(dir) = path.parent() {
                 const MAX_BYTES: u64 = 8 * 1024 * 1024;
-                let size = directory_size_until(dir, MAX_BYTES);
+                let size = directory_size_until(dir, MAX_BYTES, config.fs().as_ref());
                 if size > MAX_BYTES {
                     diagnostics.push(
                         Diagnostic::error(
@@ -1153,31 +1153,26 @@ fn frontmatter_value_byte_range(
     None
 }
 
-fn directory_size_until(path: &Path, max_bytes: u64) -> u64 {
+fn directory_size_until(path: &Path, max_bytes: u64, fs: &dyn FileSystem) -> u64 {
     let mut total = 0u64;
     let mut stack = vec![path.to_path_buf()];
     while let Some(current) = stack.pop() {
-        let entries = match fs::read_dir(&current) {
+        let entries = match fs.read_dir(&current) {
             Ok(entries) => entries,
             Err(_) => continue,
         };
-        for entry in entries.flatten() {
-            let Ok(file_type) = entry.file_type() else {
-                continue;
-            };
-            if file_type.is_symlink() {
+        for entry in entries {
+            if entry.metadata.is_symlink {
                 continue;
             }
-            if file_type.is_dir() {
-                stack.push(entry.path());
+            if entry.metadata.is_dir {
+                stack.push(entry.path.clone());
                 continue;
             }
-            if file_type.is_file() {
-                if let Ok(metadata) = entry.metadata() {
-                    total = total.saturating_add(metadata.len());
-                    if total > max_bytes {
-                        return total;
-                    }
+            if entry.metadata.is_file {
+                total = total.saturating_add(entry.metadata.len);
+                if total > max_bytes {
+                    return total;
                 }
             }
         }

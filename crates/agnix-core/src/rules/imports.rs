@@ -10,7 +10,7 @@
 use crate::{
     config::LintConfig,
     diagnostics::Diagnostic,
-    file_utils::safe_read_file,
+    fs::FileSystem,
     parsers::markdown::{extract_imports, extract_markdown_links},
     parsers::{Import, ImportCache},
     rules::Validator,
@@ -56,8 +56,9 @@ impl Validator for ImportsValidator {
         let filename = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
         let is_claude_md = matches!(filename, "CLAUDE.md" | "CLAUDE.local.md");
 
-        let project_root = resolve_project_root(path, config);
-        let root_path = normalize_existing_path(path);
+        let fs = config.fs();
+        let project_root = resolve_project_root(path, config, fs.as_ref());
+        let root_path = normalize_existing_path(path, fs.as_ref());
 
         // Use shared cache if available (project-level validation),
         // otherwise create a local cache (single-file validation)
@@ -90,10 +91,11 @@ impl Validator for ImportsValidator {
             config,
             is_claude_md,
             &project_root,
+            fs.as_ref(),
         );
 
         // Validate markdown links (REF-002)
-        validate_markdown_links(path, content, config, &mut diagnostics);
+        validate_markdown_links(path, content, config, &mut diagnostics, fs.as_ref());
 
         diagnostics
     }
@@ -111,6 +113,7 @@ fn visit_imports(
     config: &LintConfig,
     root_is_claude_md: bool,
     project_root: &Path,
+    fs: &dyn FileSystem,
 ) {
     let depth = stack.len();
     if let Some(prev_depth) = visited_depth.get(file_path) {
@@ -120,11 +123,11 @@ fn visit_imports(
     }
     visited_depth.insert(file_path.clone(), depth);
 
-    let imports = get_imports_for_file(file_path, content_override, shared_cache, local_cache);
+    let imports = get_imports_for_file(file_path, content_override, shared_cache, local_cache, fs);
     let Some(imports) = imports else { return };
 
     let base_dir = file_path.parent().unwrap_or(Path::new("."));
-    let normalized_base = normalize_existing_path(base_dir);
+    let normalized_base = normalize_existing_path(base_dir, fs);
     let normalized_root = project_root;
 
     // Determine file type for current file to route its own diagnostics
@@ -197,8 +200,8 @@ fn visit_imports(
             continue;
         }
 
-        let normalized = if resolved.exists() {
-            let canonical_resolved = normalize_existing_path(&resolved);
+        let normalized = if fs.exists(&resolved) {
+            let canonical_resolved = normalize_existing_path(&resolved, fs);
             if !canonical_resolved.starts_with(normalized_root) {
                 if check_not_found {
                     diagnostics.push(
@@ -221,7 +224,7 @@ fn visit_imports(
             resolved
         };
 
-        if !normalized.exists() {
+        if !fs.exists(&normalized) {
             if check_not_found {
                 diagnostics.push(
                     Diagnostic::error(
@@ -290,6 +293,7 @@ fn visit_imports(
                 config,
                 root_is_claude_md,
                 project_root,
+                fs,
             );
         }
     }
@@ -315,6 +319,7 @@ fn get_imports_for_file(
     content_override: Option<&str>,
     shared_cache: Option<&ImportCache>,
     local_cache: &mut HashMap<PathBuf, Vec<Import>>,
+    fs: &dyn FileSystem,
 ) -> Option<Vec<Import>> {
     // Try shared cache first if available
     if let Some(cache) = shared_cache {
@@ -335,7 +340,7 @@ fn get_imports_for_file(
             // Silently skip files that can't be read (symlinks, too large, missing).
             // This is intentional: import chains often reference optional/external files,
             // and failing noisily on each would overwhelm the user.
-            None => safe_read_file(file_path).ok()?,
+            None => fs.read_to_string(file_path).ok()?,
         };
         let imports = extract_imports(&content);
 
@@ -354,7 +359,7 @@ fn get_imports_for_file(
     if !local_cache.contains_key(file_path) {
         let content = match content_override {
             Some(content) => content.to_string(),
-            None => safe_read_file(file_path).ok()?,
+            None => fs.read_to_string(file_path).ok()?,
         };
         let imports = extract_imports(&content);
         local_cache.insert(file_path.to_path_buf(), imports);
@@ -396,28 +401,28 @@ fn normalize_join(base_dir: &Path, import_path: &str) -> PathBuf {
     result
 }
 
-fn normalize_existing_path(path: &Path) -> PathBuf {
-    std::fs::canonicalize(path).unwrap_or_else(|_| path.to_path_buf())
+fn normalize_existing_path(path: &Path, fs: &dyn FileSystem) -> PathBuf {
+    fs.canonicalize(path).unwrap_or_else(|_| path.to_path_buf())
 }
 
-fn resolve_project_root(path: &Path, config: &LintConfig) -> PathBuf {
+fn resolve_project_root(path: &Path, config: &LintConfig, fs: &dyn FileSystem) -> PathBuf {
     if let Some(root) = config.root_dir.as_deref() {
-        return normalize_existing_path(root);
+        return normalize_existing_path(root, fs);
     }
 
-    find_repo_root(path).unwrap_or_else(|| {
+    find_repo_root(path, fs).unwrap_or_else(|| {
         let fallback = path.parent().unwrap_or(Path::new("."));
-        normalize_existing_path(fallback)
+        normalize_existing_path(fallback, fs)
     })
 }
 
-fn find_repo_root(path: &Path) -> Option<PathBuf> {
+fn find_repo_root(path: &Path, fs: &dyn FileSystem) -> Option<PathBuf> {
     for ancestor in path.ancestors() {
         if ancestor.as_os_str().is_empty() {
             continue;
         }
         let git_marker = ancestor.join(".git");
-        if git_marker.is_dir() || git_marker.is_file() {
+        if fs.is_dir(&git_marker) || fs.is_file(&git_marker) {
             return Some(ancestor.to_path_buf());
         }
     }
@@ -445,6 +450,7 @@ fn validate_markdown_links(
     content: &str,
     config: &LintConfig,
     diagnostics: &mut Vec<Diagnostic>,
+    fs: &dyn FileSystem,
 ) {
     if !config.is_rule_enabled("REF-002") {
         return;
@@ -482,8 +488,8 @@ fn validate_markdown_links(
 
         // Security: Verify resolved path stays within project root
         // Normalize the resolved path to detect path traversal attempts
-        if let Ok(canonical_resolved) = std::fs::canonicalize(&resolved) {
-            if let Ok(canonical_base) = std::fs::canonicalize(base_dir) {
+        if let Ok(canonical_resolved) = fs.canonicalize(&resolved) {
+            if let Ok(canonical_base) = fs.canonicalize(base_dir) {
                 if !canonical_resolved.starts_with(&canonical_base) {
                     // Path traversal attempt detected - skip this link
                     continue;
@@ -492,7 +498,7 @@ fn validate_markdown_links(
         }
 
         // Check if file exists
-        if !resolved.exists() {
+        if !fs.exists(&resolved) {
             let link_type = if link.is_image { "Image" } else { "Link" };
             diagnostics.push(
                 Diagnostic::error(

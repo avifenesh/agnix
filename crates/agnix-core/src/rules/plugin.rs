@@ -1,7 +1,8 @@
 //! Plugin manifest validation (CC-PL-001 to CC-PL-005)
 
 use crate::{
-    config::LintConfig, diagnostics::Diagnostic, rules::Validator, schemas::plugin::PluginSchema,
+    config::LintConfig, diagnostics::Diagnostic, fs::FileSystem, rules::Validator,
+    schemas::plugin::PluginSchema,
 };
 use std::path::Path;
 
@@ -37,9 +38,10 @@ impl Validator for PluginValidator {
 
         if config.is_rule_enabled("CC-PL-002") && is_in_claude_plugin {
             if let Some(plugin_dir) = plugin_dir {
+                let fs = config.fs();
                 let disallowed = ["skills", "agents", "hooks", "commands"];
                 for entry in disallowed {
-                    if plugin_dir.join(entry).exists() {
+                    if fs.exists(&plugin_dir.join(entry)) {
                         diagnostics.push(
                             Diagnostic::error(
                                 path.to_path_buf(),

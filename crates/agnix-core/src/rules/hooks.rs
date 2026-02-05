@@ -3,6 +3,7 @@
 use crate::{
     config::LintConfig,
     diagnostics::{Diagnostic, Fix},
+    fs::FileSystem,
     rules::Validator,
     schemas::hooks::{Hook, HooksSchema, SettingsSchema},
 };
@@ -479,11 +480,12 @@ impl Validator for HooksValidator {
                             if let Some(cmd) = command {
                                 // CC-HK-008: Script file not found
                                 if config.is_rule_enabled("CC-HK-008") {
+                                    let fs = config.fs();
                                     for script_path in self.extract_script_paths(cmd) {
                                         if !self.has_unresolved_env_vars(&script_path) {
                                             let resolved =
                                                 self.resolve_script_path(&script_path, project_dir);
-                                            if !resolved.exists() {
+                                            if !fs.exists(&resolved) {
                                                 diagnostics.push(
                                                     Diagnostic::error(
                                                         path.to_path_buf(),
