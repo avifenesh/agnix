@@ -3,7 +3,6 @@
 use crate::{
     config::LintConfig, diagnostics::Diagnostic, rules::Validator, schemas::plugin::PluginSchema,
 };
-use regex::Regex;
 use std::path::Path;
 
 pub struct PluginValidator;
@@ -113,12 +112,11 @@ impl Validator for PluginValidator {
                         1,
                         0,
                         "CC-PL-003",
-                        format!(
-                            "Version must be semver format (major.minor.patch), got '{}'",
-                            schema.version
-                        ),
+                        format!("Invalid semver format: '{}'", schema.version),
                     )
-                    .with_suggestion("Use format like 1.0.0".to_string()),
+                    .with_suggestion(
+                        "Use semver format: 1.0.0, 1.0.0-rc.1, 1.0.0+build".to_string(),
+                    ),
                 );
             }
         }
@@ -153,8 +151,7 @@ fn check_required_field(
 }
 
 fn is_valid_semver(version: &str) -> bool {
-    let re = Regex::new(r"^\d+\.\d+\.\d+$").unwrap();
-    re.is_match(version)
+    semver::Version::parse(version).is_ok()
 }
 
 #[cfg(test)]
@@ -225,6 +222,44 @@ mod tests {
         );
 
         assert!(diagnostics.iter().any(|d| d.rule == "CC-PL-003"));
+    }
+
+    #[test]
+    fn test_cc_pl_003_valid_prerelease_version() {
+        let temp = TempDir::new().unwrap();
+        let plugin_path = temp.path().join(".claude-plugin").join("plugin.json");
+        write_plugin(
+            &plugin_path,
+            r#"{"name":"test-plugin","description":"desc","version":"4.0.0-rc.1"}"#,
+        );
+
+        let validator = PluginValidator;
+        let diagnostics = validator.validate(
+            &plugin_path,
+            &fs::read_to_string(&plugin_path).unwrap(),
+            &LintConfig::default(),
+        );
+
+        assert!(!diagnostics.iter().any(|d| d.rule == "CC-PL-003"));
+    }
+
+    #[test]
+    fn test_cc_pl_003_valid_build_metadata() {
+        let temp = TempDir::new().unwrap();
+        let plugin_path = temp.path().join(".claude-plugin").join("plugin.json");
+        write_plugin(
+            &plugin_path,
+            r#"{"name":"test-plugin","description":"desc","version":"1.0.0+build.123"}"#,
+        );
+
+        let validator = PluginValidator;
+        let diagnostics = validator.validate(
+            &plugin_path,
+            &fs::read_to_string(&plugin_path).unwrap(),
+            &LintConfig::default(),
+        );
+
+        assert!(!diagnostics.iter().any(|d| d.rule == "CC-PL-003"));
     }
 
     #[test]

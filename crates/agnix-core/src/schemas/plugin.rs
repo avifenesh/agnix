@@ -47,21 +47,13 @@ pub struct AuthorInfo {
 impl PluginSchema {
     /// Validate semver format
     pub fn validate_version(&self) -> Result<(), String> {
-        // Basic semver check (major.minor.patch)
-        let parts: Vec<&str> = self.version.split('.').collect();
-        if parts.len() != 3 {
-            return Err(format!(
-                "Version must be in semver format (e.g., 1.0.0), got '{}'",
-                self.version
-            ));
-        }
-
-        for part in parts {
-            if part.parse::<u32>().is_err() {
-                return Err(format!("Version parts must be numbers, got '{}'", part));
-            }
-        }
-
+        semver::Version::parse(&self.version).map_err(|e| {
+            format!(
+                "Invalid semver format '{}': {}",
+                self.version,
+                e.to_string().to_lowercase()
+            )
+        })?;
         Ok(())
     }
 
