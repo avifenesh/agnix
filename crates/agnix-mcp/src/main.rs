@@ -399,9 +399,10 @@ impl ServerHandler for AgnixServer {
 
 #[cfg(test)]
 mod tests {
-    use super::{apply_tool_selection, parse_tools, ToolsInput};
+    use super::{apply_tool_selection, parse_tools, ToolsInput, ValidateFileInput};
     use agnix_core::config::TargetTool;
     use agnix_core::LintConfig;
+    use serde_json::json;
 
     #[test]
     fn test_parse_tools_csv_trims_and_discards_empty_entries() {
@@ -436,6 +437,15 @@ mod tests {
     }
 
     #[test]
+    fn test_apply_tool_selection_falls_back_to_target_when_tools_missing() {
+        let mut config = LintConfig::default();
+        apply_tool_selection(&mut config, None, Some("claude-code".to_string()));
+
+        assert!(config.tools.is_empty());
+        assert_eq!(config.target, TargetTool::ClaudeCode);
+    }
+
+    #[test]
     fn test_apply_tool_selection_prefers_tools_over_target() {
         let mut config = LintConfig::default();
         apply_tool_selection(
@@ -447,6 +457,39 @@ mod tests {
         assert_eq!(config.tools, vec!["claude-code", "cursor"]);
         // target remains default; tools array drives filtering precedence in core.
         assert_eq!(config.target, TargetTool::Generic);
+    }
+
+    #[test]
+    fn test_validate_file_input_deserializes_csv_tools_payload() {
+        let input: ValidateFileInput = serde_json::from_value(json!({
+            "path": "SKILL.md",
+            "tools": "claude-code,cursor",
+            "target": "codex"
+        }))
+        .expect("tools CSV payload should deserialize");
+
+        match input.tools {
+            Some(ToolsInput::Csv(value)) => assert_eq!(value, "claude-code,cursor"),
+            _ => panic!("expected CSV tools variant"),
+        }
+        assert_eq!(input.target.as_deref(), Some("codex"));
+    }
+
+    #[test]
+    fn test_validate_file_input_deserializes_array_tools_payload() {
+        let input: ValidateFileInput = serde_json::from_value(json!({
+            "path": "SKILL.md",
+            "tools": ["claude-code", "cursor"]
+        }))
+        .expect("tools array payload should deserialize");
+
+        match input.tools {
+            Some(ToolsInput::List(values)) => {
+                assert_eq!(values, vec!["claude-code", "cursor"]);
+            }
+            _ => panic!("expected array tools variant"),
+        }
+        assert!(input.target.is_none());
     }
 }
 
