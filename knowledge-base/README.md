@@ -23,12 +23,12 @@ knowledge-base/
 
 ## Update Rules
 
-- Keep rule counts consistent across `SPEC.md`, `CLAUDE.md`, and `knowledge-base/INDEX.md`.
+- Keep rule counts consistent across `README.md`, `SPEC.md`, `CLAUDE.md`, and `knowledge-base/INDEX.md`.
 - When facts change, update sources in `knowledge-base/VALIDATION-RULES.md`.
 - For cross-platform content, follow support tiers ordering (S tier first, then A).
 - Prefer authoritative sources; avoid duplicating long-form guidance from vendor docs.
 
 ---
 
-**Last Updated**: 2026-02-01
+**Last Updated**: 2026-02-05
 **Pattern Source**: awesome-slash v3.6.1 (production-tested)

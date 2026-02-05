@@ -16,18 +16,25 @@ This crate provides the parsing, schema validation, and diagnostic generation fo
 This is a library crate used by `agnix-cli`. For most users, install the CLI:
 
 ```bash
-cargo install agnix
+cargo install agnix-cli
 ```
 
 For programmatic usage:
 
 ```rust
-use agnix_core::validate_project;
+use agnix_core::{validate_project, LintConfig};
 use std::path::Path;
 
-let diagnostics = validate_project(Path::new("."));
-for diag in diagnostics {
-    println!("{}: {}", diag.rule, diag.message);
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let config = LintConfig::default();
+    let result = validate_project(Path::new("."), &config)?;
+
+    println!("checked {} files", result.files_checked);
+    for diag in result.diagnostics {
+        println!("{}:{} {} {}", diag.file.display(), diag.line, diag.rule, diag.message);
+    }
+
+    Ok(())
 }
 ```
 

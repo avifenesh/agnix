@@ -4,10 +4,18 @@
 //! - XP-001: Claude-specific features in AGENTS.md
 //! - XP-002: AGENTS.md markdown structure validation
 //! - XP-003: Hard-coded platform paths in configs
+//!
+//! ## Security
+//!
+//! This module includes size limits to prevent ReDoS (Regular Expression Denial
+//! of Service) attacks. Functions that use regex will return early for oversized
+//! input.
 
 use regex::Regex;
 use std::path::Path;
 use std::sync::OnceLock;
+
+use crate::parsers::markdown::MAX_REGEX_INPUT_SIZE;
 
 // Static patterns initialized once
 static CLAUDE_HOOKS_PATTERN: OnceLock<Regex> = OnceLock::new();
@@ -85,7 +93,16 @@ fn claude_section_guard_pattern() -> &'static Regex {
 /// Features inside a Claude-specific section (marked by a header like
 /// `## Claude Code Specific` or `<!-- Claude Specific -->`) are not reported,
 /// allowing users to document Claude-specific features without triggering errors.
+///
+/// # Security
+///
+/// Returns early for content exceeding `MAX_REGEX_INPUT_SIZE` to prevent ReDoS.
 pub fn find_claude_specific_features(content: &str) -> Vec<ClaudeSpecificFeature> {
+    // Security: Skip regex processing for oversized input to prevent ReDoS
+    if content.len() > MAX_REGEX_INPUT_SIZE {
+        return Vec::new();
+    }
+
     let mut results = Vec::new();
     let guard_pattern = claude_section_guard_pattern();
 
@@ -267,7 +284,16 @@ fn hard_coded_path_pattern() -> &'static Regex {
 ///
 /// Detects paths like `.claude/`, `.opencode/`, `.cursor/` that may cause
 /// portability issues when the same config is used across different platforms.
+///
+/// # Security
+///
+/// Returns early for content exceeding `MAX_REGEX_INPUT_SIZE` to prevent ReDoS.
 pub fn find_hard_coded_paths(content: &str) -> Vec<HardCodedPath> {
+    // Security: Skip regex processing for oversized input to prevent ReDoS
+    if content.len() > MAX_REGEX_INPUT_SIZE {
+        return Vec::new();
+    }
+
     let mut results = Vec::new();
     let pattern = hard_coded_path_pattern();
 
@@ -356,7 +382,16 @@ fn build_command_pattern() -> &'static Regex {
 /// Extract build commands from content (for XP-004)
 ///
 /// Detects npm, pnpm, yarn, and bun commands in instruction files
+///
+/// # Security
+///
+/// Returns early for content exceeding `MAX_REGEX_INPUT_SIZE` to prevent ReDoS.
 pub fn extract_build_commands(content: &str) -> Vec<BuildCommand> {
+    // Security: Skip regex processing for oversized input to prevent ReDoS
+    if content.len() > MAX_REGEX_INPUT_SIZE {
+        return Vec::new();
+    }
+
     let mut results = Vec::new();
     let pattern = build_command_pattern();
 
@@ -548,7 +583,16 @@ fn tool_disallow_pattern() -> &'static Regex {
 /// Extract tool constraints from content (for XP-005)
 ///
 /// Detects tool allow/disallow patterns in instruction files
+///
+/// # Security
+///
+/// Returns early for content exceeding `MAX_REGEX_INPUT_SIZE` to prevent ReDoS.
 pub fn extract_tool_constraints(content: &str) -> Vec<ToolConstraint> {
+    // Security: Skip regex processing for oversized input to prevent ReDoS
+    if content.len() > MAX_REGEX_INPUT_SIZE {
+        return Vec::new();
+    }
+
     let mut results = Vec::new();
     let allow_pattern = tool_allow_pattern();
     let disallow_pattern = tool_disallow_pattern();
@@ -840,6 +884,12 @@ fn layer_precedence_pattern() -> &'static Regex {
 }
 
 /// Categorize a file path as an instruction layer (for XP-006)
+///
+/// # Security
+///
+/// For content exceeding `MAX_REGEX_INPUT_SIZE`, `has_precedence_doc` will be
+/// set to false to avoid ReDoS. This is a safe default as it may trigger
+/// additional warnings but won't miss security issues.
 pub fn categorize_layer(path: &Path, content: &str) -> InstructionLayer {
     let path_str = path.to_string_lossy().to_lowercase();
     let file_name = path
@@ -864,7 +914,10 @@ pub fn categorize_layer(path: &Path, content: &str) -> InstructionLayer {
         LayerType::Other
     };
 
-    let has_precedence_doc = layer_precedence_pattern().is_match(content);
+    // Security: Skip regex for oversized input to prevent ReDoS
+    // Default to false (safer - may trigger warnings but won't miss issues)
+    let has_precedence_doc =
+        content.len() <= MAX_REGEX_INPUT_SIZE && layer_precedence_pattern().is_match(content);
 
     InstructionLayer {
         path: path.to_path_buf(),
@@ -2081,5 +2134,68 @@ Use pnpm install for dependencies.
         assert!(is_instruction_file(&PathBuf::from(
             ".github/copilot-instructions.md"
         )));
+    }
+
+    // ===== ReDoS Protection Tests =====
+
+    #[test]
+    fn test_find_claude_specific_features_oversized_input() {
+        // Create content larger than MAX_REGEX_INPUT_SIZE (65536 bytes)
+        let large_content = "a".repeat(MAX_REGEX_INPUT_SIZE + 1000);
+        let results = find_claude_specific_features(&large_content);
+        // Should return empty to prevent ReDoS
+        assert!(
+            results.is_empty(),
+            "Oversized content should be skipped for ReDoS protection"
+        );
+    }
+
+    #[test]
+    fn test_find_hard_coded_paths_oversized_input() {
+        // Create content larger than MAX_REGEX_INPUT_SIZE
+        let large_content = "a".repeat(MAX_REGEX_INPUT_SIZE + 1000);
+        let results = find_hard_coded_paths(&large_content);
+        // Should return empty to prevent ReDoS
+        assert!(
+            results.is_empty(),
+            "Oversized content should be skipped for ReDoS protection"
+        );
+    }
+
+    #[test]
+    fn test_extract_build_commands_oversized_input() {
+        // Create content larger than MAX_REGEX_INPUT_SIZE
+        let large_content = "a".repeat(MAX_REGEX_INPUT_SIZE + 1000);
+        let results = extract_build_commands(&large_content);
+        // Should return empty to prevent ReDoS
+        assert!(
+            results.is_empty(),
+            "Oversized content should be skipped for ReDoS protection"
+        );
+    }
+
+    #[test]
+    fn test_extract_tool_constraints_oversized_input() {
+        // Create content larger than MAX_REGEX_INPUT_SIZE
+        let large_content = "a".repeat(MAX_REGEX_INPUT_SIZE + 1000);
+        let results = extract_tool_constraints(&large_content);
+        // Should return empty to prevent ReDoS
+        assert!(
+            results.is_empty(),
+            "Oversized content should be skipped for ReDoS protection"
+        );
+    }
+
+    #[test]
+    fn test_categorize_layer_oversized_input_precedence_doc() {
+        use std::path::PathBuf;
+        // Create content larger than MAX_REGEX_INPUT_SIZE
+        let large_content = "precedence ".repeat((MAX_REGEX_INPUT_SIZE / 11) + 100);
+        let layer = categorize_layer(&PathBuf::from("CLAUDE.md"), &large_content);
+        // has_precedence_doc should be false for oversized input (safe default)
+        assert!(
+            !layer.has_precedence_doc,
+            "Oversized content should not detect precedence for ReDoS protection"
+        );
     }
 }

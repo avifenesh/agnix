@@ -987,6 +987,53 @@ fn test_fix_exit_code_on_remaining_errors() {
 }
 
 #[test]
+fn test_fix_exit_code_when_all_issues_are_fixed() {
+    use std::fs;
+    use std::io::Write;
+
+    let temp_dir = tempfile::tempdir().expect("Failed to create temp dir for test");
+    let skills_dir = temp_dir.path().join("skills").join("test-skill");
+    fs::create_dir_all(&skills_dir).expect("Failed to create skill dir for test");
+
+    let skill_path = skills_dir.join("SKILL.md");
+    {
+        let mut file = fs::File::create(&skill_path).expect("Failed to create skill file for test");
+        // Only AS-004 should fail here, and it is auto-fixable.
+        write!(
+            file,
+            "---\nname: Test_Skill_Name\ndescription: Use when testing\n---\nContent"
+        )
+        .expect("Failed to write to skill file for test");
+    }
+
+    let mut cmd = agnix();
+    let output = cmd
+        .arg(
+            temp_dir
+                .path()
+                .to_str()
+                .expect("Temp path is not valid UTF-8"),
+        )
+        .arg("--fix")
+        .output()
+        .expect("Failed to execute agnix command");
+
+    assert!(
+        output.status.success(),
+        "Expected --fix to exit 0 when all issues are fixed, stdout: {}, stderr: {}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+
+    let fixed_content = fs::read_to_string(&skill_path).expect("Failed to read fixed skill file");
+    assert!(
+        fixed_content.contains("name: test-skill-name"),
+        "Expected AS-004 fix to be applied, got: {}",
+        fixed_content
+    );
+}
+
+#[test]
 fn test_fix_safe_exit_code() {
     let mut cmd = agnix();
     let output = cmd

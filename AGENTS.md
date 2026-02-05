@@ -12,11 +12,11 @@
 
 ## Critical Rules
 
-1. **Rust workspace** - agnix-core (lib) + agnix-cli (binary)
+1. **Rust workspace** - agnix-rules (data), agnix-core (lib), agnix-cli/agnix-lsp/agnix-mcp (binaries)
 2. **rules.json is source of truth** - `knowledge-base/rules.json` is the machine-readable source of truth. When adding a new rule, add it to BOTH `rules.json` AND `VALIDATION-RULES.md`. CI parity tests enforce this.
 3. **Plain text output** - No emojis, no ASCII art
 4. **Certainty filtering** - HIGH (>95%), MEDIUM (75-95%), LOW (<75%)
-5. **Single binary** - Compile with LTO, strip symbols,
+5. **Release binaries** - Compile with LTO, strip symbols
 6. **Track work in GitHub issues** - All tasks tracked there
 7. **Task is not done until tests added** - Every feature/fix must have quality tests
 8. **Documentation** - Keep long-form docs in `README.md`, `SPEC.md`, and `knowledge-base/` (especially `knowledge-base/VALIDATION-RULES.md`). Keep `CLAUDE.md`/`AGENTS.md` for agent instructions only.
@@ -36,7 +36,8 @@ agnix-rules (data-only, generated from rules.json)
 agnix-core (validation engine)
     ↓
 ├── agnix-cli (command-line interface)
-└── agnix-lsp (language server protocol)
+├── agnix-lsp (language server protocol)
+└── agnix-mcp (MCP server)
 ```
 
 ### Project Layout
@@ -46,7 +47,8 @@ crates/
 ├── agnix-rules/    # Rule definitions (build-time generated)
 ├── agnix-core/     # Core: parsers, schemas, validators, diagnostics
 ├── agnix-cli/      # CLI binary (clap)
-└── agnix-lsp/      # LSP server (tower-lsp, tokio)
+├── agnix-lsp/      # LSP server (tower-lsp, tokio)
+└── agnix-mcp/      # MCP server (rmcp)
 editors/
 └── vscode/         # VS Code extension
 knowledge-base/     # 100 rules, 75+ sources, rules.json
@@ -56,31 +58,26 @@ tests/fixtures/     # Test cases by category
 ### Core Modules (agnix-core)
 
 - `parsers/` - Frontmatter, JSON, Markdown parsing
-- `schemas/` - Type definitions (12 schemas: skill, hooks, agent, mcp, etc.)
+- `schemas/` - Type definitions (11 schemas: skill, hooks, agent, mcp, etc.)
 - `rules/` - Validators implementing Validator trait (13 validators)
-- `config.rs` - LintConfig, ToolVersions, SpecRevisions, ImportCache
+- `config.rs` - LintConfig, ToolVersions, SpecRevisions
 - `diagnostics.rs` - Diagnostic, Fix, DiagnosticLevel
+- `eval.rs` - Rule efficacy evaluation (precision/recall/F1)
+- `file_utils.rs` - Safe file I/O (symlink rejection, size limits)
 - `fixes.rs` - Auto-fix application engine
 - `fs.rs` - FileSystem trait abstraction (RealFileSystem, MockFileSystem)
 
 ### Key Abstractions
 
 ```rust
-// Primary extension point - implement for custom validators
+// Primary extension point
 pub trait Validator {
     fn validate(&self, path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic>;
 }
 
-// Registry pattern - multiple validators per FileType
+// Multiple validators per FileType via factory pattern
 pub struct ValidatorRegistry {
     validators: HashMap<FileType, Vec<ValidatorFactory>>
-}
-
-// Diagnostic with optional auto-fix
-pub struct Diagnostic {
-    pub level: DiagnosticLevel,
-    pub rule: String,        // "AS-004", "CC-SK-001"
-    pub fixes: Vec<Fix>,     // Byte-range replacements
 }
 ```
 
@@ -98,25 +95,19 @@ CLI args → LintConfig → validate_project()
 
 ### LSP Architecture
 
-```rust
-// Backend caches config and registry for performance
-pub struct Backend {
-    config: RwLock<Arc<LintConfig>>,
-    registry: Arc<ValidatorRegistry>,  // Immutable, shared
-    documents: RwLock<HashMap<Url, String>>,  // Content cache
-}
-```
-
+- Backend holds `RwLock<Arc<LintConfig>>`, immutable `Arc<ValidatorRegistry>`, document cache
 - Validation runs in `spawn_blocking()` (CPU-bound, sync)
-- Events: `did_open`, `did_change`, `did_save`, `codeAction`, `hover`
+- Events: `did_open`, `did_change`, `did_save`, `did_close`, `did_change_configuration`, `codeAction`, `hover`
 
 ## Commands
 
 ```bash
 cargo check                 # Compile check
 cargo test                  # Run tests
-cargo build --release       # Build binary
+cargo build --release       # Build binaries
 cargo run --bin agnix -- .  # Run CLI
+cargo run --bin agnix-lsp   # Run LSP server
+cargo run --bin agnix-mcp   # Run MCP server
 ```
 
 ## Rules Reference
@@ -131,51 +122,20 @@ Format: `[CATEGORY]-[NUMBER]` (AS-004, CC-HK-001, etc.)
 
 ## Current State
 
-- v0.2.0 - Production-ready with full validation pipeline
+- v0.7.2 - Production-ready with full validation pipeline
 - 100 validation rules across 13 validators
-- 1500+ passing tests
-- LSP server with VS Code extension
+- 1600+ passing tests
+- LSP + MCP servers with VS Code extension
 - See GitHub issues for roadmap
 
-## Top tier tools support:
+## Tool Support Tiers
 
-### S (test always)
-
-- Claude code
-- codex cli
-- opencode
-
-### A (test on major changes)
-
-- GitHub copilot
-- Cline
-- Cursor
-
-### B (test on significant changes if time permits)
-
-- Roo Code
-- Kiro cli
-- amp
-- pi
-
-### C (Community reports fixes only)
-
-- gemini cli
-- continue
-- Antigravity
-
-## D (No support, nice to have, can try once in a while, mainly if users request)
-
-- Tabnine
-- Codeium
-- Amazon Q
-- Windsurf
-- Aider
-- SourceGraph Cody
-
-## E (No support, do not test, full community support and contributions)
-
-- Everything else
+- **S** (test always): Claude Code, Codex CLI, OpenCode
+- **A** (test on major changes): GitHub Copilot, Cline, Cursor
+- **B** (test if time permits): Roo Code, Kiro CLI, amp, pi
+- **C** (community reports only): gemini cli, continue, Antigravity
+- **D** (nice to have): Tabnine, Codeium, Amazon Q, Windsurf, Aider, SourceGraph Cody
+- **E** (no support, community contributions): Everything else
 
 ## References
 

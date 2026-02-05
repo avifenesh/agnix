@@ -7,7 +7,7 @@ Provides real-time validation of agent configuration files in editors that suppo
 ## Installation
 
 ```bash
-cargo install --path crates/agnix-lsp
+cargo install agnix-lsp
 ```
 
 Or build from the workspace root:
@@ -82,12 +82,12 @@ command = "agnix-lsp"
 The LSP server validates the same file types as the CLI:
 
 - `SKILL.md` - Agent skill definitions
-- `CLAUDE.md`, `AGENTS.md` - Claude Code memory files
-- `.claude/settings.json` - Hook configurations
+- `CLAUDE.md`, `CLAUDE.local.md`, `AGENTS.md`, `AGENTS.local.md`, `AGENTS.override.md` - Memory/instruction files
+- `.claude/settings.json`, `.claude/settings.local.json` - Hook configurations
 - `plugin.json` - Plugin manifests
-- `*.mcp.json` - MCP tool configurations
-- `.github/copilot-instructions.md` - GitHub Copilot instructions
-- `.cursor/rules/*.mdc` - Cursor project rules
+- `*.mcp.json`, `mcp.json`, `mcp-*.json` - MCP tool configurations
+- `.github/copilot-instructions.md`, `.github/instructions/*.instructions.md` - GitHub Copilot instructions
+- `.cursor/rules/*.mdc`, `.cursorrules` - Cursor project rules
 
 ## Development
 

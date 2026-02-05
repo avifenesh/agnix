@@ -28,6 +28,8 @@ cargo clippy --all-targets
 4. **Add test fixtures** - `tests/fixtures/`
 5. **Run parity tests** - CI enforces rules.json and VALIDATION-RULES.md stay in sync
 
+When editing project memory instructions, keep `CLAUDE.md` and `AGENTS.md` byte-identical.
+
 Each rule in `rules.json` must include complete `evidence` metadata. See [Rule Evidence Requirements](#rule-evidence-requirements) below for field details.
 
 ## Rule Evidence Requirements
@@ -186,8 +188,10 @@ crates/
   agnix-core/     # Validation engine
   agnix-cli/      # CLI binary
   agnix-lsp/      # Language server
+  agnix-mcp/      # MCP server
 editors/
   vscode/         # VS Code extension
+  jetbrains/      # JetBrains extension scaffold
 knowledge-base/   # Rules documentation
 tests/fixtures/   # Test cases
 ```

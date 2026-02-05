@@ -14,23 +14,23 @@ disabled_rules = ["CC-MEM-006", "PE-003", "XP-001"]
 ### Target a Specific Tool
 
 ```toml
-target = "ClaudeCode"  # Options: Generic, ClaudeCode, Cursor, Codex
+target = "ClaudeCode"  # Deprecated; prefer tools = ["claude-code"]
 ```
 
 ### Multi-Tool Project
 
 ```toml
-tools = ["claude-code", "cursor"]
+tools = ["claude-code", "cursor", "github-copilot"]
 ```
 
 ## Full Reference
 
 ```toml
 severity = "Warning"  # Warning, Error, Info
-target = "Generic"    # Generic, ClaudeCode, Cursor, Codex
+target = "Generic"    # Deprecated: Generic, ClaudeCode, Cursor, Codex
 
 # Multi-tool support (overrides target)
-tools = ["claude-code", "cursor"]
+tools = ["claude-code", "cursor", "github-copilot"]  # Valid: claude-code, cursor, codex, copilot, github-copilot, generic
 
 exclude = [
   "node_modules/**",
@@ -44,6 +44,7 @@ skills = true              # AS-*, CC-SK-* rules
 hooks = true               # CC-HK-* rules
 agents = true              # CC-AG-* rules
 copilot = true             # COP-* rules
+cursor = true              # CUR-* rules
 memory = true              # CC-MEM-* rules
 plugins = true             # CC-PL-* rules
 mcp = true                 # MCP-* rules
@@ -69,7 +70,7 @@ disabled_rules = ["CC-MEM-006", "PE-003"]
 
 agnix automatically validates `.agnix.toml` files for:
 
-- **Invalid rule IDs**: Warns if `disabled_rules` contains IDs that don't match known patterns (AS-, CC-SK-, CC-HK-, etc.)
+- **Invalid rule IDs**: Warns if `disabled_rules` contains IDs that don't match known patterns (AS-, CC-SK-, CC-HK-, CC-AG-, CC-MEM-, CC-PL-, XML-, MCP-, REF-, XP-, AGM-, COP-, CUR-, PE-, imports::)
 - **Unknown tools**: Warns if `tools` array contains tool names that aren't recognized
 - **Deprecated fields**: Warns when using `mcp_protocol_version` (use `spec_revisions.mcp_protocol` instead)
 
@@ -97,6 +98,7 @@ The VS Code extension automatically uses this schema for autocomplete and valida
 | hooks | CC-HK-* | Hook configuration |
 | agents | CC-AG-* | Subagent validation |
 | copilot | COP-* | GitHub Copilot instructions |
+| cursor | CUR-* | Cursor project rule validation |
 | memory | CC-MEM-* | Memory/CLAUDE.md |
 | plugins | CC-PL-* | Plugin validation |
 | mcp | MCP-* | MCP tool validation |
@@ -105,6 +107,8 @@ The VS Code extension automatically uses this schema for autocomplete and valida
 | imports | REF-* | Import reference validation |
 | cross_platform | XP-* | Cross-platform consistency |
 | agents_md | AGM-* | AGENTS.md validation |
+
+Version-awareness (`VER-*`) is always active and configured via `tool_versions` and `spec_revisions` (not a category toggle).
 
 ## Target Filtering
 
@@ -141,7 +145,7 @@ agnix --format json . > results.json
 
 ```json
 {
-  "version": "0.3.0",
+  "version": "0.7.2",
   "files_checked": 5,
   "diagnostics": [
     {
@@ -254,7 +258,7 @@ Add to `.pre-commit-config.yaml`:
 ```yaml
 repos:
   - repo: https://github.com/avifenesh/agnix
-    rev: v0.3.0
+    rev: v0.7.2
     hooks:
       - id: agnix
 ```
@@ -271,7 +275,7 @@ repos:
 ```yaml
 repos:
   - repo: https://github.com/avifenesh/agnix
-    rev: v0.3.0
+    rev: v0.7.2
     hooks:
       - id: agnix-fix
 ```
