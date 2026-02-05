@@ -3006,4 +3006,82 @@ disabled_rules = []
         assert!(!warnings.is_empty());
         assert!(warnings[0].suggestion.is_some());
     }
+
+    #[test]
+    fn test_validate_case_insensitive_tools() {
+        // Tools should be validated case-insensitively
+        let mut config = LintConfig::default();
+        config.tools = vec![
+            "CLAUDE-CODE".to_string(),
+            "CuRsOr".to_string(),
+            "COPILOT".to_string(),
+        ];
+
+        let warnings = config.validate();
+
+        // All should be valid (case-insensitive)
+        assert!(
+            warnings.is_empty(),
+            "Expected no warnings for valid tools with different cases, got: {:?}",
+            warnings
+        );
+    }
+
+    #[test]
+    fn test_validate_multiple_warnings_same_category() {
+        // Test that multiple invalid items of the same type are all reported
+        let mut config = LintConfig::default();
+        config.rules.disabled_rules = vec![
+            "INVALID-001".to_string(),
+            "FAKE-RULE".to_string(),
+            "NOT-A-RULE".to_string(),
+        ];
+
+        let warnings = config.validate();
+
+        // Should have 3 warnings, one for each invalid rule
+        assert_eq!(
+            warnings.len(),
+            3,
+            "Expected 3 warnings for 3 invalid rules"
+        );
+
+        // Verify each invalid rule is mentioned
+        let warning_messages: Vec<&str> = warnings.iter().map(|w| w.message.as_str()).collect();
+        assert!(warning_messages.iter().any(|m| m.contains("INVALID-001")));
+        assert!(warning_messages.iter().any(|m| m.contains("FAKE-RULE")));
+        assert!(warning_messages.iter().any(|m| m.contains("NOT-A-RULE")));
+    }
+
+    #[test]
+    fn test_validate_multiple_invalid_tools() {
+        let mut config = LintConfig::default();
+        config.tools = vec![
+            "unknown-tool".to_string(),
+            "bad-editor".to_string(),
+            "claude-code".to_string(), // This one is valid
+        ];
+
+        let warnings = config.validate();
+
+        // Should have 2 warnings for the 2 invalid tools
+        assert_eq!(
+            warnings.len(),
+            2,
+            "Expected 2 warnings for 2 invalid tools"
+        );
+    }
+
+    #[test]
+    fn test_validate_empty_string_in_tools() {
+        // Empty strings should be flagged as invalid
+        let mut config = LintConfig::default();
+        config.tools = vec!["".to_string(), "claude-code".to_string()];
+
+        let warnings = config.validate();
+
+        // Empty string is not a valid tool
+        assert_eq!(warnings.len(), 1);
+        assert!(warnings[0].message.contains("Unknown tool ''"));
+    }
 }
