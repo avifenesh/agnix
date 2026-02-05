@@ -212,6 +212,10 @@ impl LanguageServer for Backend {
                 if config_path.exists() {
                     match agnix_core::LintConfig::load(&config_path) {
                         Ok(loaded_config) => {
+                            // Apply config-specified locale if present
+                            if let Some(ref config_locale) = loaded_config.locale {
+                                crate::locale::init_from_config(config_locale);
+                            }
                             *self.config.write().await = Arc::new(loaded_config);
                         }
                         Err(e) => {

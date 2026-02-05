@@ -29,6 +29,7 @@ mod backend;
 mod code_actions;
 mod diagnostic_mapper;
 mod hover_provider;
+mod locale;
 mod position;
 mod vscode_config;
 
@@ -40,12 +41,16 @@ use tower_lsp::{LspService, Server};
 /// Start the LSP server.
 ///
 /// This function sets up stdin/stdout communication and runs the server
-/// until shutdown is requested.
+/// until shutdown is requested. Locale is initialized from environment
+/// variables before the server starts.
 ///
 /// # Errors
 ///
 /// Returns an error if the server fails to start or encounters a fatal error.
 pub async fn start_server() -> anyhow::Result<()> {
+    // Initialize locale from environment variables (AGNIX_LOCALE > LANG/LC_ALL > system > "en")
+    locale::init_from_env();
+
     let stdin = tokio::io::stdin();
     let stdout = tokio::io::stdout();
 
