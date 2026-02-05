@@ -227,9 +227,12 @@ impl MockFileSystem {
     pub fn add_file(&self, path: impl AsRef<Path>, content: impl Into<String>) {
         let path = normalize_mock_path(path.as_ref());
         let mut entries = self.entries.write().expect("MockFileSystem lock poisoned");
-        entries.insert(path, MockEntry::File {
-            content: content.into(),
-        });
+        entries.insert(
+            path,
+            MockEntry::File {
+                content: content.into(),
+            },
+        );
     }
 
     /// Add a directory
@@ -281,9 +284,7 @@ impl MockFileSystem {
     /// Internal helper for metadata with depth tracking
     fn metadata_with_depth(&self, path: &Path, depth: u32) -> io::Result<FileMetadata> {
         if depth > Self::MAX_SYMLINK_DEPTH {
-            return Err(io::Error::other(
-                "too many levels of symbolic links",
-            ));
+            return Err(io::Error::other("too many levels of symbolic links"));
         }
 
         // Follow symlinks - use an enum to handle the result outside the lock
@@ -320,9 +321,7 @@ impl MockFileSystem {
     /// Internal helper for canonicalize with depth tracking
     fn canonicalize_with_depth(&self, path: &Path, depth: u32) -> io::Result<PathBuf> {
         if depth > Self::MAX_SYMLINK_DEPTH {
-            return Err(io::Error::other(
-                "too many levels of symbolic links",
-            ));
+            return Err(io::Error::other("too many levels of symbolic links"));
         }
 
         let path_normalized = normalize_mock_path(path);
@@ -374,7 +373,10 @@ impl FileSystem for MockFileSystem {
     fn symlink_metadata(&self, path: &Path) -> io::Result<FileMetadata> {
         // Don't follow symlinks
         let entry = self.get_entry(path).ok_or_else(|| {
-            io::Error::new(io::ErrorKind::NotFound, format!("path not found: {}", path.display()))
+            io::Error::new(
+                io::ErrorKind::NotFound,
+                format!("path not found: {}", path.display()),
+            )
         })?;
 
         match entry {
@@ -388,10 +390,12 @@ impl FileSystem for MockFileSystem {
         let path_normalized = normalize_mock_path(path);
         let entries = self.entries.read().expect("MockFileSystem lock poisoned");
 
-        let entry = entries.get(&path_normalized).ok_or_else(|| LintError::FileRead {
-            path: path.to_path_buf(),
-            source: io::Error::new(io::ErrorKind::NotFound, "file not found"),
-        })?;
+        let entry = entries
+            .get(&path_normalized)
+            .ok_or_else(|| LintError::FileRead {
+                path: path.to_path_buf(),
+                source: io::Error::new(io::ErrorKind::NotFound, "file not found"),
+            })?;
 
         match entry {
             MockEntry::File { content } => Ok(content.clone()),
@@ -412,9 +416,12 @@ impl FileSystem for MockFileSystem {
         match entries.get(&path_normalized) {
             Some(MockEntry::File { .. }) => {
                 // Overwrite existing file
-                entries.insert(path_normalized, MockEntry::File {
-                    content: content.to_string(),
-                });
+                entries.insert(
+                    path_normalized,
+                    MockEntry::File {
+                        content: content.to_string(),
+                    },
+                );
                 Ok(())
             }
             Some(MockEntry::Directory) => Err(LintError::FileNotRegular {
@@ -450,7 +457,10 @@ impl FileSystem for MockFileSystem {
                 ));
             }
             None => {
-                return Err(io::Error::new(io::ErrorKind::NotFound, "directory not found"));
+                return Err(io::Error::new(
+                    io::ErrorKind::NotFound,
+                    "directory not found",
+                ));
             }
         }
 

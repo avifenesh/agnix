@@ -1422,11 +1422,8 @@ skills:
 Agent instructions"#;
 
         let validator = AgentValidator;
-        let diagnostics = validator.validate(
-            Path::new("/project/random/test-agent.md"),
-            content,
-            &config,
-        );
+        let diagnostics =
+            validator.validate(Path::new("/project/random/test-agent.md"), content, &config);
 
         let cc_ag_005: Vec<_> = diagnostics
             .iter()
