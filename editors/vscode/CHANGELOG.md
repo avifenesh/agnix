@@ -4,6 +4,13 @@ All notable changes to the "agnix" extension will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+
+- **Download cleanup hardening** - `downloadFile()` now handles write-stream and non-200 failures safely (#240)
+  - Closes stream handles on failure paths
+  - Deletes temporary download artifacts when a download fails
+  - Adds dedicated unit tests for error and success branches
+
 ### Added
 
 - **Comprehensive Settings UI** - All 25+ validation settings configurable via VS Code Settings UI

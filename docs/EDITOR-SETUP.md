@@ -17,6 +17,8 @@ cargo build --release -p agnix-lsp
 
 ## VS Code
 
+The VS Code extension auto-downloads `agnix-lsp` on first use. Manual install is optional.
+
 Install the extension from source:
 
 ```bash
@@ -194,15 +196,21 @@ If using legacy `.cursorrules` file, agnix warns about migration (CUR-006). To m
 3. Add frontmatter with `description` and `globs`
 4. Delete `.cursorrules`
 
+## JetBrains IDEs
+
+JetBrains support in this repository is currently a scaffold under `editors/jetbrains/` and is not production-ready.
+
+If you need JetBrains integration today, run `agnix-lsp` manually via [LSP4IJ](https://plugins.jetbrains.com/plugin/23257-lsp4ij).
+
 ## Supported File Types
 
 - `SKILL.md` - Agent skill definitions
-- `CLAUDE.md`, `AGENTS.md` - Memory files
-- `.claude/settings.json` - Hook configurations
+- `CLAUDE.md`, `CLAUDE.local.md`, `AGENTS.md`, `AGENTS.local.md`, `AGENTS.override.md` - Memory files
+- `.claude/settings.json`, `.claude/settings.local.json` - Hook configurations
 - `plugin.json` - Plugin manifests
-- `*.mcp.json` - MCP tool configurations
-- `.github/copilot-instructions.md` - Copilot instructions
-- `.cursor/rules/*.mdc` - Cursor project rules
+- `*.mcp.json`, `mcp.json`, `mcp-*.json` - MCP tool configurations
+- `.github/copilot-instructions.md`, `.github/instructions/*.instructions.md` - Copilot instructions
+- `.cursor/rules/*.mdc`, `.cursorrules` - Cursor project rules
 
 ## Features
 

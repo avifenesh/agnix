@@ -1,0 +1,78 @@
+name: Fuzz Testing
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'crates/agnix-core/src/parsers/**'
+      - 'crates/agnix-core/fuzz/**'
+  schedule:
+    # Run weekly on Sundays at 00:00 UTC (extended fuzzing)
+    - cron: "0 0 * * 0"
+  workflow_dispatch:
+    inputs:
+      duration:
+        description: 'Fuzzing duration in seconds'
+        required: false
+        default: '300'
+
+permissions:
+  contents: read
+
+env:
+  FUZZ_DURATION_PR: 300       # 5 minutes for PRs
+  FUZZ_DURATION_WEEKLY: 1800  # 30 minutes for weekly runs
+
+jobs:
+  fuzz:
+    name: Fuzz ${{ matrix.target }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - fuzz_frontmatter
+          - fuzz_markdown
+          - fuzz_json
+
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - name: Install Rust nightly
+        uses: dtolnay/rust-toolchain@4be9e76fd7c4901c61fb841f559994984270fce7
+        with:
+          toolchain: nightly
+
+      - name: Install cargo-fuzz
+        run: cargo install cargo-fuzz
+
+      - name: Determine fuzzing duration
+        id: duration
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_DURATION: ${{ github.event.inputs.duration }}
+        run: |
+          if [ "$EVENT_NAME" = "schedule" ]; then
+            echo "seconds=$FUZZ_DURATION_WEEKLY" >> "$GITHUB_OUTPUT"
+          elif [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            echo "seconds=$INPUT_DURATION" >> "$GITHUB_OUTPUT"
+          else
+            echo "seconds=$FUZZ_DURATION_PR" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run fuzzer
+        working-directory: crates/agnix-core
+        run: |
+          cargo +nightly fuzz run ${{ matrix.target }} -- \
+            -max_total_time=${{ steps.duration.outputs.seconds }} \
+            -max_len=131072  # 128KB: 2x MAX_REGEX_INPUT_SIZE for boundary testing
+
+      - name: Upload crash artifacts
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: crash-${{ matrix.target }}
+          path: |
+            crates/agnix-core/fuzz/artifacts/${{ matrix.target }}/
+            crates/agnix-core/fuzz/corpus/${{ matrix.target }}/
+          retention-days: 30

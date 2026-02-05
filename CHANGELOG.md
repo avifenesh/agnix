@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- VS Code extension: harden `downloadFile()` cleanup for stream and HTTP failure paths (#240)
+  - Closes file/request handles on failure
+  - Removes temporary download artifacts on failed downloads
+  - Adds regression tests for non-200, stream-error, and success branches
+
 ### Security
 - ReDoS protection via regex input size limits (MAX_REGEX_INPUT_SIZE = 64KB)
   - Markdown XML tag extraction skips oversized content
@@ -40,6 +46,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Optional Telescope integration for rule browsing
   - `:checkhealth agnix` support
   - Installation via lazy.nvim, packer.nvim, vim-plug, or manual
+- JetBrains IDE plugin with LSP integration (#196)
+  - Supports IntelliJ IDEA, WebStorm, PyCharm, and all JetBrains IDEs (2023.2+)
+  - Real-time validation, quick fixes, hover documentation
+  - Auto-download of agnix-lsp binary from GitHub releases
+  - Settings UI with LSP path configuration, auto-download toggle, trace level
+  - Context menu actions: Validate File, Restart Server, Settings
+  - Uses LSP4IJ for standard LSP client support
 - `agnix schema` command for JSON Schema generation (#206)
   - Outputs JSON Schema for `.agnix.toml` to stdout or file
   - Generated from Rust types using schemars
@@ -58,6 +71,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `agnix telemetry` subcommand with status/enable/disable commands
 - Comprehensive telemetry documentation in SECURITY.md
 - Rule ID validation at collection point (defense-in-depth)
+- VS Code extension settings UI for configuring all validation options (#225)
+  - Settings page accessible via "Open Settings (UI)" command
+  - Live preview of all rules with descriptions
+  - Changes apply immediately without server restart
+  - Built with Svelte for reactive UI
 
 ### Changed
 - Refactored SkillValidator internal structure for better maintainability (#211)
@@ -70,6 +88,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Reduced main validate() method from ~480 to ~210 lines
   - Organized validation into clear phases with documentation
   - Improved maintainability and testability without changing validation behavior
+
+### Fixed
+- CLI `--fix` now exits with status `0` when all diagnostics are resolved by auto-fixes (#230)
+  - Exit status now reflects post-fix diagnostics for non-dry-run fix modes
+  - Added integration regression test for `--fix` success after full auto-fix
 
 ### Performance
 - Benchmark infrastructure with iai-callgrind for deterministic CI testing (#202)
