@@ -32,7 +32,13 @@ once_cell = "1"
 tempfile = "3"
 proptest = "1"
 criterion = { version = "0.5", features = ["html_reports"] }
+iai-callgrind = "0.14"
+tracking-allocator = "0.4"
 
 [[bench]]
 name = "validation"
+harness = false
+
+[[bench]]
+name = "iai_validation"
 harness = false
