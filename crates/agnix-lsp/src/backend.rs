@@ -1626,6 +1626,9 @@ model: sonnet
             .did_change_configuration(DidChangeConfigurationParams { settings })
             .await;
 
+        // Verify locale was actually changed
+        assert_eq!(&*rust_i18n::locale(), "es");
+
         // Reset locale for other tests
         rust_i18n::set_locale("en");
     }

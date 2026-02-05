@@ -49,8 +49,12 @@ pub struct VsCodeConfig {
     pub specs: Option<VsCodeSpecs>,
 
     /// Output locale for translated messages (e.g., "en", "es", "zh-CN")
-    #[serde(default)]
-    pub locale: Option<String>,
+    /// Uses Option<Option<String>> to distinguish:
+    /// - None = field not in JSON (preserve existing locale)
+    /// - Some(None) = field in JSON as null (revert to auto-detection)
+    /// - Some(Some(v)) = field in JSON with value (set locale to v)
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub locale: Option<Option<String>>,
 }
 
 /// Rule category toggles from VS Code settings.
@@ -212,9 +216,20 @@ impl VsCodeConfig {
         }
 
         // Merge locale
-        if let Some(ref locale) = self.locale {
-            config.locale = Some(locale.clone());
-            crate::locale::init_from_config(locale);
+        // None = not in JSON (preserve existing)
+        // Some(None) = JSON null (clear locale, revert to auto-detection)
+        // Some(Some(v)) = JSON value (set locale)
+        if let Some(ref locale_opt) = self.locale {
+            match locale_opt {
+                Some(locale) => {
+                    config.locale = Some(locale.clone());
+                    crate::locale::init_from_config(locale);
+                }
+                None => {
+                    config.locale = None;
+                    crate::locale::init_from_env();
+                }
+            }
         }
     }
 }
@@ -377,7 +392,7 @@ mod tests {
             config.tools,
             Some(vec!["claude-code".to_string(), "cursor".to_string()])
         );
-        assert_eq!(config.locale, Some("es".to_string()));
+        assert_eq!(config.locale, Some(Some("es".to_string())));
 
         let rules = config.rules.expect("rules should be present");
         assert_eq!(rules.skills, Some(false));
@@ -427,7 +442,7 @@ mod tests {
         assert!(config.rules.is_none());
         assert!(config.versions.is_none());
         assert!(config.specs.is_none());
-        assert!(config.locale.is_none());
+        assert!(config.locale.is_none()); // Option<Option<String>>: outer None = not present
     }
 
     #[test]
@@ -592,13 +607,37 @@ mod tests {
         assert!(lint_config.locale.is_none());
 
         let vscode_config = VsCodeConfig {
-            locale: Some("es".to_string()),
+            locale: Some(Some("es".to_string())),
             ..Default::default()
         };
 
         vscode_config.merge_into_lint_config(&mut lint_config);
 
         assert_eq!(lint_config.locale, Some("es".to_string()));
+        assert_eq!(&*rust_i18n::locale(), "es");
+
+        // Reset locale for other tests
+        rust_i18n::set_locale("en");
+    }
+
+    #[test]
+    fn test_locale_null_reverts_to_auto_detect() {
+        // Pin locale to "es" to simulate a previously set locale
+        rust_i18n::set_locale("es");
+
+        let mut lint_config = LintConfig::default();
+        lint_config.locale = Some("es".to_string());
+
+        // User sets locale to null in VS Code (revert to auto-detection)
+        let vscode_config = VsCodeConfig {
+            locale: Some(None),
+            ..Default::default()
+        };
+
+        vscode_config.merge_into_lint_config(&mut lint_config);
+
+        // Config locale should be cleared
+        assert!(lint_config.locale.is_none());
 
         // Reset locale for other tests
         rust_i18n::set_locale("en");

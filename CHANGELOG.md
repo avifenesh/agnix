@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - JSON and SARIF output always in English for CI/CD consistency
   - Translation guide in docs/TRANSLATING.md for contributors
   - Comprehensive test suite for locale detection and fallback behavior
+  - IDE locale setting: VS Code (`agnix.locale`), Neovim plugin, and LSP config bridge
+    - Supports explicit null to revert to auto-detection
 
 ### Fixed
 - VS Code extension: harden `downloadFile()` cleanup for stream and HTTP failure paths (#240)
