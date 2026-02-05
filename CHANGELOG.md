@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Refactored HooksValidator into standalone validation functions (#212)
+  - Extracted 12 validation rules (CC-HK-001 through CC-HK-012) into standalone functions
+  - Reduced main validate() method from ~480 to ~210 lines
+  - Organized validation into clear phases with documentation
+  - Improved maintainability and testability without changing validation behavior
+
 ## [0.7.2] - 2026-02-05
 
 ### Fixed
