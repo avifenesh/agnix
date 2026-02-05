@@ -58,31 +58,26 @@ tests/fixtures/     # Test cases by category
 ### Core Modules (agnix-core)
 
 - `parsers/` - Frontmatter, JSON, Markdown parsing
-- `schemas/` - Type definitions (12 schemas: skill, hooks, agent, mcp, etc.)
+- `schemas/` - Type definitions (11 schemas: skill, hooks, agent, mcp, etc.)
 - `rules/` - Validators implementing Validator trait (13 validators)
-- `config.rs` - LintConfig, ToolVersions, SpecRevisions, ImportCache
+- `config.rs` - LintConfig, ToolVersions, SpecRevisions
 - `diagnostics.rs` - Diagnostic, Fix, DiagnosticLevel
+- `eval.rs` - Rule efficacy evaluation (precision/recall/F1)
+- `file_utils.rs` - Safe file I/O (symlink rejection, size limits)
 - `fixes.rs` - Auto-fix application engine
 - `fs.rs` - FileSystem trait abstraction (RealFileSystem, MockFileSystem)
 
 ### Key Abstractions
 
 ```rust
-// Primary extension point - implement for custom validators
+// Primary extension point
 pub trait Validator {
     fn validate(&self, path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic>;
 }
 
-// Registry pattern - multiple validators per FileType
+// Multiple validators per FileType via factory pattern
 pub struct ValidatorRegistry {
     validators: HashMap<FileType, Vec<ValidatorFactory>>
-}
-
-// Diagnostic with optional auto-fix
-pub struct Diagnostic {
-    pub level: DiagnosticLevel,
-    pub rule: String,        // "AS-004", "CC-SK-001"
-    pub fixes: Vec<Fix>,     // Byte-range replacements
 }
 ```
 
@@ -100,17 +95,9 @@ CLI args → LintConfig → validate_project()
 
 ### LSP Architecture
 
-```rust
-// Backend caches config and registry for performance
-pub struct Backend {
-    config: RwLock<Arc<LintConfig>>,
-    registry: Arc<ValidatorRegistry>,  // Immutable, shared
-    documents: RwLock<HashMap<Url, String>>,  // Content cache
-}
-```
-
+- Backend holds `RwLock<Arc<LintConfig>>`, immutable `Arc<ValidatorRegistry>`, document cache
 - Validation runs in `spawn_blocking()` (CPU-bound, sync)
-- Events: `did_open`, `did_change`, `did_save`, `codeAction`, `hover`
+- Events: `did_open`, `did_change`, `did_save`, `did_close`, `did_change_configuration`, `codeAction`, `hover`
 
 ## Commands
 
@@ -141,45 +128,14 @@ Format: `[CATEGORY]-[NUMBER]` (AS-004, CC-HK-001, etc.)
 - LSP + MCP servers with VS Code extension
 - See GitHub issues for roadmap
 
-## Top tier tools support:
+## Tool Support Tiers
 
-### S (test always)
-
-- Claude code
-- codex cli
-- opencode
-
-### A (test on major changes)
-
-- GitHub copilot
-- Cline
-- Cursor
-
-### B (test on significant changes if time permits)
-
-- Roo Code
-- Kiro cli
-- amp
-- pi
-
-### C (Community reports fixes only)
-
-- gemini cli
-- continue
-- Antigravity
-
-## D (No support, nice to have, can try once in a while, mainly if users request)
-
-- Tabnine
-- Codeium
-- Amazon Q
-- Windsurf
-- Aider
-- SourceGraph Cody
-
-## E (No support, do not test, full community support and contributions)
-
-- Everything else
+- **S** (test always): Claude Code, Codex CLI, OpenCode
+- **A** (test on major changes): GitHub Copilot, Cline, Cursor
+- **B** (test if time permits): Roo Code, Kiro CLI, amp, pi
+- **C** (community reports only): gemini cli, continue, Antigravity
+- **D** (nice to have): Tabnine, Codeium, Amazon Q, Windsurf, Aider, SourceGraph Cody
+- **E** (no support, community contributions): Everything else
 
 ## References
 
