@@ -4,10 +4,25 @@ All notable changes to the "agnix" extension will be documented in this file.
 
 ## [0.4.0] - 2026-02-05
 
+### Added
+
+- **New commands:**
+  - `agnix: Validate Current File` - Validate the active file
+  - `agnix: Validate Workspace` - Validate all agent configs in workspace
+  - `agnix: Show All Rules` - Browse 100 validation rules by category
+  - `agnix: Fix All Issues in File` - Apply all available quick fixes
+- **Context menu integration** - Right-click on agent config files
+- **Keyboard shortcuts:**
+  - `Ctrl+Shift+V` / `Cmd+Shift+V` - Validate current file
+  - `Ctrl+Shift+.` / `Cmd+Shift+.` - Fix all issues
+- Enhanced marketplace metadata (badges, gallery banner, keywords)
+- Better discoverability in VS Code Marketplace
+
 ### Changed
 
 - Version bump to match CLI v0.4.0
-- Now validates 100 rules
+- Improved extension description
+- Added support for Cursor IDE (compatible with VS Code extensions)
 
 ## [0.3.0] - 2026-02-05
 

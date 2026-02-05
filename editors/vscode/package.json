@@ -1,29 +1,57 @@
 {
   "name": "agnix",
   "displayName": "agnix - Agent Config Linter",
-  "description": "Real-time validation for agent configuration files (SKILL.md, CLAUDE.md, AGENTS.md, MCP, hooks)",
+  "description": "Real-time validation for AI agent configuration files. Validates SKILL.md, CLAUDE.md, AGENTS.md, MCP configs, hooks, and more against 100 rules.",
   "version": "0.4.0",
   "publisher": "avifenesh",
   "repository": {
     "type": "git",
     "url": "https://github.com/avifenesh/agnix"
   },
+  "bugs": {
+    "url": "https://github.com/avifenesh/agnix/issues"
+  },
+  "homepage": "https://github.com/avifenesh/agnix#readme",
   "license": "MIT",
   "icon": "icon.png",
+  "galleryBanner": {
+    "color": "#1e1e1e",
+    "theme": "dark"
+  },
+  "badges": [
+    {
+      "url": "https://img.shields.io/github/v/release/avifenesh/agnix",
+      "href": "https://github.com/avifenesh/agnix/releases",
+      "description": "GitHub Release"
+    },
+    {
+      "url": "https://github.com/avifenesh/agnix/actions/workflows/ci.yml/badge.svg",
+      "href": "https://github.com/avifenesh/agnix/actions/workflows/ci.yml",
+      "description": "CI Status"
+    }
+  ],
   "engines": {
     "vscode": "^1.85.0"
   },
   "categories": [
     "Linters",
-    "Programming Languages"
+    "Programming Languages",
+    "Other"
   ],
   "keywords": [
     "agent",
     "claude",
+    "claude-code",
     "mcp",
+    "model-context-protocol",
     "skills",
     "validation",
-    "linter"
+    "linter",
+    "cursor",
+    "copilot",
+    "codex",
+    "ai",
+    "agents"
   ],
   "activationEvents": [
     "workspaceContains:**/SKILL.md",
@@ -100,8 +128,83 @@
         "command": "agnix.showOutput",
         "title": "Show Output Channel",
         "category": "agnix"
+      },
+      {
+        "command": "agnix.validateFile",
+        "title": "Validate Current File",
+        "category": "agnix",
+        "icon": "$(check)"
+      },
+      {
+        "command": "agnix.validateWorkspace",
+        "title": "Validate Workspace",
+        "category": "agnix",
+        "icon": "$(checklist)"
+      },
+      {
+        "command": "agnix.showRules",
+        "title": "Show All Rules",
+        "category": "agnix",
+        "icon": "$(list-ordered)"
+      },
+      {
+        "command": "agnix.fixAll",
+        "title": "Fix All Issues in File",
+        "category": "agnix",
+        "icon": "$(wand)"
       }
-    ]
+    ],
+    "keybindings": [
+      {
+        "command": "agnix.validateFile",
+        "key": "ctrl+shift+v",
+        "mac": "cmd+shift+v",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "agnix.fixAll",
+        "key": "ctrl+shift+.",
+        "mac": "cmd+shift+.",
+        "when": "editorTextFocus"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "agnix.validateFile",
+          "group": "agnix@1",
+          "when": "resourceFilename =~ /SKILL\\.md$|CLAUDE\\.md$|AGENTS\\.md$|\\.mcp\\.json$|\\.mdc$/"
+        },
+        {
+          "command": "agnix.fixAll",
+          "group": "agnix@2",
+          "when": "resourceFilename =~ /SKILL\\.md$|CLAUDE\\.md$|AGENTS\\.md$|\\.mcp\\.json$|\\.mdc$/"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "agnix.validateFile",
+          "group": "agnix@1",
+          "when": "resourceFilename =~ /SKILL\\.md$|CLAUDE\\.md$|AGENTS\\.md$|\\.mcp\\.json$|\\.mdc$/"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "agnix.validateFile",
+          "when": "editorIsOpen"
+        },
+        {
+          "command": "agnix.validateWorkspace"
+        },
+        {
+          "command": "agnix.showRules"
+        },
+        {
+          "command": "agnix.fixAll",
+          "when": "editorIsOpen"
+        }
+      ]
+    }
   },
   "scripts": {
     "compile": "node esbuild.js",
