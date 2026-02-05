@@ -143,6 +143,13 @@ async function main() {
   console.log(`Downloading agnix v${VERSION} for ${os.platform()}-${os.arch()}...`);
 
   try {
+    // Save wrapper script if it exists (npm places it during install)
+    const wrapperPath = path.join(binDir, 'agnix');
+    const wrapperBackup = path.join(binDir, 'agnix.backup');
+    if (fs.existsSync(wrapperPath) && wrapperPath !== binaryPath) {
+      fs.copyFileSync(wrapperPath, wrapperBackup);
+    }
+
     await downloadFile(downloadUrl, archivePath);
     console.log('Extracting...');
     extractArchive(archivePath, binDir);
@@ -153,6 +160,11 @@ async function main() {
     // Rename extracted binary to avoid conflict with wrapper script
     if (fs.existsSync(extractedPath) && extractedPath !== binaryPath) {
       fs.renameSync(extractedPath, binaryPath);
+    }
+
+    // Restore wrapper script if it was backed up
+    if (fs.existsSync(wrapperBackup)) {
+      fs.renameSync(wrapperBackup, wrapperPath);
     }
 
     // Make binary executable on Unix
