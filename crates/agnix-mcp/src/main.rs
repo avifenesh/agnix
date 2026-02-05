@@ -47,7 +47,7 @@ pub struct ValidateFileInput {
     pub path: String,
     /// Tools to validate for (preferred over legacy target)
     #[schemars(
-        description = "Tools to validate for. Accepts comma-separated string (e.g., 'claude-code,cursor') or array (e.g., ['claude-code','cursor']). Uses canonical agnix tool names (case-insensitive), plus compatibility aliases (e.g., 'copilot', 'claudecode'). When non-empty, this overrides legacy target."
+        description = "Tools to validate for. Accepts comma-separated string (e.g., 'claude-code,cursor,windsurf') or array (e.g., ['claude-code','cursor']). Uses canonical agnix tool names (case-insensitive), plus compatibility aliases (e.g., 'copilot', 'claudecode'). When non-empty, this overrides legacy target."
     )]
     pub tools: Option<ToolsInput>,
     /// Target tool for validation rules
@@ -68,7 +68,7 @@ pub struct ValidateProjectInput {
     pub path: String,
     /// Tools to validate for (preferred over legacy target)
     #[schemars(
-        description = "Tools to validate for. Accepts comma-separated string (e.g., 'claude-code,cursor') or array (e.g., ['claude-code','cursor']). Uses canonical agnix tool names (case-insensitive), plus compatibility aliases (e.g., 'copilot', 'claudecode'). When non-empty, this overrides legacy target."
+        description = "Tools to validate for. Accepts comma-separated string (e.g., 'claude-code,cursor,windsurf') or array (e.g., ['claude-code','cursor']). Uses canonical agnix tool names (case-insensitive), plus compatibility aliases (e.g., 'copilot', 'claudecode'). When non-empty, this overrides legacy target."
     )]
     pub tools: Option<ToolsInput>,
     /// Target tool for validation rules
@@ -516,11 +516,20 @@ mod tests {
         let tools = parse_tools(Some(ToolsInput::List(vec![
             "copilot".to_string(),
             "github-copilot".to_string(),
+            "claudecode".to_string(),
+            "claude-code".to_string(),
             "cursor".to_string(),
             "CURSOR".to_string(),
         ])))
         .expect("valid tools should parse");
-        assert_eq!(tools, vec!["github-copilot", "cursor"]);
+        assert_eq!(tools, vec!["github-copilot", "claude-code", "cursor"]);
+    }
+
+    #[test]
+    fn test_parse_tools_allows_compat_tool_names() {
+        let tools = parse_tools(Some(ToolsInput::Csv("generic,codex".to_string())))
+            .expect("generic and codex should be accepted for compatibility");
+        assert_eq!(tools, vec!["generic", "codex"]);
     }
 
     #[test]
