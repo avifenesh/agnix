@@ -43,6 +43,7 @@ dependencies = [
  "pulldown-cmark",
  "rayon",
  "regex",
+ "schemars 0.8.22",
  "semver",
  "serde",
  "serde_json",
