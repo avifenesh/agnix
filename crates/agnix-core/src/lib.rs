@@ -25,7 +25,7 @@ pub mod diagnostics;
 pub mod eval;
 mod file_utils;
 pub mod fixes;
-mod parsers;
+pub mod parsers;
 mod rules;
 mod schemas;
 
