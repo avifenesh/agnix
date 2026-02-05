@@ -58,6 +58,7 @@ version = "0.7.2"
 dependencies = [
  "agnix-core",
  "anyhow",
+ "serde",
  "serde_json",
  "tempfile",
  "tokio",

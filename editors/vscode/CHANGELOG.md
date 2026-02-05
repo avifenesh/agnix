@@ -2,6 +2,28 @@
 
 All notable changes to the "agnix" extension will be documented in this file.
 
+## [Unreleased]
+
+### Added
+
+- **Comprehensive Settings UI** - All 25+ validation settings configurable via VS Code Settings UI
+  - General settings: enable/disable validation, LSP path, severity level, trace logging
+  - Rule categories: toggle 13 rule categories (skills, hooks, agents, memory, plugins, xml, mcp, imports, crossPlatform, agentsMd, copilot, cursor, promptEngineering)
+  - Version pinning: Pin tool versions (claudeCode, codex, cursor, copilot)
+  - Spec revisions: Pin specification versions (mcpProtocol, agentSkills, agentsMd)
+  - Disabled rules: Array of specific rule IDs to disable
+  - Settings apply immediately without server restart via workspace/didChangeConfiguration
+  - VS Code settings take priority over .agnix.toml configuration files
+- **Dynamic LSP configuration** - LSP server responds to settings changes in real-time
+  - Added VsCodeConfig deserialization types in agnix-lsp
+  - Implemented workspace/didChangeConfiguration handler
+  - Config merging preserves .agnix.toml values while allowing VS Code overrides
+
+### Changed
+
+- Documentation updated with comprehensive settings tables in editors/vscode/README.md
+- Main README.md now references VS Code settings UI capability
+
 ## [0.7.0] - 2026-02-05
 
 ### Added

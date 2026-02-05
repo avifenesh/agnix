@@ -27,6 +27,156 @@ interface PlatformInfo {
   binary: string;
 }
 
+/**
+ * LSP configuration structure sent to the language server.
+ *
+ * Maps VS Code settings to the Rust LintConfig structure.
+ * Uses snake_case for Rust compatibility.
+ */
+interface LspConfig {
+  severity?: string;
+  target?: string;
+  tools?: string[];
+  rules?: {
+    skills?: boolean;
+    hooks?: boolean;
+    agents?: boolean;
+    memory?: boolean;
+    plugins?: boolean;
+    xml?: boolean;
+    mcp?: boolean;
+    imports?: boolean;
+    cross_platform?: boolean;
+    agents_md?: boolean;
+    copilot?: boolean;
+    cursor?: boolean;
+    prompt_engineering?: boolean;
+    disabled_rules?: string[];
+  };
+  versions?: {
+    claude_code?: string | null;
+    codex?: string | null;
+    cursor?: string | null;
+    copilot?: string | null;
+  };
+  specs?: {
+    mcp_protocol?: string | null;
+    agent_skills_spec?: string | null;
+    agents_md_spec?: string | null;
+  };
+}
+
+/**
+ * Build LSP configuration from VS Code settings.
+ *
+ * Reads all agnix.* settings and maps them to the Rust LintConfig structure.
+ * Handles the camelCase to snake_case conversion for Rust compatibility.
+ *
+ * @returns LspConfig object ready to send to the LSP server
+ */
+export function buildLspConfig(): LspConfig {
+  const config = vscode.workspace.getConfiguration('agnix');
+
+  // Helper to get user-set value (not schema default)
+  const getUserValue = <T>(key: string): T | undefined => {
+    const inspected = config.inspect<T>(key);
+    if (!inspected) return undefined;
+    // Priority: workspaceFolder > workspace > global > undefined (skip defaults)
+    return inspected.workspaceFolderValue ?? inspected.workspaceValue ?? inspected.globalValue;
+  };
+
+  const result: LspConfig = {};
+
+  // Only include fields explicitly set by user (preserves .agnix.toml defaults)
+  const severity = getUserValue<string>('severity');
+  if (severity !== undefined) result.severity = severity;
+
+  const target = getUserValue<string>('target');
+  if (target !== undefined) result.target = target;
+
+  const tools = getUserValue<string[]>('tools');
+  if (tools !== undefined) result.tools = tools;
+
+  // Rules - only include if user set them
+  const rulesObj: any = {};
+  let hasRules = false;
+
+  const addRule = (key: string, field: string) => {
+    const value = getUserValue<boolean>(key);
+    if (value !== undefined) {
+      rulesObj[field] = value;
+      hasRules = true;
+    }
+  };
+
+  addRule('rules.skills', 'skills');
+  addRule('rules.hooks', 'hooks');
+  addRule('rules.agents', 'agents');
+  addRule('rules.memory', 'memory');
+  addRule('rules.plugins', 'plugins');
+  addRule('rules.xml', 'xml');
+  addRule('rules.mcp', 'mcp');
+  addRule('rules.imports', 'imports');
+  addRule('rules.crossPlatform', 'cross_platform');
+  addRule('rules.agentsMd', 'agents_md');
+  addRule('rules.copilot', 'copilot');
+  addRule('rules.cursor', 'cursor');
+  addRule('rules.promptEngineering', 'prompt_engineering');
+
+  const disabledRules = getUserValue<string[]>('rules.disabledRules');
+  if (disabledRules !== undefined) {
+    rulesObj.disabled_rules = disabledRules;
+    hasRules = true;
+  }
+
+  if (hasRules) result.rules = rulesObj;
+
+  // Versions - support explicit null to clear pins
+  const versionsObj: any = {};
+  let hasVersions = false;
+
+  const addVersion = (key: string, field: string) => {
+    const inspected = config.inspect<string | null>(key);
+    if (inspected && (inspected.workspaceFolderValue !== undefined ||
+                      inspected.workspaceValue !== undefined ||
+                      inspected.globalValue !== undefined)) {
+      const value = inspected.workspaceFolderValue ?? inspected.workspaceValue ?? inspected.globalValue;
+      versionsObj[field] = value; // null is valid (clears pin)
+      hasVersions = true;
+    }
+  };
+
+  addVersion('versions.claudeCode', 'claude_code');
+  addVersion('versions.codex', 'codex');
+  addVersion('versions.cursor', 'cursor');
+  addVersion('versions.copilot', 'copilot');
+
+  if (hasVersions) result.versions = versionsObj;
+
+  // Specs - support explicit null to clear pins
+  const specsObj: any = {};
+  let hasSpecs = false;
+
+  const addSpec = (key: string, field: string) => {
+    const inspected = config.inspect<string | null>(key);
+    if (inspected && (inspected.workspaceFolderValue !== undefined ||
+                      inspected.workspaceValue !== undefined ||
+                      inspected.globalValue !== undefined)) {
+      const value = inspected.workspaceFolderValue ?? inspected.workspaceValue ?? inspected.globalValue;
+      specsObj[field] = value; // null is valid (clears pin)
+      hasSpecs = true;
+    }
+  };
+
+  addSpec('specs.mcpProtocol', 'mcp_protocol');
+  addSpec('specs.agentSkills', 'agent_skills_spec');
+  addSpec('specs.agentsMd', 'agents_md_spec');
+
+  if (hasSpecs) result.specs = specsObj;
+
+  return result;
+}
+
 const AGNIX_FILE_PATTERNS = [
   '**/SKILL.md',
   '**/CLAUDE.md',
@@ -102,7 +252,9 @@ function downloadFile(url: string, destPath: string): Promise<void> {
           file.close();
           try {
             fs.unlinkSync(destPath);
-          } catch {}
+          } catch {
+            // Error ignored during cleanup
+          }
           downloadFile(redirectUrl, destPath).then(resolve).catch(reject);
           return;
         }
@@ -126,14 +278,18 @@ function downloadFile(url: string, destPath: string): Promise<void> {
       file.close();
       try {
         fs.unlinkSync(destPath);
-      } catch {}
+      } catch {
+        // Error ignored during cleanup
+      }
       reject(err);
     });
 
     file.on('error', (err) => {
       try {
         fs.unlinkSync(destPath);
-      } catch {}
+      } catch {
+        // Error ignored during cleanup
+      }
       reject(err);
     });
   });
@@ -194,14 +350,16 @@ async function downloadAndInstallLsp(): Promise<string | null> {
             throw new Error(`Binary not found after extraction: ${binaryPath}`);
           }
 
-          // Make executable
-          await execAsync(`chmod +x "${binaryPath}"`);
+          // Make executable - use fs.chmodSync instead of shell command to avoid injection risks
+          fs.chmodSync(binaryPath, 0o755);
         }
 
         // Clean up archive
         try {
           fs.unlinkSync(downloadPath);
-        } catch {}
+        } catch {
+          // Error ignored during cleanup
+        }
       }
     );
 
@@ -336,7 +494,18 @@ export async function activate(
         const config = vscode.workspace.getConfiguration('agnix');
         if (!config.get<boolean>('enable', true)) {
           await stopClient();
+        } else if (e.affectsConfiguration('agnix.lspPath')) {
+          // LSP path changed, need full restart
+          await restartClient();
+        } else if (client && client.isRunning()) {
+          // Other settings changed, send to server without restart
+          const lspConfig = buildLspConfig();
+          outputChannel.appendLine('Sending configuration update to LSP server');
+          client.sendNotification('workspace/didChangeConfiguration', {
+            settings: lspConfig,
+          });
         } else {
+          // Client not running but enable is true, start it
           await restartClient();
         }
       }
@@ -430,6 +599,13 @@ async function startClient(): Promise<void> {
     await client.start();
     outputChannel.appendLine('agnix-lsp started successfully');
     updateStatusBar('ready', 'agnix');
+
+    // Send initial configuration to the LSP server
+    const lspConfig = buildLspConfig();
+    outputChannel.appendLine('Sending initial configuration to LSP server');
+    client.sendNotification('workspace/didChangeConfiguration', {
+      settings: lspConfig,
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     outputChannel.appendLine(`Failed to start agnix-lsp: ${message}`);
