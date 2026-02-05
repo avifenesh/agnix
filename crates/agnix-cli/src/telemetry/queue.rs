@@ -144,38 +144,70 @@ impl EventQueue {
 /// Parse an ISO 8601 timestamp to Unix seconds.
 fn parse_timestamp(ts: &str) -> Option<u64> {
     // Simple parser for YYYY-MM-DDTHH:MM:SSZ format
-    if ts.len() < 19 {
+    if ts.len() < 20 {
         return None;
     }
 
-    let year: i32 = ts[0..4].parse().ok()?;
-    let month: u32 = ts[5..7].parse().ok()?;
-    let day: u32 = ts[8..10].parse().ok()?;
-    let hour: u32 = ts[11..13].parse().ok()?;
-    let minute: u32 = ts[14..16].parse().ok()?;
-    let second: u32 = ts[17..19].parse().ok()?;
-
-    // Convert to Unix timestamp (simplified calculation)
-    let mut days = 0i64;
-
-    // Years since 1970
-    for y in 1970..year {
-        days += if is_leap_year(y) { 366 } else { 365 };
+    if !ts.is_ascii() {
+        return None;
     }
 
-    // Months in current year
+    let bytes = ts.as_bytes();
+    if bytes[4] != b'-'
+        || bytes[7] != b'-'
+        || bytes[10] != b'T'
+        || bytes[13] != b':'
+        || bytes[16] != b':'
+        || bytes[19] != b'Z'
+    {
+        return None;
+    }
+
+    let year: i32 = ts.get(0..4)?.parse().ok()?;
+    let month: u32 = ts.get(5..7)?.parse().ok()?;
+    let day: u32 = ts.get(8..10)?.parse().ok()?;
+    let hour: u32 = ts.get(11..13)?.parse().ok()?;
+    let minute: u32 = ts.get(14..16)?.parse().ok()?;
+    let second: u32 = ts.get(17..19)?.parse().ok()?;
+
+    if !(1970..=9999).contains(&year) {
+        return None;
+    }
+    if !(1..=12).contains(&month) {
+        return None;
+    }
+    if hour > 23 {
+        return None;
+    }
+    if minute > 59 {
+        return None;
+    }
+    if second > 59 {
+        return None;
+    }
+
     let days_in_months: [u32; 12] = if is_leap_year(year) {
         [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
     } else {
         [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
     };
 
+    if day == 0 || day > days_in_months[(month - 1) as usize] {
+        return None;
+    }
+
+    // Convert to Unix timestamp (simplified calculation)
+    let mut days = 0i64;
+
+    for y in 1970..year {
+        days += if is_leap_year(y) { 366 } else { 365 };
+    }
+
     for days_in_month in days_in_months.iter().take(month.saturating_sub(1) as usize) {
         days += *days_in_month as i64;
     }
 
-    // Days in current month
-    days += (day - 1) as i64;
+    days += day.checked_sub(1)? as i64;
 
     // Convert to seconds
     let secs = days * 86400 + hour as i64 * 3600 + minute as i64 * 60 + second as i64;
@@ -311,16 +343,11 @@ mod tests {
 
     #[test]
     fn test_parse_timestamp_edge_cases() {
-        // Leap year date
-        let ts = parse_timestamp("2024-02-29T12:00:00Z");
-        assert!(ts.is_some());
+        // Leap year date: 2024-02-29T12:00:00Z = 1709208000
+        assert_eq!(parse_timestamp("2024-02-29T12:00:00Z"), Some(1_709_208_000));
 
-        // End of month
-        let ts = parse_timestamp("2024-01-31T23:59:59Z");
-        assert!(ts.is_some());
-
-        // Note: parse_timestamp does minimal validation (parses positions only)
-        // It doesn't validate separators or month/day ranges - acceptable for pruning
+        // End of month: 2024-01-31T23:59:59Z = 1706745599
+        assert_eq!(parse_timestamp("2024-01-31T23:59:59Z"), Some(1_706_745_599));
 
         // Too short
         assert!(parse_timestamp("2024-01-01").is_none());
@@ -354,5 +381,78 @@ mod tests {
             let TelemetryEvent::ValidationRun(run) = event;
             assert!(!run.timestamp.starts_with("2020"));
         }
+    }
+
+    #[test]
+    fn test_parse_timestamp_rejects_non_ascii() {
+        // Multi-byte UTF-8 strings should be rejected
+        assert!(parse_timestamp("2024\u{00e9}01-01T00:00:00Z").is_none());
+        assert!(parse_timestamp("\u{2013}024-01-01T00:00:00Z").is_none());
+        assert!(parse_timestamp("2024-01-01T00:00:00\u{00dc}").is_none());
+    }
+
+    #[test]
+    fn test_parse_timestamp_rejects_invalid_ranges() {
+        assert!(parse_timestamp("2024-01-00T00:00:00Z").is_none());
+        assert!(parse_timestamp("2024-00-01T00:00:00Z").is_none());
+        assert!(parse_timestamp("2024-13-01T00:00:00Z").is_none());
+        assert!(parse_timestamp("2024-01-32T00:00:00Z").is_none());
+        assert!(parse_timestamp("2024-01-01T25:00:00Z").is_none());
+        assert!(parse_timestamp("2024-01-01T24:00:00Z").is_none());
+        assert!(parse_timestamp("2024-01-01T00:60:00Z").is_none());
+        assert!(parse_timestamp("2024-01-01T00:00:60Z").is_none());
+
+        // Month-specific day validation
+        assert!(parse_timestamp("2024-02-30T00:00:00Z").is_none());
+        assert!(parse_timestamp("2023-02-29T00:00:00Z").is_none()); // non-leap year
+        assert!(parse_timestamp("2024-04-31T00:00:00Z").is_none());
+        assert!(parse_timestamp("2024-06-31T00:00:00Z").is_none());
+        assert!(parse_timestamp("2100-02-29T00:00:00Z").is_none()); // century non-leap
+
+        // Year upper bound
+        assert!(parse_timestamp("2024-01-01T00:00:00Z").is_some());
+        assert!(parse_timestamp("9999-12-31T23:59:59Z").is_some());
+    }
+
+    #[test]
+    fn test_parse_timestamp_rejects_wrong_separators() {
+        assert!(parse_timestamp("2024/01/01T00:00:00Z").is_none());
+        assert!(parse_timestamp("2024-01-01 00:00:00Z").is_none());
+        assert!(parse_timestamp("2024-01-01T00.00.00Z").is_none());
+        assert!(parse_timestamp("2024-01-01-00:00:00Z").is_none());
+    }
+
+    #[test]
+    fn test_parse_timestamp_rejects_pre_epoch() {
+        assert!(parse_timestamp("1969-12-31T23:59:59Z").is_none());
+        assert!(parse_timestamp("1900-01-01T00:00:00Z").is_none());
+        assert!(parse_timestamp("0001-01-01T00:00:00Z").is_none());
+    }
+
+    #[test]
+    fn test_parse_timestamp_valid_boundaries() {
+        // Unix epoch: 1970-01-01T00:00:00Z -> 0
+        assert_eq!(parse_timestamp("1970-01-01T00:00:00Z"), Some(0));
+
+        // Leap year Feb 29: 2000-02-29T00:00:00Z = 951782400
+        assert_eq!(parse_timestamp("2000-02-29T00:00:00Z"), Some(951_782_400));
+
+        // End of year
+        let ts = parse_timestamp("2024-12-31T23:59:59Z");
+        assert!(ts.is_some());
+        let val = ts.unwrap();
+        // Should be just before 2025-01-01T00:00:00Z (1735689600)
+        assert_eq!(val, 1735689599);
+    }
+
+    #[test]
+    fn test_parse_timestamp_rejects_garbage() {
+        assert!(parse_timestamp("not-a-timestamp-at-all").is_none());
+        assert!(parse_timestamp("xxxx-xx-xxTxx:xx:xxZ").is_none());
+        assert!(parse_timestamp("\0\0\0\0-\0\0-\0\0T\0\0:\0\0:\0\0Z").is_none());
+        assert!(parse_timestamp("9999-99-99T99:99:99Z").is_none());
+        // Very long string (valid prefix, extra trailing data is ignored)
+        let long = "2024-01-01T00:00:00Z".to_string() + &"x".repeat(10000);
+        assert!(parse_timestamp(&long).is_some());
     }
 }

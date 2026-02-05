@@ -27,6 +27,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Supports explicit null to revert to auto-detection
 
 ### Fixed
+- CLI: harden telemetry queue timestamp parsing against malformed data (#231)
+  - Replace panic-prone byte-index slicing with safe `str::get()` calls
+  - Add ASCII guard, separator validation, and range checks (year, month-aware day bounds, hour, minute, second)
+  - Use `checked_sub` for day arithmetic to prevent u32 underflow
 - Config validation: accept VER-* prefix in disabled_rules (#233)
 - VS Code extension: harden `downloadFile()` cleanup for stream and HTTP failure paths (#240)
   - Closes file/request handles on failure
