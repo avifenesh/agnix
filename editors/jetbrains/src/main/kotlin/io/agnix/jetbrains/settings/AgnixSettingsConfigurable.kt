@@ -1,6 +1,7 @@
 package io.agnix.jetbrains.settings
 
 import com.intellij.openapi.options.Configurable
+import io.agnix.jetbrains.binary.AgnixBinaryResolver
 import javax.swing.JComponent
 
 /**
@@ -38,11 +39,18 @@ class AgnixSettingsConfigurable : Configurable {
         val settings = AgnixSettings.getInstance()
         val component = settingsComponent ?: return
 
+        val lspPathChanged = settings.lspPath != component.lspPath
+
         settings.enabled = component.enabled
         settings.lspPath = component.lspPath
         settings.autoDownload = component.autoDownload
         settings.traceLevel = component.traceLevel
         settings.codeLensEnabled = component.codeLensEnabled
+
+        // Clear binary resolver cache if LSP path changed
+        if (lspPathChanged) {
+            AgnixBinaryResolver.clearCache()
+        }
     }
 
     override fun reset() {
