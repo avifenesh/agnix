@@ -36,6 +36,10 @@ jobs:
         with:
           save-if: ${{ github.ref == 'refs/heads/main' }}
 
+      # Pre-build binary once - all subsequent action calls will use cached build
+      - name: Pre-build binary
+        run: cargo build --release
+
       - name: Test action (default inputs)
         id: test-default
         uses: ./
@@ -233,6 +237,7 @@ jobs:
         uses: ./
         with:
           format: 'sarif'
+          config: '.agnix.toml'
           build-from-source: 'true'
           fail-on-error: 'false'
 
