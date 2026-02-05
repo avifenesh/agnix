@@ -257,8 +257,10 @@ fn apply_tool_selection(
 ) -> Result<(), McpError> {
     let parsed_tools = parse_tools(tools)?;
     if parsed_tools.is_empty() {
+        config.tools.clear();
         config.target = parse_target(target);
     } else {
+        config.target = agnix_core::config::TargetTool::Generic;
         config.tools = parsed_tools;
     }
 
@@ -449,6 +451,27 @@ impl ServerHandler for AgnixServer {
     }
 }
 
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
+    // Initialize logging to stderr (stdout is for MCP protocol)
+    tracing_subscriber::fmt()
+        .with_env_filter(
+            tracing_subscriber::EnvFilter::from_default_env()
+                .add_directive(tracing::Level::WARN.into()),
+        )
+        .with_writer(std::io::stderr)
+        .init();
+
+    // Create and run MCP server on stdio
+    let server = AgnixServer::new();
+    let service = server.serve(stdio()).await?;
+
+    // Wait for shutdown
+    service.waiting().await?;
+
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::{
@@ -536,8 +559,25 @@ mod tests {
     }
 
     #[test]
+    fn test_apply_tool_selection_clears_existing_tools_on_fallback() {
+        let mut config = LintConfig::default();
+        config.tools = vec!["cursor".to_string()];
+
+        apply_tool_selection(
+            &mut config,
+            Some(ToolsInput::Csv(" ".to_string())),
+            Some("claude-code".to_string()),
+        )
+        .expect("empty tools should trigger fallback and clear stale tools");
+
+        assert!(config.tools.is_empty());
+        assert_eq!(config.target, TargetTool::ClaudeCode);
+    }
+
+    #[test]
     fn test_apply_tool_selection_prefers_tools_over_target() {
         let mut config = LintConfig::default();
+        config.target = TargetTool::Cursor;
         apply_tool_selection(
             &mut config,
             Some(ToolsInput::Csv("claude-code,cursor".to_string())),
@@ -625,25 +665,4 @@ mod tests {
             _ => panic!("expected array tools variant"),
         }
     }
-}
-
-#[tokio::main]
-async fn main() -> anyhow::Result<()> {
-    // Initialize logging to stderr (stdout is for MCP protocol)
-    tracing_subscriber::fmt()
-        .with_env_filter(
-            tracing_subscriber::EnvFilter::from_default_env()
-                .add_directive(tracing::Level::WARN.into()),
-        )
-        .with_writer(std::io::stderr)
-        .init();
-
-    // Create and run MCP server on stdio
-    let server = AgnixServer::new();
-    let service = server.serve(stdio()).await?;
-
-    // Wait for shutdown
-    service.waiting().await?;
-
-    Ok(())
 }
