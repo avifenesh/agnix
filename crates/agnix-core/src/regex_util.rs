@@ -31,8 +31,7 @@ macro_rules! static_regex {
         fn $fname() -> &'static Regex {
             static STORE: std::sync::OnceLock<Regex> = std::sync::OnceLock::new();
             STORE.get_or_init(|| {
-                Regex::new($pattern)
-                    .expect(concat!("BUG: invalid static regex: ", $pattern))
+                Regex::new($pattern).expect(concat!("BUG: invalid static regex: ", $pattern))
             })
         }
     };

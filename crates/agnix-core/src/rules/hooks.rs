@@ -79,8 +79,9 @@ fn dangerous_patterns() -> &'static Vec<DangerousPattern> {
         patterns
             .iter()
             .map(|&(pattern, reason)| {
-                let regex = Regex::new(&format!("(?i){}", pattern))
-                    .unwrap_or_else(|_| panic!("BUG: invalid dangerous pattern regex: {}", pattern));
+                let regex = Regex::new(&format!("(?i){}", pattern)).unwrap_or_else(|_| {
+                    panic!("BUG: invalid dangerous pattern regex: {}", pattern)
+                });
                 DangerousPattern {
                     regex,
                     pattern,
@@ -101,7 +102,9 @@ fn script_patterns() -> &'static Vec<Regex> {
             r#"["']?([^\s"']+\.ts)["']?\b"#,
         ]
         .iter()
-        .map(|p| Regex::new(p).unwrap_or_else(|_| panic!("BUG: invalid script pattern regex: {}", p)))
+        .map(|p| {
+            Regex::new(p).unwrap_or_else(|_| panic!("BUG: invalid script pattern regex: {}", p))
+        })
         .collect()
     })
 }

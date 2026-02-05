@@ -18,16 +18,20 @@ static_regex!(fn npm_run_pattern, r"npm\s+run\s+([a-zA-Z0-9_:-]+)");
 /// Generic instruction patterns that Claude already knows
 pub fn generic_patterns() -> &'static Vec<Regex> {
     GENERIC_PATTERNS.get_or_init(|| {
-        vec![
-            Regex::new(r"(?i)\bbe\s+helpful").expect(r"BUG: invalid regex: (?i)\bbe\s+helpful"),
-            Regex::new(r"(?i)\bbe\s+accurate").expect(r"BUG: invalid regex: (?i)\bbe\s+accurate"),
-            Regex::new(r"(?i)\bthink\s+step\s+by\s+step").expect(r"BUG: invalid regex: (?i)\bthink\s+step\s+by\s+step"),
-            Regex::new(r"(?i)\bbe\s+concise").expect(r"BUG: invalid regex: (?i)\bbe\s+concise"),
-            Regex::new(r"(?i)\bformat.*properly").expect(r"BUG: invalid regex: (?i)\bformat.*properly"),
-            Regex::new(r"(?i)\bprovide.*clear.*explanations").expect(r"BUG: invalid regex: (?i)\bprovide.*clear.*explanations"),
-            Regex::new(r"(?i)\bmake\s+sure\s+to").expect(r"BUG: invalid regex: (?i)\bmake\s+sure\s+to"),
-            Regex::new(r"(?i)\balways\s+be").expect(r"BUG: invalid regex: (?i)\balways\s+be"),
-        ]
+        const PATTERNS: &[&str] = &[
+            r"(?i)\bbe\s+helpful",
+            r"(?i)\bbe\s+accurate",
+            r"(?i)\bthink\s+step\s+by\s+step",
+            r"(?i)\bbe\s+concise",
+            r"(?i)\bformat.*properly",
+            r"(?i)\bprovide.*clear.*explanations",
+            r"(?i)\bmake\s+sure\s+to",
+            r"(?i)\balways\s+be",
+        ];
+        PATTERNS
+            .iter()
+            .map(|&p| Regex::new(p).unwrap_or_else(|e| panic!("BUG: invalid regex '{}': {}", p, e)))
+            .collect()
     })
 }
 
