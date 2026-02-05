@@ -666,7 +666,10 @@ fn validate_cc_hk_010_prompt_timeout(
     }
 }
 
-// Keep HooksValidator impl for backward compatibility with existing tests
+// Keep HooksValidator methods for backward compatibility with existing tests.
+// These delegate to the standalone functions above.
+#[cfg(test)]
+#[allow(dead_code)]
 impl HooksValidator {
     fn check_dangerous_patterns(&self, command: &str) -> Option<(&'static str, &'static str)> {
         check_dangerous_patterns(command)
