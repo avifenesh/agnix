@@ -1,17 +1,43 @@
-# Source files (not needed in package)
+# Source files
 src/**
 **/*.ts
-!out/**/*.js
+!**/*.d.ts
+
+# Test files
+**/test/**
+**/*.test.js
+**/*.test.js.map
+**/runTest.js
+**/runTest.js.map
+
+# Source maps (not needed in production)
+**/*.js.map
+
+# Unbundled output (for testing only)
+out/src/**
 
 # Build configuration
 tsconfig.json
+tsconfig.test.json
 esbuild.js
+.eslintrc*
+eslint.config.*
 
 # Development files
 .gitignore
+.vscode/
 .vscode-test/
-node_modules/
+
+# Dependencies (bundled via esbuild)
+node_modules/**
+
+# Packages
+*.vsix
+
+# OS files
+.DS_Store
+Thumbs.db
 
 # Other
-*.vsix
-.DS_Store
+*.log
+.npmrc
