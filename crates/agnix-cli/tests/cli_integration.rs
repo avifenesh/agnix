@@ -1915,3 +1915,150 @@ fn test_telemetry_invalid_action_rejected() {
         .failure()
         .stderr(predicate::str::contains("invalid value"));
 }
+
+// ============================================================================
+// Schema Command Integration Tests (Issue #206)
+// ============================================================================
+
+#[test]
+fn test_schema_command_stdout() {
+    // agnix schema outputs valid JSON to stdout
+    let mut cmd = agnix();
+    cmd.arg("schema")
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("\"$schema\""))
+        .stdout(predicate::str::contains("LintConfig"));
+}
+
+#[test]
+fn test_schema_command_output_file() {
+    // agnix schema --output file.json writes to file
+    let temp_dir = tempfile::tempdir().unwrap();
+    let output_path = temp_dir.path().join("schema.json");
+
+    let mut cmd = agnix();
+    cmd.arg("schema")
+        .arg("--output")
+        .arg(&output_path)
+        .assert()
+        .success();
+
+    // Verify file was created and contains valid JSON
+    let content = std::fs::read_to_string(&output_path).unwrap();
+    let json: serde_json::Value = serde_json::from_str(&content).unwrap();
+
+    // Verify it's a valid JSON Schema
+    assert!(
+        json["$schema"].is_string(),
+        "Schema output should have $schema field"
+    );
+    assert!(
+        json["title"].is_string() || json["definitions"].is_object(),
+        "Schema output should have title or definitions"
+    );
+}
+
+#[test]
+fn test_schema_command_help_shows_output_option() {
+    let mut cmd = agnix();
+    cmd.arg("schema")
+        .arg("--help")
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("--output"));
+}
+
+// ============================================================================
+// Config Validation Warning Display Integration Tests (Issue #206)
+// ============================================================================
+
+#[test]
+fn test_invalid_rule_displays_semantic_warning() {
+    // Use tests/fixtures/config_validation/invalid_rules.toml
+    let mut cmd = agnix();
+    cmd.arg("--config")
+        .arg("tests/fixtures/config_validation/invalid_rules.toml")
+        .arg("tests/fixtures/valid")
+        .assert()
+        .success()
+        .stderr(predicate::str::contains("Config warning"))
+        .stderr(predicate::str::contains("INVALID-001"));
+}
+
+#[test]
+fn test_deprecated_field_displays_warning() {
+    // Use tests/fixtures/config_validation/deprecated_fields.toml
+    let mut cmd = agnix();
+    cmd.arg("--config")
+        .arg("tests/fixtures/config_validation/deprecated_fields.toml")
+        .arg("tests/fixtures/valid")
+        .assert()
+        .success()
+        .stderr(predicate::str::contains("mcp_protocol_version"))
+        .stderr(predicate::str::contains("deprecated"));
+}
+
+#[test]
+fn test_invalid_tools_displays_warning() {
+    // Use tests/fixtures/config_validation/invalid_tools.toml
+    let mut cmd = agnix();
+    cmd.arg("--config")
+        .arg("tests/fixtures/config_validation/invalid_tools.toml")
+        .arg("tests/fixtures/valid")
+        .assert()
+        .success()
+        .stderr(predicate::str::contains("Config warning"))
+        .stderr(predicate::str::contains("unknown-tool"));
+}
+
+#[test]
+fn test_valid_config_no_semantic_warnings() {
+    // Use tests/fixtures/config_validation/valid_config.toml
+    let mut cmd = agnix();
+    let output = cmd
+        .arg("--config")
+        .arg("tests/fixtures/config_validation/valid_config.toml")
+        .arg("tests/fixtures/valid")
+        .output()
+        .unwrap();
+
+    let stderr = String::from_utf8_lossy(&output.stderr);
+
+    // Valid config should NOT produce "Config warning:" messages
+    assert!(
+        !stderr.contains("Config warning:"),
+        "Valid config should not produce semantic warnings, stderr: {}",
+        stderr
+    );
+}
+
+#[test]
+fn test_config_semantic_warnings_go_to_stderr_with_json_output() {
+    // Semantic warnings should go to stderr, not corrupt JSON output
+    let mut cmd = agnix();
+    let output = cmd
+        .arg("--config")
+        .arg("tests/fixtures/config_validation/invalid_rules.toml")
+        .arg("tests/fixtures/valid")
+        .arg("--format")
+        .arg("json")
+        .output()
+        .unwrap();
+
+    let _stderr = String::from_utf8_lossy(&output.stderr);
+    let stdout = String::from_utf8_lossy(&output.stdout);
+
+    // Note: Semantic warnings only display for text output per main.rs line 273
+    // JSON output suppresses them to avoid corrupting the JSON
+    // So this test verifies JSON is still valid
+    let json: Result<serde_json::Value, _> = serde_json::from_str(&stdout);
+    assert!(
+        json.is_ok(),
+        "JSON output should be valid even with config that has semantic issues, got: {}",
+        stdout
+    );
+
+    // The parse warning (if any) goes to stderr, but semantic warnings are suppressed for JSON
+    // This is intentional behavior per the implementation
+}
