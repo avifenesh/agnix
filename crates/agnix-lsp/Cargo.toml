@@ -13,7 +13,7 @@ name = "agnix-lsp"
 path = "src/main.rs"
 
 [dependencies]
-agnix-core = { path = "../agnix-core" }
+agnix-core.workspace = true
 tower-lsp = { workspace = true }
 tokio = { workspace = true }
 anyhow = { workspace = true }

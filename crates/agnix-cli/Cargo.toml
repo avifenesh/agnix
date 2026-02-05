@@ -16,8 +16,8 @@ name = "agnix"
 path = "src/main.rs"
 
 [dependencies]
-agnix-core = { path = "../agnix-core", version = "0.2.0" }
-agnix-rules = { path = "../agnix-rules", version = "0.2.0" }
+agnix-core.workspace = true
+agnix-rules.workspace = true
 clap.workspace = true
 colored.workspace = true
 anyhow.workspace = true
@@ -25,6 +25,8 @@ serde.workspace = true
 serde_json.workspace = true
 toml = "0.8"
 similar = "2"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
 [dev-dependencies]
 assert_cmd = "2"

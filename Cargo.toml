@@ -19,8 +19,9 @@ keywords = ["agent", "linter", "claude", "skills", "mcp"]
 categories = ["development-tools", "command-line-utilities"]
 
 [workspace.dependencies]
-# Internal crates
+# Internal crates - path for local dev, version for crates.io
 agnix-rules = { path = "crates/agnix-rules", version = "0.2.0" }
+agnix-core = { path = "crates/agnix-core", version = "0.2.0" }
 
 # Core dependencies
 serde = { version = "1", features = ["derive"] }
