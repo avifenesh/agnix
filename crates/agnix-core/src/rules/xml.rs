@@ -6,6 +6,7 @@ use crate::{
     parsers::markdown::{check_xml_balance_with_content_end, extract_xml_tags, XmlBalanceError},
     rules::Validator,
 };
+use rust_i18n::t;
 use std::path::Path;
 
 pub struct XmlValidator;
@@ -35,8 +36,8 @@ impl Validator for XmlValidator {
                     if !config.is_rule_enabled(rule_id) {
                         continue;
                     }
-                    let message = format!("Unclosed XML tag '<{}>'", tag);
-                    let suggestion = format!("Add closing tag '</{}>'", tag);
+                    let message = t!("rules.xml_001.message", tag = tag);
+                    let suggestion = t!("rules.xml_001.suggestion", tag = tag);
                     let closing_tag = format!("</{}>", tag);
 
                     // Create fix: insert closing tag at content end
@@ -47,7 +48,7 @@ impl Validator for XmlValidator {
                     let fix = Fix::insert(
                         content_end_byte,
                         closing_tag,
-                        format!("Insert closing tag '</{}>'", tag),
+                        t!("rules.xml_001.fix", tag = tag),
                         false,
                     );
 
@@ -67,8 +68,8 @@ impl Validator for XmlValidator {
                     if !config.is_rule_enabled(rule_id) {
                         continue;
                     }
-                    let message = format!("Expected '</{}>' but found '</{}>'", expected, found);
-                    let suggestion = format!("Replace '</{}>' with '</{}>'", found, expected);
+                    let message = t!("rules.xml_002.message", expected = expected, found = found);
+                    let suggestion = t!("rules.xml_002.suggestion", found = found, expected = expected);
 
                     let diagnostic =
                         Diagnostic::error(path.to_path_buf(), line, column, rule_id, message)
@@ -80,11 +81,8 @@ impl Validator for XmlValidator {
                     if !config.is_rule_enabled(rule_id) {
                         continue;
                     }
-                    let message = format!("Unmatched closing tag '</{}>'", tag);
-                    let suggestion = format!(
-                        "Remove '</{}>' or add matching opening tag '<{}>'",
-                        tag, tag
-                    );
+                    let message = t!("rules.xml_003.message", tag = tag);
+                    let suggestion = t!("rules.xml_003.suggestion", tag = tag);
 
                     let diagnostic =
                         Diagnostic::error(path.to_path_buf(), line, column, rule_id, message)

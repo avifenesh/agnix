@@ -9,6 +9,7 @@ use crate::{
     schemas::skill::SkillSchema,
 };
 use regex::Regex;
+use rust_i18n::t;
 use serde::Deserialize;
 use std::collections::{HashMap, HashSet};
 use std::path::Path;
@@ -214,9 +215,9 @@ impl<'a> ValidationContext<'a> {
                     frontmatter_line,
                     frontmatter_col,
                     "AS-001",
-                    "SKILL.md must have YAML frontmatter between --- markers".to_string(),
+                    t!("rules.as_001.message"),
                 )
-                .with_suggestion("Add frontmatter between --- markers".to_string()),
+                .with_suggestion(t!("rules.as_001.suggestion")),
             );
         }
 
@@ -232,7 +233,7 @@ impl<'a> ValidationContext<'a> {
                             frontmatter_line,
                             frontmatter_col,
                             "AS-016",
-                            format!("Failed to parse SKILL.md: {}", e),
+                            t!("rules.as_016.message", error = e.to_string()),
                         ));
                     }
                 }
@@ -253,9 +254,9 @@ impl<'a> ValidationContext<'a> {
                     name_line,
                     name_col,
                     "AS-002",
-                    "Skill frontmatter is missing required 'name' field".to_string(),
+                    t!("rules.as_002.message"),
                 )
-                .with_suggestion("Add 'name: your-skill-name' to frontmatter".to_string()),
+                .with_suggestion(t!("rules.as_002.suggestion")),
             );
         }
 
@@ -267,9 +268,9 @@ impl<'a> ValidationContext<'a> {
                     description_line,
                     description_col,
                     "AS-003",
-                    "Skill frontmatter is missing required 'description' field".to_string(),
+                    t!("rules.as_003.message"),
                 )
-                .with_suggestion("Add 'description: Use when...' to frontmatter".to_string()),
+                .with_suggestion(t!("rules.as_003.suggestion")),
             );
         }
     }
@@ -290,13 +291,10 @@ impl<'a> ValidationContext<'a> {
                     name_line,
                     name_col,
                     "AS-004",
-                    format!(
-                        "Name '{}' must be 1-64 characters of lowercase letters, digits, and hyphens",
-                        name_trimmed
-                    ),
+                    t!("rules.as_004.message", name = name_trimmed),
                 )
                 .with_suggestion(
-                    "Lowercase and trim the name, replace spaces and '_' with '-', collapse multiple '-' into one, remove invalid characters, and truncate to 64 characters".to_string(),
+                    t!("rules.as_004.suggestion"),
                 );
 
                 // Add auto-fix if we can find the byte range and the fixed name is valid
@@ -314,7 +312,7 @@ impl<'a> ValidationContext<'a> {
                             start,
                             end,
                             &fixed_name,
-                            format!("Convert name to kebab-case: '{}'", fixed_name),
+                            t!("rules.as_004.fix", name = fixed_name.clone()),
                             is_case_only,
                         );
                         diagnostic = diagnostic.with_fix(fix);
@@ -335,9 +333,9 @@ impl<'a> ValidationContext<'a> {
                     name_line,
                     name_col,
                     "AS-005",
-                    format!("Name '{}' cannot start or end with hyphen", name_trimmed),
+                    t!("rules.as_005.message", name = name_trimmed),
                 )
-                .with_suggestion("Remove leading/trailing hyphens from the name".to_string()),
+                .with_suggestion(t!("rules.as_005.suggestion")),
             );
         }
 
@@ -349,9 +347,9 @@ impl<'a> ValidationContext<'a> {
                     name_line,
                     name_col,
                     "AS-006",
-                    format!("Name '{}' cannot contain consecutive hyphens", name_trimmed),
+                    t!("rules.as_006.message", name = name_trimmed),
                 )
-                .with_suggestion("Replace '--' with '-' in the name".to_string()),
+                .with_suggestion(t!("rules.as_006.suggestion")),
             );
         }
 
@@ -365,9 +363,9 @@ impl<'a> ValidationContext<'a> {
                         name_line,
                         name_col,
                         "AS-007",
-                        format!("Name '{}' is reserved and cannot be used", name_trimmed),
+                        t!("rules.as_007.message", name = name_trimmed),
                     )
-                    .with_suggestion("Choose a different skill name".to_string()),
+                    .with_suggestion(t!("rules.as_007.suggestion")),
                 );
             }
         }
@@ -388,10 +386,10 @@ impl<'a> ValidationContext<'a> {
                         description_line,
                         description_col,
                         "AS-008",
-                        format!("Description must be 1-1024 characters, got {}", len),
+                        t!("rules.as_008.message", len = len),
                     )
                     .with_suggestion(
-                        "Trim the description to 1024 characters or fewer".to_string(),
+                        t!("rules.as_008.suggestion"),
                     ),
                 );
             }
@@ -407,9 +405,9 @@ impl<'a> ValidationContext<'a> {
                         description_line,
                         description_col,
                         "AS-009",
-                        "Description must not contain XML tags".to_string(),
+                        t!("rules.as_009.message"),
                     )
-                    .with_suggestion("Remove XML tags from the description".to_string()),
+                    .with_suggestion(t!("rules.as_009.suggestion")),
                 );
             }
         }
@@ -423,11 +421,10 @@ impl<'a> ValidationContext<'a> {
                     description_line,
                     description_col,
                     "AS-010",
-                    "Description should include a 'Use when...' trigger phrase".to_string(),
+                    t!("rules.as_010.message"),
                 )
                 .with_suggestion(
-                    "Add 'Use when [condition]' to help Claude understand when to invoke this skill"
-                        .to_string(),
+                    t!("rules.as_010.suggestion"),
                 );
 
                 // Add auto-fix: prepend "Use when user wants to " to description
@@ -439,7 +436,7 @@ impl<'a> ValidationContext<'a> {
                             start,
                             end,
                             &new_description,
-                            "Prepend 'Use when user wants to ' to description",
+                            t!("rules.as_010.fix"),
                             false, // Not safe - changes semantics
                         );
                         diagnostic = diagnostic.with_fix(fix);
@@ -464,10 +461,10 @@ impl<'a> ValidationContext<'a> {
                             compat_line,
                             compat_col,
                             "AS-011",
-                            format!("Compatibility must be 1-500 characters, got {}", len),
+                            t!("rules.as_011.message", len = len),
                         )
                         .with_suggestion(
-                            "Trim compatibility to 500 characters or fewer".to_string(),
+                            t!("rules.as_011.suggestion"),
                         ),
                     );
                 }
@@ -491,15 +488,10 @@ impl<'a> ValidationContext<'a> {
                             model_line,
                             model_col,
                             "CC-SK-001",
-                            format!(
-                                "Invalid model '{}'. Must be one of: {}",
-                                model,
-                                VALID_MODELS.join(", ")
-                            ),
+                            t!("rules.cc_sk_001.message", model = model.as_str(), valid = VALID_MODELS.join(", ")),
                         )
-                        .with_suggestion(format!(
-                            "Use one of the valid model values: {}",
-                            VALID_MODELS.join(", ")
+                        .with_suggestion(t!(
+                            "rules.cc_sk_001.suggestion", valid = VALID_MODELS.join(", ")
                         )),
                     );
                 }
@@ -516,10 +508,10 @@ impl<'a> ValidationContext<'a> {
                             context_line,
                             context_col,
                             "CC-SK-002",
-                            format!("Invalid context '{}'. Must be 'fork' or omitted", context),
+                            t!("rules.cc_sk_002.message", context = context.as_str()),
                         )
                         .with_suggestion(
-                            "Set context to 'fork' or remove the field entirely".to_string(),
+                            t!("rules.cc_sk_002.suggestion"),
                         ),
                     );
                 }
@@ -537,10 +529,10 @@ impl<'a> ValidationContext<'a> {
                     context_line,
                     context_col,
                     "CC-SK-003",
-                    "Context 'fork' requires an 'agent' field".to_string(),
+                    t!("rules.cc_sk_003.message"),
                 )
                 .with_suggestion(
-                    "Add 'agent: general-purpose' or another valid agent type".to_string(),
+                    t!("rules.cc_sk_003.suggestion"),
                 ),
             );
         }
@@ -556,9 +548,9 @@ impl<'a> ValidationContext<'a> {
                     agent_line,
                     agent_col,
                     "CC-SK-004",
-                    "Agent field requires 'context: fork'".to_string(),
+                    t!("rules.cc_sk_004.message"),
                 )
-                .with_suggestion("Add 'context: fork' to the frontmatter".to_string()),
+                .with_suggestion(t!("rules.cc_sk_004.suggestion")),
             );
         }
     }
@@ -575,13 +567,10 @@ impl<'a> ValidationContext<'a> {
                             agent_line,
                             agent_col,
                             "CC-SK-005",
-                            format!(
-                                "Invalid agent type '{}'. Must be Explore, Plan, general-purpose, or a custom kebab-case name (1-64 chars)",
-                                agent
-                            ),
+                            t!("rules.cc_sk_005.message", agent = agent.as_str()),
                         )
                         .with_suggestion(
-                            "Use a built-in agent (Explore, Plan, general-purpose) or a custom kebab-case name".to_string()
+                            t!("rules.cc_sk_005.suggestion")
                         ),
                     );
                 }
@@ -631,9 +620,9 @@ impl<'a> ValidationContext<'a> {
                             allowed_tools_line,
                             allowed_tools_col,
                             "CC-SK-007",
-                            "Unrestricted Bash access detected. Consider using scoped version for better security.".to_string(),
+                            t!("rules.cc_sk_007.message"),
                         )
-                        .with_suggestion("Use scoped Bash like 'Bash(git:*)' or 'Bash(npm:*)' instead of plain 'Bash'".to_string());
+                        .with_suggestion(t!("rules.cc_sk_007.suggestion"));
 
                         // Try to attach a fix for each plain Bash
                         if let Some(&(start, end)) = bash_pos_iter.next() {
@@ -643,7 +632,7 @@ impl<'a> ValidationContext<'a> {
                                 start,
                                 end,
                                 "Bash(git:*)",
-                                "Replace unrestricted Bash with scoped Bash(git:*)",
+                                t!("rules.cc_sk_007.fix"),
                                 false,
                             );
                             diagnostic = diagnostic.with_fix(fix);
@@ -671,14 +660,10 @@ impl<'a> ValidationContext<'a> {
                                 allowed_tools_line,
                                 allowed_tools_col,
                                 "CC-SK-008",
-                                format!(
-                                    "Unknown tool '{}'. Known tools: {}",
-                                    base_name, known_tools_str
-                                ),
+                                t!("rules.cc_sk_008.message", tool = base_name, known = known_tools_str.as_str()),
                             )
-                            .with_suggestion(format!(
-                                "Use one of the known Claude Code tools: {}",
-                                known_tools_str
+                            .with_suggestion(t!(
+                                "rules.cc_sk_008.suggestion", known = known_tools_str.as_str()
                             )),
                         );
                     }
@@ -706,13 +691,10 @@ impl<'a> ValidationContext<'a> {
                         name_line,
                         name_col,
                         "CC-SK-006",
-                        format!(
-                            "Dangerous skill '{}' must set 'disable-model-invocation: true' to prevent accidental invocation",
-                            schema.name
-                        ),
+                        t!("rules.cc_sk_006.message", name = schema.name.as_str()),
                     )
                     .with_suggestion(
-                        "Add 'disable-model-invocation: true' to the frontmatter".to_string(),
+                        t!("rules.cc_sk_006.suggestion"),
                     ),
                 );
             }
@@ -729,14 +711,10 @@ impl<'a> ValidationContext<'a> {
                         frontmatter_line,
                         frontmatter_col,
                         "CC-SK-009",
-                        format!(
-                            "Too many dynamic injections ({}). Limit to {} for better performance",
-                            injection_count, MAX_INJECTIONS
-                        ),
+                        t!("rules.cc_sk_009.message", count = injection_count, max = MAX_INJECTIONS),
                     )
                     .with_suggestion(
-                        "Consider moving complex logic to a scripts/ directory or reducing injections"
-                            .to_string(),
+                        t!("rules.cc_sk_009.suggestion"),
                     ),
                 );
             }
@@ -762,9 +740,9 @@ impl<'a> ValidationContext<'a> {
                         body_line,
                         body_col,
                         "AS-012",
-                        format!("Skill content exceeds 500 lines (got {})", line_count),
+                        t!("rules.as_012.message", count = line_count),
                     )
-                    .with_suggestion("Move extra content into references/".to_string()),
+                    .with_suggestion(t!("rules.as_012.suggestion")),
                 );
             }
         }
@@ -781,12 +759,9 @@ impl<'a> ValidationContext<'a> {
                             line,
                             col,
                             "AS-013",
-                            format!(
-                                "File reference '{}' is deeper than one level",
-                                ref_path.path
-                            ),
+                            t!("rules.as_013.message", path = ref_path.path.as_str()),
                         )
-                        .with_suggestion("Flatten the references/ directory structure".to_string()),
+                        .with_suggestion(t!("rules.as_013.suggestion")),
                     );
                 }
             }
@@ -803,12 +778,9 @@ impl<'a> ValidationContext<'a> {
                         line,
                         col,
                         "AS-014",
-                        format!(
-                            "Windows path separator detected in '{}'; use forward slashes",
-                            win_path.path
-                        ),
+                        t!("rules.as_014.message", path = win_path.path.as_str()),
                     )
-                    .with_suggestion("Replace '\\\\' with '/' in file paths".to_string()),
+                    .with_suggestion(t!("rules.as_014.suggestion")),
                 );
             }
         }
@@ -829,10 +801,10 @@ impl<'a> ValidationContext<'a> {
                             frontmatter_line,
                             frontmatter_col,
                             "AS-015",
-                            format!("Skill directory exceeds 8MB ({} bytes)", size),
+                            t!("rules.as_015.message", size = size),
                         )
                         .with_suggestion(
-                            "Remove large assets or split the skill into smaller parts".to_string(),
+                            t!("rules.as_015.suggestion"),
                         ),
                     );
                 }

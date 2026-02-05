@@ -8,6 +8,7 @@ use crate::{
 };
 use once_cell::sync::Lazy;
 use regex::Regex;
+use rust_i18n::t;
 use std::path::Path;
 
 pub struct HooksValidator;
@@ -15,9 +16,6 @@ pub struct HooksValidator;
 /// Default timeout thresholds per hook type (from official Claude Code docs)
 const COMMAND_HOOK_DEFAULT_TIMEOUT: u64 = 600; // 10 minutes
 const PROMPT_HOOK_DEFAULT_TIMEOUT: u64 = 30; // 30 seconds
-
-/// Version assumption note for CC-HK-010 when claude_code version is not pinned
-const CC_HK_010_ASSUMPTION: &str = "Assumes Claude Code default timeout behavior. Pin claude_code version in .agnix.toml [tool_versions] for version-specific validation.";
 
 struct DangerousPattern {
     regex: Regex,
@@ -122,13 +120,10 @@ fn validate_cc_hk_005_missing_type_field(
                                         1,
                                         0,
                                         "CC-HK-005",
-                                        format!(
-                                            "Hook at {} is missing required 'type' field",
-                                            hook_location
-                                        ),
+                                        t!("rules.cc_hk_005.message", location = hook_location.as_str()),
                                     )
                                     .with_suggestion(
-                                        "Add 'type': 'command' or 'type': 'prompt'".to_string(),
+                                        t!("rules.cc_hk_005.suggestion"),
                                     ),
                                 );
                             }
@@ -179,13 +174,10 @@ fn validate_cc_hk_011_invalid_timeout_values(
                                             1,
                                             0,
                                             "CC-HK-011",
-                                            format!(
-                                                "Invalid timeout value at {}: must be a positive integer",
-                                                hook_location
-                                            ),
+                                            t!("rules.cc_hk_011.message", location = hook_location.as_str()),
                                         )
                                         .with_suggestion(
-                                            "Set timeout to a positive integer like 30".to_string(),
+                                            t!("rules.cc_hk_011.suggestion"),
                                         ),
                                     );
                                 }
@@ -215,11 +207,7 @@ fn validate_cc_hk_001_event_name(
         1,
         0,
         "CC-HK-001",
-        format!(
-            "Invalid hook event '{}', valid events: {:?}",
-            event,
-            HooksSchema::VALID_EVENTS
-        ),
+        t!("rules.cc_hk_001.message", event = event, valid = format!("{:?}", HooksSchema::VALID_EVENTS)),
     )
     .with_suggestion(closest.suggestion);
 
@@ -227,7 +215,7 @@ fn validate_cc_hk_001_event_name(
     if let Some(corrected) = closest.corrected_event {
         if let Some((start, end)) = find_event_key_position(content, event) {
             let replacement = format!("\"{}\"", corrected);
-            let description = format!("Replace '{}' with '{}'", event, corrected);
+            let description = t!("rules.cc_hk_001.fix", old = event, new = corrected);
             // Case-only fixes are safe (high confidence)
             let fix = Fix::replace(start, end, replacement, description, closest.is_case_fix);
             diagnostic = diagnostic.with_fix(fix);
@@ -254,12 +242,9 @@ fn validate_cc_hk_003_matcher_required(
                 1,
                 0,
                 "CC-HK-003",
-                format!(
-                    "Tool event '{}' at {} requires a matcher field",
-                    event, hook_location
-                ),
+                t!("rules.cc_hk_003.message", event = event, location = hook_location.as_str()),
             )
-            .with_suggestion("Add 'matcher': '*' for all tools or specify a tool name".to_string()),
+            .with_suggestion(t!("rules.cc_hk_003.suggestion")),
         );
     }
 }
@@ -280,12 +265,9 @@ fn validate_cc_hk_004_matcher_forbidden(
                 1,
                 0,
                 "CC-HK-004",
-                format!(
-                    "Non-tool event '{}' at {} must not have a matcher field",
-                    event, hook_location
-                ),
+                t!("rules.cc_hk_004.message", event = event, location = hook_location.as_str()),
             )
-            .with_suggestion("Remove the 'matcher' field".to_string()),
+            .with_suggestion(t!("rules.cc_hk_004.suggestion")),
         );
     }
 }
@@ -350,12 +332,9 @@ fn validate_cc_hk_006_command_field(
                 1,
                 0,
                 "CC-HK-006",
-                format!(
-                    "Command hook at {} is missing required 'command' field",
-                    hook_location
-                ),
+                t!("rules.cc_hk_006.message", location = hook_location),
             )
-            .with_suggestion("Add a 'command' field with the command to execute".to_string()),
+            .with_suggestion(t!("rules.cc_hk_006.suggestion")),
         );
     }
 }
@@ -379,13 +358,9 @@ fn validate_cc_hk_008_script_exists(
                         1,
                         0,
                         "CC-HK-008",
-                        format!(
-                            "Script file not found at '{}' (resolved to '{}')",
-                            script_path,
-                            resolved.display()
-                        ),
+                        t!("rules.cc_hk_008.message", script = script_path.as_str(), resolved = resolved.display().to_string()),
                     )
-                    .with_suggestion("Create the script file or correct the path".to_string()),
+                    .with_suggestion(t!("rules.cc_hk_008.suggestion")),
                 );
             }
         }
@@ -405,11 +380,10 @@ fn validate_cc_hk_009_dangerous_patterns(
                 1,
                 0,
                 "CC-HK-009",
-                format!("Potentially dangerous command pattern detected: {}", reason),
+                t!("rules.cc_hk_009.message", reason = reason),
             )
-            .with_suggestion(format!(
-                "Review the command for safety. Pattern matched: {}",
-                pattern
+            .with_suggestion(t!(
+                "rules.cc_hk_009.suggestion", pattern = pattern
             )),
         );
     }
@@ -429,12 +403,12 @@ fn validate_cc_hk_010_command_timeout(
             1,
             0,
             "CC-HK-010",
-            format!("Command hook at {} has no timeout specified", hook_location),
+            t!("rules.cc_hk_010.command_no_timeout", location = hook_location),
         )
-        .with_suggestion("Add a \"timeout\" field (e.g., 600 for command hooks)".to_string());
+        .with_suggestion(t!("rules.cc_hk_010.command_no_timeout_suggestion"));
 
         if !version_pinned {
-            diag = diag.with_assumption(CC_HK_010_ASSUMPTION);
+            diag = diag.with_assumption(t!("rules.cc_hk_010.assumption"));
         }
 
         diagnostics.push(diag);
@@ -446,18 +420,14 @@ fn validate_cc_hk_010_command_timeout(
                 1,
                 0,
                 "CC-HK-010",
-                format!(
-                    "Command hook at {} has timeout {}s exceeding {}s default",
-                    hook_location, t, COMMAND_HOOK_DEFAULT_TIMEOUT
-                ),
+                t!("rules.cc_hk_010.command_exceeds", location = hook_location, timeout = t, default = COMMAND_HOOK_DEFAULT_TIMEOUT),
             )
-            .with_suggestion(format!(
-                "Consider timeout <= {}s (10-minute default limit)",
-                COMMAND_HOOK_DEFAULT_TIMEOUT
+            .with_suggestion(t!(
+                "rules.cc_hk_010.command_exceeds_suggestion", default = COMMAND_HOOK_DEFAULT_TIMEOUT
             ));
 
             if !version_pinned {
-                diag = diag.with_assumption(CC_HK_010_ASSUMPTION);
+                diag = diag.with_assumption(t!("rules.cc_hk_010.assumption"));
             }
 
             diagnostics.push(diag);
@@ -479,13 +449,10 @@ fn validate_cc_hk_002_prompt_event_type(
                 1,
                 0,
                 "CC-HK-002",
-                format!(
-                    "Prompt hook at {} is only allowed for Stop and SubagentStop events, not '{}'",
-                    hook_location, event
-                ),
+                t!("rules.cc_hk_002.message", location = hook_location, event = event),
             )
             .with_suggestion(
-                "Use 'type': 'command' instead, or move this hook to Stop/SubagentStop".to_string(),
+                t!("rules.cc_hk_002.suggestion"),
             ),
         );
     }
@@ -505,12 +472,9 @@ fn validate_cc_hk_007_prompt_field(
                 1,
                 0,
                 "CC-HK-007",
-                format!(
-                    "Prompt hook at {} is missing required 'prompt' field",
-                    hook_location
-                ),
+                t!("rules.cc_hk_007.message", location = hook_location),
             )
-            .with_suggestion("Add a 'prompt' field with the prompt text".to_string()),
+            .with_suggestion(t!("rules.cc_hk_007.suggestion")),
         );
     }
 }
@@ -529,12 +493,12 @@ fn validate_cc_hk_010_prompt_timeout(
             1,
             0,
             "CC-HK-010",
-            format!("Prompt hook at {} has no timeout specified", hook_location),
+            t!("rules.cc_hk_010.prompt_no_timeout", location = hook_location),
         )
-        .with_suggestion("Add a \"timeout\" field (e.g., 30 for prompt hooks)".to_string());
+        .with_suggestion(t!("rules.cc_hk_010.prompt_no_timeout_suggestion"));
 
         if !version_pinned {
-            diag = diag.with_assumption(CC_HK_010_ASSUMPTION);
+            diag = diag.with_assumption(t!("rules.cc_hk_010.assumption"));
         }
 
         diagnostics.push(diag);
@@ -546,18 +510,14 @@ fn validate_cc_hk_010_prompt_timeout(
                 1,
                 0,
                 "CC-HK-010",
-                format!(
-                    "Prompt hook at {} has timeout {}s exceeding {}s default",
-                    hook_location, t, PROMPT_HOOK_DEFAULT_TIMEOUT
-                ),
+                t!("rules.cc_hk_010.prompt_exceeds", location = hook_location, timeout = t, default = PROMPT_HOOK_DEFAULT_TIMEOUT),
             )
-            .with_suggestion(format!(
-                "Consider timeout <= {}s (30-second default limit)",
-                PROMPT_HOOK_DEFAULT_TIMEOUT
+            .with_suggestion(t!(
+                "rules.cc_hk_010.prompt_exceeds_suggestion", default = PROMPT_HOOK_DEFAULT_TIMEOUT
             ));
 
             if !version_pinned {
-                diag = diag.with_assumption(CC_HK_010_ASSUMPTION);
+                diag = diag.with_assumption(t!("rules.cc_hk_010.assumption"));
             }
 
             diagnostics.push(diag);
@@ -611,7 +571,7 @@ impl Validator for HooksValidator {
                         1,
                         0,
                         "CC-HK-012",
-                        format!("Failed to parse hooks configuration: {}", e),
+                        t!("rules.cc_hk_012.message", error = e.to_string()),
                     ));
                 }
                 return diagnostics;
@@ -640,7 +600,7 @@ impl Validator for HooksValidator {
                         1,
                         0,
                         "CC-HK-012",
-                        format!("Failed to parse hooks configuration: {}", e),
+                        t!("rules.cc_hk_012.message", error = e.to_string()),
                     ));
                 }
                 return diagnostics;
