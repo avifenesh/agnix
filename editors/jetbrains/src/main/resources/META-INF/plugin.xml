@@ -18,8 +18,8 @@
     <h2>Supported Files</h2>
     <ul>
         <li>SKILL.md - Agent Skills specification</li>
-        <li>CLAUDE.md / AGENTS.md - Project memory files</li>
-        <li>.claude/settings.json - Claude Code settings</li>
+        <li>CLAUDE.md / AGENTS.md variants - Project memory files</li>
+        <li>.claude/settings.json and .claude/settings.local.json - Claude Code settings</li>
         <li>*.mcp.json - MCP server configurations</li>
         <li>.cursor/rules/*.mdc - Cursor rules</li>
         <li>.github/copilot-instructions.md - GitHub Copilot instructions</li>
@@ -53,7 +53,7 @@
             name="SKILL.md"
             implementationClass="io.agnix.jetbrains.filetype.SkillFileType"
             fieldName="INSTANCE"
-            language="Markdown"
+            language="TEXT"
             fileNames="SKILL.md"/>
 
         <!-- Notifications -->
@@ -78,80 +78,23 @@
             ]]></description>
         </server>
 
-        <!-- File Mappings -->
-        <languageMapping
-            language="Markdown"
-            serverId="io.agnix.lsp"
-            languageId="markdown"/>
-        <languageMapping
-            language="JSON"
-            serverId="io.agnix.lsp"
-            languageId="json"/>
-
         <!--
             File Pattern Mappings
 
-            Note: Some patterns (mcp.json, plugin.json, settings.json) are broader than ideal
-            because LSP4IJ doesn't support path-based patterns. The agnix-lsp server validates
-            the full file path context and gracefully ignores unrelated files (e.g., it won't
-            validate .vscode/settings.json as a Claude hooks file).
+            LSP4IJ file name patterns do not encode parent-directory semantics. We pair
+            patterns with AgnixDocumentMatcher for path-aware checks so files like
+            .vscode/settings.json are ignored while .claude/settings.json is matched.
         -->
         <fileNamePatternMapping
-            pattern="SKILL.md"
+            patterns="SKILL.md;CLAUDE.md;CLAUDE.local.md;AGENTS.md;AGENTS.local.md;AGENTS.override.md;copilot-instructions.md;*.instructions.md;*.mdc;.cursorrules"
             serverId="io.agnix.lsp"
-            languageId="markdown"/>
+            languageId="markdown"
+            documentMatcher="io.agnix.jetbrains.lsp.AgnixDocumentMatcher"/>
         <fileNamePatternMapping
-            pattern="CLAUDE.md"
+            patterns="*.mcp.json;mcp.json;plugin.json;settings.json;settings.local.json"
             serverId="io.agnix.lsp"
-            languageId="markdown"/>
-        <fileNamePatternMapping
-            pattern="CLAUDE.local.md"
-            serverId="io.agnix.lsp"
-            languageId="markdown"/>
-        <fileNamePatternMapping
-            pattern="AGENTS.md"
-            serverId="io.agnix.lsp"
-            languageId="markdown"/>
-        <fileNamePatternMapping
-            pattern="AGENTS.local.md"
-            serverId="io.agnix.lsp"
-            languageId="markdown"/>
-        <fileNamePatternMapping
-            pattern="*.mcp.json"
-            serverId="io.agnix.lsp"
-            languageId="json"/>
-        <fileNamePatternMapping
-            pattern="mcp.json"
-            serverId="io.agnix.lsp"
-            languageId="json"/>
-        <fileNamePatternMapping
-            pattern="plugin.json"
-            serverId="io.agnix.lsp"
-            languageId="json"/>
-        <fileNamePatternMapping
-            pattern="settings.json"
-            serverId="io.agnix.lsp"
-            languageId="json"/>
-        <fileNamePatternMapping
-            pattern="settings.local.json"
-            serverId="io.agnix.lsp"
-            languageId="json"/>
-        <fileNamePatternMapping
-            pattern="copilot-instructions.md"
-            serverId="io.agnix.lsp"
-            languageId="markdown"/>
-        <fileNamePatternMapping
-            pattern="*.instructions.md"
-            serverId="io.agnix.lsp"
-            languageId="markdown"/>
-        <fileNamePatternMapping
-            pattern="*.mdc"
-            serverId="io.agnix.lsp"
-            languageId="markdown"/>
-        <fileNamePatternMapping
-            pattern=".cursorrules"
-            serverId="io.agnix.lsp"
-            languageId="markdown"/>
+            languageId="json"
+            documentMatcher="io.agnix.jetbrains.lsp.AgnixDocumentMatcher"/>
     </extensions>
 
     <actions>

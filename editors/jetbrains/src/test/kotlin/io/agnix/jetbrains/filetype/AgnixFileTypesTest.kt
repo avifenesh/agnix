@@ -1,116 +1,59 @@
 package io.agnix.jetbrains.filetype
 
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.Assertions.*
 
 /**
- * Tests for AgnixFileTypes utility.
+ * Tests for path-aware agnix file detection.
  */
 class AgnixFileTypesTest {
 
     @Test
-    fun `isAgnixFile returns true for SKILL md`() {
-        assertTrue(AgnixFileTypes.isAgnixFile("SKILL.md"))
-    }
-
-    @Test
-    fun `isAgnixFile returns true for CLAUDE md`() {
-        assertTrue(AgnixFileTypes.isAgnixFile("CLAUDE.md"))
-    }
-
-    @Test
-    fun `isAgnixFile returns true for CLAUDE local md`() {
-        assertTrue(AgnixFileTypes.isAgnixFile("CLAUDE.local.md"))
-    }
-
-    @Test
-    fun `isAgnixFile returns true for AGENTS md`() {
-        assertTrue(AgnixFileTypes.isAgnixFile("AGENTS.md"))
-    }
-
-    @Test
-    fun `isAgnixFile returns true for AGENTS local md`() {
-        assertTrue(AgnixFileTypes.isAgnixFile("AGENTS.local.md"))
-    }
-
-    @Test
-    fun `isAgnixFile returns true for mcp json files`() {
-        assertTrue(AgnixFileTypes.isAgnixFile("server.mcp.json"))
-        assertTrue(AgnixFileTypes.isAgnixFile("mcp.json"))
-    }
-
-    @Test
-    fun `isAgnixFile returns true for plugin json`() {
-        assertTrue(AgnixFileTypes.isAgnixFile("plugin.json"))
-    }
-
-    @Test
-    fun `isAgnixFile returns true for instructions md files`() {
-        assertTrue(AgnixFileTypes.isAgnixFile("copilot-instructions.md"))
-        assertTrue(AgnixFileTypes.isAgnixFile("custom.instructions.md"))
-    }
-
-    @Test
-    fun `isAgnixFile returns true for mdc files`() {
-        assertTrue(AgnixFileTypes.isAgnixFile("rule.mdc"))
-    }
-
-    @Test
-    fun `isAgnixFile returns true for cursorrules`() {
-        assertTrue(AgnixFileTypes.isAgnixFile(".cursorrules"))
-    }
-
-    @Test
-    fun `isAgnixFile returns false for random files`() {
-        assertFalse(AgnixFileTypes.isAgnixFile("random.md"))
-        assertFalse(AgnixFileTypes.isAgnixFile("package.json"))
-        assertFalse(AgnixFileTypes.isAgnixFile("config.yaml"))
-    }
-
-    @Test
-    fun `isAgnixFilePath returns true for SKILL md in any directory`() {
+    fun `matches top-level markdown memory files`() {
         assertTrue(AgnixFileTypes.isAgnixFilePath("/project/SKILL.md"))
-        assertTrue(AgnixFileTypes.isAgnixFilePath("/project/subdir/SKILL.md"))
-        assertTrue(AgnixFileTypes.isAgnixFilePath("C:\\project\\SKILL.md"))
+        assertTrue(AgnixFileTypes.isAgnixFilePath("/project/CLAUDE.md"))
+        assertTrue(AgnixFileTypes.isAgnixFilePath("/project/CLAUDE.local.md"))
+        assertTrue(AgnixFileTypes.isAgnixFilePath("/project/AGENTS.md"))
+        assertTrue(AgnixFileTypes.isAgnixFilePath("/project/AGENTS.local.md"))
+        assertTrue(AgnixFileTypes.isAgnixFilePath("/project/AGENTS.override.md"))
     }
 
     @Test
-    fun `isAgnixFilePath returns true for claude settings in correct directory`() {
-        assertTrue(AgnixFileTypes.isAgnixFilePath("/project/.claude/settings.json"))
-        assertTrue(AgnixFileTypes.isAgnixFilePath("/project/.claude/settings.local.json"))
-    }
-
-    @Test
-    fun `isAgnixFilePath returns false for settings json outside claude directory`() {
-        assertFalse(AgnixFileTypes.isAgnixFilePath("/project/settings.json"))
-        assertFalse(AgnixFileTypes.isAgnixFilePath("/project/config/settings.json"))
-    }
-
-    @Test
-    fun `isAgnixFilePath returns true for copilot instructions in github directory`() {
-        assertTrue(AgnixFileTypes.isAgnixFilePath("/project/.github/copilot-instructions.md"))
-    }
-
-    @Test
-    fun `isAgnixFilePath returns true for custom instructions in github instructions directory`() {
+    fun `matches json and extension-based agnix files`() {
+        assertTrue(AgnixFileTypes.isAgnixFilePath("/project/mcp.json"))
+        assertTrue(AgnixFileTypes.isAgnixFilePath("/project/server.mcp.json"))
+        assertTrue(AgnixFileTypes.isAgnixFilePath("/project/plugin.json"))
+        assertTrue(AgnixFileTypes.isAgnixFilePath("/project/.cursor/rules/rule.mdc"))
         assertTrue(AgnixFileTypes.isAgnixFilePath("/project/.github/instructions/custom.instructions.md"))
     }
 
     @Test
-    fun `isAgnixFilePath returns true for mdc files in cursor rules directory`() {
-        assertTrue(AgnixFileTypes.isAgnixFilePath("/project/.cursor/rules/rule.mdc"))
+    fun `matches claude settings only under dot claude directory`() {
+        assertTrue(AgnixFileTypes.isAgnixFilePath("/project/.claude/settings.json"))
+        assertTrue(AgnixFileTypes.isAgnixFilePath("/project/.claude/settings.local.json"))
+
+        assertFalse(AgnixFileTypes.isAgnixFilePath("/project/settings.json"))
+        assertFalse(AgnixFileTypes.isAgnixFilePath("/project/config/settings.local.json"))
     }
 
     @Test
-    fun `isAgnixFilePath handles Windows paths`() {
+    fun `matches copilot instructions only under github directory`() {
+        assertTrue(AgnixFileTypes.isAgnixFilePath("/project/.github/copilot-instructions.md"))
+        assertFalse(AgnixFileTypes.isAgnixFilePath("/project/copilot-instructions.md"))
+    }
+
+    @Test
+    fun `supports windows paths`() {
         assertTrue(AgnixFileTypes.isAgnixFilePath("C:\\project\\SKILL.md"))
         assertTrue(AgnixFileTypes.isAgnixFilePath("C:\\project\\.claude\\settings.json"))
+        assertTrue(AgnixFileTypes.isAgnixFilePath("C:\\project\\.cursor\\rules\\rule.mdc"))
     }
 
     @Test
-    fun `isAgnixFilePath returns false for unrelated paths`() {
+    fun `does not match unrelated files`() {
+        assertFalse(AgnixFileTypes.isAgnixFilePath("/project/README.md"))
         assertFalse(AgnixFileTypes.isAgnixFilePath("/project/src/main.rs"))
         assertFalse(AgnixFileTypes.isAgnixFilePath("/project/package.json"))
-        assertFalse(AgnixFileTypes.isAgnixFilePath("/project/README.md"))
     }
 }

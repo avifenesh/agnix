@@ -1,34 +1,69 @@
-# agnix JetBrains Integration (Scaffold)
+# agnix JetBrains Plugin
 
-This directory currently contains the JetBrains plugin scaffold for agnix.
+JetBrains IDE integration for agnix using LSP4IJ.
 
-## Current Status
+<!-- Plugin description -->
+Real-time validation for AI agent configuration files in JetBrains IDEs.
 
-- Gradle/IntelliJ project structure is present
-- Packaging metadata and changelog are present
-- Plugin implementation sources are not yet in this repository
+Features:
 
-This means JetBrains support is **not production-ready** from this tree yet.
+- Validation for `SKILL.md`, `CLAUDE.md`, `AGENTS.md`, `.claude/settings.json`, `*.mcp.json`, `.cursor/rules/*.mdc`, and related files
+- Diagnostics with quick fixes and hover docs through `agnix-lsp`
+- Automatic `agnix-lsp` install/update via LSP4IJ server installer flow
+- Actions to restart the server, validate current file, and open settings
+<!-- Plugin description end -->
 
-## Recommended Usage Today
+## Requirements
 
-- Use the agnix CLI (`agnix`) directly for validation
-- Use the VS Code extension for full IDE integration
-- For JetBrains experimentation, wire `agnix-lsp` through [LSP4IJ](https://plugins.jetbrains.com/plugin/23257-lsp4ij)
+- IntelliJ Platform 2023.3+
+- Java 17
 
-## Development Notes
-
-If you want to continue JetBrains integration work, this scaffold is the starting point:
+## Build From Source
 
 ```bash
 cd editors/jetbrains
-./gradlew build
+./gradlew test
+./gradlew buildPlugin
 ```
 
-Add plugin sources under the standard Gradle IntelliJ layout (`src/main/kotlin`, resources, plugin.xml) before attempting release packaging.
+Built plugin zip:
 
-## Links
+```text
+editors/jetbrains/build/distributions/agnix-<version>.zip
+```
 
-- [agnix Repository](https://github.com/avifenesh/agnix)
-- [VS Code Extension](https://marketplace.visualstudio.com/items?itemName=avifenesh.agnix)
-- [Issue Tracker](https://github.com/avifenesh/agnix/issues)
+## Run In Sandbox IDE
+
+```bash
+cd editors/jetbrains
+./gradlew runIde
+```
+
+After the sandbox IDE launches:
+
+1. Open a project with agnix config files.
+2. Open `Tools > agnix > Settings`.
+3. Confirm diagnostics appear for invalid files and clear after fixes.
+4. Use `Tools > agnix > Restart Language Server` and verify reconnect.
+
+## Real IDE Test Matrix
+
+Run these checks against real installs (not only sandbox):
+
+1. IntelliJ IDEA Community 2023.3+
+2. WebStorm 2023.3+
+3. PyCharm Community 2023.3+
+
+For each IDE, verify:
+
+1. Plugin installs from zip without startup errors.
+2. `agnix-lsp` auto-download works (with auto-download enabled).
+3. Manual path override works (`Settings > Tools > agnix > LSP binary path`).
+4. Diagnostics and hover work on supported files.
+5. Unrelated `settings.json` files (for example `.vscode/settings.json`) do not activate agnix diagnostics.
+
+## Troubleshooting
+
+- If `agnix-lsp` is not detected, set `LSP binary path` explicitly.
+- For download issues, verify internet access to GitHub release asset domains.
+- Enable trace logging with `Trace level = Messages` or `Verbose`.

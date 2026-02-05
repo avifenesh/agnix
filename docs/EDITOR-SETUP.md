@@ -161,9 +161,32 @@ If using legacy `.cursorrules` file, agnix warns about migration (CUR-006). To m
 
 ## JetBrains IDEs
 
-JetBrains support in this repository is currently a scaffold under `editors/jetbrains/` and is not production-ready.
+JetBrains plugin source is in `editors/jetbrains/` and integrates with `agnix-lsp` through LSP4IJ.
 
-If you need JetBrains integration today, run `agnix-lsp` manually via [LSP4IJ](https://plugins.jetbrains.com/plugin/23257-lsp4ij).
+### Build and Run
+
+```bash
+cd editors/jetbrains
+./gradlew test
+./gradlew buildPlugin
+./gradlew runIde
+```
+
+### Settings
+
+- **Enable agnix validation**: Global plugin on/off
+- **LSP binary path**: Custom path to `agnix-lsp` (optional)
+- **Auto-download**: Automatically install `agnix-lsp` if missing
+- **Trace level**: `off`, `messages`, `verbose`
+- **CodeLens**: Show inline rule annotations
+
+### Real IDE Validation Checklist
+
+1. Install built zip in IntelliJ IDEA, WebStorm, and PyCharm (2023.3+).
+2. Confirm diagnostics on supported files and no diagnostics on unrelated files.
+3. Confirm `agnix-lsp` auto-download works when binary is missing.
+4. Confirm manual `LSP binary path` override works.
+5. Confirm `Restart Language Server` action reconnects cleanly.
 
 ## Supported File Types
 
@@ -171,7 +194,7 @@ If you need JetBrains integration today, run `agnix-lsp` manually via [LSP4IJ](h
 - `CLAUDE.md`, `CLAUDE.local.md`, `AGENTS.md`, `AGENTS.local.md`, `AGENTS.override.md` - Memory files
 - `.claude/settings.json`, `.claude/settings.local.json` - Hook configurations
 - `plugin.json` - Plugin manifests
-- `*.mcp.json`, `mcp.json`, `mcp-*.json` - MCP tool configurations
+- `*.mcp.json`, `mcp.json` - MCP tool configurations
 - `.github/copilot-instructions.md`, `.github/instructions/*.instructions.md` - Copilot instructions
 - `.cursor/rules/*.mdc`, `.cursorrules` - Cursor project rules
 

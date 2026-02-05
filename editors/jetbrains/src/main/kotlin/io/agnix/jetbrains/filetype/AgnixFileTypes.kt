@@ -31,60 +31,32 @@ class SkillFileType private constructor() : LanguageFileType(PlainTextLanguage.I
  */
 object AgnixFileTypes {
 
-    /**
-     * File name patterns that agnix supports.
-     */
-    private val SUPPORTED_PATTERNS = listOf(
+    private val GLOBAL_FILE_NAMES = setOf(
         "SKILL.md",
         "CLAUDE.md",
         "CLAUDE.local.md",
         "AGENTS.md",
         "AGENTS.local.md",
-        "settings.json",
-        "settings.local.json",
+        "AGENTS.override.md",
         "plugin.json",
-        "mcp.json",
-        "copilot-instructions.md",
-        ".cursorrules"
+        "mcp.json"
     )
 
-    /**
-     * File extension patterns that agnix supports.
-     */
-    private val SUPPORTED_EXTENSIONS = listOf(
+    private val SUFFIX_PATTERNS = listOf(
         ".mcp.json",
         ".instructions.md",
         ".mdc"
     )
 
-    /**
-     * Directory patterns for file matching.
-     */
-    private val DIRECTORY_PATTERNS = mapOf(
-        ".claude" to listOf("settings.json", "settings.local.json"),
-        ".github" to listOf("copilot-instructions.md"),
-        ".github/instructions" to listOf(".instructions.md"),
-        ".cursor/rules" to listOf(".mdc")
+    private val CLAUDE_SETTINGS_FILE_NAMES = setOf(
+        "settings.json",
+        "settings.local.json"
     )
 
-    /**
-     * Check if a file name matches agnix patterns.
-     */
-    fun isAgnixFile(fileName: String): Boolean {
-        // Check exact file names
-        if (fileName in SUPPORTED_PATTERNS) {
-            return true
-        }
-
-        // Check extension patterns
-        for (ext in SUPPORTED_EXTENSIONS) {
-            if (fileName.endsWith(ext)) {
-                return true
-            }
-        }
-
-        return false
-    }
+    private val GITHUB_FILE_NAMES = setOf(
+        "copilot-instructions.md",
+        ".cursorrules"
+    )
 
     /**
      * Check if a file path matches agnix patterns.
@@ -96,20 +68,20 @@ object AgnixFileTypes {
         val fileName = normalizedPath.substringAfterLast('/')
 
         // Check exact file names at any level
-        if (fileName in listOf("SKILL.md", "CLAUDE.md", "CLAUDE.local.md", "AGENTS.md", "AGENTS.local.md", "plugin.json", "mcp.json")) {
+        if (fileName in GLOBAL_FILE_NAMES) {
             return true
         }
 
         // Check extension patterns
-        if (fileName.endsWith(".mcp.json") || fileName.endsWith(".instructions.md") || fileName.endsWith(".mdc")) {
+        if (SUFFIX_PATTERNS.any { fileName.endsWith(it) }) {
             return true
         }
 
         // Check directory-specific patterns
-        if (normalizedPath.contains("/.claude/") && (fileName == "settings.json" || fileName == "settings.local.json")) {
+        if (normalizedPath.contains("/.claude/") && fileName in CLAUDE_SETTINGS_FILE_NAMES) {
             return true
         }
-        if (normalizedPath.contains("/.github/") && fileName == "copilot-instructions.md") {
+        if (normalizedPath.contains("/.github/") && fileName in GITHUB_FILE_NAMES) {
             return true
         }
         if (normalizedPath.contains("/.github/instructions/") && fileName.endsWith(".instructions.md")) {

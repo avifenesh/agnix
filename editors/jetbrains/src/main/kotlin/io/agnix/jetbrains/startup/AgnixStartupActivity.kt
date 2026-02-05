@@ -3,7 +3,6 @@ package io.agnix.jetbrains.startup
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
-import io.agnix.jetbrains.binary.AgnixBinaryDownloader
 import io.agnix.jetbrains.binary.AgnixBinaryResolver
 import io.agnix.jetbrains.notifications.AgnixNotifications
 import io.agnix.jetbrains.settings.AgnixSettings
@@ -13,7 +12,7 @@ import io.agnix.jetbrains.settings.AgnixSettings
  *
  * Runs when a project is opened to:
  * 1. Check if the LSP binary is available
- * 2. Offer to download if not found (and auto-download is enabled)
+ * 2. Notify if binary is missing and auto-download is disabled
  * 3. Log startup information
  */
 class AgnixStartupActivity : ProjectActivity {
@@ -42,17 +41,9 @@ class AgnixStartupActivity : ProjectActivity {
         // Binary not found
         logger.warn("agnix-lsp binary not found")
 
-        // Auto-download if enabled
+        // LSP4IJ installer will auto-download on first server start when enabled.
         if (settings.autoDownload) {
-            logger.info("Auto-download enabled, starting download...")
-            val downloader = AgnixBinaryDownloader()
-            downloader.downloadAsync(project) { downloadedPath ->
-                if (downloadedPath != null) {
-                    logger.info("Successfully downloaded agnix-lsp to: $downloadedPath")
-                } else {
-                    logger.error("Failed to download agnix-lsp")
-                }
-            }
+            logger.info("Auto-download enabled; installer will download agnix-lsp when language server starts")
         } else {
             // Show notification to user
             AgnixNotifications.notifyBinaryNotFound(project)

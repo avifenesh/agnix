@@ -21,6 +21,7 @@ Thumbs.db
 # Build artifacts
 dist/
 *.wasm
+.intellijPlatform/
 
 # Temporary docs
 IMPLEMENTATION-NEXT-STEPS.md
@@ -31,6 +32,8 @@ STATUS.md
 .claude/state/*
 .claude/workflow-status.json
 .claude/plan.md
+.claude-workflow-status.json
+.workflow-status.json
 
 # Plugin state
 .agnix/state/

@@ -50,7 +50,8 @@ crates/
 ├── agnix-lsp/      # LSP server (tower-lsp, tokio)
 └── agnix-mcp/      # MCP server (rmcp)
 editors/
-└── vscode/         # VS Code extension
+├── vscode/         # VS Code extension
+└── jetbrains/      # JetBrains IDE plugin
 knowledge-base/     # 100 rules, 75+ sources, rules.json
 tests/fixtures/     # Test cases by category
 ```

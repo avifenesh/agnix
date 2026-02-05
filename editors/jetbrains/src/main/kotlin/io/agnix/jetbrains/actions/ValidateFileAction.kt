@@ -21,7 +21,7 @@ class ValidateFileAction : AnAction(
     private val logger = Logger.getInstance(ValidateFileAction::class.java)
 
     override fun actionPerformed(e: AnActionEvent) {
-        val project = e.project ?: return
+        if (e.project == null) return
         val editor = e.getData(CommonDataKeys.EDITOR) ?: return
         val document = editor.document
         val virtualFile = FileDocumentManager.getInstance().getFile(document) ?: return

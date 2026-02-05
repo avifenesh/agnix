@@ -187,7 +187,7 @@ Real-time diagnostics as you type, quick-fix code actions, hover documentation.
 
 **VS Code extension** includes a comprehensive settings UI for configuring all validation options. Changes apply immediately without server restart. See [VS Code extension](editors/vscode/README.md) for details.
 
-See [Editor Setup](docs/EDITOR-SETUP.md) for VS Code, Neovim, Helix, Cursor, and JetBrains status.
+See [Editor Setup](docs/EDITOR-SETUP.md) for VS Code, Neovim, Helix, Cursor, and JetBrains setup.
 
 ## MCP Server
 
@@ -301,7 +301,7 @@ crates/
   agnix-rules/    # Rule metadata
 editors/
   vscode/         # VS Code extension
-  jetbrains/      # JetBrains extension scaffold (WIP)
+  jetbrains/      # JetBrains IDE plugin
 knowledge-base/   # 100 rules documentation
 ```
 
@@ -313,7 +313,7 @@ knowledge-base/   # 100 rules documentation
 - **LSP server** for real-time editor diagnostics
 - **MCP server** for AI assistant integration
 - **VS Code extension** with syntax highlighting
-- **JetBrains extension scaffold** under `editors/jetbrains/` (work in progress)
+- **JetBrains IDE plugin** under `editors/jetbrains/` (LSP4IJ-based)
 - **GitHub Action** for CI/CD integration
 - **Auto-fix** infrastructure (--fix, --dry-run, --fix-safe)
 - **Parallel validation** using rayon

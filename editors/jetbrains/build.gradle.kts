@@ -24,17 +24,16 @@ kotlin {
 }
 
 dependencies {
+    implementation("org.apache.commons:commons-compress:1.27.1")
+
     intellijPlatform {
-        intellijIdeaCommunity("2023.2")
+        intellijIdeaCommunity(providers.gradleProperty("platformVersion").get())
 
         // LSP4IJ - JetBrains LSP Support
-        plugin("com.redhat.devtools.lsp4ij:0.8.1")
-
-        bundledPlugin("com.intellij.modules.json")
+        plugin("com.redhat.devtools.lsp4ij:0.14.0")
 
         pluginVerifier()
         zipSigner()
-        instrumentationTools()
     }
 
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.0")

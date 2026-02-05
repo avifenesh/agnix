@@ -7,6 +7,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import io.agnix.jetbrains.notifications.AgnixNotifications
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import java.io.*
 import java.net.HttpURLConnection
 import java.net.URL
@@ -28,6 +29,46 @@ class AgnixBinaryDownloader {
         const val GITHUB_REPO = "avifenesh/agnix"
         const val DOWNLOAD_TIMEOUT = 60000 // 60 seconds
         const val BUFFER_SIZE = 8192
+
+        private val TRUSTED_DOWNLOAD_HOSTS = setOf(
+            "github.com",
+            "objects.githubusercontent.com",
+            "release-assets.githubusercontent.com",
+            "github-releases.githubusercontent.com"
+        )
+        private const val GITHUB_USER_CONTENT_SUFFIX = ".githubusercontent.com"
+
+        internal fun isTrustedDownloadUrl(urlString: String): Boolean {
+            val url = try {
+                URL(urlString)
+            } catch (_: Exception) {
+                return false
+            }
+            if (!url.protocol.equals("https", ignoreCase = true)) {
+                return false
+            }
+            return isTrustedHost(url.host)
+        }
+
+        internal fun resolveTrustedRedirectUrl(currentUrl: String, redirectLocation: String?): String {
+            if (redirectLocation.isNullOrBlank()) {
+                throw IOException("Redirect location header missing")
+            }
+
+            val resolvedUrl = URL(URL(currentUrl), redirectLocation).toString()
+            if (!isTrustedDownloadUrl(resolvedUrl)) {
+                throw IOException("Redirect to untrusted URL not allowed: $resolvedUrl")
+            }
+            return resolvedUrl
+        }
+
+        private fun isTrustedHost(host: String): Boolean {
+            val normalizedHost = host.lowercase()
+            if (normalizedHost in TRUSTED_DOWNLOAD_HOSTS) {
+                return true
+            }
+            return normalizedHost.endsWith(GITHUB_USER_CONTENT_SUFFIX)
+        }
     }
 
     /**
@@ -76,11 +117,11 @@ class AgnixBinaryDownloader {
      *
      * Used for initial startup when we need the binary immediately.
      */
-    fun downloadSync(): String? {
+    fun downloadSync(indicator: ProgressIndicator? = null): String? {
         val binaryInfo = PlatformInfo.getBinaryInfo() ?: return null
 
         return try {
-            downloadAndExtract(binaryInfo, null)
+            downloadAndExtract(binaryInfo, indicator)
         } catch (e: Exception) {
             logger.error("Failed to download agnix-lsp", e)
             null
@@ -169,6 +210,10 @@ class AgnixBinaryDownloader {
 
             // Follow redirects (GitHub releases use redirects)
             while (redirectCount < maxRedirects) {
+                if (!isTrustedDownloadUrl(currentUrl)) {
+                    throw IOException("Refusing to download from untrusted URL: $currentUrl")
+                }
+
                 val url = URL(currentUrl)
                 connection = url.openConnection() as HttpURLConnection
                 connection.connectTimeout = DOWNLOAD_TIMEOUT
@@ -181,7 +226,7 @@ class AgnixBinaryDownloader {
                 if (responseCode == HttpURLConnection.HTTP_MOVED_PERM ||
                     responseCode == HttpURLConnection.HTTP_MOVED_TEMP ||
                     responseCode == HttpURLConnection.HTTP_SEE_OTHER) {
-                    val newUrl = connection.getHeaderField("Location")
+                    val newUrl = resolveTrustedRedirectUrl(currentUrl, connection.getHeaderField("Location"))
                     connection.disconnect()
                     currentUrl = newUrl
                     redirectCount++
@@ -247,12 +292,11 @@ class AgnixBinaryDownloader {
     private fun extractTarGz(archive: File, destination: File, binaryName: String) {
         FileInputStream(archive).use { fis ->
             GZIPInputStream(fis).use { gzis ->
-                TarInputStream(gzis).use { tis ->
+                TarArchiveInputStream(gzis).use { tis ->
                     var entry = tis.nextEntry
                     while (entry != null) {
                         val name = entry.name
-                        // Look for the binary file (may be in root or subdirectory)
-                        if (name.endsWith(binaryName) || name == binaryName) {
+                        if (!entry.isDirectory && isTargetBinaryEntry(name, binaryName)) {
                             val outFile = File(destination, binaryName)
                             verifyPathWithinDestination(outFile, destination)
                             FileOutputStream(outFile).use { fos ->
@@ -279,8 +323,7 @@ class AgnixBinaryDownloader {
             var entry = zis.nextEntry
             while (entry != null) {
                 val name = entry.name
-                // Look for the binary file (may be in root or subdirectory)
-                if (name.endsWith(binaryName) || name == binaryName) {
+                if (!entry.isDirectory && isTargetBinaryEntry(name, binaryName)) {
                     val outFile = File(destination, binaryName)
                     verifyPathWithinDestination(outFile, destination)
                     FileOutputStream(outFile).use { fos ->
@@ -292,6 +335,12 @@ class AgnixBinaryDownloader {
             }
         }
         logger.error("Binary $binaryName not found in zip archive")
+    }
+
+    private fun isTargetBinaryEntry(entryName: String, binaryName: String): Boolean {
+        return entryName == binaryName ||
+            entryName.endsWith("/$binaryName") ||
+            entryName.endsWith("\\$binaryName")
     }
 
     /**
@@ -324,93 +373,4 @@ class AgnixBinaryDownloader {
         }
     }
 
-    /**
-     * Simple tar input stream implementation.
-     *
-     * Handles basic tar format for extracting files.
-     */
-    private class TarInputStream(inputStream: InputStream) : FilterInputStream(inputStream) {
-        private var currentEntry: TarEntry? = null
-        private var currentFileSize: Long = 0
-        private var bytesRead: Long = 0
-
-        data class TarEntry(val name: String, val size: Long)
-
-        private fun skipFully(n: Long) {
-            var remaining = n
-            while (remaining > 0) {
-                val skipped = `in`.skip(remaining)
-                if (skipped <= 0) {
-                    // skip() returned 0 or negative, read and discard instead
-                    val toRead = minOf(remaining, 8192L).toInt()
-                    val buffer = ByteArray(toRead)
-                    val read = `in`.read(buffer, 0, toRead)
-                    if (read < 0) break
-                    remaining -= read
-                } else {
-                    remaining -= skipped
-                }
-            }
-        }
-
-        val nextEntry: TarEntry?
-            get() {
-                // Skip remaining bytes of current entry
-                if (currentEntry != null) {
-                    val remaining = currentFileSize - bytesRead
-                    if (remaining > 0) {
-                        skipFully(remaining)
-                    }
-                    // Skip padding to 512-byte boundary
-                    val padding = (512 - (currentFileSize % 512)) % 512
-                    if (padding > 0) {
-                        skipFully(padding)
-                    }
-                }
-
-                // Read header block (512 bytes)
-                val header = ByteArray(512)
-                var totalRead = 0
-                while (totalRead < 512) {
-                    val n = `in`.read(header, totalRead, 512 - totalRead)
-                    if (n < 0) return null
-                    totalRead += n
-                }
-
-                // Check for end of archive (two zero blocks)
-                if (header.all { it == 0.toByte() }) {
-                    return null
-                }
-
-                // Parse header
-                val name = String(header, 0, 100).trim('\u0000', ' ')
-                val sizeStr = String(header, 124, 12).trim('\u0000', ' ')
-                val size = if (sizeStr.isNotEmpty()) {
-                    sizeStr.toLongOrNull(8) ?: 0L
-                } else {
-                    0L
-                }
-
-                currentEntry = TarEntry(name, size)
-                currentFileSize = size
-                bytesRead = 0
-
-                return currentEntry
-            }
-
-        override fun read(): Int {
-            if (bytesRead >= currentFileSize) return -1
-            val b = `in`.read()
-            if (b >= 0) bytesRead++
-            return b
-        }
-
-        override fun read(b: ByteArray, off: Int, len: Int): Int {
-            if (bytesRead >= currentFileSize) return -1
-            val maxRead = minOf(len.toLong(), currentFileSize - bytesRead).toInt()
-            val n = `in`.read(b, off, maxRead)
-            if (n > 0) bytesRead += n
-            return n
-        }
-    }
 }

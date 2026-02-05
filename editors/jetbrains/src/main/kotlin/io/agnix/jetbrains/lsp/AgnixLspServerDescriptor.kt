@@ -1,8 +1,9 @@
 package io.agnix.jetbrains.lsp
 
+import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
-import com.redhat.devtools.lsp4ij.server.ProcessStreamConnectionProvider
+import com.redhat.devtools.lsp4ij.server.OSProcessStreamConnectionProvider
 import io.agnix.jetbrains.binary.AgnixBinaryResolver
 import io.agnix.jetbrains.notifications.AgnixNotifications
 import io.agnix.jetbrains.settings.AgnixSettings
@@ -16,7 +17,7 @@ import java.io.File
  */
 class AgnixLspServerDescriptor(
     private val project: Project
-) : ProcessStreamConnectionProvider() {
+) : OSProcessStreamConnectionProvider() {
 
     private val logger = Logger.getInstance(AgnixLspServerDescriptor::class.java)
 
@@ -24,9 +25,9 @@ class AgnixLspServerDescriptor(
         // Resolve binary path without blocking download - only check existing locations
         val binaryPath = resolveBinaryPathNonBlocking()
         if (binaryPath != null) {
-            val commands = mutableListOf(binaryPath)
-            setCommands(commands)
-            setWorkingDirectory(project.basePath ?: System.getProperty("user.home"))
+            val commandLine = GeneralCommandLine(binaryPath)
+                .withWorkDirectory(project.basePath ?: System.getProperty("user.home"))
+            setCommandLine(commandLine)
         }
     }
 
@@ -68,21 +69,21 @@ class AgnixLspServerDescriptor(
     }
 
     override fun start() {
-        val commands = getCommands()
-        if (commands.isEmpty()) {
+        val commandLine = getCommandLine()
+        if (commandLine == null) {
             logger.error("No LSP command configured - binary not found")
             AgnixNotifications.notifyBinaryNotFound(project)
             return
         }
 
-        val binaryPath = commands[0]
+        val binaryPath = commandLine.exePath
         if (!File(binaryPath).exists()) {
             logger.error("LSP binary not found: $binaryPath")
             AgnixNotifications.notifyBinaryNotFound(project)
             return
         }
 
-        logger.info("Starting agnix-lsp: ${commands.joinToString(" ")}")
+        logger.info("Starting agnix-lsp: ${commandLine.commandLineString}")
         super.start()
     }
 

@@ -41,7 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - JetBrains IDE plugin with LSP integration (#196)
-  - Supports IntelliJ IDEA, WebStorm, PyCharm, and all JetBrains IDEs (2023.2+)
+  - Supports IntelliJ IDEA, WebStorm, PyCharm, and all JetBrains IDEs (2023.3+)
   - Real-time validation, quick fixes, hover documentation
   - Auto-download of agnix-lsp binary from GitHub releases
   - Settings UI with LSP path configuration, auto-download toggle, trace level
