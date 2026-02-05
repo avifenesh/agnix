@@ -1,0 +1,179 @@
+<idea-plugin>
+    <id>io.agnix.jetbrains</id>
+    <name>agnix - Agent Config Linter</name>
+    <vendor email="support@agnix.io" url="https://github.com/avifenesh/agnix">agnix</vendor>
+
+    <description><![CDATA[
+    Real-time validation for AI agent configuration files.
+
+    <h2>Features</h2>
+    <ul>
+        <li>Validates SKILL.md, CLAUDE.md, AGENTS.md, and other agent configuration files</li>
+        <li>Real-time diagnostics with quick fixes</li>
+        <li>100+ validation rules across multiple categories</li>
+        <li>Auto-download of LSP binary from GitHub releases</li>
+        <li>Hover documentation for configuration fields</li>
+    </ul>
+
+    <h2>Supported Files</h2>
+    <ul>
+        <li>SKILL.md - Agent Skills specification</li>
+        <li>CLAUDE.md / AGENTS.md - Project memory files</li>
+        <li>.claude/settings.json - Claude Code settings</li>
+        <li>*.mcp.json - MCP server configurations</li>
+        <li>.cursor/rules/*.mdc - Cursor rules</li>
+        <li>.github/copilot-instructions.md - GitHub Copilot instructions</li>
+    </ul>
+
+    <h2>Quick Start</h2>
+    <ol>
+        <li>Install the plugin</li>
+        <li>Open a project containing agent configuration files</li>
+        <li>The plugin will automatically download and start the LSP server</li>
+        <li>Issues will appear in the Problems panel with quick fixes</li>
+    </ol>
+    ]]></description>
+
+    <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.json</depends>
+    <depends>com.redhat.devtools.lsp4ij</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <!-- Settings -->
+        <applicationConfigurable
+            parentId="tools"
+            instance="io.agnix.jetbrains.settings.AgnixSettingsConfigurable"
+            id="io.agnix.jetbrains.settings"
+            displayName="agnix"/>
+        <applicationService
+            serviceImplementation="io.agnix.jetbrains.settings.AgnixSettings"/>
+
+        <!-- File Types -->
+        <fileType
+            name="SKILL.md"
+            implementationClass="io.agnix.jetbrains.filetype.SkillFileType"
+            fieldName="INSTANCE"
+            language="Markdown"
+            fileNames="SKILL.md"/>
+
+        <!-- Notifications -->
+        <notificationGroup
+            id="agnix.notifications"
+            displayType="BALLOON"
+            toolWindowId="Problems"/>
+
+        <!-- Startup Activity -->
+        <postStartupActivity
+            implementation="io.agnix.jetbrains.startup.AgnixStartupActivity"/>
+    </extensions>
+
+    <extensions defaultExtensionNs="com.redhat.devtools.lsp4ij">
+        <!-- LSP Server Support -->
+        <server
+            id="io.agnix.lsp"
+            name="agnix"
+            factoryClass="io.agnix.jetbrains.lsp.AgnixLspServerSupportProvider">
+            <description><![CDATA[
+            agnix Language Server for validating AI agent configuration files.
+            ]]></description>
+        </server>
+
+        <!-- File Mappings -->
+        <languageMapping
+            language="Markdown"
+            serverId="io.agnix.lsp"
+            languageId="markdown"/>
+        <languageMapping
+            language="JSON"
+            serverId="io.agnix.lsp"
+            languageId="json"/>
+
+        <!--
+            File Pattern Mappings
+
+            Note: Some patterns (mcp.json, plugin.json, settings.json) are broader than ideal
+            because LSP4IJ doesn't support path-based patterns. The agnix-lsp server validates
+            the full file path context and gracefully ignores unrelated files (e.g., it won't
+            validate .vscode/settings.json as a Claude hooks file).
+        -->
+        <fileNamePatternMapping
+            pattern="SKILL.md"
+            serverId="io.agnix.lsp"
+            languageId="markdown"/>
+        <fileNamePatternMapping
+            pattern="CLAUDE.md"
+            serverId="io.agnix.lsp"
+            languageId="markdown"/>
+        <fileNamePatternMapping
+            pattern="CLAUDE.local.md"
+            serverId="io.agnix.lsp"
+            languageId="markdown"/>
+        <fileNamePatternMapping
+            pattern="AGENTS.md"
+            serverId="io.agnix.lsp"
+            languageId="markdown"/>
+        <fileNamePatternMapping
+            pattern="AGENTS.local.md"
+            serverId="io.agnix.lsp"
+            languageId="markdown"/>
+        <fileNamePatternMapping
+            pattern="*.mcp.json"
+            serverId="io.agnix.lsp"
+            languageId="json"/>
+        <fileNamePatternMapping
+            pattern="mcp.json"
+            serverId="io.agnix.lsp"
+            languageId="json"/>
+        <fileNamePatternMapping
+            pattern="plugin.json"
+            serverId="io.agnix.lsp"
+            languageId="json"/>
+        <fileNamePatternMapping
+            pattern="settings.json"
+            serverId="io.agnix.lsp"
+            languageId="json"/>
+        <fileNamePatternMapping
+            pattern="settings.local.json"
+            serverId="io.agnix.lsp"
+            languageId="json"/>
+        <fileNamePatternMapping
+            pattern="copilot-instructions.md"
+            serverId="io.agnix.lsp"
+            languageId="markdown"/>
+        <fileNamePatternMapping
+            pattern="*.instructions.md"
+            serverId="io.agnix.lsp"
+            languageId="markdown"/>
+        <fileNamePatternMapping
+            pattern="*.mdc"
+            serverId="io.agnix.lsp"
+            languageId="markdown"/>
+        <fileNamePatternMapping
+            pattern=".cursorrules"
+            serverId="io.agnix.lsp"
+            languageId="markdown"/>
+    </extensions>
+
+    <actions>
+        <group id="agnix.ActionGroup" text="agnix" popup="true">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+
+            <action id="agnix.RestartLspServer"
+                class="io.agnix.jetbrains.actions.RestartLspServerAction"
+                text="Restart Language Server"
+                description="Restart the agnix language server"/>
+
+            <action id="agnix.ValidateFile"
+                class="io.agnix.jetbrains.actions.ValidateFileAction"
+                text="Validate Current File"
+                description="Manually trigger validation on the current file"/>
+
+            <separator/>
+
+            <action id="agnix.OpenSettings"
+                class="io.agnix.jetbrains.actions.OpenSettingsAction"
+                text="Settings"
+                description="Open agnix settings"/>
+        </group>
+    </actions>
+</idea-plugin>

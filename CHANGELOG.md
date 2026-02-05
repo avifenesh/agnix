@@ -34,6 +34,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Audit history tracking and incident response procedures
 
 ### Added
+- JetBrains IDE plugin with LSP integration (#196)
+  - Supports IntelliJ IDEA, WebStorm, PyCharm, and all JetBrains IDEs (2023.2+)
+  - Real-time validation, quick fixes, hover documentation
+  - Auto-download of agnix-lsp binary from GitHub releases
+  - Settings UI with LSP path configuration, auto-download toggle, trace level
+  - Context menu actions: Validate File, Restart Server, Settings
+  - Uses LSP4IJ for standard LSP client support
 - `agnix schema` command for JSON Schema generation (#206)
   - Outputs JSON Schema for `.agnix.toml` to stdout or file
   - Generated from Rust types using schemars
