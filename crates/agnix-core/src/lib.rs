@@ -40,7 +40,7 @@ use std::sync::Mutex;
 
 pub use config::LintConfig;
 pub use diagnostics::{Diagnostic, DiagnosticLevel, Fix, LintError, LintResult};
-pub use fixes::{apply_fixes, FixResult};
+pub use fixes::{apply_fixes, apply_fixes_with_fs, FixResult};
 pub use fs::{FileSystem, RealFileSystem};
 pub use rules::Validator;
 

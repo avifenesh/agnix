@@ -2,8 +2,10 @@
 
 use crate::diagnostics::{Diagnostic, Fix, LintResult};
 use crate::file_utils::{safe_read_file, safe_write_file};
+use crate::fs::{FileSystem, RealFileSystem};
 use std::collections::HashMap;
 use std::path::PathBuf;
+use std::sync::Arc;
 
 /// Result of applying fixes to a file
 #[derive(Debug, Clone)]
@@ -39,6 +41,27 @@ pub fn apply_fixes(
     dry_run: bool,
     safe_only: bool,
 ) -> LintResult<Vec<FixResult>> {
+    apply_fixes_with_fs(diagnostics, dry_run, safe_only, None)
+}
+
+/// Apply fixes from diagnostics to files with optional FileSystem abstraction
+///
+/// # Arguments
+/// * `diagnostics` - Diagnostics with potential fixes
+/// * `dry_run` - If true, compute fixes but don't write files
+/// * `safe_only` - If true, only apply fixes marked as safe
+/// * `fs` - Optional FileSystem for reading/writing files. If None, uses RealFileSystem.
+///
+/// # Returns
+/// Vector of fix results, one per file that had fixes
+pub fn apply_fixes_with_fs(
+    diagnostics: &[Diagnostic],
+    dry_run: bool,
+    safe_only: bool,
+    fs: Option<Arc<dyn FileSystem>>,
+) -> LintResult<Vec<FixResult>> {
+    let fs = fs.unwrap_or_else(|| Arc::new(RealFileSystem));
+
     // Group diagnostics by file
     let mut by_file: HashMap<PathBuf, Vec<&Diagnostic>> = HashMap::new();
     for diag in diagnostics {
@@ -50,7 +73,7 @@ pub fn apply_fixes(
     let mut results = Vec::new();
 
     for (path, file_diagnostics) in by_file {
-        let original = safe_read_file(&path)?;
+        let original = fs.read_to_string(&path)?;
 
         let mut fixes: Vec<&Fix> = file_diagnostics
             .iter()
@@ -69,7 +92,7 @@ pub fn apply_fixes(
 
         if fixed != original {
             if !dry_run {
-                safe_write_file(&path, &fixed)?;
+                fs.write(&path, &fixed)?;
             }
 
             results.push(FixResult {
