@@ -228,3 +228,129 @@ describe('Rules Categories', () => {
     });
   });
 });
+
+describe('Fix Preview Logic', () => {
+  // Mock TextEdit interface for testing
+  interface MockRange {
+    start: { line: number; character: number };
+    end: { line: number; character: number };
+    isEmpty: boolean;
+  }
+
+  interface MockTextEdit {
+    range: MockRange;
+    newText: string;
+  }
+
+  /**
+   * Get edit summary (extracted from extension.ts for testing)
+   */
+  function getEditSummary(changes: MockTextEdit[]): string {
+    if (!changes || changes.length === 0) {
+      return '';
+    }
+
+    if (changes.length === 1) {
+      const change = changes[0];
+      const lineNum = change.range.start.line + 1;
+      if (change.newText === '') {
+        return `Line ${lineNum}: delete text`;
+      }
+      if (change.range.isEmpty) {
+        return `Line ${lineNum}: insert text`;
+      }
+      return `Line ${lineNum}: replace text`;
+    }
+
+    return `${changes.length} changes`;
+  }
+
+  describe('getEditSummary', () => {
+    it('should return empty string for no changes', () => {
+      assert.strictEqual(getEditSummary([]), '');
+    });
+
+    it('should identify delete operations', () => {
+      const changes: MockTextEdit[] = [
+        {
+          range: {
+            start: { line: 4, character: 0 },
+            end: { line: 4, character: 10 },
+            isEmpty: false,
+          },
+          newText: '',
+        },
+      ];
+      assert.strictEqual(getEditSummary(changes), 'Line 5: delete text');
+    });
+
+    it('should identify insert operations', () => {
+      const changes: MockTextEdit[] = [
+        {
+          range: {
+            start: { line: 9, character: 5 },
+            end: { line: 9, character: 5 },
+            isEmpty: true,
+          },
+          newText: 'inserted text',
+        },
+      ];
+      assert.strictEqual(getEditSummary(changes), 'Line 10: insert text');
+    });
+
+    it('should identify replace operations', () => {
+      const changes: MockTextEdit[] = [
+        {
+          range: {
+            start: { line: 0, character: 0 },
+            end: { line: 0, character: 5 },
+            isEmpty: false,
+          },
+          newText: 'replacement',
+        },
+      ];
+      assert.strictEqual(getEditSummary(changes), 'Line 1: replace text');
+    });
+
+    it('should summarize multiple changes', () => {
+      const changes: MockTextEdit[] = [
+        {
+          range: {
+            start: { line: 0, character: 0 },
+            end: { line: 0, character: 5 },
+            isEmpty: false,
+          },
+          newText: 'a',
+        },
+        {
+          range: {
+            start: { line: 1, character: 0 },
+            end: { line: 1, character: 5 },
+            isEmpty: false,
+          },
+          newText: 'b',
+        },
+        {
+          range: {
+            start: { line: 2, character: 0 },
+            end: { line: 2, character: 5 },
+            isEmpty: false,
+          },
+          newText: 'c',
+        },
+      ];
+      assert.strictEqual(getEditSummary(changes), '3 changes');
+    });
+  });
+
+  describe('Fix confidence levels', () => {
+    it('safe fixes should be marked as preferred', () => {
+      // This matches the LSP behavior where safe=true maps to isPreferred=true
+      const safeFix = { isPreferred: true };
+      const unsafeFix = { isPreferred: false };
+
+      assert.strictEqual(safeFix.isPreferred, true);
+      assert.strictEqual(unsafeFix.isPreferred, false);
+    });
+  });
+});

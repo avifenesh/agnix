@@ -2,7 +2,7 @@
   "name": "agnix",
   "displayName": "agnix - Agent Config Linter",
   "description": "Real-time validation for AI agent configuration files. Validates SKILL.md, CLAUDE.md, AGENTS.md, MCP configs, hooks, and more against 100 rules.",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "publisher": "avifenesh",
   "repository": {
     "type": "git",
@@ -152,6 +152,18 @@
         "title": "Fix All Issues in File",
         "category": "agnix",
         "icon": "$(wand)"
+      },
+      {
+        "command": "agnix.previewFixes",
+        "title": "Preview Fixes",
+        "category": "agnix",
+        "icon": "$(preview)"
+      },
+      {
+        "command": "agnix.fixAllSafe",
+        "title": "Fix All Safe Issues",
+        "category": "agnix",
+        "icon": "$(shield)"
       }
     ],
     "keybindings": [
@@ -166,6 +178,18 @@
         "key": "ctrl+shift+.",
         "mac": "cmd+shift+.",
         "when": "editorTextFocus"
+      },
+      {
+        "command": "agnix.previewFixes",
+        "key": "ctrl+shift+p ctrl+shift+f",
+        "mac": "cmd+shift+p cmd+shift+f",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "agnix.fixAllSafe",
+        "key": "ctrl+alt+.",
+        "mac": "cmd+alt+.",
+        "when": "editorTextFocus"
       }
     ],
     "menus": {
@@ -178,6 +202,16 @@
         {
           "command": "agnix.fixAll",
           "group": "agnix@2",
+          "when": "resourceFilename =~ /SKILL\\.md$|CLAUDE\\.md$|AGENTS\\.md$|\\.mcp\\.json$|\\.mdc$/"
+        },
+        {
+          "command": "agnix.previewFixes",
+          "group": "agnix@3",
+          "when": "resourceFilename =~ /SKILL\\.md$|CLAUDE\\.md$|AGENTS\\.md$|\\.mcp\\.json$|\\.mdc$/"
+        },
+        {
+          "command": "agnix.fixAllSafe",
+          "group": "agnix@4",
           "when": "resourceFilename =~ /SKILL\\.md$|CLAUDE\\.md$|AGENTS\\.md$|\\.mcp\\.json$|\\.mdc$/"
         }
       ],
@@ -201,6 +235,14 @@
         },
         {
           "command": "agnix.fixAll",
+          "when": "editorIsOpen"
+        },
+        {
+          "command": "agnix.previewFixes",
+          "when": "editorIsOpen"
+        },
+        {
+          "command": "agnix.fixAllSafe",
           "when": "editorIsOpen"
         }
       ]

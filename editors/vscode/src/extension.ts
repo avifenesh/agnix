@@ -51,7 +51,9 @@ export async function activate(
       validateWorkspace()
     ),
     vscode.commands.registerCommand('agnix.showRules', () => showRules()),
-    vscode.commands.registerCommand('agnix.fixAll', () => fixAllInFile())
+    vscode.commands.registerCommand('agnix.fixAll', () => fixAllInFile()),
+    vscode.commands.registerCommand('agnix.previewFixes', () => previewFixes()),
+    vscode.commands.registerCommand('agnix.fixAllSafe', () => fixAllSafeInFile())
   );
 
   context.subscriptions.push(
@@ -386,6 +388,289 @@ async function fixAllInFile(): Promise<void> {
     vscode.window.showInformationMessage(
       'No automatic fixes could be applied'
     );
+  }
+}
+
+/**
+ * Preview all available fixes before applying them.
+ * Shows a quick pick with fix details and confidence level.
+ */
+async function previewFixes(): Promise<void> {
+  const editor = vscode.window.activeTextEditor;
+  if (!editor) {
+    vscode.window.showWarningMessage('No file is currently open');
+    return;
+  }
+
+  if (!client) {
+    vscode.window.showErrorMessage(
+      'agnix language server is not running. Use "agnix: Restart Language Server" to start it.'
+    );
+    return;
+  }
+
+  const document = editor.document;
+  const actions = await vscode.commands.executeCommand<vscode.CodeAction[]>(
+    'vscode.executeCodeActionProvider',
+    document.uri,
+    new vscode.Range(0, 0, document.lineCount, 0),
+    vscode.CodeActionKind.QuickFix.value
+  );
+
+  if (!actions || actions.length === 0) {
+    vscode.window.showInformationMessage('No fixes available for this file');
+    return;
+  }
+
+  // Build quick pick items with confidence indicators
+  const items: (vscode.QuickPickItem & { action: vscode.CodeAction })[] = actions
+    .filter((a) => a.edit)
+    .map((action) => {
+      const isSafe = action.isPreferred === true;
+      const confidence = isSafe ? '$(check) Safe' : '$(warning) Review';
+      return {
+        label: `${confidence}  ${action.title}`,
+        description: getEditSummary(action.edit!, document),
+        detail: isSafe
+          ? 'This fix is safe to apply automatically'
+          : 'Review this fix before applying',
+        action,
+      };
+    });
+
+  if (items.length === 0) {
+    vscode.window.showInformationMessage('No fixes available for this file');
+    return;
+  }
+
+  // Add "Apply All" options at the top
+  const applyAllItem = {
+    label: '$(checklist) Apply All Fixes',
+    description: `${items.length} fixes`,
+    detail: 'Apply all available fixes at once',
+    action: null as unknown as vscode.CodeAction,
+  };
+
+  const safeCount = items.filter((i) => i.action.isPreferred === true).length;
+  const applyAllSafeItem = {
+    label: '$(shield) Apply All Safe Fixes',
+    description: `${safeCount} safe fixes`,
+    detail: 'Only apply fixes marked as safe',
+    action: null as unknown as vscode.CodeAction,
+  };
+
+  const allItems = [applyAllItem, applyAllSafeItem, { label: '', kind: vscode.QuickPickItemKind.Separator } as any, ...items];
+
+  const selected = await vscode.window.showQuickPick(allItems, {
+    title: `agnix Fixes Preview (${items.length} available)`,
+    placeHolder: 'Select a fix to preview or apply',
+    matchOnDescription: true,
+    matchOnDetail: true,
+  });
+
+  if (!selected) {
+    return;
+  }
+
+  if (selected.label === '$(checklist) Apply All Fixes') {
+    await applyAllFixes(items.map((i) => i.action));
+    return;
+  }
+
+  if (selected.label === '$(shield) Apply All Safe Fixes') {
+    const safeActions = items.filter((i) => i.action.isPreferred === true).map((i) => i.action);
+    await applyAllFixes(safeActions);
+    return;
+  }
+
+  // Show diff preview for single fix
+  await showFixPreview(document, selected.action);
+}
+
+/**
+ * Get a summary of what an edit will change.
+ */
+function getEditSummary(edit: vscode.WorkspaceEdit, document: vscode.TextDocument): string {
+  const changes = edit.get(document.uri);
+  if (!changes || changes.length === 0) {
+    return '';
+  }
+
+  if (changes.length === 1) {
+    const change = changes[0];
+    const lineNum = change.range.start.line + 1;
+    if (change.newText === '') {
+      return `Line ${lineNum}: delete text`;
+    }
+    if (change.range.isEmpty) {
+      return `Line ${lineNum}: insert text`;
+    }
+    return `Line ${lineNum}: replace text`;
+  }
+
+  return `${changes.length} changes`;
+}
+
+/**
+ * Show a diff preview for a single fix.
+ */
+async function showFixPreview(
+  document: vscode.TextDocument,
+  action: vscode.CodeAction
+): Promise<void> {
+  if (!action.edit) {
+    return;
+  }
+
+  const originalContent = document.getText();
+  const changes = action.edit.get(document.uri);
+
+  if (!changes || changes.length === 0) {
+    return;
+  }
+
+  // Apply changes to create preview content
+  let previewContent = originalContent;
+  // Sort changes in reverse order to apply from end to start
+  const sortedChanges = [...changes].sort(
+    (a, b) => b.range.start.compareTo(a.range.start)
+  );
+
+  for (const change of sortedChanges) {
+    const startOffset = document.offsetAt(change.range.start);
+    const endOffset = document.offsetAt(change.range.end);
+    previewContent =
+      previewContent.substring(0, startOffset) +
+      change.newText +
+      previewContent.substring(endOffset);
+  }
+
+  // Create virtual documents for diff
+  const originalUri = vscode.Uri.parse(
+    `agnix-preview:${document.uri.path}?original`
+  );
+  const previewUri = vscode.Uri.parse(
+    `agnix-preview:${document.uri.path}?preview`
+  );
+
+  // Register content provider for virtual documents
+  const provider = new (class implements vscode.TextDocumentContentProvider {
+    provideTextDocumentContent(uri: vscode.Uri): string {
+      if (uri.query === 'original') {
+        return originalContent;
+      }
+      return previewContent;
+    }
+  })();
+
+  const registration = vscode.workspace.registerTextDocumentContentProvider(
+    'agnix-preview',
+    provider
+  );
+
+  try {
+    // Show diff
+    await vscode.commands.executeCommand(
+      'vscode.diff',
+      originalUri,
+      previewUri,
+      `${path.basename(document.fileName)}: Fix Preview - ${action.title}`,
+      { preview: true }
+    );
+
+    // Ask user to apply
+    const isSafe = action.isPreferred === true;
+    const confidence = isSafe ? 'Safe fix' : 'Review recommended';
+
+    const choice = await vscode.window.showInformationMessage(
+      `${confidence}: ${action.title}`,
+      { modal: false },
+      'Apply Fix',
+      'Cancel'
+    );
+
+    if (choice === 'Apply Fix') {
+      await vscode.workspace.applyEdit(action.edit);
+      vscode.window.showInformationMessage('Fix applied');
+    }
+  } finally {
+    registration.dispose();
+  }
+}
+
+/**
+ * Apply multiple fixes.
+ */
+async function applyAllFixes(actions: vscode.CodeAction[]): Promise<void> {
+  let fixCount = 0;
+  for (const action of actions) {
+    if (action.edit) {
+      await vscode.workspace.applyEdit(action.edit);
+      fixCount++;
+    }
+  }
+
+  if (fixCount > 0) {
+    vscode.window.showInformationMessage(`Applied ${fixCount} fixes`);
+  } else {
+    vscode.window.showInformationMessage('No fixes could be applied');
+  }
+}
+
+/**
+ * Apply only safe fixes in the current file.
+ */
+async function fixAllSafeInFile(): Promise<void> {
+  const editor = vscode.window.activeTextEditor;
+  if (!editor) {
+    vscode.window.showWarningMessage('No file is currently open');
+    return;
+  }
+
+  if (!client) {
+    vscode.window.showErrorMessage(
+      'agnix language server is not running. Use "agnix: Restart Language Server" to start it.'
+    );
+    return;
+  }
+
+  const actions = await vscode.commands.executeCommand<vscode.CodeAction[]>(
+    'vscode.executeCodeActionProvider',
+    editor.document.uri,
+    new vscode.Range(0, 0, editor.document.lineCount, 0),
+    vscode.CodeActionKind.QuickFix.value
+  );
+
+  if (!actions || actions.length === 0) {
+    vscode.window.showInformationMessage('No fixes available for this file');
+    return;
+  }
+
+  // Filter to only safe fixes (isPreferred = true)
+  const safeActions = actions.filter((a) => a.isPreferred === true && a.edit);
+
+  if (safeActions.length === 0) {
+    vscode.window.showInformationMessage(
+      'No safe fixes available. Use "Preview Fixes" to review all fixes.'
+    );
+    return;
+  }
+
+  let fixCount = 0;
+  for (const action of safeActions) {
+    if (action.edit) {
+      await vscode.workspace.applyEdit(action.edit);
+      fixCount++;
+    }
+  }
+
+  const skipped = actions.filter((a) => a.edit).length - fixCount;
+  if (skipped > 0) {
+    vscode.window.showInformationMessage(
+      `Applied ${fixCount} safe fixes (${skipped} fixes skipped - use Preview to review)`
+    );
+  } else {
+    vscode.window.showInformationMessage(`Applied ${fixCount} safe fixes`);
   }
 }
 

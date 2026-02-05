@@ -8,7 +8,8 @@ Real-time validation for AI agent configuration files in VS Code.
 
 - **Real-time validation** - Diagnostics as you type
 - **Validates 100 rules** - From official specs and best practices
-- **Auto-fix support** - One-click fixes for common issues
+- **Quick-fix preview** - See diff before applying fixes
+- **Safe fixes** - Apply only high-confidence fixes automatically
 - **Multi-tool** - Claude Code, Cursor, GitHub Copilot, Codex CLI
 - **Status bar** - See validation status at a glance
 
@@ -33,6 +34,8 @@ Access via Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`):
 | `agnix: Validate Current File` | `Ctrl+Shift+V` | Validate active file |
 | `agnix: Validate Workspace` | - | Validate all agent configs |
 | `agnix: Fix All Issues in File` | `Ctrl+Shift+.` | Apply all available fixes |
+| `agnix: Preview Fixes` | - | Browse fixes with diff preview |
+| `agnix: Fix All Safe Issues` | `Ctrl+Alt+.` | Apply only safe fixes |
 | `agnix: Show All Rules` | - | Browse 100 rules by category |
 | `agnix: Restart Language Server` | - | Restart the LSP server |
 | `agnix: Show Output Channel` | - | View server logs |
@@ -42,6 +45,8 @@ Access via Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`):
 Right-click on agent config files to:
 - Validate Current File
 - Fix All Issues
+- Preview Fixes (with diff)
+- Fix All Safe Issues
 
 ## Requirements
 

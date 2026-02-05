@@ -2,6 +2,23 @@
 
 All notable changes to the "agnix" extension will be documented in this file.
 
+## [0.5.0] - 2026-02-05
+
+### Added
+
+- **Quick-fix preview** - See changes before applying fixes
+  - `agnix: Preview Fixes` - Browse and preview all available fixes
+  - Shows diff view before applying each fix
+  - Confidence indicators (Safe/Review) for each fix
+- **Safe fixes only** - `agnix: Fix All Safe Issues` applies only high-confidence fixes
+- **New keyboard shortcuts:**
+  - `Ctrl+Alt+.` / `Cmd+Alt+.` - Fix all safe issues
+
+### Changed
+
+- Fix preview shows original vs fixed content side-by-side
+- Quick pick shows confidence level for each fix
+
 ## [0.4.0] - 2026-02-05
 
 ### Added
