@@ -64,7 +64,7 @@ pub fn find_critical_in_middle_pe(content: &str) -> Vec<CriticalInMiddle> {
             if (40.0..60.0).contains(&position_percent) {
                 results.push(CriticalInMiddle {
                     line: line_num + 1,
-                    column: mat.start(),
+                    column: mat.start() + 1,
                     keyword: mat.as_str().to_string(),
                     position_percent,
                 });
@@ -145,7 +145,7 @@ pub fn find_cot_on_simple_tasks(content: &str) -> Vec<CotOnSimpleTask> {
                 if distance <= 5 {
                     results.push(CotOnSimpleTask {
                         line: line_num + 1,
-                        column: mat.start(),
+                        column: mat.start() + 1,
                         phrase: mat.as_str().to_string(),
                         task_indicator: task.clone(),
                     });
@@ -213,7 +213,7 @@ pub fn find_weak_imperative_language(content: &str) -> Vec<WeakLanguageInCritica
             if let Some(mat) = weak_pattern.find(line) {
                 results.push(WeakLanguageInCritical {
                     line: line_num + 1,
-                    column: mat.start(),
+                    column: mat.start() + 1, // 1-indexed for diagnostics
                     weak_term: mat.as_str().to_string(),
                     section_name: section_name.clone(),
                 });
@@ -293,7 +293,7 @@ pub fn find_ambiguous_instructions(content: &str) -> Vec<AmbiguousInstruction> {
 
             results.push(AmbiguousInstruction {
                 line: line_num + 1,
-                column: mat.start(),
+                column: mat.start() + 1,
                 term: mat.as_str().to_string(),
                 context,
             });

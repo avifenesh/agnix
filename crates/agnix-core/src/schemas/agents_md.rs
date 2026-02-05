@@ -98,7 +98,7 @@ pub fn check_markdown_validity(content: &str) -> Vec<MarkdownValidityIssue> {
                         if !has_close_paren {
                             results.push(MarkdownValidityIssue {
                                 line: line_num + 1,
-                                column: mat.start(),
+                                column: mat.start() + 1,
                                 issue_type: MarkdownIssueType::MalformedLink,
                                 description:
                                     "Malformed markdown link (missing closing parenthesis)"
@@ -114,7 +114,7 @@ pub fn check_markdown_validity(content: &str) -> Vec<MarkdownValidityIssue> {
                     if !has_close_bracket {
                         results.push(MarkdownValidityIssue {
                             line: line_num + 1,
-                            column: mat.start(),
+                            column: mat.start() + 1,
                             issue_type: MarkdownIssueType::MalformedLink,
                             description:
                                 "Malformed markdown link reference (missing closing bracket)"
@@ -356,7 +356,7 @@ pub fn find_unguarded_platform_features(content: &str) -> Vec<UnguardedPlatformF
             {
                 results.push(UnguardedPlatformFeature {
                     line: line_num + 1,
-                    column: mat.start(),
+                    column: mat.start() + 1,
                     feature: feature.clone(),
                     platform: platform.clone(),
                     description: format!(

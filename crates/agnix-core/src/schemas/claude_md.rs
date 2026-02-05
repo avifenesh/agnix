@@ -51,7 +51,7 @@ pub fn find_generic_instructions(content: &str) -> Vec<GenericInstruction> {
             if let Some(mat) = pattern.find(line) {
                 results.push(GenericInstruction {
                     line: line_num + 1,
-                    column: mat.start(),
+                    column: mat.start() + 1,
                     text: mat.as_str().to_string(),
                     pattern: pattern.as_str().to_string(),
                     start_byte: line_start,
@@ -154,7 +154,7 @@ pub fn find_negative_without_positive(content: &str) -> Vec<NegativeInstruction>
             if !has_positive_same_line && !has_positive_next_line {
                 results.push(NegativeInstruction {
                     line: line_num + 1,
-                    column: mat.start(),
+                    column: mat.start() + 1,
                     text: mat.as_str().to_string(),
                 });
             }
@@ -225,7 +225,7 @@ pub fn find_weak_constraints(content: &str) -> Vec<WeakConstraint> {
             if let Some(mat) = weak_pattern.find(line) {
                 results.push(WeakConstraint {
                     line: line_num + 1,
-                    column: mat.start(),
+                    column: mat.start() + 1,
                     text: mat.as_str().to_string(),
                     section: section_name.clone(),
                     start_byte: line_start + mat.start(),
@@ -290,7 +290,7 @@ pub fn find_critical_in_middle(content: &str) -> Vec<CriticalInMiddle> {
             if position_percent > 40.0 && position_percent < 60.0 {
                 results.push(CriticalInMiddle {
                     line: line_num + 1,
-                    column: mat.start(),
+                    column: mat.start() + 1,
                     keyword: mat.as_str().to_string(),
                     position_percent,
                 });

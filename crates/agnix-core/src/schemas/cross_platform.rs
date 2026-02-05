@@ -134,7 +134,7 @@ pub fn find_claude_specific_features(content: &str) -> Vec<ClaudeSpecificFeature
         if let Some(mat) = claude_hooks_pattern().find(line) {
             results.push(ClaudeSpecificFeature {
                 line: line_num + 1,
-                column: mat.start(),
+                column: mat.start() + 1,
                 feature: "hooks".to_string(),
                 description: "Claude Code hooks are not supported by other AGENTS.md readers"
                     .to_string(),
@@ -145,7 +145,7 @@ pub fn find_claude_specific_features(content: &str) -> Vec<ClaudeSpecificFeature
         if let Some(mat) = context_fork_pattern().find(line) {
             results.push(ClaudeSpecificFeature {
                 line: line_num + 1,
-                column: mat.start(),
+                column: mat.start() + 1,
                 feature: "context:fork".to_string(),
                 description: "Context forking is Claude Code specific".to_string(),
             });
@@ -155,7 +155,7 @@ pub fn find_claude_specific_features(content: &str) -> Vec<ClaudeSpecificFeature
         if let Some(mat) = agent_field_pattern().find(line) {
             results.push(ClaudeSpecificFeature {
                 line: line_num + 1,
-                column: mat.start(),
+                column: mat.start() + 1,
                 feature: "agent".to_string(),
                 description: "Agent field is Claude Code specific".to_string(),
             });
@@ -165,7 +165,7 @@ pub fn find_claude_specific_features(content: &str) -> Vec<ClaudeSpecificFeature
         if let Some(mat) = allowed_tools_pattern().find(line) {
             results.push(ClaudeSpecificFeature {
                 line: line_num + 1,
-                column: mat.start(),
+                column: mat.start() + 1,
                 feature: "allowed-tools".to_string(),
                 description: "Tool restrictions are Claude Code specific".to_string(),
             });
@@ -290,7 +290,7 @@ pub fn find_hard_coded_paths(content: &str) -> Vec<HardCodedPath> {
 
             results.push(HardCodedPath {
                 line: line_num + 1,
-                column: mat.start(),
+                column: mat.start() + 1,
                 path: mat.as_str().to_string(),
                 platform: platform.to_string(),
             });
@@ -566,7 +566,7 @@ pub fn extract_tool_constraints(content: &str) -> Vec<ToolConstraint> {
                         if let Some(canonical) = normalize_tool_name(tool_cap.as_str()) {
                             results.push(ToolConstraint {
                                 line: line_num + 1,
-                                column: mat.start(),
+                                column: mat.start() + 1,
                                 tool_name: canonical,
                                 constraint_type: ConstraintType::Allow,
                                 source_context: matched.to_string(),
@@ -581,7 +581,7 @@ pub fn extract_tool_constraints(content: &str) -> Vec<ToolConstraint> {
             for tool in tools {
                 results.push(ToolConstraint {
                     line: line_num + 1,
-                    column: mat.start(),
+                    column: mat.start() + 1,
                     tool_name: tool,
                     constraint_type: ConstraintType::Allow,
                     source_context: matched.to_string(),
@@ -601,7 +601,7 @@ pub fn extract_tool_constraints(content: &str) -> Vec<ToolConstraint> {
                         if let Some(canonical) = normalize_tool_name(tool_cap.as_str()) {
                             results.push(ToolConstraint {
                                 line: line_num + 1,
-                                column: mat.start(),
+                                column: mat.start() + 1,
                                 tool_name: canonical,
                                 constraint_type: ConstraintType::Disallow,
                                 source_context: matched.to_string(),
@@ -616,7 +616,7 @@ pub fn extract_tool_constraints(content: &str) -> Vec<ToolConstraint> {
             for tool in tools {
                 results.push(ToolConstraint {
                     line: line_num + 1,
-                    column: mat.start(),
+                    column: mat.start() + 1,
                     tool_name: tool,
                     constraint_type: ConstraintType::Disallow,
                     source_context: matched.to_string(),
