@@ -23,4 +23,10 @@ generic_instructions = true
 frontmatter_validation = true
 xml_balance = true
 import_references = true
-disabled_rules = []
+# Disable rules that don't apply to this repo:
+# - XP-001/002/003: We document tool paths, so mentioning them is expected
+# - XP-006: We intentionally have both CLAUDE.md and AGENTS.md
+# - VER-001: Version pinning not needed for the linter itself
+# - CC-MEM-006: Negative instructions are sometimes necessary in CLAUDE.md
+# - PE-003: Weak language in docs is acceptable
+disabled_rules = ["XP-001", "XP-002", "XP-003", "XP-006", "VER-001", "CC-MEM-006", "PE-003"]

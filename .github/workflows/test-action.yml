@@ -246,3 +246,4 @@ jobs:
         uses: github/codeql-action/upload-sarif@2588666de8825e1e9dc4e2329a4c985457d55b32 # v3
         with:
           sarif_file: ${{ steps.agnix.outputs.sarif-file }}
+          category: agnix-linting
