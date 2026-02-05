@@ -383,12 +383,10 @@ pub fn validate_project_with_registry(
     config.set_root_dir(root_dir.clone());
 
     // Initialize shared import cache for project-level validation.
-    // Reuse an existing cache when one is configured so callers can preserve
-    // cache state across validations (including poison-state recovery tests).
+    // This cache is shared across all file validations, allowing the ImportsValidator
+    // to avoid redundant parsing when traversing import chains that reference the same files.
     let import_cache: crate::parsers::ImportCache =
-        config.get_import_cache().cloned().unwrap_or_else(|| {
-            std::sync::Arc::new(std::sync::RwLock::new(std::collections::HashMap::new()))
-        });
+        std::sync::Arc::new(std::sync::RwLock::new(std::collections::HashMap::new()));
     config.set_import_cache(import_cache);
 
     // Pre-compile exclude patterns once (avoids N+1 pattern compilation)
@@ -3476,7 +3474,6 @@ Use idiomatic Rust patterns.
     fn test_concurrent_file_validation() {
         use std::sync::Arc;
         use std::thread;
-
         let temp = tempfile::TempDir::new().unwrap();
 
         // Create multiple files
@@ -3516,7 +3513,6 @@ Use idiomatic Rust patterns.
     fn test_concurrent_project_validation() {
         use std::sync::Arc;
         use std::thread;
-
         let temp = tempfile::TempDir::new().unwrap();
 
         // Create a project structure
@@ -3561,41 +3557,56 @@ Use idiomatic Rust patterns.
 
     #[test]
     fn test_validate_project_with_poisoned_import_cache_does_not_panic() {
-        use std::collections::HashMap;
-        use std::sync::{Arc, RwLock};
-        use std::thread;
+        struct PoisonImportCacheValidator;
+
+        impl Validator for PoisonImportCacheValidator {
+            fn validate(
+                &self,
+                _path: &Path,
+                _content: &str,
+                config: &LintConfig,
+            ) -> Vec<Diagnostic> {
+                use std::thread;
+
+                if let Some(cache) = config.get_import_cache().cloned() {
+                    let _ = thread::spawn(move || {
+                        let _guard = cache.write().unwrap();
+                        panic!("poison import cache lock");
+                    })
+                    .join();
+                }
+
+                Vec::new()
+            }
+        }
+
+        fn create_poison_validator() -> Box<dyn Validator> {
+            Box::new(PoisonImportCacheValidator)
+        }
+
+        fn create_imports_validator() -> Box<dyn Validator> {
+            Box::new(crate::rules::imports::ImportsValidator)
+        }
 
         let temp = tempfile::TempDir::new().unwrap();
-        std::fs::write(temp.path().join("README.md"), "See @target.md").unwrap();
-        std::fs::write(temp.path().join("target.md"), "Target content").unwrap();
+        std::fs::write(temp.path().join("README.md"), "See @missing.md").unwrap();
 
-        let cache: crate::parsers::ImportCache = Arc::new(RwLock::new(HashMap::new()));
-        let cache_for_assert = cache.clone();
+        let mut registry = ValidatorRegistry::new();
+        registry.register(FileType::GenericMarkdown, create_poison_validator);
+        registry.register(FileType::GenericMarkdown, create_imports_validator);
 
-        let cache_for_poison = cache.clone();
-        let _ = thread::spawn(move || {
-            let _guard = cache_for_poison.write().unwrap();
-            panic!("poison import cache lock");
-        })
-        .join();
-        assert!(cache.read().is_err(), "Cache lock should be poisoned");
-
-        let mut config = LintConfig::default();
-        config.set_import_cache(cache);
-
-        let result = validate_project(temp.path(), &config);
+        let config = LintConfig::default();
+        let result = validate_project_with_registry(temp.path(), &config, &registry);
         assert!(
             result.is_ok(),
             "Project validation should continue with a poisoned import cache lock"
         );
-
-        let cache_guard = cache_for_assert
-            .read()
-            .expect_err("Poisoned cache should remain poisoned")
-            .into_inner();
+        let diagnostics = result.unwrap().diagnostics;
         assert!(
-            !cache_guard.is_empty(),
-            "Project validation should reuse and populate the provided import cache"
+            diagnostics
+                .iter()
+                .any(|d| d.rule == "REF-001" && d.message.contains("@missing.md")),
+            "Imports validation should still run and report missing imports after cache poisoning"
         );
     }
 

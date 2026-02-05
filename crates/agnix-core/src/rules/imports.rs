@@ -118,7 +118,10 @@ fn visit_imports(
 ) {
     let depth = stack.len();
     if let Some(prev_depth) = visited_depth.get(file_path) {
-        if *prev_depth >= depth {
+        // Skip only when we have already visited this file at an equal or
+        // shallower depth. If we discover a shallower path later, revisit it
+        // so traversal can continue with the tighter depth budget.
+        if *prev_depth <= depth {
             return;
         }
     }
@@ -1253,6 +1256,73 @@ mod tests {
         assert!(
             diagnostics.is_empty(),
             "Validation should continue with a poisoned shared cache lock"
+        );
+    }
+
+    #[test]
+    fn test_shared_cache_poisoned_lock_still_reports_missing_import() {
+        use std::collections::HashMap;
+        use std::sync::{Arc, RwLock};
+        use std::thread;
+
+        let temp = TempDir::new().unwrap();
+        let file_path = temp.path().join("test.md");
+        fs::write(&file_path, "See @missing.md").unwrap();
+
+        let cache: crate::parsers::ImportCache = Arc::new(RwLock::new(HashMap::new()));
+
+        let cache_for_poison = cache.clone();
+        let _ = thread::spawn(move || {
+            let _guard = cache_for_poison.write().unwrap();
+            panic!("poison import cache lock");
+        })
+        .join();
+        assert!(cache.read().is_err(), "Cache lock should be poisoned");
+
+        let mut config = LintConfig::default();
+        config.set_import_cache(cache);
+
+        let validator = ImportsValidator;
+        let diagnostics = validator.validate(&file_path, "See @missing.md", &config);
+        assert!(
+            diagnostics
+                .iter()
+                .any(|d| d.rule == "REF-001" && d.message.contains("@missing.md")),
+            "Validation should still report missing imports with a poisoned shared cache lock"
+        );
+    }
+
+    #[test]
+    fn test_revisits_file_when_later_seen_at_shallower_depth() {
+        let temp = TempDir::new().unwrap();
+        let root = temp.path().join("CLAUDE.md");
+        let a = temp.path().join("a.md");
+        let b = temp.path().join("b.md");
+        let c = temp.path().join("c.md");
+        let d = temp.path().join("d.md");
+        let shared = temp.path().join("shared.md");
+        let leaf = temp.path().join("leaf.md");
+
+        fs::write(&root, "@a.md\n@shared.md").unwrap();
+        fs::write(&a, "@b.md").unwrap();
+        fs::write(&b, "@c.md").unwrap();
+        fs::write(&c, "@d.md").unwrap();
+        fs::write(&d, "@shared.md").unwrap();
+        fs::write(&shared, "@leaf.md").unwrap();
+        fs::write(&leaf, "@missing.md").unwrap();
+
+        let mut config = LintConfig::default();
+        config.set_root_dir(temp.path().to_path_buf());
+
+        let validator = ImportsValidator;
+        let content = fs::read_to_string(&root).unwrap();
+        let diagnostics = validator.validate(&root, &content, &config);
+
+        assert!(
+            diagnostics
+                .iter()
+                .any(|d| d.rule == "REF-001" && d.message.contains("@missing.md")),
+            "Traversal should revisit shared.md at shallower depth and report downstream missing imports"
         );
     }
 }
