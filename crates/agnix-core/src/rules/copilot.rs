@@ -520,11 +520,11 @@ applyTo: "**/*.ts"
 Body content"#;
         let diagnostics = validate_scoped(content);
         // Valid frontmatter should not trigger COP-002
-        let cop_002: Vec<_> = diagnostics
-            .iter()
-            .filter(|d| d.rule == "COP-002")
-            .collect();
-        assert!(cop_002.is_empty(), "Valid frontmatter should not trigger COP-002");
+        let cop_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "COP-002").collect();
+        assert!(
+            cop_002.is_empty(),
+            "Valid frontmatter should not trigger COP-002"
+        );
     }
 
     #[test]
@@ -541,11 +541,7 @@ Body content"#;
             let content = format!("---\napplyTo: \"{}\"\n---\nBody", pattern);
             let diagnostics = validate_scoped(&content);
             let cop_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "COP-003").collect();
-            assert!(
-                cop_003.is_empty(),
-                "Pattern '{}' should be valid",
-                pattern
-            );
+            assert!(cop_003.is_empty(), "Pattern '{}' should be valid", pattern);
         }
     }
 

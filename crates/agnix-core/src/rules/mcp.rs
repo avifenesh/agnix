@@ -1265,7 +1265,9 @@ mod tests {
 
     #[test]
     fn test_all_mcp_rules_can_be_disabled() {
-        let rules = ["MCP-001", "MCP-002", "MCP-003", "MCP-004", "MCP-005", "MCP-006", "MCP-007", "MCP-008"];
+        let rules = [
+            "MCP-001", "MCP-002", "MCP-003", "MCP-004", "MCP-005", "MCP-006", "MCP-007", "MCP-008",
+        ];
 
         for rule in rules {
             let mut config = LintConfig::default();

@@ -1540,7 +1540,8 @@ Body"#;
 
     #[test]
     fn test_cc_ag_003_all_valid_models() {
-        let valid_models = ["sonnet", "opus", "haiku", "inherit"];
+        // Must match VALID_MODELS constant in agent.rs
+        let valid_models = VALID_MODELS;
 
         for model in valid_models {
             let content = format!(
@@ -1553,17 +1554,14 @@ Body"#;
                 .iter()
                 .filter(|d| d.rule == "CC-AG-003")
                 .collect();
-            assert!(
-                cc_ag_003.is_empty(),
-                "Model '{}' should be valid",
-                model
-            );
+            assert!(cc_ag_003.is_empty(), "Model '{}' should be valid", model);
         }
     }
 
     #[test]
     fn test_cc_ag_004_all_valid_permission_modes() {
-        let valid_modes = ["default", "acceptEdits", "dontAsk", "bypassPermissions", "plan"];
+        // Must match VALID_PERMISSION_MODES constant in agent.rs
+        let valid_modes = VALID_PERMISSION_MODES;
 
         for mode in valid_modes {
             let content = format!(

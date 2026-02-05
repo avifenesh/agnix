@@ -881,7 +881,9 @@ You should consider this approach.
     #[test]
     fn test_cc_mem_004_all_known_commands() {
         // Test that known Claude commands don't trigger CC-MEM-004
-        let known_commands = ["/help", "/compact", "/resume", "/memory", "/config", "/doctor"];
+        let known_commands = [
+            "/help", "/compact", "/resume", "/memory", "/config", "/doctor",
+        ];
         let validator = ClaudeMdValidator;
 
         for cmd in known_commands {
@@ -1002,7 +1004,15 @@ You should consider this approach.
 
     #[test]
     fn test_all_cc_mem_rules_can_be_disabled() {
-        let rules = ["CC-MEM-004", "CC-MEM-005", "CC-MEM-006", "CC-MEM-007", "CC-MEM-008", "CC-MEM-009", "CC-MEM-010"];
+        let rules = [
+            "CC-MEM-004",
+            "CC-MEM-005",
+            "CC-MEM-006",
+            "CC-MEM-007",
+            "CC-MEM-008",
+            "CC-MEM-009",
+            "CC-MEM-010",
+        ];
 
         for rule in rules {
             let mut config = LintConfig::default();

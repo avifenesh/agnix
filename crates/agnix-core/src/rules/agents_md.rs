@@ -567,24 +567,26 @@ Content here."#;
 
     #[test]
     fn test_agm_003_exact_12000_chars() {
-        // AGM-003 checks for content exceeding 12000 char Windsurf limit
-        let content = "a".repeat(12000);
+        // AGM-003 checks for content exceeding WINDSURF_CHAR_LIMIT
+        let content = "a".repeat(WINDSURF_CHAR_LIMIT);
 
         let validator = AgentsMdValidator;
-        let diagnostics = validator.validate(Path::new("AGENTS.md"), &content, &LintConfig::default());
-        // At exactly 12000 chars, should not trigger (limit is >12000)
+        let diagnostics =
+            validator.validate(Path::new("AGENTS.md"), &content, &LintConfig::default());
+        // At exactly WINDSURF_CHAR_LIMIT chars, should not trigger (limit is >12000)
         let agm_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AGM-003").collect();
         assert!(agm_003.is_empty());
     }
 
     #[test]
     fn test_agm_003_over_12001_chars() {
-        let content = "a".repeat(12001);
+        let content = "a".repeat(WINDSURF_CHAR_LIMIT + 1);
 
         let validator = AgentsMdValidator;
-        let diagnostics = validator.validate(Path::new("AGENTS.md"), &content, &LintConfig::default());
+        let diagnostics =
+            validator.validate(Path::new("AGENTS.md"), &content, &LintConfig::default());
         let agm_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AGM-003").collect();
-        // 12001 chars should exceed the Windsurf compatibility limit
+        // Over WINDSURF_CHAR_LIMIT should exceed the Windsurf compatibility limit
         assert!(!agm_003.is_empty());
     }
 

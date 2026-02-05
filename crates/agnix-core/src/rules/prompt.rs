@@ -531,10 +531,14 @@ This is not a critical section.
         let content = lines.join("\n");
 
         let validator = PromptValidator;
-        let diagnostics = validator.validate(Path::new("SKILL.md"), &content, &LintConfig::default());
+        let diagnostics =
+            validator.validate(Path::new("SKILL.md"), &content, &LintConfig::default());
 
         let pe_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "PE-001").collect();
-        assert!(pe_001.is_empty(), "Critical at end should not trigger PE-001");
+        assert!(
+            pe_001.is_empty(),
+            "Critical at end should not trigger PE-001"
+        );
     }
 
     #[test]
@@ -544,24 +548,31 @@ This is not a critical section.
         let content = lines.join("\n");
 
         let validator = PromptValidator;
-        let diagnostics = validator.validate(Path::new("SKILL.md"), &content, &LintConfig::default());
+        let diagnostics =
+            validator.validate(Path::new("SKILL.md"), &content, &LintConfig::default());
 
         let pe_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "PE-001").collect();
-        assert!(pe_001.is_empty(), "Critical at start should not trigger PE-001");
+        assert!(
+            pe_001.is_empty(),
+            "Critical at start should not trigger PE-001"
+        );
     }
 
     #[test]
     fn test_pe_002_cot_on_file_read() {
-        // Test the actual pattern that triggers PE-002
-        let content = "# Rules\n\nLet's think step by step about reading files.";
+        // Test PE-002: CoT markers on simple tasks
+        // Content must have both: CoT marker + simple task indicator within 5 lines
+        let content = "# Rules\n\nLet's think step by step.\nYou need to read the file carefully.";
         let validator = PromptValidator;
         let diagnostics =
             validator.validate(Path::new("SKILL.md"), content, &LintConfig::default());
 
         let pe_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "PE-002").collect();
-        // PE-002 may or may not trigger depending on exact pattern matching
-        // This test verifies no panic and the rule can be checked
-        let _ = pe_002;
+        // PE-002 triggers when CoT marker is within 5 lines of a simple task indicator
+        assert!(
+            !pe_002.is_empty(),
+            "Chain-of-thought near 'read the file' should trigger PE-002"
+        );
     }
 
     #[test]
@@ -639,7 +650,10 @@ This is not a critical section.
             validator.validate(Path::new("SKILL.md"), content, &LintConfig::default());
 
         let pe_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "PE-004").collect();
-        assert!(pe_004.is_empty(), "Clear instructions should not trigger PE-004");
+        assert!(
+            pe_004.is_empty(),
+            "Clear instructions should not trigger PE-004"
+        );
     }
 
     #[test]

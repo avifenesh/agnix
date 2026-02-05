@@ -593,11 +593,8 @@ Always use strict mode and explicit types.
         // .cursorrules should NOT require frontmatter (CUR-002 is for .mdc files)
         let content = "Just plain text rules without frontmatter.";
         let validator = CursorValidator;
-        let diagnostics = validator.validate(
-            Path::new(".cursorrules"),
-            content,
-            &LintConfig::default(),
-        );
+        let diagnostics =
+            validator.validate(Path::new(".cursorrules"), content, &LintConfig::default());
         assert!(!diagnostics.iter().any(|d| d.rule == "CUR-002"));
     }
 
@@ -611,22 +608,13 @@ Always use strict mode and explicit types.
 
     #[test]
     fn test_cur_004_all_valid_patterns() {
-        let valid_patterns = [
-            "**/*.ts",
-            "*.rs",
-            "src/**/*.py",
-            "{src,lib}/**/*.tsx",
-        ];
+        let valid_patterns = ["**/*.ts", "*.rs", "src/**/*.py", "{src,lib}/**/*.tsx"];
 
         for pattern in valid_patterns {
             let content = format!("---\nglobs: \"{}\"\n---\nBody", pattern);
             let diagnostics = validate_mdc(&content);
             let cur_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CUR-004").collect();
-            assert!(
-                cur_004.is_empty(),
-                "Pattern '{}' should be valid",
-                pattern
-            );
+            assert!(cur_004.is_empty(), "Pattern '{}' should be valid", pattern);
         }
     }
 
@@ -688,11 +676,8 @@ Body"#;
     fn test_cur_006_legacy_file_with_content() {
         let content = "Some legacy cursor rules.";
         let validator = CursorValidator;
-        let diagnostics = validator.validate(
-            Path::new(".cursorrules"),
-            content,
-            &LintConfig::default(),
-        );
+        let diagnostics =
+            validator.validate(Path::new(".cursorrules"), content, &LintConfig::default());
         assert!(diagnostics.iter().any(|d| d.rule == "CUR-006"));
     }
 
@@ -706,7 +691,9 @@ Body"#;
 
     #[test]
     fn test_all_cur_rules_can_be_disabled() {
-        let rules = ["CUR-001", "CUR-002", "CUR-003", "CUR-004", "CUR-005", "CUR-006"];
+        let rules = [
+            "CUR-001", "CUR-002", "CUR-003", "CUR-004", "CUR-005", "CUR-006",
+        ];
 
         for rule in rules {
             let mut config = LintConfig::default();

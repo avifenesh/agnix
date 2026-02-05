@@ -3247,7 +3247,11 @@ Body"#;
 
         // Tabs in YAML can cause parse errors
         let parse_errors: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-016").collect();
-        assert_eq!(parse_errors.len(), 1, "Tab indentation should cause parse error");
+        assert_eq!(
+            parse_errors.len(),
+            1,
+            "Tab indentation should cause parse error"
+        );
     }
 
     #[test]
@@ -3346,7 +3350,10 @@ Body"#;
 
         // Whitespace-only description should be treated as short (AS-008)
         let as_008: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-008").collect();
-        assert!(!as_008.is_empty(), "Whitespace description should trigger AS-008");
+        assert!(
+            !as_008.is_empty(),
+            "Whitespace description should trigger AS-008"
+        );
     }
 
     #[test]
@@ -3380,7 +3387,8 @@ Body"#;
 
     #[test]
     fn test_as_007_all_reserved_names() {
-        // The actual reserved names in the implementation
+        // Reserved names hardcoded in AS-007 validation logic
+        // No constant exists for these in the codebase
         let reserved = ["anthropic", "claude", "skill"];
 
         for name in reserved {
@@ -3426,7 +3434,8 @@ Body"#;
         );
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), &content, &LintConfig::default());
+        let diagnostics =
+            validator.validate(Path::new("test.md"), &content, &LintConfig::default());
 
         // Exactly 500 should be OK (limit is >500)
         assert!(!diagnostics.iter().any(|d| d.rule == "AS-011"));
@@ -3441,18 +3450,26 @@ Body"#;
         );
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), &content, &LintConfig::default());
+        let diagnostics =
+            validator.validate(Path::new("test.md"), &content, &LintConfig::default());
 
         assert!(diagnostics.iter().any(|d| d.rule == "AS-011"));
     }
 
     #[test]
     fn test_as_012_exactly_500_lines_ok() {
-        let body_lines = (0..470).map(|i| format!("Line {}", i)).collect::<Vec<_>>().join("\n");
-        let content = format!("---\nname: test\ndescription: Use when testing line limits\n---\n{}", body_lines);
+        let body_lines = (0..470)
+            .map(|i| format!("Line {}", i))
+            .collect::<Vec<_>>()
+            .join("\n");
+        let content = format!(
+            "---\nname: test\ndescription: Use when testing line limits\n---\n{}",
+            body_lines
+        );
 
         let validator = SkillValidator;
-        let diagnostics = validator.validate(Path::new("test.md"), &content, &LintConfig::default());
+        let diagnostics =
+            validator.validate(Path::new("test.md"), &content, &LintConfig::default());
 
         // Around 500 lines should be OK
         assert!(!diagnostics.iter().any(|d| d.rule == "AS-012"));
@@ -3460,8 +3477,8 @@ Body"#;
 
     #[test]
     fn test_cc_sk_001_all_valid_models() {
-        // The actual valid models in the implementation
-        let valid_models = ["sonnet", "opus", "haiku", "inherit"];
+        // Must match VALID_MODELS constant in skill.rs
+        let valid_models = VALID_MODELS;
 
         for model in valid_models {
             let content = format!(
@@ -3473,7 +3490,10 @@ Body"#;
             let diagnostics =
                 validator.validate(Path::new("test.md"), &content, &LintConfig::default());
 
-            let cc_sk_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CC-SK-001").collect();
+            let cc_sk_001: Vec<_> = diagnostics
+                .iter()
+                .filter(|d| d.rule == "CC-SK-001")
+                .collect();
             assert!(
                 cc_sk_001.is_empty(),
                 "Model '{}' should be valid but got CC-SK-001",
@@ -3511,7 +3531,10 @@ Body"#;
         let validator = SkillValidator;
         let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
 
-        let cc_sk_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CC-SK-002").collect();
+        let cc_sk_002: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-SK-002")
+            .collect();
         assert!(
             cc_sk_002.is_empty(),
             "Context 'fork' with agent should be valid"
@@ -3566,7 +3589,8 @@ Body"#;
 
     #[test]
     fn test_cc_sk_005_builtin_agents_valid() {
-        let builtin_agents = ["Explore", "Plan", "general-purpose"];
+        // Must match BUILTIN_AGENTS constant in skill.rs
+        let builtin_agents = BUILTIN_AGENTS;
 
         for agent in builtin_agents {
             let content = format!(
@@ -3578,7 +3602,10 @@ Body"#;
             let diagnostics =
                 validator.validate(Path::new("test.md"), &content, &LintConfig::default());
 
-            let cc_sk_005: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CC-SK-005").collect();
+            let cc_sk_005: Vec<_> = diagnostics
+                .iter()
+                .filter(|d| d.rule == "CC-SK-005")
+                .collect();
             assert!(
                 cc_sk_005.is_empty(),
                 "Built-in agent '{}' should be valid",

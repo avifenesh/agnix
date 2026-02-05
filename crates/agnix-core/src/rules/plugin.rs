@@ -486,6 +486,7 @@ mod tests {
         fs::create_dir_all(temp.path().join(".claude-plugin").join("skills")).unwrap();
         fs::create_dir_all(temp.path().join(".claude-plugin").join("agents")).unwrap();
         fs::create_dir_all(temp.path().join(".claude-plugin").join("hooks")).unwrap();
+        fs::create_dir_all(temp.path().join(".claude-plugin").join("commands")).unwrap();
 
         let validator = PluginValidator;
         let diagnostics = validator.validate(
@@ -498,7 +499,7 @@ mod tests {
             .iter()
             .filter(|d| d.rule == "CC-PL-002")
             .collect();
-        assert_eq!(pl_002_errors.len(), 3);
+        assert_eq!(pl_002_errors.len(), 4);
     }
 
     #[test]

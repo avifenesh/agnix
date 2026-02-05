@@ -609,11 +609,17 @@ agent: some-agent
         // Claude-specific features are allowed in CLAUDE.local.md
         let content = "# Project\n\ncontext: fork\nagent: reviewer";
         let validator = CrossPlatformValidator;
-        let diagnostics =
-            validator.validate(Path::new("CLAUDE.local.md"), content, &LintConfig::default());
+        let diagnostics = validator.validate(
+            Path::new("CLAUDE.local.md"),
+            content,
+            &LintConfig::default(),
+        );
 
         let xp_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XP-001").collect();
-        assert!(xp_001.is_empty(), "CLAUDE.local.md should allow Claude features");
+        assert!(
+            xp_001.is_empty(),
+            "CLAUDE.local.md should allow Claude features"
+        );
     }
 
     #[test]
@@ -686,7 +692,10 @@ Use context: fork for subagents.
             validator.validate(Path::new("AGENTS.md"), content, &LintConfig::default());
 
         let xp_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XP-001").collect();
-        assert!(xp_001.is_empty(), "Guarded features should not trigger XP-001");
+        assert!(
+            xp_001.is_empty(),
+            "Guarded features should not trigger XP-001"
+        );
     }
 
     #[test]

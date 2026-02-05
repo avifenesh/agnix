@@ -2878,16 +2878,13 @@ mod tests {
 
     #[test]
     fn test_cc_hk_001_all_valid_events() {
-        let events = [
-            "PreToolUse",
-            "PostToolUse",
-            "Stop",
-            "SubagentStop",
-            "SessionStart",
-            "PermissionRequest",
-        ];
+        // Tool events that require matcher
+        let tool_events = ["PreToolUse", "PostToolUse", "PermissionRequest"];
+        // Non-tool events that don't require matcher
+        let non_tool_events = ["Stop", "SubagentStop", "SessionStart"];
 
-        for event in events {
+        // Test tool events WITH matcher (should be valid)
+        for event in tool_events {
             let content = format!(
                 r#"{{
                     "hooks": {{
@@ -2909,7 +2906,34 @@ mod tests {
                 .collect();
             assert!(
                 hk_001.is_empty(),
-                "Event '{}' should be valid but got CC-HK-001",
+                "Tool event '{}' with matcher should be valid",
+                event
+            );
+        }
+
+        // Test non-tool events WITHOUT matcher (should be valid)
+        for event in non_tool_events {
+            let content = format!(
+                r#"{{
+                    "hooks": {{
+                        "{}": [
+                            {{
+                                "hooks": [{{ "type": "command", "command": "echo test" }}]
+                            }}
+                        ]
+                    }}
+                }}"#,
+                event
+            );
+
+            let diagnostics = validate(&content);
+            let hk_001: Vec<_> = diagnostics
+                .iter()
+                .filter(|d| d.rule == "CC-HK-001")
+                .collect();
+            assert!(
+                hk_001.is_empty(),
+                "Non-tool event '{}' without matcher should be valid",
                 event
             );
         }
@@ -2917,7 +2941,8 @@ mod tests {
 
     #[test]
     fn test_cc_hk_003_all_tool_events_require_matcher() {
-        let tool_events = ["PreToolUse", "PostToolUse", "PermissionRequest"];
+        // Must match HooksSchema::TOOL_EVENTS constant
+        let tool_events = HooksSchema::TOOL_EVENTS;
 
         for event in tool_events {
             let content = format!(
@@ -2982,7 +3007,8 @@ mod tests {
 
     #[test]
     fn test_cc_hk_002_prompt_allowed_events() {
-        let prompt_allowed = ["Stop", "SubagentStop"];
+        // Must match HooksSchema::PROMPT_EVENTS constant
+        let prompt_allowed = HooksSchema::PROMPT_EVENTS;
 
         for event in prompt_allowed {
             let content = format!(
@@ -3013,7 +3039,12 @@ mod tests {
 
     #[test]
     fn test_cc_hk_002_prompt_disallowed_events() {
-        let prompt_disallowed = ["PreToolUse", "PostToolUse", "SessionStart", "PermissionRequest"];
+        let prompt_disallowed = [
+            "PreToolUse",
+            "PostToolUse",
+            "SessionStart",
+            "PermissionRequest",
+        ];
 
         for event in prompt_disallowed {
             let content = format!(
