@@ -50,6 +50,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - SECURITY.md with reporting policy and security configuration
   - knowledge-base/SECURITY-MODEL.md with threat model and implementation details
   - Audit history tracking and incident response procedures
+- LSP workspace boundary check hardened (#232)
+  - Added normalize_path() fallback when canonicalize() fails
+  - Prevents path traversal via .. components in non-canonical paths
 
 ### Added
 - Research tracking document (`knowledge-base/RESEARCH-TRACKING.md`) with AI tool inventory and monitoring process (#191)
@@ -103,7 +106,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CLI `--fix` now exits with status `0` when all diagnostics are resolved by auto-fixes (#230)
   - Exit status now reflects post-fix diagnostics for non-dry-run fix modes
   - Added integration regression test for `--fix` success after full auto-fix
-
+- Imports validation now recovers from poisoned shared `ImportCache` locks during project validation (#239)
+- Import traversal now revisits files discovered at shallower depth and avoids duplicate REF-001 diagnostics (#239)
 ### Performance
 - Benchmark infrastructure with iai-callgrind for deterministic CI testing (#202)
   - Instruction count benchmarks immune to system load variance
