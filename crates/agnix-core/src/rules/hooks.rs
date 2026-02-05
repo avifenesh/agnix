@@ -240,6 +240,109 @@ fn validate_cc_hk_011_invalid_timeout_values(
     }
 }
 
+// =============================================================================
+// Event-Level Validation Functions (CC-HK-001, CC-HK-003, CC-HK-004)
+// =============================================================================
+
+/// CC-HK-001: Invalid event name
+///
+/// Validates that the event name is one of the allowed hook events.
+/// Returns `true` if the event is valid, `false` if invalid (caller should skip further validation).
+fn validate_cc_hk_001_event_name(
+    event: &str,
+    path: &Path,
+    content: &str,
+    diagnostics: &mut Vec<Diagnostic>,
+) -> bool {
+    if HooksSchema::VALID_EVENTS.contains(&event) {
+        return true;
+    }
+
+    let closest = find_closest_event(event);
+    let mut diagnostic = Diagnostic::error(
+        path.to_path_buf(),
+        1,
+        0,
+        "CC-HK-001",
+        format!(
+            "Invalid hook event '{}', valid events: {:?}",
+            event,
+            HooksSchema::VALID_EVENTS
+        ),
+    )
+    .with_suggestion(closest.suggestion);
+
+    // Add auto-fix if we found a matching event
+    if let Some(corrected) = closest.corrected_event {
+        if let Some((start, end)) = find_event_key_position(content, event) {
+            let replacement = format!("\"{}\"", corrected);
+            let description = format!("Replace '{}' with '{}'", event, corrected);
+            // Case-only fixes are safe (high confidence)
+            let fix = Fix::replace(start, end, replacement, description, closest.is_case_fix);
+            diagnostic = diagnostic.with_fix(fix);
+        }
+    }
+
+    diagnostics.push(diagnostic);
+    false
+}
+
+/// CC-HK-003: Missing matcher for tool events
+///
+/// Tool events (PreToolUse, PostToolUse, PermissionRequest) require a matcher field.
+fn validate_cc_hk_003_matcher_required(
+    event: &str,
+    matcher: &Option<String>,
+    matcher_idx: usize,
+    path: &Path,
+    diagnostics: &mut Vec<Diagnostic>,
+) {
+    if HooksSchema::is_tool_event(event) && matcher.is_none() {
+        let hook_location = format!("hooks.{}[{}]", event, matcher_idx);
+        diagnostics.push(
+            Diagnostic::error(
+                path.to_path_buf(),
+                1,
+                0,
+                "CC-HK-003",
+                format!(
+                    "Tool event '{}' at {} requires a matcher field",
+                    event, hook_location
+                ),
+            )
+            .with_suggestion("Add 'matcher': '*' for all tools or specify a tool name".to_string()),
+        );
+    }
+}
+
+/// CC-HK-004: Matcher on non-tool event
+///
+/// Non-tool events (Stop, SubagentStop, SessionStart, etc.) must not have a matcher field.
+fn validate_cc_hk_004_matcher_forbidden(
+    event: &str,
+    matcher: &Option<String>,
+    matcher_idx: usize,
+    path: &Path,
+    diagnostics: &mut Vec<Diagnostic>,
+) {
+    if !HooksSchema::is_tool_event(event) && matcher.is_some() {
+        let hook_location = format!("hooks.{}[{}]", event, matcher_idx);
+        diagnostics.push(
+            Diagnostic::error(
+                path.to_path_buf(),
+                1,
+                0,
+                "CC-HK-004",
+                format!(
+                    "Non-tool event '{}' at {} must not have a matcher field",
+                    event, hook_location
+                ),
+            )
+            .with_suggestion("Remove the 'matcher' field".to_string()),
+        );
+    }
+}
+
 impl HooksValidator {
     fn check_dangerous_patterns(&self, command: &str) -> Option<(&'static str, &'static str)> {
         for dp in DANGEROUS_PATTERNS.iter() {
@@ -354,42 +457,11 @@ impl Validator for HooksValidator {
             })
             .unwrap_or_else(|| Path::new("."));
 
+        // Phase 5: Event iteration with typed validation
         for (event, matchers) in &settings.hooks {
             // CC-HK-001: Invalid event name
             if config.is_rule_enabled("CC-HK-001") {
-                if !HooksSchema::VALID_EVENTS.contains(&event.as_str()) {
-                    let closest = find_closest_event(event);
-                    let mut diagnostic = Diagnostic::error(
-                        path.to_path_buf(),
-                        1,
-                        0,
-                        "CC-HK-001",
-                        format!(
-                            "Invalid hook event '{}', valid events: {:?}",
-                            event,
-                            HooksSchema::VALID_EVENTS
-                        ),
-                    )
-                    .with_suggestion(closest.suggestion);
-
-                    // Add auto-fix if we found a matching event
-                    if let Some(corrected) = closest.corrected_event {
-                        if let Some((start, end)) = find_event_key_position(content, event) {
-                            let replacement = format!("\"{}\"", corrected);
-                            let description = format!("Replace '{}' with '{}'", event, corrected);
-                            // Case-only fixes are safe (high confidence)
-                            let fix = Fix::replace(
-                                start,
-                                end,
-                                replacement,
-                                description,
-                                closest.is_case_fix,
-                            );
-                            diagnostic = diagnostic.with_fix(fix);
-                        }
-                    }
-
-                    diagnostics.push(diagnostic);
+                if !validate_cc_hk_001_event_name(event, path, content, &mut diagnostics) {
                     continue; // Skip further validation for invalid events
                 }
             } else if !HooksSchema::VALID_EVENTS.contains(&event.as_str()) {
@@ -399,46 +471,24 @@ impl Validator for HooksValidator {
 
             for (matcher_idx, matcher) in matchers.iter().enumerate() {
                 // CC-HK-003: Missing matcher for tool events
-                if config.is_rule_enabled("CC-HK-003")
-                    && HooksSchema::is_tool_event(event)
-                    && matcher.matcher.is_none()
-                {
-                    let hook_location = format!("hooks.{}[{}]", event, matcher_idx);
-                    diagnostics.push(
-                        Diagnostic::error(
-                            path.to_path_buf(),
-                            1,
-                            0,
-                            "CC-HK-003",
-                            format!(
-                                "Tool event '{}' at {} requires a matcher field",
-                                event, hook_location
-                            ),
-                        )
-                        .with_suggestion(
-                            "Add 'matcher': '*' for all tools or specify a tool name".to_string(),
-                        ),
+                if config.is_rule_enabled("CC-HK-003") {
+                    validate_cc_hk_003_matcher_required(
+                        event,
+                        &matcher.matcher,
+                        matcher_idx,
+                        path,
+                        &mut diagnostics,
                     );
                 }
 
                 // CC-HK-004: Matcher on non-tool event
-                if config.is_rule_enabled("CC-HK-004")
-                    && !HooksSchema::is_tool_event(event)
-                    && matcher.matcher.is_some()
-                {
-                    let hook_location = format!("hooks.{}[{}]", event, matcher_idx);
-                    diagnostics.push(
-                        Diagnostic::error(
-                            path.to_path_buf(),
-                            1,
-                            0,
-                            "CC-HK-004",
-                            format!(
-                                "Non-tool event '{}' at {} must not have a matcher field",
-                                event, hook_location
-                            ),
-                        )
-                        .with_suggestion("Remove the 'matcher' field".to_string()),
+                if config.is_rule_enabled("CC-HK-004") {
+                    validate_cc_hk_004_matcher_forbidden(
+                        event,
+                        &matcher.matcher,
+                        matcher_idx,
+                        path,
+                        &mut diagnostics,
                     );
                 }
 
