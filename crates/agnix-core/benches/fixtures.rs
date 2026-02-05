@@ -394,13 +394,7 @@ cargo build --release
 
 /// Create an agent definition file.
 fn create_agent(index: usize) -> String {
-    let roles = [
-        "reviewer",
-        "tester",
-        "deployer",
-        "documenter",
-        "optimizer",
-    ];
+    let roles = ["reviewer", "tester", "deployer", "documenter", "optimizer"];
     let role = roles[index % roles.len()];
 
     format!(
