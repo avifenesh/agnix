@@ -11,7 +11,7 @@
 If you discover a security vulnerability in agnix, please report it responsibly:
 
 1. **Do NOT open a public issue** for security vulnerabilities
-2. Email the maintainer directly at: avifenesh@gmail.com
+2. Email the maintainer directly at: aviarchi1994@gmail.com
 3. Include:
    - Description of the vulnerability
    - Steps to reproduce
