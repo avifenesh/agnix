@@ -734,6 +734,7 @@ impl LintConfig {
             "COP-",
             "CUR-",
             "PE-",
+            "VER-",
             "imports::",
         ];
         for rule_id in &self.rules.disabled_rules {
@@ -2991,6 +2992,7 @@ disabled_rules = []
             "CUR-001".to_string(),
             "XML-001".to_string(),
             "REF-001".to_string(),
+            "VER-001".to_string(),
         ];
 
         let warnings = config.validate();
@@ -3010,6 +3012,17 @@ disabled_rules = []
         assert!(warnings[0].field.contains("disabled_rules"));
         assert!(warnings[0].message.contains("Unknown rule ID pattern"));
         assert!(warnings[1].message.contains("UNKNOWN-999"));
+    }
+
+    #[test]
+    fn test_validate_ver_prefix_accepted() {
+        // Regression test for #233
+        let mut config = LintConfig::default();
+        config.rules.disabled_rules = vec!["VER-001".to_string()];
+
+        let warnings = config.validate();
+
+        assert!(warnings.is_empty());
     }
 
     #[test]
