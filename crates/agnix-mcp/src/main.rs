@@ -39,9 +39,14 @@ pub struct ValidateFileInput {
         description = "Absolute or relative path to the agent configuration file (e.g., 'SKILL.md', '.claude/settings.json', 'mcp-config.json')"
     )]
     pub path: String,
+    /// Tools to validate for (preferred over legacy target)
+    #[schemars(
+        description = "Tools to validate for. Accepts comma-separated string (e.g., 'claude-code,cursor') or array (e.g., ['claude-code','cursor']). Valid values: 'generic', 'claude-code', 'cursor', 'codex', 'copilot', 'github-copilot'. When non-empty, this overrides legacy target."
+    )]
+    pub tools: Option<ToolsInput>,
     /// Target tool for validation rules
     #[schemars(
-        description = "Target AI tool for validation rules. Options: 'generic' (default), 'claude-code', 'cursor', 'codex'"
+        description = "Legacy single target for validation rules (deprecated). Options: 'generic' (default), 'claude-code', 'cursor', 'codex'. Used only when 'tools' is missing or empty."
     )]
     pub target: Option<String>,
 }
@@ -55,11 +60,26 @@ pub struct ValidateProjectInput {
         description = "Path to the project directory to validate (e.g., '.' for current directory)"
     )]
     pub path: String,
+    /// Tools to validate for (preferred over legacy target)
+    #[schemars(
+        description = "Tools to validate for. Accepts comma-separated string (e.g., 'claude-code,cursor') or array (e.g., ['claude-code','cursor']). Valid values: 'generic', 'claude-code', 'cursor', 'codex', 'copilot', 'github-copilot'. When non-empty, this overrides legacy target."
+    )]
+    pub tools: Option<ToolsInput>,
     /// Target tool for validation rules
     #[schemars(
-        description = "Target AI tool for validation rules. Options: 'generic' (default), 'claude-code', 'cursor', 'codex'"
+        description = "Legacy single target for validation rules (deprecated). Options: 'generic' (default), 'claude-code', 'cursor', 'codex'. Used only when 'tools' is missing or empty."
     )]
     pub target: Option<String>,
+}
+
+/// Tools input for MCP validate tools.
+///
+/// Supports either comma-separated string or array syntax.
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+#[serde(untagged)]
+pub enum ToolsInput {
+    Csv(String),
+    List(Vec<String>),
 }
 
 /// Input for get_rule_docs tool
@@ -160,6 +180,39 @@ fn parse_target(target: Option<String>) -> agnix_core::config::TargetTool {
     }
 }
 
+fn normalize_tool_entry(value: &str) -> Option<String> {
+    let trimmed = value.trim();
+    if trimmed.is_empty() {
+        None
+    } else {
+        Some(trimmed.to_string())
+    }
+}
+
+fn parse_tools(tools: Option<ToolsInput>) -> Vec<String> {
+    match tools {
+        None => Vec::new(),
+        Some(ToolsInput::Csv(csv)) => csv.split(',').filter_map(normalize_tool_entry).collect(),
+        Some(ToolsInput::List(list)) => list
+            .into_iter()
+            .filter_map(|entry| normalize_tool_entry(&entry))
+            .collect(),
+    }
+}
+
+fn apply_tool_selection(
+    config: &mut LintConfig,
+    tools: Option<ToolsInput>,
+    target: Option<String>,
+) {
+    let parsed_tools = parse_tools(tools);
+    if parsed_tools.is_empty() {
+        config.target = parse_target(target);
+    } else {
+        config.tools = parsed_tools;
+    }
+}
+
 fn diagnostics_to_result(
     path: &str,
     diagnostics: Vec<Diagnostic>,
@@ -225,7 +278,7 @@ impl AgnixServer {
         Parameters(input): Parameters<ValidateFileInput>,
     ) -> Result<CallToolResult, McpError> {
         let mut config = LintConfig::default();
-        config.target = parse_target(input.target);
+        apply_tool_selection(&mut config, input.tools, input.target);
 
         let file_path = Path::new(&input.path);
 
@@ -248,7 +301,7 @@ impl AgnixServer {
         Parameters(input): Parameters<ValidateProjectInput>,
     ) -> Result<CallToolResult, McpError> {
         let mut config = LintConfig::default();
-        config.target = parse_target(input.target);
+        apply_tool_selection(&mut config, input.tools, input.target);
 
         let validation_result = core_validate_project(Path::new(&input.path), &config)
             .map_err(|e| make_error(format!("Failed to validate project: {}", e)))?;
@@ -335,10 +388,65 @@ impl ServerHandler for AgnixServer {
                  - validate_file: Validate a single config file\n\
                  - get_rules: List all 100 validation rules\n\
                  - get_rule_docs: Get details about a specific rule\n\n\
-                 Target options: generic, claude-code, cursor, codex"
+                 Preferred input: tools (CSV string or array)\n\
+                 Legacy fallback: target\n\
+                 Supported tools: generic, claude-code, cursor, codex, copilot, github-copilot"
                     .to_string(),
             ),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{apply_tool_selection, parse_tools, ToolsInput};
+    use agnix_core::config::TargetTool;
+    use agnix_core::LintConfig;
+
+    #[test]
+    fn test_parse_tools_csv_trims_and_discards_empty_entries() {
+        let tools = parse_tools(Some(ToolsInput::Csv(
+            "claude-code, cursor, ,codex,, ".to_string(),
+        )));
+        assert_eq!(tools, vec!["claude-code", "cursor", "codex"]);
+    }
+
+    #[test]
+    fn test_parse_tools_array_trims_and_discards_empty_entries() {
+        let tools = parse_tools(Some(ToolsInput::List(vec![
+            " claude-code ".to_string(),
+            "".to_string(),
+            " cursor".to_string(),
+            "   ".to_string(),
+        ])));
+        assert_eq!(tools, vec!["claude-code", "cursor"]);
+    }
+
+    #[test]
+    fn test_apply_tool_selection_falls_back_to_target_when_tools_empty() {
+        let mut config = LintConfig::default();
+        apply_tool_selection(
+            &mut config,
+            Some(ToolsInput::Csv(" , ".to_string())),
+            Some("cursor".to_string()),
+        );
+
+        assert!(config.tools.is_empty());
+        assert_eq!(config.target, TargetTool::Cursor);
+    }
+
+    #[test]
+    fn test_apply_tool_selection_prefers_tools_over_target() {
+        let mut config = LintConfig::default();
+        apply_tool_selection(
+            &mut config,
+            Some(ToolsInput::Csv("claude-code,cursor".to_string())),
+            Some("codex".to_string()),
+        );
+
+        assert_eq!(config.tools, vec!["claude-code", "cursor"]);
+        // target remains default; tools array drives filtering precedence in core.
+        assert_eq!(config.target, TargetTool::Generic);
     }
 }
 

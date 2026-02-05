@@ -188,6 +188,16 @@ mod validation_tests {
 
         assert!(result.is_ok());
     }
+
+    #[test]
+    fn test_tools_array_overrides_target_semantics_in_core_filtering() {
+        let mut config = LintConfig::default();
+        config.target = agnix_core::config::TargetTool::Codex;
+        config.tools = vec!["claude-code".to_string(), "cursor".to_string()];
+
+        // CC-* rules do not apply to codex target alone, but they do apply when tools include claude-code.
+        assert!(config.is_rule_enabled("CC-AG-001"));
+    }
 }
 
 mod rules_tests {
@@ -380,12 +390,21 @@ mod json_schema_tests {
     use schemars::JsonSchema;
     use serde::Deserialize;
 
+    #[allow(dead_code)]
+    #[derive(Debug, Deserialize, JsonSchema)]
+    #[serde(untagged)]
+    enum TestToolsInput {
+        Csv(String),
+        List(Vec<String>),
+    }
+
     // Test that input structs have proper JSON schema
     // Fields are used via schema generation, not directly
     #[allow(dead_code)]
     #[derive(Debug, Deserialize, JsonSchema)]
     struct TestValidateFileInput {
         path: String,
+        tools: Option<TestToolsInput>,
         target: Option<String>,
     }
 
@@ -393,6 +412,7 @@ mod json_schema_tests {
     #[derive(Debug, Deserialize, JsonSchema)]
     struct TestValidateProjectInput {
         path: String,
+        tools: Option<TestToolsInput>,
         target: Option<String>,
     }
 
@@ -408,6 +428,7 @@ mod json_schema_tests {
         let json = serde_json::to_string_pretty(&schema).unwrap();
 
         assert!(json.contains("path"));
+        assert!(json.contains("tools"));
         assert!(json.contains("target"));
     }
 
@@ -417,6 +438,7 @@ mod json_schema_tests {
         let json = serde_json::to_string_pretty(&schema).unwrap();
 
         assert!(json.contains("path"));
+        assert!(json.contains("tools"));
         assert!(json.contains("target"));
     }
 
