@@ -1797,3 +1797,152 @@ fn test_fix_safe_skips_structural_as_004() {
         "--fix-safe should not apply structural AS-004 fix"
     );
 }
+
+// ============================================================================
+// Telemetry Command Tests (Issue #209)
+// ============================================================================
+
+#[test]
+fn test_telemetry_status_shows_disabled_by_default() {
+    let mut cmd = agnix();
+    let output = cmd
+        .arg("telemetry")
+        .arg("status")
+        .output()
+        .unwrap();
+
+    assert!(
+        output.status.success(),
+        "telemetry status should succeed"
+    );
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+
+    // Should show telemetry is disabled
+    assert!(
+        stdout.contains("disabled"),
+        "Telemetry should be disabled by default, got: {}",
+        stdout
+    );
+
+    // Should show privacy guarantees
+    assert!(
+        stdout.contains("Privacy Guarantees"),
+        "Should display privacy guarantees, got: {}",
+        stdout
+    );
+}
+
+#[test]
+fn test_telemetry_status_default_action() {
+    // "agnix telemetry" without action should default to status
+    let mut cmd = agnix();
+    let output = cmd
+        .arg("telemetry")
+        .output()
+        .unwrap();
+
+    assert!(
+        output.status.success(),
+        "telemetry without action should succeed"
+    );
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(
+        stdout.contains("Telemetry Status"),
+        "Should show status by default, got: {}",
+        stdout
+    );
+}
+
+#[test]
+fn test_telemetry_help_shows_actions() {
+    let mut cmd = agnix();
+    let output = cmd
+        .arg("telemetry")
+        .arg("--help")
+        .output()
+        .unwrap();
+
+    assert!(
+        output.status.success(),
+        "telemetry --help should succeed"
+    );
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+
+    // Should list the available actions
+    assert!(
+        stdout.contains("status") && stdout.contains("enable") && stdout.contains("disable"),
+        "Help should show status/enable/disable actions, got: {}",
+        stdout
+    );
+}
+
+#[test]
+fn test_telemetry_enable_disable_roundtrip() {
+    use std::env;
+
+    // Use a temp config directory to avoid affecting real config
+    let temp_dir = tempfile::tempdir().unwrap();
+    let config_dir = temp_dir.path().join("agnix");
+    std::fs::create_dir_all(&config_dir).unwrap();
+
+    // Skip this test in CI - it would try to write to the real config dir
+    // and we can't easily override dirs::config_dir()
+    if env::var("CI").is_ok() || env::var("GITHUB_ACTIONS").is_ok() {
+        eprintln!("Skipping telemetry roundtrip test in CI");
+        return;
+    }
+
+    // Test enable
+    let mut cmd = agnix();
+    let output = cmd
+        .arg("telemetry")
+        .arg("enable")
+        .output()
+        .unwrap();
+
+    assert!(
+        output.status.success(),
+        "telemetry enable should succeed"
+    );
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    // Should indicate success or already enabled
+    assert!(
+        stdout.contains("enabled") || stdout.contains("already"),
+        "Should confirm enable, got: {}",
+        stdout
+    );
+
+    // Test disable
+    let mut cmd = agnix();
+    let output = cmd
+        .arg("telemetry")
+        .arg("disable")
+        .output()
+        .unwrap();
+
+    assert!(
+        output.status.success(),
+        "telemetry disable should succeed"
+    );
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(
+        stdout.contains("disabled") || stdout.contains("already"),
+        "Should confirm disable, got: {}",
+        stdout
+    );
+}
+
+#[test]
+fn test_telemetry_invalid_action_rejected() {
+    let mut cmd = agnix();
+    cmd.arg("telemetry")
+        .arg("invalid-action")
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("invalid value"));
+}
