@@ -87,6 +87,15 @@ pub struct LintConfig {
     /// Runtime-only validation root directory (not serialized)
     #[serde(skip)]
     pub root_dir: Option<PathBuf>,
+
+    /// Shared import cache for project-level validation (not serialized).
+    ///
+    /// When set, validators can use this cache to share parsed import data
+    /// across files, avoiding redundant parsing during import chain traversal.
+    /// This is typically initialized by `validate_project_with_registry` and
+    /// shared across all file validations in a project.
+    #[serde(skip)]
+    pub import_cache: Option<crate::parsers::ImportCache>,
 }
 
 impl Default for LintConfig {
@@ -105,6 +114,7 @@ impl Default for LintConfig {
             tool_versions: ToolVersions::default(),
             spec_revisions: SpecRevisions::default(),
             root_dir: None,
+            import_cache: None,
         }
     }
 }
@@ -267,6 +277,24 @@ impl LintConfig {
     /// Set the runtime validation root directory (not persisted)
     pub fn set_root_dir(&mut self, root_dir: PathBuf) {
         self.root_dir = Some(root_dir);
+    }
+
+    /// Set the shared import cache for project-level validation (not persisted).
+    ///
+    /// When set, the ImportsValidator will use this cache to share parsed
+    /// import data across files, improving performance by avoiding redundant
+    /// parsing during import chain traversal.
+    pub fn set_import_cache(&mut self, cache: crate::parsers::ImportCache) {
+        self.import_cache = Some(cache);
+    }
+
+    /// Get the shared import cache, if one has been set.
+    ///
+    /// Returns `None` for single-file validation or when the cache hasn't
+    /// been initialized. Returns `Some(&ImportCache)` during project-level
+    /// validation where import results are shared across files.
+    pub fn import_cache(&self) -> Option<&crate::parsers::ImportCache> {
+        self.import_cache.as_ref()
     }
 
     /// Get the expected MCP protocol version

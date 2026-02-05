@@ -331,6 +331,67 @@ This is the body with more content.
     group.finish();
 }
 
+fn bench_import_cache(c: &mut Criterion) {
+    use std::fs;
+    use tempfile::TempDir;
+
+    // Create a temporary directory with files that have overlapping imports
+    // This simulates a real-world scenario where multiple markdown files
+    // reference the same set of shared documentation files.
+    let temp = TempDir::new().unwrap();
+
+    // Create shared files that will be imported multiple times
+    for i in 0..5 {
+        let content = format!("# Shared Doc {}\n\nShared content {}", i, i);
+        fs::write(temp.path().join(format!("shared{}.md", i)), content).unwrap();
+    }
+
+    // Create main files that each import all shared files
+    for i in 0..10 {
+        let imports: Vec<String> = (0..5)
+            .map(|j| format!("@shared{}.md", j))
+            .collect();
+        let content = format!(
+            "# Main Doc {}\n\nReferences: {}\n",
+            i,
+            imports.join(", ")
+        );
+        fs::write(temp.path().join(format!("main{}.md", i)), content).unwrap();
+    }
+
+    // Create a CLAUDE.md that references all main files (to trigger import traversal)
+    let main_imports: Vec<String> = (0..10)
+        .map(|i| format!("@main{}.md", i))
+        .collect();
+    fs::write(
+        temp.path().join("CLAUDE.md"),
+        format!("# Project\n\nFiles: {}\n", main_imports.join(", ")),
+    )
+    .unwrap();
+
+    let mut group = c.benchmark_group("import_cache");
+
+    // Benchmark project validation with shared cache (default behavior)
+    group.bench_function("project_with_shared_cache", |b| {
+        b.iter(|| {
+            let config = LintConfig::default();
+            validate_project(black_box(temp.path()), black_box(&config))
+        })
+    });
+
+    // Benchmark single-file validation (no shared cache, baseline)
+    // This shows the overhead of re-parsing imports for each file
+    group.bench_function("single_file_no_cache", |b| {
+        let claude_path = temp.path().join("CLAUDE.md");
+        b.iter(|| {
+            let config = LintConfig::default();
+            validate_file(black_box(&claude_path), black_box(&config))
+        })
+    });
+
+    group.finish();
+}
+
 criterion_group!(
     benches,
     bench_detect_file_type,
@@ -339,5 +400,6 @@ criterion_group!(
     bench_validate_project,
     bench_registry_caching,
     bench_frontmatter_parsing,
+    bench_import_cache,
 );
 criterion_main!(benches);

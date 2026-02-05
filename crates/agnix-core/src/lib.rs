@@ -380,6 +380,13 @@ pub fn validate_project_with_registry(
     let mut config = config.clone();
     config.set_root_dir(root_dir.clone());
 
+    // Initialize shared import cache for project-level validation.
+    // This cache is shared across all file validations, allowing the ImportsValidator
+    // to avoid redundant parsing when traversing import chains that reference the same files.
+    let import_cache: crate::parsers::ImportCache =
+        std::sync::Arc::new(std::sync::RwLock::new(std::collections::HashMap::new()));
+    config.set_import_cache(import_cache);
+
     // Pre-compile exclude patterns once (avoids N+1 pattern compilation)
     let exclude_patterns = compile_exclude_patterns(&config.exclude)?;
     let exclude_patterns = Arc::new(exclude_patterns);
