@@ -4,11 +4,11 @@
 //! an invalid pattern produces a descriptive panic (with the pattern text)
 //! instead of a bare `.unwrap()`.
 
-use regex::Regex;
-
-/// Declare a module-private function that returns `&'static Regex`, backed by a
-/// `std::sync::OnceLock`. The pattern is compiled on first access and cached
-/// forever.
+/// Declare a module-private function that returns `&'static regex::Regex`,
+/// backed by a `std::sync::OnceLock`. The pattern is compiled on first access
+/// and cached forever.
+///
+/// The calling module must have `use regex::Regex;` in scope.
 ///
 /// # Panics
 ///
@@ -18,6 +18,7 @@ use regex::Regex;
 /// # Example
 ///
 /// ```ignore
+/// use regex::Regex;
 /// use crate::regex_util::static_regex;
 ///
 /// static_regex!(fn my_pattern, r"^hello\s+world$");

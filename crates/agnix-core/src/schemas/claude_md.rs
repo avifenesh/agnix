@@ -4,26 +4,29 @@ use regex::Regex;
 use std::collections::HashSet;
 use std::sync::OnceLock;
 
+use crate::regex_util::static_regex;
+
 static GENERIC_PATTERNS: OnceLock<Vec<Regex>> = OnceLock::new();
-static NEGATIVE_PATTERN: OnceLock<Regex> = OnceLock::new();
-static POSITIVE_PATTERN: OnceLock<Regex> = OnceLock::new();
-static WEAK_LANGUAGE_PATTERN: OnceLock<Regex> = OnceLock::new();
-static CRITICAL_SECTION_PATTERN: OnceLock<Regex> = OnceLock::new();
-static CRITICAL_KEYWORD_PATTERN: OnceLock<Regex> = OnceLock::new();
-static NPM_RUN_PATTERN: OnceLock<Regex> = OnceLock::new();
+
+static_regex!(fn negative_pattern, r"(?i)\b(don't|do\s+not|never|avoid|shouldn't|should\s+not)\b");
+static_regex!(fn positive_pattern, r"(?i)\b(instead|rather|prefer|better\s+to|alternative)\b");
+static_regex!(fn weak_language_pattern, r"(?i)\b(should|try\s+to|consider|maybe|might\s+want\s+to|could|possibly)\b");
+static_regex!(fn critical_section_pattern, r"(?i)^#+\s*.*(critical|important|required|mandatory|rules|must|essential)");
+static_regex!(fn critical_keyword_pattern, r"(?i)\b(critical|important|must|required|essential|mandatory|crucial)\b");
+static_regex!(fn npm_run_pattern, r"npm\s+run\s+([a-zA-Z0-9_:-]+)");
 
 /// Generic instruction patterns that Claude already knows
 pub fn generic_patterns() -> &'static Vec<Regex> {
     GENERIC_PATTERNS.get_or_init(|| {
         vec![
-            Regex::new(r"(?i)\bbe\s+helpful").unwrap(),
-            Regex::new(r"(?i)\bbe\s+accurate").unwrap(),
-            Regex::new(r"(?i)\bthink\s+step\s+by\s+step").unwrap(),
-            Regex::new(r"(?i)\bbe\s+concise").unwrap(),
-            Regex::new(r"(?i)\bformat.*properly").unwrap(),
-            Regex::new(r"(?i)\bprovide.*clear.*explanations").unwrap(),
-            Regex::new(r"(?i)\bmake\s+sure\s+to").unwrap(),
-            Regex::new(r"(?i)\balways\s+be").unwrap(),
+            Regex::new(r"(?i)\bbe\s+helpful").expect(r"BUG: invalid regex: (?i)\bbe\s+helpful"),
+            Regex::new(r"(?i)\bbe\s+accurate").expect(r"BUG: invalid regex: (?i)\bbe\s+accurate"),
+            Regex::new(r"(?i)\bthink\s+step\s+by\s+step").expect(r"BUG: invalid regex: (?i)\bthink\s+step\s+by\s+step"),
+            Regex::new(r"(?i)\bbe\s+concise").expect(r"BUG: invalid regex: (?i)\bbe\s+concise"),
+            Regex::new(r"(?i)\bformat.*properly").expect(r"BUG: invalid regex: (?i)\bformat.*properly"),
+            Regex::new(r"(?i)\bprovide.*clear.*explanations").expect(r"BUG: invalid regex: (?i)\bprovide.*clear.*explanations"),
+            Regex::new(r"(?i)\bmake\s+sure\s+to").expect(r"BUG: invalid regex: (?i)\bmake\s+sure\s+to"),
+            Regex::new(r"(?i)\balways\s+be").expect(r"BUG: invalid regex: (?i)\balways\s+be"),
         ]
     })
 }
@@ -120,20 +123,6 @@ pub struct NegativeInstruction {
     pub text: String,
 }
 
-fn negative_pattern() -> &'static Regex {
-    NEGATIVE_PATTERN.get_or_init(|| {
-        // Match common negative instruction patterns
-        Regex::new(r"(?i)\b(don't|do\s+not|never|avoid|shouldn't|should\s+not)\b").unwrap()
-    })
-}
-
-fn positive_pattern() -> &'static Regex {
-    POSITIVE_PATTERN.get_or_init(|| {
-        // Match positive alternatives - words that indicate a suggested approach
-        Regex::new(r"(?i)\b(instead|rather|prefer|better\s+to|alternative)\b").unwrap()
-    })
-}
-
 /// Find negative instructions without positive alternatives
 pub fn find_negative_without_positive(content: &str) -> Vec<NegativeInstruction> {
     let mut results = Vec::new();
@@ -192,20 +181,6 @@ pub struct WeakConstraint {
     pub start_byte: usize,
     /// Byte offset of the end of the weak constraint word
     pub end_byte: usize,
-}
-
-fn weak_language_pattern() -> &'static Regex {
-    WEAK_LANGUAGE_PATTERN.get_or_init(|| {
-        Regex::new(r"(?i)\b(should|try\s+to|consider|maybe|might\s+want\s+to|could|possibly)\b")
-            .unwrap()
-    })
-}
-
-fn critical_section_pattern() -> &'static Regex {
-    CRITICAL_SECTION_PATTERN.get_or_init(|| {
-        Regex::new(r"(?i)^#+\s*.*(critical|important|required|mandatory|rules|must|essential)")
-            .unwrap()
-    })
 }
 
 /// Find weak constraint language in critical sections
@@ -271,13 +246,6 @@ pub struct CriticalInMiddle {
     pub position_percent: f64,
 }
 
-fn critical_keyword_pattern() -> &'static Regex {
-    CRITICAL_KEYWORD_PATTERN.get_or_init(|| {
-        Regex::new(r"(?i)\b(critical|important|must|required|essential|mandatory|crucial)\b")
-            .unwrap()
-    })
-}
-
 /// Find critical content positioned in the middle of the document (40-60%)
 ///
 /// Based on "Lost in the Middle" research (Liu et al., 2023, TACL):
@@ -324,10 +292,6 @@ pub struct NpmScriptReference {
     pub line: usize,
     pub column: usize,
     pub script_name: String,
-}
-
-fn npm_run_pattern() -> &'static Regex {
-    NPM_RUN_PATTERN.get_or_init(|| Regex::new(r"npm\s+run\s+([a-zA-Z0-9_:-]+)").unwrap())
 }
 
 /// Extract npm script references from content
@@ -411,6 +375,17 @@ pub fn check_readme_duplication(claude_md: &str, readme: &str) -> Option<ReadmeD
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_regex_patterns_compile() {
+        let _ = generic_patterns();
+        let _ = negative_pattern();
+        let _ = positive_pattern();
+        let _ = weak_language_pattern();
+        let _ = critical_section_pattern();
+        let _ = critical_keyword_pattern();
+        let _ = npm_run_pattern();
+    }
 
     #[test]
     fn test_find_generic_instructions() {
