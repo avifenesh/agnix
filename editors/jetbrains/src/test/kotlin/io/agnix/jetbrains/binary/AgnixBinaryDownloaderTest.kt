@@ -282,6 +282,25 @@ class AgnixBinaryDownloaderTest {
     }
 
     @Test
+    fun `extractZip extracts first matching entry`(@TempDir tempDir: Path) {
+        val dest = tempDir.toFile()
+        val archive = File(dest, "test.zip")
+        val firstContent = "first-match".toByteArray()
+        val secondContent = "second-match".toByteArray()
+
+        createZipArchive(archive, mapOf(
+            "agnix-lsp.exe" to firstContent,
+            "release/agnix-lsp.exe" to secondContent
+        ))
+
+        AgnixBinaryDownloader.extractZip(archive, dest, "agnix-lsp.exe")
+
+        val extracted = File(dest, "agnix-lsp.exe")
+        assertTrue(extracted.exists())
+        assertTrue(extracted.readBytes().contentEquals(firstContent))
+    }
+
+    @Test
     fun `extractZip skips directory entries`(@TempDir tempDir: Path) {
         val dest = tempDir.toFile()
         val archive = File(dest, "test.zip")
