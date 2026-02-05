@@ -216,11 +216,17 @@ rules:
   agm_001:
     message: "无效的 markdown: %{description}"
     suggestion: "修复 markdown 语法错误"
+  agm_002:
+    # messages come from schemas::agents_md, not the validator directly
   agm_003:
     message: "%{filename} 超过字符限制（%{chars} 个字符，最大 %{limit}，Windsurf 兼容性要求）"
     suggestion: "将内容拆分为多个文件或减少内容长度"
+  agm_004:
+    # messages come from schemas::agents_md, not the validator directly
   agm_005:
     suggestion: "在平台特定内容之前添加平台保护部分标题，如 '## %{platform} Specific'"
+  agm_006:
+    # post-processing rule in lib.rs
 
   # --- XML (xml.rs) ---
   xml_001:

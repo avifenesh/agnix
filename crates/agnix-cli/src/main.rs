@@ -330,6 +330,19 @@ fn validate_command(path: &Path, cli: &Cli) -> anyhow::Result<()> {
     // Resolve absolute path for consistent relative output (prefer repo root)
     let base_path = std::fs::canonicalize(".").unwrap_or_else(|_| PathBuf::from("."));
 
+    // For machine-readable output (JSON/SARIF), force English locale so that
+    // diagnostic messages are always in English for tooling interoperability.
+    // Save and restore the user's locale so that any subsequent stderr output
+    // (e.g., error messages) remains in their chosen locale.
+    let is_machine_output = matches!(cli.format, OutputFormat::Json | OutputFormat::Sarif);
+    let saved_locale = if is_machine_output {
+        let current = rust_i18n::locale().to_string();
+        rust_i18n::set_locale("en");
+        Some(current)
+    } else {
+        None
+    };
+
     // Time the validation for telemetry
     let validation_start = Instant::now();
 
@@ -337,6 +350,11 @@ fn validate_command(path: &Path, cli: &Cli) -> anyhow::Result<()> {
         diagnostics,
         files_checked,
     } = validate_project(path, &config)?;
+
+    // Restore user locale after validation so stderr messages use their language
+    if let Some(ref locale) = saved_locale {
+        rust_i18n::set_locale(locale);
+    }
 
     let validation_duration = validation_start.elapsed();
 

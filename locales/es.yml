@@ -216,11 +216,17 @@ rules:
   agm_001:
     message: "Markdown invalido: %{description}"
     suggestion: "Corrige el error de sintaxis markdown"
+  agm_002:
+    # messages come from schemas::agents_md, not the validator directly
   agm_003:
     message: "%{filename} excede el limite de caracteres (%{chars} caracteres, maximo %{limit} para compatibilidad con Windsurf)"
     suggestion: "Divide el contenido en multiples archivos o reduce la longitud del contenido"
+  agm_004:
+    # messages come from schemas::agents_md, not the validator directly
   agm_005:
     suggestion: "Agrega un encabezado de seccion de guardia de plataforma como '## %{platform} Specific' antes del contenido especifico de plataforma"
+  agm_006:
+    # post-processing rule in lib.rs
 
   # --- XML (xml.rs) ---
   xml_001:
