@@ -258,8 +258,7 @@ The server follows MCP best practices with rich parameter schemas and structured
 `validate_file` and `validate_project` support multi-tool filtering via `tools`:
 - `tools` (preferred): comma-separated string (`"claude-code,cursor"`) or string array (`["claude-code","cursor"]`)
 - `target` (legacy fallback): used only when `tools` is missing or empty
-
-Supported tool names: `generic`, `claude-code`, `cursor`, `codex`, `copilot`, `github-copilot`
+- tool names follow agnix canonical tool metadata, with compatibility aliases accepted (`copilot`, `claudecode`)
 
 ## Configuration
 

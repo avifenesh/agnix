@@ -31,6 +31,11 @@ use serde_json::Value;
 use std::collections::HashSet;
 use std::path::Path;
 
+const TOOL_ALIASES: &[(&str, &str)] =
+    &[("copilot", "github-copilot"), ("claudecode", "claude-code")];
+
+const COMPAT_TOOL_NAMES: &[&str] = &["generic", "codex"];
+
 /// Input for validate_file tool
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 #[schemars(description = "Input for validating a single agent configuration file")]
@@ -42,7 +47,7 @@ pub struct ValidateFileInput {
     pub path: String,
     /// Tools to validate for (preferred over legacy target)
     #[schemars(
-        description = "Tools to validate for. Accepts comma-separated string (e.g., 'claude-code,cursor') or array (e.g., ['claude-code','cursor']). Valid values: 'generic', 'claude-code', 'cursor', 'codex', 'copilot', 'github-copilot'. When non-empty, this overrides legacy target."
+        description = "Tools to validate for. Accepts comma-separated string (e.g., 'claude-code,cursor') or array (e.g., ['claude-code','cursor']). Uses canonical agnix tool names (case-insensitive), plus compatibility aliases (e.g., 'copilot', 'claudecode'). When non-empty, this overrides legacy target."
     )]
     pub tools: Option<ToolsInput>,
     /// Target tool for validation rules
@@ -63,7 +68,7 @@ pub struct ValidateProjectInput {
     pub path: String,
     /// Tools to validate for (preferred over legacy target)
     #[schemars(
-        description = "Tools to validate for. Accepts comma-separated string (e.g., 'claude-code,cursor') or array (e.g., ['claude-code','cursor']). Valid values: 'generic', 'claude-code', 'cursor', 'codex', 'copilot', 'github-copilot'. When non-empty, this overrides legacy target."
+        description = "Tools to validate for. Accepts comma-separated string (e.g., 'claude-code,cursor') or array (e.g., ['claude-code','cursor']). Uses canonical agnix tool names (case-insensitive), plus compatibility aliases (e.g., 'copilot', 'claudecode'). When non-empty, this overrides legacy target."
     )]
     pub tools: Option<ToolsInput>,
     /// Target tool for validation rules
@@ -191,23 +196,34 @@ fn normalize_tool_entry(value: &str) -> Option<String> {
 }
 
 fn canonicalize_tool(value: &str) -> Option<&'static str> {
-    if value.eq_ignore_ascii_case("generic") {
-        return Some("generic");
+    match value {
+        v if v.eq_ignore_ascii_case("generic") => Some("generic"),
+        v if v.eq_ignore_ascii_case("codex") => Some("codex"),
+        _ => TOOL_ALIASES
+            .iter()
+            .find(|(alias, _)| value.eq_ignore_ascii_case(alias))
+            .map(|(_, canonical)| *canonical)
+            .or_else(|| agnix_rules::normalize_tool_name(value)),
     }
+}
 
-    if value.eq_ignore_ascii_case("codex") {
-        return Some("codex");
+fn supported_tool_names() -> Vec<&'static str> {
+    let mut tools = agnix_rules::valid_tools().to_vec();
+    for compat in COMPAT_TOOL_NAMES {
+        if !tools.contains(compat) {
+            tools.push(compat);
+        }
     }
+    tools.sort_unstable();
+    tools
+}
 
-    if value.eq_ignore_ascii_case("copilot") {
-        return Some("github-copilot");
-    }
-
-    if value.eq_ignore_ascii_case("claudecode") {
-        return Some("claude-code");
-    }
-
-    agnix_rules::normalize_tool_name(value)
+fn alias_help() -> String {
+    TOOL_ALIASES
+        .iter()
+        .map(|(alias, canonical)| format!("{} -> {}", alias, canonical))
+        .collect::<Vec<_>>()
+        .join(", ")
 }
 
 fn parse_tools(tools: Option<ToolsInput>) -> Result<Vec<String>, McpError> {
@@ -228,18 +244,11 @@ fn parse_tools(tools: Option<ToolsInput>) -> Result<Vec<String>, McpError> {
     let mut normalized = Vec::new();
     for tool in raw {
         let canonical = canonicalize_tool(&tool).ok_or_else(|| {
-            let mut valid = agnix_rules::valid_tools().to_vec();
-            if !valid.contains(&"generic") {
-                valid.push("generic");
-            }
-            if !valid.contains(&"codex") {
-                valid.push("codex");
-            }
-            valid.sort_unstable();
             make_invalid_params(format!(
-                "Unknown tool '{}'. Valid values: {}. Alias: copilot -> github-copilot.",
+                "Unknown tool '{}'. Valid values: {}. Aliases: {}.",
                 tool,
-                valid.join(", ")
+                supported_tool_names().join(", "),
+                alias_help()
             ))
         })?;
         if seen.insert(canonical) {
@@ -444,7 +453,7 @@ impl ServerHandler for AgnixServer {
                  - get_rule_docs: Get details about a specific rule\n\n\
                  Preferred input: tools (CSV string or array)\n\
                  Legacy fallback: target\n\
-                 Supported tools: generic, claude-code, cursor, codex, copilot, github-copilot"
+                 Supported tools are derived from agnix rule metadata"
                     .to_string(),
             ),
         }
