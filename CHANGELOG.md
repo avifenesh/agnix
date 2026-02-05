@@ -25,6 +25,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Closes file/request handles on failure
   - Removes temporary download artifacts on failed downloads
   - Adds regression tests for non-200, stream-error, and success branches
+- CLI: gate telemetry module wiring behind `telemetry` feature while preserving command UX via a non-feature stub (#245)
+  - `telemetry` module compiles only when feature-enabled
+  - Non-feature builds route telemetry calls through `telemetry_stub` no-op facade
+  - Added stub-path unit tests and validated both feature and non-feature builds
 ### Security
 - ReDoS protection via regex input size limits (MAX_REGEX_INPUT_SIZE = 64KB)
   - Markdown XML tag extraction skips oversized content
