@@ -3474,7 +3474,6 @@ Use idiomatic Rust patterns.
     fn test_concurrent_file_validation() {
         use std::sync::Arc;
         use std::thread;
-
         let temp = tempfile::TempDir::new().unwrap();
 
         // Create multiple files
@@ -3514,7 +3513,6 @@ Use idiomatic Rust patterns.
     fn test_concurrent_project_validation() {
         use std::sync::Arc;
         use std::thread;
-
         let temp = tempfile::TempDir::new().unwrap();
 
         // Create a project structure
@@ -3555,6 +3553,61 @@ Use idiomatic Rust patterns.
                 "Concurrent validations should produce identical results"
             );
         }
+    }
+
+    #[test]
+    fn test_validate_project_with_poisoned_import_cache_does_not_panic() {
+        struct PoisonImportCacheValidator;
+
+        impl Validator for PoisonImportCacheValidator {
+            fn validate(
+                &self,
+                _path: &Path,
+                _content: &str,
+                config: &LintConfig,
+            ) -> Vec<Diagnostic> {
+                use std::thread;
+
+                if let Some(cache) = config.get_import_cache().cloned() {
+                    let _ = thread::spawn(move || {
+                        let _guard = cache.write().unwrap();
+                        panic!("poison import cache lock");
+                    })
+                    .join();
+                }
+
+                Vec::new()
+            }
+        }
+
+        fn create_poison_validator() -> Box<dyn Validator> {
+            Box::new(PoisonImportCacheValidator)
+        }
+
+        fn create_imports_validator() -> Box<dyn Validator> {
+            Box::new(crate::rules::imports::ImportsValidator)
+        }
+
+        let temp = tempfile::TempDir::new().unwrap();
+        std::fs::write(temp.path().join("README.md"), "See @missing.md").unwrap();
+
+        let mut registry = ValidatorRegistry::new();
+        registry.register(FileType::GenericMarkdown, create_poison_validator);
+        registry.register(FileType::GenericMarkdown, create_imports_validator);
+
+        let config = LintConfig::default();
+        let result = validate_project_with_registry(temp.path(), &config, &registry);
+        assert!(
+            result.is_ok(),
+            "Project validation should continue with a poisoned import cache lock"
+        );
+        let diagnostics = result.unwrap().diagnostics;
+        assert!(
+            diagnostics
+                .iter()
+                .any(|d| d.rule == "REF-001" && d.message.contains("@missing.md")),
+            "Imports validation should still run and report missing imports after cache poisoning"
+        );
     }
 
     // ===== Security: File Count Limit Tests =====
