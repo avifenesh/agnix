@@ -1,3 +1,487 @@
 en:
-  # Placeholder - individual sections below
-  placeholder: "placeholder"
+  # ===========================================================================
+  # Rules - Validator diagnostic messages, suggestions, assumptions, fixes
+  # ===========================================================================
+  rules:
+    # --- Agent Skills (skill.rs) ---
+    as_001:
+      message: "SKILL.md must have YAML frontmatter between --- markers"
+      suggestion: "Add frontmatter between --- markers"
+    as_002:
+      message: "Skill frontmatter is missing required 'name' field"
+      suggestion: "Add 'name: your-skill-name' to frontmatter"
+    as_003:
+      message: "Skill frontmatter is missing required 'description' field"
+      suggestion: "Add 'description: Use when...' to frontmatter"
+    as_004:
+      message: "Name '%{name}' must be 1-64 characters of lowercase letters, digits, and hyphens"
+      suggestion: "Lowercase and trim the name, replace spaces and '_' with '-', collapse multiple '-' into one, remove invalid characters, and truncate to 64 characters"
+      fix: "Convert name to kebab-case: '%{name}'"
+    as_005:
+      message: "Name '%{name}' cannot start or end with hyphen"
+      suggestion: "Remove leading/trailing hyphens from the name"
+    as_006:
+      message: "Name '%{name}' cannot contain consecutive hyphens"
+      suggestion: "Replace '--' with '-' in the name"
+    as_007:
+      message: "Name '%{name}' is reserved and cannot be used"
+      suggestion: "Choose a different skill name"
+    as_008:
+      message: "Description must be 1-1024 characters, got %{len}"
+      suggestion: "Trim the description to 1024 characters or fewer"
+    as_009:
+      message: "Description must not contain XML tags"
+      suggestion: "Remove XML tags from the description"
+    as_010:
+      message: "Description should include a 'Use when...' trigger phrase"
+      suggestion: "Add 'Use when [condition]' to help Claude understand when to invoke this skill"
+      fix: "Prepend 'Use when user wants to ' to description"
+    as_011:
+      message: "Compatibility must be 1-500 characters, got %{len}"
+      suggestion: "Trim compatibility to 500 characters or fewer"
+    as_012:
+      message: "Skill content exceeds 500 lines (got %{count})"
+      suggestion: "Move extra content into references/"
+    as_013:
+      message: "File reference '%{path}' is deeper than one level"
+      suggestion: "Flatten the references/ directory structure"
+    as_014:
+      message: "Windows path separator detected in '%{path}'; use forward slashes"
+      suggestion: "Replace '\\\\' with '/' in file paths"
+    as_015:
+      message: "Skill directory exceeds 8MB (%{size} bytes)"
+      suggestion: "Remove large assets or split the skill into smaller parts"
+    as_016:
+      message: "Failed to parse SKILL.md: %{error}"
+
+    # --- Claude Code Skills (skill.rs) ---
+    cc_sk_001:
+      message: "Invalid model '%{model}'. Must be one of: %{valid}"
+      suggestion: "Use one of the valid model values: %{valid}"
+    cc_sk_002:
+      message: "Invalid context '%{context}'. Must be 'fork' or omitted"
+      suggestion: "Set context to 'fork' or remove the field entirely"
+    cc_sk_003:
+      message: "Context 'fork' requires an 'agent' field"
+      suggestion: "Add 'agent: general-purpose' or another valid agent type"
+    cc_sk_004:
+      message: "Agent field requires 'context: fork'"
+      suggestion: "Add 'context: fork' to the frontmatter"
+    cc_sk_005:
+      message: "Invalid agent type '%{agent}'. Must be Explore, Plan, general-purpose, or a custom kebab-case name (1-64 chars)"
+      suggestion: "Use a built-in agent (Explore, Plan, general-purpose) or a custom kebab-case name"
+    cc_sk_006:
+      message: "Dangerous skill '%{name}' must set 'disable-model-invocation: true' to prevent accidental invocation"
+      suggestion: "Add 'disable-model-invocation: true' to the frontmatter"
+    cc_sk_007:
+      message: "Unrestricted Bash access detected. Consider using scoped version for better security."
+      suggestion: "Use scoped Bash like 'Bash(git:*)' or 'Bash(npm:*)' instead of plain 'Bash'"
+      fix: "Replace unrestricted Bash with scoped Bash(git:*)"
+    cc_sk_008:
+      message: "Unknown tool '%{tool}'. Known tools: %{known}"
+      suggestion: "Use one of the known Claude Code tools: %{known}"
+    cc_sk_009:
+      message: "Too many dynamic injections (%{count}). Limit to %{max} for better performance"
+      suggestion: "Consider moving complex logic to a scripts/ directory or reducing injections"
+
+    # --- Hooks (hooks.rs) ---
+    cc_hk_001:
+      message: "Invalid hook event '%{event}', valid events: %{valid}"
+      fix: "Replace '%{old}' with '%{new}'"
+    cc_hk_002:
+      message: "Invalid hook type '%{hook_type}'. Valid types: 'command', 'prompt'"
+      suggestion: "Use 'type': 'command' or 'type': 'prompt'"
+    cc_hk_003:
+      message: "Tool event '%{event}' at %{location} requires a matcher field"
+      suggestion: "Add 'matcher': '*' for all tools or specify a tool name"
+    cc_hk_004:
+      message: "Non-tool event '%{event}' at %{location} must not have a matcher field"
+      suggestion: "Remove the 'matcher' field"
+    cc_hk_005:
+      message: "Hook at %{location} is missing required 'type' field"
+      suggestion: "Add 'type': 'command' or 'type': 'prompt'"
+    cc_hk_006:
+      message: "Command hook at %{location} is missing required 'command' field"
+      suggestion: "Add a 'command' field with the command to execute"
+    cc_hk_007:
+      message: "Failed to parse hooks configuration: %{error}"
+    cc_hk_008:
+      message: "Script file not found at '%{script}' (resolved to '%{resolved}')"
+      suggestion: "Create the script file or correct the path"
+    cc_hk_009:
+      message: "Dangerous command pattern detected: '%{pattern}' (%{reason})"
+      suggestion: "Review this command carefully. Consider adding safety checks."
+    cc_hk_010:
+      message: "Hook at %{location} has excessive timeout (%{timeout}s, default for %{hook_type} hooks is %{default}s)"
+      suggestion: "Consider reducing the timeout. High timeouts may indicate the command needs optimization."
+      assumption: "Assumes Claude Code default timeout behavior. Pin claude_code version in .agnix.toml [tool_versions] for version-specific validation."
+    cc_hk_011:
+      message: "Invalid timeout value at %{location}: must be a positive integer"
+      suggestion: "Set timeout to a positive integer like 30"
+    cc_hk_012:
+      message: "Prompt hook at %{location} must not have a 'command' field"
+      suggestion: "Remove the 'command' field from prompt hooks"
+
+    # --- MCP (mcp.rs) ---
+    mcp_001:
+      message: "MCP tool '%{tool}' is missing required 'name' field"
+      suggestion: "Add a 'name' field to the tool definition"
+    mcp_002:
+      message: "MCP tool '%{tool}' is missing required 'description' field"
+      suggestion: "Add a 'description' field to the tool definition"
+    mcp_003:
+      message: "MCP tool '%{tool}' has empty input schema"
+      suggestion: "Add a valid JSON Schema for the tool's input parameters"
+    mcp_004:
+      message: "MCP server '%{server}' is missing required 'command' field"
+      suggestion: "Add a 'command' field specifying how to start the MCP server"
+    mcp_005:
+      message: "Invalid JSON Schema in tool '%{tool}' inputSchema: %{error}"
+      suggestion: "Fix the JSON Schema structure in the inputSchema field"
+    mcp_006:
+      message: "MCP configuration has no servers defined"
+      suggestion: "Add at least one server under 'mcpServers'"
+    mcp_007:
+      message: "Failed to parse MCP configuration: %{error}"
+    mcp_008:
+      message: "MCP protocol version '%{found}' does not match expected '%{expected}'"
+      suggestion: "Update the protocol version or pin the expected version in .agnix.toml"
+      assumption: "Using default MCP protocol version. Pin mcp_protocol in .agnix.toml [spec_revisions] for explicit control."
+
+    # --- Agent (agent.rs) ---
+    cc_ag_001:
+      message: "Agent file is missing required 'name' field"
+      suggestion: "Add 'name: agent-name' to frontmatter"
+    cc_ag_002:
+      message: "Agent file is missing required 'description' field"
+      suggestion: "Add 'description: Agent description' to frontmatter"
+    cc_ag_003:
+      message: "Invalid model '%{model}' in agent definition. Must be one of: %{valid}"
+      suggestion: "Use one of the valid model values: %{valid}"
+    cc_ag_004:
+      message: "Invalid permission mode '%{mode}'. Valid modes: %{valid}"
+      suggestion: "Use one of the valid permission modes"
+    cc_ag_005:
+      message: "Referenced skill '%{skill}' not found"
+      suggestion: "Create the skill at .claude/skills/%{skill}/SKILL.md or correct the name"
+    cc_ag_006:
+      message: "Agent body is empty"
+      suggestion: "Add system prompt content after the frontmatter"
+    cc_ag_007:
+      message: "Agent file must have YAML frontmatter"
+      suggestion: "Add frontmatter between --- markers"
+    cc_ag_008:
+      message: "Failed to parse agent frontmatter: %{error}"
+      suggestion: "Fix the YAML syntax in the frontmatter"
+
+    # --- Claude MD (claude_md.rs) ---
+    cc_mem_001:
+      message: "CLAUDE.md exceeds recommended size (%{size} bytes, limit %{limit})"
+      suggestion: "Split large CLAUDE.md into smaller files using @import"
+    cc_mem_002:
+      message: "CLAUDE.md contains generic/placeholder instructions"
+      suggestion: "Replace generic instructions with project-specific content"
+    cc_mem_003:
+      message: "Section '%{section}' exceeds recommended length (%{len} characters)"
+      suggestion: "Break this section into smaller, focused sections"
+    cc_mem_004:
+      message: "CLAUDE.md is empty or contains only whitespace"
+      suggestion: "Add project-specific instructions to guide Claude"
+    cc_mem_005:
+      message: "CLAUDE.md has no markdown structure (headings)"
+      suggestion: "Organize content with markdown headings (## Section Name)"
+
+    # --- AGENTS.md (agents_md.rs) ---
+    agm_001:
+      message: "AGENTS.md should have structured sections"
+      suggestion: "Add headings to organize agent instructions"
+    agm_002:
+      message: "AGENTS.md is empty or contains only whitespace"
+      suggestion: "Add team-specific agent instructions"
+    agm_003:
+      message: "AGENTS.md appears identical to CLAUDE.md"
+      suggestion: "AGENTS.md should contain team-specific instructions different from CLAUDE.md"
+    agm_004:
+      message: "AGENTS.md does not match CLAUDE.md - files should be identical if both exist"
+      suggestion: "Synchronize the files or document why they differ"
+    agm_005:
+      message: "AGENTS.md exceeds recommended size (%{size} bytes, limit %{limit})"
+      suggestion: "Split large AGENTS.md into smaller files"
+    agm_006:
+      message_nested: "Nested AGENTS.md detected - parent AGENTS.md files exist at: %{paths}"
+      message_multiple: "Multiple AGENTS.md files detected - other AGENTS.md files exist at: %{paths}"
+      suggestion: "Some tools load AGENTS.md hierarchically. Document inheritance behavior or consolidate files."
+
+    # --- XML (xml.rs) ---
+    xml_001:
+      message: "Unclosed XML tag '<%{tag}>'"
+      suggestion: "Add closing tag '</%{tag}>'"
+      fix: "Insert closing tag '</%{tag}>'"
+    xml_002:
+      message: "Expected '</%{expected}>' but found '</%{found}>'"
+      suggestion: "Replace '</%{found}>' with '</%{expected}>'"
+    xml_003:
+      message: "Unmatched closing tag '</%{tag}>'"
+      suggestion: "Remove '</%{tag}>' or add matching opening tag '<%{tag}>'"
+
+    # --- Imports (imports.rs) ---
+    ref_001:
+      message: "Import target not found: '%{path}'"
+      suggestion: "Create the file or correct the import path"
+    ref_002:
+      message: "Circular import detected: %{chain}"
+      suggestion: "Remove the circular reference"
+    ref_003:
+      message: "Import path escapes project root: '%{path}'"
+      suggestion: "Keep imports within the project directory"
+    ref_004:
+      message: "Import reference too deep (depth %{depth}, max %{max})"
+      suggestion: "Flatten the import chain"
+    ref_005:
+      message: "Ambiguous import target: '%{path}' matches multiple files"
+      suggestion: "Use a more specific path"
+    ref_006:
+      message: "Import path uses absolute path: '%{path}'"
+      suggestion: "Use relative paths for imports"
+    ref_007:
+      message: "Import references non-markdown file: '%{path}'"
+      suggestion: "Only import .md files"
+
+    # --- Cross-platform (cross_platform.rs) ---
+    xp_001:
+      message: "OS-specific path detected: '%{path}'"
+      suggestion: "Use platform-independent paths"
+    xp_002:
+      message: "OS-specific command detected: '%{cmd}'"
+      suggestion: "Use cross-platform alternatives or conditional logic"
+    xp_003:
+      message: "Hardcoded absolute path detected: '%{path}'"
+      suggestion: "Use relative paths or environment variables"
+    xp_004:
+      message: "Conflicting package managers: %{file1} uses %{mgr1} but %{file2} uses %{mgr2} for %{cmd_type} commands"
+      suggestion: "Standardize on a single package manager across all instruction files"
+    xp_005:
+      message: "Conflicting tool constraints: '%{tool}' is allowed in %{allow_file} but disallowed in %{disallow_file}"
+      suggestion: "Resolve the conflict by consistently allowing or disallowing the tool"
+    xp_006:
+      suggestion: "Document which file takes precedence (e.g., 'CLAUDE.md takes precedence over AGENTS.md')"
+
+    # --- Copilot (copilot.rs) ---
+    cop_001:
+      message: "Copilot instructions file is empty"
+      suggestion: "Add instructions content to the file"
+    cop_002:
+      message: "Copilot instructions exceed recommended size (%{size} bytes, limit %{limit})"
+      suggestion: "Reduce instructions to stay within the recommended limit"
+    cop_003:
+      message: "Copilot instructions file has no markdown structure"
+      suggestion: "Organize content with markdown headings"
+    cop_004:
+      message: "Copilot scoped instructions missing required frontmatter"
+      suggestion: "Add YAML frontmatter with 'applyTo' field between --- markers"
+    cop_005:
+      message: "Copilot scoped instructions missing required 'applyTo' field"
+      suggestion: "Add 'applyTo: \"**/*.ext\"' to specify which files these instructions apply to"
+    cop_006:
+      message: "Invalid 'applyTo' glob pattern: '%{pattern}'"
+      suggestion: "Use a valid glob pattern (e.g., '**/*.ts', 'src/**')"
+    cop_007:
+      message: "Copilot instructions contain generic placeholder content"
+      suggestion: "Replace generic instructions with project-specific content"
+    cop_008:
+      message: "Failed to parse Copilot scoped instructions frontmatter: %{error}"
+      suggestion: "Fix the YAML syntax in the frontmatter"
+
+    # --- Cursor (cursor.rs) ---
+    cur_001:
+      message: "Cursor rule file is empty"
+      suggestion: "Add rule content to the file"
+    cur_002:
+      message: "Cursor rule exceeds recommended size (%{size} bytes, limit %{limit})"
+      suggestion: "Break the rule into smaller, more focused rules"
+    cur_003:
+      message: "Cursor rule file has no markdown structure"
+      suggestion: "Organize content with markdown headings"
+    cur_004:
+      message: "Legacy .cursorrules file detected"
+      suggestion: "Migrate to .cursor/rules/*.mdc format for better organization"
+    cur_005:
+      message: "Cursor rule missing required frontmatter"
+      suggestion: "Add YAML frontmatter between --- markers"
+    cur_006:
+      message: "Cursor rule missing 'description' in frontmatter"
+      suggestion: "Add 'description: Rule description' to frontmatter"
+    cur_007:
+      message: "Cursor rule contains generic placeholder content"
+      suggestion: "Replace generic content with project-specific rules"
+    cur_008:
+      message: "Failed to parse Cursor rule frontmatter: %{error}"
+      suggestion: "Fix the YAML syntax in the frontmatter"
+
+    # --- Prompt engineering (prompt.rs) ---
+    pe_001:
+      message: "Ambiguous instruction detected: '%{text}'"
+      suggestion: "Replace vague language with specific, actionable instructions"
+    pe_002:
+      message: "Conflicting instructions detected: '%{text1}' conflicts with '%{text2}'"
+      suggestion: "Resolve the contradiction between these instructions"
+    pe_003:
+      message: "Instruction exceeds recommended complexity"
+      suggestion: "Break complex instructions into smaller, focused directives"
+    pe_004:
+      message: "Missing context for instruction: '%{text}'"
+      suggestion: "Add context about when and how this instruction applies"
+
+    # --- Plugin (plugin.rs) ---
+    cc_pl_001:
+      message: "Plugin manifest must be inside .claude-plugin/ directory"
+      suggestion: "Move plugin.json to .claude-plugin/plugin.json"
+    cc_pl_002:
+      message: "Plugin manifest is missing required 'name' field"
+      suggestion: "Add 'name' to the plugin manifest"
+    cc_pl_003:
+      message: "Plugin manifest is missing required 'version' field"
+      suggestion: "Add 'version' to the plugin manifest"
+    cc_pl_004:
+      message: "Plugin manifest is missing required 'description' field"
+      suggestion: "Add 'description' to the plugin manifest"
+    cc_pl_005:
+      message: "Invalid plugin version '%{version}': not a valid semver"
+      suggestion: "Use semantic versioning (e.g., '1.0.0')"
+    cc_pl_006:
+      message: "Failed to parse plugin manifest: %{error}"
+
+    # --- Version (lib.rs) ---
+    ver_001:
+      message: "No tool or spec versions pinned. Version-dependent rules will use default assumptions."
+      suggestion: "Pin versions in .agnix.toml [tool_versions] or [spec_revisions] for deterministic validation."
+
+    # --- File-level errors (lib.rs) ---
+    file_read_error: "Failed to validate file: %{error}"
+    xp_004_read_error: "Failed to read instruction file: %{error}"
+
+  # ===========================================================================
+  # Core - Config warnings, eval output, LintError
+  # ===========================================================================
+  core:
+    error:
+      file_read: "Failed to read file: %{path}"
+      file_write: "Failed to write file: %{path}"
+      file_symlink: "Refusing to read symlink: %{path}"
+      file_too_big: "File too large: %{path} (%{size} bytes, limit %{limit} bytes)"
+      file_not_regular: "Not a regular file: %{path}"
+      invalid_exclude: "Invalid exclude pattern: %{pattern} (%{message})"
+    config:
+      unknown_rule: "Unknown rule ID pattern '%{rule}'. Expected prefix: %{prefixes}"
+      unknown_rule_suggestion: "Check the rule ID spelling or remove if invalid"
+      unknown_tool: "Unknown tool '%{tool}'. Valid tools: %{valid}"
+      unknown_tool_suggestion: "Use one of the supported tool names"
+      deprecated_target: "Field 'target' is deprecated"
+      deprecated_target_suggestion: "Use the 'tools' array instead"
+      deprecated_mcp_version: "Field 'mcp_protocol_version' is deprecated"
+      deprecated_mcp_version_suggestion: "Use 'spec_revisions.mcp_protocol' instead"
+      load_warning: "Failed to parse config '%{path}': %{error}. Using defaults."
+
+  # ===========================================================================
+  # CLI - Command-line interface output strings
+  # ===========================================================================
+  cli:
+    validating: "Validating:"
+    no_issues_found: "No issues found"
+    found_errors_warnings: "Found %{errors} %{error_word}, %{warnings} %{warning_word}"
+    info_messages: "  %{count} info messages"
+    fixable_issues: "  %{count} %{word} automatically fixable"
+    issue_is: "issue is"
+    issues_are: "issues are"
+    error_singular: "error"
+    error_plural: "errors"
+    warning_singular: "warning"
+    warning_plural: "warnings"
+    hint_run_fix: "Run with %{flag} to apply fixes"
+    applying_fixes: "%{mode} fixes%{safe_mode}..."
+    no_fixes: "  No fixes to apply"
+    would_fix: "Would fix:"
+    fixed: "Fixed:"
+    diff_label: "Diff"
+    fix_summary: "%{action} %{count} %{word}"
+    file_singular: "file"
+    file_plural: "files"
+    preview: "Preview"
+    applying: "Applying"
+    safe_only: " (safe only)"
+    created: "Created:"
+    schema_written: "Schema written to:"
+    error_label: "Error:"
+    warning_label: "Warning:"
+    config_warning_label: "Config warning:"
+    hint_label: "hint:"
+    rule_label: "rule:"
+    help_label: "help:"
+    note_label: "note:"
+    fix_label: "fix:"
+    safe: "safe"
+    unsafe: "unsafe"
+    fixable: "[fixable]"
+    watch_error_text_only: "Watch mode is only supported with text output."
+    watch_error_fix: "Watch mode cannot be combined with fix flags."
+    fix_error_text_only: "Fix flags are only supported with text output. Remove --format or use --format text."
+    evaluating: "Evaluating:"
+    filter_label: "  filter:"
+    per_case_results: "Per-Case Results"
+    pass: "PASS"
+    fail: "FAIL"
+    unexpected_label: "unexpected:"
+    missing_label: "missing:"
+    success: "SUCCESS"
+    failed: "FAILED"
+    all_cases_passed: "All %{count} cases passed"
+    cases_failed: "%{failed}/%{total} cases failed"
+    telemetry_status: "Telemetry Status"
+    telemetry_configured: "Configured:"
+    telemetry_effective: "Effective:"
+    telemetry_enabled: "enabled"
+    telemetry_disabled: "disabled"
+    telemetry_env_note: "Telemetry is disabled due to environment (CI, DO_NOT_TRACK, etc.)"
+    telemetry_installation_id: "Installation ID:"
+    telemetry_consent_given: "Consent given:"
+    telemetry_privacy: "Privacy Guarantees"
+    telemetry_privacy_1: "  - Opt-in only (disabled by default)"
+    telemetry_privacy_2: "  - No file paths or contents ever collected"
+    telemetry_privacy_3: "  - No user identity collected"
+    telemetry_privacy_4: "  - Only aggregate counts (file types, rule triggers)"
+    telemetry_privacy_5: "  - Respects DO_NOT_TRACK, CI environments"
+    telemetry_config_file: "Config file:"
+    telemetry_already_enabled: "Telemetry is already enabled."
+    telemetry_ok_enabled: "Telemetry enabled."
+    telemetry_thanks: "Thank you for helping improve agnix!"
+    telemetry_collect: "What we collect:"
+    telemetry_collect_1: "  - File type counts (e.g., 5 skills, 2 MCP configs)"
+    telemetry_collect_2: "  - Rule trigger counts (e.g., AS-001: 3 times)"
+    telemetry_collect_3: "  - Error/warning counts"
+    telemetry_collect_4: "  - Validation duration"
+    telemetry_never_collect: "What we never collect:"
+    telemetry_never_1: "  - File paths or names"
+    telemetry_never_2: "  - File contents or code"
+    telemetry_never_3: "  - User identity"
+    telemetry_disable_hint: "You can disable telemetry at any time with: %{cmd}"
+    telemetry_already_disabled: "Telemetry is already disabled."
+    telemetry_ok_disabled: "Telemetry disabled."
+    locale_unsupported: "Warning: unsupported locale '%{locale}', falling back to 'en'"
+
+  # ===========================================================================
+  # LSP - Language server protocol strings
+  # ===========================================================================
+  lsp:
+    suggestion_label: "Suggestion:"
+    hover:
+      name: "Name"
+      description: "Description"
+      model: "Model"
+      context: "Context"
+      agent: "Agent"
+      allowed_tools: "Allowed Tools"
+      argument_hint: "Argument Hint"
+      user_invocable: "User Invocable"
+      disable_model_invocation: "Disable Model Invocation"
+      license: "License"
+      compatibility: "Compatibility"
