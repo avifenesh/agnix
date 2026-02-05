@@ -54,10 +54,13 @@ pub fn detect_locale() -> String {
 
 /// Initialize the locale for the application.
 ///
-/// If `cli_locale` is provided (from `--locale` flag), it takes highest priority.
-/// Otherwise, auto-detection is used.
-pub fn init(cli_locale: Option<&str>) {
-    let locale = if let Some(l) = cli_locale {
+/// Resolution order:
+/// 1. `cli_locale` from `--locale` flag (highest priority)
+/// 2. `config_locale` from `.agnix.toml` locale field
+/// 3. Auto-detection (env vars, system locale, fallback to "en")
+pub fn init(cli_locale: Option<&str>, config_locale: Option<&str>) {
+    let explicit = cli_locale.or(config_locale);
+    let locale = if let Some(l) = explicit {
         let normalized = normalize_locale(l);
         if is_supported(&normalized) {
             normalized

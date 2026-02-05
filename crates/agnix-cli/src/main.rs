@@ -206,7 +206,8 @@ fn main() {
     }
 
     // Initialize locale (--locale flag > env var > system locale > "en")
-    locale::init(cli.locale.as_deref());
+    // Config locale will be applied later when config is loaded
+    locale::init(cli.locale.as_deref(), None);
 
     // Initialize tracing for verbose mode (only for text output to avoid corrupting JSON/SARIF)
     if cli.verbose && matches!(cli.format, OutputFormat::Text) {
@@ -284,6 +285,13 @@ fn validate_command(path: &Path, cli: &Cli) -> anyhow::Result<()> {
     tracing::debug!(config_path = ?config_path, "Resolved config path");
 
     let (mut config, config_warning) = LintConfig::load_or_default(config_path.as_ref());
+
+    // Re-initialize locale if config specifies one and no --locale flag was given
+    if cli.locale.is_none() {
+        if let Some(ref config_locale) = config.locale {
+            locale::init(None, Some(config_locale));
+        }
+    }
 
     // Display config warning before validation output
     if let Some(warning) = config_warning {

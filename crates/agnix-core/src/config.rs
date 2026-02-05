@@ -298,6 +298,12 @@ pub struct LintConfig {
     #[schemars(description = "Pin specific specification revisions for revision-aware validation")]
     pub spec_revisions: SpecRevisions,
 
+    /// Output locale for translated messages (e.g., "en", "es", "zh-CN").
+    /// When not set, the CLI locale detection is used.
+    #[serde(default)]
+    #[schemars(description = "Output locale for translated messages (e.g., \"en\", \"es\", \"zh-CN\")")]
+    pub locale: Option<String>,
+
     /// Project root directory for validation (not serialized).
     ///
     /// When set, validators can use this to resolve relative paths and
@@ -338,6 +344,7 @@ impl Default for LintConfig {
             mcp_protocol_version: None,
             tool_versions: ToolVersions::default(),
             spec_revisions: SpecRevisions::default(),
+            locale: None,
             root_dir: None,
             import_cache: None,
             runtime: RuntimeContext::default(),
