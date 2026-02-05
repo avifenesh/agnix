@@ -350,12 +350,18 @@ mod tests {
 
         assert_eq!(config.severity, Some("Error".to_string()));
         assert_eq!(config.target, Some("ClaudeCode".to_string()));
-        assert_eq!(config.tools, Some(vec!["claude-code".to_string(), "cursor".to_string()]));
+        assert_eq!(
+            config.tools,
+            Some(vec!["claude-code".to_string(), "cursor".to_string()])
+        );
 
         let rules = config.rules.expect("rules should be present");
         assert_eq!(rules.skills, Some(false));
         assert_eq!(rules.hooks, Some(true));
-        assert_eq!(rules.disabled_rules, Some(vec!["AS-001".to_string(), "PE-003".to_string()]));
+        assert_eq!(
+            rules.disabled_rules,
+            Some(vec!["AS-001".to_string(), "PE-003".to_string()])
+        );
 
         let versions = config.versions.expect("versions should be present");
         assert_eq!(versions.claude_code, Some("1.0.0".to_string()));
@@ -466,7 +472,10 @@ mod tests {
 
         vscode_config.merge_into_lint_config(&mut lint_config);
 
-        assert_eq!(lint_config.tool_versions.claude_code, Some("1.0.0".to_string()));
+        assert_eq!(
+            lint_config.tool_versions.claude_code,
+            Some("1.0.0".to_string())
+        );
         assert_eq!(lint_config.tool_versions.codex, Some("0.1.0".to_string()));
         assert!(lint_config.tool_versions.cursor.is_none()); // Not specified
     }
@@ -485,7 +494,10 @@ mod tests {
 
         vscode_config.merge_into_lint_config(&mut lint_config);
 
-        assert_eq!(lint_config.spec_revisions.mcp_protocol, Some("2025-06-18".to_string()));
+        assert_eq!(
+            lint_config.spec_revisions.mcp_protocol,
+            Some("2025-06-18".to_string())
+        );
         assert!(lint_config.spec_revisions.agent_skills_spec.is_none());
     }
 
@@ -522,7 +534,10 @@ mod tests {
         vscode_config.merge_into_lint_config(&mut lint_config);
 
         // VS Code config replaces (not appends) disabled_rules
-        assert_eq!(lint_config.rules.disabled_rules, vec!["PE-003".to_string(), "MCP-001".to_string()]);
+        assert_eq!(
+            lint_config.rules.disabled_rules,
+            vec!["PE-003".to_string(), "MCP-001".to_string()]
+        );
     }
 
     #[test]
@@ -537,6 +552,9 @@ mod tests {
 
         vscode_config.merge_into_lint_config(&mut lint_config);
 
-        assert_eq!(lint_config.tools, vec!["claude-code".to_string(), "cursor".to_string()]);
+        assert_eq!(
+            lint_config.tools,
+            vec!["claude-code".to_string(), "cursor".to_string()]
+        );
     }
 }

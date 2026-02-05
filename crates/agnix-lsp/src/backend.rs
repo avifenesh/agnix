@@ -365,7 +365,10 @@ impl LanguageServer for Backend {
         };
 
         self.client
-            .log_message(MessageType::INFO, "Received configuration update from VS Code")
+            .log_message(
+                MessageType::INFO,
+                "Received configuration update from VS Code",
+            )
             .await;
 
         // Acquire write lock and apply settings
