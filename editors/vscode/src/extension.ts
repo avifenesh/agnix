@@ -51,25 +51,25 @@ function getPlatformInfo(): PlatformInfo | null {
   if (platform === 'darwin') {
     if (arch === 'arm64') {
       return {
-        asset: 'agnix-aarch64-apple-darwin.tar.gz',
+        asset: 'agnix-lsp-aarch64-apple-darwin.tar.gz',
         binary: 'agnix-lsp',
       };
     }
     // x64 Mac can use ARM binary via Rosetta
     return {
-      asset: 'agnix-aarch64-apple-darwin.tar.gz',
+      asset: 'agnix-lsp-aarch64-apple-darwin.tar.gz',
       binary: 'agnix-lsp',
     };
   } else if (platform === 'linux') {
     if (arch === 'x64') {
       return {
-        asset: 'agnix-x86_64-unknown-linux-gnu.tar.gz',
+        asset: 'agnix-lsp-x86_64-unknown-linux-gnu.tar.gz',
         binary: 'agnix-lsp',
       };
     }
     if (arch === 'arm64') {
       return {
-        asset: 'agnix-aarch64-unknown-linux-gnu.tar.gz',
+        asset: 'agnix-lsp-aarch64-unknown-linux-gnu.tar.gz',
         binary: 'agnix-lsp',
       };
     }
@@ -77,7 +77,7 @@ function getPlatformInfo(): PlatformInfo | null {
   } else if (platform === 'win32') {
     if (arch === 'x64') {
       return {
-        asset: 'agnix-x86_64-pc-windows-msvc.zip',
+        asset: 'agnix-lsp-x86_64-pc-windows-msvc.zip',
         binary: 'agnix-lsp.exe',
       };
     }
@@ -188,6 +188,12 @@ async function downloadAndInstallLsp(): Promise<string | null> {
             `tar -xzf "${downloadPath}" -C "${storageUri.fsPath}"`,
             { timeout: 60000 }
           );
+
+          // Verify binary exists before chmod
+          if (!fs.existsSync(binaryPath)) {
+            throw new Error(`Binary not found after extraction: ${binaryPath}`);
+          }
+
           // Make executable
           await execAsync(`chmod +x "${binaryPath}"`);
         }
