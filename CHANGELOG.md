@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Fix metadata (`autofix`, `fix_safety`) for all 100 rules in rules.json
+- Fix metadata schema validation parity test
+- Autofix count parity test (rules.json vs VALIDATION-RULES.md)
+- Context-aware completions documented in all editor READMEs
+- `--fix-safe` flag documented in README.md usage section
+
+### Changed
+- Auto-fix table in VALIDATION-RULES.md expanded from 7 to 25 rules with safety classification
+- Auto-fixable count corrected from 22 to 25 rules (25%)
+- Generated website rule pages now include Auto-Fix metadata
+- Website rules index table includes Auto-Fix column
+- `generate-docs-rules.py` renders fix metadata with strict validation
+
 ## [0.9.3] - 2026-02-06
 
 ### Fixed

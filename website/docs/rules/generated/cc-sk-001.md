@@ -12,6 +12,7 @@ keywords: ["CC-SK-001", "invalid model value", "claude skills", "validation", "a
 - **Severity**: `HIGH`
 - **Category**: `Claude Skills`
 - **Normative Level**: `MUST`
+- **Auto-Fix**: `Yes (unsafe)`
 - **Verified On**: `2026-02-04`
 
 ## Applicability

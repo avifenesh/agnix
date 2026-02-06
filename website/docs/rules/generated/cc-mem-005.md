@@ -12,6 +12,7 @@ keywords: ["CC-MEM-005", "generic instruction", "claude memory", "validation", "
 - **Severity**: `HIGH`
 - **Category**: `Claude Memory`
 - **Normative Level**: `SHOULD`
+- **Auto-Fix**: `Yes (safe)`
 - **Verified On**: `2026-02-04`
 
 ## Applicability

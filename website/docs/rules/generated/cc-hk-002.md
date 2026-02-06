@@ -12,6 +12,7 @@ keywords: ["CC-HK-002", "prompt hook on wrong event", "claude hooks", "validatio
 - **Severity**: `HIGH`
 - **Category**: `Claude Hooks`
 - **Normative Level**: `MUST`
+- **Auto-Fix**: `No`
 - **Verified On**: `2026-02-04`
 
 ## Applicability

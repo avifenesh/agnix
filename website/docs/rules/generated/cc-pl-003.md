@@ -12,6 +12,7 @@ keywords: ["CC-PL-003", "invalid semver", "claude plugins", "validation", "agnix
 - **Severity**: `HIGH`
 - **Category**: `Claude Plugins`
 - **Normative Level**: `MUST`
+- **Auto-Fix**: `No`
 - **Verified On**: `2026-02-04`
 
 ## Applicability

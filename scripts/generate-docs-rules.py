@@ -121,6 +121,20 @@ def slug(rule_id: str) -> str:
 
 
 
+def render_autofix(rule: dict) -> str:
+    """Return a human-readable auto-fix label for a rule."""
+    fix = rule.get("fix", {})
+    if not fix.get("autofix"):
+        return "No"
+    safety = fix.get("fix_safety")
+    if not safety:
+        raise ValueError(f"Rule {rule['id']} has autofix=true but missing fix_safety")
+    valid = ("safe", "unsafe", "safe/unsafe")
+    if safety not in valid:
+        raise ValueError(f"Rule {rule['id']} has invalid fix_safety: '{safety}'. Expected one of: {valid}")
+    return f"Yes ({safety})"
+
+
 def render_rule(rule: dict) -> str:
     rule_id = rule["id"]
     name = rule["name"]
@@ -165,6 +179,8 @@ def render_rule(rule: dict) -> str:
         seo_desc = seo_desc[:157] + "..."
     description = json.dumps(seo_desc)
 
+    autofix_label = render_autofix(rule)
+
     # SEO keywords (quote each to avoid YAML colon issues)
     kw_list = [rule_id, name.lower(), cat_label.lower(), "validation", "agnix", "linter"]
     keywords = ", ".join(json.dumps(kw) for kw in kw_list)
@@ -183,6 +199,7 @@ keywords: [{keywords}]
 - **Severity**: `{severity}`
 - **Category**: `{CATEGORY_LABELS.get(category, category)}`
 - **Normative Level**: `{evidence.get('normative_level', 'UNKNOWN')}`
+- **Auto-Fix**: `{autofix_label}`
 - **Verified On**: `{evidence.get('verified_on', 'unknown')}`
 
 ## Applicability
@@ -230,13 +247,18 @@ def main() -> int:
         for existing in target_output_dir.glob("*.md"):
             existing.unlink()
 
+        autofix_count = sum(
+            1 for r in rules if r.get("fix", {}).get("autofix")
+        )
+
         lines = [
             "# Rules Reference",
             "",
             f"This section contains all `{total_rules}` validation rules generated from `knowledge-base/rules.json`.",
+            f"`{autofix_count}` rules have automatic fixes.",
             "",
-            "| Rule | Name | Severity | Category |",
-            "|------|------|----------|----------|",
+            "| Rule | Name | Severity | Category | Auto-Fix |",
+            "|------|------|----------|----------|----------|",
         ]
 
         for rule in rules:
@@ -245,8 +267,9 @@ def main() -> int:
             page_path = target_output_dir / filename
             page_path.write_text(render_rule(rule), encoding="utf-8")
 
+            autofix_label = render_autofix(rule)
             lines.append(
-                f"| [{rule_id}](./generated/{slug(rule_id)}.md) | {rule['name']} | {rule['severity']} | {CATEGORY_LABELS.get(rule['category'], rule['category'])} |"
+                f"| [{rule_id}](./generated/{slug(rule_id)}.md) | {rule['name']} | {rule['severity']} | {CATEGORY_LABELS.get(rule['category'], rule['category'])} | {autofix_label} |"
             )
 
         target_index_path.parent.mkdir(parents=True, exist_ok=True)

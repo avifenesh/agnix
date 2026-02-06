@@ -86,6 +86,7 @@ The extension automatically downloads the `agnix-lsp` binary. See `editors/zed/R
 - Rule codes shown in diagnostic messages
 - Quick-fix code actions for auto-fixable diagnostics
 - Hover documentation for frontmatter fields (name, version, model, etc.)
+- Context-aware completions for frontmatter keys, values, and snippets
 
 ## Supported File Types
 
@@ -123,8 +124,11 @@ agnix-lsp/
 │   ├── backend.rs          # LSP protocol implementation
 │   ├── diagnostic_mapper.rs # Converts agnix diagnostics to LSP format
 │   ├── code_actions.rs      # Quick-fix code action generation
+│   ├── completion_provider.rs # Context-aware frontmatter completions
 │   ├── hover_provider.rs    # Hover documentation for frontmatter fields
-│   └── position.rs          # Byte offset to LSP position conversion
+│   ├── locale.rs            # Localization support
+│   ├── position.rs          # Byte offset to LSP position conversion
+│   └── vscode_config.rs     # VS Code settings integration
 └── tests/
     └── lsp_integration.rs  # Integration tests
 ```

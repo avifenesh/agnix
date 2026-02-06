@@ -12,6 +12,7 @@ keywords: ["CC-PL-005", "empty plugin name", "claude plugins", "validation", "ag
 - **Severity**: `HIGH`
 - **Category**: `Claude Plugins`
 - **Normative Level**: `MUST`
+- **Auto-Fix**: `Yes (unsafe)`
 - **Verified On**: `2026-02-04`
 
 ## Applicability

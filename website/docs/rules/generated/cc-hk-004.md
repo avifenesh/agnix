@@ -12,6 +12,7 @@ keywords: ["CC-HK-004", "matcher on non-tool event", "claude hooks", "validation
 - **Severity**: `HIGH`
 - **Category**: `Claude Hooks`
 - **Normative Level**: `MUST`
+- **Auto-Fix**: `Yes (safe)`
 - **Verified On**: `2026-02-04`
 
 ## Applicability

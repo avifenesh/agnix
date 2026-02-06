@@ -12,6 +12,7 @@ keywords: ["CC-MEM-001", "invalid import path", "claude memory", "validation", "
 - **Severity**: `HIGH`
 - **Category**: `Claude Memory`
 - **Normative Level**: `MUST`
+- **Auto-Fix**: `No`
 - **Verified On**: `2026-02-04`
 
 ## Applicability

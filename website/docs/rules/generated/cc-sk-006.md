@@ -12,6 +12,7 @@ keywords: ["CC-SK-006", "dangerous auto-invocation", "claude skills", "validatio
 - **Severity**: `HIGH`
 - **Category**: `Claude Skills`
 - **Normative Level**: `MUST`
+- **Auto-Fix**: `No`
 - **Verified On**: `2026-02-04`
 
 ## Applicability

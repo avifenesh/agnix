@@ -12,6 +12,7 @@ keywords: ["CC-PL-001", "plugin manifest not in .claude-plugin/", "claude plugin
 - **Severity**: `HIGH`
 - **Category**: `Claude Plugins`
 - **Normative Level**: `MUST`
+- **Auto-Fix**: `No`
 - **Verified On**: `2026-02-04`
 
 ## Applicability

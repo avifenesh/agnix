@@ -12,6 +12,7 @@ keywords: ["CC-HK-009", "dangerous command pattern", "claude hooks", "validation
 - **Severity**: `HIGH`
 - **Category**: `Claude Hooks`
 - **Normative Level**: `SHOULD`
+- **Auto-Fix**: `No`
 - **Verified On**: `2026-02-04`
 
 ## Applicability
