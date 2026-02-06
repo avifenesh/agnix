@@ -203,13 +203,13 @@ rules:
     suggestion: "在关键部分使用强语言: 'must'、'always'、'required'。"
     fix: "将 '%{text}' 替换为更强的语言"
   cc_mem_008:
-    message: "关键词 '%{keyword}' 在文档的 %{percent}%% 处（中间区域）"
+    message: "关键词 '%{keyword}' 在文档的 %{percent} 百分比处（中间区域）"
     suggestion: "将关键内容移到文档的顶部或底部以获得更好的记忆效果。"
   cc_mem_009:
     message: "文件超过推荐的 token 限制（约 %{tokens} tokens，限制为 %{limit}）"
     suggestion: "考虑使用 @import 将内容拆分为多个文件。"
   cc_mem_010:
-    message: "CLAUDE.md 与 README.md 有 %{overlap}%% 的重叠（阈值: %{threshold}%%）"
+    message: "CLAUDE.md 与 README.md 有 %{overlap} 百分比的重叠（阈值: %{threshold} 百分比）"
     suggestion: "CLAUDE.md 应补充 README，而不是复制它。删除重复的部分。"
 
   # --- AGENTS.md (agents_md.rs) ---
@@ -323,7 +323,7 @@ rules:
 
   # --- Prompt engineering (prompt.rs) ---
   pe_001:
-    message: "关键词 '%{keyword}' 在文档的 %{percent}%% 处（40-60%% 是'中间遗忘'区域）"
+    message: "关键词 '%{keyword}' 在文档的 %{percent} 百分比处（40-60 百分比是'中间遗忘'区域）"
     suggestion: "将关键内容移到文档的开头或结尾以获得更好的记忆效果"
   pe_002:
     message: "思维链短语 '%{phrase}' 用于简单任务 '%{task}'"

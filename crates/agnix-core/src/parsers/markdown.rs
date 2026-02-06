@@ -594,6 +594,18 @@ fn is_probable_import_path(path: &str) -> bool {
         return true;
     }
 
+    // Exclude email-like patterns (multiple dots with no file extension structure)
+    // e.g., "users.noreply.github.com" is an email domain, not a file
+    if path.matches('.').count() >= 2 && !path.contains('/') {
+        // If the last segment after the last dot looks like a TLD, it's likely a domain
+        if let Some(last_dot) = path.rfind('.') {
+            let ext = &path[last_dot + 1..];
+            if matches!(ext, "com" | "org" | "net" | "io" | "dev" | "ai" | "co" | "edu" | "gov") {
+                return false;
+            }
+        }
+    }
+
     // Must contain a dot (file extension) to be considered a file reference
     path.contains('.')
 }

@@ -203,13 +203,13 @@ rules:
     suggestion: "Use strong language in critical sections: 'must', 'always', 'required'."
     fix: "Replace '%{text}' with stronger language"
   cc_mem_008:
-    message: "Critical keyword '%{keyword}' at %{percent}%% of document (middle zone)"
+    message: "Critical keyword '%{keyword}' at %{percent} percent of document (middle zone)"
     suggestion: "Move critical content to the top or bottom of the document for better recall."
   cc_mem_009:
     message: "File exceeds recommended token limit (~%{tokens} tokens, limit is %{limit})"
     suggestion: "Consider using @import to split content into multiple files."
   cc_mem_010:
-    message: "CLAUDE.md has %{overlap}%% overlap with README.md (threshold: %{threshold}%%)"
+    message: "CLAUDE.md has %{overlap} percent overlap with README.md (threshold: %{threshold} percent)"
     suggestion: "CLAUDE.md should complement README, not duplicate it. Remove duplicated sections."
 
   # --- AGENTS.md (agents_md.rs) ---
@@ -323,7 +323,7 @@ rules:
 
   # --- Prompt engineering (prompt.rs) ---
   pe_001:
-    message: "Critical keyword '%{keyword}' at %{percent}%% of document (40-60%% is the 'lost in the middle' zone)"
+    message: "Critical keyword '%{keyword}' at %{percent} percent of document (40-60 percent is the 'lost in the middle' zone)"
     suggestion: "Move critical content to the start or end of the document for better recall"
   pe_002:
     message: "Chain-of-thought phrase '%{phrase}' used with simple task '%{task}'"

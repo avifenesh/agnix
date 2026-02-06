@@ -203,13 +203,13 @@ rules:
     suggestion: "Usa lenguaje fuerte en secciones criticas: 'must', 'always', 'required'."
     fix: "Reemplazar '%{text}' con lenguaje mas fuerte"
   cc_mem_008:
-    message: "Palabra clave critica '%{keyword}' al %{percent}%% del documento (zona media)"
+    message: "Palabra clave critica '%{keyword}' al %{percent} por ciento del documento (zona media)"
     suggestion: "Mueve contenido critico al inicio o final del documento para mejor recuerdo."
   cc_mem_009:
     message: "El archivo excede el limite recomendado de tokens (~%{tokens} tokens, limite es %{limit})"
     suggestion: "Considera usar @import para dividir contenido en multiples archivos."
   cc_mem_010:
-    message: "CLAUDE.md tiene %{overlap}%% de superposicion con README.md (umbral: %{threshold}%%)"
+    message: "CLAUDE.md tiene %{overlap} por ciento de superposicion con README.md (umbral: %{threshold} por ciento)"
     suggestion: "CLAUDE.md debe complementar README, no duplicarlo. Elimina secciones duplicadas."
 
   # --- AGENTS.md (agents_md.rs) ---
@@ -323,7 +323,7 @@ rules:
 
   # --- Prompt engineering (prompt.rs) ---
   pe_001:
-    message: "Palabra clave critica '%{keyword}' al %{percent}%% del documento (40-60%% es la zona 'perdido en el medio')"
+    message: "Palabra clave critica '%{keyword}' al %{percent} por ciento del documento (40-60 por ciento es la zona 'perdido en el medio')"
     suggestion: "Mueve contenido critico al inicio o final del documento para mejor recuerdo"
   pe_002:
     message: "Frase de cadena de pensamiento '%{phrase}' usada con tarea simple '%{task}'"
