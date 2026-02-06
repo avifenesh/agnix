@@ -80,9 +80,12 @@ fn assert_rules_bundle(root: &Path, rules: &RulesIndex, docs_root: &Path) {
     }
 
     assert_eq!(
-        markdown_count, rules.total_rules,
+        markdown_count,
+        rules.total_rules,
         "Expected {} generated rule docs, found {} in {}",
-        rules.total_rules, markdown_count, docs_dir.display()
+        rules.total_rules,
+        markdown_count,
+        docs_dir.display()
     );
 
     for rule in &rules.rules {
