@@ -27,6 +27,13 @@ if [ -f editors/vscode/package.json ]; then
   echo "  editors/vscode/package.json -> $VERSION"
 fi
 
+# VS Code package-lock.json
+if [ -f editors/vscode/package-lock.json ]; then
+  sed -i.bak "s/\"version\": \"[^\"]*\"/\"version\": \"$VERSION\"/" editors/vscode/package-lock.json
+  rm -f editors/vscode/package-lock.json.bak
+  echo "  editors/vscode/package-lock.json -> $VERSION"
+fi
+
 # npm package
 if [ -f npm/package.json ]; then
   sed -i.bak "s/\"version\": \"[^\"]*\"/\"version\": \"$VERSION\"/" npm/package.json
