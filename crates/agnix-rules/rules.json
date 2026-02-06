@@ -1,7 +1,7 @@
 {
   "description": "Machine-readable source of truth for all validation rules. When adding a new rule, add it here AND in VALIDATION-RULES.md. CI parity tests enforce sync.",
   "version": "1.1.0",
-  "total_rules": 100,
+  "total_rules": 102,
   "last_updated": "2026-02-04",
   "schema": {
     "evidence": {
@@ -1735,6 +1735,50 @@
       }
     },
     {
+      "id": "COP-005",
+      "name": "Invalid excludeAgent Value",
+      "severity": "HIGH",
+      "category": "copilot",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://docs.github.com/en/copilot/customizing-copilot"
+        ],
+        "verified_on": "2026-02-07",
+        "applies_to": {
+          "tool": "github-copilot"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      }
+    },
+    {
+      "id": "COP-006",
+      "name": "File Length Limit",
+      "severity": "MEDIUM",
+      "category": "copilot",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://docs.github.com/en/copilot/customizing-copilot"
+        ],
+        "verified_on": "2026-02-07",
+        "applies_to": {
+          "tool": "github-copilot"
+        },
+        "normative_level": "SHOULD",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      }
+    },
+    {
       "id": "CUR-001",
       "name": "Empty Cursor Rule File",
       "severity": "HIGH",
@@ -2242,7 +2286,7 @@
     },
     "copilot": {
       "prefix": "COP",
-      "count": 4,
+      "count": 6,
       "description": "GitHub Copilot rules"
     },
     "cursor": {
@@ -2920,6 +2964,18 @@
               "**/*.py"
             ],
             "snippet": "applyTo: \"**/*.ts\""
+          },
+          {
+            "key": "excludeAgent",
+            "docs": "Exclude a specific Copilot agent from this scoped instruction.",
+            "rules": [
+              "COP-005"
+            ],
+            "values": [
+              "code-review",
+              "coding-agent"
+            ],
+            "snippet": "excludeAgent: \"code-review\""
           }
         ],
         "snippets": [
