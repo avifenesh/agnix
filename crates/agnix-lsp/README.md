@@ -67,6 +67,16 @@ language-servers = ["agnix-lsp"]
 command = "agnix-lsp"
 ```
 
+### Zed
+
+Install the agnix extension from the Zed Extensions panel:
+
+1. Open Zed > Extensions (`cmd+shift+x`)
+2. Search for "agnix"
+3. Click Install
+
+The extension automatically downloads the `agnix-lsp` binary. See `editors/zed/README.md` for details.
+
 ## Features
 
 - Real-time diagnostics as you type (via textDocument/didChange)

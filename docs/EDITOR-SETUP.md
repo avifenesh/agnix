@@ -225,6 +225,47 @@ cd editors/jetbrains
 4. Confirm manual `LSP binary path` override works.
 5. Confirm `Restart Language Server` action reconnects cleanly.
 
+## Zed
+
+Zed extension source is in `editors/zed/` and provides automatic LSP binary download.
+
+### Installation
+
+1. Open Zed
+2. Open the Extensions panel (Zed > Extensions, or `cmd+shift+x`)
+3. Search for "agnix"
+4. Click Install
+
+The extension automatically downloads the `agnix-lsp` binary from GitHub releases.
+
+### Configuration
+
+agnix reads configuration from `.agnix.toml` in your project root.
+
+### Troubleshooting
+
+**No diagnostics appearing:**
+
+1. Verify the file is a supported type
+2. Check Zed log (`cmd+shift+p` > "zed: open log") for LSP errors
+3. Ensure project has a `.git` directory or `.agnix.toml` for root detection
+
+**LSP binary download fails:**
+
+1. Check internet connection
+2. Verify access to https://github.com/avifenesh/agnix/releases
+3. Try restarting Zed to trigger fresh download
+
+**Manual installation:**
+
+```bash
+# npm
+npm install -g agnix
+
+# Cargo
+cargo install agnix-lsp
+```
+
 ## Supported File Types
 
 - `SKILL.md` - Agent skill definitions

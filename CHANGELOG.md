@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Zed editor extension with automatic LSP binary download and MDC file type support (#198)
 - JetBrains plugin: archive extraction tests for AgnixBinaryDownloader (#255)
   - 19 tests covering TAR.GZ/ZIP extraction, binary selection, path traversal protection
   - Refactored extraction methods to companion object for testability

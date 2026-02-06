@@ -34,7 +34,7 @@ agnix/
 │   ├── agnix-cli/      # CLI binary
 │   ├── agnix-lsp/      # LSP server
 │   └── agnix-mcp/      # MCP server
-├── editors/            # VS Code + JetBrains scaffold
+├── editors/            # VS Code, Neovim, JetBrains, Zed
 ├── knowledge-base/     # 100 rules documented
 └── tests/fixtures/     # Test cases
 ```
