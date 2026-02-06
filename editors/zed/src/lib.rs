@@ -15,15 +15,15 @@ struct AgnixExtension {
 /// Returns the expected release asset name and download file type for a given platform.
 fn asset_for_platform(os: Os, arch: Architecture) -> Result<(&'static str, DownloadedFileType)> {
     match (os, arch) {
-        (Os::Mac, Architecture::Aarch64) => Ok((
-            "agnix-lsp-aarch64-apple-darwin.tar.gz",
-            DownloadedFileType::GzipTar,
-        )),
-        // macOS x86_64 uses the ARM binary via Rosetta 2
-        (Os::Mac, Architecture::X8664) => Ok((
-            "agnix-lsp-aarch64-apple-darwin.tar.gz",
-            DownloadedFileType::GzipTar,
-        )),
+        (Os::Mac, arch @ (Architecture::Aarch64 | Architecture::X8664)) => {
+            // On x86_64, use the x86_64 binary; on ARM, use the ARM64 binary
+            let asset_name = match arch {
+                Architecture::Aarch64 => "agnix-lsp-aarch64-apple-darwin.tar.gz",
+                Architecture::X8664 => "agnix-lsp-x86_64-apple-darwin.tar.gz",
+                _ => unreachable!(),
+            };
+            Ok((asset_name, DownloadedFileType::GzipTar))
+        }
         (Os::Linux, Architecture::X8664) => Ok((
             "agnix-lsp-x86_64-unknown-linux-gnu.tar.gz",
             DownloadedFileType::GzipTar,
@@ -153,35 +153,40 @@ mod tests {
 
     #[test]
     fn asset_name_mac_aarch64() {
-        let (name, file_type) = asset_for_platform(Os::Mac, Architecture::Aarch64).unwrap();
+        let (name, file_type) = asset_for_platform(Os::Mac, Architecture::Aarch64)
+            .expect("should get asset for mac aarch64");
         assert_eq!(name, "agnix-lsp-aarch64-apple-darwin.tar.gz");
         assert!(matches!(file_type, DownloadedFileType::GzipTar));
     }
 
     #[test]
-    fn asset_name_mac_x86_64_uses_rosetta() {
-        let (name, file_type) = asset_for_platform(Os::Mac, Architecture::X8664).unwrap();
-        assert_eq!(name, "agnix-lsp-aarch64-apple-darwin.tar.gz");
+    fn asset_name_mac_x86_64() {
+        let (name, file_type) = asset_for_platform(Os::Mac, Architecture::X8664)
+            .expect("should get asset for mac x86_64");
+        assert_eq!(name, "agnix-lsp-x86_64-apple-darwin.tar.gz");
         assert!(matches!(file_type, DownloadedFileType::GzipTar));
     }
 
     #[test]
     fn asset_name_linux_x86_64() {
-        let (name, file_type) = asset_for_platform(Os::Linux, Architecture::X8664).unwrap();
+        let (name, file_type) = asset_for_platform(Os::Linux, Architecture::X8664)
+            .expect("should get asset for linux x86_64");
         assert_eq!(name, "agnix-lsp-x86_64-unknown-linux-gnu.tar.gz");
         assert!(matches!(file_type, DownloadedFileType::GzipTar));
     }
 
     #[test]
     fn asset_name_linux_aarch64() {
-        let (name, file_type) = asset_for_platform(Os::Linux, Architecture::Aarch64).unwrap();
+        let (name, file_type) = asset_for_platform(Os::Linux, Architecture::Aarch64)
+            .expect("should get asset for linux aarch64");
         assert_eq!(name, "agnix-lsp-aarch64-unknown-linux-gnu.tar.gz");
         assert!(matches!(file_type, DownloadedFileType::GzipTar));
     }
 
     #[test]
     fn asset_name_windows_x86_64() {
-        let (name, file_type) = asset_for_platform(Os::Windows, Architecture::X8664).unwrap();
+        let (name, file_type) = asset_for_platform(Os::Windows, Architecture::X8664)
+            .expect("should get asset for windows x86_64");
         assert_eq!(name, "agnix-lsp-x86_64-pc-windows-msvc.zip");
         assert!(matches!(file_type, DownloadedFileType::Zip));
     }
@@ -190,7 +195,7 @@ mod tests {
     fn unsupported_platform_returns_error() {
         let result = asset_for_platform(Os::Windows, Architecture::Aarch64);
         assert!(result.is_err());
-        let err = result.unwrap_err();
+        let err = result.expect_err("should fail for unsupported platform");
         assert!(err.contains("unsupported platform"));
     }
 
