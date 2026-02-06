@@ -1,0 +1,18 @@
+:root {
+  --ifm-color-primary: #0f766e;
+  --ifm-color-primary-dark: #0d665f;
+  --ifm-color-primary-darker: #0c6059;
+  --ifm-color-primary-darkest: #0a4f49;
+  --ifm-color-primary-light: #11867d;
+  --ifm-color-primary-lighter: #129084;
+  --ifm-color-primary-lightest: #15aa9b;
+  --ifm-code-font-size: 95%;
+}
+
+.navbar {
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.footer {
+  border-top: 1px solid #1f2937;
+}
