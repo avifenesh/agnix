@@ -89,7 +89,7 @@ knowledge-base/
 | Claude Memory | 10 | 7 | 3 | 0 | 2 |
 | AGENTS.md | 6 | 1 | 5 | 0 | 2 |
 | Claude Plugins | 6 | 6 | 0 | 0 | 1 |
-| GitHub Copilot | 6 | 5 | 1 | 0 | 0 |
+| GitHub Copilot | 6 | 4 | 2 | 0 | 0 |
 | MCP | 8 | 7 | 1 | 0 | 1 |
 | XML | 3 | 3 | 0 | 0 | 1 |
 | References | 2 | 2 | 0 | 0 | 0 |
@@ -97,7 +97,7 @@ knowledge-base/
 | Cross-Platform | 6 | 4 | 2 | 0 | 0 |
 | Cursor | 6 | 3 | 3 | 0 | 1 |
 | Version Awareness | 1 | 0 | 0 | 1 | 0 |
-| **TOTAL** | **100** | **76** | **23** | **1** | **22** |
+| **TOTAL** | **102** | **77** | **24** | **1** | **22** |
 
 ---
 

@@ -285,7 +285,10 @@ fn infer_fixture_coverage(rules: &[RuleEntry]) -> HashMap<String, Vec<String>> {
         ("claude-plugins", vec!["valid/plugins", "invalid/plugins"]),
         ("agents-md", vec!["agents_md"]),
         ("mcp", vec!["mcp"]),
-        ("copilot", vec!["copilot", "copilot-invalid", "copilot-too-long"]),
+        (
+            "copilot",
+            vec!["copilot", "copilot-invalid", "copilot-too-long"],
+        ),
         ("cursor", vec!["cursor", "cursor-invalid", "cursor-legacy"]),
         ("xml", vec!["xml"]),
         ("references", vec!["refs"]),

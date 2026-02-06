@@ -251,10 +251,7 @@ impl Validator for CopilotValidator {
                                 line,
                                 0,
                                 "COP-005",
-                                t!(
-                                    "rules.cop_005.message",
-                                    value = agent_value.as_str()
-                                ),
+                                t!("rules.cop_005.message", value = agent_value.as_str()),
                             )
                             .with_suggestion(t!("rules.cop_005.suggestion")),
                         );
@@ -661,7 +658,9 @@ Body"#;
 
     #[test]
     fn test_all_cop_rules_can_be_disabled() {
-        let rules = ["COP-001", "COP-002", "COP-003", "COP-004", "COP-005", "COP-006"];
+        let rules = [
+            "COP-001", "COP-002", "COP-003", "COP-004", "COP-005", "COP-006",
+        ];
         let long_content = make_long_content();
 
         for rule in rules {
@@ -791,7 +790,8 @@ excludeAgent: "invalid-agent"
 
     #[test]
     fn test_cop_005_case_sensitive() {
-        let content = "---\napplyTo: \"**/*.ts\"\nexcludeAgent: \"Code-Review\"\n---\n# Instructions\n";
+        let content =
+            "---\napplyTo: \"**/*.ts\"\nexcludeAgent: \"Code-Review\"\n---\n# Instructions\n";
         let diagnostics = validate_scoped(content);
         let cop_005: Vec<_> = diagnostics.iter().filter(|d| d.rule == "COP-005").collect();
         assert_eq!(cop_005.len(), 1, "Mixed-case value should trigger COP-005");
@@ -802,7 +802,11 @@ excludeAgent: "invalid-agent"
         let content = "---\napplyTo: \"**/*.ts\"\nexcludeAgent: \"\"\n---\n# Instructions\n";
         let diagnostics = validate_scoped(content);
         let cop_005: Vec<_> = diagnostics.iter().filter(|d| d.rule == "COP-005").collect();
-        assert_eq!(cop_005.len(), 1, "Empty excludeAgent should trigger COP-005");
+        assert_eq!(
+            cop_005.len(),
+            1,
+            "Empty excludeAgent should trigger COP-005"
+        );
     }
 
     // ===== COP-006: File Length Limit =====
@@ -841,11 +845,7 @@ excludeAgent: "invalid-agent"
         let content_4001 = "x".repeat(4001);
         let diagnostics = validate_global(&content_4001);
         let cop_006: Vec<_> = diagnostics.iter().filter(|d| d.rule == "COP-006").collect();
-        assert_eq!(
-            cop_006.len(),
-            1,
-            "4001 chars should trigger COP-006"
-        );
+        assert_eq!(cop_006.len(), 1, "4001 chars should trigger COP-006");
     }
 
     #[test]

@@ -1011,7 +1011,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | Claude Memory | 10 | 7 | 3 | 0 | 2 |
 | AGENTS.md | 6 | 1 | 5 | 0 | 0 |
 | Claude Plugins | 6 | 6 | 0 | 0 | 1 |
-| GitHub Copilot | 6 | 5 | 1 | 0 | 1 |
+| GitHub Copilot | 6 | 4 | 2 | 0 | 1 |
 | Cursor | 6 | 3 | 3 | 0 | 1 |
 | MCP | 8 | 7 | 1 | 0 | 2 |
 | XML | 3 | 3 | 0 | 0 | 3 |
@@ -1019,7 +1019,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | Prompt Eng | 4 | 0 | 4 | 0 | 0 |
 | Cross-Platform | 6 | 4 | 2 | 0 | 0 |
 | Version Awareness | 1 | 0 | 0 | 1 | 0 |
-| **TOTAL** | **100** | **76** | **23** | **1** | **25** |
+| **TOTAL** | **102** | **77** | **24** | **1** | **25** |
 
 ---
 
