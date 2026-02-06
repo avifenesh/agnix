@@ -14,6 +14,39 @@ use rust_i18n::t;
 use std::collections::HashSet;
 use std::path::Path;
 
+/// Convert raw serde YAML errors into user-friendly messages.
+fn humanize_yaml_error(raw: &str) -> String {
+    let mut msg = raw.to_string();
+
+    // "tools: invalid type: string "X", expected a sequence"
+    // -> "tools: expected a YAML list (use '- item' syntax), got a comma-separated string"
+    if msg.contains("expected a sequence") && msg.contains("invalid type: string") {
+        if let Some(field) = msg.split(':').next() {
+            return format!(
+                "{}: expected a YAML list (use '- item' syntax on separate lines), not a comma-separated string",
+                field.trim()
+            );
+        }
+    }
+
+    // "expected a string" for fields that should be strings
+    if msg.contains("expected a string") && msg.contains("invalid type: sequence") {
+        if let Some(field) = msg.split(':').next() {
+            return format!(
+                "{}: expected a single string value, not a YAML list",
+                field.trim()
+            );
+        }
+    }
+
+    // Strip " at line X column Y" suffix for cleaner messages since we already report location
+    if let Some(pos) = msg.find(" at line ") {
+        msg.truncate(pos);
+    }
+
+    msg
+}
+
 /// Valid model values per CC-AG-003
 const VALID_MODELS: &[&str] = &["sonnet", "opus", "haiku", "inherit"];
 
@@ -182,12 +215,14 @@ impl Validator for AgentValidator {
                         .location()
                         .map(|loc| (loc.line(), loc.column()))
                         .unwrap_or((1, 0));
+                    let raw_error = e.to_string();
+                    let friendly_error = humanize_yaml_error(&raw_error);
                     diagnostics.push(Diagnostic::error(
                         path.to_path_buf(),
                         line,
                         column,
                         "CC-AG-007",
-                        t!("rules.cc_ag_007.parse_error", error = e.to_string()),
+                        t!("rules.cc_ag_007.parse_error", error = friendly_error),
                     ));
                 }
                 return diagnostics;

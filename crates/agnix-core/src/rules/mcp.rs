@@ -478,6 +478,16 @@ fn validate_tool(
             );
         }
         if !has_schema {
+            // Check if content has a "parameters" field that might be a misnaming
+            let has_parameters_field = content.contains("\"parameters\"");
+            let suggestion = if has_parameters_field {
+                format!(
+                    "{}. Found 'parameters' field - did you mean 'inputSchema'?",
+                    t!("rules.mcp_002.missing_schema_suggestion")
+                )
+            } else {
+                t!("rules.mcp_002.missing_schema_suggestion").to_string()
+            };
             diagnostics.push(
                 Diagnostic::error(
                     path.to_path_buf(),
@@ -489,7 +499,7 @@ fn validate_tool(
                         prefix = tool_prefix.as_str()
                     ),
                 )
-                .with_suggestion(t!("rules.mcp_002.missing_schema_suggestion")),
+                .with_suggestion(suggestion),
             );
         }
     }

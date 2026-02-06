@@ -270,6 +270,17 @@ pub fn find_ambiguous_instructions(content: &str) -> Vec<AmbiguousInstruction> {
         }
 
         for mat in pattern.find_iter(line) {
+            // Skip ambiguous terms inside parentheses - these are typically
+            // descriptive/explanatory text, not instructions.
+            // e.g., "linting errors (usually part of the build)" is describing, not instructing
+            let before = &line[..mat.start()];
+            let after = &line[mat.end()..];
+            if before.rfind('(').is_some_and(|p| before[p..].find(')').is_none())
+                && after.find(')').is_some()
+            {
+                continue;
+            }
+
             // Extract context using UTF-8 safe slicing to avoid panics on multi-byte chars
             let target_start = mat.start().saturating_sub(20);
             let target_end = (mat.end() + 20).min(line.len());
