@@ -207,7 +207,7 @@ See [Configuration Reference](docs/CONFIGURATION.md) for all options including `
 
 ## Features
 
-- **Validation across 15 categories**: Skills, Hooks, Agents, Plugins, MCP, Memory, Prompt Engineering, XML, Imports, Cross-platform, AGENTS.md, Copilot, Cursor, Version Awareness
+- **Validation across 15 categories**: Skills, Hooks, Agents, Plugins, MCP, Memory, Prompt Engineering, XML, References, Cross-platform, AGENTS.md, Copilot, Cursor, Version Awareness
 - **Auto-fix**: `--fix` applies safe corrections, `--dry-run` previews them
 - **LSP server**: Real-time diagnostics in any editor that supports LSP
 - **MCP server**: Expose validation as AI-assistant tools
