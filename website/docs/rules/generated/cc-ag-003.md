@@ -1,7 +1,9 @@
 ---
 id: cc-ag-003
-title: "CC-AG-003 Invalid Model Value"
+title: "CC-AG-003: Invalid Model Value - Claude Agents"
 sidebar_label: "CC-AG-003"
+description: "agnix rule CC-AG-003 checks for invalid model value in claude agents files. Severity: HIGH. See examples and fix guidance."
+keywords: ["CC-AG-003", "invalid model value", "claude agents", "validation", "agnix", "linter"]
 ---
 
 ## Summary

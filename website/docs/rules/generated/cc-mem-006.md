@@ -1,7 +1,9 @@
 ---
 id: cc-mem-006
-title: "CC-MEM-006 Negative Without Positive"
+title: "CC-MEM-006: Negative Without Positive - Claude Memory"
 sidebar_label: "CC-MEM-006"
+description: "agnix rule CC-MEM-006 checks for negative without positive in claude memory files. Severity: HIGH. See examples and fix guidance."
+keywords: ["CC-MEM-006", "negative without positive", "claude memory", "validation", "agnix", "linter"]
 ---
 
 ## Summary

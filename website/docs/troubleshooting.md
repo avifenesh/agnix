@@ -1,6 +1,11 @@
+---
+title: Troubleshooting
+description: "Common issues and fixes when using agnix CLI and editor integrations."
+---
+
 # Troubleshooting
 
-## Command not found
+## agnix command not found
 
 Ensure `agnix` is in your PATH:
 
@@ -9,20 +14,47 @@ which agnix
 agnix --version
 ```
 
-## Unexpected validation scope
+If installed via npm, make sure npm global binaries are in your PATH. Run `npm config get prefix` to find the install location.
 
-Check:
+## No files found to validate
 
-- `.agnix.toml` target/tools settings
-- `.gitignore` and file discovery boundaries
+agnix respects `.gitignore` and has file discovery boundaries. Check:
 
-## LSP diagnostics are missing
+- You are running from the project root
+- Your config files are not git-ignored
+- `.agnix.toml` `target` or `tools` settings are not excluding your files
 
-Check that editor plugin points to `agnix-lsp` binary and server logs do not show startup errors.
+## Unexpected rules triggering
 
-## Rule mismatch questions
+Check your `.agnix.toml` configuration:
 
-If docs and rule behavior appear out of sync, validate against canonical rule data:
+- `target` limits validation to a single tool's files
+- `disabled_rules` can suppress specific rules
+- Some rules only apply to specific tool configs
+
+## LSP diagnostics not showing
+
+1. Verify the `agnix-lsp` binary is installed and accessible:
+   ```bash
+   which agnix-lsp
+   agnix-lsp --version
+   ```
+
+2. Check your editor plugin points to the correct binary path
+
+3. Check editor logs for LSP server startup errors
+
+4. For VS Code, the extension bundles the server -- try reinstalling the extension
+
+## Rule behavior differs from docs
+
+Validate against the canonical rule data:
 
 - [knowledge-base/rules.json](https://github.com/avifenesh/agnix/blob/main/knowledge-base/rules.json)
 - [knowledge-base/VALIDATION-RULES.md](https://github.com/avifenesh/agnix/blob/main/knowledge-base/VALIDATION-RULES.md)
+
+If you find a discrepancy, please [open an issue](https://github.com/avifenesh/agnix/issues/new).
+
+## Auto-fix changed something unexpected
+
+Run `agnix --fix` on a clean git working tree so you can review changes with `git diff`. If a fix is incorrect, [report it](https://github.com/avifenesh/agnix/issues/new) with the original file content.

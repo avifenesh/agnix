@@ -1,7 +1,9 @@
 ---
 id: cc-hk-011
-title: "CC-HK-011 Invalid Timeout Value"
+title: "CC-HK-011: Invalid Timeout Value - Claude Hooks"
 sidebar_label: "CC-HK-011"
+description: "agnix rule CC-HK-011 checks for invalid timeout value in claude hooks files. Severity: HIGH. See examples and fix guidance."
+keywords: ["CC-HK-011", "invalid timeout value", "claude hooks", "validation", "agnix", "linter"]
 ---
 
 ## Summary

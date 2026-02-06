@@ -1,7 +1,9 @@
 ---
 id: cc-mem-003
-title: "CC-MEM-003 Import Depth Exceeds 5"
+title: "CC-MEM-003: Import Depth Exceeds 5 - Claude Memory"
 sidebar_label: "CC-MEM-003"
+description: "agnix rule CC-MEM-003 checks for import depth exceeds 5 in claude memory files. Severity: HIGH. See examples and fix guidance."
+keywords: ["CC-MEM-003", "import depth exceeds 5", "claude memory", "validation", "agnix", "linter"]
 ---
 
 ## Summary

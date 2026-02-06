@@ -1,7 +1,9 @@
 ---
 id: cc-pl-005
-title: "CC-PL-005 Empty Plugin Name"
+title: "CC-PL-005: Empty Plugin Name - Claude Plugins"
 sidebar_label: "CC-PL-005"
+description: "agnix rule CC-PL-005 checks for empty plugin name in claude plugins files. Severity: HIGH. See examples and fix guidance."
+keywords: ["CC-PL-005", "empty plugin name", "claude plugins", "validation", "agnix", "linter"]
 ---
 
 ## Summary

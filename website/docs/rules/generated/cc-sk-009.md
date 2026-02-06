@@ -1,7 +1,9 @@
 ---
 id: cc-sk-009
-title: "CC-SK-009 Too Many Injections"
+title: "CC-SK-009: Too Many Injections - Claude Skills"
 sidebar_label: "CC-SK-009"
+description: "agnix rule CC-SK-009 checks for too many injections in claude skills files. Severity: MEDIUM. See examples and fix guidance."
+keywords: ["CC-SK-009", "too many injections", "claude skills", "validation", "agnix", "linter"]
 ---
 
 ## Summary

@@ -1,7 +1,9 @@
 ---
 id: cc-ag-005
-title: "CC-AG-005 Referenced Skill Not Found"
+title: "CC-AG-005: Referenced Skill Not Found - Claude Agents"
 sidebar_label: "CC-AG-005"
+description: "agnix rule CC-AG-005 checks for referenced skill not found in claude agents files. Severity: HIGH. See examples and fix guidance."
+keywords: ["CC-AG-005", "referenced skill not found", "claude agents", "validation", "agnix", "linter"]
 ---
 
 ## Summary

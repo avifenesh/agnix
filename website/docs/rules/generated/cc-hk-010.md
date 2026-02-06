@@ -1,7 +1,9 @@
 ---
 id: cc-hk-010
-title: "CC-HK-010 Timeout Policy"
+title: "CC-HK-010: Timeout Policy - Claude Hooks"
 sidebar_label: "CC-HK-010"
+description: "agnix rule CC-HK-010 checks for timeout policy in claude hooks files. Severity: MEDIUM. See examples and fix guidance."
+keywords: ["CC-HK-010", "timeout policy", "claude hooks", "validation", "agnix", "linter"]
 ---
 
 ## Summary

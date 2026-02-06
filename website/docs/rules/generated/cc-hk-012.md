@@ -1,7 +1,9 @@
 ---
 id: cc-hk-012
-title: "CC-HK-012 Hooks Parse Error"
+title: "CC-HK-012: Hooks Parse Error - Claude Hooks"
 sidebar_label: "CC-HK-012"
+description: "agnix rule CC-HK-012 checks for hooks parse error in claude hooks files. Severity: HIGH. See examples and fix guidance."
+keywords: ["CC-HK-012", "hooks parse error", "claude hooks", "validation", "agnix", "linter"]
 ---
 
 ## Summary

@@ -1,7 +1,9 @@
 ---
 id: cc-ag-007
-title: "CC-AG-007 Agent Parse Error"
+title: "CC-AG-007: Agent Parse Error - Claude Agents"
 sidebar_label: "CC-AG-007"
+description: "agnix rule CC-AG-007 checks for agent parse error in claude agents files. Severity: HIGH. See examples and fix guidance."
+keywords: ["CC-AG-007", "agent parse error", "claude agents", "validation", "agnix", "linter"]
 ---
 
 ## Summary

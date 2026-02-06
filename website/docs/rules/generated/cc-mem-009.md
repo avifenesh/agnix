@@ -1,7 +1,9 @@
 ---
 id: cc-mem-009
-title: "CC-MEM-009 Token Count Exceeded"
+title: "CC-MEM-009: Token Count Exceeded - Claude Memory"
 sidebar_label: "CC-MEM-009"
+description: "agnix rule CC-MEM-009 checks for token count exceeded in claude memory files. Severity: MEDIUM. See examples and fix guidance."
+keywords: ["CC-MEM-009", "token count exceeded", "claude memory", "validation", "agnix", "linter"]
 ---
 
 ## Summary

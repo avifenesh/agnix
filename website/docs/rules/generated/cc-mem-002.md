@@ -1,7 +1,9 @@
 ---
 id: cc-mem-002
-title: "CC-MEM-002 Circular Import"
+title: "CC-MEM-002: Circular Import - Claude Memory"
 sidebar_label: "CC-MEM-002"
+description: "agnix rule CC-MEM-002 checks for circular import in claude memory files. Severity: HIGH. See examples and fix guidance."
+keywords: ["CC-MEM-002", "circular import", "claude memory", "validation", "agnix", "linter"]
 ---
 
 ## Summary

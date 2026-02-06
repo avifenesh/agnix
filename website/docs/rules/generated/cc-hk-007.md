@@ -1,7 +1,9 @@
 ---
 id: cc-hk-007
-title: "CC-HK-007 Missing Prompt Field"
+title: "CC-HK-007: Missing Prompt Field - Claude Hooks"
 sidebar_label: "CC-HK-007"
+description: "agnix rule CC-HK-007 checks for missing prompt field in claude hooks files. Severity: HIGH. See examples and fix guidance."
+keywords: ["CC-HK-007", "missing prompt field", "claude hooks", "validation", "agnix", "linter"]
 ---
 
 ## Summary

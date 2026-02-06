@@ -1,7 +1,9 @@
 ---
 id: cc-sk-002
-title: "CC-SK-002 Invalid Context Value"
+title: "CC-SK-002: Invalid Context Value - Claude Skills"
 sidebar_label: "CC-SK-002"
+description: "agnix rule CC-SK-002 checks for invalid context value in claude skills files. Severity: HIGH. See examples and fix guidance."
+keywords: ["CC-SK-002", "invalid context value", "claude skills", "validation", "agnix", "linter"]
 ---
 
 ## Summary

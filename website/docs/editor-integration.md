@@ -1,27 +1,69 @@
+---
+title: Editor Integration
+description: "Set up agnix real-time diagnostics in VS Code, Neovim, JetBrains, and Zed."
+---
+
 # Editor Integration
 
-agnix ships editor integrations around the `agnix-lsp` server.
+agnix ships an LSP server (`agnix-lsp`) that provides real-time diagnostics, code actions, and hover documentation in your editor.
 
-## LSP server
+## Capabilities
+
+- Diagnostics on open, save, and change
+- Code actions for fixable findings
+- Hover details for rule explanations
+
+## VS Code
+
+Install the extension from the
+[VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=avifenesh.agnix).
+
+The extension bundles the LSP server. No additional setup needed.
+
+For manual configuration, see the
+[VS Code extension README](https://github.com/avifenesh/agnix/tree/main/editors/vscode).
+
+## JetBrains (IntelliJ, WebStorm, etc.)
+
+Install from the
+[JetBrains Plugin Marketplace](https://plugins.jetbrains.com/plugin/30087-agnix).
+
+Configure the `agnix-lsp` binary path in plugin settings if not auto-detected.
+
+For details, see the
+[JetBrains plugin README](https://github.com/avifenesh/agnix/tree/main/editors/jetbrains).
+
+## Neovim
+
+Use the Neovim plugin with your LSP client (nvim-lspconfig, mason, etc.):
+
+```lua
+-- With nvim-lspconfig
+require('lspconfig').agnix.setup{}
+```
+
+Install the LSP binary:
 
 ```bash
 cargo install agnix-lsp
 ```
 
-Main capabilities:
+For full setup instructions, see the
+[Neovim plugin README](https://github.com/avifenesh/agnix/tree/main/editors/neovim).
 
-- Diagnostics on open/save/change
-- Code actions for fixable findings
-- Hover details for rule explanations
+## Zed
 
-Integration docs:
+Install the agnix extension from the Zed extension marketplace, or see the
+[Zed extension README](https://github.com/avifenesh/agnix/tree/main/editors/zed).
 
-- [Install agnix for VS Code](https://marketplace.visualstudio.com/items?itemName=avifenesh.agnix)
-- [VS Code extension guide](https://github.com/avifenesh/agnix/blob/main/editors/vscode/README.md)
-- [Neovim plugin](https://github.com/avifenesh/agnix/tree/main/editors/neovim)
-- [Install agnix for JetBrains](https://plugins.jetbrains.com/plugin/30087-agnix)
-- [JetBrains plugin guide](https://github.com/avifenesh/agnix/blob/main/editors/jetbrains/README.md)
+## Other editors
 
-JetBrains install widget:
+Any editor with LSP support can use `agnix-lsp`. Point your LSP client to the binary:
 
-<iframe width="245px" height="48px" src="https://plugins.jetbrains.com/embeddable/install/30087" title="Install agnix plugin for JetBrains IDEs"></iframe>
+```bash
+cargo install agnix-lsp
+agnix-lsp
+```
+
+For the full editor support matrix, see
+[docs/EDITOR-SETUP.md](https://github.com/avifenesh/agnix/blob/main/docs/EDITOR-SETUP.md).

@@ -1,7 +1,9 @@
 ---
 id: cc-hk-009
-title: "CC-HK-009 Dangerous Command Pattern"
+title: "CC-HK-009: Dangerous Command Pattern - Claude Hooks"
 sidebar_label: "CC-HK-009"
+description: "agnix rule CC-HK-009 checks for dangerous command pattern in claude hooks files. Severity: HIGH. See examples and fix guidance."
+keywords: ["CC-HK-009", "dangerous command pattern", "claude hooks", "validation", "agnix", "linter"]
 ---
 
 ## Summary

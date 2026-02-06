@@ -1,7 +1,9 @@
 ---
 id: cc-hk-005
-title: "CC-HK-005 Missing Type Field"
+title: "CC-HK-005: Missing Type Field - Claude Hooks"
 sidebar_label: "CC-HK-005"
+description: "agnix rule CC-HK-005 checks for missing type field in claude hooks files. Severity: HIGH. See examples and fix guidance."
+keywords: ["CC-HK-005", "missing type field", "claude hooks", "validation", "agnix", "linter"]
 ---
 
 ## Summary

@@ -1,39 +1,75 @@
+---
+title: API Reference
+description: "agnix CLI flags, output formats, MCP server tools, and LSP capabilities."
+---
+
 # API Reference
 
 ## CLI
 
-Primary commands:
-
 ```bash
 agnix [OPTIONS] [PATH]
-agnix schema [--output <FILE>]
-agnix watch [PATH]
-agnix telemetry <status|enable|disable>
 ```
 
-Output formats:
+### Options
 
-- Human text (default)
-- JSON (`--format json`)
-- SARIF (`--format sarif`)
+| Flag | Description |
+|------|-------------|
+| `[PATH]` | Directory or file to validate (default: `.`) |
+| `--target <TOOL>` | Single tool focus (`claude-code`, `cursor`, `codex`, `copilot`) |
+| `--tools <TOOLS>` | Comma-separated tool list |
+| `--fix` | Apply auto-fixes |
+| `--format <FMT>` | Output format: `text` (default), `json`, `sarif` |
+| `--strict` | Treat warnings as errors (exit code 1) |
+| `--config <PATH>` | Config file path (default: `.agnix.toml`) |
+| `--version` | Print version |
+| `--help` | Print help |
+
+### Subcommands
+
+| Command | Description |
+|---------|-------------|
+| `agnix schema [--output FILE]` | Output JSON Schema for `.agnix.toml` |
+| `agnix watch [PATH]` | Watch mode -- re-validate on file changes |
+| `agnix telemetry <status\|enable\|disable>` | Manage telemetry settings |
+
+### Output formats
+
+- **text** -- Human-readable terminal output with colors
+- **json** -- Machine-readable JSON array of diagnostics
+- **sarif** -- SARIF format for GitHub Code Scanning integration
 
 ## MCP server
-
-Install and run:
 
 ```bash
 cargo install agnix-mcp
 agnix-mcp
 ```
 
-Available tools include:
+The MCP server exposes these tools:
 
-- `validate_file`
-- `validate_project`
-- `get_rules`
-- `get_rule_docs`
+| Tool | Description |
+|------|-------------|
+| `validate_file` | Validate a single configuration file |
+| `validate_project` | Validate all config files in a project |
+| `get_rules` | List all available validation rules |
+| `get_rule_docs` | Get documentation for a specific rule |
 
-Specification references:
+## LSP server
 
-- [SPEC.md](https://github.com/avifenesh/agnix/blob/main/SPEC.md)
-- [MCP docs](https://modelcontextprotocol.io)
+```bash
+cargo install agnix-lsp
+agnix-lsp
+```
+
+Supported LSP capabilities:
+
+- `textDocument/publishDiagnostics` -- real-time validation
+- `textDocument/codeAction` -- auto-fix suggestions
+- `textDocument/hover` -- rule documentation on hover
+- `workspace/didChangeConfiguration` -- runtime config updates
+
+## References
+
+- [SPEC.md](https://github.com/avifenesh/agnix/blob/main/SPEC.md) -- full technical specification
+- [MCP Protocol](https://modelcontextprotocol.io) -- MCP specification

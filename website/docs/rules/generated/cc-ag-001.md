@@ -1,7 +1,9 @@
 ---
 id: cc-ag-001
-title: "CC-AG-001 Missing Name Field"
+title: "CC-AG-001: Missing Name Field - Claude Agents"
 sidebar_label: "CC-AG-001"
+description: "agnix rule CC-AG-001 checks for missing name field in claude agents files. Severity: HIGH. See examples and fix guidance."
+keywords: ["CC-AG-001", "missing name field", "claude agents", "validation", "agnix", "linter"]
 ---
 
 ## Summary

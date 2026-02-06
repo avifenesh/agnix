@@ -1,7 +1,9 @@
 ---
 id: cc-sk-001
-title: "CC-SK-001 Invalid Model Value"
+title: "CC-SK-001: Invalid Model Value - Claude Skills"
 sidebar_label: "CC-SK-001"
+description: "agnix rule CC-SK-001 checks for invalid model value in claude skills files. Severity: HIGH. See examples and fix guidance."
+keywords: ["CC-SK-001", "invalid model value", "claude skills", "validation", "agnix", "linter"]
 ---
 
 ## Summary

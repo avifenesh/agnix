@@ -1,7 +1,9 @@
 ---
 id: cc-ag-004
-title: "CC-AG-004 Invalid Permission Mode"
+title: "CC-AG-004: Invalid Permission Mode - Claude Agents"
 sidebar_label: "CC-AG-004"
+description: "agnix rule CC-AG-004 checks for invalid permission mode in claude agents files. Severity: HIGH. See examples and fix guidance."
+keywords: ["CC-AG-004", "invalid permission mode", "claude agents", "validation", "agnix", "linter"]
 ---
 
 ## Summary
