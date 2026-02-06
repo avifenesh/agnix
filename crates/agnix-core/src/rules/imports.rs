@@ -267,7 +267,18 @@ fn visit_imports(
             resolved
         };
 
-        if !fs.exists(&normalized) {
+        // Try file-relative resolution first, then project-root resolution.
+        // Claude Code resolves @imports relative to the project root, not
+        // the importing file's directory.
+        let import_exists = if fs.exists(&normalized) {
+            true
+        } else {
+            // Fallback: try resolving relative to project root
+            let root_resolved = project_root.join(&import.path);
+            fs.exists(&root_resolved)
+        };
+
+        if !import_exists {
             if check_not_found {
                 push_unique_diagnostic(
                     diagnostics,

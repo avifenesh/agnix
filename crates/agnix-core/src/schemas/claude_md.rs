@@ -29,7 +29,7 @@ pub fn generic_patterns() -> &'static Vec<Regex> {
             r"(?i)\balways\s+be",
             // Role-play identity preambles
             r"(?i)^#+\s*(?:you\s+are|your\s+role)\b",
-            r"(?i)^\s*-?\s*you\s+are\s+a\s+(?:helpful|expert|senior|skilled|experienced)\s+(?:assistant|ai|large\s+language\s+model)\b",
+            r"(?i)^\s*-?\s*you(?:'re|\s+are)\s+a\s+(?:helpful|expert|senior|skilled|experienced)\b",
             // Generic programming principles without project context
             r"(?i)\bfollow\s+(?:best\s+practices|coding\s+standards|clean\s+code)\b",
             r"(?i)\bwrite\s+clean\s+(?:and\s+)?(?:maintainable|readable)\s+code\b",
