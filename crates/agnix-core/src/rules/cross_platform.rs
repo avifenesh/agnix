@@ -689,7 +689,11 @@ Description here.
             validator.validate(Path::new("AGENTS.md"), content, &LintConfig::default());
 
         let xp_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XP-003").collect();
-        assert_eq!(xp_003.len(), 2, "Should detect /Users/ and /home/ absolute paths");
+        assert_eq!(
+            xp_003.len(),
+            2,
+            "Should detect /Users/ and /home/ absolute paths"
+        );
     }
 
     #[test]
@@ -700,7 +704,11 @@ Description here.
             validator.validate(Path::new("AGENTS.md"), content, &LintConfig::default());
 
         let xp_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XP-003").collect();
-        assert_eq!(xp_003.len(), 1, "Should detect ~/Library/ as macOS-specific");
+        assert_eq!(
+            xp_003.len(),
+            1,
+            "Should detect ~/Library/ as macOS-specific"
+        );
     }
 
     #[test]
@@ -711,7 +719,11 @@ Description here.
             validator.validate(Path::new("AGENTS.md"), content, &LintConfig::default());
 
         let xp_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XP-003").collect();
-        assert_eq!(xp_003.len(), 1, "Should detect ~/.config/ as user-specific path");
+        assert_eq!(
+            xp_003.len(),
+            1,
+            "Should detect ~/.config/ as user-specific path"
+        );
     }
 
     #[test]

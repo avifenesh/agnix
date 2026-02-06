@@ -452,7 +452,9 @@ mod tests {
         let content = "Follow best practices when writing code.";
         let results = find_generic_instructions(content);
         assert!(
-            results.iter().any(|r| r.text.to_lowercase().contains("follow best practices")),
+            results
+                .iter()
+                .any(|r| r.text.to_lowercase().contains("follow best practices")),
             "Should detect 'follow best practices'"
         );
 

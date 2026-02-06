@@ -299,37 +299,37 @@ pub fn detect_file_type(path: &Path) -> FileType {
             if parent == Some("agents") || grandparent == Some("agents") {
                 FileType::Agent
             } else {
-            // Exclude common project files that are not agent configurations.
-            // These files commonly contain HTML, @mentions, and cross-platform
-            // references that would produce false positives if validated.
-            let lower = name.to_lowercase();
-            let parent_lower = parent.map(|p| p.to_lowercase());
-            let parent_lower_str = parent_lower.as_deref();
-            if lower == "changelog.md"
-                || lower == "history.md"
-                || lower == "releases.md"
-                || lower == "readme.md"
-                || lower == "contributing.md"
-                || lower == "license.md"
-                || lower == "code_of_conduct.md"
-                || lower == "security.md"
-                || lower == "pull_request_template.md"
-                || lower == "issue_template.md"
-                || lower == "bug_report.md"
-                || lower == "feature_request.md"
-            {
-                FileType::Unknown
-            } else if is_documentation_directory(path) {
-                // Markdown files in documentation directories are not agent configs
-                FileType::Unknown
-            } else if parent_lower_str == Some(".github")
-                || parent_lower_str == Some("issue_template")
-                || parent_lower_str == Some("pull_request_template")
-            {
-                FileType::Unknown
-            } else {
-                FileType::GenericMarkdown
-            }
+                // Exclude common project files that are not agent configurations.
+                // These files commonly contain HTML, @mentions, and cross-platform
+                // references that would produce false positives if validated.
+                let lower = name.to_lowercase();
+                let parent_lower = parent.map(|p| p.to_lowercase());
+                let parent_lower_str = parent_lower.as_deref();
+                if lower == "changelog.md"
+                    || lower == "history.md"
+                    || lower == "releases.md"
+                    || lower == "readme.md"
+                    || lower == "contributing.md"
+                    || lower == "license.md"
+                    || lower == "code_of_conduct.md"
+                    || lower == "security.md"
+                    || lower == "pull_request_template.md"
+                    || lower == "issue_template.md"
+                    || lower == "bug_report.md"
+                    || lower == "feature_request.md"
+                {
+                    FileType::Unknown
+                } else if is_documentation_directory(path) {
+                    // Markdown files in documentation directories are not agent configs
+                    FileType::Unknown
+                } else if parent_lower_str == Some(".github")
+                    || parent_lower_str == Some("issue_template")
+                    || parent_lower_str == Some("pull_request_template")
+                {
+                    FileType::Unknown
+                } else {
+                    FileType::GenericMarkdown
+                }
             }
         }
         _ => FileType::Unknown,
@@ -951,18 +951,12 @@ mod tests {
     #[test]
     fn test_detect_excluded_project_files() {
         // Common project files should be Unknown, not GenericMarkdown
-        assert_eq!(
-            detect_file_type(Path::new("README.md")),
-            FileType::Unknown
-        );
+        assert_eq!(detect_file_type(Path::new("README.md")), FileType::Unknown);
         assert_eq!(
             detect_file_type(Path::new("CONTRIBUTING.md")),
             FileType::Unknown
         );
-        assert_eq!(
-            detect_file_type(Path::new("LICENSE.md")),
-            FileType::Unknown
-        );
+        assert_eq!(detect_file_type(Path::new("LICENSE.md")), FileType::Unknown);
         assert_eq!(
             detect_file_type(Path::new("CODE_OF_CONDUCT.md")),
             FileType::Unknown
@@ -972,14 +966,8 @@ mod tests {
             FileType::Unknown
         );
         // Case insensitive
-        assert_eq!(
-            detect_file_type(Path::new("readme.md")),
-            FileType::Unknown
-        );
-        assert_eq!(
-            detect_file_type(Path::new("Readme.md")),
-            FileType::Unknown
-        );
+        assert_eq!(detect_file_type(Path::new("readme.md")), FileType::Unknown);
+        assert_eq!(detect_file_type(Path::new("Readme.md")), FileType::Unknown);
     }
 
     #[test]
@@ -989,10 +977,7 @@ mod tests {
             detect_file_type(Path::new("docs/guide.md")),
             FileType::Unknown
         );
-        assert_eq!(
-            detect_file_type(Path::new("doc/api.md")),
-            FileType::Unknown
-        );
+        assert_eq!(detect_file_type(Path::new("doc/api.md")), FileType::Unknown);
         assert_eq!(
             detect_file_type(Path::new("documentation/setup.md")),
             FileType::Unknown

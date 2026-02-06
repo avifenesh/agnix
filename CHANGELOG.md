@@ -8,6 +8,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Real-world validation harness (`scripts/real-world-validate.py`) with 121 curated repos (`tests/real-world/repos.yaml`) (#184)
+- XP-001: detect `@import` syntax in AGENTS.md files (Claude Code specific)
+- XP-003: detect OS-specific absolute paths (`/Users/`, `/home/`, `~/Library/`, `~/.config/`)
+- CC-MEM-005: detect role-play preambles and generic programming principles
+
+### Changed
+- Exclude non-agent markdown files from validation (README.md, CONTRIBUTING.md, docs/, wiki/, etc.) to reduce false positives by 57%
+- Agent directory files (`agents/*.md`) take precedence over filename exclusions
+
+### Fixed
+- Operator precedence bug in `@import` email filtering that incorrectly matched email addresses
 - Zed editor extension with automatic LSP binary download and MDC file type support (#198)
 - Documentation website pipeline (#195)
   - Added Docusaurus website under `website/` with versioned docs and local search

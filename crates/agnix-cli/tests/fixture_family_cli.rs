@@ -71,11 +71,7 @@ make_cli_test!(
     ["XML-001", "XML-002", "XML-003"]
 );
 // REF-001 still fires on generic markdown (tests @import syntax)
-make_cli_test!(
-    test_cli_reports_ref_001_fixtures,
-    "refs",
-    ["REF-001"]
-);
+make_cli_test!(test_cli_reports_ref_001_fixtures, "refs", ["REF-001"]);
 
 // REF-002 only fires on agent config files, so we need a CLAUDE.md with broken links
 #[test]
