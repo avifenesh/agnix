@@ -31,6 +31,7 @@ Use the Neovim plugin and attach `agnix-lsp` in your LSP config.
 
 Install the plugin and configure executable path.
 
+- [Install from JetBrains Marketplace](https://plugins.jetbrains.com/plugin/30087-agnix)
 - [JetBrains integration guide](https://github.com/avifenesh/agnix/blob/main/editors/jetbrains/README.md)
 
 ### Other editors

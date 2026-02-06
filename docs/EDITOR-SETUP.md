@@ -200,6 +200,7 @@ If using legacy `.cursorrules` file, agnix warns about migration (CUR-006). To m
 ## JetBrains IDEs
 
 JetBrains plugin source is in `editors/jetbrains/` and integrates with `agnix-lsp` through LSP4IJ.
+Install from the [JetBrains Marketplace](https://plugins.jetbrains.com/plugin/30087-agnix).
 
 ### Build and Run
 

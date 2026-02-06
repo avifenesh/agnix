@@ -13,7 +13,7 @@
 
 The linter for your AI coding stack -- skills, hooks, memory, plugins, MCP, and agent configs. CLI, LSP server, and IDE plugins for Claude Code, Cursor, GitHub Copilot, Codex CLI, and more.
 
-**100 validation rules** | **Auto-fix** | **[VS Code](https://marketplace.visualstudio.com/items?itemName=avifenesh.agnix) + JetBrains + Neovim** | **GitHub Action**
+**100 validation rules** | **Auto-fix** | **[VS Code](https://marketplace.visualstudio.com/items?itemName=avifenesh.agnix) + [JetBrains](https://plugins.jetbrains.com/plugin/30087-agnix) + Neovim** | **GitHub Action**
 
 Quick links:
 - [Documentation website](https://avifenesh.github.io/agnix/docs/intro)
@@ -99,7 +99,7 @@ Real-time diagnostics as you type, quick-fix code actions, hover documentation.
 | Editor | Install | Details |
 |--------|---------|---------|
 | **VS Code** | [Install from VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=avifenesh.agnix) | [Website guide](https://avifenesh.github.io/agnix/docs/editor-integration) |
-| **JetBrains** | LSP4IJ-based plugin | [Website guide](https://avifenesh.github.io/agnix/docs/editor-integration) |
+| **JetBrains** | [Install from JetBrains Marketplace](https://plugins.jetbrains.com/plugin/30087-agnix) | [Website guide](https://avifenesh.github.io/agnix/docs/editor-integration) |
 | **Neovim** | `{ "avifenesh/agnix.nvim" }` | [Website guide](https://avifenesh.github.io/agnix/docs/editor-integration) |
 
 ### GitHub Action
