@@ -807,3 +807,2942 @@ repos:
   - url: https://github.com/70-10/blog
     categories: [other]
     status: pending
+
+  # ===== Round 3: Auto-discovered repos (from gh search) =====
+  - url: https://github.com/15athompson/code-tracking
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/1amageek/app-mcp
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/1hoookkk/ARTEFACT_Production
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/1nk1/agentic-keycheck
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/26d0/vrchat-ime-chat
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/26weeks-ai/chatkit-dart
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/514-labs/area-code
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/99sono/docker_builds
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/ABakker30/koospuzzlev1
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/AHartTN/Hartonomous-Opus
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/AReid987/aigency-v1.0.0
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/AReid987/aigency_arch
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/AReid987/lynx-turbo
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Aarogaming/AaroneousAutomationSuite
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/AbhijitKumarJ/Experimental_Aider_Extensions
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Agustincou/ai-sintentic-live-comments
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Ajinkyapatil1234/amazonq-k8s-deployment
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Alreriabiceps/express-clinic-appointment-system-
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/AmyJeanes/TARDIS
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Angleito/angelsnixconfig
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Anselmoo/spectrafit
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Anshumaan031/Web-knowledge-Crawler
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/AntoniusKonovalov/automation-workflow
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Areo-RGB/KoKo-3
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Aryanmaurya283/ai-interview
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/AshtonYoon/claude-config
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/AshutoshDM1/Backend-Syndicate
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/AsisYu/whosee-whois
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/AthenaASB82/Equoria
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Atyantik/python-modern-template
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/AungMyoKyaw/awesome-claude
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Azure/AgentBaker
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/BIG-A-K/TransPaper
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/BTCeive/botBTCeibe
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Babinci/pomodoro-timerflow
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/BartSte/dotfiles-linux
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Behodler/phoenix-deployment-staging
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Bhartendu-Kumar/agentic-ai-101
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/BiniyamGetachew1001/project
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/BioLM/py-biolm
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/BlackBookEditions/foundry-cof2-base
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/BrightAudio/Bright-Ops
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/BuildBudget/BuildBudget
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Burrun/BigData
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/BusterCharlie/TemplateProject
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/CCWorkforce/CCProxy
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/CarbonORM/CarbonNode
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Catskill909/podfeed-embed
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Chronovyan/NexusCore
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Claude-Code-Community-Ireland/claude-code-resources
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/ClaudiuBogdan/hack-for-facts-eb-server
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Clay10J/dotfiles
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/CodeFox-Repo/codefox
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/CodeRod-Solutions/claude_ignore_optimizer
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/CodeWithKarol/admin-panel
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/CodeWithKarol/freelance-portfolio
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/CodeWithKarol/quick-cart
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Codential-ai/AiNativeDevExample
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/CoderMariusz/MonoPilot
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/ConstantinVictorBeatErtel/fincast
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Creed-Space/Constexpandtest
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Cripto-cracia/criptocracia
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Criscoll/dotfiles
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/CyranoB/readability-python
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Czok12/llkjj_knut
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/DJ-no1/motia_suggestor
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/DRamaMercer/AI-Agency-Business-Operations
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/DannyMac180/mirror
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Deltares/Ribasim
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/EndoHizumi/webTaleKit
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/EthGri345/robosexual-research-platform
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/EviewNicks/rental-baju
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/FCisco95/organic-app
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Falkicon/Mechanic
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/FlashDemo8789/DemoFlash
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Forreal360/SpecialOneRexvilleDash
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Fred-Ko/kotlin-spring-boot-msa
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/FunnyWolf/agentic-soc-platform
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/G-Serene/agent-chat
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/G7DAO/summon-contracts
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/GeorgePearse/rf-detr-mask
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Gosshi/gym-equipment-directory
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/GregBaugues/tokenbowl-mcp
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/GriffinCanCode/safespace
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Growth4U-systems/Gattaca-Secuenciador-de-Prompts
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/HACKMANV8/Hackathon-Comeback
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Haorui117/DaVinci-CDP
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Hartha-aloufi/Merqam
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/HassanZahirnia/laravel-package-ocean
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/HeInfinity/auto_scripts
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/HeavenOSK/rich-cline
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/HendrikReh/chessmate
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/HenryAllen04/Life-KB
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/HoangNguyen0403/agent-skills-standard
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Hoon9901/Rails-I18n-IntelliSense
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Horbin-Magician/rotor
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/HsnSaboor/repurpose-api
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Humanizr/Humanizer
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/HyperLee/Work_Memo
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/IGRSoft/Lock-Watcher
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/INTO-CPS-Association/DTaaS
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Ic1558/02luka
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/IlluminoStudio/scribemate
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Indeoo/omaha-reader
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Inikoo-Ltd/aiku
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/IsaacAhor/MedReg
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/IslandHQ/aTimerController
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Ivy-Interactive/Ivy-Query-Editor
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/J-Tech-Japan/Sekiban
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/JT5D/portals_v4-unity2
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/JackGilmore/DropD8
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/JackSmack1971/SPARC12
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/JackSmack1971/roomaws
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/JamesMcDaniel04/SprintIQ
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Jamesun921/cam-run
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Jamfin92/FileOperations.Solution
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/JanDamek/jervis
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/JarrydGordon/Polyglot-Package-Auditor-GUI
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/JarrydGordon/To-Do-list-app
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Jawjaww/elegance_mobility
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/JayjayR89/JR-Vice-Code-AI
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/JeromeErasmus/mcp-confluence-adf
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/JeromeErasmus/mcp-style-guide
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/JeromyJSmith/wellspring_directory
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/JetBrains-Research/ai-agents-code-editing
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/JohnPeng47/Feedcode
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/JohnnyMarnell/iqe
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/JoshAaronLevy/ai-fantasy-football
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Jsunwilke/Focal-Point
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Kaylebor/dotfiles
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/KentaroAOKI/combine_gtfs
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Knowledge-Graph-Hub/kg-registry
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/KooshaPari/GDK
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/KristinnRoach/sample-prepper
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Kyuseol/expanded-critical-literacy-test
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/L3DigitalNet/dfbu-dotfiles-backup-utility
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Lachlan1478/dividend-tracker
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/LeighAtkins/OpenPaint
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/LiveRepoReflection/LiveRepoReflection-Execution
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Lmraza98/hipaaforms.org
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Louis454545/testxeon
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/LuYanFCP/star-tidy
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/MS893/BastAir
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Mac-Cooper1/44-Frames-Agent-MVP
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Mafyuh/iac
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Makanz/chartjs-plugin-trendline
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Manikatlantis/EV-charge-optimization
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/MarcZenn/rento
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/MarkErik/local-transcribe
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/MarkZither/mywyamblog
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/MartinSarvio/OrderFlow-AI-Complete
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/MarvinZavala/handymanproject
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/MasterGHD/symfony7-skeleton-webpack
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/MathieuSoysal/Winter_Challenge_2024
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/MatiasTervonen/Training-App
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Maximooch/penguin
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/MedwinCorreo/llm-ide-config
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/MichaelPopeDeveloper/ThePhotographyFactoryV2
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Midnajt/10x-warmup
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Milkbboy/repo
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/MokkeMeguru/dotfiles
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Morlock52/newmedia
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Mr-Mastrianni/be-fearless
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/MrGlox/nx-boiler
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/MrHuangJser/pdf-tools
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/MrLesk/Backlog.md
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/MuelTech/Pharmacy-POS
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Mustansar739/edu-matrix-interlinked-v3
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Nainish-Rai/paper_ai
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/NathanColosimo/inbox-concierge
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Naz1337/pekan-trader
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Naz1337/workshop-system
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Neudzulab/zasian-media
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/NextCommunity/NextCommunity.github.io
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/NomadicHomebody/ffmpeg-converter
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/NotYevvie/OnlyLocals
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/NoumenaDigital/npl-cli
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Nourimabrouk/Een
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Nucs/portainer_templates
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Nugine/const-str
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/OFranjas/taca-da-pinga
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/OSLC/oslc4net
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Oak-and-Sprout/sprout-track
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/OfficeDev/microsoft-365-agents-toolkit-samples
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Open-LLM-VTuber/Open-LLM-VTuber
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/OpenSecEd/appliedcrypto
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Overload119/mochitype
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/PARS-DOE/roopars
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/PEZ/easter-cal
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/PatrickAbainza/test_open_manus
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/PawelAdamWawrzyniak/10xNoteQuiz
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/PawelGerr/Thinktecture.Runtime.Extensions
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/PawmelMeller/x-to-tradingview
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Pewpewarrows/dotfiles
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Pipelex/pipelex
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Pluglug/pie-menu-editor-fork
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/PovertyAction/ipa-research-data-science-hub
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Project-KONGOR-Open-Source/NEXUS
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Provable-Games/beasts
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/PseudoDarwinist/Vamos
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/PulkitXChadha/awesome-databricks-mcp
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/QuantEcon/lecture-python.myst
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/R1DDL30510/Init-
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/RAYCOON/SyncRay
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/RExBench2025/aider
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/RIP21/nutria-upload
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Rackar/EduScheduler
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Ramshankar07/Shopgpt
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Range-Software/range-fea
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/RationaleDesignHanson/RationaleStudio
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/ResistanceIsUseless/dotfiles
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/RiddlenBaba/Riddlen
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/RipKDR/Steps-to-recovery
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/RobertoOsorio17/MdRConstruccionesLaravel
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Rotwang9000/chesstris
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Routhleck/myNotes
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Royal-lobster/Transedit
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Ryotaverse69/suptia-kiro
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/SAP/e-mobility-charging-stations-simulator
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/STYLE-PORT/tools-unimark
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/SXP-Simon/astrbot_plugin_qq_group_daily_analysis
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Sacode/searxng-simple-mcp
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Sailfishc/cursor-rule
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Sankyuubigan/rivals_counter_peaks
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/SavanCode/cusor1portfolio
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Scaffold-Stark/scaffold-stark-2
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/SethRobinson/aitools_client
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Shaurya-Sethi/circuitron
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/ShehrozHanif/n8n_workflow
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/ShocKwav3/esp32c6-tft-lcd-sample
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/ShreyX24/RP-X-temp
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/SimonHaugesund/WP5.1-Test
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/SiriusFHJ/ShangAnNotes
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Sitecore-Hackathon/2025-DED
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Sivolc2/ai-friendly-repo-template
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Skatteetaten/designsystemet
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Sklavit/future-time-tracking-pwa
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/SolidInvoice/SolidInvoice
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/SpencerLeung1024/roo_code_test_13
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/SpencerLeung1024/roo_code_test_5
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/SpencerLeung1024/roo_code_test_9
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/SplooshAI/sploosh-ai-hockey-analytics
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/StatistikStadtZuerich/sszvis
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/SteelCompendium/data-bestiary-yaml
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/SunghwaTour/enzyme-customer
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/SupportTools/k8s-ns-purger
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/SupportTools/website
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Supremeesimon/Octavia-x-Aider
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Surfer12/OnlineFoodDelievery
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Surfer12/wolfram-calculus-notebooks
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/SwiftEnProfundidad/ast-intelligence-hooks
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Tattzy25/DisconnectedGROQ
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/TencentCloudBase/awesome-cloudbase-examples
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/The-Pocket/PocketFlow-Tutorial-Video-Generator
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/TheCowboyAI/mcp
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/TheRealMkadmi/cidrscan-rs
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/TheRealMkadmi/laravel-citadel
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/TheoWakelin/FplDashboard
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/ThreatFlux/cryptum-go
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/TimeWarpEngineering/timewarp-architecture
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/TimurMunykin/OutlineVpnTelegramBot
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Tokiarivelo/ai4Local
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/TomahawkCM/modern-tco
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Tristan578/research-team-tutorial
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/TrueCrimeDev/ClautoHotkey
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/TuringLang/Bijectors.jl
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/UArizonaCB2/sensorfabric-uh
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/UbaidDev10/Contact-Manager
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Vasek18/buttontrack
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Vasiliy-Makogon/PHP-MySQL-Class
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/VendettaXI/CodeBlue-Setup-For-Local-Simulation
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Vesias/claudeosaar
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Vixvvo3D/VixvvoWebsite2.0
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/VoidWorksIO/shortcut-assistant
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Vojio/repo-prompt-web
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Walkover-Web-Solution/Giddh-New-Angular4-App
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/WangTingYeYe/llm-agent-study
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Weaverse/weaverse
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/WebKenth/blackcapitaltech
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/WesternFriend/westernfriend.org
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Widisnei/BitCrypto
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Wuodan/routheon
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/XilviuX/esphome
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/YakDriver/magicmix
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/YashM8329/Zerodha-Clone
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Yinnohs/ai-made-coffe-api
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/YodasMyDad/ShoutingIguana
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/ZXXZ1000/creative-dna-quest
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/ZachFlint/Intellicrack
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/ZachHandley/ZMCPTools
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/ZenAlexa/hachimi-figure
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/ZenDevMaster/barcodecentral
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/Zenobia000/iSpan_python-FE_DM-cookbooks
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/ZeroCatDev/zerocat-frontend
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/ZuCommunications/health-check-bundle
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/aadeelyounas/VoiceAIAgent-final-clean
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/aadjones/opening-check-js
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/aaronsb/ado-mcp
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/aasherkamal216/Axiom_2.0
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/aayushkesarkar/pet_vscodedevday_workshop
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/abobilly/kimbar
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/aboustayyef/InfraRead
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/abpframework/abp
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/abradner/transformer
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/acutype/SwarmBuilder
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/adimov-eth/xln_me
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/aditya-autoomstudio/anubhuta-jogamala
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/adrian-d-hidalgo/nestjs-mcp-server
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/aegntic/DAILYDOCO
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/aegntic/ae-co-system
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/aesthetic-inc/ai-workspace
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/agentience/tribal_mcp_server
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/agentscope-ai/agentscope
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/ahsc786/tw-copilot-dev
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/aicantalk/fairybook-test
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/aiya000/bash-toys
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/aiya000/vim-scratch-buffer
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/akeit0/vscode-mock-debug-custom-runtimes
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/akito85/dotfiles
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/akulkarni7a/28
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/albandiguer/dotfiles
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/albertocavalcante/garf
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/alesierraalta/LUMONEW
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/alestic/abc
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/alex-taxiera/proxy-print
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/alexeykrol/claude-code-starter
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/alexeykuptsov/TodoLists
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/alexhuang0915/FishBroWFS_V2
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/alisonc6/danish-buddy
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/allabur/.github
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/alnwangchi/room-reservation-system
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/alongor666/chexianduoweifenxi
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/aloysb/nostradamus
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/alphanodes/additionals
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/alsosprachben/mnvkd
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/andgate/noggin
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/andotherstuff/chorus
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/andreferra/scoopify-manager
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/andreijiroh-dev/nixops-config
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/andrejsstepanovs/andai
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/andrewhopper/itmcp
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/andyhomecode/pdf-to-eps
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/andywingate/D365BC-vibe-page-scripting
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/animeshkundu/youtube-audio
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/annenpolka/roo-logger
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/answersamir/srebench
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/antiwork/flexile
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/antiwork/gumroad
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/antiwork/helper
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/antogkou/laravel-salesforce
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/aosenuma/SISGEMEC
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/api-haus/bevy_pixel_world
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/appthrust/kutelog
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/arhadnane/real-time-screen-voice-intelligence
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/artemijan/L2Shablya
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/arwie/controlOS_demo
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/asa-degroff/umbra
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/asfalots/obsidian-epub-reader
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/aspizu/goboscript
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/atcastells/flow-cv
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/aubarkas3/aubarkas.github.io
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/aurevives/claudevoice
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/autifyhq/aethr
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/autumn-library/autumn
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/avantifellows/link-shortener
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/avelino/logseq-todoist-backup
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/avelino/training-personal-data
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/aviadshiber/kapsis
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/axAilotl/character-federation
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/aydenden/dotfiles
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/azam-dilawar/seafood
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/azcoigreach/nagatha-assistant
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/bahaha/waritally
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/bassdrum-org/rush-generator
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/bbuchsbaum/fmrismooth
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/be-wise-be-kind/durable-code-test
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/bencan1a/9boxer
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/bertrandgorge/fip
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/bililive-go/bililive-go
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/blopit/Cursor-Template-Repo
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/bnn1/hotmeal-ext
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/bobmatnyc/kuzu-memory
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/bodan007g/news10-related-scripts
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/bossjones/goob_ai
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/bossjones/prompt-library
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/bprzybys-nc/manager
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/brandon-fryslie/kalider
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/braydenm/equity-financial-optimizer
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/brianluft/social-media-translator
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/bronxys/Takeshi-pt
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/bryanbraun/music-box-fun
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/buiquocnam/crwal-fahasa
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/burggraf/property-manager
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/buserbrasil/notion-webhook
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/c-a-p-engineer/c-a-p-engineer.github.io
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/capnknives/WitsV3
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/carnaticlabs/Sangeetha-Grantha
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/causers/causers
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/cbcgb-com/sgbs-training
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/cc2lee/Reveila
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/cdsap/testDuckDuckGo
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/cenkalti/dotfiles
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/champierre/space-orbit-js
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/chaos-dotcom/colourstream
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/charles2nd/saas_template
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/chatbotgang/ai-coding-workshop-250712
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/chengchew0204/mxcamp_wp_plugin
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/chisgit/MenuBosse
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/chrisjanbothma79/esphome
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/chrislyons/carbon-acx
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/chrisreedio/mdstaff-docs
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/clafollett/agenterra
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/cleverhoods/sagecompass
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/cloud-native-tools/cws-lib-bash
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/cnjimmyshao/com.fajiezhixin.media-encoding-farm
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/codeblazar/Open-LLM-VTuber
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/codesandtags/simple-site-blocker
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/coliff/bootstrap-5-migrate-tool
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/combinatrix-ai/PromptTrail
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/combinatrix-ai/ask.sh
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/concrnt/concrnt
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/corbadotech/docs
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/coreyschulz/bcs-secure-jeopardy
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/corpetty/mnemosyne
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/cory-johannsen/gomud
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/couchbase/sync_gateway
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/couleeregiontennis/ltta
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/cphurley82/chris-resume
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/crashtestbrandt/Adventorator
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/crestalnetwork/intentkit
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/crypticpy/dash-show
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/ctrlShiftBryan/docker-composed-mcp
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/curbol/.dotfiles
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/cyanheads/perplexity-mcp-server
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/cyb3r-w0lf/nuclei-template-collection
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/cyh1001/DaVinci
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/d-zero-dev/mcp-server
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/d0pe1/SelfPlanner
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/daffy0208/si-systems-v5
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/dandi/llm-analysis
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/danielroe/roe.dev
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/danielscholl-osdu/hostk8s
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/danstis/lotto-numbers
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/daohai2102/esphome-pipsolar
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/darkstar/tdc-database
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/davethackeray/inner-light-studio
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/dbawebdesign/lailms
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/dbekaert/RAiDER-docs
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/dbpprt/whispr
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/dcs-retribution/dcs-retribution
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/dcyfr/dcyfr-labs
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/deadcoast/Docs_Templates
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/decker502/repoprompt
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/defeatd/firemail-perfect
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/delinoio/docs
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/derek1ee/clrviz
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/deseven/ec-su_axb35-win
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/dev-parvej/FlowQ
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/developer-over/socks2trojan
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/developerhost/my-dq-portfolio
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/diegofornalha/dashboard-claude-cto
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/discuno/discuno
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/dougwithseismic/gtm-crawler
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/dpaluy/rails-ai-rules
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/dracory/cmsstore
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/drillan/stapy116
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/dtdannen/dvmdash
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/dtgagnon/nix-config
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/duckduckgo/Android
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/ducky7go/Ducky.Samples
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/dwalleck/mental-health-bar-rs
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/echoleesong/koa2-starter-kit
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/edbizarro/dotfiles
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/egamma/refactoring-agent
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/elementor/elementor
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/ematipico/ematipico.xyz
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/emersonhinterholz/emersonhinterholz.github.io
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/emon-swe-sust/js-ci-insights
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/erent8/Advanced-Customer-Detection
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/ericmjl/llamabot
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/ernos/easyPGP
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/eser/golang-service-template
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/esphome/esphome
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/evangstav/python-memory-mcp-server
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/explicitcontextualunderstanding/vscodecontext
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/fabro777/hansOn1
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/facebookresearch/llm-speedrunner
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/facetlayer/expect-mcp
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/fahrymaodah/agrosangapati
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/faithdy/HoloSphere
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/falvarez1/AutomationWorkflow
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/farhankaz/ombm
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/fazil47/wgpu-renderer
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/fbrbovic/ai-epic-framework
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/febus982/bootstrap-python-fastapi
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/fedify-dev/hollo
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/felipepimentel/plexure-api-search
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/fexd-team/pro-components
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/ff6347/markdown-to-html-extension
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/ff6347/rundgang2025
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/fierzone/agent-skills-standard
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/fifyrio/Focus-Shield-Study-Concentrate
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/firezone/firezone
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/flightphp/core
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/flowkraft/reportburster
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/fxcl/.dotfiles
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/gavinmorrison/little-snitch-cloud-rules
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/getzerocard/zerocard-infra
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/gitahidotcc/pesapeak
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/gitwithravi/filament-hrms
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/gjohnsx/sunil-scraper
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/gmag11/Paperless_ngx_uploader
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/goldbergmac309-gif/studyappp1
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/goleaf/laravel-jobs-portal
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/gotalab/claude-code-marimo
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/grenade/crypto-market-data
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/greyhaven-ai/sygaldry
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/griotdev/lista-da-vanessaDOR
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/gsominsk/jina-qdrant-embedder
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/gulkily/pollyanna
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/gweesin/biliup-watcher
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/h3ro-dev/claude-power-tools
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/haakco/docker-ubuntu-php
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/hacksur/model-one
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/haimgel/slack-status-go
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/halfaider/flaskfarmaider
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/hapticfish/RustRaptor
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/harehare/mq
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/harish876/DevLog
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/harrysayers7/claudelife
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/hdemers/dotfiles
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/hechin91/sovant-ai
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/helloshowup/hope-clean
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/helluvamatt/hogwarts-checklist
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/hermannleboss/EB-vs-DDD
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/heycalmdown/quester
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/hezijwix/svgallery
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/hhaidrr/dotfiles
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/hickad/cartoon-my-pet
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/hipcn/windsurf-agile-workflow-toolkit
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/hiromaily/go-crypto-wallet
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/hitcklife/yoryor-last
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/holo-q/atmos
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/holooooo/survivor
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/hope0hermes/StravaFetcher
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/hotdrop/consider-ai-coding
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/hsmtrych919/nextjs_ts_init
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/huanzhen777/FileFlexManager
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/hughescr/apartment-manager
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/hwfengcs/DM-Code-Agent
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/i365dev/agent_forge
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/ido2222/BAMBI-AI-BYOK-IMAGE-GENERATOR
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/igamenovoer/cascadeur-py-client
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/imbaniac/buildscape-ui
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/imbant/2025-google-hackathon
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/ineffably/city-scape
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/initialxy/initialxy-points
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/instructure/instructure-ui
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/intellectronica/ruler
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/iog-creator/LivingTruthEngine
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/irfndi/fin-in-flow
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/ironcodex/warmahordes-opendata
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/isaccanedo/aider
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/ismaeljouhariperez/astro-spa
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/iuldashev21-boop/HabitQuest
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/ivolabbe/dotfit
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/j4ckxyz/ai-profile-picture-stylizer
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/j5ik2o/oni-comb-rs
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/jacekstaszynski/nestJs-template
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/jamesk9526/NoxBox---Its-Better-Than-Ad-Block
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/jaredlockhart/penny
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/jasonstcyrx/ai-template
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/jayjz/neobreaksmeanreversion
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/jayvicsanantonio/personal-organization
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/jbabin91/tsc-files
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/jeanlucthumm/project-creator
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/jeanrrf/SENTINNELL_AINEX_PRO
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/jeffaf/jeffaf.github.io
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/jeffrey-l-turner/CPSC_298
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/jesec/flood
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/jessesanford/idpbuidler-software-factory-attempt1
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/jferrl/anklyze
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/jgtolentino/insightpulse-odoo
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/jgwill/jgtml
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/jikhanjung/Modan2
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/jimrothstein/docs
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/jinnaiyuu/heuristic-search-answers
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/jmagar/taboot
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/jmshrv/MineCheck
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/jodobear/sparcaroo
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/johnkraczek/ydtb-ui-registry
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/johnlindquist/cursor-history
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/joho/pocketsmith-mcp
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/jonas0711/elverum-yc-tournament
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/jonathanpeppers/inclusive-code-reviews-browser
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/jonghyo/nextjs-roocode-template
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/jramshur/HRVAS
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/jukangpark/Code_King_Builder
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/jukangpark/Sankaku-Franchise-Landing-Page
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/just-another-rule-craft/.claude
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/jwleepro/powerpoint-learning-studio
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/jwp528/eatmyentireass.online
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/jwynia/the-archived-city
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/kamilio/montessori-parenting-book
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/kaptinlin/deepclone
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/karaage0703/cline-cli
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/karaage0703/docubot
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/karaage0703/kindle-analyzer
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/karaage0703/reki-gao
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/kasbench/globeco-confirmation-service
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/kcenon/claude-config
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/kdnye/Hana-Table-inventory
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/keen-wugui/UI_miniverse_agentics
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/kelvin262292/flow
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/kesjam/snap-speak
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/keyurgit45/expense-tracker-client
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/kfly8/yapc-fukuoka-bbs
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/kg-ueshima/Mac-for-Business
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/khalic-lab/schmock
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/kianmeng/dotfiles
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/kingdomautofinance-admin/kingdom-reconciliation
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/kingler/neo_v0
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/kiran-venugopal/lofi-fm
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/knuurr/kiepskie-tv
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/koboriakira/dotfiles
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/koel/koel
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/kosiew/aider
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/kourtni/dotfiles
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/kpassoubady/Personal-Expense-Tracker
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/kungfuflex/free-mint
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/kyle-apex/tree-sponsor
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/kyopark2014/woo-project
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/lab2023/digitalbarometer-v2-web-app
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/lacolaco/contributors-img
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/langadventurellc/trixie
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/laptou/rust-docs-mcp-server
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/laradashboard/laradashboard
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/laserpointlabs/procos
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/lauri245/astridmart
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/lavantien/dotfiles
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/ledgifi/currencies
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/lemyskaman/jasper-reports-nestjs
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/liadgez/PostWriter
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/liferay/liferay-portal
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/lighttiger2505/wakabata
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/lingdojo/kana-dojo
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/lintyourcode/vercade
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/linus-mcmanamey/need_a_job
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/lizTheDeveloper/superalignment-chatroom
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/lloydrichards/proj_shadcn-lit-registry
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/lloydrichards/shadcn-storybook-registry
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/llsccm/code-snippet
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/longtermrisk/research-assistant
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/louissellier/financial-analyst-mistral
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/lowprofix/wuta
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/lrpthomas/LRPDM
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/ltostes/emotionalgeographies_interactivity
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/lubosmato/.config
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/luizjrlopes/front-organizador
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/luutuankiet/crawl4ai_examples
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/lydavid/MusicSearch
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/lyons114514/cp_ds
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/m3ue/m3u-editor
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/ma-foyez/bloodBD
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/ma-foyez/civil-enginner
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/ma-foyez/intelicasoft-Laravel
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/madebyfamo/dega-toolkit
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/madeindjs/dotfiles
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/mainwp/mainwp.dev
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/mamertofabian/bolt-to-github
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/manojbajaj95/ga-bench
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/maolonglong/nix-config
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/marcelomatus/gtopt
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/marceloterra1983/docker-B3
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/marcioaltoe/template-elysia
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/masanami/family-tree
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/maslennikov-ig/MC-2
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/mastercode-io/cml-car-finance
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/masterpiece-alliances/macc-website
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/material-lab-io/HendrixVideo
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/matthew-humphrey/MassoToolEditor
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/maxischmaxi/vibe-maker
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/maxmoneycash/cash-trading-game
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/mb-mal/startupResearcher
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/mdit-plugins/mdit-plugins
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/meain/dotfiles
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/medelman17/lemcs
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/medz/alien-signals-dart
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/mfuechec/ClipForge
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/mfuechec/MessageAI
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/mgrossmann/libmyrtx
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/mickkhaw1981/1_rn_starter_kit
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/mickkhaw1981/rn_ryde
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/microsoft/debug-gym
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/microsoft/rushstack
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/microsoft/service-fabric-dotnet
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/mizchi/deno-ai-bestpractice
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/mjmaurer/infra
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/mkimitch/omnical
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/mkizka/linkat
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/mmcmillan1999/SOTOS
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/mochi-sann/mi-deck
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/modiase/www.modiase.dev
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/mogak-us/mogak-us
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/mohalnassery/HR-Management-System
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/monarch-initiative/boomer-py
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/monarch-initiative/mmrrc-ingest
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/moorestech/moorestech
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/mrhobbeys/HooknSock
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/mrviduus/ReplyMate
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/ms2sato/kanban-loader
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/msr-ds3/community-notes-2025-group-1
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/msr-ds3/community-notes-2025-group-2
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/msr-ds3/community-notes-2025-group-4
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/msr-ds3/community-notes-2025-group-5
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/msr-ds3/coursework
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/msunbay/zod-pg
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/mt114ran/mt114ran.github.io
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/mzbac/swift-mlx-server
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/n3tz-io/n3tz
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/nanggo/life-log
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/naoto714714/kindle-rank-bot
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/nate-d-olson/fins20250719
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/nbonamy/witsy
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/neko-jpg/MindSync
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/nestcn/docs.nestjs.cn
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/neurion-ai/seraph
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/nevir/dotfilet
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/newrev-io/newrev
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/nextbeat-dev/nextbeat-tech-event
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/ngocminh1511/QLDA
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/nibertinvestments/GenerativeNFTART
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/nicholasjprimianomd/CTH_CTA_CTP
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/nimh-dsst/osm
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/niodtn/dotfiles
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/nitishkthakur/jarvis-offline
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/niya1123/codex-scrum
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/nizos/tdd-guard
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/nnaynnay/translation-file-editor
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/noetl/noetl
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/noshiro-pf/octokit-safe-types
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/notalex/dotfiles
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/ntquangtrung/nestjs-restful-boilerplate
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/ntquangtrung/trung.dev
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/nuin/selfspy3
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/o9-ent/o9nn
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/obeone/scripts
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/obielwb/bridge-gateway
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/ocknamo/nosskey-sdk
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/officebeats/beats-pm-antigravity-brain
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/olafkfreund/nix-ai-help
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/oldwinter/knowledge-garden
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/omniflow-oss/http-adapter
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/onigetoc/terminalx-experience
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/openann19/pet3
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/opendidac/opendidac
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/opensensor/isp
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/orbitalconsortium/orbital-collection
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/oscript-library/opm
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/oshikiri/staden-outliner
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/oursky/skytest-agent
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/owid/owid-grapher
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/owner/repo
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/oxalc88/finan-track
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/ozand/Code2MARKDOWN
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/paeneumbra/dotfiles
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/pakkio/wordpress
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/panayiotis/widgets
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/patelpratyush/patelpratyush.github.io
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/patryksztuczka/foodie
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/pavel444-byte/specai
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/pc-style/MCF
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/peacefulrobot/peacefulrobot.github.io
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/pedrohdz/dotfiles-zsh
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/perdixlabs/openyap
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/petalo/save-attachments-from-gmail-to-gdrive
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/phosphorco/rdf-utils
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/pjsny/hackharvard-25-balboa-vodka
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/pkirkaas/pk-ts-node-lib
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/poisontr33s/PsychoNoir-Kontrapunkt
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/pokt-network/poktroll
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/prabirshrestha/dotfiles
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/pratikpakhale/mixboard
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/presidio-oss/aider-based-code-generator
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/proffesor-for-testing/sentinel-api-testing
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/projen/projen
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/proveo-ca/images
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/przeprogramowani/10x-warmup
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/pthom/litgen
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/pubkey/rxdb
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/quantum-box/urushiri
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/quentinsf/IMAPdedup
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/qut-dmrc/buttermilk
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/qwickapps/ai-sdlc-workflows
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/r38k/ai-cli
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/raawaa/jav-scrapy
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/rachellefriloux-alt/before
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/raold/second-brain
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/rauversion/rauversion
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/ravensorb/Kometa-Configs
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/rdevaul/yapCAD
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/readyyyk/Worthy
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/reallygood83/theme
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/realsuperheavy/ONE_SONG_V0.1
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/reggiechan74/JobOps
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/rephlex187/aider-copilot
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/rexdotsh/valeo
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/rfair404/WordPress-QuickStart
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/rfay/d11-upsun-fixed
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/rfxlamia/centotype
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/ricardoHer/smart-doc-rag
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/richardjlyon/americas_tapestry
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/rif8treyerl9ip/quick_start_tools
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/rixbeck/symai-demo
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/rjurney/florian
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/rkttu/csharp-book
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/rl337/the-dark-closet
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/rmdnps10/inyoung.dev
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/robertaworkjr/ExhibitionC8
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/robertorubioes/ancla
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/rollercoaster-dev/monorepo
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/romanzaikin/MCP-Demo
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/romawatson93-dev/SmetaBot
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/ros3sareblack007/workspace-start
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/roymichaels/aurora
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/rumos-automatic/yahoo-auction-chrome-extension
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/rupeedev/scho1ar-backend
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/ryaneggz/next-agent
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/samjd-zz/answer42
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/sammcj/m2e
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/sandshrewmetaprotocols/metashrew
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/sangdth/python-starter
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/sawa-zen/simple-nodejs-mcp-client
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/sawa-zen/vrchat-mcp
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/scarecr0w12/ctrl-alt-play-panel
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/schmalle/secman
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/sealablab/volo_vhdl
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/seanivore/c-scopes-handy-agent
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/semaj90/mau5law
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/senarukana/voice_reservation
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/sendouw/weather-vision
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/sengokudaikon/aider-mcp-server
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/sergelents/CartWise
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/shaneholloman/uvi
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/sharavanask/3s
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/shazzar00ni/paperlyte
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/shenyimings/alias-axiom
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/shoveller/react-router-template
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/shunya-sasaki/vscode-settings
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/siapy/siapy-lib
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/siddharthanagula3/agiworkforce-desktop-app
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/skatesham/handbook-manavitae-waresoft
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/skyasu2/openmanager-vibe-v5
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/solo10010/BugBounty-Hub
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/sota1235/notion-sdk-js-helper
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/soymustamahti/portfolio
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/spasdev/evcc_cloud_run
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/spitoglou/diabetes
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/sstublic/AIStorm
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/st-dev0/pochi-lp
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/statisticsnorway/statbus
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/stephane-klein/neovim-playground
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/steveandroulakis/temporal-conductor-migration-agent
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/stibiums/terminator_task_manager
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/storj/storj
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/strangeloopcanon/digital-enterprise-twin
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/strataga/ghostpirates
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/streamlit/streamlit
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/sumik5/dotfiles
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/suwa-sh/local-RAG-backend
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/swistaczek/mcp
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/syh52/playwright-docs-collection
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/sysown/proxysql
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/sysrqio/obsidian-ai-vault-assistant
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/systemaccounting/mxfactorial
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/ta21cos/thread
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/tabrezkhan005/kits-alumni
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/tag1consulting/goose
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/takayukikosoto/kintai
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/taradinoc/zilf
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/taskhub-sh/taskhub
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/tatarmb4s/treesize-web
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/tbuczen/LARPilot
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/terraform-industry/electrolyzer_test_rig
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/terry623/roo-code-demo
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/tgfjt-boxbox/monorepo-mise
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/th3nolo/Vibe-game
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/thbueno/ghosthands
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/the-alex-g/custom_parser
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/the-vindex/CanvasBlox
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/thecolorblue/snow_day
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/thedavidyoungblood/vm-ork
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/thepian/record-thing
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/thetom42/perplexica-mcp
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/thetom42/stock-portfolio
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/thisis-romar/emblem.io-whatsapp-receipts
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/thobenayann/next-contract-builder
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/thsergitox/tutor-ai
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/tigorlazuardi/nixos
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/time-loop/clickup-projen
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/timothywarner/copilot-dev
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/tinanpha/trading
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/toedter/hal-explorer
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/tom-doerr/aider_dspy
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/tomasgeneroso/DOAPP
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/tosaka07/nixos-config
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/tradingstrategy-ai/web3-ethereum-defi
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/trathailoi/ai-coding-assistant-workflow
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/trcarneiro/academia
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/tsilva/gymnasium-solver
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/twardoch/pedalboard-pluginary
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/twofoldtech-dakota/claude-marketplace
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/tyyim/esg_reason
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/ubuntupunk/aider-dev
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/uchuudev/start
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/ufechner7/FLORIDyn.jl
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/uhyo/better-typescript-lib
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/unirevenge/preservation-system
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/unravel-team/example-cool-mcp-server
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/utof/canvas-graph1
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/utof/rudn-map
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/valdislaf/AiderLocal
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/valentinvieriu/EuroJackpotGenerator
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/vanamamulaicharishma/Docker
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/vandensky/iqes-schulqualitaets-dashboard
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/vburghelea/solstice
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/verlyn13/kbe-website
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/vfarcic/dot-ai-demo
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/vibercode/cli
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/victorcssiano/zammad_teste
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/vijaythecoder/clueless
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/visa2any/fly2any
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/vlobachev/vibecode
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/voxmenthe/optionstrat
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/vrushalisarfare/PromptToProduct
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/warmonger0/war-tac-7
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/watanabe-tsubasa/rust_test_server
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/watdafawx/improved-robot
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/wcarmon/docs
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/weavermarquez/house-of-bao
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/wenerme/wener
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/werdnum/family-assistant
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/weskerllc/cronicorn
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/wesleyflorence/dotfiles
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/wikiarena/wikiarena
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/wkemmey/nixos_config
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/wobure123/pflow-test
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/woosang1/PokeInfo-compose
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/wooyoungkang123/CrossLend
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/workblockchain/client
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/wtyler2505/multi-controller-app
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/wvlet/airframe
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/wxad/abc
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/x123/ip2asn
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/xJesusx0/smart-city-bq-traffic-api
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/xmartlabs/vytalLink
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/xmlking/spectacular
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/y-hirakaw/mcp-file-editor
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/yarnovo/markdown-river
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/yezihack/k1s
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/yluiop123/vite-shadcn
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/yokthanwa1993/textBot
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/yosupo06/library-checker-judge
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/yosupo06/yosupo-library
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/yprez/synth
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/ysys143/simple_MCP_host
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/yuanyuanyuan/Stark-AI-notes
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/yuokada/bqjdbc-crawler
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/yurenju/cursor-tdd-rules
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/yutaka-shoji/truzt
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/yutkat/yutkat
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/yysun/apprun
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/zach-source/mcp-rust-proxy
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/zackees/fastled-wasm
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/zackees/ytclip
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/zammad/zammad
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/zappybiby/PeakBot
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/zxcvbnm103/wangzhongwang-project
+    categories: [auto-discovered]
+    status: pending
+  - url: https://github.com/zxlie/FeHelper
+    categories: [auto-discovered]
+    status: pending
