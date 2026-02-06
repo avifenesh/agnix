@@ -546,11 +546,13 @@ fn is_probable_import_path(path: &str) -> bool {
         return has_extension;
     }
 
-    // For paths without separators, use existing heuristics
-    if path.starts_with('~') || path.contains('.') || path.contains(':') {
+    // For paths without separators, require a file extension or tilde prefix.
+    // This prevents @mentions like @MashTimeBot from being treated as imports.
+    if path.starts_with('~') || path.contains(':') {
         return true;
     }
-    path.chars().any(|c| c.is_ascii_uppercase())
+    // Must contain a dot (file extension) to be considered a file reference
+    path.contains('.')
 }
 
 #[cfg(test)]
