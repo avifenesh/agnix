@@ -600,7 +600,10 @@ fn is_probable_import_path(path: &str) -> bool {
         // If the last segment after the last dot looks like a TLD, it's likely a domain
         if let Some(last_dot) = path.rfind('.') {
             let ext = &path[last_dot + 1..];
-            if matches!(ext, "com" | "org" | "net" | "io" | "dev" | "ai" | "co" | "edu" | "gov") {
+            if matches!(
+                ext,
+                "com" | "org" | "net" | "io" | "dev" | "ai" | "co" | "edu" | "gov"
+            ) {
                 return false;
             }
         }
