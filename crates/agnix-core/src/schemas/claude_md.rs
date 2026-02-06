@@ -412,6 +412,69 @@ mod tests {
         assert!(results.is_empty());
     }
 
+    #[test]
+    fn test_detect_role_play_header() {
+        let content = "# You Are an Expert\nDo this specific task.";
+        let results = find_generic_instructions(content);
+        assert!(
+            results.iter().any(|r| r.pattern.contains("you\\s+are")),
+            "Should detect role-play header '# You Are'"
+        );
+    }
+
+    #[test]
+    fn test_detect_role_play_preamble() {
+        let content = "You are a helpful assistant for this project.";
+        let results = find_generic_instructions(content);
+        assert!(
+            !results.is_empty(),
+            "Should detect 'You are a helpful assistant'"
+        );
+    }
+
+    #[test]
+    fn test_no_false_positive_role_play() {
+        // "You are a developer" should not match because "developer" isn't in the descriptor list
+        let content = "You are a developer who writes Rust code.";
+        let results = find_generic_instructions(content);
+        let role_play: Vec<_> = results
+            .iter()
+            .filter(|r| r.pattern.contains("you\\s+are\\s+a"))
+            .collect();
+        assert!(
+            role_play.is_empty(),
+            "Should not match 'You are a developer' (not a generic role-play)"
+        );
+    }
+
+    #[test]
+    fn test_detect_generic_programming_principles() {
+        let content = "Follow best practices when writing code.";
+        let results = find_generic_instructions(content);
+        assert!(
+            results.iter().any(|r| r.text.to_lowercase().contains("follow best practices")),
+            "Should detect 'follow best practices'"
+        );
+
+        let content2 = "Write clean and maintainable code.";
+        let results2 = find_generic_instructions(content2);
+        assert!(
+            !results2.is_empty(),
+            "Should detect 'write clean and maintainable code'"
+        );
+    }
+
+    #[test]
+    fn test_no_false_positive_specific_standards() {
+        // Project-specific references should not match
+        let content = "Follow the airbnb style guide for JavaScript.";
+        let results = find_generic_instructions(content);
+        assert!(
+            results.is_empty(),
+            "Project-specific style references should not trigger"
+        );
+    }
+
     // CC-MEM-009 tests
     #[test]
     fn test_check_token_count_under_limit() {

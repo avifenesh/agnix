@@ -3,7 +3,11 @@
 
 Clones repos from a YAML manifest, runs agnix --format json against each,
 and saves per-repo results. Designed for one-time validation runs.
+
+Requires Python 3.9+ and PyYAML.
 """
+
+from __future__ import annotations
 
 import argparse
 import json
@@ -40,7 +44,11 @@ def load_repos(repos_file: Path, filter_pattern: str | None = None, category: st
 
 
 def repo_slug(url: str) -> str:
+    if not url:
+        raise ValueError("Empty repository URL")
     parts = url.rstrip("/").split("/")
+    if len(parts) < 2:
+        raise ValueError(f"Malformed repository URL (need at least owner/repo): {url!r}")
     return f"{parts[-2]}--{parts[-1]}"
 
 

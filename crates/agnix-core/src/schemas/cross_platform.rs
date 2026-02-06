@@ -158,8 +158,7 @@ pub fn find_claude_specific_features(content: &str) -> Vec<ClaudeSpecificFeature
         if let Some(mat) = at_import_pattern().find(line) {
             // Avoid matching email addresses (user@domain.com)
             let matched = mat.as_str().trim_start();
-            if matched.starts_with('@') && !matched.contains('@') || matched.matches('@').count() == 1
-            {
+            if matched.starts_with('@') && matched.matches('@').count() == 1 {
                 results.push(ClaudeSpecificFeature {
                     line: line_num + 1,
                     column: mat.start() + 1,
@@ -1007,6 +1006,46 @@ allowed-tools: Read Write Bash
 Body"#;
         let results = find_claude_specific_features(content);
         assert!(results.iter().any(|r| r.feature == "allowed-tools"));
+    }
+
+    #[test]
+    fn test_detect_at_import_syntax() {
+        let content = "Include rules from @path/to/rules.md in your config.";
+        let results = find_claude_specific_features(content);
+        assert!(
+            results.iter().any(|r| r.feature == "@import"),
+            "Should detect @path/to/rules.md as @import syntax"
+        );
+    }
+
+    #[test]
+    fn test_detect_at_import_with_wildcard() {
+        let content = "Load all rules with @.config/rules/*.md";
+        let results = find_claude_specific_features(content);
+        assert!(
+            results.iter().any(|r| r.feature == "@import"),
+            "Should detect @.config/rules/*.md (wildcard @import)"
+        );
+    }
+
+    #[test]
+    fn test_no_false_positive_email_in_at_import() {
+        let content = "Contact user@example.com for questions.";
+        let results = find_claude_specific_features(content);
+        assert!(
+            !results.iter().any(|r| r.feature == "@import"),
+            "Email addresses should not be flagged as @imports"
+        );
+    }
+
+    #[test]
+    fn test_no_false_positive_email_standalone() {
+        let content = "Email admin@domain.org for access.";
+        let results = find_claude_specific_features(content);
+        assert!(
+            !results.iter().any(|r| r.feature == "@import"),
+            "Standalone email should not trigger @import detection"
+        );
     }
 
     #[test]

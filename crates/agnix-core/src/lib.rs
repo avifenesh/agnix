@@ -229,7 +229,6 @@ fn cursor_validator() -> Box<dyn Validator> {
 /// false positives from XML tags, broken links, and cross-platform
 /// references in project documentation.
 fn is_documentation_directory(path: &Path) -> bool {
-    let path_str = path.to_string_lossy().to_lowercase();
     // Check if any ancestor directory is a documentation directory
     for component in path.components() {
         if let std::path::Component::Normal(name) = component {
@@ -249,11 +248,7 @@ fn is_documentation_directory(path: &Path) -> bool {
             }
         }
     }
-    // Check for common documentation path patterns
-    path_str.contains("/docs/")
-        || path_str.contains("/doc/")
-        || path_str.contains("/documentation/")
-        || path_str.contains("/wiki/")
+    false
 }
 
 /// Detect file type based on path patterns
@@ -299,6 +294,11 @@ pub fn detect_file_type(path: &Path) -> FileType {
         // Legacy Cursor rules file (.cursorrules)
         ".cursorrules" => FileType::CursorRulesLegacy,
         name if name.ends_with(".md") => {
+            // Agent directories take precedence over filename exclusions.
+            // Files like agents/README.md should be validated as agent configs.
+            if parent == Some("agents") || grandparent == Some("agents") {
+                FileType::Agent
+            } else {
             // Exclude common project files that are not agent configurations.
             // These files commonly contain HTML, @mentions, and cross-platform
             // references that would produce false positives if validated.
@@ -319,8 +319,6 @@ pub fn detect_file_type(path: &Path) -> FileType {
                 || lower == "feature_request.md"
             {
                 FileType::Unknown
-            } else if parent == Some("agents") || grandparent == Some("agents") {
-                FileType::Agent
             } else if is_documentation_directory(path) {
                 // Markdown files in documentation directories are not agent configs
                 FileType::Unknown
@@ -331,6 +329,7 @@ pub fn detect_file_type(path: &Path) -> FileType {
                 FileType::Unknown
             } else {
                 FileType::GenericMarkdown
+            }
             }
         }
         _ => FileType::Unknown,
@@ -1009,6 +1008,26 @@ mod tests {
         assert_eq!(
             detect_file_type(Path::new("examples/basic.md")),
             FileType::Unknown
+        );
+    }
+
+    #[test]
+    fn test_agent_directory_takes_precedence_over_filename_exclusion() {
+        // agents/README.md should be detected as Agent, not Unknown
+        assert_eq!(
+            detect_file_type(Path::new("agents/README.md")),
+            FileType::Agent,
+            "agents/README.md should be Agent, not excluded as README"
+        );
+        assert_eq!(
+            detect_file_type(Path::new(".claude/agents/README.md")),
+            FileType::Agent,
+            ".claude/agents/README.md should be Agent"
+        );
+        assert_eq!(
+            detect_file_type(Path::new("agents/CONTRIBUTING.md")),
+            FileType::Agent,
+            "agents/CONTRIBUTING.md should be Agent"
         );
     }
 
