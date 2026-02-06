@@ -18,6 +18,11 @@ Thumbs.db
 /test-output/
 /fixtures/
 
+# Coverage
+lcov*.info
+*.profraw
+*.profdata
+
 # Build artifacts
 dist/
 *.wasm

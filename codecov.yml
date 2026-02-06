@@ -1,0 +1,25 @@
+coverage:
+  status:
+    project:
+      default:
+        informational: true
+    patch:
+      default:
+        informational: true
+
+ignore:
+  - "tests/fixtures/**"
+  - "**/benches/**"
+  - "**/fuzz/**"
+  - "**/build.rs"
+  - "editors/**"
+
+comment:
+  layout: "header, diff, flags, components"
+  behavior: default
+  require_changes: true
+
+flags:
+  unittests:
+    paths:
+      - crates/
