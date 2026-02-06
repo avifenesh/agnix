@@ -77,9 +77,18 @@ const config = {
           dropdownActiveClassDisabled: true,
         },
         {
-          href: 'https://marketplace.visualstudio.com/items?itemName=avifenesh.agnix',
-          label: 'VS Code',
+          label: 'Downloads',
           position: 'right',
+          items: [
+            {
+              label: 'VS Code Extension',
+              href: 'https://marketplace.visualstudio.com/items?itemName=avifenesh.agnix',
+            },
+            {
+              label: 'JetBrains Plugin',
+              href: 'https://plugins.jetbrains.com/plugin/30087-agnix',
+            },
+          ],
         },
         {
           href: 'https://github.com/avifenesh/agnix',
@@ -110,6 +119,10 @@ const config = {
             {
               label: 'VS Code Extension',
               href: 'https://marketplace.visualstudio.com/items?itemName=avifenesh.agnix',
+            },
+            {
+              label: 'JetBrains Plugin',
+              href: 'https://plugins.jetbrains.com/plugin/30087-agnix',
             },
             {
               label: 'GitHub Issues',

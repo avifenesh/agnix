@@ -45,17 +45,31 @@ export default function Home() {
           <p className={styles.heroSubtitle}>
             Practical guides, rule reference, and editor integration docs.
           </p>
-          <div>
+          <div className={styles.heroActions}>
             <Link className="button button--primary button--lg" to="/docs/getting-started">
               Open User Guide
             </Link>
             <Link
-              className="button button--secondary button--lg margin-left--md"
+              className={clsx('button button--secondary button--lg', styles.downloadButton)}
               href="https://marketplace.visualstudio.com/items?itemName=avifenesh.agnix"
             >
               Install VS Code Extension
             </Link>
+            <Link
+              className={clsx(
+                'button button--secondary button--lg',
+                styles.downloadButton,
+                styles.jetbrainsButton
+              )}
+              href="https://plugins.jetbrains.com/plugin/30087-agnix"
+            >
+              Install JetBrains Plugin
+            </Link>
           </div>
+          <p className={styles.heroLinks}>
+            Direct install links are also listed in the{' '}
+            <Link to="/docs/installation">installation guide</Link>.
+          </p>
         </div>
       </header>
       <main>
