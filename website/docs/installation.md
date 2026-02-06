@@ -18,6 +18,7 @@ Alternative installs:
 
 Install extension from the marketplace and point server path if needed. Full details:
 
+- [Install from VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=avifenesh.agnix)
 - [VS Code integration guide](https://github.com/avifenesh/agnix/blob/main/editors/vscode/README.md)
 
 ### Neovim

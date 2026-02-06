@@ -16,6 +16,7 @@ Main capabilities:
 
 Integration docs:
 
-- [VS Code extension](https://github.com/avifenesh/agnix/tree/main/editors/vscode)
+- [Install agnix for VS Code](https://marketplace.visualstudio.com/items?itemName=avifenesh.agnix)
+- [VS Code extension guide](https://github.com/avifenesh/agnix/blob/main/editors/vscode/README.md)
 - [Neovim plugin](https://github.com/avifenesh/agnix/tree/main/editors/neovim)
 - [JetBrains plugin](https://github.com/avifenesh/agnix/tree/main/editors/jetbrains)
