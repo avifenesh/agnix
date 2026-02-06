@@ -19,8 +19,7 @@ Thumbs.db
 /fixtures/
 
 # Coverage
-lcov.info
-lcov-doctests.info
+lcov*.info
 *.profraw
 *.profdata
 

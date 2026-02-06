@@ -99,12 +99,10 @@ jobs:
       - uses: taiki-e/install-action@cd05dcd6eb73067dda063b97a15b7060049dacd9 # nextest
       - name: Generate coverage
         run: cargo llvm-cov nextest --workspace --lcov --output-path lcov.info
-      - name: Generate doc test coverage
-        run: cargo llvm-cov --doc --workspace --lcov --output-path lcov-doctests.info
       - name: Upload to Codecov
         uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
         with:
-          files: lcov.info,lcov-doctests.info
+          files: lcov.info
           flags: unittests
           fail_ci_if_error: false
           token: ${{ secrets.CODECOV_TOKEN }}

@@ -10,6 +10,7 @@ coverage:
 ignore:
   - "tests/fixtures/**"
   - "**/benches/**"
+  - "**/fuzz/**"
   - "**/build.rs"
   - "editors/**"
 
