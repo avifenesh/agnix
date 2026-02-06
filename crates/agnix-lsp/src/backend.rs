@@ -528,6 +528,10 @@ impl LanguageServer for Backend {
             )
             .await;
 
+        // Invalidate in-flight config-revalidation batches first.
+        // This prevents older batches from publishing after a newer config update starts.
+        let revalidation_generation = self.config_generation.fetch_add(1, Ordering::SeqCst) + 1;
+
         // Acquire write lock and apply settings
         // Clone the existing config, modify it, then replace
         {
@@ -536,7 +540,6 @@ impl LanguageServer for Backend {
             vscode_config.merge_into_lint_config(&mut new_config);
             *config_guard = Arc::new(new_config);
         }
-        let revalidation_generation = self.config_generation.fetch_add(1, Ordering::SeqCst) + 1;
 
         // Re-validate all open documents with new config
         let documents: Vec<Url> = {
