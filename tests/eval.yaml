@@ -20,8 +20,8 @@ cases:
     description: "Windows path separator triggers AS-014"
 
   - file: fixtures/invalid/skills/invalid-name/SKILL.md
-    expected: [CC-SK-001]
-    description: "Invalid skill name triggers CC-SK-001 (not AS-004)"
+    expected: [AS-004]
+    description: "Invalid skill name (underscores) triggers AS-004"
 
   - file: fixtures/invalid/skills/deploy-prod/SKILL.md
     expected: [CC-SK-006, CC-SK-007, AS-010]
@@ -115,11 +115,9 @@ cases:
     expected: [AGM-005, XP-001]
     description: "Unguarded platform features triggers AGM-005 and XP-001"
 
-  # Note: agents_md/valid/AGENTS.md contains hooks in Claude Code section which
-  # triggers XP-001 (cross-platform warning for Claude-specific features in AGENTS.md)
   - file: fixtures/agents_md/valid/AGENTS.md
-    expected: [XP-001]
-    description: "Valid AGENTS.md with Claude-specific hooks triggers XP-001"
+    expected: []
+    description: "Valid AGENTS.md with guarded Claude section - no errors"
 
   # ===== Cross-Platform Rules (XP-*) =====
 
@@ -127,7 +125,6 @@ cases:
     expected: [XP-001, AGM-005]
     description: "Claude-specific hooks triggers XP-001 and AGM-005"
 
-  # Context fork triggers XP-001, AGM-004 (missing context section), and AGM-005 (unguarded)
   - file: fixtures/cross_platform/with-context-fork/AGENTS.md
     expected: [XP-001, AGM-004, AGM-005]
     description: "Context fork triggers XP-001, AGM-004, and AGM-005"

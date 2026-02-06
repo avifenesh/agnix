@@ -15,6 +15,9 @@ pub fn get_field_at_position(content: &str, position: Position) -> Option<String
     let line = content.lines().nth(line_idx)?;
 
     let trimmed = line.trim_start();
+    // Strip JSON object/array delimiters for hover detection
+    let trimmed = trimmed.trim_start_matches(['{', '[', ',']);
+    let trimmed = trimmed.trim_start();
     if let Some(colon_pos) = trimmed.find(':') {
         let mut field = trimmed[..colon_pos].trim();
         field = field.trim_matches('"').trim_matches('\'');

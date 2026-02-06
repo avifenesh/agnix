@@ -1,5 +1,5 @@
 ---
-name: completely-wrong-name
+name: invalid_name
 description: Use when user wants to review code
 model: sonnet
 ---
