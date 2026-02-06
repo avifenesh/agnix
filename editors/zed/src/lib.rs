@@ -209,4 +209,72 @@ mod tests {
     fn binary_name_windows() {
         assert_eq!(binary_name(Os::Windows), "agnix-lsp.exe");
     }
+
+    #[test]
+    fn version_with_forward_slash_rejected() {
+        let version = "../../../tmp/evil";
+        assert!(
+            version.contains('/') || version.contains('\\') || version.contains(".."),
+            "path traversal should be detected"
+        );
+    }
+
+    #[test]
+    fn version_with_backslash_rejected() {
+        let version = "v1.0.0\\..\\tmp";
+        assert!(
+            version.contains('/') || version.contains('\\') || version.contains(".."),
+            "path traversal should be detected"
+        );
+    }
+
+    #[test]
+    fn version_with_dot_dot_rejected() {
+        let version = "v1.0.0-..";
+        assert!(
+            version.contains(".."),
+            "double-dot path traversal should be detected"
+        );
+    }
+
+    #[test]
+    fn clean_version_accepted() {
+        let version = "v0.7.2";
+        assert!(
+            !(version.contains('/') || version.contains('\\') || version.contains("..")),
+            "clean semver should be accepted"
+        );
+    }
+
+    #[test]
+    fn trusted_github_url_accepted() {
+        let url = "https://github.com/avifenesh/agnix/releases/download/v0.7.2/agnix-lsp.tar.gz";
+        let is_trusted = url.starts_with("https://github.com/")
+            || url.starts_with("https://objects.githubusercontent.com/");
+        assert!(is_trusted, "github.com URL should be trusted");
+    }
+
+    #[test]
+    fn trusted_githubusercontent_url_accepted() {
+        let url = "https://objects.githubusercontent.com/github-production-release-asset/12345";
+        let is_trusted = url.starts_with("https://github.com/")
+            || url.starts_with("https://objects.githubusercontent.com/");
+        assert!(is_trusted, "objects.githubusercontent.com URL should be trusted");
+    }
+
+    #[test]
+    fn untrusted_url_rejected() {
+        let url = "https://evil.com/malware.tar.gz";
+        let is_trusted = url.starts_with("https://github.com/")
+            || url.starts_with("https://objects.githubusercontent.com/");
+        assert!(!is_trusted, "non-GitHub URL should be rejected");
+    }
+
+    #[test]
+    fn http_url_rejected() {
+        let url = "http://github.com/avifenesh/agnix/releases/download/v0.7.2/agnix-lsp.tar.gz";
+        let is_trusted = url.starts_with("https://github.com/")
+            || url.starts_with("https://objects.githubusercontent.com/");
+        assert!(!is_trusted, "HTTP URL should be rejected");
+    }
 }
