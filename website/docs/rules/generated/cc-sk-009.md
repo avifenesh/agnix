@@ -12,6 +12,7 @@ keywords: ["CC-SK-009", "too many injections", "claude skills", "validation", "a
 - **Severity**: `MEDIUM`
 - **Category**: `Claude Skills`
 - **Normative Level**: `SHOULD`
+- **Auto-Fix**: `No`
 - **Verified On**: `2026-02-04`
 
 ## Applicability

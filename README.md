@@ -95,7 +95,7 @@ cargo install agnix-cli
 
 ### Editor Extensions
 
-Real-time diagnostics as you type, quick-fix code actions, hover documentation.
+Real-time diagnostics as you type, quick-fix code actions, hover documentation, context-aware completions.
 
 | Editor | Install | Details |
 |--------|---------|---------|
@@ -200,6 +200,9 @@ agnix .
 # Apply automatic fixes
 agnix --fix .
 
+# Apply only safe fixes (high-confidence, no semantic changes)
+agnix --fix-safe .
+
 # Strict mode (warnings = errors)
 agnix --strict .
 
@@ -216,7 +219,8 @@ See [Configuration Reference](docs/CONFIGURATION.md) for all options including `
 ## Features
 
 - **Validation across 15 categories**: Skills, Hooks, Agents, Plugins, MCP, Memory, Prompt Engineering, XML, References, Cross-platform, AGENTS.md, Copilot, Cursor, Version Awareness
-- **Auto-fix**: `--fix` applies safe corrections, `--dry-run` previews them
+- **Auto-fix**: `--fix` applies all corrections, `--fix-safe` applies only safe ones, `--dry-run` previews them
+- **Completion**: Context-aware completions for frontmatter keys, values, and snippets
 - **LSP server**: Real-time diagnostics in any editor that supports LSP
 - **MCP server**: Expose validation as AI-assistant tools
 - **Parallel validation**: Uses rayon for fast multi-file processing

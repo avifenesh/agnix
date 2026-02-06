@@ -12,6 +12,7 @@ keywords: ["CC-SK-007", "unrestricted bash", "claude skills", "validation", "agn
 - **Severity**: `HIGH`
 - **Category**: `Claude Skills`
 - **Normative Level**: `SHOULD`
+- **Auto-Fix**: `Yes (unsafe)`
 - **Verified On**: `2026-02-04`
 
 ## Applicability

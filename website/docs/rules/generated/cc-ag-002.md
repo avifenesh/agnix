@@ -12,6 +12,7 @@ keywords: ["CC-AG-002", "missing description field", "claude agents", "validatio
 - **Severity**: `HIGH`
 - **Category**: `Claude Agents`
 - **Normative Level**: `MUST`
+- **Auto-Fix**: `No`
 - **Verified On**: `2026-02-04`
 
 ## Applicability

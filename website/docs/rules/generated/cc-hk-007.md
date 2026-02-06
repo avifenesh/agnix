@@ -12,6 +12,7 @@ keywords: ["CC-HK-007", "missing prompt field", "claude hooks", "validation", "a
 - **Severity**: `HIGH`
 - **Category**: `Claude Hooks`
 - **Normative Level**: `MUST`
+- **Auto-Fix**: `No`
 - **Verified On**: `2026-02-04`
 
 ## Applicability

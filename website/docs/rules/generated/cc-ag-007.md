@@ -12,6 +12,7 @@ keywords: ["CC-AG-007", "agent parse error", "claude agents", "validation", "agn
 - **Severity**: `HIGH`
 - **Category**: `Claude Agents`
 - **Normative Level**: `MUST`
+- **Auto-Fix**: `No`
 - **Verified On**: `2026-02-04`
 
 ## Applicability

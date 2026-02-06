@@ -12,6 +12,7 @@ keywords: ["CC-MEM-004", "invalid command reference", "claude memory", "validati
 - **Severity**: `MEDIUM`
 - **Category**: `Claude Memory`
 - **Normative Level**: `SHOULD`
+- **Auto-Fix**: `No`
 - **Verified On**: `2026-02-04`
 
 ## Applicability

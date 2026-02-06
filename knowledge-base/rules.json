@@ -21,6 +21,10 @@
         "fixtures": "boolean",
         "e2e": "boolean"
       }
+    },
+    "fix": {
+      "autofix": "boolean - whether this rule has an automatic fix",
+      "fix_safety": "safe|unsafe|safe/unsafe (only present when autofix is true)"
     }
   },
   "rules": [
@@ -44,6 +48,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -66,6 +73,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -88,6 +98,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -110,6 +123,10 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": true,
+        "fix_safety": "safe/unsafe"
       }
     },
     {
@@ -132,6 +149,10 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": true,
+        "fix_safety": "safe"
       }
     },
     {
@@ -154,6 +175,10 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": true,
+        "fix_safety": "safe"
       }
     },
     {
@@ -176,6 +201,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -198,6 +226,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -220,6 +251,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -243,6 +277,10 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": true,
+        "fix_safety": "unsafe"
       }
     },
     {
@@ -265,6 +303,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -288,6 +329,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -310,6 +354,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -332,6 +379,10 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": true,
+        "fix_safety": "safe"
       }
     },
     {
@@ -354,6 +405,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -376,6 +430,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -398,6 +455,10 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": true,
+        "fix_safety": "unsafe"
       }
     },
     {
@@ -420,6 +481,10 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": true,
+        "fix_safety": "unsafe"
       }
     },
     {
@@ -442,6 +507,10 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": true,
+        "fix_safety": "unsafe"
       }
     },
     {
@@ -464,6 +533,10 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": true,
+        "fix_safety": "unsafe"
       }
     },
     {
@@ -486,6 +559,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -508,6 +584,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -530,6 +609,10 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": true,
+        "fix_safety": "unsafe"
       }
     },
     {
@@ -552,6 +635,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -574,6 +660,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -596,6 +685,10 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": true,
+        "fix_safety": "safe/unsafe"
       }
     },
     {
@@ -618,6 +711,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -640,6 +736,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -662,6 +761,10 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": true,
+        "fix_safety": "safe"
       }
     },
     {
@@ -684,6 +787,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -706,6 +812,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -728,6 +837,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -750,6 +862,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -772,6 +887,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -794,6 +912,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -816,6 +937,10 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": true,
+        "fix_safety": "unsafe"
       }
     },
     {
@@ -838,6 +963,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -860,6 +988,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -882,6 +1013,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -904,6 +1038,10 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": true,
+        "fix_safety": "unsafe"
       }
     },
     {
@@ -926,6 +1064,10 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": true,
+        "fix_safety": "unsafe"
       }
     },
     {
@@ -948,6 +1090,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -970,6 +1115,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -992,6 +1140,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -1014,6 +1165,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -1036,6 +1190,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -1058,6 +1215,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -1080,6 +1240,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -1103,6 +1266,10 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": true,
+        "fix_safety": "safe"
       }
     },
     {
@@ -1123,6 +1290,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -1143,6 +1313,10 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": true,
+        "fix_safety": "safe/unsafe"
       }
     },
     {
@@ -1163,6 +1337,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -1185,6 +1362,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -1207,6 +1387,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -1229,6 +1412,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -1250,6 +1436,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -1272,6 +1461,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -1293,6 +1485,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -1314,6 +1509,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -1336,6 +1534,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -1358,6 +1559,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -1380,6 +1584,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -1402,6 +1609,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -1424,6 +1634,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -1446,6 +1659,10 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": true,
+        "fix_safety": "unsafe"
       }
     },
     {
@@ -1468,6 +1685,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -1490,6 +1710,10 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": true,
+        "fix_safety": "safe"
       }
     },
     {
@@ -1512,6 +1736,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -1534,6 +1761,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -1556,6 +1786,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -1578,6 +1811,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -1600,6 +1836,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -1622,6 +1861,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -1644,6 +1886,10 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": true,
+        "fix_safety": "unsafe"
       }
     },
     {
@@ -1666,6 +1912,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -1688,6 +1937,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -1710,6 +1962,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -1732,6 +1987,10 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": true,
+        "fix_safety": "safe"
       }
     },
     {
@@ -1754,6 +2013,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -1776,6 +2038,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -1798,6 +2063,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -1820,6 +2088,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -1842,6 +2113,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -1864,6 +2138,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -1886,6 +2163,10 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": true,
+        "fix_safety": "safe"
       }
     },
     {
@@ -1908,6 +2189,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -1928,6 +2212,10 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": true,
+        "fix_safety": "unsafe"
       }
     },
     {
@@ -1948,6 +2236,10 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": true,
+        "fix_safety": "unsafe"
       }
     },
     {
@@ -1968,6 +2260,10 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": true,
+        "fix_safety": "unsafe"
       }
     },
     {
@@ -1990,6 +2286,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -2010,6 +2309,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -2030,6 +2332,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -2050,6 +2355,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -2071,6 +2379,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -2091,6 +2402,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -2112,6 +2426,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -2136,6 +2453,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -2157,6 +2477,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -2178,6 +2501,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -2199,6 +2525,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -2220,6 +2549,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     },
     {
@@ -2240,6 +2572,9 @@
           "fixtures": true,
           "e2e": false
         }
+      },
+      "fix": {
+        "autofix": false
       }
     }
   ],

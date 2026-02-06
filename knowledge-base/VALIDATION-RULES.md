@@ -972,13 +972,31 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 
 | Rule | Auto-Fix | Safety |
 |------|----------|--------|
-| AS-001 | Add frontmatter template | HIGH |
-| AS-004 | Convert to kebab-case | HIGH (case-only) / MEDIUM (structural) |
-| AS-010 | Prepend "Use when user wants to " | MEDIUM |
-| CC-SK-007 | Suggest Bash(git:*) | MEDIUM |
-| CC-MEM-005 | Remove line | HIGH |
-| CC-MEM-007 | Replace weak language with strong | MEDIUM |
-| XML-001 | Add closing tag | MEDIUM |
+| AS-004 | Convert name to kebab-case | safe/unsafe |
+| AS-005 | Strip leading/trailing hyphens | safe |
+| AS-006 | Collapse consecutive hyphens | safe |
+| AS-010 | Prepend "Use when user wants to " | unsafe |
+| AS-014 | Normalize Windows path separators | safe |
+| CC-SK-001 | Default invalid model to sonnet | unsafe |
+| CC-SK-002 | Normalize context to fork | unsafe |
+| CC-SK-003 | Add default agent for fork context | unsafe |
+| CC-SK-004 | Insert context: fork before agent key | unsafe |
+| CC-SK-007 | Suggest Bash(git:*) matcher | unsafe |
+| CC-HK-001 | Correct event name casing/typo | safe/unsafe |
+| CC-HK-004 | Clamp timeout to valid range | safe |
+| CC-HK-011 | Remove redundant wildcard matcher | unsafe |
+| CC-AG-003 | Default invalid model to sonnet | unsafe |
+| CC-AG-004 | Default invalid permission mode | unsafe |
+| CC-MEM-005 | Remove generic instruction line | safe |
+| CC-MEM-007 | Replace weak language with strong | safe/unsafe |
+| CC-PL-005 | Normalize plugin name | unsafe |
+| MCP-001 | Set jsonrpc to "2.0" | safe |
+| MCP-008 | Update protocolVersion | unsafe |
+| COP-004 | Remove unknown frontmatter key | safe |
+| CUR-005 | Remove unknown frontmatter key | safe |
+| XML-001 | Add missing closing tag | unsafe |
+| XML-002 | Fix mismatched closing tag | unsafe |
+| XML-003 | Remove orphaned closing tag | unsafe |
 
 ---
 
@@ -986,22 +1004,22 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 
 | Category | Total Rules | HIGH | MEDIUM | LOW | Auto-Fixable |
 |----------|-------------|------|--------|-----|--------------|
-| Agent Skills | 16 | 14 | 2 | 0 | 6 |
-| Claude Skills | 9 | 8 | 1 | 0 | 3 |
-| Claude Hooks | 12 | 11 | 1 | 0 | 2 |
-| Claude Agents | 7 | 7 | 0 | 0 | 1 |
-| Claude Memory | 10 | 7 | 3 | 0 | 3 |
-| AGENTS.md | 6 | 1 | 5 | 0 | 2 |
+| Agent Skills | 16 | 14 | 2 | 0 | 5 |
+| Claude Skills | 9 | 8 | 1 | 0 | 5 |
+| Claude Hooks | 12 | 11 | 1 | 0 | 3 |
+| Claude Agents | 7 | 7 | 0 | 0 | 2 |
+| Claude Memory | 10 | 7 | 3 | 0 | 2 |
+| AGENTS.md | 6 | 1 | 5 | 0 | 0 |
 | Claude Plugins | 6 | 6 | 0 | 0 | 1 |
 | GitHub Copilot | 6 | 5 | 1 | 0 | 1 |
 | Cursor | 6 | 3 | 3 | 0 | 1 |
-| MCP | 8 | 7 | 1 | 0 | 1 |
-| XML | 3 | 3 | 0 | 0 | 1 |
+| MCP | 8 | 7 | 1 | 0 | 2 |
+| XML | 3 | 3 | 0 | 0 | 3 |
 | References | 2 | 2 | 0 | 0 | 0 |
-| Prompt Eng | 4 | 0 | 4 | 0 | 1 |
+| Prompt Eng | 4 | 0 | 4 | 0 | 0 |
 | Cross-Platform | 6 | 4 | 2 | 0 | 0 |
 | Version Awareness | 1 | 0 | 0 | 1 | 0 |
-| **TOTAL** | **100** | **76** | **23** | **1** | **22** |
+| **TOTAL** | **100** | **76** | **23** | **1** | **25** |
 
 ---
 
@@ -1033,4 +1051,4 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 **Total Coverage**: 102 validation rules across 15 categories
 **Knowledge Base**: 11,036 lines, 320KB, 75+ sources
 **Certainty**: 76 HIGH, 23 MEDIUM, 1 LOW
-**Auto-Fixable**: 22 rules (22%)
+**Auto-Fixable**: 25 rules (25%)
