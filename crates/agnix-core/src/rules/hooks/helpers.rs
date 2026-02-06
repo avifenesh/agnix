@@ -302,6 +302,16 @@ pub(super) fn extract_script_paths(command: &str) -> Vec<String> {
                 if path.contains("://") || path.starts_with("http") {
                     continue;
                 }
+                // Skip regex patterns and glob patterns that happen to end in
+                // script extensions (e.g., `\.py$`, `*.js`, `[^/]*.sh`)
+                if path.starts_with('\\')
+                    || path.starts_with('[')
+                    || path.starts_with('*')
+                    || path.starts_with('(')
+                    || path.contains("]*")
+                {
+                    continue;
+                }
                 paths.push(path.to_string());
             }
         }

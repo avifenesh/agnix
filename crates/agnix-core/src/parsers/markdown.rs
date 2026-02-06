@@ -453,6 +453,16 @@ fn is_likely_type_parameter(name: &str) -> bool {
     )
 }
 
+/// Returns true if the HTML element is commonly used in markdown
+/// without proper closing tags and rendered correctly by GitHub/GitLab.
+/// These are NOT void elements but are frequently unpaired in practice.
+fn is_markdown_safe_html(name: &str) -> bool {
+    matches!(
+        name.to_lowercase().as_str(),
+        "details" | "summary" | "picture" | "video" | "audio" | "figure" | "figcaption"
+    )
+}
+
 fn scan_xml_tags_in_text(
     text: &str,
     range: Range<usize>,
@@ -482,7 +492,10 @@ fn scan_xml_tags_in_text(
             // Skip HTML5 void elements - they never need closing tags.
             // In markdown, these are commonly written without self-closing syntax
             // (e.g., <br> instead of <br/>, <img src="..."> instead of <img ... />)
-            if is_html5_void_element(&name) && !is_closing {
+            // Also skip HTML elements commonly used in markdown without closing tags
+            // (e.g., <details> for collapsible sections on GitHub)
+            // Skip both opening AND closing tags for void elements and markdown-safe elements
+            if is_html5_void_element(&name) || is_markdown_safe_html(&name) {
                 continue;
             }
 
@@ -526,6 +539,30 @@ fn scan_xml_tags_in_text(
     }
 }
 
+/// Returns true if the name matches a known file that has no extension.
+/// These are common in project roots and are valid @import targets.
+fn is_known_extensionless_file(name: &str) -> bool {
+    matches!(
+        name,
+        "Dockerfile"
+            | "Makefile"
+            | "Jenkinsfile"
+            | "Vagrantfile"
+            | "Procfile"
+            | "Gemfile"
+            | "Rakefile"
+            | "Brewfile"
+            | "Justfile"
+            | "Taskfile"
+            | "Earthfile"
+            | "Containerfile"
+            | "Tiltfile"
+            | "Snakefile"
+            | "LICENSE"
+            | "LICENCE"
+    )
+}
+
 fn is_probable_import_path(path: &str) -> bool {
     // Absolute paths (start with / or \) are always considered imports
     // (they will be rejected later in validation)
@@ -551,6 +588,12 @@ fn is_probable_import_path(path: &str) -> bool {
     if path.starts_with('~') || path.contains(':') {
         return true;
     }
+
+    // Known extensionless files that are valid import targets
+    if is_known_extensionless_file(path) {
+        return true;
+    }
+
     // Must contain a dot (file extension) to be considered a file reference
     path.contains('.')
 }
@@ -941,7 +984,12 @@ mod proptests {
         }
 
         #[test]
-        fn xml_unclosed_detected(tag in "[a-z]+") {
+        fn xml_unclosed_detected(tag in "[a-z]{2,8}") {
+            // Skip void elements and markdown-safe elements which are intentionally
+            // not tracked for balance checking
+            if is_html5_void_element(&tag) || is_markdown_safe_html(&tag) || is_likely_type_parameter(&tag) {
+                return Ok(());
+            }
             let input = format!("<{}>content", tag);
             let tags = extract_xml_tags(&input);
             let errors = check_xml_balance(&tags);
