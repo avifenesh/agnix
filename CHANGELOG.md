@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Zed editor extension with automatic LSP binary download and MDC file type support (#198)
+- Documentation website pipeline (#195)
+  - Added Docusaurus website under `website/` with versioned docs and local search
+  - Added rule-doc generation from `knowledge-base/rules.json` via `scripts/generate-docs-rules.py`
+  - Added docs parity test (`crates/agnix-cli/tests/docs_website_parity.rs`) and CI workflow (`.github/workflows/docs-site.yml`)
 - JetBrains plugin: archive extraction tests for AgnixBinaryDownloader (#255)
   - 19 tests covering TAR.GZ/ZIP extraction, binary selection, path traversal protection
   - Refactored extraction methods to companion object for testability
@@ -132,6 +136,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Reduced main validate() method from ~480 to ~210 lines
   - Organized validation into clear phases with documentation
   - Improved maintainability and testability without changing validation behavior
+- Split Hook and Skill validator modules into focused files (#242)
+  - Replaced monolithic `rules/hooks.rs` and `rules/skill.rs` with `rules/hooks/{mod,helpers,tests}.rs` and `rules/skill/{mod,helpers,tests}.rs`
+  - No validation behavior changes; refactor is layout-only for maintainability
 
 ### Fixed
 - CLI `--fix` now exits with status `0` when all diagnostics are resolved by auto-fixes (#230)

@@ -156,8 +156,12 @@ fn extract_implemented_rule_ids() -> BTreeSet<String> {
         "XML-", "REF-", "PE-", "XP-", "VER-",
     ];
 
-    // Helper to extract rule IDs from a file
-    let extract_from_file = |path: &Path, rule_ids: &mut BTreeSet<String>| {
+    fn extract_from_file(
+        path: &Path,
+        re: &Regex,
+        valid_prefixes: &[&str],
+        rule_ids: &mut BTreeSet<String>,
+    ) {
         if let Ok(content) = fs::read_to_string(path) {
             for cap in re.captures_iter(&content) {
                 let rule_id = &cap[1];
@@ -166,20 +170,38 @@ fn extract_implemented_rule_ids() -> BTreeSet<String> {
                 }
             }
         }
-    };
+    }
 
-    // Scan rules directory
-    let rules_dir = core_src.join("rules");
-    for entry in fs::read_dir(&rules_dir).expect("Failed to read rules directory") {
-        let entry = entry.expect("Failed to read directory entry");
-        let path = entry.path();
-        if path.extension().is_some_and(|ext| ext == "rs") {
-            extract_from_file(&path, &mut rule_ids);
+    fn scan_rules_recursive(
+        dir: &Path,
+        re: &Regex,
+        valid_prefixes: &[&str],
+        rule_ids: &mut BTreeSet<String>,
+    ) {
+        let entries = fs::read_dir(dir)
+            .unwrap_or_else(|e| panic!("Failed to read rules directory {}: {}", dir.display(), e));
+        for entry in entries {
+            let entry = entry.expect("Failed to read directory entry");
+            let path = entry.path();
+            if path.is_dir() {
+                scan_rules_recursive(&path, re, valid_prefixes, rule_ids);
+            } else if path.extension().is_some_and(|ext| ext == "rs") {
+                extract_from_file(&path, re, valid_prefixes, rule_ids);
+            }
         }
     }
 
+    // Scan rules directory recursively so nested modules are included.
+    let rules_dir = core_src.join("rules");
+    scan_rules_recursive(&rules_dir, &re, &valid_prefixes, &mut rule_ids);
+
     // Also scan lib.rs for project-level rules (e.g., AGM-006)
-    extract_from_file(&core_src.join("lib.rs"), &mut rule_ids);
+    extract_from_file(
+        &core_src.join("lib.rs"),
+        &re,
+        &valid_prefixes,
+        &mut rule_ids,
+    );
 
     rule_ids
 }

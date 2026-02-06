@@ -2,7 +2,7 @@
 # Reglas - Mensajes de diagnóstico del validador, sugerencias, supuestos, correcciones
 # ===========================================================================
 rules:
-  # --- Agent Skills (skill.rs) ---
+  # --- Agent Skills (skill/mod.rs) ---
   as_001:
     message: "SKILL.md debe tener frontmatter YAML entre marcadores ---"
     suggestion: "Agrega frontmatter entre marcadores ---"
@@ -53,7 +53,7 @@ rules:
   as_016:
     message: "Error al analizar SKILL.md: %{error}"
 
-  # --- Claude Code Skills (skill.rs) ---
+  # --- Claude Code Skills (skill/mod.rs) ---
   cc_sk_001:
     message: "Modelo invalido '%{model}'. Debe ser uno de: %{valid}"
     suggestion: "Usa uno de los valores de modelo validos: %{valid}"
@@ -83,7 +83,7 @@ rules:
     message: "Demasiadas inyecciones dinamicas (%{count}). Limite de %{max} para mejor rendimiento"
     suggestion: "Considera mover logica compleja a un directorio scripts/ o reducir las inyecciones"
 
-  # --- Hooks (hooks.rs) ---
+  # --- Hooks (hooks/mod.rs) ---
   cc_hk_001:
     message: "Evento de hook invalido '%{event}', eventos validos: %{valid}"
     fix: "Reemplazar '%{old}' con '%{new}'"

@@ -2,7 +2,7 @@
 # Rules - Validator diagnostic messages, suggestions, assumptions, fixes
 # ===========================================================================
 rules:
-  # --- Agent Skills (skill.rs) ---
+  # --- Agent Skills (skill/mod.rs) ---
   as_001:
     message: "SKILL.md 必须在 --- 标记之间包含 YAML frontmatter"
     suggestion: "在 --- 标记之间添加 frontmatter"
@@ -53,7 +53,7 @@ rules:
   as_016:
     message: "解析 SKILL.md 失败: %{error}"
 
-  # --- Claude Code Skills (skill.rs) ---
+  # --- Claude Code Skills (skill/mod.rs) ---
   cc_sk_001:
     message: "无效模型 '%{model}'。必须是以下之一: %{valid}"
     suggestion: "使用有效的模型值之一: %{valid}"
@@ -83,7 +83,7 @@ rules:
     message: "动态注入过多（%{count} 个）。限制为 %{max} 个以获得更好性能"
     suggestion: "考虑将复杂逻辑移至 scripts/ 目录或减少注入"
 
-  # --- Hooks (hooks.rs) ---
+  # --- Hooks (hooks/mod.rs) ---
   cc_hk_001:
     message: "无效的 hook 事件 '%{event}'，有效事件: %{valid}"
     fix: "将 '%{old}' 替换为 '%{new}'"

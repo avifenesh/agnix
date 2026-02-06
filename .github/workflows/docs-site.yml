@@ -1,0 +1,78 @@
+name: Docs Website
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'website/**'
+      - 'knowledge-base/rules.json'
+      - 'scripts/generate-docs-rules.py'
+      - '.github/workflows/docs-site.yml'
+      - 'crates/agnix-cli/tests/docs_website_parity.rs'
+  push:
+    branches: [main]
+    paths:
+      - 'website/**'
+      - 'knowledge-base/rules.json'
+      - 'scripts/generate-docs-rules.py'
+      - '.github/workflows/docs-site.yml'
+      - 'crates/agnix-cli/tests/docs_website_parity.rs'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: docs-site-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build docs site
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - name: Lint workflow files
+        uses: rhysd/actionlint@62dc61a45fc95efe8c800af7a557ab0b9165d63b # v1.7.1
+        with:
+          args: .github/workflows/docs-site.yml
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: 'website/package-lock.json'
+      - uses: dtolnay/rust-toolchain@4be9e76fd7c4901c61fb841f559994984270fce7 # stable
+      - name: Install website dependencies
+        run: npm --prefix website ci
+      - name: Generate rule docs and build site
+        run: npm --prefix website run build
+      - name: Run docs parity test
+        run: cargo test -p agnix-cli --test docs_website_parity
+      - name: Upload site artifact
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3
+        with:
+          path: website/build
+
+  deploy:
+    name: Deploy to GitHub Pages
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+      contents: read
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Configure Pages
+        uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4

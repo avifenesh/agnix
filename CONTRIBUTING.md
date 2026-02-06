@@ -82,7 +82,7 @@ Step-by-step process for adding a new validation rule:
 3. **Implement the `Validator` trait** -- Add validation logic in `crates/agnix-core/src/rules/`. Look at existing validators for patterns:
    - `xml_balance.rs` -- simple single-file validator
    - `agents_md.rs` -- project-level validator with cross-file analysis
-   - `skill.rs` -- complex validator with multiple sub-rules
+   - `skill/mod.rs` and `hooks/mod.rs` -- complex validators split into focused `helpers.rs` and `tests.rs` modules
 
 4. **Register in `ValidatorRegistry`** -- Add the validator factory to the appropriate `FileType` in `crates/agnix-core/src/rules/mod.rs`.
 
@@ -197,9 +197,12 @@ crates/
   agnix-lsp/      # Language server
   agnix-mcp/      # MCP server
 editors/
+  neovim/         # Neovim extension
   vscode/         # VS Code extension
   jetbrains/      # JetBrains extension scaffold
 knowledge-base/   # Rules documentation
+scripts/          # Development automation scripts
+website/          # Docusaurus documentation website
 tests/fixtures/   # Test cases
 ```
 

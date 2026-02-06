@@ -1,0 +1,34 @@
+.heroBanner {
+  padding: 5rem 0 4rem;
+  text-align: center;
+  background: radial-gradient(circle at top left, #d6f3f7, #f4f6f8 55%, #ffffff 100%);
+}
+
+.heroLogo {
+  width: 96px;
+  height: 96px;
+  margin-bottom: 1rem;
+}
+
+.heroTitle {
+  font-size: 3rem;
+  margin-bottom: 0.5rem;
+}
+
+.heroSubtitle {
+  color: #334155;
+  font-size: 1.15rem;
+  margin-bottom: 1.5rem;
+}
+
+.features {
+  padding: 2rem 0 3rem;
+}
+
+.featureCard {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1rem;
+  height: 100%;
+  background: #ffffff;
+}
