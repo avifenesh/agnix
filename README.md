@@ -15,6 +15,8 @@ The linter for your AI coding stack -- skills, hooks, memory, plugins, MCP, and 
 
 **100 validation rules** | **Auto-fix** | **[VS Code](https://marketplace.visualstudio.com/items?itemName=avifenesh.agnix) + [JetBrains](https://plugins.jetbrains.com/plugin/30087-agnix) + Neovim** | **GitHub Action**
 
+Website: [avifenesh.github.io/agnix](https://avifenesh.github.io/agnix/)
+
 Quick links:
 - [Documentation website](https://avifenesh.github.io/agnix/docs/intro)
 - [Installation guide](https://avifenesh.github.io/agnix/docs/installation)
