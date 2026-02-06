@@ -389,6 +389,30 @@ fn scan_imports_in_text(
     }
 }
 
+/// Returns true if the tag name is an HTML5 void element.
+/// Void elements are elements that cannot have child nodes and never
+/// need closing tags (e.g., `<br>`, `<img>`, `<hr>`).
+/// See: https://html.spec.whatwg.org/multipage/syntax.html#void-elements
+fn is_html5_void_element(name: &str) -> bool {
+    matches!(
+        name.to_lowercase().as_str(),
+        "area"
+            | "base"
+            | "br"
+            | "col"
+            | "embed"
+            | "hr"
+            | "img"
+            | "input"
+            | "link"
+            | "meta"
+            | "param"
+            | "source"
+            | "track"
+            | "wbr"
+    )
+}
+
 fn scan_xml_tags_in_text(
     text: &str,
     range: Range<usize>,
@@ -414,6 +438,13 @@ fn scan_xml_tags_in_text(
 
         if let Some(name_match) = cap.get(2) {
             let name = name_match.as_str().to_string();
+
+            // Skip HTML5 void elements - they never need closing tags.
+            // In markdown, these are commonly written without self-closing syntax
+            // (e.g., <br> instead of <br/>, <img src="..."> instead of <img ... />)
+            if is_html5_void_element(&name) && !is_closing {
+                continue;
+            }
             let start = cap.get(0).unwrap().start();
             let end = cap.get(0).unwrap().end();
             let start_byte = range.start + start;
