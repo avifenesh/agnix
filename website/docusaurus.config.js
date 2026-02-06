@@ -77,6 +77,11 @@ const config = {
           dropdownActiveClassDisabled: true,
         },
         {
+          href: 'https://marketplace.visualstudio.com/items?itemName=avifenesh.agnix',
+          label: 'VS Code',
+          position: 'right',
+        },
+        {
           href: 'https://github.com/avifenesh/agnix',
           label: 'GitHub',
           position: 'right',
@@ -102,6 +107,10 @@ const config = {
         {
           title: 'Community',
           items: [
+            {
+              label: 'VS Code Extension',
+              href: 'https://marketplace.visualstudio.com/items?itemName=avifenesh.agnix',
+            },
             {
               label: 'GitHub Issues',
               href: 'https://github.com/avifenesh/agnix/issues',

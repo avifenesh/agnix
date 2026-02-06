@@ -49,6 +49,12 @@ export default function Home() {
             <Link className="button button--primary button--lg" to="/docs/getting-started">
               Open User Guide
             </Link>
+            <Link
+              className="button button--secondary button--lg margin-left--md"
+              href="https://marketplace.visualstudio.com/items?itemName=avifenesh.agnix"
+            >
+              Install VS Code Extension
+            </Link>
           </div>
         </div>
       </header>
