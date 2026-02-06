@@ -12,6 +12,7 @@ keywords: ["CC-PL-006", "plugin parse error", "claude plugins", "validation", "a
 - **Severity**: `HIGH`
 - **Category**: `Claude Plugins`
 - **Normative Level**: `MUST`
+- **Auto-Fix**: `No`
 - **Verified On**: `2026-02-04`
 
 ## Applicability

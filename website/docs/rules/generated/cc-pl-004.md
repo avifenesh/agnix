@@ -12,6 +12,7 @@ keywords: ["CC-PL-004", "missing required plugin field", "claude plugins", "vali
 - **Severity**: `HIGH`
 - **Category**: `Claude Plugins`
 - **Normative Level**: `MUST`
+- **Auto-Fix**: `No`
 - **Verified On**: `2026-02-04`
 
 ## Applicability

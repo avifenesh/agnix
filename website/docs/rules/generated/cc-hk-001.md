@@ -12,6 +12,7 @@ keywords: ["CC-HK-001", "invalid hook event", "claude hooks", "validation", "agn
 - **Severity**: `HIGH`
 - **Category**: `Claude Hooks`
 - **Normative Level**: `MUST`
+- **Auto-Fix**: `Yes (safe/unsafe)`
 - **Verified On**: `2026-02-04`
 
 ## Applicability

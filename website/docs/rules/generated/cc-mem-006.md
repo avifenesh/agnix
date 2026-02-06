@@ -12,6 +12,7 @@ keywords: ["CC-MEM-006", "negative without positive", "claude memory", "validati
 - **Severity**: `HIGH`
 - **Category**: `Claude Memory`
 - **Normative Level**: `SHOULD`
+- **Auto-Fix**: `No`
 - **Verified On**: `2026-02-04`
 
 ## Applicability

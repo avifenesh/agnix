@@ -12,6 +12,7 @@ keywords: ["CC-SK-003", "context without agent", "claude skills", "validation", 
 - **Severity**: `HIGH`
 - **Category**: `Claude Skills`
 - **Normative Level**: `MUST`
+- **Auto-Fix**: `Yes (unsafe)`
 - **Verified On**: `2026-02-04`
 
 ## Applicability
