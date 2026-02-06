@@ -225,7 +225,7 @@ def main() -> int:
             page_path.write_text(render_rule(rule), encoding="utf-8")
 
             lines.append(
-                f"| [{rule_id}](./generated/{slug(rule_id)}) | {rule['name']} | {rule['severity']} | {CATEGORY_LABELS.get(rule['category'], rule['category'])} |"
+                f"| [{rule_id}](./generated/{slug(rule_id)}.md) | {rule['name']} | {rule['severity']} | {CATEGORY_LABELS.get(rule['category'], rule['category'])} |"
             )
 
         target_index_path.parent.mkdir(parents=True, exist_ok=True)
