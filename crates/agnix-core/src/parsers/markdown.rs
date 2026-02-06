@@ -423,10 +423,26 @@ fn is_likely_type_parameter(name: &str) -> bool {
     // Common generic type parameter names (PascalCase, all start with uppercase)
     matches!(
         name,
-        "Key" | "Value" | "Item" | "Element" | "Result" | "Error"
-        | "Input" | "Output" | "State" | "Props" | "Args" | "Return"
-        | "Option" | "Type" | "Param" | "Config" | "Context"
-        | "TableName" | "DeviceID" | "FieldName"
+        "Key"
+            | "Value"
+            | "Item"
+            | "Element"
+            | "Result"
+            | "Error"
+            | "Input"
+            | "Output"
+            | "State"
+            | "Props"
+            | "Args"
+            | "Return"
+            | "Option"
+            | "Type"
+            | "Param"
+            | "Config"
+            | "Context"
+            | "TableName"
+            | "DeviceID"
+            | "FieldName"
     )
 }
 
