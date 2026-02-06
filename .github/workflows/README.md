@@ -36,6 +36,11 @@ actions/checkout@v4:           34e114876b0b11c390a56381ad16ebd13914f8d5
 actions/upload-artifact@v4:    ea165f8d65b6e75b540449e92b4886f43607fa02
 actions/download-artifact@v4:  d3f86a106a0bac45b974a628896c90dbdf5c8093
 actions/setup-python@v5:       a26af69be951a213d495a4c3e4e4022e16d87065
+actions/setup-node@v4:         49933ea5288caeca8642d1e84afbd3f7d6820020
+actions/configure-pages@v5:    983d7736d9b0ae728b81ab479565c72886d7745b
+actions/upload-pages-artifact@v3: 56afc609e74202658d3ffba0e8f6dda462b719fa
+actions/deploy-pages@v4:       d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e
+rhysd/actionlint@v1.7.1:       62dc61a45fc95efe8c800af7a557ab0b9165d63b
 
 # Rust Tooling
 dtolnay/rust-toolchain@stable: 4be9e76fd7c4901c61fb841f559994984270fce7
@@ -79,3 +84,4 @@ When a new version of an action is released:
 | claude-code-review.yml | PR | Automated code review |
 | spec-drift.yml | schedule/manual | Monitor upstream specs for changes |
 | mcp-release-watch.yml | daily/manual | Watch MCP spec repo for new releases |
+| docs-site.yml | push/PR/manual | Build and deploy documentation website |

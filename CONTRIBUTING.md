@@ -197,9 +197,12 @@ crates/
   agnix-lsp/      # Language server
   agnix-mcp/      # MCP server
 editors/
+  neovim/         # Neovim extension
   vscode/         # VS Code extension
   jetbrains/      # JetBrains extension scaffold
 knowledge-base/   # Rules documentation
+scripts/          # Development automation scripts
+website/          # Docusaurus documentation website
 tests/fixtures/   # Test cases
 ```
 
