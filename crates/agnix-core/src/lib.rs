@@ -3037,6 +3037,15 @@ Use idiomatic Rust patterns.
             detect_file_type(Path::new("project/.cursorrules")),
             FileType::CursorRulesLegacy
         );
+        // Also test .cursorrules.md variant
+        assert_eq!(
+            detect_file_type(Path::new(".cursorrules.md")),
+            FileType::CursorRulesLegacy
+        );
+        assert_eq!(
+            detect_file_type(Path::new("project/.cursorrules.md")),
+            FileType::CursorRulesLegacy
+        );
     }
 
     #[test]

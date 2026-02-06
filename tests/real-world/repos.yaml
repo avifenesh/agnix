@@ -382,7 +382,7 @@ repos:
     categories: [claude-code, claude-code-hooks, self-test]
     status: pending
 
-  # ===== Round 2: 150 additional repos =====
+  # ===== Round 2: 136 additional repos =====
 
   # MCP (30 more)
   - url: https://github.com/8bit-wraith/mcp
@@ -3093,9 +3093,6 @@ repos:
     categories: [auto-discovered]
     status: pending
   - url: https://github.com/owid/owid-grapher
-    categories: [auto-discovered]
-    status: pending
-  - url: https://github.com/owner/repo
     categories: [auto-discovered]
     status: pending
   - url: https://github.com/oxalc88/finan-track

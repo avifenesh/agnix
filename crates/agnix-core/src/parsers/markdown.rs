@@ -892,6 +892,119 @@ mod tests {
         // Verify the constant is set to 64KB as documented
         assert_eq!(MAX_REGEX_INPUT_SIZE, 65536);
     }
+
+    // ===== Tests for new helper functions =====
+
+    #[test]
+    fn test_is_markdown_safe_html() {
+        // Should return true for commonly unpaired HTML elements in markdown
+        assert!(is_markdown_safe_html("details"));
+        assert!(is_markdown_safe_html("summary"));
+        assert!(is_markdown_safe_html("picture"));
+        assert!(is_markdown_safe_html("video"));
+        assert!(is_markdown_safe_html("audio"));
+        assert!(is_markdown_safe_html("figure"));
+        assert!(is_markdown_safe_html("figcaption"));
+        assert!(is_markdown_safe_html("DETAILS")); // case-insensitive
+        assert!(is_markdown_safe_html("Summary")); // case-insensitive
+    }
+
+    #[test]
+    fn test_is_markdown_safe_html_negative() {
+        // Should return false for other HTML elements
+        assert!(!is_markdown_safe_html("div"));
+        assert!(!is_markdown_safe_html("span"));
+        assert!(!is_markdown_safe_html("p"));
+        assert!(!is_markdown_safe_html("table"));
+        assert!(!is_markdown_safe_html("example"));
+    }
+
+    #[test]
+    fn test_is_known_extensionless_file() {
+        // Should return true for known files without extensions
+        assert!(is_known_extensionless_file("Dockerfile"));
+        assert!(is_known_extensionless_file("Makefile"));
+        assert!(is_known_extensionless_file("Jenkinsfile"));
+        assert!(is_known_extensionless_file("LICENSE"));
+        assert!(is_known_extensionless_file("LICENCE"));
+        assert!(is_known_extensionless_file("Gemfile"));
+        assert!(is_known_extensionless_file("Rakefile"));
+    }
+
+    #[test]
+    fn test_is_known_extensionless_file_negative() {
+        // Should return false for other files
+        assert!(!is_known_extensionless_file("README"));
+        assert!(!is_known_extensionless_file("dockerfile")); // case-sensitive
+        assert!(!is_known_extensionless_file("main"));
+        assert!(!is_known_extensionless_file("test"));
+    }
+
+    #[test]
+    fn test_xml_path_template_placeholder_filtering_inline() {
+        // Test that tags immediately adjacent to slashes in inline text are filtered
+        // This works when the entire path is in a single text node
+        let content = "`lib/features/<feature>/data/`";
+        let tags = extract_xml_tags(content);
+        // Tags in code blocks/spans should not be extracted at all
+        assert_eq!(tags.len(), 0, "Tags in code should be ignored");
+    }
+
+    #[test]
+    fn test_xml_path_template_detection_logic() {
+        // The filtering logic applies within text chunks that the markdown parser provides
+        // When a tag has a slash immediately before or after it in the SAME text chunk,
+        // it gets filtered. This test verifies the behavior matches expectations.
+
+        // Real XML tag without slashes should be detected
+        let content = "Some <example> tag here";
+        let tags = extract_xml_tags(content);
+        assert_eq!(tags.len(), 1, "Real XML tags should be detected");
+        assert_eq!(tags[0].name, "example");
+
+        // Tag in actual path context (markdown may split this differently)
+        let content2 = "The path is: `/<folder>/`";
+        let tags2 = extract_xml_tags(content2);
+        // In code context, should be filtered anyway
+        assert_eq!(tags2.len(), 0, "Tags in code should be filtered");
+    }
+
+    #[test]
+    fn test_xml_non_path_tags_not_filtered() {
+        // Real XML tags not adjacent to slashes should not be filtered
+        let content = "Some <example> tag here";
+        let tags = extract_xml_tags(content);
+        assert_eq!(tags.len(), 1, "Real XML tags should not be filtered");
+        assert_eq!(tags[0].name, "example");
+    }
+
+    #[test]
+    fn test_is_probable_import_path_email_domain_filtering() {
+        // Email-like patterns should be rejected
+        assert!(!is_probable_import_path("users.noreply.github.com"));
+        assert!(!is_probable_import_path("foo.bar.example.com"));
+        assert!(!is_probable_import_path("test.example.org"));
+        assert!(!is_probable_import_path("api.service.io"));
+    }
+
+    #[test]
+    fn test_is_probable_import_path_valid_files() {
+        // Valid file paths should be accepted
+        assert!(is_probable_import_path("docs/guide.md"));
+        assert!(is_probable_import_path("README.md"));
+        assert!(is_probable_import_path("config.json"));
+        assert!(is_probable_import_path("Dockerfile"));
+        assert!(is_probable_import_path("~/docs/file.txt"));
+        assert!(is_probable_import_path("./relative/path.md"));
+    }
+
+    #[test]
+    fn test_is_probable_import_path_rejects_mentions() {
+        // Plain @mentions should be rejected
+        assert!(!is_probable_import_path("username"));
+        assert!(!is_probable_import_path("MashTimeBot"));
+        assert!(!is_probable_import_path("import"));
+    }
 }
 
 #[cfg(test)]
