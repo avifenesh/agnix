@@ -154,7 +154,11 @@ impl ValidatorRegistry {
             (FileType::CopilotScoped, copilot_validator),
             (FileType::CopilotScoped, xml_validator),
             (FileType::CursorRule, cursor_validator),
+            (FileType::CursorRule, prompt_validator),
+            (FileType::CursorRule, claude_md_validator),
             (FileType::CursorRulesLegacy, cursor_validator),
+            (FileType::CursorRulesLegacy, prompt_validator),
+            (FileType::CursorRulesLegacy, claude_md_validator),
             (FileType::GenericMarkdown, cross_platform_validator),
             (FileType::GenericMarkdown, xml_validator),
             (FileType::GenericMarkdown, imports_validator),
@@ -3040,10 +3044,10 @@ Use idiomatic Rust patterns.
         let registry = ValidatorRegistry::with_defaults();
 
         let cursor_validators = registry.validators_for(FileType::CursorRule);
-        assert_eq!(cursor_validators.len(), 1); // cursor only
+        assert_eq!(cursor_validators.len(), 3); // cursor + prompt + claude_md
 
         let legacy_validators = registry.validators_for(FileType::CursorRulesLegacy);
-        assert_eq!(legacy_validators.len(), 1); // cursor only
+        assert_eq!(legacy_validators.len(), 3); // cursor + prompt + claude_md
     }
 
     #[test]

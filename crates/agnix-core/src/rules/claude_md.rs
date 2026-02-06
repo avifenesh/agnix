@@ -19,10 +19,14 @@ impl Validator for ClaudeMdValidator {
     fn validate(&self, path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic> {
         let mut diagnostics = Vec::new();
 
-        // Only validate CLAUDE.md variants (not AGENTS.* files)
-        // CC-MEM rules are Claude Code specific and should not apply to cross-platform AGENTS files
+        // Validate CLAUDE.md variants and cursor rule files.
+        // Skip AGENTS.* files - CC-MEM rules are Claude-specific.
         let filename = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
-        if !matches!(filename, "CLAUDE.md" | "CLAUDE.local.md") {
+        let is_claude_md = matches!(filename, "CLAUDE.md" | "CLAUDE.local.md");
+        let is_cursor_rules = filename == ".cursorrules"
+            || filename == ".cursorrules.md"
+            || filename.ends_with(".mdc");
+        if !is_claude_md && !is_cursor_rules {
             return diagnostics;
         }
 
