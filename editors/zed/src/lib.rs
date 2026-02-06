@@ -4,6 +4,8 @@ use zed_extension_api::{
     Os, Result,
 };
 
+const GITHUB_REPO: &str = "avifenesh/agnix";
+
 /// Zed extension that integrates the agnix LSP for validating agent configurations.
 struct AgnixExtension {
     /// Cached path to the agnix-lsp binary, if already downloaded.
@@ -62,7 +64,7 @@ impl AgnixExtension {
 
         // Determine the latest release from GitHub
         let release = zed::latest_github_release(
-            "avifenesh/agnix",
+            GITHUB_REPO,
             GithubReleaseOptions {
                 require_assets: true,
                 pre_release: false,
@@ -94,10 +96,12 @@ impl AgnixExtension {
             .find(|a| a.name == asset_name)
             .ok_or_else(|| format!("no release asset found matching {asset_name}"))?;
 
-        // Validate download URL uses HTTPS from GitHub
-        if !asset.download_url.starts_with("https://") {
+        // Validate download URL uses HTTPS from a trusted GitHub domain
+        let is_trusted = asset.download_url.starts_with("https://github.com/")
+            || asset.download_url.starts_with("https://objects.githubusercontent.com/");
+        if !is_trusted {
             return Err(format!(
-                "refusing non-HTTPS download URL: {}",
+                "refusing download from untrusted URL: {}",
                 asset.download_url
             ));
         }
