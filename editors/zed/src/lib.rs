@@ -1,7 +1,7 @@
 use std::fs;
 use zed_extension_api::{
-    self as zed, Architecture, Command, DownloadedFileType, GithubReleaseOptions,
-    LanguageServerId, Os, Result,
+    self as zed, Architecture, Command, DownloadedFileType, GithubReleaseOptions, LanguageServerId,
+    Os, Result,
 };
 
 /// Zed extension that integrates the agnix LSP for validating agent configurations.
@@ -34,9 +34,7 @@ fn asset_for_platform(os: Os, arch: Architecture) -> Result<(&'static str, Downl
             "agnix-lsp-x86_64-pc-windows-msvc.zip",
             DownloadedFileType::Zip,
         )),
-        _ => Err(format!(
-            "unsupported platform: {os:?} {arch:?}",
-        )),
+        _ => Err(format!("unsupported platform: {os:?} {arch:?}",)),
     }
 }
 
@@ -59,7 +57,7 @@ impl AgnixExtension {
 
         // Check cached path first
         if let Some(ref path) = self.cached_binary_path {
-            if fs::metadata(path).map_or(false, |m| m.is_file()) {
+            if fs::metadata(path).is_ok_and(|m| m.is_file()) {
                 return Ok(path.clone());
             }
         }
@@ -78,7 +76,7 @@ impl AgnixExtension {
         let binary_path = format!("{version_dir}/{bin}");
 
         // If this version is already downloaded, use it
-        if fs::metadata(&binary_path).map_or(false, |m| m.is_file()) {
+        if fs::metadata(&binary_path).is_ok_and(|m| m.is_file()) {
             self.cached_binary_path = Some(binary_path.clone());
             return Ok(binary_path);
         }
@@ -91,16 +89,10 @@ impl AgnixExtension {
             .assets
             .iter()
             .find(|a| a.name == asset_name)
-            .ok_or_else(|| {
-                format!("no release asset found matching {asset_name}")
-            })?;
+            .ok_or_else(|| format!("no release asset found matching {asset_name}"))?;
 
-        zed::download_file(
-            &asset.download_url,
-            &version_dir,
-            file_type,
-        )
-        .map_err(|e| format!("failed to download {asset_name}: {e}"))?;
+        zed::download_file(&asset.download_url, &version_dir, file_type)
+            .map_err(|e| format!("failed to download {asset_name}: {e}"))?;
 
         zed::make_file_executable(&binary_path)?;
 
