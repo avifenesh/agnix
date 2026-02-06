@@ -102,11 +102,11 @@ impl Validator for CopilotValidator {
 
         // COP-006: File length limit for global files (WARNING)
         const COPILOT_GLOBAL_LENGTH_LIMIT: usize = 4000;
-        let char_count = content.chars().count();
         if config.is_rule_enabled("COP-006")
             && !is_scoped
-            && char_count > COPILOT_GLOBAL_LENGTH_LIMIT
+            && content.chars().count() > COPILOT_GLOBAL_LENGTH_LIMIT
         {
+            let char_count = content.chars().count();
             diagnostics.push(
                 Diagnostic::warning(
                     path.to_path_buf(),
@@ -241,7 +241,7 @@ impl Validator for CopilotValidator {
                             .raw
                             .lines()
                             .enumerate()
-                            .find(|(_, l)| l.trim_start().starts_with("excludeAgent:"))
+                            .find(|(_, l)| l.trim_start().starts_with("excludeAgent"))
                             .map(|(i, _)| parsed.start_line + 1 + i)
                             .unwrap_or(parsed.start_line + 1);
 
