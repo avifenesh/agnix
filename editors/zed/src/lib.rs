@@ -98,7 +98,9 @@ impl AgnixExtension {
 
         // Validate download URL uses HTTPS from a trusted GitHub domain
         let is_trusted = asset.download_url.starts_with("https://github.com/")
-            || asset.download_url.starts_with("https://objects.githubusercontent.com/");
+            || asset
+                .download_url
+                .starts_with("https://objects.githubusercontent.com/");
         if !is_trusted {
             return Err(format!(
                 "refusing download from untrusted URL: {}",
