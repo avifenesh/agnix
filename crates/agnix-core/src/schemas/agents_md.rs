@@ -11,15 +11,15 @@
 use regex::Regex;
 use std::collections::HashSet;
 use std::path::Path;
-use std::sync::OnceLock;
 
-// Static patterns initialized once
-static CODE_BLOCK_PATTERN: OnceLock<Regex> = OnceLock::new();
-static LINK_PATTERN: OnceLock<Regex> = OnceLock::new();
-static MARKDOWN_HEADER_PATTERN: OnceLock<Regex> = OnceLock::new();
-static PROJECT_CONTEXT_PATTERN: OnceLock<Regex> = OnceLock::new();
-static PLATFORM_GUARD_PATTERN: OnceLock<Regex> = OnceLock::new();
-static PLATFORM_FEATURE_PATTERN: OnceLock<Regex> = OnceLock::new();
+use crate::regex_util::static_regex;
+
+static_regex!(fn code_block_pattern, r"^```");
+static_regex!(fn link_pattern, r"\[([^\]]*)\](?:\(([^)]*)\)?|\[([^\]]*)\]?)");
+static_regex!(fn markdown_header_pattern, r"^#+\s+.+");
+static_regex!(fn project_context_pattern, r"(?im)^#+\s*(project|overview|about|description|introduction|summary|this\s+(project|repository|repo))\b");
+static_regex!(fn platform_guard_pattern, r#"(?im)^(?:#+\s*|<!--\s*)(claude|cursor|codex|opencode|cline|copilot|windsurf)(?:\s+code)?(?:\s+specific|\s+only)?(?:\s*-->)?"#);
+static_regex!(fn platform_feature_pattern, r#"(?im)(?:^\s*-?\s*(?:type|event):\s*(?:PreToolExecution|PostToolExecution|Notification|Stop|SubagentStop)\b|^\s*context:\s*fork\b|^\s*agent:\s*\S+|^\s*allowed-tools:\s*.+|\.cursor/|@rules)"#);
 
 // ============================================================================
 // AGM-001: Valid Markdown Structure
@@ -38,21 +38,6 @@ pub struct MarkdownValidityIssue {
 pub enum MarkdownIssueType {
     UnclosedCodeBlock,
     MalformedLink,
-}
-
-fn code_block_pattern() -> &'static Regex {
-    CODE_BLOCK_PATTERN.get_or_init(|| {
-        // Match triple backtick code blocks (with optional language specifier)
-        Regex::new(r"^```").unwrap()
-    })
-}
-
-fn link_pattern() -> &'static Regex {
-    LINK_PATTERN.get_or_init(|| {
-        // Match markdown links: [text](url) or [text][ref]
-        // Also detect malformed patterns like [text( or [text]( without closing
-        Regex::new(r"\[([^\]]*)\](?:\(([^)]*)\)?|\[([^\]]*)\]?)").unwrap()
-    })
 }
 
 /// Check markdown validity (for AGM-001)
@@ -152,10 +137,6 @@ pub struct SectionHeaderIssue {
     pub suggestion: String,
 }
 
-fn markdown_header_pattern() -> &'static Regex {
-    MARKDOWN_HEADER_PATTERN.get_or_init(|| Regex::new(r"^#+\s+.+").unwrap())
-}
-
 /// Check for missing section headers (for AGM-002)
 ///
 /// AGENTS.md should have clear section headers for organization
@@ -223,13 +204,6 @@ pub struct MissingProjectContext {
     pub suggestion: String,
 }
 
-fn project_context_pattern() -> &'static Regex {
-    PROJECT_CONTEXT_PATTERN.get_or_init(|| {
-        // Match common project description headers/sections
-        Regex::new(r"(?im)^#+\s*(project|overview|about|description|introduction|summary|this\s+(project|repository|repo))\b").unwrap()
-    })
-}
-
 /// Check for missing project context (for AGM-004)
 ///
 /// AGENTS.md should describe project purpose/stack
@@ -278,23 +252,6 @@ pub struct UnguardedPlatformFeature {
     pub feature: String,
     pub platform: String,
     pub description: String,
-}
-
-fn platform_guard_pattern() -> &'static Regex {
-    PLATFORM_GUARD_PATTERN.get_or_init(|| {
-        // Match platform guard comments/headers
-        // Examples: "## Claude Code Specific", "<!-- Claude Code -->", "# Cursor Only"
-        Regex::new(r"(?im)^(?:#+\s*|<!--\s*)(claude|cursor|codex|opencode|cline|copilot|windsurf)(?:\s+code)?(?:\s+specific|\s+only)?(?:\s*-->)?").unwrap()
-    })
-}
-
-fn platform_feature_pattern() -> &'static Regex {
-    PLATFORM_FEATURE_PATTERN.get_or_init(|| {
-        // Match platform-specific features that should be guarded
-        // Claude Code: hooks, context: fork, agent:, allowed-tools:
-        // Cursor: .cursor/, @rules
-        Regex::new(r"(?im)(?:^\s*-?\s*(?:type|event):\s*(?:PreToolExecution|PostToolExecution|Notification|Stop|SubagentStop)\b|^\s*context:\s*fork\b|^\s*agent:\s*\S+|^\s*allowed-tools:\s*.+|\.cursor/|@rules)").unwrap()
-    })
 }
 
 /// Find platform-specific features without guard comments (for AGM-005)
@@ -466,6 +423,16 @@ pub fn check_agents_md_hierarchy(
 mod tests {
     use super::*;
     use std::path::PathBuf;
+
+    #[test]
+    fn test_regex_patterns_compile() {
+        let _ = code_block_pattern();
+        let _ = link_pattern();
+        let _ = markdown_header_pattern();
+        let _ = project_context_pattern();
+        let _ = platform_guard_pattern();
+        let _ = platform_feature_pattern();
+    }
 
     // ===== AGM-001: Valid Markdown Structure =====
 

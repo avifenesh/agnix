@@ -26,6 +26,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - IDE locale setting: VS Code (`agnix.locale`), Neovim plugin, and LSP config bridge
     - Supports explicit null to revert to auto-detection
 
+### Changed
+- Core: introduce `static_regex!` macro for validated regex initialization (#246)
+  - Replaces bare `.unwrap()` on `Regex::new()` with descriptive `.expect()` messages
+  - Migrates 36 `OnceLock<Regex>` patterns across 7 files to use the macro
+  - Converts `hooks.rs` from `once_cell::sync::Lazy` to `std::sync::OnceLock`
+  - Removes `once_cell` direct dependency from agnix-core
+  - Adds per-module `test_regex_patterns_compile` tests for all static patterns
+
 ### Fixed
 - CLI: harden telemetry queue timestamp parsing against malformed data (#231)
   - Replace panic-prone byte-index slicing with safe `str::get()` calls

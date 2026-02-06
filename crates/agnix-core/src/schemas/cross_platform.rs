@@ -13,28 +13,30 @@
 
 use regex::Regex;
 use std::path::Path;
-use std::sync::OnceLock;
 
 use crate::parsers::markdown::MAX_REGEX_INPUT_SIZE;
+use crate::regex_util::static_regex;
 
-// Static patterns initialized once
-static CLAUDE_HOOKS_PATTERN: OnceLock<Regex> = OnceLock::new();
-static CONTEXT_FORK_PATTERN: OnceLock<Regex> = OnceLock::new();
-static AGENT_FIELD_PATTERN: OnceLock<Regex> = OnceLock::new();
-static ALLOWED_TOOLS_PATTERN: OnceLock<Regex> = OnceLock::new();
-static HARD_CODED_PATH_PATTERN: OnceLock<Regex> = OnceLock::new();
-static MARKDOWN_HEADER_PATTERN: OnceLock<Regex> = OnceLock::new();
-static CLAUDE_SECTION_GUARD_PATTERN: OnceLock<Regex> = OnceLock::new();
+// XP-001: Claude-specific feature patterns
+static_regex!(fn claude_hooks_pattern, r"(?im)^\s*-?\s*(?:type|event):\s*(?:PreToolExecution|PostToolExecution|Notification|Stop|SubagentStop)\b");
+static_regex!(fn context_fork_pattern, r"(?im)^\s*context:\s*fork\b");
+static_regex!(fn agent_field_pattern, r"(?im)^\s*agent:\s*\S+");
+static_regex!(fn allowed_tools_pattern, r"(?im)^\s*allowed-tools:\s*.+");
+static_regex!(fn claude_section_guard_pattern, r"(?im)^(?:#+\s*|<!--\s*)claude(?:\s+code)?(?:\s+specific|\s+only)?(?:\s*-->)?");
+
+// XP-002/003: Markdown structure and path patterns
+static_regex!(fn markdown_header_pattern, r"^#+\s+.+");
+static_regex!(fn hard_coded_path_pattern, r"(?i)(?:\.claude/|\.opencode/|\.cursor/|\.cline/|\.github/copilot/)");
 
 // XP-004: Build command patterns
-static BUILD_COMMAND_PATTERN: OnceLock<Regex> = OnceLock::new();
+static_regex!(fn build_command_pattern, r"(?m)(?:^|\s|`)((?:npm|pnpm|yarn|bun)\s+(?:install|i|add|build|test|run|exec|ci)\b[^\n`]*)");
 
 // XP-005: Tool constraint patterns
-static TOOL_ALLOW_PATTERN: OnceLock<Regex> = OnceLock::new();
-static TOOL_DISALLOW_PATTERN: OnceLock<Regex> = OnceLock::new();
+static_regex!(fn tool_allow_pattern, r"(?im)(?:allowed[-_]?tools\s*:|tools\s*:\s*\[|\ballways?\s+allow\s+(\w+)\b|\bcan\s+use\s+(\w+)\b|\bmay\s+use\s+(\w+)\b)");
+static_regex!(fn tool_disallow_pattern, r"(?im)(?:disallowed[-_]?tools\s*:|\bnever\s+use\s+(\w+)\b|\bdon'?t\s+use\s+(\w+)\b|\bdo\s+not\s+use\s+(\w+)\b|\bforbidden\s*:\s*(\w+)\b|\bprohibited\s*:\s*(\w+)\b|\bno\s+(\w+)\s+tool\b)");
 
 // XP-006: Layer type patterns
-static LAYER_PRECEDENCE_PATTERN: OnceLock<Regex> = OnceLock::new();
+static_regex!(fn layer_precedence_pattern, r"(?im)(?:precedence|priority|override|hierarchy|takes?\s+precedence|supersede|primary\s+source|authoritative)");
 
 // ============================================================================
 // XP-001: Claude-Specific Features Detection
@@ -47,42 +49,6 @@ pub struct ClaudeSpecificFeature {
     pub column: usize,
     pub feature: String,
     pub description: String,
-}
-
-fn claude_hooks_pattern() -> &'static Regex {
-    CLAUDE_HOOKS_PATTERN.get_or_init(|| {
-        // Match hooks configuration patterns in markdown/YAML
-        Regex::new(r"(?im)^\s*-?\s*(?:type|event):\s*(?:PreToolExecution|PostToolExecution|Notification|Stop|SubagentStop)\b").unwrap()
-    })
-}
-
-fn context_fork_pattern() -> &'static Regex {
-    CONTEXT_FORK_PATTERN.get_or_init(|| {
-        // Match context: fork in YAML frontmatter or content
-        Regex::new(r"(?im)^\s*context:\s*fork\b").unwrap()
-    })
-}
-
-fn agent_field_pattern() -> &'static Regex {
-    AGENT_FIELD_PATTERN.get_or_init(|| {
-        // Match any agent: field in YAML frontmatter (Claude Code specific)
-        // The agent: field is used to spawn subagents, which is Claude Code exclusive
-        Regex::new(r"(?im)^\s*agent:\s*\S+").unwrap()
-    })
-}
-
-fn allowed_tools_pattern() -> &'static Regex {
-    ALLOWED_TOOLS_PATTERN.get_or_init(|| {
-        // Match allowed-tools: field (Claude Code specific)
-        Regex::new(r"(?im)^\s*allowed-tools:\s*.+").unwrap()
-    })
-}
-
-fn claude_section_guard_pattern() -> &'static Regex {
-    CLAUDE_SECTION_GUARD_PATTERN.get_or_init(|| {
-        Regex::new(r"(?im)^(?:#+\s*|<!--\s*)claude(?:\s+code)?(?:\s+specific|\s+only)?(?:\s*-->)?")
-            .unwrap()
-    })
 }
 
 /// Find Claude-specific features in content (for XP-001)
@@ -205,10 +171,6 @@ pub struct MarkdownStructureIssue {
     pub suggestion: String,
 }
 
-fn markdown_header_pattern() -> &'static Regex {
-    MARKDOWN_HEADER_PATTERN.get_or_init(|| Regex::new(r"^#+\s+.+").unwrap())
-}
-
 /// Check AGENTS.md markdown structure (for XP-002)
 ///
 /// Validates that AGENTS.md follows good markdown conventions for
@@ -271,13 +233,6 @@ pub struct HardCodedPath {
     pub column: usize,
     pub path: String,
     pub platform: String,
-}
-
-fn hard_coded_path_pattern() -> &'static Regex {
-    HARD_CODED_PATH_PATTERN.get_or_init(|| {
-        // Match common platform-specific config directories
-        Regex::new(r"(?i)(?:\.claude/|\.opencode/|\.cursor/|\.cline/|\.github/copilot/)").unwrap()
-    })
 }
 
 /// Find hard-coded platform-specific paths (for XP-003)
@@ -369,14 +324,6 @@ pub struct BuildCommand {
     pub package_manager: PackageManager,
     pub command_type: CommandType,
     pub raw_command: String,
-}
-
-fn build_command_pattern() -> &'static Regex {
-    BUILD_COMMAND_PATTERN.get_or_init(|| {
-        // Match npm/pnpm/yarn/bun commands
-        Regex::new(r"(?m)(?:^|\s|`)((?:npm|pnpm|yarn|bun)\s+(?:install|i|add|build|test|run|exec|ci)\b[^\n`]*)")
-            .unwrap()
-    })
 }
 
 /// Extract build commands from content (for XP-004)
@@ -560,24 +507,6 @@ pub struct ToolConstraint {
     pub tool_name: String,
     pub constraint_type: ConstraintType,
     pub source_context: String,
-}
-
-fn tool_allow_pattern() -> &'static Regex {
-    TOOL_ALLOW_PATTERN.get_or_init(|| {
-        // Match patterns that allow tools
-        // allowed-tools:, tools:, allowedTools:, always allow, can use, may use
-        Regex::new(r"(?im)(?:allowed[-_]?tools\s*:|tools\s*:\s*\[|\ballways?\s+allow\s+(\w+)\b|\bcan\s+use\s+(\w+)\b|\bmay\s+use\s+(\w+)\b)")
-            .unwrap()
-    })
-}
-
-fn tool_disallow_pattern() -> &'static Regex {
-    TOOL_DISALLOW_PATTERN.get_or_init(|| {
-        // Match patterns that disallow tools
-        // disallowed-tools:, disallowedTools:, never use, don't use, do not use, forbidden, prohibited
-        Regex::new(r"(?im)(?:disallowed[-_]?tools\s*:|\bnever\s+use\s+(\w+)\b|\bdon'?t\s+use\s+(\w+)\b|\bdo\s+not\s+use\s+(\w+)\b|\bforbidden\s*:\s*(\w+)\b|\bprohibited\s*:\s*(\w+)\b|\bno\s+(\w+)\s+tool\b)")
-            .unwrap()
-    })
 }
 
 /// Extract tool constraints from content (for XP-005)
@@ -875,14 +804,6 @@ pub struct InstructionLayer {
     pub has_precedence_doc: bool,
 }
 
-fn layer_precedence_pattern() -> &'static Regex {
-    LAYER_PRECEDENCE_PATTERN.get_or_init(|| {
-        // Match patterns that document precedence/priority
-        Regex::new(r"(?im)(?:precedence|priority|override|hierarchy|takes?\s+precedence|supersede|primary\s+source|authoritative)")
-            .unwrap()
-    })
-}
-
 /// Categorize a file path as an instruction layer (for XP-006)
 ///
 /// # Security
@@ -1000,6 +921,21 @@ pub fn is_instruction_file(path: &Path) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_regex_patterns_compile() {
+        let _ = claude_hooks_pattern();
+        let _ = context_fork_pattern();
+        let _ = agent_field_pattern();
+        let _ = allowed_tools_pattern();
+        let _ = claude_section_guard_pattern();
+        let _ = markdown_header_pattern();
+        let _ = hard_coded_path_pattern();
+        let _ = build_command_pattern();
+        let _ = tool_allow_pattern();
+        let _ = tool_disallow_pattern();
+        let _ = layer_precedence_pattern();
+    }
 
     // ===== XP-001: Claude-Specific Features =====
 

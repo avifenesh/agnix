@@ -1,11 +1,10 @@
 use crate::fs::FileSystem;
 use crate::parsers::frontmatter::FrontmatterParts;
-use regex::Regex;
 use std::collections::HashSet;
 use std::path::Path;
 
 use super::{
-    PathMatch, SkillFrontmatter, REFERENCE_PATH_REGEX, WINDOWS_PATH_REGEX, WINDOWS_PATH_TOKEN_REGEX,
+    reference_path_regex, windows_path_regex, windows_path_token_regex, PathMatch, SkillFrontmatter,
 };
 
 pub(super) fn parse_frontmatter_fields(
@@ -18,8 +17,7 @@ pub(super) fn parse_frontmatter_fields(
 }
 
 pub(super) fn extract_reference_paths(body: &str) -> Vec<PathMatch> {
-    let re = REFERENCE_PATH_REGEX
-        .get_or_init(|| Regex::new("(?i)\\b(?:references?|refs)[/\\\\][^\\s)\\]}>\"']+").unwrap());
+    let re = reference_path_regex();
     let mut paths = Vec::new();
     let mut seen = HashSet::new();
     for m in re.find_iter(body) {
@@ -66,9 +64,8 @@ pub(super) fn is_regex_escape(s: &str) -> bool {
 }
 
 pub(super) fn extract_windows_paths(body: &str) -> Vec<PathMatch> {
-    let re = WINDOWS_PATH_REGEX
-        .get_or_init(|| Regex::new(r"(?i)\b(?:[a-z]:)?[a-z0-9._-]+(?:\\[a-z0-9._-]+)+\b").unwrap());
-    let token_re = WINDOWS_PATH_TOKEN_REGEX.get_or_init(|| Regex::new(r"[^\s]+\\[^\s]+").unwrap());
+    let re = windows_path_regex();
+    let token_re = windows_path_token_regex();
     let mut paths = Vec::new();
     let mut seen = HashSet::new();
     for m in re.find_iter(body) {

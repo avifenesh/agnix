@@ -41,7 +41,6 @@ dependencies = [
  "glob",
  "iai-callgrind",
  "ignore",
- "once_cell",
  "proptest",
  "pulldown-cmark",
  "rayon",

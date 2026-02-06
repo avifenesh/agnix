@@ -4,6 +4,7 @@ use crate::{
     config::LintConfig,
     diagnostics::{Diagnostic, Fix},
     parsers::frontmatter::{split_frontmatter, FrontmatterParts},
+    regex_util::static_regex,
     rules::Validator,
     schemas::skill::SkillSchema,
 };
@@ -43,12 +44,12 @@ struct PathMatch {
     start: usize,
 }
 
-static NAME_FORMAT_REGEX: OnceLock<Regex> = OnceLock::new();
-static DESCRIPTION_XML_REGEX: OnceLock<Regex> = OnceLock::new();
-static REFERENCE_PATH_REGEX: OnceLock<Regex> = OnceLock::new();
-static WINDOWS_PATH_REGEX: OnceLock<Regex> = OnceLock::new();
-static WINDOWS_PATH_TOKEN_REGEX: OnceLock<Regex> = OnceLock::new();
-static PLAIN_BASH_REGEX: OnceLock<Regex> = OnceLock::new();
+static_regex!(fn name_format_regex, r"^[a-z0-9]+(-[a-z0-9]+)*$");
+static_regex!(fn description_xml_regex, r"<[^>]+>");
+static_regex!(fn reference_path_regex, "(?i)\\b(?:references?|refs)[/\\\\][^\\s)\\]}>\"']+");
+static_regex!(fn windows_path_regex, r"(?i)\b(?:[a-z]:)?[a-z0-9._-]+(?:\\[a-z0-9._-]+)+\b");
+static_regex!(fn windows_path_token_regex, r"[^\s]+\\[^\s]+");
+static_regex!(fn plain_bash_regex, r"\bBash\b");
 
 /// Valid model values for CC-SK-001
 const VALID_MODELS: &[&str] = &["sonnet", "opus", "haiku", "inherit"];
@@ -116,11 +117,7 @@ fn convert_to_kebab_case(name: &str) -> String {
 /// Find byte positions of plain "Bash" (not scoped like "Bash(...)") in content
 /// Returns Vec of (start_byte, end_byte) for each occurrence
 fn find_plain_bash_positions(content: &str, search_start: usize) -> Vec<(usize, usize)> {
-    let re = PLAIN_BASH_REGEX.get_or_init(|| {
-        // Match "Bash" at word boundary
-        // Note: regex crate doesn't support lookahead, so we'll filter manually
-        Regex::new(r"\bBash\b").unwrap()
-    });
+    let re = plain_bash_regex();
 
     let search_content = &content[search_start..];
     re.find_iter(search_content)
@@ -153,8 +150,7 @@ fn is_valid_agent(agent: &str) -> bool {
     }
 
     // Reuse the same kebab-case regex used for skill names
-    let re = NAME_FORMAT_REGEX.get_or_init(|| Regex::new(r"^[a-z0-9]+(-[a-z0-9]+)*$").unwrap());
-    re.is_match(agent)
+    name_format_regex().is_match(agent)
 }
 
 /// Validation context holding shared state for skill validation.
@@ -284,8 +280,7 @@ impl<'a> ValidationContext<'a> {
 
         // AS-004: Invalid name format
         if self.config.is_rule_enabled("AS-004") {
-            let name_re =
-                NAME_FORMAT_REGEX.get_or_init(|| Regex::new(r"^[a-z0-9]+(-[a-z0-9]+)*$").unwrap());
+            let name_re = name_format_regex();
             if name_trimmed.len() > 64 || !name_re.is_match(name_trimmed) {
                 let fixed_name = convert_to_kebab_case(name_trimmed);
                 let mut diagnostic = Diagnostic::error(
@@ -395,8 +390,7 @@ impl<'a> ValidationContext<'a> {
 
         // AS-009: Description contains XML tags
         if self.config.is_rule_enabled("AS-009") {
-            let xml_re = DESCRIPTION_XML_REGEX.get_or_init(|| Regex::new(r"<[^>]+>").unwrap());
-            if xml_re.is_match(description) {
+            if description_xml_regex().is_match(description) {
                 self.diagnostics.push(
                     Diagnostic::error(
                         self.path.to_path_buf(),
