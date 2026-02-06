@@ -275,7 +275,9 @@ pub fn find_ambiguous_instructions(content: &str) -> Vec<AmbiguousInstruction> {
             // e.g., "linting errors (usually part of the build)" is describing, not instructing
             let before = &line[..mat.start()];
             let after = &line[mat.end()..];
-            if before.rfind('(').is_some_and(|p| before[p..].find(')').is_none())
+            if before
+                .rfind('(')
+                .is_some_and(|p| before[p..].find(')').is_none())
                 && after.find(')').is_some()
             {
                 continue;

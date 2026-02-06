@@ -2,7 +2,7 @@
   "name": "agnix",
   "displayName": "agnix - Agent Config Linter",
   "description": "Real-time validation for AI agent configuration files. Validates SKILL.md, CLAUDE.md, AGENTS.md, MCP configs, hooks, and more against 100 rules.",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "publisher": "avifenesh",
   "repository": {
     "type": "git",

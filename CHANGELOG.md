@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.1] - 2026-02-06
+
+### Fixed
+- CC-MEM-006: Detect positive alternatives after negatives ("NEVER X - always Y" no longer false positive)
+- PE-004: Skip ambiguous terms inside parentheses (descriptive text no longer flagged)
+- CC-AG-007: Humanize YAML parse errors ("expected a YAML list" instead of "expected a sequence")
+- MCP-002: Suggest `parameters` -> `inputSchema` when field exists under wrong name
+- VS Code marketplace image now bundled in extension package
+- Exclude DEVELOPER.md and 11 other developer-focused files from validation
+
+### Added
+- JetBrains plugin auto-publish in release workflow
+- Zed extension auto-publish via zed-extension-action
+- All editor extension versions now auto-synced from Cargo.toml on release
+
 ## [0.9.0] - 2026-02-06
 
 ### Changed

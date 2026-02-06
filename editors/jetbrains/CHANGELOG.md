@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.1] - 2026-02-06
+
+### Fixed
+- Exclude developer-focused markdown files from validation scope.
+- Detect positive alternatives after negatives in configuration memory rules (CC-MEM-006).
+
+
 ## [0.7.3] - 2026-02-05
 
 ### Fixed
