@@ -13,7 +13,7 @@
 
 The linter for your AI coding stack -- skills, hooks, memory, plugins, MCP, and agent configs. CLI, LSP server, and IDE plugins for Claude Code, Cursor, GitHub Copilot, Codex CLI, and more.
 
-**116 validation rules** | **Auto-fix** | **VS Code + JetBrains + Neovim** | **GitHub Action**
+**100 validation rules** | **Auto-fix** | **VS Code + JetBrains + Neovim** | **GitHub Action**
 
 ## Quick Start
 
