@@ -232,7 +232,7 @@ Contributions are welcome and appreciated. See [CONTRIBUTING.md](CONTRIBUTING.md
 
 ### Found Something Off?
 
-agnix validates against 116 rules, but the agent config ecosystem moves fast.
+agnix validates against 100 rules, but the agent config ecosystem moves fast.
 If a rule is wrong, missing, or too noisy -- we want to know.
 
 [Report a bug](https://github.com/avifenesh/agnix/issues/new) |
