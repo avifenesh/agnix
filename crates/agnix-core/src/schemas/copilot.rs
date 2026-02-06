@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 
 /// Known valid keys for scoped instruction frontmatter
-const KNOWN_KEYS: &[&str] = &["applyTo"];
+const KNOWN_KEYS: &[&str] = &["applyTo", "excludeAgent"];
 
 /// Frontmatter schema for scoped Copilot instructions
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -20,6 +20,10 @@ pub struct CopilotScopedSchema {
     /// Glob patterns specifying which files this instruction applies to
     #[serde(default)]
     pub apply_to: Option<String>,
+
+    /// Agent exclusion filter (e.g., "code-review" or "coding-agent")
+    #[serde(default)]
+    pub exclude_agent: Option<String>,
 }
 
 /// Result of parsing Copilot instruction file frontmatter
@@ -357,5 +361,51 @@ unknownKey: value
         assert_eq!(result.unknown_keys.len(), 1);
         // unknownKey is on line 3 (line 1 is ---, line 2 is applyTo, line 3 is unknownKey)
         assert_eq!(result.unknown_keys[0].line, 3);
+    }
+
+    // ===== excludeAgent Parsing =====
+
+    #[test]
+    fn test_parse_exclude_agent() {
+        let content = r#"---
+applyTo: "**/*.ts"
+excludeAgent: "code-review"
+---
+# Body
+"#;
+        let result = parse_frontmatter(content).unwrap();
+        assert!(result.schema.is_some());
+        let schema = result.schema.unwrap();
+        assert_eq!(schema.apply_to, Some("**/*.ts".to_string()));
+        assert_eq!(schema.exclude_agent, Some("code-review".to_string()));
+        assert!(result.parse_error.is_none());
+    }
+
+    #[test]
+    fn test_exclude_agent_not_unknown_key() {
+        let content = r#"---
+applyTo: "**/*.ts"
+excludeAgent: "coding-agent"
+---
+# Body
+"#;
+        let result = parse_frontmatter(content).unwrap();
+        assert!(
+            result.unknown_keys.is_empty(),
+            "excludeAgent should not be reported as unknown key, got: {:?}",
+            result.unknown_keys
+        );
+    }
+
+    #[test]
+    fn test_exclude_agent_absent() {
+        let content = r#"---
+applyTo: "**/*.ts"
+---
+# Body
+"#;
+        let result = parse_frontmatter(content).unwrap();
+        assert!(result.schema.is_some());
+        assert!(result.schema.unwrap().exclude_agent.is_none());
     }
 }

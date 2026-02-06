@@ -1,10 +1,12 @@
-//! GitHub Copilot instruction file validation rules (COP-001 to COP-004)
+//! GitHub Copilot instruction file validation rules (COP-001 to COP-006)
 //!
 //! Validates:
 //! - COP-001: Empty instruction file (HIGH) - files must have content
 //! - COP-002: Invalid frontmatter (HIGH) - scoped files require valid YAML with applyTo
 //! - COP-003: Invalid glob pattern (HIGH) - applyTo must contain valid globs
 //! - COP-004: Unknown frontmatter keys (MEDIUM) - warn about unrecognized keys
+//! - COP-005: Invalid excludeAgent value (HIGH) - must be "code-review" or "coding-agent"
+//! - COP-006: File length limit (MEDIUM) - global files should not exceed ~4000 characters
 
 use crate::{
     FileType,
@@ -98,7 +100,21 @@ impl Validator for CopilotValidator {
             }
         }
 
-        // Rules COP-002, COP-003, COP-004 only apply to scoped instruction files
+        // COP-006: File length limit for global files (WARNING)
+        if config.is_rule_enabled("COP-006") && !is_scoped && content.len() > 4000 {
+            diagnostics.push(
+                Diagnostic::warning(
+                    path.to_path_buf(),
+                    1,
+                    0,
+                    "COP-006",
+                    t!("rules.cop_006.message", len = content.len()),
+                )
+                .with_suggestion(t!("rules.cop_006.suggestion")),
+            );
+        }
+
+        // Rules COP-002, COP-003, COP-004, COP-005 only apply to scoped instruction files
         if !is_scoped {
             return diagnostics;
         }
@@ -206,6 +222,39 @@ impl Validator for CopilotValidator {
                 }
 
                 diagnostics.push(diagnostic);
+            }
+        }
+
+        // COP-005: Invalid excludeAgent value (ERROR)
+        if config.is_rule_enabled("COP-005") {
+            if let Some(ref schema) = parsed.schema {
+                if let Some(ref agent_value) = schema.exclude_agent {
+                    const VALID_AGENTS: &[&str] = &["code-review", "coding-agent"];
+                    if !VALID_AGENTS.contains(&agent_value.as_str()) {
+                        // Find the line number of excludeAgent in raw frontmatter
+                        let line = parsed
+                            .raw
+                            .lines()
+                            .enumerate()
+                            .find(|(_, l)| l.trim_start().starts_with("excludeAgent"))
+                            .map(|(i, _)| parsed.start_line + 1 + i)
+                            .unwrap_or(parsed.start_line + 1);
+
+                        diagnostics.push(
+                            Diagnostic::error(
+                                path.to_path_buf(),
+                                line,
+                                0,
+                                "COP-005",
+                                t!(
+                                    "rules.cop_005.message",
+                                    value = agent_value.as_str()
+                                ),
+                            )
+                            .with_suggestion(t!("rules.cop_005.suggestion")),
+                        );
+                    }
+                }
             }
         }
 

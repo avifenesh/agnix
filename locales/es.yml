@@ -295,7 +295,13 @@ rules:
     suggestion: "Usa sintaxis glob valida como '**/*.ts' o 'src/**/*.js'"
   cop_004:
     message: "Clave de frontmatter desconocida '%{key}' en archivo de instrucciones de Copilot"
-    suggestion: "Elimina la clave desconocida '%{key}'. Solo se reconoce 'applyTo'."
+    suggestion: "Elimina la clave desconocida '%{key}'. Solo se reconocen 'applyTo' y 'excludeAgent'."
+  cop_005:
+    message: "Valor de excludeAgent invalido '%{value}'. Valores validos: 'code-review', 'coding-agent'"
+    suggestion: "Usa 'code-review' o 'coding-agent' para excludeAgent"
+  cop_006:
+    message: "El archivo de instrucciones de Copilot excede la longitud recomendada (%{len} caracteres, limite ~4000)"
+    suggestion: "Reduce la longitud del contenido o divide en archivos de instrucciones con alcance"
 
   # --- Cursor (cursor.rs) ---
   cur_001:

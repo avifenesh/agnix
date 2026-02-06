@@ -295,7 +295,13 @@ rules:
     suggestion: "Use valid glob syntax like '**/*.ts' or 'src/**/*.js'"
   cop_004:
     message: "Unknown frontmatter key '%{key}' in Copilot instruction file"
-    suggestion: "Remove unknown key '%{key}'. Only 'applyTo' is recognized."
+    suggestion: "Remove unknown key '%{key}'. Only 'applyTo' and 'excludeAgent' are recognized."
+  cop_005:
+    message: "Invalid excludeAgent value '%{value}'. Valid values: 'code-review', 'coding-agent'"
+    suggestion: "Use 'code-review' or 'coding-agent' for excludeAgent"
+  cop_006:
+    message: "Copilot instruction file exceeds recommended length (%{len} characters, limit ~4000)"
+    suggestion: "Reduce content length or split into scoped instruction files"
 
   # --- Cursor (cursor.rs) ---
   cur_001:
