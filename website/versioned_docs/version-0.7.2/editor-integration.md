@@ -24,4 +24,4 @@ Integration docs:
 
 JetBrains install widget:
 
-<iframe width="245px" height="48px" src="https://plugins.jetbrains.com/embeddable/install/30087"></iframe>
+<iframe width="245px" height="48px" src="https://plugins.jetbrains.com/embeddable/install/30087" title="Install agnix plugin for JetBrains IDEs"></iframe>
