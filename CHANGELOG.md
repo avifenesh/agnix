@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Validated against 1,200+ real-world repositories with 71 rules triggered
+- Exclude non-agent markdown files (README.md, docs/, wiki/) from validation
+- Restrict REF-002 broken link detection to agent config files only
+- Skip HTML5 void elements and markdown-safe elements in XML balance checking
+- Resolve @imports relative to project root when file-relative fails
+- Apply prompt quality rules (CC-MEM-005/006, PE-*) to Cursor rule files
+- Detect .cursorrules.md as Cursor rules variant
+- Flag `|| true` and `2>/dev/null` as error suppression in hooks (CC-HK-009)
+- Broaden persona detection in CC-MEM-005 ("You're a senior...")
+- Add PCRE assertions to AS-014 regex escape detection
+- Fix %% formatting in diagnostic messages across all locales
+
+### Added
+- `docs/RELEASING.md` - Release process guide with install target verification
+- `docs/REAL-WORLD-TESTING.md` - Real-world validation and manual inspection guide
+- `scripts/real-world-validate.py` - Batch validation harness
+- `tests/real-world/repos.yaml` - Curated manifest of 1,236 repos
+
 ## [0.8.1] - 2026-02-06
 
 ### Added
