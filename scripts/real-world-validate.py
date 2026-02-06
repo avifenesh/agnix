@@ -12,6 +12,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import shutil
 import subprocess
 import sys
 import time
@@ -170,6 +171,10 @@ def process_repo(repo: dict, clones_dir: Path, results_dir: Path, agnix_bin: str
 
     with open(result_file, "w") as f:
         json.dump(result, f, indent=2)
+
+    # Delete clone to save disk space (results are already saved)
+    if not skip_clone and clone_dir.exists():
+        shutil.rmtree(clone_dir, ignore_errors=True)
 
     return result
 
