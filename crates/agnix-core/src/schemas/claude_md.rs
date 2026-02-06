@@ -147,12 +147,9 @@ pub fn find_negative_without_positive(content: &str) -> Vec<NegativeInstruction>
             let has_positive_after = if mat.end() < line.len() {
                 let after_negative = &line[mat.end()..];
                 // Look for separator followed by positive language
-                after_negative.contains(" - ")
-                    && pos_pattern.is_match(after_negative)
-                    || after_negative.contains(", ")
-                        && pos_pattern.is_match(after_negative)
-                    || after_negative.contains("; ")
-                        && pos_pattern.is_match(after_negative)
+                after_negative.contains(" - ") && pos_pattern.is_match(after_negative)
+                    || after_negative.contains(", ") && pos_pattern.is_match(after_negative)
+                    || after_negative.contains("; ") && pos_pattern.is_match(after_negative)
             } else {
                 false
             };
@@ -563,11 +560,17 @@ mod tests {
         // "NEVER X - always Y" pattern
         let content = "NEVER assume - always verify with tests and benchmarks";
         let results = find_negative_without_positive(content);
-        assert!(results.is_empty(), "NEVER with dash-separated positive should not trigger");
+        assert!(
+            results.is_empty(),
+            "NEVER with dash-separated positive should not trigger"
+        );
 
         let content2 = "NEVER ignore bugs, even out of scope - open an issue";
         let results2 = find_negative_without_positive(content2);
-        assert!(results2.is_empty(), "NEVER with dash-separated action should not trigger");
+        assert!(
+            results2.is_empty(),
+            "NEVER with dash-separated action should not trigger"
+        );
     }
 
     #[test]
@@ -575,18 +578,29 @@ mod tests {
         // "Raise it, but don't change without approval"
         let content = "Disagree? Raise it, but don't change without approval";
         let results = find_negative_without_positive(content);
-        assert!(results.is_empty(), "don't with preceding positive context should not trigger");
+        assert!(
+            results.is_empty(),
+            "don't with preceding positive context should not trigger"
+        );
     }
 
     #[test]
     fn test_standalone_negative_still_triggers() {
         let content = "Never use global variables";
         let results = find_negative_without_positive(content);
-        assert_eq!(results.len(), 1, "Standalone NEVER without alternative should trigger");
+        assert_eq!(
+            results.len(),
+            1,
+            "Standalone NEVER without alternative should trigger"
+        );
 
         let content2 = "Don't hardcode values";
         let results2 = find_negative_without_positive(content2);
-        assert_eq!(results2.len(), 1, "Standalone don't without alternative should trigger");
+        assert_eq!(
+            results2.len(),
+            1,
+            "Standalone don't without alternative should trigger"
+        );
     }
 
     // CC-MEM-007 tests
