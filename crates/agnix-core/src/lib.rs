@@ -326,6 +326,19 @@ pub fn detect_file_type(path: &Path) -> FileType {
                     || lower == "issue_template.md"
                     || lower == "bug_report.md"
                     || lower == "feature_request.md"
+                    // Developer-focused docs, not agent instructions
+                    || lower == "developer.md"
+                    || lower == "developers.md"
+                    || lower == "development.md"
+                    || lower == "hacking.md"
+                    || lower == "maintainers.md"
+                    || lower == "governance.md"
+                    || lower == "support.md"
+                    || lower == "authors.md"
+                    || lower == "credits.md"
+                    || lower == "thanks.md"
+                    || lower == "migration.md"
+                    || lower == "upgrading.md"
                 {
                     FileType::Unknown
                 } else if is_documentation_directory(path) {
