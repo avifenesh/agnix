@@ -678,9 +678,23 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 
 <a id="cop-004"></a>
 ### COP-004 [MEDIUM] Unknown Frontmatter Keys
-**Requirement**: Scoped instruction frontmatter SHOULD only contain known keys (applyTo)
-**Detection**: Check for keys other than `applyTo` in frontmatter
+**Requirement**: Scoped instruction frontmatter SHOULD only contain known keys (`applyTo`, `excludeAgent`)
+**Detection**: Check for keys other than `applyTo` and `excludeAgent` in frontmatter
 **Fix**: Remove unknown keys
+**Source**: docs.github.com/en/copilot/customizing-copilot
+
+<a id="cop-005"></a>
+### COP-005 [HIGH] Invalid excludeAgent Value
+**Requirement**: The `excludeAgent` frontmatter field in scoped instruction files MUST be either `"code-review"` or `"coding-agent"`
+**Detection**: Parse frontmatter, validate `excludeAgent` value against allowed set
+**Fix**: Use a valid `excludeAgent` value
+**Source**: docs.github.com/en/copilot/customizing-copilot
+
+<a id="cop-006"></a>
+### COP-006 [MEDIUM] File Length Limit
+**Requirement**: Global instruction files (`.github/copilot-instructions.md`) SHOULD not exceed ~4000 characters
+**Detection**: Check `content.len() > 4000`
+**Fix**: Reduce content or split into scoped instruction files
 **Source**: docs.github.com/en/copilot/customizing-copilot
 
 ---
