@@ -693,7 +693,7 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 <a id="cop-006"></a>
 ### COP-006 [MEDIUM] File Length Limit
 **Requirement**: Global instruction files (`.github/copilot-instructions.md`) SHOULD not exceed ~4000 characters
-**Detection**: Check `content.len() > 4000`
+**Detection**: Check `content.chars().count() > 4000`
 **Fix**: Reduce content or split into scoped instruction files
 **Source**: docs.github.com/en/copilot/customizing-copilot
 

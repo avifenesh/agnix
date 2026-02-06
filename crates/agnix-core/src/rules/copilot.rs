@@ -101,14 +101,19 @@ impl Validator for CopilotValidator {
         }
 
         // COP-006: File length limit for global files (WARNING)
-        if config.is_rule_enabled("COP-006") && !is_scoped && content.len() > 4000 {
+        const COPILOT_GLOBAL_LENGTH_LIMIT: usize = 4000;
+        if config.is_rule_enabled("COP-006")
+            && !is_scoped
+            && content.chars().count() > COPILOT_GLOBAL_LENGTH_LIMIT
+        {
+            let char_count = content.chars().count();
             diagnostics.push(
                 Diagnostic::warning(
                     path.to_path_buf(),
                     1,
                     0,
                     "COP-006",
-                    t!("rules.cop_006.message", len = content.len()),
+                    t!("rules.cop_006.message", len = char_count),
                 )
                 .with_suggestion(t!("rules.cop_006.suggestion")),
             );
@@ -666,12 +671,24 @@ Body"#;
             // Content and path that could trigger each rule
             let (content, path): (&str, &str) = match rule {
                 "COP-001" => ("", ".github/copilot-instructions.md"),
+                "COP-002" => (
+                    "Content without frontmatter",
+                    ".github/instructions/test.instructions.md",
+                ),
+                "COP-003" => (
+                    "---\napplyTo: \"[invalid\"\n---\nBody",
+                    ".github/instructions/test.instructions.md",
+                ),
+                "COP-004" => (
+                    "---\nunknown: value\n---\nBody",
+                    ".github/instructions/test.instructions.md",
+                ),
                 "COP-005" => (
                     "---\napplyTo: \"**/*.ts\"\nexcludeAgent: \"invalid\"\n---\nBody",
                     ".github/instructions/test.instructions.md",
                 ),
                 "COP-006" => (&long_content, ".github/copilot-instructions.md"),
-                _ => ("---\nunknown: value\n---\n", ".github/copilot-instructions.md"),
+                _ => unreachable!("Unknown rule: {rule}"),
             };
 
             let validator = CopilotValidator;

@@ -2,7 +2,7 @@
   "description": "Machine-readable source of truth for all validation rules. When adding a new rule, add it here AND in VALIDATION-RULES.md. CI parity tests enforce sync.",
   "version": "1.1.0",
   "total_rules": 102,
-  "last_updated": "2026-02-04",
+  "last_updated": "2026-02-07",
   "schema": {
     "evidence": {
       "source_type": "spec|vendor_docs|vendor_code|paper|community",
