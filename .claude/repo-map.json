@@ -1,0 +1,8087 @@
+{
+  "version": "1.0.0",
+  "generated": "2026-02-06T21:41:00Z",
+  "updated": "2026-02-06T21:41:00Z",
+  "git": {
+    "commit": "e052f45",
+    "branch": "main"
+  },
+  "project": {
+    "languages": [
+      "rust"
+    ]
+  },
+  "stats": {
+    "totalFiles": 83,
+    "totalSymbols": 425,
+    "totalImports": 585
+  },
+  "files": {
+    "crates/agnix-cli/src/json.rs": {
+      "hash": "a672195910a807e0",
+      "language": "rust",
+      "symbols": {
+        "exports": [
+          {
+            "name": "diagnostics_to_json",
+            "kind": "function",
+            "line": 75
+          },
+          {
+            "name": "JsonOutput",
+            "kind": "struct",
+            "line": 10
+          },
+          {
+            "name": "JsonDiagnostic",
+            "kind": "struct",
+            "line": 23
+          },
+          {
+            "name": "JsonSummary",
+            "kind": "struct",
+            "line": 46
+          }
+        ],
+        "functions": [
+          {
+            "name": "diagnostics_to_json",
+            "line": 75
+          }
+        ],
+        "structs": [
+          {
+            "name": "JsonOutput",
+            "line": 10
+          },
+          {
+            "name": "JsonDiagnostic",
+            "line": 23
+          },
+          {
+            "name": "JsonSummary",
+            "line": 46
+          }
+        ],
+        "enums": [],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [],
+        "impls": []
+      },
+      "imports": [
+        {
+          "source": "agnix_core::diagnostics::{Diagnostic, DiagnosticLevel}",
+          "kind": "named"
+        },
+        {
+          "source": "serde::Serialize",
+          "kind": "named"
+        },
+        {
+          "source": "std::path::Path",
+          "kind": "named"
+        },
+        {
+          "source": "super::*",
+          "kind": "glob"
+        },
+        {
+          "source": "std::path::PathBuf",
+          "kind": "named"
+        }
+      ]
+    },
+    "crates/agnix-cli/src/locale.rs": {
+      "hash": "edae72ba7340cb74",
+      "language": "rust",
+      "symbols": {
+        "exports": [
+          {
+            "name": "detect_locale",
+            "kind": "function",
+            "line": 26
+          },
+          {
+            "name": "init",
+            "kind": "function",
+            "line": 61
+          },
+          {
+            "name": "print_supported_locales",
+            "kind": "function",
+            "line": 79
+          }
+        ],
+        "functions": [
+          {
+            "name": "detect_locale",
+            "line": 26
+          },
+          {
+            "name": "init",
+            "line": 61
+          },
+          {
+            "name": "print_supported_locales",
+            "line": 79
+          }
+        ],
+        "structs": [],
+        "enums": [],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [],
+        "impls": []
+      },
+      "imports": [
+        {
+          "source": "agnix_core::i18n::{is_supported, normalize_locale}",
+          "kind": "named"
+        },
+        {
+          "source": "rust_i18n::{set_locale, t}",
+          "kind": "named"
+        },
+        {
+          "source": "super::*",
+          "kind": "glob"
+        }
+      ]
+    },
+    "crates/agnix-cli/src/main.rs": {
+      "hash": "a049bc5e893e39f1",
+      "language": "rust",
+      "symbols": {
+        "exports": [
+          {
+            "name": "OutputFormat",
+            "kind": "enum",
+            "line": 34
+          },
+          {
+            "name": "TargetArg",
+            "kind": "enum",
+            "line": 44
+          },
+          {
+            "name": "EvalOutputFormat",
+            "kind": "enum",
+            "line": 131
+          },
+          {
+            "name": "TelemetryAction",
+            "kind": "enum",
+            "line": 150
+          },
+          {
+            "name": "telemetry",
+            "kind": "module",
+            "line": 9
+          }
+        ],
+        "functions": [],
+        "structs": [],
+        "enums": [
+          {
+            "name": "OutputFormat",
+            "line": 34
+          },
+          {
+            "name": "TargetArg",
+            "line": 44
+          },
+          {
+            "name": "EvalOutputFormat",
+            "line": 131
+          },
+          {
+            "name": "TelemetryAction",
+            "line": 150
+          }
+        ],
+        "traits": [],
+        "types": [],
+        "modules": [
+          {
+            "name": "telemetry",
+            "line": 9
+          }
+        ],
+        "constants": [],
+        "impls": [
+          {
+            "name": "From<TargetArg>",
+            "line": 53
+          },
+          {
+            "name": "From<EvalOutputFormat>",
+            "line": 138
+          }
+        ]
+      },
+      "imports": [
+        {
+          "source": "telemetry_stub as telemetry",
+          "kind": "named"
+        },
+        {
+          "source": "agnix_core::{\n    ValidationResult, apply_fixes,\n    config::{LintConfig, TargetTool},\n    diagnostics::{Diagnostic, DiagnosticLevel},\n    eval::{EvalFormat, evaluate_manifest_file},\n    generate_schema, validate_project,\n}",
+          "kind": "named"
+        },
+        {
+          "source": "clap::{Parser, Subcommand, ValueEnum}",
+          "kind": "named"
+        },
+        {
+          "source": "colored::*",
+          "kind": "glob"
+        },
+        {
+          "source": "rust_i18n::t",
+          "kind": "named"
+        },
+        {
+          "source": "similar::{ChangeTag, TextDiff}",
+          "kind": "named"
+        },
+        {
+          "source": "std::collections::HashMap",
+          "kind": "named"
+        },
+        {
+          "source": "std::env",
+          "kind": "named"
+        },
+        {
+          "source": "std::path::{Path, PathBuf}",
+          "kind": "named"
+        },
+        {
+          "source": "std::process",
+          "kind": "named"
+        },
+        {
+          "source": "std::time::Instant",
+          "kind": "named"
+        },
+        {
+          "source": "tracing_subscriber::{EnvFilter, fmt, prelude::*}",
+          "kind": "named"
+        },
+        {
+          "source": "agnix_core::DiagnosticLevel",
+          "kind": "named"
+        },
+        {
+          "source": "telemetry::TelemetryConfig",
+          "kind": "named"
+        }
+      ]
+    },
+    "crates/agnix-cli/src/sarif.rs": {
+      "hash": "e1c190eee5e4ddd6",
+      "language": "rust",
+      "symbols": {
+        "exports": [
+          {
+            "name": "diagnostics_to_sarif",
+            "kind": "function",
+            "line": 133
+          },
+          {
+            "name": "SarifLog",
+            "kind": "struct",
+            "line": 19
+          },
+          {
+            "name": "Run",
+            "kind": "struct",
+            "line": 27
+          },
+          {
+            "name": "Tool",
+            "kind": "struct",
+            "line": 33
+          },
+          {
+            "name": "Driver",
+            "kind": "struct",
+            "line": 39
+          },
+          {
+            "name": "ReportingDescriptor",
+            "kind": "struct",
+            "line": 48
+          },
+          {
+            "name": "Message",
+            "kind": "struct",
+            "line": 56
+          },
+          {
+            "name": "SarifResult",
+            "kind": "struct",
+            "line": 62
+          },
+          {
+            "name": "Location",
+            "kind": "struct",
+            "line": 71
+          },
+          {
+            "name": "PhysicalLocation",
+            "kind": "struct",
+            "line": 77
+          },
+          {
+            "name": "ArtifactLocation",
+            "kind": "struct",
+            "line": 83
+          },
+          {
+            "name": "Region",
+            "kind": "struct",
+            "line": 89
+          }
+        ],
+        "functions": [
+          {
+            "name": "diagnostics_to_sarif",
+            "line": 133
+          }
+        ],
+        "structs": [
+          {
+            "name": "SarifLog",
+            "line": 19
+          },
+          {
+            "name": "Run",
+            "line": 27
+          },
+          {
+            "name": "Tool",
+            "line": 33
+          },
+          {
+            "name": "Driver",
+            "line": 39
+          },
+          {
+            "name": "ReportingDescriptor",
+            "line": 48
+          },
+          {
+            "name": "Message",
+            "line": 56
+          },
+          {
+            "name": "SarifResult",
+            "line": 62
+          },
+          {
+            "name": "Location",
+            "line": 71
+          },
+          {
+            "name": "PhysicalLocation",
+            "line": 77
+          },
+          {
+            "name": "ArtifactLocation",
+            "line": 83
+          },
+          {
+            "name": "Region",
+            "line": 89
+          }
+        ],
+        "enums": [],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [],
+        "impls": []
+      },
+      "imports": [
+        {
+          "source": "agnix_core::diagnostics::{Diagnostic, DiagnosticLevel}",
+          "kind": "named"
+        },
+        {
+          "source": "agnix_rules::RULES_DATA",
+          "kind": "named"
+        },
+        {
+          "source": "serde::Serialize",
+          "kind": "named"
+        },
+        {
+          "source": "std::path::Path",
+          "kind": "named"
+        },
+        {
+          "source": "std::sync::LazyLock",
+          "kind": "named"
+        },
+        {
+          "source": "super::*",
+          "kind": "glob"
+        },
+        {
+          "source": "std::path::PathBuf",
+          "kind": "named"
+        }
+      ]
+    },
+    "crates/agnix-cli/src/telemetry/client.rs": {
+      "hash": "e3036dcaaa5a2641",
+      "language": "rust",
+      "symbols": {
+        "exports": [
+          {
+            "name": "new",
+            "kind": "function",
+            "line": 18
+          },
+          {
+            "name": "submit_batch",
+            "kind": "function",
+            "line": 43
+          },
+          {
+            "name": "TelemetryClient",
+            "kind": "struct",
+            "line": 10
+          }
+        ],
+        "functions": [
+          {
+            "name": "new",
+            "line": 18
+          },
+          {
+            "name": "submit_batch",
+            "line": 43
+          }
+        ],
+        "structs": [
+          {
+            "name": "TelemetryClient",
+            "line": 10
+          }
+        ],
+        "enums": [],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [],
+        "impls": [
+          {
+            "name": "TelemetryClient",
+            "line": 16
+          }
+        ]
+      },
+      "imports": [
+        {
+          "source": "super::{TelemetryConfig, TelemetryEvent}",
+          "kind": "named"
+        },
+        {
+          "source": "std::io",
+          "kind": "named"
+        },
+        {
+          "source": "std::time::Duration",
+          "kind": "named"
+        },
+        {
+          "source": "super::*",
+          "kind": "glob"
+        },
+        {
+          "source": "std::collections::HashMap",
+          "kind": "named"
+        }
+      ]
+    },
+    "crates/agnix-cli/src/telemetry/config.rs": {
+      "hash": "cca3d7cc21e31363",
+      "language": "rust",
+      "symbols": {
+        "exports": [
+          {
+            "name": "load",
+            "kind": "function",
+            "line": 38
+          },
+          {
+            "name": "save",
+            "kind": "function",
+            "line": 57
+          },
+          {
+            "name": "is_enabled",
+            "kind": "function",
+            "line": 85
+          },
+          {
+            "name": "enable",
+            "kind": "function",
+            "line": 137
+          },
+          {
+            "name": "disable",
+            "kind": "function",
+            "line": 152
+          },
+          {
+            "name": "config_path",
+            "kind": "function",
+            "line": 161
+          },
+          {
+            "name": "endpoint",
+            "kind": "function",
+            "line": 173
+          },
+          {
+            "name": "TelemetryConfig",
+            "kind": "struct",
+            "line": 15
+          }
+        ],
+        "functions": [
+          {
+            "name": "load",
+            "line": 38
+          },
+          {
+            "name": "save",
+            "line": 57
+          },
+          {
+            "name": "is_enabled",
+            "line": 85
+          },
+          {
+            "name": "enable",
+            "line": 137
+          },
+          {
+            "name": "disable",
+            "line": 152
+          },
+          {
+            "name": "config_path",
+            "line": 161
+          },
+          {
+            "name": "endpoint",
+            "line": 173
+          }
+        ],
+        "structs": [
+          {
+            "name": "TelemetryConfig",
+            "line": 15
+          }
+        ],
+        "enums": [],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [],
+        "impls": [
+          {
+            "name": "TelemetryConfig",
+            "line": 36
+          }
+        ]
+      },
+      "imports": [
+        {
+          "source": "serde::{Deserialize, Serialize}",
+          "kind": "named"
+        },
+        {
+          "source": "std::env",
+          "kind": "named"
+        },
+        {
+          "source": "std::fs",
+          "kind": "named"
+        },
+        {
+          "source": "std::io",
+          "kind": "named"
+        },
+        {
+          "source": "std::path::PathBuf",
+          "kind": "named"
+        },
+        {
+          "source": "std::time::{SystemTime, UNIX_EPOCH}",
+          "kind": "named"
+        },
+        {
+          "source": "super::*",
+          "kind": "glob"
+        }
+      ]
+    },
+    "crates/agnix-cli/src/telemetry/events.rs": {
+      "hash": "79af34e15f0e77fb",
+      "language": "rust",
+      "symbols": {
+        "exports": [
+          {
+            "name": "event_type",
+            "kind": "function",
+            "line": 63
+          },
+          {
+            "name": "timestamp",
+            "kind": "function",
+            "line": 70
+          },
+          {
+            "name": "validate_privacy",
+            "kind": "function",
+            "line": 80
+          },
+          {
+            "name": "ValidationRunEvent",
+            "kind": "struct",
+            "line": 30
+          },
+          {
+            "name": "TelemetryEvent",
+            "kind": "enum",
+            "line": 20
+          },
+          {
+            "name": "PrivacyViolation",
+            "kind": "enum",
+            "line": 105
+          }
+        ],
+        "functions": [
+          {
+            "name": "event_type",
+            "line": 63
+          },
+          {
+            "name": "timestamp",
+            "line": 70
+          },
+          {
+            "name": "validate_privacy",
+            "line": 80
+          }
+        ],
+        "structs": [
+          {
+            "name": "ValidationRunEvent",
+            "line": 30
+          }
+        ],
+        "enums": [
+          {
+            "name": "TelemetryEvent",
+            "line": 20
+          },
+          {
+            "name": "PrivacyViolation",
+            "line": 105
+          }
+        ],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [],
+        "impls": [
+          {
+            "name": "TelemetryEvent",
+            "line": 61
+          },
+          {
+            "name": "std::fmt::Display",
+            "line": 112
+          },
+          {
+            "name": "std::error::Error",
+            "line": 125
+          }
+        ]
+      },
+      "imports": [
+        {
+          "source": "serde::{Deserialize, Serialize}",
+          "kind": "named"
+        },
+        {
+          "source": "std::collections::HashMap",
+          "kind": "named"
+        },
+        {
+          "source": "super::*",
+          "kind": "glob"
+        }
+      ]
+    },
+    "crates/agnix-cli/src/telemetry/mod.rs": {
+      "hash": "3f1a952d301e4fc2",
+      "language": "rust",
+      "symbols": {
+        "exports": [
+          {
+            "name": "record_validation",
+            "kind": "function",
+            "line": 54
+          }
+        ],
+        "functions": [
+          {
+            "name": "record_validation",
+            "line": 54
+          }
+        ],
+        "structs": [],
+        "enums": [],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [],
+        "impls": []
+      },
+      "imports": [
+        {
+          "source": "std::collections::HashMap",
+          "kind": "named"
+        },
+        {
+          "source": "std::thread",
+          "kind": "named"
+        },
+        {
+          "source": "super::*",
+          "kind": "glob"
+        }
+      ]
+    },
+    "crates/agnix-cli/src/telemetry/queue.rs": {
+      "hash": "dc8b45761046a9ce",
+      "language": "rust",
+      "symbols": {
+        "exports": [
+          {
+            "name": "load",
+            "kind": "function",
+            "line": 29
+          },
+          {
+            "name": "save",
+            "kind": "function",
+            "line": 51
+          },
+          {
+            "name": "push",
+            "kind": "function",
+            "line": 71
+          },
+          {
+            "name": "take_batch",
+            "kind": "function",
+            "line": 89
+          },
+          {
+            "name": "remove_batch",
+            "kind": "function",
+            "line": 94
+          },
+          {
+            "name": "len",
+            "kind": "function",
+            "line": 101
+          },
+          {
+            "name": "is_empty",
+            "kind": "function",
+            "line": 106
+          },
+          {
+            "name": "queue_path",
+            "kind": "function",
+            "line": 111
+          },
+          {
+            "name": "EventQueue",
+            "kind": "struct",
+            "line": 23
+          }
+        ],
+        "functions": [
+          {
+            "name": "load",
+            "line": 29
+          },
+          {
+            "name": "save",
+            "line": 51
+          },
+          {
+            "name": "push",
+            "line": 71
+          },
+          {
+            "name": "take_batch",
+            "line": 89
+          },
+          {
+            "name": "remove_batch",
+            "line": 94
+          },
+          {
+            "name": "len",
+            "line": 101
+          },
+          {
+            "name": "is_empty",
+            "line": 106
+          },
+          {
+            "name": "queue_path",
+            "line": 111
+          }
+        ],
+        "structs": [
+          {
+            "name": "EventQueue",
+            "line": 23
+          }
+        ],
+        "enums": [],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [],
+        "impls": [
+          {
+            "name": "EventQueue",
+            "line": 27
+          }
+        ]
+      },
+      "imports": [
+        {
+          "source": "super::TelemetryEvent",
+          "kind": "named"
+        },
+        {
+          "source": "serde::{Deserialize, Serialize}",
+          "kind": "named"
+        },
+        {
+          "source": "std::collections::VecDeque",
+          "kind": "named"
+        },
+        {
+          "source": "std::fs",
+          "kind": "named"
+        },
+        {
+          "source": "std::io",
+          "kind": "named"
+        },
+        {
+          "source": "std::path::PathBuf",
+          "kind": "named"
+        },
+        {
+          "source": "std::time::{Duration, SystemTime, UNIX_EPOCH}",
+          "kind": "named"
+        },
+        {
+          "source": "super::*",
+          "kind": "glob"
+        },
+        {
+          "source": "std::collections::HashMap",
+          "kind": "named"
+        }
+      ]
+    },
+    "crates/agnix-cli/src/telemetry/shared.rs": {
+      "hash": "dc55a31a54a475c8",
+      "language": "rust",
+      "symbols": {
+        "exports": [
+          {
+            "name": "chrono_timestamp",
+            "kind": "function",
+            "line": 8
+          },
+          {
+            "name": "is_valid_rule_id",
+            "kind": "function",
+            "line": 64
+          }
+        ],
+        "functions": [
+          {
+            "name": "chrono_timestamp",
+            "line": 8
+          },
+          {
+            "name": "is_valid_rule_id",
+            "line": 64
+          }
+        ],
+        "structs": [],
+        "enums": [],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [],
+        "impls": []
+      },
+      "imports": [
+        {
+          "source": "std::time::{Duration, SystemTime, UNIX_EPOCH}",
+          "kind": "named"
+        },
+        {
+          "source": "super::*",
+          "kind": "glob"
+        }
+      ]
+    },
+    "crates/agnix-cli/src/telemetry_stub.rs": {
+      "hash": "cc85da860beeeccc",
+      "language": "rust",
+      "symbols": {
+        "exports": [
+          {
+            "name": "record_validation",
+            "kind": "function",
+            "line": 16
+          }
+        ],
+        "functions": [
+          {
+            "name": "record_validation",
+            "line": 16
+          }
+        ],
+        "structs": [],
+        "enums": [],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [],
+        "impls": []
+      },
+      "imports": [
+        {
+          "source": "std::collections::HashMap",
+          "kind": "named"
+        },
+        {
+          "source": "super::*",
+          "kind": "glob"
+        }
+      ]
+    },
+    "crates/agnix-cli/src/watch.rs": {
+      "hash": "c8df2b2e007d7290",
+      "language": "rust",
+      "symbols": {
+        "exports": [],
+        "functions": [],
+        "structs": [],
+        "enums": [],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [],
+        "impls": []
+      },
+      "imports": [
+        {
+          "source": "notify_debouncer_mini::{DebounceEventResult, new_debouncer, notify::RecursiveMode}",
+          "kind": "named"
+        },
+        {
+          "source": "rust_i18n::t",
+          "kind": "named"
+        },
+        {
+          "source": "std::path::Path",
+          "kind": "named"
+        },
+        {
+          "source": "std::sync::Arc",
+          "kind": "named"
+        },
+        {
+          "source": "std::sync::atomic::{AtomicBool, Ordering}",
+          "kind": "named"
+        },
+        {
+          "source": "std::sync::mpsc::channel",
+          "kind": "named"
+        },
+        {
+          "source": "std::time::Duration",
+          "kind": "named"
+        }
+      ]
+    },
+    "crates/agnix-cli/tests/cli_integration.rs": {
+      "hash": "72d248cab533fb37",
+      "language": "rust",
+      "symbols": {
+        "exports": [],
+        "functions": [],
+        "structs": [],
+        "enums": [],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [],
+        "impls": []
+      },
+      "imports": [
+        {
+          "source": "assert_cmd::Command",
+          "kind": "named"
+        },
+        {
+          "source": "predicates::prelude::*",
+          "kind": "glob"
+        },
+        {
+          "source": "std::sync::OnceLock",
+          "kind": "named"
+        },
+        {
+          "source": "std::io::Write",
+          "kind": "named"
+        },
+        {
+          "source": "std::fs",
+          "kind": "named"
+        },
+        {
+          "source": "std::io::Write",
+          "kind": "named"
+        },
+        {
+          "source": "std::fs",
+          "kind": "named"
+        },
+        {
+          "source": "std::io::Write",
+          "kind": "named"
+        },
+        {
+          "source": "std::fs",
+          "kind": "named"
+        },
+        {
+          "source": "std::io::Write",
+          "kind": "named"
+        },
+        {
+          "source": "std::fs",
+          "kind": "named"
+        },
+        {
+          "source": "std::io::Write",
+          "kind": "named"
+        },
+        {
+          "source": "std::fs",
+          "kind": "named"
+        },
+        {
+          "source": "std::io::Write",
+          "kind": "named"
+        },
+        {
+          "source": "std::fs",
+          "kind": "named"
+        },
+        {
+          "source": "std::io::Write",
+          "kind": "named"
+        },
+        {
+          "source": "std::fs",
+          "kind": "named"
+        },
+        {
+          "source": "std::io::Write",
+          "kind": "named"
+        },
+        {
+          "source": "std::fs",
+          "kind": "named"
+        },
+        {
+          "source": "std::io::Write",
+          "kind": "named"
+        },
+        {
+          "source": "std::fs",
+          "kind": "named"
+        },
+        {
+          "source": "std::io::Write",
+          "kind": "named"
+        },
+        {
+          "source": "std::fs",
+          "kind": "named"
+        },
+        {
+          "source": "std::path::{Path, PathBuf}",
+          "kind": "named"
+        },
+        {
+          "source": "std::fs",
+          "kind": "named"
+        },
+        {
+          "source": "std::fs",
+          "kind": "named"
+        },
+        {
+          "source": "std::fs",
+          "kind": "named"
+        },
+        {
+          "source": "std::io::Write",
+          "kind": "named"
+        },
+        {
+          "source": "std::fs",
+          "kind": "named"
+        },
+        {
+          "source": "std::io::Write",
+          "kind": "named"
+        },
+        {
+          "source": "std::fs",
+          "kind": "named"
+        },
+        {
+          "source": "std::io::Write",
+          "kind": "named"
+        },
+        {
+          "source": "std::fs",
+          "kind": "named"
+        },
+        {
+          "source": "std::io::Write",
+          "kind": "named"
+        },
+        {
+          "source": "std::fs",
+          "kind": "named"
+        },
+        {
+          "source": "std::io::Write",
+          "kind": "named"
+        },
+        {
+          "source": "std::fs",
+          "kind": "named"
+        },
+        {
+          "source": "std::io::Write",
+          "kind": "named"
+        },
+        {
+          "source": "std::fs",
+          "kind": "named"
+        },
+        {
+          "source": "std::io::Write",
+          "kind": "named"
+        },
+        {
+          "source": "std::env",
+          "kind": "named"
+        },
+        {
+          "source": "std::fs",
+          "kind": "named"
+        },
+        {
+          "source": "std::fs",
+          "kind": "named"
+        },
+        {
+          "source": "std::fs",
+          "kind": "named"
+        },
+        {
+          "source": "std::fs",
+          "kind": "named"
+        },
+        {
+          "source": "std::fs",
+          "kind": "named"
+        },
+        {
+          "source": "std::fs",
+          "kind": "named"
+        },
+        {
+          "source": "std::fs",
+          "kind": "named"
+        },
+        {
+          "source": "std::fs",
+          "kind": "named"
+        },
+        {
+          "source": "std::fs",
+          "kind": "named"
+        },
+        {
+          "source": "std::fs",
+          "kind": "named"
+        },
+        {
+          "source": "std::fs",
+          "kind": "named"
+        },
+        {
+          "source": "std::io::Write",
+          "kind": "named"
+        }
+      ]
+    },
+    "crates/agnix-cli/tests/docs_website_parity.rs": {
+      "hash": "edb8a4d5c6c83e3d",
+      "language": "rust",
+      "symbols": {
+        "exports": [],
+        "functions": [],
+        "structs": [],
+        "enums": [],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [],
+        "impls": []
+      },
+      "imports": [
+        {
+          "source": "serde::Deserialize",
+          "kind": "named"
+        },
+        {
+          "source": "std::fs",
+          "kind": "named"
+        },
+        {
+          "source": "std::path::{Path, PathBuf}",
+          "kind": "named"
+        },
+        {
+          "source": "std::sync::OnceLock",
+          "kind": "named"
+        }
+      ]
+    },
+    "crates/agnix-cli/tests/fixture_family_cli.rs": {
+      "hash": "e295e125c20e53cf",
+      "language": "rust",
+      "symbols": {
+        "exports": [],
+        "functions": [],
+        "structs": [],
+        "enums": [],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [],
+        "impls": []
+      },
+      "imports": [
+        {
+          "source": "assert_cmd::Command",
+          "kind": "named"
+        },
+        {
+          "source": "std::sync::OnceLock",
+          "kind": "named"
+        }
+      ]
+    },
+    "crates/agnix-cli/tests/research_docs.rs": {
+      "hash": "09582362725c0342",
+      "language": "rust",
+      "symbols": {
+        "exports": [],
+        "functions": [],
+        "structs": [],
+        "enums": [],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [],
+        "impls": []
+      },
+      "imports": [
+        {
+          "source": "std::fs",
+          "kind": "named"
+        },
+        {
+          "source": "std::path::{Path, PathBuf}",
+          "kind": "named"
+        },
+        {
+          "source": "std::sync::OnceLock",
+          "kind": "named"
+        }
+      ]
+    },
+    "crates/agnix-cli/tests/rule_parity.rs": {
+      "hash": "a67186304e17e42a",
+      "language": "rust",
+      "symbols": {
+        "exports": [
+          {
+            "name": "AppliesTo",
+            "kind": "struct",
+            "line": 47
+          },
+          {
+            "name": "TestCoverage",
+            "kind": "struct",
+            "line": 61
+          },
+          {
+            "name": "Evidence",
+            "kind": "struct",
+            "line": 72
+          },
+          {
+            "name": "SourceType",
+            "kind": "enum",
+            "line": 20
+          },
+          {
+            "name": "NormativeLevel",
+            "kind": "enum",
+            "line": 36
+          }
+        ],
+        "functions": [],
+        "structs": [
+          {
+            "name": "AppliesTo",
+            "line": 47
+          },
+          {
+            "name": "TestCoverage",
+            "line": 61
+          },
+          {
+            "name": "Evidence",
+            "line": 72
+          }
+        ],
+        "enums": [
+          {
+            "name": "SourceType",
+            "line": 20
+          },
+          {
+            "name": "NormativeLevel",
+            "line": 36
+          }
+        ],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [],
+        "impls": []
+      },
+      "imports": [
+        {
+          "source": "regex::Regex",
+          "kind": "named"
+        },
+        {
+          "source": "serde::Deserialize",
+          "kind": "named"
+        },
+        {
+          "source": "std::collections::{BTreeSet, HashMap}",
+          "kind": "named"
+        },
+        {
+          "source": "std::fs",
+          "kind": "named"
+        },
+        {
+          "source": "std::path::{Path, PathBuf}",
+          "kind": "named"
+        },
+        {
+          "source": "std::sync::OnceLock",
+          "kind": "named"
+        },
+        {
+          "source": "agnix_core::LintConfig",
+          "kind": "named"
+        }
+      ]
+    },
+    "crates/agnix-core/benches/fixtures.rs": {
+      "hash": "ce21fb2d10ca4c0e",
+      "language": "rust",
+      "symbols": {
+        "exports": [
+          {
+            "name": "create_single_skill_file",
+            "kind": "function",
+            "line": 20
+          },
+          {
+            "name": "create_realistic_skill",
+            "kind": "function",
+            "line": 87
+          },
+          {
+            "name": "create_scale_project",
+            "kind": "function",
+            "line": 153
+          },
+          {
+            "name": "create_memory_test_project",
+            "kind": "function",
+            "line": 221
+          }
+        ],
+        "functions": [
+          {
+            "name": "create_single_skill_file",
+            "line": 20
+          },
+          {
+            "name": "create_realistic_skill",
+            "line": 87
+          },
+          {
+            "name": "create_scale_project",
+            "line": 153
+          },
+          {
+            "name": "create_memory_test_project",
+            "line": 221
+          }
+        ],
+        "structs": [],
+        "enums": [],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [],
+        "impls": []
+      },
+      "imports": [
+        {
+          "source": "std::fs",
+          "kind": "named"
+        },
+        {
+          "source": "tempfile::TempDir",
+          "kind": "named"
+        },
+        {
+          "source": "super::{create_memory_test_project, create_scale_project, create_single_skill_file}",
+          "kind": "named"
+        },
+        {
+          "source": "std::fs",
+          "kind": "named"
+        }
+      ]
+    },
+    "crates/agnix-core/benches/iai_validation.rs": {
+      "hash": "dee9edf14663418c",
+      "language": "rust",
+      "symbols": {
+        "exports": [],
+        "functions": [],
+        "structs": [],
+        "enums": [],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [],
+        "impls": []
+      },
+      "imports": [
+        {
+          "source": "iai_callgrind::{library_benchmark, library_benchmark_group, main}",
+          "kind": "named"
+        },
+        {
+          "source": "std::hint::black_box",
+          "kind": "named"
+        },
+        {
+          "source": "std::path::PathBuf",
+          "kind": "named"
+        },
+        {
+          "source": "agnix_core::{LintConfig, ValidatorRegistry, validate_file_with_registry, validate_project}",
+          "kind": "named"
+        },
+        {
+          "source": "fixtures::{create_scale_project, create_single_skill_file}",
+          "kind": "named"
+        }
+      ]
+    },
+    "crates/agnix-core/benches/validation.rs": {
+      "hash": "42973276fd61790b",
+      "language": "rust",
+      "symbols": {
+        "exports": [],
+        "functions": [],
+        "structs": [],
+        "enums": [],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [],
+        "impls": []
+      },
+      "imports": [
+        {
+          "source": "criterion::{BenchmarkId, Criterion, Throughput, black_box, criterion_group, criterion_main}",
+          "kind": "named"
+        },
+        {
+          "source": "std::path::Path",
+          "kind": "named"
+        },
+        {
+          "source": "tempfile::TempDir",
+          "kind": "named"
+        },
+        {
+          "source": "agnix_core::{\n    LintConfig, ValidatorRegistry, detect_file_type, validate_file, validate_file_with_registry,\n    validate_project,\n}",
+          "kind": "named"
+        },
+        {
+          "source": "fixtures::{create_memory_test_project, create_scale_project}",
+          "kind": "named"
+        },
+        {
+          "source": "agnix_core::parsers::frontmatter::split_frontmatter",
+          "kind": "named"
+        },
+        {
+          "source": "std::fs",
+          "kind": "named"
+        },
+        {
+          "source": "tempfile::TempDir",
+          "kind": "named"
+        },
+        {
+          "source": "fixtures::create_single_skill_file",
+          "kind": "named"
+        }
+      ]
+    },
+    "crates/agnix-core/fuzz/fuzz_targets/fuzz_frontmatter.rs": {
+      "hash": "4553e297263208ea",
+      "language": "rust",
+      "symbols": {
+        "exports": [],
+        "functions": [],
+        "structs": [],
+        "enums": [],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [],
+        "impls": []
+      },
+      "imports": [
+        {
+          "source": "libfuzzer_sys::fuzz_target",
+          "kind": "named"
+        }
+      ]
+    },
+    "crates/agnix-core/fuzz/fuzz_targets/fuzz_json.rs": {
+      "hash": "c4ced8683f719674",
+      "language": "rust",
+      "symbols": {
+        "exports": [],
+        "functions": [],
+        "structs": [],
+        "enums": [],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [],
+        "impls": []
+      },
+      "imports": [
+        {
+          "source": "libfuzzer_sys::fuzz_target",
+          "kind": "named"
+        }
+      ]
+    },
+    "crates/agnix-core/fuzz/fuzz_targets/fuzz_markdown.rs": {
+      "hash": "ee783b4fca4493fa",
+      "language": "rust",
+      "symbols": {
+        "exports": [],
+        "functions": [],
+        "structs": [],
+        "enums": [],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [],
+        "impls": []
+      },
+      "imports": [
+        {
+          "source": "libfuzzer_sys::fuzz_target",
+          "kind": "named"
+        }
+      ]
+    },
+    "crates/agnix-core/src/authoring.rs": {
+      "hash": "29ae912925dca131",
+      "language": "rust",
+      "symbols": {
+        "exports": [
+          {
+            "name": "completion_candidates",
+            "kind": "function",
+            "line": 214
+          },
+          {
+            "name": "hover_doc",
+            "kind": "function",
+            "line": 294
+          },
+          {
+            "name": "CompletionCandidate",
+            "kind": "struct",
+            "line": 19
+          },
+          {
+            "name": "HoverDoc",
+            "kind": "struct",
+            "line": 30
+          },
+          {
+            "name": "CompletionKind",
+            "kind": "enum",
+            "line": 11
+          }
+        ],
+        "functions": [
+          {
+            "name": "completion_candidates",
+            "line": 214
+          },
+          {
+            "name": "hover_doc",
+            "line": 294
+          }
+        ],
+        "structs": [
+          {
+            "name": "CompletionCandidate",
+            "line": 19
+          },
+          {
+            "name": "HoverDoc",
+            "line": 30
+          }
+        ],
+        "enums": [
+          {
+            "name": "CompletionKind",
+            "line": 11
+          }
+        ],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [],
+        "impls": []
+      },
+      "imports": [
+        {
+          "source": "crate::{FileType, parsers::frontmatter::split_frontmatter}",
+          "kind": "named"
+        },
+        {
+          "source": "serde::Deserialize",
+          "kind": "named"
+        },
+        {
+          "source": "std::sync::OnceLock",
+          "kind": "named"
+        },
+        {
+          "source": "super::*",
+          "kind": "glob"
+        }
+      ]
+    },
+    "crates/agnix-core/src/config.rs": {
+      "hash": "1585d88f5dc1d901",
+      "language": "rust",
+      "symbols": {
+        "exports": [
+          {
+            "name": "load_or_default",
+            "kind": "function",
+            "line": 551
+          },
+          {
+            "name": "root_dir",
+            "kind": "function",
+            "line": 580
+          },
+          {
+            "name": "get_root_dir",
+            "kind": "function",
+            "line": 586
+          },
+          {
+            "name": "set_root_dir",
+            "kind": "function",
+            "line": 594
+          },
+          {
+            "name": "set_import_cache",
+            "kind": "function",
+            "line": 606
+          },
+          {
+            "name": "import_cache",
+            "kind": "function",
+            "line": 619
+          },
+          {
+            "name": "get_import_cache",
+            "kind": "function",
+            "line": 625
+          },
+          {
+            "name": "fs",
+            "kind": "function",
+            "line": 634
+          },
+          {
+            "name": "set_fs",
+            "kind": "function",
+            "line": 647
+          },
+          {
+            "name": "get_mcp_protocol_version",
+            "kind": "function",
+            "line": 654
+          },
+          {
+            "name": "is_mcp_revision_pinned",
+            "kind": "function",
+            "line": 663
+          },
+          {
+            "name": "is_claude_code_version_pinned",
+            "kind": "function",
+            "line": 668
+          },
+          {
+            "name": "get_claude_code_version",
+            "kind": "function",
+            "line": 673
+          },
+          {
+            "name": "is_rule_enabled",
+            "kind": "function",
+            "line": 689
+          },
+          {
+            "name": "is_tool_alias",
+            "kind": "function",
+            "line": 706
+          },
+          {
+            "name": "validate",
+            "kind": "function",
+            "line": 716
+          },
+          {
+            "name": "generate_schema",
+            "kind": "function",
+            "line": 835
+          },
+          {
+            "name": "ToolVersions",
+            "kind": "struct",
+            "line": 17
+          },
+          {
+            "name": "SpecRevisions",
+            "kind": "struct",
+            "line": 46
+          },
+          {
+            "name": "LintConfig",
+            "kind": "struct",
+            "line": 253
+          },
+          {
+            "name": "RuleConfig",
+            "kind": "struct",
+            "line": 403
+          },
+          {
+            "name": "ConfigWarning",
+            "kind": "struct",
+            "line": 812
+          },
+          {
+            "name": "SeverityLevel",
+            "kind": "enum",
+            "line": 387
+          },
+          {
+            "name": "TargetTool",
+            "kind": "enum",
+            "line": 526
+          },
+          {
+            "name": "DEFAULT_MAX_FILES",
+            "kind": "constant",
+            "line": 352
+          }
+        ],
+        "functions": [
+          {
+            "name": "load_or_default",
+            "line": 551
+          },
+          {
+            "name": "root_dir",
+            "line": 580
+          },
+          {
+            "name": "get_root_dir",
+            "line": 586
+          },
+          {
+            "name": "set_root_dir",
+            "line": 594
+          },
+          {
+            "name": "set_import_cache",
+            "line": 606
+          },
+          {
+            "name": "import_cache",
+            "line": 619
+          },
+          {
+            "name": "get_import_cache",
+            "line": 625
+          },
+          {
+            "name": "fs",
+            "line": 634
+          },
+          {
+            "name": "set_fs",
+            "line": 647
+          },
+          {
+            "name": "get_mcp_protocol_version",
+            "line": 654
+          },
+          {
+            "name": "is_mcp_revision_pinned",
+            "line": 663
+          },
+          {
+            "name": "is_claude_code_version_pinned",
+            "line": 668
+          },
+          {
+            "name": "get_claude_code_version",
+            "line": 673
+          },
+          {
+            "name": "is_rule_enabled",
+            "line": 689
+          },
+          {
+            "name": "is_tool_alias",
+            "line": 706
+          },
+          {
+            "name": "validate",
+            "line": 716
+          },
+          {
+            "name": "generate_schema",
+            "line": 835
+          }
+        ],
+        "structs": [
+          {
+            "name": "ToolVersions",
+            "line": 17
+          },
+          {
+            "name": "SpecRevisions",
+            "line": 46
+          },
+          {
+            "name": "LintConfig",
+            "line": 253
+          },
+          {
+            "name": "RuleConfig",
+            "line": 403
+          },
+          {
+            "name": "ConfigWarning",
+            "line": 812
+          }
+        ],
+        "enums": [
+          {
+            "name": "SeverityLevel",
+            "line": 387
+          },
+          {
+            "name": "TargetTool",
+            "line": 526
+          }
+        ],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [
+          {
+            "name": "DEFAULT_MAX_FILES",
+            "line": 352
+          }
+        ],
+        "impls": [
+          {
+            "name": "Default",
+            "line": 113
+          },
+          {
+            "name": "std::fmt::Debug",
+            "line": 121
+          },
+          {
+            "name": "RuleFilter",
+            "line": 233
+          },
+          {
+            "name": "Default",
+            "line": 359
+          },
+          {
+            "name": "Default",
+            "line": 497
+          },
+          {
+            "name": "LintConfig",
+            "line": 537
+          }
+        ]
+      },
+      "imports": [
+        {
+          "source": "crate::file_utils::safe_read_file",
+          "kind": "named"
+        },
+        {
+          "source": "crate::fs::{FileSystem, RealFileSystem}",
+          "kind": "named"
+        },
+        {
+          "source": "crate::schemas::mcp::DEFAULT_MCP_PROTOCOL_VERSION",
+          "kind": "named"
+        },
+        {
+          "source": "rust_i18n::t",
+          "kind": "named"
+        },
+        {
+          "source": "schemars::JsonSchema",
+          "kind": "named"
+        },
+        {
+          "source": "serde::{Deserialize, Serialize}",
+          "kind": "named"
+        },
+        {
+          "source": "std::path::{Path, PathBuf}",
+          "kind": "named"
+        },
+        {
+          "source": "std::sync::Arc",
+          "kind": "named"
+        },
+        {
+          "source": "super::*",
+          "kind": "glob"
+        },
+        {
+          "source": "crate::fs::{FileSystem, MockFileSystem}",
+          "kind": "named"
+        },
+        {
+          "source": "crate::fs::MockFileSystem",
+          "kind": "named"
+        },
+        {
+          "source": "crate::fs::{FileSystem, MockFileSystem}",
+          "kind": "named"
+        },
+        {
+          "source": "std::thread",
+          "kind": "named"
+        },
+        {
+          "source": "crate::fs::{FileSystem, MockFileSystem}",
+          "kind": "named"
+        },
+        {
+          "source": "crate::fs::MockFileSystem",
+          "kind": "named"
+        }
+      ]
+    },
+    "crates/agnix-core/src/diagnostics.rs": {
+      "hash": "0432e15de1d8ff7e",
+      "language": "rust",
+      "symbols": {
+        "exports": [
+          {
+            "name": "replace",
+            "kind": "function",
+            "line": 25
+          },
+          {
+            "name": "insert",
+            "kind": "function",
+            "line": 42
+          },
+          {
+            "name": "delete",
+            "kind": "function",
+            "line": 58
+          },
+          {
+            "name": "is_insertion",
+            "kind": "function",
+            "line": 69
+          },
+          {
+            "name": "is_deletion",
+            "kind": "function",
+            "line": 74
+          },
+          {
+            "name": "error",
+            "kind": "function",
+            "line": 110
+          },
+          {
+            "name": "warning",
+            "kind": "function",
+            "line": 130
+          },
+          {
+            "name": "info",
+            "kind": "function",
+            "line": 150
+          },
+          {
+            "name": "with_suggestion",
+            "kind": "function",
+            "line": 170
+          },
+          {
+            "name": "with_assumption",
+            "kind": "function",
+            "line": 179
+          },
+          {
+            "name": "with_fix",
+            "kind": "function",
+            "line": 185
+          },
+          {
+            "name": "with_fixes",
+            "kind": "function",
+            "line": 191
+          },
+          {
+            "name": "has_fixes",
+            "kind": "function",
+            "line": 197
+          },
+          {
+            "name": "has_safe_fixes",
+            "kind": "function",
+            "line": 202
+          },
+          {
+            "name": "Fix",
+            "kind": "struct",
+            "line": 10
+          },
+          {
+            "name": "Diagnostic",
+            "kind": "struct",
+            "line": 81
+          },
+          {
+            "name": "DiagnosticLevel",
+            "kind": "enum",
+            "line": 103
+          },
+          {
+            "name": "LintError",
+            "kind": "enum",
+            "line": 209
+          }
+        ],
+        "functions": [
+          {
+            "name": "replace",
+            "line": 25
+          },
+          {
+            "name": "insert",
+            "line": 42
+          },
+          {
+            "name": "delete",
+            "line": 58
+          },
+          {
+            "name": "is_insertion",
+            "line": 69
+          },
+          {
+            "name": "is_deletion",
+            "line": 74
+          },
+          {
+            "name": "error",
+            "line": 110
+          },
+          {
+            "name": "warning",
+            "line": 130
+          },
+          {
+            "name": "info",
+            "line": 150
+          },
+          {
+            "name": "with_suggestion",
+            "line": 170
+          },
+          {
+            "name": "with_assumption",
+            "line": 179
+          },
+          {
+            "name": "with_fix",
+            "line": 185
+          },
+          {
+            "name": "with_fixes",
+            "line": 191
+          },
+          {
+            "name": "has_fixes",
+            "line": 197
+          },
+          {
+            "name": "has_safe_fixes",
+            "line": 202
+          }
+        ],
+        "structs": [
+          {
+            "name": "Fix",
+            "line": 10
+          },
+          {
+            "name": "Diagnostic",
+            "line": 81
+          }
+        ],
+        "enums": [
+          {
+            "name": "DiagnosticLevel",
+            "line": 103
+          },
+          {
+            "name": "LintError",
+            "line": 209
+          }
+        ],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [],
+        "impls": [
+          {
+            "name": "Fix",
+            "line": 23
+          },
+          {
+            "name": "Diagnostic",
+            "line": 109
+          }
+        ]
+      },
+      "imports": [
+        {
+          "source": "serde::{Deserialize, Serialize}",
+          "kind": "named"
+        },
+        {
+          "source": "std::path::PathBuf",
+          "kind": "named"
+        },
+        {
+          "source": "thiserror::Error",
+          "kind": "named"
+        }
+      ]
+    },
+    "crates/agnix-core/src/eval.rs": {
+      "hash": "2736cbdb904f7ab0",
+      "language": "rust",
+      "symbols": {
+        "exports": [
+          {
+            "name": "passed",
+            "kind": "function",
+            "line": 40
+          },
+          {
+            "name": "new",
+            "kind": "function",
+            "line": 60
+          },
+          {
+            "name": "precision",
+            "kind": "function",
+            "line": 71
+          },
+          {
+            "name": "recall",
+            "kind": "function",
+            "line": 82
+          },
+          {
+            "name": "f1",
+            "kind": "function",
+            "line": 93
+          },
+          {
+            "name": "from_results",
+            "kind": "function",
+            "line": 126
+          },
+          {
+            "name": "to_json",
+            "kind": "function",
+            "line": 193
+          },
+          {
+            "name": "to_csv",
+            "kind": "function",
+            "line": 198
+          },
+          {
+            "name": "to_markdown",
+            "kind": "function",
+            "line": 235
+          },
+          {
+            "name": "evaluate_case",
+            "kind": "function",
+            "line": 377
+          },
+          {
+            "name": "evaluate_manifest",
+            "kind": "function",
+            "line": 446
+          },
+          {
+            "name": "EvalCase",
+            "kind": "struct",
+            "line": 13
+          },
+          {
+            "name": "EvalResult",
+            "kind": "struct",
+            "line": 25
+          },
+          {
+            "name": "RuleMetrics",
+            "kind": "struct",
+            "line": 47
+          },
+          {
+            "name": "EvalSummary",
+            "kind": "struct",
+            "line": 107
+          },
+          {
+            "name": "EvalManifest",
+            "kind": "struct",
+            "line": 278
+          },
+          {
+            "name": "EvalError",
+            "kind": "enum",
+            "line": 309
+          },
+          {
+            "name": "EvalFormat",
+            "kind": "enum",
+            "line": 487
+          }
+        ],
+        "functions": [
+          {
+            "name": "passed",
+            "line": 40
+          },
+          {
+            "name": "new",
+            "line": 60
+          },
+          {
+            "name": "precision",
+            "line": 71
+          },
+          {
+            "name": "recall",
+            "line": 82
+          },
+          {
+            "name": "f1",
+            "line": 93
+          },
+          {
+            "name": "from_results",
+            "line": 126
+          },
+          {
+            "name": "to_json",
+            "line": 193
+          },
+          {
+            "name": "to_csv",
+            "line": 198
+          },
+          {
+            "name": "to_markdown",
+            "line": 235
+          },
+          {
+            "name": "evaluate_case",
+            "line": 377
+          },
+          {
+            "name": "evaluate_manifest",
+            "line": 446
+          }
+        ],
+        "structs": [
+          {
+            "name": "EvalCase",
+            "line": 13
+          },
+          {
+            "name": "EvalResult",
+            "line": 25
+          },
+          {
+            "name": "RuleMetrics",
+            "line": 47
+          },
+          {
+            "name": "EvalSummary",
+            "line": 107
+          },
+          {
+            "name": "EvalManifest",
+            "line": 278
+          }
+        ],
+        "enums": [
+          {
+            "name": "EvalError",
+            "line": 309
+          },
+          {
+            "name": "EvalFormat",
+            "line": 487
+          }
+        ],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [],
+        "impls": [
+          {
+            "name": "EvalResult",
+            "line": 38
+          },
+          {
+            "name": "RuleMetrics",
+            "line": 58
+          },
+          {
+            "name": "EvalSummary",
+            "line": 124
+          },
+          {
+            "name": "EvalManifest",
+            "line": 283
+          },
+          {
+            "name": "std::str::FromStr",
+            "line": 494
+          },
+          {
+            "name": "std::fmt::Display",
+            "line": 510
+          }
+        ]
+      },
+      "imports": [
+        {
+          "source": "crate::{Diagnostic, LintConfig, LintError, file_utils::safe_read_file, validate_file}",
+          "kind": "named"
+        },
+        {
+          "source": "serde::{Deserialize, Serialize}",
+          "kind": "named"
+        },
+        {
+          "source": "std::collections::{HashMap, HashSet}",
+          "kind": "named"
+        },
+        {
+          "source": "std::path::{Path, PathBuf}",
+          "kind": "named"
+        },
+        {
+          "source": "super::*",
+          "kind": "glob"
+        }
+      ]
+    },
+    "crates/agnix-core/src/file_utils.rs": {
+      "hash": "b42605c3215d4fcd",
+      "language": "rust",
+      "symbols": {
+        "exports": [
+          {
+            "name": "safe_read_file",
+            "kind": "function",
+            "line": 49
+          },
+          {
+            "name": "safe_write_file",
+            "kind": "function",
+            "line": 65
+          },
+          {
+            "name": "safe_read_file_with_limit",
+            "kind": "function",
+            "line": 177
+          },
+          {
+            "name": "DEFAULT_MAX_FILE_SIZE",
+            "kind": "constant",
+            "line": 34
+          }
+        ],
+        "functions": [
+          {
+            "name": "safe_read_file",
+            "line": 49
+          },
+          {
+            "name": "safe_write_file",
+            "line": 65
+          },
+          {
+            "name": "safe_read_file_with_limit",
+            "line": 177
+          }
+        ],
+        "structs": [],
+        "enums": [],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [
+          {
+            "name": "DEFAULT_MAX_FILE_SIZE",
+            "line": 34
+          }
+        ],
+        "impls": []
+      },
+      "imports": [
+        {
+          "source": "crate::diagnostics::{LintError, LintResult}",
+          "kind": "named"
+        },
+        {
+          "source": "std::fs",
+          "kind": "named"
+        },
+        {
+          "source": "std::fs::OpenOptions",
+          "kind": "named"
+        },
+        {
+          "source": "std::io::{self, Write}",
+          "kind": "named"
+        },
+        {
+          "source": "std::path::Path",
+          "kind": "named"
+        },
+        {
+          "source": "std::time::{SystemTime, UNIX_EPOCH}",
+          "kind": "named"
+        },
+        {
+          "source": "super::*",
+          "kind": "glob"
+        },
+        {
+          "source": "std::io::Write",
+          "kind": "named"
+        },
+        {
+          "source": "tempfile::TempDir",
+          "kind": "named"
+        },
+        {
+          "source": "super::*",
+          "kind": "glob"
+        },
+        {
+          "source": "std::os::unix::fs::symlink",
+          "kind": "named"
+        },
+        {
+          "source": "super::*",
+          "kind": "glob"
+        },
+        {
+          "source": "std::os::windows::fs::symlink_file",
+          "kind": "named"
+        },
+        {
+          "source": "std::os::unix::fs::symlink",
+          "kind": "named"
+        }
+      ]
+    },
+    "crates/agnix-core/src/fixes.rs": {
+      "hash": "8992fb4bd215490f",
+      "language": "rust",
+      "symbols": {
+        "exports": [
+          {
+            "name": "has_changes",
+            "kind": "function",
+            "line": 23
+          },
+          {
+            "name": "apply_fixes",
+            "kind": "function",
+            "line": 37
+          },
+          {
+            "name": "apply_fixes_with_fs",
+            "kind": "function",
+            "line": 55
+          },
+          {
+            "name": "FixResult",
+            "kind": "struct",
+            "line": 10
+          }
+        ],
+        "functions": [
+          {
+            "name": "has_changes",
+            "line": 23
+          },
+          {
+            "name": "apply_fixes",
+            "line": 37
+          },
+          {
+            "name": "apply_fixes_with_fs",
+            "line": 55
+          }
+        ],
+        "structs": [
+          {
+            "name": "FixResult",
+            "line": 10
+          }
+        ],
+        "enums": [],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [],
+        "impls": [
+          {
+            "name": "FixResult",
+            "line": 21
+          }
+        ]
+      },
+      "imports": [
+        {
+          "source": "crate::diagnostics::{Diagnostic, Fix, LintResult}",
+          "kind": "named"
+        },
+        {
+          "source": "crate::fs::{FileSystem, RealFileSystem}",
+          "kind": "named"
+        },
+        {
+          "source": "std::collections::HashMap",
+          "kind": "named"
+        },
+        {
+          "source": "std::path::PathBuf",
+          "kind": "named"
+        },
+        {
+          "source": "std::sync::Arc",
+          "kind": "named"
+        },
+        {
+          "source": "super::*",
+          "kind": "glob"
+        },
+        {
+          "source": "crate::diagnostics::{DiagnosticLevel, Fix}",
+          "kind": "named"
+        },
+        {
+          "source": "crate::fs::MockFileSystem",
+          "kind": "named"
+        },
+        {
+          "source": "crate::fs::{FileSystem, MockFileSystem}",
+          "kind": "named"
+        },
+        {
+          "source": "crate::fs::{FileSystem, MockFileSystem}",
+          "kind": "named"
+        },
+        {
+          "source": "crate::fs::{FileSystem, MockFileSystem}",
+          "kind": "named"
+        },
+        {
+          "source": "crate::fs::MockFileSystem",
+          "kind": "named"
+        },
+        {
+          "source": "crate::fs::MockFileSystem",
+          "kind": "named"
+        }
+      ]
+    },
+    "crates/agnix-core/src/fs.rs": {
+      "hash": "d2657b8b8024180e",
+      "language": "rust",
+      "symbols": {
+        "exports": [
+          {
+            "name": "file",
+            "kind": "function",
+            "line": 77
+          },
+          {
+            "name": "directory",
+            "kind": "function",
+            "line": 87
+          },
+          {
+            "name": "symlink",
+            "kind": "function",
+            "line": 97
+          },
+          {
+            "name": "new",
+            "kind": "function",
+            "line": 242
+          },
+          {
+            "name": "add_file",
+            "kind": "function",
+            "line": 249
+          },
+          {
+            "name": "add_dir",
+            "kind": "function",
+            "line": 261
+          },
+          {
+            "name": "add_symlink",
+            "kind": "function",
+            "line": 268
+          },
+          {
+            "name": "remove",
+            "kind": "function",
+            "line": 276
+          },
+          {
+            "name": "clear",
+            "kind": "function",
+            "line": 283
+          },
+          {
+            "name": "FileMetadata",
+            "kind": "struct",
+            "line": 64
+          },
+          {
+            "name": "DirEntry",
+            "kind": "struct",
+            "line": 120
+          },
+          {
+            "name": "RealFileSystem",
+            "kind": "struct",
+            "line": 165
+          },
+          {
+            "name": "MockFileSystem",
+            "kind": "struct",
+            "line": 236
+          },
+          {
+            "name": "FileSystem:",
+            "kind": "trait",
+            "line": 131
+          },
+          {
+            "name": "MAX_SYMLINK_DEPTH",
+            "kind": "constant",
+            "line": 308
+          }
+        ],
+        "functions": [
+          {
+            "name": "file",
+            "line": 77
+          },
+          {
+            "name": "directory",
+            "line": 87
+          },
+          {
+            "name": "symlink",
+            "line": 97
+          },
+          {
+            "name": "new",
+            "line": 242
+          },
+          {
+            "name": "add_file",
+            "line": 249
+          },
+          {
+            "name": "add_dir",
+            "line": 261
+          },
+          {
+            "name": "add_symlink",
+            "line": 268
+          },
+          {
+            "name": "remove",
+            "line": 276
+          },
+          {
+            "name": "clear",
+            "line": 283
+          }
+        ],
+        "structs": [
+          {
+            "name": "FileMetadata",
+            "line": 64
+          },
+          {
+            "name": "DirEntry",
+            "line": 120
+          },
+          {
+            "name": "RealFileSystem",
+            "line": 165
+          },
+          {
+            "name": "MockFileSystem",
+            "line": 236
+          }
+        ],
+        "enums": [],
+        "traits": [
+          {
+            "name": "FileSystem:",
+            "line": 131
+          }
+        ],
+        "types": [],
+        "modules": [],
+        "constants": [
+          {
+            "name": "MAX_SYMLINK_DEPTH",
+            "line": 308
+          }
+        ],
+        "impls": [
+          {
+            "name": "FileMetadata",
+            "line": 75
+          },
+          {
+            "name": "From<&Metadata>",
+            "line": 107
+          },
+          {
+            "name": "FileSystem",
+            "line": 167
+          },
+          {
+            "name": "MockFileSystem",
+            "line": 240
+          },
+          {
+            "name": "FileSystem",
+            "line": 378
+          }
+        ]
+      },
+      "imports": [
+        {
+          "source": "crate::diagnostics::{LintError, LintResult}",
+          "kind": "named"
+        },
+        {
+          "source": "std::collections::HashMap",
+          "kind": "named"
+        },
+        {
+          "source": "std::fs::Metadata",
+          "kind": "named"
+        },
+        {
+          "source": "std::io",
+          "kind": "named"
+        },
+        {
+          "source": "std::path::{Path, PathBuf}",
+          "kind": "named"
+        },
+        {
+          "source": "std::sync::RwLock",
+          "kind": "named"
+        },
+        {
+          "source": "super::*",
+          "kind": "glob"
+        },
+        {
+          "source": "std::sync::Arc",
+          "kind": "named"
+        },
+        {
+          "source": "std::thread",
+          "kind": "named"
+        },
+        {
+          "source": "super::*",
+          "kind": "glob"
+        },
+        {
+          "source": "std::os::unix::fs::symlink",
+          "kind": "named"
+        },
+        {
+          "source": "tempfile::TempDir",
+          "kind": "named"
+        }
+      ]
+    },
+    "crates/agnix-core/src/i18n.rs": {
+      "hash": "4b67bfb08c02e1bb",
+      "language": "rust",
+      "symbols": {
+        "exports": [
+          {
+            "name": "normalize_locale",
+            "kind": "function",
+            "line": 16
+          },
+          {
+            "name": "is_supported",
+            "kind": "function",
+            "line": 51
+          },
+          {
+            "name": "SUPPORTED_LOCALES",
+            "kind": "constant",
+            "line": 6
+          }
+        ],
+        "functions": [
+          {
+            "name": "normalize_locale",
+            "line": 16
+          },
+          {
+            "name": "is_supported",
+            "line": 51
+          }
+        ],
+        "structs": [],
+        "enums": [],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [
+          {
+            "name": "SUPPORTED_LOCALES",
+            "line": 6
+          }
+        ],
+        "impls": []
+      },
+      "imports": [
+        {
+          "source": "super::*",
+          "kind": "glob"
+        }
+      ]
+    },
+    "crates/agnix-core/src/lib.rs": {
+      "hash": "efd1c18158ef4485",
+      "language": "rust",
+      "symbols": {
+        "exports": [
+          {
+            "name": "new",
+            "kind": "function",
+            "line": 112
+          },
+          {
+            "name": "with_defaults",
+            "kind": "function",
+            "line": 119
+          },
+          {
+            "name": "register",
+            "kind": "function",
+            "line": 126
+          },
+          {
+            "name": "validators_for",
+            "kind": "function",
+            "line": 131
+          },
+          {
+            "name": "detect_file_type",
+            "kind": "function",
+            "line": 263
+          },
+          {
+            "name": "validate_file",
+            "kind": "function",
+            "line": 361
+          },
+          {
+            "name": "validate_file_with_registry",
+            "kind": "function",
+            "line": 367
+          },
+          {
+            "name": "validate_project",
+            "kind": "function",
+            "line": 391
+          },
+          {
+            "name": "validate_project_with_registry",
+            "kind": "function",
+            "line": 455
+          },
+          {
+            "name": "ValidationResult",
+            "kind": "struct",
+            "line": 58
+          },
+          {
+            "name": "ValidatorRegistry",
+            "kind": "struct",
+            "line": 106
+          },
+          {
+            "name": "FileType",
+            "kind": "enum",
+            "line": 67
+          },
+          {
+            "name": "ValidatorFactory",
+            "kind": "type",
+            "line": 95
+          },
+          {
+            "name": "authoring",
+            "kind": "module",
+            "line": 28
+          },
+          {
+            "name": "config",
+            "kind": "module",
+            "line": 29
+          },
+          {
+            "name": "diagnostics",
+            "kind": "module",
+            "line": 30
+          },
+          {
+            "name": "eval",
+            "kind": "module",
+            "line": 31
+          },
+          {
+            "name": "fixes",
+            "kind": "module",
+            "line": 33
+          },
+          {
+            "name": "fs",
+            "kind": "module",
+            "line": 34
+          },
+          {
+            "name": "i18n",
+            "kind": "module",
+            "line": 35
+          },
+          {
+            "name": "parsers",
+            "kind": "module",
+            "line": 36
+          }
+        ],
+        "functions": [
+          {
+            "name": "new",
+            "line": 112
+          },
+          {
+            "name": "with_defaults",
+            "line": 119
+          },
+          {
+            "name": "register",
+            "line": 126
+          },
+          {
+            "name": "validators_for",
+            "line": 131
+          },
+          {
+            "name": "detect_file_type",
+            "line": 263
+          },
+          {
+            "name": "validate_file",
+            "line": 361
+          },
+          {
+            "name": "validate_file_with_registry",
+            "line": 367
+          },
+          {
+            "name": "validate_project",
+            "line": 391
+          },
+          {
+            "name": "validate_project_with_registry",
+            "line": 455
+          }
+        ],
+        "structs": [
+          {
+            "name": "ValidationResult",
+            "line": 58
+          },
+          {
+            "name": "ValidatorRegistry",
+            "line": 106
+          }
+        ],
+        "enums": [
+          {
+            "name": "FileType",
+            "line": 67
+          }
+        ],
+        "traits": [],
+        "types": [
+          {
+            "name": "ValidatorFactory",
+            "line": 95
+          }
+        ],
+        "modules": [
+          {
+            "name": "authoring",
+            "line": 28
+          },
+          {
+            "name": "config",
+            "line": 29
+          },
+          {
+            "name": "diagnostics",
+            "line": 30
+          },
+          {
+            "name": "eval",
+            "line": 31
+          },
+          {
+            "name": "fixes",
+            "line": 33
+          },
+          {
+            "name": "fs",
+            "line": 34
+          },
+          {
+            "name": "i18n",
+            "line": 35
+          },
+          {
+            "name": "parsers",
+            "line": 36
+          }
+        ],
+        "constants": [],
+        "impls": [
+          {
+            "name": "ValidatorRegistry",
+            "line": 110
+          },
+          {
+            "name": "Default",
+            "line": 177
+          },
+          {
+            "name": "Validator",
+            "line": 1100
+          },
+          {
+            "name": "Validator",
+            "line": 3730
+          }
+        ]
+      },
+      "imports": [
+        {
+          "source": "std::collections::HashMap",
+          "kind": "named"
+        },
+        {
+          "source": "std::path::{Path, PathBuf}",
+          "kind": "named"
+        },
+        {
+          "source": "rayon::iter::ParallelBridge",
+          "kind": "named"
+        },
+        {
+          "source": "rayon::prelude::*",
+          "kind": "glob"
+        },
+        {
+          "source": "rust_i18n::t",
+          "kind": "named"
+        },
+        {
+          "source": "std::sync::Mutex",
+          "kind": "named"
+        },
+        {
+          "source": "std::sync::atomic::{AtomicBool, AtomicUsize, Ordering}",
+          "kind": "named"
+        },
+        {
+          "source": "ignore::WalkBuilder",
+          "kind": "named"
+        },
+        {
+          "source": "std::sync::Arc",
+          "kind": "named"
+        },
+        {
+          "source": "super::*",
+          "kind": "glob"
+        },
+        {
+          "source": "std::sync::OnceLock",
+          "kind": "named"
+        },
+        {
+          "source": "std::sync::Arc",
+          "kind": "named"
+        },
+        {
+          "source": "std::thread",
+          "kind": "named"
+        },
+        {
+          "source": "std::sync::Arc",
+          "kind": "named"
+        },
+        {
+          "source": "std::thread",
+          "kind": "named"
+        },
+        {
+          "source": "std::sync::Arc",
+          "kind": "named"
+        },
+        {
+          "source": "std::thread",
+          "kind": "named"
+        },
+        {
+          "source": "std::thread",
+          "kind": "named"
+        },
+        {
+          "source": "std::time::Instant",
+          "kind": "named"
+        },
+        {
+          "source": "rust_i18n::t",
+          "kind": "named"
+        },
+        {
+          "source": "std::sync::Mutex",
+          "kind": "named"
+        },
+        {
+          "source": "super::*",
+          "kind": "glob"
+        },
+        {
+          "source": "std::path::Path",
+          "kind": "named"
+        },
+        {
+          "source": "super::*",
+          "kind": "glob"
+        },
+        {
+          "source": "std::path::Path",
+          "kind": "named"
+        }
+      ]
+    },
+    "crates/agnix-core/src/parsers/frontmatter.rs": {
+      "hash": "29c06f17524c54b3",
+      "language": "rust",
+      "symbols": {
+        "exports": [
+          {
+            "name": "split_frontmatter",
+            "kind": "function",
+            "line": 59
+          },
+          {
+            "name": "FrontmatterParts",
+            "kind": "struct",
+            "line": 49
+          }
+        ],
+        "functions": [
+          {
+            "name": "split_frontmatter",
+            "line": 59
+          }
+        ],
+        "structs": [
+          {
+            "name": "FrontmatterParts",
+            "line": 49
+          }
+        ],
+        "enums": [],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [],
+        "impls": []
+      },
+      "imports": [
+        {
+          "source": "crate::diagnostics::{LintError, LintResult}",
+          "kind": "named"
+        },
+        {
+          "source": "serde::de::DeserializeOwned",
+          "kind": "named"
+        },
+        {
+          "source": "super::*",
+          "kind": "glob"
+        },
+        {
+          "source": "serde::Deserialize",
+          "kind": "named"
+        },
+        {
+          "source": "super::*",
+          "kind": "glob"
+        },
+        {
+          "source": "proptest::prelude::*",
+          "kind": "glob"
+        }
+      ]
+    },
+    "crates/agnix-core/src/parsers/json.rs": {
+      "hash": "432f91abf3f608cd",
+      "language": "rust",
+      "symbols": {
+        "exports": [],
+        "functions": [],
+        "structs": [],
+        "enums": [],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [],
+        "impls": []
+      },
+      "imports": [
+        {
+          "source": "crate::diagnostics::{LintError, LintResult}",
+          "kind": "named"
+        },
+        {
+          "source": "serde::de::DeserializeOwned",
+          "kind": "named"
+        },
+        {
+          "source": "super::*",
+          "kind": "glob"
+        },
+        {
+          "source": "serde::Deserialize",
+          "kind": "named"
+        },
+        {
+          "source": "super::*",
+          "kind": "glob"
+        },
+        {
+          "source": "proptest::prelude::*",
+          "kind": "glob"
+        },
+        {
+          "source": "serde_json::Value",
+          "kind": "named"
+        }
+      ]
+    },
+    "crates/agnix-core/src/parsers/markdown.rs": {
+      "hash": "76a996d607c3d3df",
+      "language": "rust",
+      "symbols": {
+        "exports": [
+          {
+            "name": "extract_imports",
+            "kind": "function",
+            "line": 38
+          },
+          {
+            "name": "extract_xml_tags",
+            "kind": "function",
+            "line": 70
+          },
+          {
+            "name": "extract_markdown_links",
+            "kind": "function",
+            "line": 111
+          },
+          {
+            "name": "check_xml_balance",
+            "kind": "function",
+            "line": 171
+          },
+          {
+            "name": "check_xml_balance_with_content_end",
+            "kind": "function",
+            "line": 176
+          },
+          {
+            "name": "Import",
+            "kind": "struct",
+            "line": 227
+          },
+          {
+            "name": "MarkdownLink",
+            "kind": "struct",
+            "line": 237
+          },
+          {
+            "name": "XmlTag",
+            "kind": "struct",
+            "line": 255
+          },
+          {
+            "name": "XmlBalanceError",
+            "kind": "enum",
+            "line": 265
+          },
+          {
+            "name": "MAX_REGEX_INPUT_SIZE",
+            "kind": "constant",
+            "line": 29
+          }
+        ],
+        "functions": [
+          {
+            "name": "extract_imports",
+            "line": 38
+          },
+          {
+            "name": "extract_xml_tags",
+            "line": 70
+          },
+          {
+            "name": "extract_markdown_links",
+            "line": 111
+          },
+          {
+            "name": "check_xml_balance",
+            "line": 171
+          },
+          {
+            "name": "check_xml_balance_with_content_end",
+            "line": 176
+          }
+        ],
+        "structs": [
+          {
+            "name": "Import",
+            "line": 227
+          },
+          {
+            "name": "MarkdownLink",
+            "line": 237
+          },
+          {
+            "name": "XmlTag",
+            "line": 255
+          }
+        ],
+        "enums": [
+          {
+            "name": "XmlBalanceError",
+            "line": 265
+          }
+        ],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [
+          {
+            "name": "MAX_REGEX_INPUT_SIZE",
+            "line": 29
+          }
+        ],
+        "impls": []
+      },
+      "imports": [
+        {
+          "source": "pulldown_cmark::{Event, Options, Parser, Tag, TagEnd}",
+          "kind": "named"
+        },
+        {
+          "source": "regex::Regex",
+          "kind": "named"
+        },
+        {
+          "source": "std::ops::Range",
+          "kind": "named"
+        },
+        {
+          "source": "std::panic::{self, AssertUnwindSafe}",
+          "kind": "named"
+        },
+        {
+          "source": "crate::regex_util::static_regex",
+          "kind": "named"
+        },
+        {
+          "source": "super::*",
+          "kind": "glob"
+        },
+        {
+          "source": "super::*",
+          "kind": "glob"
+        },
+        {
+          "source": "proptest::prelude::*",
+          "kind": "glob"
+        }
+      ]
+    },
+    "crates/agnix-core/src/parsers/mod.rs": {
+      "hash": "fa74441f7aaaf15d",
+      "language": "rust",
+      "symbols": {
+        "exports": [
+          {
+            "name": "ImportCache",
+            "kind": "type",
+            "line": 23
+          },
+          {
+            "name": "frontmatter",
+            "kind": "module",
+            "line": 7
+          },
+          {
+            "name": "json",
+            "kind": "module",
+            "line": 8
+          },
+          {
+            "name": "markdown",
+            "kind": "module",
+            "line": 9
+          }
+        ],
+        "functions": [],
+        "structs": [],
+        "enums": [],
+        "traits": [],
+        "types": [
+          {
+            "name": "ImportCache",
+            "line": 23
+          }
+        ],
+        "modules": [
+          {
+            "name": "frontmatter",
+            "line": 7
+          },
+          {
+            "name": "json",
+            "line": 8
+          },
+          {
+            "name": "markdown",
+            "line": 9
+          }
+        ],
+        "constants": [],
+        "impls": []
+      },
+      "imports": []
+    },
+    "crates/agnix-core/src/rules/agent.rs": {
+      "hash": "4332a89417ba1f27",
+      "language": "rust",
+      "symbols": {
+        "exports": [
+          {
+            "name": "AgentValidator",
+            "kind": "struct",
+            "line": 61
+          }
+        ],
+        "functions": [],
+        "structs": [
+          {
+            "name": "AgentValidator",
+            "line": 61
+          }
+        ],
+        "enums": [],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [],
+        "impls": [
+          {
+            "name": "AgentValidator",
+            "line": 134
+          },
+          {
+            "name": "Validator",
+            "line": 186
+          }
+        ]
+      },
+      "imports": [
+        {
+          "source": "crate::{\n    config::LintConfig,\n    diagnostics::{Diagnostic, Fix},\n    fs::FileSystem,\n    parsers::frontmatter::split_frontmatter,\n    rules::Validator,\n    schemas::agent::AgentSchema,\n}",
+          "kind": "named"
+        },
+        {
+          "source": "rust_i18n::t",
+          "kind": "named"
+        },
+        {
+          "source": "std::collections::HashSet",
+          "kind": "named"
+        },
+        {
+          "source": "std::path::Path",
+          "kind": "named"
+        },
+        {
+          "source": "super::*",
+          "kind": "glob"
+        },
+        {
+          "source": "crate::config::LintConfig",
+          "kind": "named"
+        },
+        {
+          "source": "crate::diagnostics::DiagnosticLevel",
+          "kind": "named"
+        },
+        {
+          "source": "tempfile::TempDir",
+          "kind": "named"
+        },
+        {
+          "source": "crate::config::TargetTool",
+          "kind": "named"
+        },
+        {
+          "source": "crate::config::TargetTool",
+          "kind": "named"
+        },
+        {
+          "source": "crate::fs::MockFileSystem",
+          "kind": "named"
+        },
+        {
+          "source": "std::sync::Arc",
+          "kind": "named"
+        },
+        {
+          "source": "crate::fs::MockFileSystem",
+          "kind": "named"
+        },
+        {
+          "source": "std::sync::Arc",
+          "kind": "named"
+        },
+        {
+          "source": "crate::fs::MockFileSystem",
+          "kind": "named"
+        },
+        {
+          "source": "std::sync::Arc",
+          "kind": "named"
+        },
+        {
+          "source": "crate::fs::MockFileSystem",
+          "kind": "named"
+        },
+        {
+          "source": "std::sync::Arc",
+          "kind": "named"
+        },
+        {
+          "source": "crate::fs::MockFileSystem",
+          "kind": "named"
+        },
+        {
+          "source": "std::sync::Arc",
+          "kind": "named"
+        },
+        {
+          "source": "crate::fs::MockFileSystem",
+          "kind": "named"
+        },
+        {
+          "source": "std::sync::Arc",
+          "kind": "named"
+        }
+      ]
+    },
+    "crates/agnix-core/src/rules/agents_md.rs": {
+      "hash": "1fff62bbb9058d57",
+      "language": "rust",
+      "symbols": {
+        "exports": [
+          {
+            "name": "AgentsMdValidator",
+            "kind": "struct",
+            "line": 22
+          }
+        ],
+        "functions": [],
+        "structs": [
+          {
+            "name": "AgentsMdValidator",
+            "line": 22
+          }
+        ],
+        "enums": [],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [],
+        "impls": [
+          {
+            "name": "Validator",
+            "line": 24
+          }
+        ]
+      },
+      "imports": [
+        {
+          "source": "crate::{\n    config::LintConfig,\n    diagnostics::Diagnostic,\n    rules::Validator,\n    schemas::agents_md::{\n        MarkdownIssueType, WINDSURF_CHAR_LIMIT, check_character_limit, check_markdown_validity,\n        check_project_context, check_section_headers, find_unguarded_platform_features,\n    },\n}",
+          "kind": "named"
+        },
+        {
+          "source": "rust_i18n::t",
+          "kind": "named"
+        },
+        {
+          "source": "std::path::Path",
+          "kind": "named"
+        },
+        {
+          "source": "super::*",
+          "kind": "glob"
+        },
+        {
+          "source": "crate::config::LintConfig",
+          "kind": "named"
+        },
+        {
+          "source": "crate::diagnostics::DiagnosticLevel",
+          "kind": "named"
+        }
+      ]
+    },
+    "crates/agnix-core/src/rules/claude_md.rs": {
+      "hash": "1d8731baa7d623da",
+      "language": "rust",
+      "symbols": {
+        "exports": [
+          {
+            "name": "ClaudeMdValidator",
+            "kind": "struct",
+            "line": 15
+          }
+        ],
+        "functions": [],
+        "structs": [
+          {
+            "name": "ClaudeMdValidator",
+            "line": 15
+          }
+        ],
+        "enums": [],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [],
+        "impls": [
+          {
+            "name": "Validator",
+            "line": 17
+          }
+        ]
+      },
+      "imports": [
+        {
+          "source": "crate::{\n    config::LintConfig,\n    diagnostics::{Diagnostic, Fix},\n    file_utils::safe_read_file,\n    rules::Validator,\n    schemas::claude_md::{\n        check_readme_duplication, check_token_count, extract_npm_scripts, find_critical_in_middle,\n        find_generic_instructions, find_negative_without_positive, find_weak_constraints,\n    },\n}",
+          "kind": "named"
+        },
+        {
+          "source": "rust_i18n::t",
+          "kind": "named"
+        },
+        {
+          "source": "std::path::Path",
+          "kind": "named"
+        },
+        {
+          "source": "super::*",
+          "kind": "glob"
+        },
+        {
+          "source": "crate::config::LintConfig",
+          "kind": "named"
+        },
+        {
+          "source": "std::fs",
+          "kind": "named"
+        },
+        {
+          "source": "crate::config::TargetTool",
+          "kind": "named"
+        },
+        {
+          "source": "std::io::Write",
+          "kind": "named"
+        },
+        {
+          "source": "tempfile::TempDir",
+          "kind": "named"
+        },
+        {
+          "source": "std::io::Write",
+          "kind": "named"
+        },
+        {
+          "source": "tempfile::TempDir",
+          "kind": "named"
+        },
+        {
+          "source": "std::io::Write",
+          "kind": "named"
+        },
+        {
+          "source": "tempfile::TempDir",
+          "kind": "named"
+        },
+        {
+          "source": "std::io::Write",
+          "kind": "named"
+        },
+        {
+          "source": "tempfile::TempDir",
+          "kind": "named"
+        }
+      ]
+    },
+    "crates/agnix-core/src/rules/copilot.rs": {
+      "hash": "d3d0cf539840f7a7",
+      "language": "rust",
+      "symbols": {
+        "exports": [
+          {
+            "name": "CopilotValidator",
+            "kind": "struct",
+            "line": 18
+          }
+        ],
+        "functions": [],
+        "structs": [
+          {
+            "name": "CopilotValidator",
+            "line": 18
+          }
+        ],
+        "enums": [],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [],
+        "impls": [
+          {
+            "name": "Validator",
+            "line": 45
+          }
+        ]
+      },
+      "imports": [
+        {
+          "source": "crate::{\n    FileType,\n    config::LintConfig,\n    diagnostics::{Diagnostic, Fix},\n    rules::Validator,\n    schemas::copilot::{is_body_empty, is_content_empty, parse_frontmatter, validate_glob_pattern},\n}",
+          "kind": "named"
+        },
+        {
+          "source": "rust_i18n::t",
+          "kind": "named"
+        },
+        {
+          "source": "std::path::Path",
+          "kind": "named"
+        },
+        {
+          "source": "super::*",
+          "kind": "glob"
+        },
+        {
+          "source": "crate::config::LintConfig",
+          "kind": "named"
+        },
+        {
+          "source": "crate::diagnostics::DiagnosticLevel",
+          "kind": "named"
+        }
+      ]
+    },
+    "crates/agnix-core/src/rules/cross_platform.rs": {
+      "hash": "e748e5922caee765",
+      "language": "rust",
+      "symbols": {
+        "exports": [
+          {
+            "name": "CrossPlatformValidator",
+            "kind": "struct",
+            "line": 18
+          }
+        ],
+        "functions": [],
+        "structs": [
+          {
+            "name": "CrossPlatformValidator",
+            "line": 18
+          }
+        ],
+        "enums": [],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [],
+        "impls": [
+          {
+            "name": "Validator",
+            "line": 20
+          }
+        ]
+      },
+      "imports": [
+        {
+          "source": "crate::{\n    config::LintConfig,\n    diagnostics::Diagnostic,\n    rules::Validator,\n    schemas::cross_platform::{\n        check_markdown_structure, find_claude_specific_features, find_hard_coded_paths,\n    },\n}",
+          "kind": "named"
+        },
+        {
+          "source": "rust_i18n::t",
+          "kind": "named"
+        },
+        {
+          "source": "std::path::Path",
+          "kind": "named"
+        },
+        {
+          "source": "super::*",
+          "kind": "glob"
+        },
+        {
+          "source": "crate::config::{LintConfig, TargetTool}",
+          "kind": "named"
+        },
+        {
+          "source": "crate::diagnostics::DiagnosticLevel",
+          "kind": "named"
+        }
+      ]
+    },
+    "crates/agnix-core/src/rules/cursor.rs": {
+      "hash": "d25e69d2e0cf9cd4",
+      "language": "rust",
+      "symbols": {
+        "exports": [
+          {
+            "name": "CursorValidator",
+            "kind": "struct",
+            "line": 22
+          }
+        ],
+        "functions": [],
+        "structs": [
+          {
+            "name": "CursorValidator",
+            "line": 22
+          }
+        ],
+        "enums": [],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [],
+        "impls": [
+          {
+            "name": "Validator",
+            "line": 49
+          }
+        ]
+      },
+      "imports": [
+        {
+          "source": "crate::{\n    FileType,\n    config::LintConfig,\n    diagnostics::{Diagnostic, Fix},\n    rules::Validator,\n    schemas::cursor::{\n        is_body_empty, is_content_empty, parse_mdc_frontmatter, validate_glob_pattern,\n    },\n}",
+          "kind": "named"
+        },
+        {
+          "source": "rust_i18n::t",
+          "kind": "named"
+        },
+        {
+          "source": "std::path::Path",
+          "kind": "named"
+        },
+        {
+          "source": "super::*",
+          "kind": "glob"
+        },
+        {
+          "source": "crate::config::LintConfig",
+          "kind": "named"
+        },
+        {
+          "source": "crate::diagnostics::DiagnosticLevel",
+          "kind": "named"
+        }
+      ]
+    },
+    "crates/agnix-core/src/rules/hooks/helpers.rs": {
+      "hash": "cbf1a0e509bd66ea",
+      "language": "rust",
+      "symbols": {
+        "exports": [
+          {
+            "name": "validate_cc_hk_005_missing_type_field",
+            "kind": "function",
+            "line": 108
+          },
+          {
+            "name": "validate_cc_hk_011_invalid_timeout_values",
+            "kind": "function",
+            "line": 145
+          },
+          {
+            "name": "validate_cc_hk_001_event_name",
+            "kind": "function",
+            "line": 220
+          },
+          {
+            "name": "validate_cc_hk_003_matcher_required",
+            "kind": "function",
+            "line": 260
+          },
+          {
+            "name": "validate_cc_hk_004_matcher_forbidden",
+            "kind": "function",
+            "line": 287
+          },
+          {
+            "name": "check_dangerous_patterns",
+            "kind": "function",
+            "line": 327
+          },
+          {
+            "name": "extract_script_paths",
+            "kind": "function",
+            "line": 336
+          },
+          {
+            "name": "resolve_script_path",
+            "kind": "function",
+            "line": 362
+          },
+          {
+            "name": "has_unresolved_env_vars",
+            "kind": "function",
+            "line": 376
+          },
+          {
+            "name": "find_closest_event",
+            "kind": "function",
+            "line": 391
+          },
+          {
+            "name": "find_event_key_position",
+            "kind": "function",
+            "line": 426
+          },
+          {
+            "name": "ClosestEventMatch",
+            "kind": "struct",
+            "line": 383
+          }
+        ],
+        "functions": [
+          {
+            "name": "validate_cc_hk_005_missing_type_field",
+            "line": 108
+          },
+          {
+            "name": "validate_cc_hk_011_invalid_timeout_values",
+            "line": 145
+          },
+          {
+            "name": "validate_cc_hk_001_event_name",
+            "line": 220
+          },
+          {
+            "name": "validate_cc_hk_003_matcher_required",
+            "line": 260
+          },
+          {
+            "name": "validate_cc_hk_004_matcher_forbidden",
+            "line": 287
+          },
+          {
+            "name": "check_dangerous_patterns",
+            "line": 327
+          },
+          {
+            "name": "extract_script_paths",
+            "line": 336
+          },
+          {
+            "name": "resolve_script_path",
+            "line": 362
+          },
+          {
+            "name": "has_unresolved_env_vars",
+            "line": 376
+          },
+          {
+            "name": "find_closest_event",
+            "line": 391
+          },
+          {
+            "name": "find_event_key_position",
+            "line": 426
+          }
+        ],
+        "structs": [
+          {
+            "name": "ClosestEventMatch",
+            "line": 383
+          }
+        ],
+        "enums": [],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [],
+        "impls": []
+      },
+      "imports": [
+        {
+          "source": "crate::diagnostics::{Diagnostic, Fix}",
+          "kind": "named"
+        },
+        {
+          "source": "crate::schemas::hooks::HooksSchema",
+          "kind": "named"
+        },
+        {
+          "source": "regex::Regex",
+          "kind": "named"
+        },
+        {
+          "source": "rust_i18n::t",
+          "kind": "named"
+        },
+        {
+          "source": "std::path::Path",
+          "kind": "named"
+        },
+        {
+          "source": "std::sync::OnceLock",
+          "kind": "named"
+        },
+        {
+          "source": "super::*",
+          "kind": "glob"
+        }
+      ]
+    },
+    "crates/agnix-core/src/rules/hooks/mod.rs": {
+      "hash": "f5179cf5edb012ab",
+      "language": "rust",
+      "symbols": {
+        "exports": [
+          {
+            "name": "HooksValidator",
+            "kind": "struct",
+            "line": 14
+          }
+        ],
+        "functions": [],
+        "structs": [
+          {
+            "name": "HooksValidator",
+            "line": 14
+          }
+        ],
+        "enums": [],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [],
+        "impls": [
+          {
+            "name": "HooksValidator",
+            "line": 251
+          },
+          {
+            "name": "Validator",
+            "line": 269
+          }
+        ]
+      },
+      "imports": [
+        {
+          "source": "crate::{\n    config::LintConfig,\n    diagnostics::Diagnostic,\n    rules::Validator,\n    schemas::hooks::{Hook, HooksSchema, SettingsSchema},\n}",
+          "kind": "named"
+        },
+        {
+          "source": "rust_i18n::t",
+          "kind": "named"
+        },
+        {
+          "source": "std::path::Path",
+          "kind": "named"
+        },
+        {
+          "source": "helpers::*",
+          "kind": "glob"
+        }
+      ]
+    },
+    "crates/agnix-core/src/rules/hooks/tests.rs": {
+      "hash": "f7dae81d882f0153",
+      "language": "rust",
+      "symbols": {
+        "exports": [],
+        "functions": [],
+        "structs": [],
+        "enums": [],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [],
+        "impls": []
+      },
+      "imports": [
+        {
+          "source": "super::*",
+          "kind": "glob"
+        },
+        {
+          "source": "crate::config::LintConfig",
+          "kind": "named"
+        },
+        {
+          "source": "crate::diagnostics::DiagnosticLevel",
+          "kind": "named"
+        },
+        {
+          "source": "crate::config::TargetTool",
+          "kind": "named"
+        }
+      ]
+    },
+    "crates/agnix-core/src/rules/imports.rs": {
+      "hash": "6ab4526a0e523b06",
+      "language": "rust",
+      "symbols": {
+        "exports": [
+          {
+            "name": "ImportsValidator",
+            "kind": "struct",
+            "line": 21
+          }
+        ],
+        "functions": [],
+        "structs": [
+          {
+            "name": "ImportsValidator",
+            "line": 21
+          }
+        ],
+        "enums": [],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [],
+        "impls": [
+          {
+            "name": "Validator",
+            "line": 64
+          }
+        ]
+      },
+      "imports": [
+        {
+          "source": "crate::{\n    config::LintConfig,\n    diagnostics::Diagnostic,\n    fs::FileSystem,\n    parsers::markdown::{extract_imports, extract_markdown_links},\n    parsers::{Import, ImportCache},\n    rules::Validator,\n}",
+          "kind": "named"
+        },
+        {
+          "source": "rust_i18n::t",
+          "kind": "named"
+        },
+        {
+          "source": "std::collections::{HashMap, HashSet}",
+          "kind": "named"
+        },
+        {
+          "source": "std::path::{Component, Path, PathBuf}",
+          "kind": "named"
+        },
+        {
+          "source": "super::*",
+          "kind": "glob"
+        },
+        {
+          "source": "crate::config::LintConfig",
+          "kind": "named"
+        },
+        {
+          "source": "std::fs",
+          "kind": "named"
+        },
+        {
+          "source": "tempfile::TempDir",
+          "kind": "named"
+        },
+        {
+          "source": "std::os::unix::fs::symlink",
+          "kind": "named"
+        },
+        {
+          "source": "std::collections::HashMap",
+          "kind": "named"
+        },
+        {
+          "source": "std::sync::{Arc, RwLock}",
+          "kind": "named"
+        },
+        {
+          "source": "std::collections::HashMap",
+          "kind": "named"
+        },
+        {
+          "source": "std::sync::{Arc, RwLock}",
+          "kind": "named"
+        },
+        {
+          "source": "std::collections::HashMap",
+          "kind": "named"
+        },
+        {
+          "source": "std::sync::{Arc, RwLock}",
+          "kind": "named"
+        },
+        {
+          "source": "std::thread",
+          "kind": "named"
+        },
+        {
+          "source": "std::collections::HashMap",
+          "kind": "named"
+        },
+        {
+          "source": "std::sync::{Arc, RwLock}",
+          "kind": "named"
+        },
+        {
+          "source": "std::thread",
+          "kind": "named"
+        },
+        {
+          "source": "std::collections::HashMap",
+          "kind": "named"
+        },
+        {
+          "source": "std::sync::{Arc, RwLock}",
+          "kind": "named"
+        },
+        {
+          "source": "std::thread",
+          "kind": "named"
+        }
+      ]
+    },
+    "crates/agnix-core/src/rules/mcp.rs": {
+      "hash": "71f31c27a88add83",
+      "language": "rust",
+      "symbols": {
+        "exports": [
+          {
+            "name": "McpValidator",
+            "kind": "struct",
+            "line": 112
+          }
+        ],
+        "functions": [],
+        "structs": [
+          {
+            "name": "McpValidator",
+            "line": 112
+          }
+        ],
+        "enums": [],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [],
+        "impls": [
+          {
+            "name": "Validator",
+            "line": 114
+          }
+        ]
+      },
+      "imports": [
+        {
+          "source": "crate::{\n    config::LintConfig,\n    diagnostics::{Diagnostic, Fix},\n    rules::Validator,\n    schemas::mcp::{\n        McpConfigSchema, McpToolSchema, extract_request_protocol_version,\n        extract_response_protocol_version, is_initialize_message, is_initialize_response,\n        validate_json_schema_structure,\n    },\n}",
+          "kind": "named"
+        },
+        {
+          "source": "regex::Regex",
+          "kind": "named"
+        },
+        {
+          "source": "rust_i18n::t",
+          "kind": "named"
+        },
+        {
+          "source": "std::path::Path",
+          "kind": "named"
+        },
+        {
+          "source": "super::*",
+          "kind": "glob"
+        },
+        {
+          "source": "crate::config::LintConfig",
+          "kind": "named"
+        },
+        {
+          "source": "std::path::PathBuf",
+          "kind": "named"
+        }
+      ]
+    },
+    "crates/agnix-core/src/rules/mod.rs": {
+      "hash": "d75bc73030aef44c",
+      "language": "rust",
+      "symbols": {
+        "exports": [
+          {
+            "name": "Validator",
+            "kind": "trait",
+            "line": 20
+          },
+          {
+            "name": "agent",
+            "kind": "module",
+            "line": 2
+          },
+          {
+            "name": "agents_md",
+            "kind": "module",
+            "line": 3
+          },
+          {
+            "name": "claude_md",
+            "kind": "module",
+            "line": 4
+          },
+          {
+            "name": "copilot",
+            "kind": "module",
+            "line": 5
+          },
+          {
+            "name": "cross_platform",
+            "kind": "module",
+            "line": 6
+          },
+          {
+            "name": "cursor",
+            "kind": "module",
+            "line": 7
+          },
+          {
+            "name": "hooks",
+            "kind": "module",
+            "line": 8
+          },
+          {
+            "name": "imports",
+            "kind": "module",
+            "line": 9
+          },
+          {
+            "name": "mcp",
+            "kind": "module",
+            "line": 10
+          },
+          {
+            "name": "plugin",
+            "kind": "module",
+            "line": 11
+          },
+          {
+            "name": "prompt",
+            "kind": "module",
+            "line": 12
+          },
+          {
+            "name": "skill",
+            "kind": "module",
+            "line": 13
+          },
+          {
+            "name": "xml",
+            "kind": "module",
+            "line": 14
+          }
+        ],
+        "functions": [],
+        "structs": [],
+        "enums": [],
+        "traits": [
+          {
+            "name": "Validator",
+            "line": 20
+          }
+        ],
+        "types": [],
+        "modules": [
+          {
+            "name": "agent",
+            "line": 2
+          },
+          {
+            "name": "agents_md",
+            "line": 3
+          },
+          {
+            "name": "claude_md",
+            "line": 4
+          },
+          {
+            "name": "copilot",
+            "line": 5
+          },
+          {
+            "name": "cross_platform",
+            "line": 6
+          },
+          {
+            "name": "cursor",
+            "line": 7
+          },
+          {
+            "name": "hooks",
+            "line": 8
+          },
+          {
+            "name": "imports",
+            "line": 9
+          },
+          {
+            "name": "mcp",
+            "line": 10
+          },
+          {
+            "name": "plugin",
+            "line": 11
+          },
+          {
+            "name": "prompt",
+            "line": 12
+          },
+          {
+            "name": "skill",
+            "line": 13
+          },
+          {
+            "name": "xml",
+            "line": 14
+          }
+        ],
+        "constants": [],
+        "impls": []
+      },
+      "imports": [
+        {
+          "source": "crate::{config::LintConfig, diagnostics::Diagnostic}",
+          "kind": "named"
+        },
+        {
+          "source": "std::path::Path",
+          "kind": "named"
+        }
+      ]
+    },
+    "crates/agnix-core/src/rules/plugin.rs": {
+      "hash": "3ba632e9f39c3243",
+      "language": "rust",
+      "symbols": {
+        "exports": [
+          {
+            "name": "PluginValidator",
+            "kind": "struct",
+            "line": 12
+          }
+        ],
+        "functions": [],
+        "structs": [
+          {
+            "name": "PluginValidator",
+            "line": 12
+          }
+        ],
+        "enums": [],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [],
+        "impls": [
+          {
+            "name": "Validator",
+            "line": 14
+          }
+        ]
+      },
+      "imports": [
+        {
+          "source": "crate::{\n    config::LintConfig,\n    diagnostics::{Diagnostic, Fix},\n    rules::Validator,\n    schemas::plugin::PluginSchema,\n}",
+          "kind": "named"
+        },
+        {
+          "source": "regex::Regex",
+          "kind": "named"
+        },
+        {
+          "source": "rust_i18n::t",
+          "kind": "named"
+        },
+        {
+          "source": "std::path::Path",
+          "kind": "named"
+        },
+        {
+          "source": "super::*",
+          "kind": "glob"
+        },
+        {
+          "source": "crate::config::LintConfig",
+          "kind": "named"
+        },
+        {
+          "source": "std::fs",
+          "kind": "named"
+        },
+        {
+          "source": "tempfile::TempDir",
+          "kind": "named"
+        }
+      ]
+    },
+    "crates/agnix-core/src/rules/prompt.rs": {
+      "hash": "57b93d524bf2cb3d",
+      "language": "rust",
+      "symbols": {
+        "exports": [
+          {
+            "name": "PromptValidator",
+            "kind": "struct",
+            "line": 20
+          }
+        ],
+        "functions": [],
+        "structs": [
+          {
+            "name": "PromptValidator",
+            "line": 20
+          }
+        ],
+        "enums": [],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [],
+        "impls": [
+          {
+            "name": "Validator",
+            "line": 22
+          }
+        ]
+      },
+      "imports": [
+        {
+          "source": "crate::{\n    config::LintConfig,\n    diagnostics::Diagnostic,\n    rules::Validator,\n    schemas::prompt::{\n        find_ambiguous_instructions, find_cot_on_simple_tasks, find_critical_in_middle_pe,\n        find_weak_imperative_language,\n    },\n}",
+          "kind": "named"
+        },
+        {
+          "source": "rust_i18n::t",
+          "kind": "named"
+        },
+        {
+          "source": "std::path::Path",
+          "kind": "named"
+        },
+        {
+          "source": "super::*",
+          "kind": "glob"
+        },
+        {
+          "source": "crate::config::LintConfig",
+          "kind": "named"
+        },
+        {
+          "source": "crate::diagnostics::DiagnosticLevel",
+          "kind": "named"
+        }
+      ]
+    },
+    "crates/agnix-core/src/rules/skill/helpers.rs": {
+      "hash": "3ce20eb3f5d561a1",
+      "language": "rust",
+      "symbols": {
+        "exports": [
+          {
+            "name": "parse_frontmatter_fields",
+            "kind": "function",
+            "line": 9
+          },
+          {
+            "name": "extract_reference_paths",
+            "kind": "function",
+            "line": 18
+          },
+          {
+            "name": "is_regex_escape",
+            "kind": "function",
+            "line": 37
+          },
+          {
+            "name": "extract_windows_paths",
+            "kind": "function",
+            "line": 67
+          },
+          {
+            "name": "reference_path_too_deep",
+            "kind": "function",
+            "line": 103
+          },
+          {
+            "name": "trim_path_token",
+            "kind": "function",
+            "line": 138
+          },
+          {
+            "name": "trim_path_token_with_offset",
+            "kind": "function",
+            "line": 144
+          },
+          {
+            "name": "compute_line_starts",
+            "kind": "function",
+            "line": 153
+          },
+          {
+            "name": "line_col_at",
+            "kind": "function",
+            "line": 163
+          },
+          {
+            "name": "frontmatter_key_line_col",
+            "kind": "function",
+            "line": 178
+          },
+          {
+            "name": "frontmatter_key_offset",
+            "kind": "function",
+            "line": 189
+          },
+          {
+            "name": "frontmatter_value_byte_range",
+            "kind": "function",
+            "line": 244
+          },
+          {
+            "name": "frontmatter_key_line_byte_range",
+            "kind": "function",
+            "line": 347
+          },
+          {
+            "name": "directory_size_until",
+            "kind": "function",
+            "line": 370
+          }
+        ],
+        "functions": [
+          {
+            "name": "parse_frontmatter_fields",
+            "line": 9
+          },
+          {
+            "name": "extract_reference_paths",
+            "line": 18
+          },
+          {
+            "name": "is_regex_escape",
+            "line": 37
+          },
+          {
+            "name": "extract_windows_paths",
+            "line": 67
+          },
+          {
+            "name": "reference_path_too_deep",
+            "line": 103
+          },
+          {
+            "name": "trim_path_token",
+            "line": 138
+          },
+          {
+            "name": "trim_path_token_with_offset",
+            "line": 144
+          },
+          {
+            "name": "compute_line_starts",
+            "line": 153
+          },
+          {
+            "name": "line_col_at",
+            "line": 163
+          },
+          {
+            "name": "frontmatter_key_line_col",
+            "line": 178
+          },
+          {
+            "name": "frontmatter_key_offset",
+            "line": 189
+          },
+          {
+            "name": "frontmatter_value_byte_range",
+            "line": 244
+          },
+          {
+            "name": "frontmatter_key_line_byte_range",
+            "line": 347
+          },
+          {
+            "name": "directory_size_until",
+            "line": 370
+          }
+        ],
+        "structs": [],
+        "enums": [],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [],
+        "impls": []
+      },
+      "imports": [
+        {
+          "source": "crate::fs::FileSystem",
+          "kind": "named"
+        },
+        {
+          "source": "crate::parsers::frontmatter::FrontmatterParts",
+          "kind": "named"
+        },
+        {
+          "source": "std::collections::HashSet",
+          "kind": "named"
+        },
+        {
+          "source": "std::path::Path",
+          "kind": "named"
+        },
+        {
+          "source": "super::{\n    PathMatch, SkillFrontmatter, reference_path_regex, windows_path_regex, windows_path_token_regex,\n}",
+          "kind": "named"
+        }
+      ]
+    },
+    "crates/agnix-core/src/rules/skill/mod.rs": {
+      "hash": "91402f7431d26ab8",
+      "language": "rust",
+      "symbols": {
+        "exports": [
+          {
+            "name": "SkillValidator",
+            "kind": "struct",
+            "line": 916
+          }
+        ],
+        "functions": [],
+        "structs": [
+          {
+            "name": "SkillValidator",
+            "line": 916
+          }
+        ],
+        "enums": [],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [],
+        "impls": [
+          {
+            "name": "Validator",
+            "line": 918
+          }
+        ]
+      },
+      "imports": [
+        {
+          "source": "crate::{\n    config::LintConfig,\n    diagnostics::{Diagnostic, Fix},\n    parsers::frontmatter::{FrontmatterParts, split_frontmatter},\n    regex_util::static_regex,\n    rules::Validator,\n    schemas::skill::SkillSchema,\n}",
+          "kind": "named"
+        },
+        {
+          "source": "regex::Regex",
+          "kind": "named"
+        },
+        {
+          "source": "rust_i18n::t",
+          "kind": "named"
+        },
+        {
+          "source": "serde::Deserialize",
+          "kind": "named"
+        },
+        {
+          "source": "std::collections::HashMap",
+          "kind": "named"
+        },
+        {
+          "source": "std::path::Path",
+          "kind": "named"
+        },
+        {
+          "source": "std::sync::OnceLock",
+          "kind": "named"
+        },
+        {
+          "source": "helpers::*",
+          "kind": "glob"
+        }
+      ]
+    },
+    "crates/agnix-core/src/rules/skill/tests.rs": {
+      "hash": "677e0c864b6a07f2",
+      "language": "rust",
+      "symbols": {
+        "exports": [],
+        "functions": [],
+        "structs": [],
+        "enums": [],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [],
+        "impls": []
+      },
+      "imports": [
+        {
+          "source": "super::*",
+          "kind": "glob"
+        },
+        {
+          "source": "crate::config::LintConfig",
+          "kind": "named"
+        },
+        {
+          "source": "crate::fs::RealFileSystem",
+          "kind": "named"
+        },
+        {
+          "source": "std::fs",
+          "kind": "named"
+        },
+        {
+          "source": "std::io::Write",
+          "kind": "named"
+        },
+        {
+          "source": "crate::config::TargetTool",
+          "kind": "named"
+        },
+        {
+          "source": "crate::config::TargetTool",
+          "kind": "named"
+        },
+        {
+          "source": "std::io::Write",
+          "kind": "named"
+        }
+      ]
+    },
+    "crates/agnix-core/src/rules/xml.rs": {
+      "hash": "fa039fb9990bebf0",
+      "language": "rust",
+      "symbols": {
+        "exports": [
+          {
+            "name": "XmlValidator",
+            "kind": "struct",
+            "line": 13
+          }
+        ],
+        "functions": [],
+        "structs": [
+          {
+            "name": "XmlValidator",
+            "line": 13
+          }
+        ],
+        "enums": [],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [],
+        "impls": [
+          {
+            "name": "Validator",
+            "line": 31
+          }
+        ]
+      },
+      "imports": [
+        {
+          "source": "crate::{\n    config::LintConfig,\n    diagnostics::{Diagnostic, Fix},\n    parsers::markdown::{\n        XmlBalanceError, XmlTag, check_xml_balance_with_content_end, extract_xml_tags,\n    },\n    rules::Validator,\n}",
+          "kind": "named"
+        },
+        {
+          "source": "rust_i18n::t",
+          "kind": "named"
+        },
+        {
+          "source": "std::path::Path",
+          "kind": "named"
+        },
+        {
+          "source": "super::*",
+          "kind": "glob"
+        },
+        {
+          "source": "crate::config::LintConfig",
+          "kind": "named"
+        }
+      ]
+    },
+    "crates/agnix-core/src/schemas/agent.rs": {
+      "hash": "550d335890c72de6",
+      "language": "rust",
+      "symbols": {
+        "exports": [
+          {
+            "name": "AgentSchema",
+            "kind": "struct",
+            "line": 7
+          }
+        ],
+        "functions": [],
+        "structs": [
+          {
+            "name": "AgentSchema",
+            "line": 7
+          }
+        ],
+        "enums": [],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [],
+        "impls": []
+      },
+      "imports": [
+        {
+          "source": "serde::{Deserialize, Serialize}",
+          "kind": "named"
+        },
+        {
+          "source": "serde_json::Value",
+          "kind": "named"
+        }
+      ]
+    },
+    "crates/agnix-core/src/schemas/agents_md.rs": {
+      "hash": "d104d75eb1d9b23e",
+      "language": "rust",
+      "symbols": {
+        "exports": [
+          {
+            "name": "check_markdown_validity",
+            "kind": "function",
+            "line": 47
+          },
+          {
+            "name": "check_section_headers",
+            "kind": "function",
+            "line": 142
+          },
+          {
+            "name": "check_character_limit",
+            "kind": "function",
+            "line": 183
+          },
+          {
+            "name": "check_project_context",
+            "kind": "function",
+            "line": 209
+          },
+          {
+            "name": "find_unguarded_platform_features",
+            "kind": "function",
+            "line": 259
+          },
+          {
+            "name": "find_multiple_agents_md",
+            "kind": "function",
+            "line": 344
+          },
+          {
+            "name": "find_nested_agents_md",
+            "kind": "function",
+            "line": 380
+          },
+          {
+            "name": "check_agents_md_hierarchy",
+            "kind": "function",
+            "line": 387
+          },
+          {
+            "name": "MarkdownValidityIssue",
+            "kind": "struct",
+            "line": 29
+          },
+          {
+            "name": "SectionHeaderIssue",
+            "kind": "struct",
+            "line": 132
+          },
+          {
+            "name": "CharacterLimitExceeded",
+            "kind": "struct",
+            "line": 172
+          },
+          {
+            "name": "MissingProjectContext",
+            "kind": "struct",
+            "line": 199
+          },
+          {
+            "name": "UnguardedPlatformFeature",
+            "kind": "struct",
+            "line": 248
+          },
+          {
+            "name": "NestedAgentsMd",
+            "kind": "struct",
+            "line": 336
+          },
+          {
+            "name": "MarkdownIssueType",
+            "kind": "enum",
+            "line": 37
+          },
+          {
+            "name": "WINDSURF_CHAR_LIMIT",
+            "kind": "constant",
+            "line": 178
+          }
+        ],
+        "functions": [
+          {
+            "name": "check_markdown_validity",
+            "line": 47
+          },
+          {
+            "name": "check_section_headers",
+            "line": 142
+          },
+          {
+            "name": "check_character_limit",
+            "line": 183
+          },
+          {
+            "name": "check_project_context",
+            "line": 209
+          },
+          {
+            "name": "find_unguarded_platform_features",
+            "line": 259
+          },
+          {
+            "name": "find_multiple_agents_md",
+            "line": 344
+          },
+          {
+            "name": "find_nested_agents_md",
+            "line": 380
+          },
+          {
+            "name": "check_agents_md_hierarchy",
+            "line": 387
+          }
+        ],
+        "structs": [
+          {
+            "name": "MarkdownValidityIssue",
+            "line": 29
+          },
+          {
+            "name": "SectionHeaderIssue",
+            "line": 132
+          },
+          {
+            "name": "CharacterLimitExceeded",
+            "line": 172
+          },
+          {
+            "name": "MissingProjectContext",
+            "line": 199
+          },
+          {
+            "name": "UnguardedPlatformFeature",
+            "line": 248
+          },
+          {
+            "name": "NestedAgentsMd",
+            "line": 336
+          }
+        ],
+        "enums": [
+          {
+            "name": "MarkdownIssueType",
+            "line": 37
+          }
+        ],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [
+          {
+            "name": "WINDSURF_CHAR_LIMIT",
+            "line": 178
+          }
+        ],
+        "impls": []
+      },
+      "imports": [
+        {
+          "source": "regex::Regex",
+          "kind": "named"
+        },
+        {
+          "source": "std::collections::HashSet",
+          "kind": "named"
+        },
+        {
+          "source": "std::path::Path",
+          "kind": "named"
+        },
+        {
+          "source": "crate::regex_util::static_regex",
+          "kind": "named"
+        },
+        {
+          "source": "super::*",
+          "kind": "glob"
+        },
+        {
+          "source": "std::path::PathBuf",
+          "kind": "named"
+        }
+      ]
+    },
+    "crates/agnix-core/src/schemas/claude_md.rs": {
+      "hash": "06767847f4e70657",
+      "language": "rust",
+      "symbols": {
+        "exports": [
+          {
+            "name": "generic_patterns",
+            "kind": "function",
+            "line": 18
+          },
+          {
+            "name": "find_generic_instructions",
+            "kind": "function",
+            "line": 44
+          },
+          {
+            "name": "check_token_count",
+            "kind": "function",
+            "line": 108
+          },
+          {
+            "name": "find_negative_without_positive",
+            "kind": "function",
+            "line": 136
+          },
+          {
+            "name": "find_weak_constraints",
+            "kind": "function",
+            "line": 212
+          },
+          {
+            "name": "find_critical_in_middle",
+            "kind": "function",
+            "line": 281
+          },
+          {
+            "name": "extract_npm_scripts",
+            "kind": "function",
+            "line": 323
+          },
+          {
+            "name": "calculate_text_overlap",
+            "kind": "function",
+            "line": 348
+          },
+          {
+            "name": "check_readme_duplication",
+            "kind": "function",
+            "line": 386
+          },
+          {
+            "name": "GenericInstruction",
+            "kind": "struct",
+            "line": 83
+          },
+          {
+            "name": "TokenCountExceeded",
+            "kind": "struct",
+            "line": 100
+          },
+          {
+            "name": "NegativeInstruction",
+            "kind": "struct",
+            "line": 129
+          },
+          {
+            "name": "WeakConstraint",
+            "kind": "struct",
+            "line": 200
+          },
+          {
+            "name": "CriticalInMiddle",
+            "kind": "struct",
+            "line": 267
+          },
+          {
+            "name": "NpmScriptReference",
+            "kind": "struct",
+            "line": 316
+          },
+          {
+            "name": "ReadmeDuplication",
+            "kind": "struct",
+            "line": 380
+          }
+        ],
+        "functions": [
+          {
+            "name": "generic_patterns",
+            "line": 18
+          },
+          {
+            "name": "find_generic_instructions",
+            "line": 44
+          },
+          {
+            "name": "check_token_count",
+            "line": 108
+          },
+          {
+            "name": "find_negative_without_positive",
+            "line": 136
+          },
+          {
+            "name": "find_weak_constraints",
+            "line": 212
+          },
+          {
+            "name": "find_critical_in_middle",
+            "line": 281
+          },
+          {
+            "name": "extract_npm_scripts",
+            "line": 323
+          },
+          {
+            "name": "calculate_text_overlap",
+            "line": 348
+          },
+          {
+            "name": "check_readme_duplication",
+            "line": 386
+          }
+        ],
+        "structs": [
+          {
+            "name": "GenericInstruction",
+            "line": 83
+          },
+          {
+            "name": "TokenCountExceeded",
+            "line": 100
+          },
+          {
+            "name": "NegativeInstruction",
+            "line": 129
+          },
+          {
+            "name": "WeakConstraint",
+            "line": 200
+          },
+          {
+            "name": "CriticalInMiddle",
+            "line": 267
+          },
+          {
+            "name": "NpmScriptReference",
+            "line": 316
+          },
+          {
+            "name": "ReadmeDuplication",
+            "line": 380
+          }
+        ],
+        "enums": [],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [],
+        "impls": []
+      },
+      "imports": [
+        {
+          "source": "regex::Regex",
+          "kind": "named"
+        },
+        {
+          "source": "std::collections::HashSet",
+          "kind": "named"
+        },
+        {
+          "source": "std::sync::OnceLock",
+          "kind": "named"
+        },
+        {
+          "source": "crate::regex_util::static_regex",
+          "kind": "named"
+        },
+        {
+          "source": "super::*",
+          "kind": "glob"
+        }
+      ]
+    },
+    "crates/agnix-core/src/schemas/copilot.rs": {
+      "hash": "a614ccc0cb1f1073",
+      "language": "rust",
+      "symbols": {
+        "exports": [
+          {
+            "name": "parse_frontmatter",
+            "kind": "function",
+            "line": 62
+          },
+          {
+            "name": "validate_glob_pattern",
+            "kind": "function",
+            "line": 164
+          },
+          {
+            "name": "is_body_empty",
+            "kind": "function",
+            "line": 180
+          },
+          {
+            "name": "is_content_empty",
+            "kind": "function",
+            "line": 185
+          },
+          {
+            "name": "CopilotScopedSchema",
+            "kind": "struct",
+            "line": 18
+          },
+          {
+            "name": "ParsedFrontmatter",
+            "kind": "struct",
+            "line": 26
+          },
+          {
+            "name": "UnknownKey",
+            "kind": "struct",
+            "line": 45
+          },
+          {
+            "name": "GlobValidation",
+            "kind": "struct",
+            "line": 53
+          }
+        ],
+        "functions": [
+          {
+            "name": "parse_frontmatter",
+            "line": 62
+          },
+          {
+            "name": "validate_glob_pattern",
+            "line": 164
+          },
+          {
+            "name": "is_body_empty",
+            "line": 180
+          },
+          {
+            "name": "is_content_empty",
+            "line": 185
+          }
+        ],
+        "structs": [
+          {
+            "name": "CopilotScopedSchema",
+            "line": 18
+          },
+          {
+            "name": "ParsedFrontmatter",
+            "line": 26
+          },
+          {
+            "name": "UnknownKey",
+            "line": 45
+          },
+          {
+            "name": "GlobValidation",
+            "line": 53
+          }
+        ],
+        "enums": [],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [],
+        "impls": []
+      },
+      "imports": [
+        {
+          "source": "serde::{Deserialize, Serialize}",
+          "kind": "named"
+        },
+        {
+          "source": "std::collections::HashSet",
+          "kind": "named"
+        },
+        {
+          "source": "super::*",
+          "kind": "glob"
+        }
+      ]
+    },
+    "crates/agnix-core/src/schemas/cross_platform.rs": {
+      "hash": "13ab0c49c414df38",
+      "language": "rust",
+      "symbols": {
+        "exports": [
+          {
+            "name": "find_claude_specific_features",
+            "kind": "function",
+            "line": 65
+          },
+          {
+            "name": "check_markdown_structure",
+            "kind": "function",
+            "line": 191
+          },
+          {
+            "name": "find_hard_coded_paths",
+            "kind": "function",
+            "line": 261
+          },
+          {
+            "name": "as_str",
+            "kind": "function",
+            "line": 322
+          },
+          {
+            "name": "extract_build_commands",
+            "kind": "function",
+            "line": 359
+          },
+          {
+            "name": "detect_build_conflicts",
+            "kind": "function",
+            "line": 441
+          },
+          {
+            "name": "extract_tool_constraints",
+            "kind": "function",
+            "line": 542
+          },
+          {
+            "name": "detect_tool_conflicts",
+            "kind": "function",
+            "line": 712
+          },
+          {
+            "name": "as_str",
+            "kind": "function",
+            "line": 809
+          },
+          {
+            "name": "categorize_layer",
+            "kind": "function",
+            "line": 837
+          },
+          {
+            "name": "detect_precedence_issues",
+            "kind": "function",
+            "line": 883
+          },
+          {
+            "name": "is_instruction_file",
+            "kind": "function",
+            "line": 917
+          },
+          {
+            "name": "ClaudeSpecificFeature",
+            "kind": "struct",
+            "line": 46
+          },
+          {
+            "name": "MarkdownStructureIssue",
+            "kind": "struct",
+            "line": 180
+          },
+          {
+            "name": "HardCodedPath",
+            "kind": "struct",
+            "line": 244
+          },
+          {
+            "name": "BuildCommand",
+            "kind": "struct",
+            "line": 344
+          },
+          {
+            "name": "BuildConflict",
+            "kind": "struct",
+            "line": 425
+          },
+          {
+            "name": "ToolConstraint",
+            "kind": "struct",
+            "line": 527
+          },
+          {
+            "name": "ToolConflict",
+            "kind": "struct",
+            "line": 697
+          },
+          {
+            "name": "InstructionLayer",
+            "kind": "struct",
+            "line": 824
+          },
+          {
+            "name": "LayerPrecedenceIssue",
+            "kind": "struct",
+            "line": 875
+          },
+          {
+            "name": "PackageManager",
+            "kind": "enum",
+            "line": 313
+          },
+          {
+            "name": "CommandType",
+            "kind": "enum",
+            "line": 334
+          },
+          {
+            "name": "ConstraintType",
+            "kind": "enum",
+            "line": 520
+          },
+          {
+            "name": "LayerType",
+            "kind": "enum",
+            "line": 790
+          }
+        ],
+        "functions": [
+          {
+            "name": "find_claude_specific_features",
+            "line": 65
+          },
+          {
+            "name": "check_markdown_structure",
+            "line": 191
+          },
+          {
+            "name": "find_hard_coded_paths",
+            "line": 261
+          },
+          {
+            "name": "as_str",
+            "line": 322
+          },
+          {
+            "name": "extract_build_commands",
+            "line": 359
+          },
+          {
+            "name": "detect_build_conflicts",
+            "line": 441
+          },
+          {
+            "name": "extract_tool_constraints",
+            "line": 542
+          },
+          {
+            "name": "detect_tool_conflicts",
+            "line": 712
+          },
+          {
+            "name": "as_str",
+            "line": 809
+          },
+          {
+            "name": "categorize_layer",
+            "line": 837
+          },
+          {
+            "name": "detect_precedence_issues",
+            "line": 883
+          },
+          {
+            "name": "is_instruction_file",
+            "line": 917
+          }
+        ],
+        "structs": [
+          {
+            "name": "ClaudeSpecificFeature",
+            "line": 46
+          },
+          {
+            "name": "MarkdownStructureIssue",
+            "line": 180
+          },
+          {
+            "name": "HardCodedPath",
+            "line": 244
+          },
+          {
+            "name": "BuildCommand",
+            "line": 344
+          },
+          {
+            "name": "BuildConflict",
+            "line": 425
+          },
+          {
+            "name": "ToolConstraint",
+            "line": 527
+          },
+          {
+            "name": "ToolConflict",
+            "line": 697
+          },
+          {
+            "name": "InstructionLayer",
+            "line": 824
+          },
+          {
+            "name": "LayerPrecedenceIssue",
+            "line": 875
+          }
+        ],
+        "enums": [
+          {
+            "name": "PackageManager",
+            "line": 313
+          },
+          {
+            "name": "CommandType",
+            "line": 334
+          },
+          {
+            "name": "ConstraintType",
+            "line": 520
+          },
+          {
+            "name": "LayerType",
+            "line": 790
+          }
+        ],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [],
+        "impls": [
+          {
+            "name": "PackageManager",
+            "line": 320
+          },
+          {
+            "name": "LayerType",
+            "line": 807
+          }
+        ]
+      },
+      "imports": [
+        {
+          "source": "regex::Regex",
+          "kind": "named"
+        },
+        {
+          "source": "std::path::Path",
+          "kind": "named"
+        },
+        {
+          "source": "crate::parsers::markdown::MAX_REGEX_INPUT_SIZE",
+          "kind": "named"
+        },
+        {
+          "source": "crate::regex_util::static_regex",
+          "kind": "named"
+        },
+        {
+          "source": "std::collections::HashMap",
+          "kind": "named"
+        },
+        {
+          "source": "std::collections::{HashMap, HashSet}",
+          "kind": "named"
+        },
+        {
+          "source": "super::*",
+          "kind": "glob"
+        },
+        {
+          "source": "std::path::PathBuf",
+          "kind": "named"
+        },
+        {
+          "source": "std::path::PathBuf",
+          "kind": "named"
+        },
+        {
+          "source": "std::path::PathBuf",
+          "kind": "named"
+        },
+        {
+          "source": "std::path::PathBuf",
+          "kind": "named"
+        },
+        {
+          "source": "std::path::PathBuf",
+          "kind": "named"
+        },
+        {
+          "source": "std::path::PathBuf",
+          "kind": "named"
+        },
+        {
+          "source": "std::path::PathBuf",
+          "kind": "named"
+        },
+        {
+          "source": "std::path::PathBuf",
+          "kind": "named"
+        },
+        {
+          "source": "std::path::PathBuf",
+          "kind": "named"
+        },
+        {
+          "source": "std::path::PathBuf",
+          "kind": "named"
+        },
+        {
+          "source": "std::path::PathBuf",
+          "kind": "named"
+        },
+        {
+          "source": "std::path::PathBuf",
+          "kind": "named"
+        },
+        {
+          "source": "std::path::PathBuf",
+          "kind": "named"
+        },
+        {
+          "source": "std::path::PathBuf",
+          "kind": "named"
+        },
+        {
+          "source": "std::path::PathBuf",
+          "kind": "named"
+        },
+        {
+          "source": "std::path::PathBuf",
+          "kind": "named"
+        },
+        {
+          "source": "std::path::PathBuf",
+          "kind": "named"
+        },
+        {
+          "source": "std::path::PathBuf",
+          "kind": "named"
+        },
+        {
+          "source": "std::path::PathBuf",
+          "kind": "named"
+        },
+        {
+          "source": "std::path::PathBuf",
+          "kind": "named"
+        },
+        {
+          "source": "std::path::PathBuf",
+          "kind": "named"
+        },
+        {
+          "source": "std::path::PathBuf",
+          "kind": "named"
+        },
+        {
+          "source": "std::path::PathBuf",
+          "kind": "named"
+        },
+        {
+          "source": "std::path::PathBuf",
+          "kind": "named"
+        }
+      ]
+    },
+    "crates/agnix-core/src/schemas/cursor.rs": {
+      "hash": "d2fa22a91eb14d8b",
+      "language": "rust",
+      "symbols": {
+        "exports": [
+          {
+            "name": "patterns",
+            "kind": "function",
+            "line": 42
+          },
+          {
+            "name": "parse_mdc_frontmatter",
+            "kind": "function",
+            "line": 88
+          },
+          {
+            "name": "validate_glob_pattern",
+            "kind": "function",
+            "line": 187
+          },
+          {
+            "name": "is_body_empty",
+            "kind": "function",
+            "line": 203
+          },
+          {
+            "name": "is_content_empty",
+            "kind": "function",
+            "line": 208
+          },
+          {
+            "name": "CursorRuleSchema",
+            "kind": "struct",
+            "line": 20
+          },
+          {
+            "name": "ParsedMdcFrontmatter",
+            "kind": "struct",
+            "line": 52
+          },
+          {
+            "name": "UnknownKey",
+            "kind": "struct",
+            "line": 71
+          },
+          {
+            "name": "GlobValidation",
+            "kind": "struct",
+            "line": 79
+          },
+          {
+            "name": "GlobsField",
+            "kind": "enum",
+            "line": 35
+          }
+        ],
+        "functions": [
+          {
+            "name": "patterns",
+            "line": 42
+          },
+          {
+            "name": "parse_mdc_frontmatter",
+            "line": 88
+          },
+          {
+            "name": "validate_glob_pattern",
+            "line": 187
+          },
+          {
+            "name": "is_body_empty",
+            "line": 203
+          },
+          {
+            "name": "is_content_empty",
+            "line": 208
+          }
+        ],
+        "structs": [
+          {
+            "name": "CursorRuleSchema",
+            "line": 20
+          },
+          {
+            "name": "ParsedMdcFrontmatter",
+            "line": 52
+          },
+          {
+            "name": "UnknownKey",
+            "line": 71
+          },
+          {
+            "name": "GlobValidation",
+            "line": 79
+          }
+        ],
+        "enums": [
+          {
+            "name": "GlobsField",
+            "line": 35
+          }
+        ],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [],
+        "impls": [
+          {
+            "name": "GlobsField",
+            "line": 40
+          }
+        ]
+      },
+      "imports": [
+        {
+          "source": "serde::{Deserialize, Serialize}",
+          "kind": "named"
+        },
+        {
+          "source": "std::collections::HashSet",
+          "kind": "named"
+        },
+        {
+          "source": "super::*",
+          "kind": "glob"
+        }
+      ]
+    },
+    "crates/agnix-core/src/schemas/hooks.rs": {
+      "hash": "1687232f53acd116",
+      "language": "rust",
+      "symbols": {
+        "exports": [
+          {
+            "name": "from_json",
+            "kind": "function",
+            "line": 48
+          },
+          {
+            "name": "to_hooks_schema",
+            "kind": "function",
+            "line": 52
+          },
+          {
+            "name": "command",
+            "kind": "function",
+            "line": 60
+          },
+          {
+            "name": "prompt",
+            "kind": "function",
+            "line": 67
+          },
+          {
+            "name": "is_command",
+            "kind": "function",
+            "line": 74
+          },
+          {
+            "name": "is_prompt",
+            "kind": "function",
+            "line": 78
+          },
+          {
+            "name": "is_tool_event",
+            "kind": "function",
+            "line": 113
+          },
+          {
+            "name": "is_prompt_event",
+            "kind": "function",
+            "line": 118
+          },
+          {
+            "name": "from_json",
+            "kind": "function",
+            "line": 122
+          },
+          {
+            "name": "validate_events",
+            "kind": "function",
+            "line": 126
+          },
+          {
+            "name": "validate",
+            "kind": "function",
+            "line": 142
+          },
+          {
+            "name": "SettingsSchema",
+            "kind": "struct",
+            "line": 8
+          },
+          {
+            "name": "HooksSchema",
+            "kind": "struct",
+            "line": 17
+          },
+          {
+            "name": "HookMatcher",
+            "kind": "struct",
+            "line": 22
+          },
+          {
+            "name": "Hook",
+            "kind": "enum",
+            "line": 30
+          },
+          {
+            "name": "VALID_EVENTS",
+            "kind": "constant",
+            "line": 85
+          },
+          {
+            "name": "TOOL_EVENTS",
+            "kind": "constant",
+            "line": 102
+          },
+          {
+            "name": "PROMPT_EVENTS",
+            "kind": "constant",
+            "line": 110
+          }
+        ],
+        "functions": [
+          {
+            "name": "from_json",
+            "line": 48
+          },
+          {
+            "name": "to_hooks_schema",
+            "line": 52
+          },
+          {
+            "name": "command",
+            "line": 60
+          },
+          {
+            "name": "prompt",
+            "line": 67
+          },
+          {
+            "name": "is_command",
+            "line": 74
+          },
+          {
+            "name": "is_prompt",
+            "line": 78
+          },
+          {
+            "name": "is_tool_event",
+            "line": 113
+          },
+          {
+            "name": "is_prompt_event",
+            "line": 118
+          },
+          {
+            "name": "from_json",
+            "line": 122
+          },
+          {
+            "name": "validate_events",
+            "line": 126
+          },
+          {
+            "name": "validate",
+            "line": 142
+          }
+        ],
+        "structs": [
+          {
+            "name": "SettingsSchema",
+            "line": 8
+          },
+          {
+            "name": "HooksSchema",
+            "line": 17
+          },
+          {
+            "name": "HookMatcher",
+            "line": 22
+          }
+        ],
+        "enums": [
+          {
+            "name": "Hook",
+            "line": 30
+          }
+        ],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [
+          {
+            "name": "VALID_EVENTS",
+            "line": 85
+          },
+          {
+            "name": "TOOL_EVENTS",
+            "line": 102
+          },
+          {
+            "name": "PROMPT_EVENTS",
+            "line": 110
+          }
+        ],
+        "impls": [
+          {
+            "name": "SettingsSchema",
+            "line": 47
+          },
+          {
+            "name": "Hook",
+            "line": 59
+          },
+          {
+            "name": "HooksSchema",
+            "line": 83
+          }
+        ]
+      },
+      "imports": [
+        {
+          "source": "serde::{Deserialize, Serialize}",
+          "kind": "named"
+        },
+        {
+          "source": "serde_json::Value",
+          "kind": "named"
+        },
+        {
+          "source": "std::collections::HashMap",
+          "kind": "named"
+        }
+      ]
+    },
+    "crates/agnix-core/src/schemas/mcp.rs": {
+      "hash": "66fffb2ef1171227",
+      "language": "rust",
+      "symbols": {
+        "exports": [
+          {
+            "name": "is_initialize_message",
+            "kind": "function",
+            "line": 120
+          },
+          {
+            "name": "is_initialize_response",
+            "kind": "function",
+            "line": 128
+          },
+          {
+            "name": "extract_request_protocol_version",
+            "kind": "function",
+            "line": 136
+          },
+          {
+            "name": "extract_response_protocol_version",
+            "kind": "function",
+            "line": 145
+          },
+          {
+            "name": "has_required_fields",
+            "kind": "function",
+            "line": 155
+          },
+          {
+            "name": "has_meaningful_description",
+            "kind": "function",
+            "line": 164
+          },
+          {
+            "name": "has_consent_fields",
+            "kind": "function",
+            "line": 173
+          },
+          {
+            "name": "has_annotations",
+            "kind": "function",
+            "line": 182
+          },
+          {
+            "name": "has_valid_jsonrpc_version",
+            "kind": "function",
+            "line": 189
+          },
+          {
+            "name": "validate_json_schema_structure",
+            "kind": "function",
+            "line": 198
+          },
+          {
+            "name": "McpToolSchema",
+            "kind": "struct",
+            "line": 7
+          },
+          {
+            "name": "McpJsonRpcMessage",
+            "kind": "struct",
+            "line": 32
+          },
+          {
+            "name": "McpServerConfig",
+            "kind": "struct",
+            "line": 54
+          },
+          {
+            "name": "McpConfigSchema",
+            "kind": "struct",
+            "line": 69
+          },
+          {
+            "name": "McpInitializeParams",
+            "kind": "struct",
+            "line": 91
+          },
+          {
+            "name": "McpInitializeResult",
+            "kind": "struct",
+            "line": 106
+          },
+          {
+            "name": "VALID_JSON_SCHEMA_TYPES",
+            "kind": "constant",
+            "line": 82
+          },
+          {
+            "name": "DEFAULT_MCP_PROTOCOL_VERSION",
+            "kind": "constant",
+            "line": 87
+          }
+        ],
+        "functions": [
+          {
+            "name": "is_initialize_message",
+            "line": 120
+          },
+          {
+            "name": "is_initialize_response",
+            "line": 128
+          },
+          {
+            "name": "extract_request_protocol_version",
+            "line": 136
+          },
+          {
+            "name": "extract_response_protocol_version",
+            "line": 145
+          },
+          {
+            "name": "has_required_fields",
+            "line": 155
+          },
+          {
+            "name": "has_meaningful_description",
+            "line": 164
+          },
+          {
+            "name": "has_consent_fields",
+            "line": 173
+          },
+          {
+            "name": "has_annotations",
+            "line": 182
+          },
+          {
+            "name": "has_valid_jsonrpc_version",
+            "line": 189
+          },
+          {
+            "name": "validate_json_schema_structure",
+            "line": 198
+          }
+        ],
+        "structs": [
+          {
+            "name": "McpToolSchema",
+            "line": 7
+          },
+          {
+            "name": "McpJsonRpcMessage",
+            "line": 32
+          },
+          {
+            "name": "McpServerConfig",
+            "line": 54
+          },
+          {
+            "name": "McpConfigSchema",
+            "line": 69
+          },
+          {
+            "name": "McpInitializeParams",
+            "line": 91
+          },
+          {
+            "name": "McpInitializeResult",
+            "line": 106
+          }
+        ],
+        "enums": [],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [
+          {
+            "name": "VALID_JSON_SCHEMA_TYPES",
+            "line": 82
+          },
+          {
+            "name": "DEFAULT_MCP_PROTOCOL_VERSION",
+            "line": 87
+          }
+        ],
+        "impls": [
+          {
+            "name": "McpToolSchema",
+            "line": 153
+          },
+          {
+            "name": "McpJsonRpcMessage",
+            "line": 187
+          }
+        ]
+      },
+      "imports": [
+        {
+          "source": "serde::{Deserialize, Serialize}",
+          "kind": "named"
+        },
+        {
+          "source": "std::collections::HashMap",
+          "kind": "named"
+        },
+        {
+          "source": "super::*",
+          "kind": "glob"
+        },
+        {
+          "source": "serde_json::json",
+          "kind": "named"
+        }
+      ]
+    },
+    "crates/agnix-core/src/schemas/mod.rs": {
+      "hash": "0834bbc82a8cd70a",
+      "language": "rust",
+      "symbols": {
+        "exports": [
+          {
+            "name": "agent",
+            "kind": "module",
+            "line": 7
+          },
+          {
+            "name": "agents_md",
+            "kind": "module",
+            "line": 8
+          },
+          {
+            "name": "claude_md",
+            "kind": "module",
+            "line": 9
+          },
+          {
+            "name": "copilot",
+            "kind": "module",
+            "line": 10
+          },
+          {
+            "name": "cross_platform",
+            "kind": "module",
+            "line": 11
+          },
+          {
+            "name": "cursor",
+            "kind": "module",
+            "line": 12
+          },
+          {
+            "name": "hooks",
+            "kind": "module",
+            "line": 13
+          },
+          {
+            "name": "mcp",
+            "kind": "module",
+            "line": 14
+          },
+          {
+            "name": "plugin",
+            "kind": "module",
+            "line": 15
+          },
+          {
+            "name": "prompt",
+            "kind": "module",
+            "line": 16
+          },
+          {
+            "name": "skill",
+            "kind": "module",
+            "line": 17
+          }
+        ],
+        "functions": [],
+        "structs": [],
+        "enums": [],
+        "traits": [],
+        "types": [],
+        "modules": [
+          {
+            "name": "agent",
+            "line": 7
+          },
+          {
+            "name": "agents_md",
+            "line": 8
+          },
+          {
+            "name": "claude_md",
+            "line": 9
+          },
+          {
+            "name": "copilot",
+            "line": 10
+          },
+          {
+            "name": "cross_platform",
+            "line": 11
+          },
+          {
+            "name": "cursor",
+            "line": 12
+          },
+          {
+            "name": "hooks",
+            "line": 13
+          },
+          {
+            "name": "mcp",
+            "line": 14
+          },
+          {
+            "name": "plugin",
+            "line": 15
+          },
+          {
+            "name": "prompt",
+            "line": 16
+          },
+          {
+            "name": "skill",
+            "line": 17
+          }
+        ],
+        "constants": [],
+        "impls": []
+      },
+      "imports": []
+    },
+    "crates/agnix-core/src/schemas/plugin.rs": {
+      "hash": "ac5d0f2d7c7e4d24",
+      "language": "rust",
+      "symbols": {
+        "exports": [
+          {
+            "name": "validate_version",
+            "kind": "function",
+            "line": 48
+          },
+          {
+            "name": "validate",
+            "kind": "function",
+            "line": 60
+          },
+          {
+            "name": "PluginSchema",
+            "kind": "struct",
+            "line": 6
+          },
+          {
+            "name": "AuthorInfo",
+            "kind": "struct",
+            "line": 38
+          }
+        ],
+        "functions": [
+          {
+            "name": "validate_version",
+            "line": 48
+          },
+          {
+            "name": "validate",
+            "line": 60
+          }
+        ],
+        "structs": [
+          {
+            "name": "PluginSchema",
+            "line": 6
+          },
+          {
+            "name": "AuthorInfo",
+            "line": 38
+          }
+        ],
+        "enums": [],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [],
+        "impls": [
+          {
+            "name": "PluginSchema",
+            "line": 46
+          }
+        ]
+      },
+      "imports": [
+        {
+          "source": "serde::{Deserialize, Serialize}",
+          "kind": "named"
+        }
+      ]
+    },
+    "crates/agnix-core/src/schemas/prompt.rs": {
+      "hash": "43d39c583d2be6da",
+      "language": "rust",
+      "symbols": {
+        "exports": [
+          {
+            "name": "find_critical_in_middle_pe",
+            "kind": "function",
+            "line": 49
+          },
+          {
+            "name": "find_cot_on_simple_tasks",
+            "kind": "function",
+            "line": 108
+          },
+          {
+            "name": "find_weak_imperative_language",
+            "kind": "function",
+            "line": 182
+          },
+          {
+            "name": "find_ambiguous_instructions",
+            "kind": "function",
+            "line": 242
+          },
+          {
+            "name": "CriticalInMiddle",
+            "kind": "struct",
+            "line": 32
+          },
+          {
+            "name": "CotOnSimpleTask",
+            "kind": "struct",
+            "line": 90
+          },
+          {
+            "name": "WeakLanguageInCritical",
+            "kind": "struct",
+            "line": 167
+          },
+          {
+            "name": "AmbiguousInstruction",
+            "kind": "struct",
+            "line": 227
+          }
+        ],
+        "functions": [
+          {
+            "name": "find_critical_in_middle_pe",
+            "line": 49
+          },
+          {
+            "name": "find_cot_on_simple_tasks",
+            "line": 108
+          },
+          {
+            "name": "find_weak_imperative_language",
+            "line": 182
+          },
+          {
+            "name": "find_ambiguous_instructions",
+            "line": 242
+          }
+        ],
+        "structs": [
+          {
+            "name": "CriticalInMiddle",
+            "line": 32
+          },
+          {
+            "name": "CotOnSimpleTask",
+            "line": 90
+          },
+          {
+            "name": "WeakLanguageInCritical",
+            "line": 167
+          },
+          {
+            "name": "AmbiguousInstruction",
+            "line": 227
+          }
+        ],
+        "enums": [],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [],
+        "impls": []
+      },
+      "imports": [
+        {
+          "source": "regex::Regex",
+          "kind": "named"
+        },
+        {
+          "source": "crate::parsers::markdown::MAX_REGEX_INPUT_SIZE",
+          "kind": "named"
+        },
+        {
+          "source": "crate::regex_util::static_regex",
+          "kind": "named"
+        },
+        {
+          "source": "super::*",
+          "kind": "glob"
+        }
+      ]
+    },
+    "crates/agnix-core/src/schemas/skill.rs": {
+      "hash": "9a674b46fad87d9f",
+      "language": "rust",
+      "symbols": {
+        "exports": [
+          {
+            "name": "validate_name",
+            "kind": "function",
+            "line": 61
+          },
+          {
+            "name": "validate_description",
+            "kind": "function",
+            "line": 93
+          },
+          {
+            "name": "validate_compatibility",
+            "kind": "function",
+            "line": 105
+          },
+          {
+            "name": "validate_model",
+            "kind": "function",
+            "line": 119
+          },
+          {
+            "name": "validate_context",
+            "kind": "function",
+            "line": 133
+          },
+          {
+            "name": "validate",
+            "kind": "function",
+            "line": 143
+          },
+          {
+            "name": "SkillSchema",
+            "kind": "struct",
+            "line": 7
+          }
+        ],
+        "functions": [
+          {
+            "name": "validate_name",
+            "line": 61
+          },
+          {
+            "name": "validate_description",
+            "line": 93
+          },
+          {
+            "name": "validate_compatibility",
+            "line": 105
+          },
+          {
+            "name": "validate_model",
+            "line": 119
+          },
+          {
+            "name": "validate_context",
+            "line": 133
+          },
+          {
+            "name": "validate",
+            "line": 143
+          }
+        ],
+        "structs": [
+          {
+            "name": "SkillSchema",
+            "line": 7
+          }
+        ],
+        "enums": [],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [],
+        "impls": [
+          {
+            "name": "SkillSchema",
+            "line": 59
+          }
+        ]
+      },
+      "imports": [
+        {
+          "source": "serde::{Deserialize, Serialize}",
+          "kind": "named"
+        },
+        {
+          "source": "std::collections::HashMap",
+          "kind": "named"
+        },
+        {
+          "source": "super::*",
+          "kind": "glob"
+        }
+      ]
+    },
+    "crates/agnix-core/tests/security_integration.rs": {
+      "hash": "ac91b19157e59e33",
+      "language": "rust",
+      "symbols": {
+        "exports": [],
+        "functions": [],
+        "structs": [],
+        "enums": [],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [],
+        "impls": []
+      },
+      "imports": [
+        {
+          "source": "agnix_core::{\n    config::LintConfig,\n    diagnostics::LintError,\n    parsers::{frontmatter::split_frontmatter, markdown::MAX_REGEX_INPUT_SIZE},\n    validate_project,\n}",
+          "kind": "named"
+        },
+        {
+          "source": "tempfile::TempDir",
+          "kind": "named"
+        },
+        {
+          "source": "agnix_core::parsers::markdown::extract_xml_tags",
+          "kind": "named"
+        },
+        {
+          "source": "agnix_core::parsers::json::parse_json_config",
+          "kind": "named"
+        },
+        {
+          "source": "serde_json::Value",
+          "kind": "named"
+        },
+        {
+          "source": "agnix_core::parsers::json::parse_json_config",
+          "kind": "named"
+        },
+        {
+          "source": "serde_json::Value",
+          "kind": "named"
+        }
+      ]
+    },
+    "crates/agnix-lsp/src/backend.rs": {
+      "hash": "6c7ee2209f4237b7",
+      "language": "rust",
+      "symbols": {
+        "exports": [
+          {
+            "name": "new",
+            "kind": "function",
+            "line": 159
+          },
+          {
+            "name": "Backend",
+            "kind": "struct",
+            "line": 138
+          }
+        ],
+        "functions": [
+          {
+            "name": "new",
+            "line": 159
+          }
+        ],
+        "structs": [
+          {
+            "name": "Backend",
+            "line": 138
+          }
+        ],
+        "enums": [],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [],
+        "impls": [
+          {
+            "name": "Backend",
+            "line": 157
+          },
+          {
+            "name": "LanguageServer",
+            "line": 353
+          }
+        ]
+      },
+      "imports": [
+        {
+          "source": "std::collections::HashMap",
+          "kind": "named"
+        },
+        {
+          "source": "std::future::Future",
+          "kind": "named"
+        },
+        {
+          "source": "std::path::{Component, Path, PathBuf}",
+          "kind": "named"
+        },
+        {
+          "source": "std::sync::Arc",
+          "kind": "named"
+        },
+        {
+          "source": "std::sync::atomic::{AtomicU64, Ordering}",
+          "kind": "named"
+        },
+        {
+          "source": "tokio::sync::RwLock",
+          "kind": "named"
+        },
+        {
+          "source": "tower_lsp::jsonrpc::Result",
+          "kind": "named"
+        },
+        {
+          "source": "tower_lsp::lsp_types::*",
+          "kind": "glob"
+        },
+        {
+          "source": "tower_lsp::{Client, LanguageServer}",
+          "kind": "named"
+        },
+        {
+          "source": "crate::code_actions::fixes_to_code_actions_with_diagnostic",
+          "kind": "named"
+        },
+        {
+          "source": "crate::completion_provider::completion_items_for_document",
+          "kind": "named"
+        },
+        {
+          "source": "crate::diagnostic_mapper::{deserialize_fixes, to_lsp_diagnostics}",
+          "kind": "named"
+        },
+        {
+          "source": "crate::hover_provider::hover_at_position",
+          "kind": "named"
+        },
+        {
+          "source": "crate::vscode_config::VsCodeConfig",
+          "kind": "named"
+        },
+        {
+          "source": "super::*",
+          "kind": "glob"
+        },
+        {
+          "source": "tower_lsp::LspService",
+          "kind": "named"
+        },
+        {
+          "source": "std::sync::atomic::{AtomicUsize, Ordering}",
+          "kind": "named"
+        },
+        {
+          "source": "std::time::Duration",
+          "kind": "named"
+        },
+        {
+          "source": "tokio::sync::Barrier",
+          "kind": "named"
+        }
+      ]
+    },
+    "crates/agnix-lsp/src/code_actions.rs": {
+      "hash": "ebb9a7a43ff82130",
+      "language": "rust",
+      "symbols": {
+        "exports": [
+          {
+            "name": "fix_to_code_action",
+            "kind": "function",
+            "line": 27
+          },
+          {
+            "name": "fix_to_code_action_with_diagnostic",
+            "kind": "function",
+            "line": 32
+          },
+          {
+            "name": "fixes_to_code_actions",
+            "kind": "function",
+            "line": 69
+          },
+          {
+            "name": "fixes_to_code_actions_with_diagnostic",
+            "kind": "function",
+            "line": 77
+          }
+        ],
+        "functions": [
+          {
+            "name": "fix_to_code_action",
+            "line": 27
+          },
+          {
+            "name": "fix_to_code_action_with_diagnostic",
+            "line": 32
+          },
+          {
+            "name": "fixes_to_code_actions",
+            "line": 69
+          },
+          {
+            "name": "fixes_to_code_actions_with_diagnostic",
+            "line": 77
+          }
+        ],
+        "structs": [],
+        "enums": [],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [],
+        "impls": []
+      },
+      "imports": [
+        {
+          "source": "agnix_core::Fix",
+          "kind": "named"
+        },
+        {
+          "source": "std::collections::HashMap",
+          "kind": "named"
+        },
+        {
+          "source": "tower_lsp::lsp_types::{\n    CodeAction, CodeActionKind, Diagnostic as LspDiagnostic, TextEdit, Url, WorkspaceEdit,\n}",
+          "kind": "named"
+        },
+        {
+          "source": "crate::position::byte_range_to_lsp_range",
+          "kind": "named"
+        },
+        {
+          "source": "super::*",
+          "kind": "glob"
+        }
+      ]
+    },
+    "crates/agnix-lsp/src/completion_provider.rs": {
+      "hash": "02bf1a805781b704",
+      "language": "rust",
+      "symbols": {
+        "exports": [
+          {
+            "name": "completion_items_for_document",
+            "kind": "function",
+            "line": 21
+          }
+        ],
+        "functions": [
+          {
+            "name": "completion_items_for_document",
+            "line": 21
+          }
+        ],
+        "structs": [],
+        "enums": [],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [],
+        "impls": []
+      },
+      "imports": [
+        {
+          "source": "std::path::Path",
+          "kind": "named"
+        },
+        {
+          "source": "agnix_core::authoring::{CompletionKind, completion_candidates}",
+          "kind": "named"
+        },
+        {
+          "source": "tower_lsp::lsp_types::{\n    CompletionItem, CompletionItemKind, Documentation, InsertTextFormat, MarkupContent, MarkupKind,\n    Position,\n}",
+          "kind": "named"
+        },
+        {
+          "source": "crate::position::position_to_byte",
+          "kind": "named"
+        },
+        {
+          "source": "super::*",
+          "kind": "glob"
+        }
+      ]
+    },
+    "crates/agnix-lsp/src/diagnostic_mapper.rs": {
+      "hash": "811b8802e3a48a32",
+      "language": "rust",
+      "symbols": {
+        "exports": [
+          {
+            "name": "deserialize_fixes",
+            "kind": "function",
+            "line": 22
+          },
+          {
+            "name": "to_lsp_diagnostic",
+            "kind": "function",
+            "line": 35
+          },
+          {
+            "name": "to_lsp_diagnostics",
+            "kind": "function",
+            "line": 81
+          }
+        ],
+        "functions": [
+          {
+            "name": "deserialize_fixes",
+            "line": 22
+          },
+          {
+            "name": "to_lsp_diagnostic",
+            "line": 35
+          },
+          {
+            "name": "to_lsp_diagnostics",
+            "line": 81
+          }
+        ],
+        "structs": [],
+        "enums": [],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [],
+        "impls": []
+      },
+      "imports": [
+        {
+          "source": "agnix_core::{Diagnostic, DiagnosticLevel, Fix}",
+          "kind": "named"
+        },
+        {
+          "source": "rust_i18n::t",
+          "kind": "named"
+        },
+        {
+          "source": "serde_json::Value as JsonValue",
+          "kind": "named"
+        },
+        {
+          "source": "tower_lsp::lsp_types::{\n    Diagnostic as LspDiagnostic, DiagnosticSeverity, NumberOrString, Position, Range,\n}",
+          "kind": "named"
+        },
+        {
+          "source": "super::*",
+          "kind": "glob"
+        },
+        {
+          "source": "std::path::PathBuf",
+          "kind": "named"
+        }
+      ]
+    },
+    "crates/agnix-lsp/src/hover_provider.rs": {
+      "hash": "ecbaa7b170893412",
+      "language": "rust",
+      "symbols": {
+        "exports": [
+          {
+            "name": "get_field_at_position",
+            "kind": "function",
+            "line": 12
+          },
+          {
+            "name": "get_hover_info",
+            "kind": "function",
+            "line": 43
+          },
+          {
+            "name": "hover_at_position",
+            "kind": "function",
+            "line": 56
+          }
+        ],
+        "functions": [
+          {
+            "name": "get_field_at_position",
+            "line": 12
+          },
+          {
+            "name": "get_hover_info",
+            "line": 43
+          },
+          {
+            "name": "hover_at_position",
+            "line": 56
+          }
+        ],
+        "structs": [],
+        "enums": [],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [],
+        "impls": []
+      },
+      "imports": [
+        {
+          "source": "agnix_core::FileType",
+          "kind": "named"
+        },
+        {
+          "source": "tower_lsp::lsp_types::{Hover, HoverContents, MarkupContent, MarkupKind, Position}",
+          "kind": "named"
+        },
+        {
+          "source": "super::*",
+          "kind": "glob"
+        }
+      ]
+    },
+    "crates/agnix-lsp/src/lib.rs": {
+      "hash": "ec94bbe10179ecf4",
+      "language": "rust",
+      "symbols": {
+        "exports": [],
+        "functions": [],
+        "structs": [],
+        "enums": [],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [],
+        "impls": []
+      },
+      "imports": [
+        {
+          "source": "tower_lsp::{LspService, Server}",
+          "kind": "named"
+        }
+      ]
+    },
+    "crates/agnix-lsp/src/locale.rs": {
+      "hash": "ecbce4cc501af72f",
+      "language": "rust",
+      "symbols": {
+        "exports": [
+          {
+            "name": "init_from_env",
+            "kind": "function",
+            "line": 15
+          },
+          {
+            "name": "init_from_config",
+            "kind": "function",
+            "line": 23
+          }
+        ],
+        "functions": [
+          {
+            "name": "init_from_env",
+            "line": 15
+          },
+          {
+            "name": "init_from_config",
+            "line": 23
+          }
+        ],
+        "structs": [],
+        "enums": [],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [],
+        "impls": []
+      },
+      "imports": [
+        {
+          "source": "agnix_core::i18n::{is_supported, normalize_locale}",
+          "kind": "named"
+        },
+        {
+          "source": "rust_i18n::set_locale",
+          "kind": "named"
+        },
+        {
+          "source": "super::*",
+          "kind": "glob"
+        }
+      ]
+    },
+    "crates/agnix-lsp/src/position.rs": {
+      "hash": "d0018f19b0e6c99c",
+      "language": "rust",
+      "symbols": {
+        "exports": [
+          {
+            "name": "byte_to_position",
+            "kind": "function",
+            "line": 21
+          },
+          {
+            "name": "position_to_byte",
+            "kind": "function",
+            "line": 47
+          },
+          {
+            "name": "byte_range_to_lsp_range",
+            "kind": "function",
+            "line": 105
+          }
+        ],
+        "functions": [
+          {
+            "name": "byte_to_position",
+            "line": 21
+          },
+          {
+            "name": "position_to_byte",
+            "line": 47
+          },
+          {
+            "name": "byte_range_to_lsp_range",
+            "line": 105
+          }
+        ],
+        "structs": [],
+        "enums": [],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [],
+        "impls": []
+      },
+      "imports": [
+        {
+          "source": "tower_lsp::lsp_types::{Position, Range}",
+          "kind": "named"
+        },
+        {
+          "source": "super::*",
+          "kind": "glob"
+        }
+      ]
+    },
+    "crates/agnix-lsp/src/vscode_config.rs": {
+      "hash": "14a06a3150809c7d",
+      "language": "rust",
+      "symbols": {
+        "exports": [
+          {
+            "name": "merge_into_lint_config",
+            "kind": "function",
+            "line": 182
+          },
+          {
+            "name": "VsCodeConfig",
+            "kind": "struct",
+            "line": 25
+          },
+          {
+            "name": "VsCodeRules",
+            "kind": "struct",
+            "line": 64
+          },
+          {
+            "name": "VsCodeVersions",
+            "kind": "struct",
+            "line": 131
+          },
+          {
+            "name": "VsCodeSpecs",
+            "kind": "struct",
+            "line": 158
+          }
+        ],
+        "functions": [
+          {
+            "name": "merge_into_lint_config",
+            "line": 182
+          }
+        ],
+        "structs": [
+          {
+            "name": "VsCodeConfig",
+            "line": 25
+          },
+          {
+            "name": "VsCodeRules",
+            "line": 64
+          },
+          {
+            "name": "VsCodeVersions",
+            "line": 131
+          },
+          {
+            "name": "VsCodeSpecs",
+            "line": 158
+          }
+        ],
+        "enums": [],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [],
+        "impls": [
+          {
+            "name": "VsCodeConfig",
+            "line": 172
+          },
+          {
+            "name": "VsCodeRules",
+            "line": 236
+          },
+          {
+            "name": "VsCodeVersions",
+            "line": 284
+          },
+          {
+            "name": "VsCodeSpecs",
+            "line": 306
+          }
+        ]
+      },
+      "imports": [
+        {
+          "source": "agnix_core::LintConfig",
+          "kind": "named"
+        },
+        {
+          "source": "agnix_core::config::{RuleConfig, SeverityLevel, SpecRevisions, TargetTool, ToolVersions}",
+          "kind": "named"
+        },
+        {
+          "source": "serde::{Deserialize, Serialize}",
+          "kind": "named"
+        },
+        {
+          "source": "super::*",
+          "kind": "glob"
+        }
+      ]
+    },
+    "crates/agnix-lsp/tests/lsp_integration.rs": {
+      "hash": "9163843e2c397ae1",
+      "language": "rust",
+      "symbols": {
+        "exports": [],
+        "functions": [],
+        "structs": [],
+        "enums": [],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [],
+        "impls": []
+      },
+      "imports": [
+        {
+          "source": "agnix_core::{Diagnostic, DiagnosticLevel}",
+          "kind": "named"
+        },
+        {
+          "source": "std::path::PathBuf",
+          "kind": "named"
+        },
+        {
+          "source": "super::*",
+          "kind": "glob"
+        },
+        {
+          "source": "agnix_core::LintConfig",
+          "kind": "named"
+        },
+        {
+          "source": "std::io::Write",
+          "kind": "named"
+        },
+        {
+          "source": "tempfile::NamedTempFile",
+          "kind": "named"
+        },
+        {
+          "source": "tower_lsp::lsp_types::*",
+          "kind": "glob"
+        },
+        {
+          "source": "agnix_core::Fix",
+          "kind": "named"
+        },
+        {
+          "source": "agnix_core::{Diagnostic, DiagnosticLevel, Fix}",
+          "kind": "named"
+        },
+        {
+          "source": "std::path::PathBuf",
+          "kind": "named"
+        },
+        {
+          "source": "tower_lsp::lsp_types::{Hover, HoverContents, MarkupContent, MarkupKind, Position}",
+          "kind": "named"
+        },
+        {
+          "source": "agnix_lsp::Backend",
+          "kind": "named"
+        },
+        {
+          "source": "tower_lsp::lsp_types::*",
+          "kind": "glob"
+        },
+        {
+          "source": "tower_lsp::{LanguageServer, LspService}",
+          "kind": "named"
+        }
+      ]
+    },
+    "crates/agnix-mcp/src/main.rs": {
+      "hash": "8e07ce59cd528332",
+      "language": "rust",
+      "symbols": {
+        "exports": [
+          {
+            "name": "new",
+            "kind": "function",
+            "line": 328
+          },
+          {
+            "name": "ValidateFileInput",
+            "kind": "struct",
+            "line": 41
+          },
+          {
+            "name": "ValidateProjectInput",
+            "kind": "struct",
+            "line": 62
+          },
+          {
+            "name": "GetRuleDocsInput",
+            "kind": "struct",
+            "line": 93
+          },
+          {
+            "name": "AgnixServer",
+            "kind": "struct",
+            "line": 316
+          },
+          {
+            "name": "ToolsInput",
+            "kind": "enum",
+            "line": 85
+          }
+        ],
+        "functions": [
+          {
+            "name": "new",
+            "line": 328
+          }
+        ],
+        "structs": [
+          {
+            "name": "ValidateFileInput",
+            "line": 41
+          },
+          {
+            "name": "ValidateProjectInput",
+            "line": 62
+          },
+          {
+            "name": "GetRuleDocsInput",
+            "line": 93
+          },
+          {
+            "name": "AgnixServer",
+            "line": 316
+          }
+        ],
+        "enums": [
+          {
+            "name": "ToolsInput",
+            "line": 85
+          }
+        ],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [],
+        "impls": [
+          {
+            "name": "From<&Diagnostic>",
+            "line": 122
+          },
+          {
+            "name": "Default",
+            "line": 320
+          },
+          {
+            "name": "AgnixServer",
+            "line": 327
+          },
+          {
+            "name": "ServerHandler",
+            "line": 434
+          }
+        ]
+      },
+      "imports": [
+        {
+          "source": "agnix_core::{\n    config::LintConfig,\n    diagnostics::{Diagnostic, DiagnosticLevel},\n    validate_file as core_validate_file, validate_project as core_validate_project,\n}",
+          "kind": "named"
+        },
+        {
+          "source": "rmcp::{\n    ServerHandler, ServiceExt,\n    handler::server::{tool::ToolRouter, wrapper::Parameters},\n    model::{\n        CallToolResult, Content, ErrorData as McpError, Implementation, ProtocolVersion,\n        ServerCapabilities, ServerInfo,\n    },\n    schemars, tool, tool_handler, tool_router,\n    transport::stdio,\n}",
+          "kind": "named"
+        },
+        {
+          "source": "serde::{Deserialize, Serialize}",
+          "kind": "named"
+        },
+        {
+          "source": "serde_json::Value",
+          "kind": "named"
+        },
+        {
+          "source": "std::collections::HashSet",
+          "kind": "named"
+        },
+        {
+          "source": "std::path::Path",
+          "kind": "named"
+        },
+        {
+          "source": "agnix_core::config::TargetTool",
+          "kind": "named"
+        },
+        {
+          "source": "super::{\n        ToolsInput, ValidateFileInput, ValidateProjectInput, apply_tool_selection, parse_tools,\n    }",
+          "kind": "named"
+        },
+        {
+          "source": "agnix_core::LintConfig",
+          "kind": "named"
+        },
+        {
+          "source": "agnix_core::config::TargetTool",
+          "kind": "named"
+        },
+        {
+          "source": "serde_json::json",
+          "kind": "named"
+        }
+      ]
+    },
+    "crates/agnix-mcp/tests/mcp_tests.rs": {
+      "hash": "4cc8f00ec7030395",
+      "language": "rust",
+      "symbols": {
+        "exports": [],
+        "functions": [],
+        "structs": [],
+        "enums": [],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [],
+        "impls": []
+      },
+      "imports": [
+        {
+          "source": "std::fs",
+          "kind": "named"
+        },
+        {
+          "source": "std::path::PathBuf",
+          "kind": "named"
+        },
+        {
+          "source": "tempfile::TempDir",
+          "kind": "named"
+        },
+        {
+          "source": "agnix_core::config::TargetTool",
+          "kind": "named"
+        },
+        {
+          "source": "super::*",
+          "kind": "glob"
+        },
+        {
+          "source": "agnix_core::{config::LintConfig, validate_file, validate_project}",
+          "kind": "named"
+        },
+        {
+          "source": "agnix_core::diagnostics::{Diagnostic, DiagnosticLevel, Fix}",
+          "kind": "named"
+        },
+        {
+          "source": "serde_json::Value",
+          "kind": "named"
+        },
+        {
+          "source": "std::path::PathBuf",
+          "kind": "named"
+        },
+        {
+          "source": "rmcp::model::ProtocolVersion",
+          "kind": "named"
+        },
+        {
+          "source": "super::*",
+          "kind": "glob"
+        },
+        {
+          "source": "schemars::JsonSchema",
+          "kind": "named"
+        },
+        {
+          "source": "serde::Deserialize",
+          "kind": "named"
+        }
+      ]
+    },
+    "crates/agnix-rules/build.rs": {
+      "hash": "4fa259503dab8f30",
+      "language": "rust",
+      "symbols": {
+        "exports": [],
+        "functions": [],
+        "structs": [],
+        "enums": [],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [],
+        "impls": []
+      },
+      "imports": [
+        {
+          "source": "std::collections::{BTreeMap, BTreeSet}",
+          "kind": "named"
+        },
+        {
+          "source": "std::env",
+          "kind": "named"
+        },
+        {
+          "source": "std::fs",
+          "kind": "named"
+        },
+        {
+          "source": "std::path::{Path, PathBuf}",
+          "kind": "named"
+        }
+      ]
+    },
+    "crates/agnix-rules/src/lib.rs": {
+      "hash": "7a57d285abfa6f76",
+      "language": "rust",
+      "symbols": {
+        "exports": [
+          {
+            "name": "rule_count",
+            "kind": "function",
+            "line": 41
+          },
+          {
+            "name": "get_rule_name",
+            "kind": "function",
+            "line": 46
+          },
+          {
+            "name": "valid_tools",
+            "kind": "function",
+            "line": 56
+          },
+          {
+            "name": "authoring_families",
+            "kind": "function",
+            "line": 61
+          },
+          {
+            "name": "authoring_catalog_json",
+            "kind": "function",
+            "line": 66
+          },
+          {
+            "name": "get_tool_for_prefix",
+            "kind": "function",
+            "line": 85
+          },
+          {
+            "name": "get_prefixes_for_tool",
+            "kind": "function",
+            "line": 102
+          },
+          {
+            "name": "is_valid_tool",
+            "kind": "function",
+            "line": 113
+          },
+          {
+            "name": "normalize_tool_name",
+            "kind": "function",
+            "line": 130
+          }
+        ],
+        "functions": [
+          {
+            "name": "rule_count",
+            "line": 41
+          },
+          {
+            "name": "get_rule_name",
+            "line": 46
+          },
+          {
+            "name": "valid_tools",
+            "line": 56
+          },
+          {
+            "name": "authoring_families",
+            "line": 61
+          },
+          {
+            "name": "authoring_catalog_json",
+            "line": 66
+          },
+          {
+            "name": "get_tool_for_prefix",
+            "line": 85
+          },
+          {
+            "name": "get_prefixes_for_tool",
+            "line": 102
+          },
+          {
+            "name": "is_valid_tool",
+            "line": 113
+          },
+          {
+            "name": "normalize_tool_name",
+            "line": 130
+          }
+        ],
+        "structs": [],
+        "enums": [],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [],
+        "impls": []
+      },
+      "imports": [
+        {
+          "source": "super::*",
+          "kind": "glob"
+        }
+      ]
+    },
+    "crates/agnix-rules/tests/parity.rs": {
+      "hash": "7a8f7fc2922b62f3",
+      "language": "rust",
+      "symbols": {
+        "exports": [],
+        "functions": [],
+        "structs": [],
+        "enums": [],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [],
+        "impls": []
+      },
+      "imports": [
+        {
+          "source": "std::fs",
+          "kind": "named"
+        },
+        {
+          "source": "std::path::Path",
+          "kind": "named"
+        }
+      ]
+    },
+    "editors/zed/src/lib.rs": {
+      "hash": "73aea4419ff81f58",
+      "language": "rust",
+      "symbols": {
+        "exports": [],
+        "functions": [],
+        "structs": [],
+        "enums": [],
+        "traits": [],
+        "types": [],
+        "modules": [],
+        "constants": [],
+        "impls": [
+          {
+            "name": "AgnixExtension",
+            "line": 50
+          },
+          {
+            "name": "zed::Extension",
+            "line": 126
+          }
+        ]
+      },
+      "imports": [
+        {
+          "source": "std::fs",
+          "kind": "named"
+        },
+        {
+          "source": "zed_extension_api::{\n    self as zed, Architecture, Command, DownloadedFileType, GithubReleaseOptions, LanguageServerId,\n    Os, Result,\n}",
+          "kind": "named"
+        },
+        {
+          "source": "super::*",
+          "kind": "glob"
+        }
+      ]
+    }
+  }
+}
