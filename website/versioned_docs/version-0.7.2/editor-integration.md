@@ -16,6 +16,12 @@ Main capabilities:
 
 Integration docs:
 
-- [VS Code extension](https://github.com/avifenesh/agnix/tree/main/editors/vscode)
+- [Install agnix for VS Code](https://marketplace.visualstudio.com/items?itemName=avifenesh.agnix)
+- [VS Code extension guide](https://github.com/avifenesh/agnix/blob/main/editors/vscode/README.md)
 - [Neovim plugin](https://github.com/avifenesh/agnix/tree/main/editors/neovim)
-- [JetBrains plugin](https://github.com/avifenesh/agnix/tree/main/editors/jetbrains)
+- [Install agnix for JetBrains](https://plugins.jetbrains.com/plugin/30087-agnix)
+- [JetBrains plugin guide](https://github.com/avifenesh/agnix/blob/main/editors/jetbrains/README.md)
+
+JetBrains install widget:
+
+<iframe width="245px" height="48px" src="https://plugins.jetbrains.com/embeddable/install/30087" title="Install agnix plugin for JetBrains IDEs"></iframe>

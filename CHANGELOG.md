@@ -33,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Supports explicit null to revert to auto-detection
 
 ### Changed
+- Documentation and website navigation now include direct install links for VS Code and JetBrains extensions, plus a prominent website link in the README.
 - Core: introduce `static_regex!` macro for validated regex initialization (#246)
   - Replaces bare `.unwrap()` on `Regex::new()` with descriptive `.expect()` messages
   - Migrates 36 `OnceLock<Regex>` patterns across 7 files to use the macro

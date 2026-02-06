@@ -18,6 +18,7 @@ cargo build --release -p agnix-lsp
 ## VS Code
 
 The VS Code extension auto-downloads `agnix-lsp` on first use. Manual install is optional.
+Install from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=avifenesh.agnix).
 
 Install the extension from source:
 
@@ -143,7 +144,7 @@ Cursor is built on VS Code, so the VS Code extension works directly. The extensi
 
 ### Installation
 
-1. Install the VS Code extension (see VS Code section above)
+1. Install the VS Code extension from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=avifenesh.agnix)
 2. Cursor will detect and use it automatically
 
 ### Cursor-Specific Validation
@@ -199,6 +200,7 @@ If using legacy `.cursorrules` file, agnix warns about migration (CUR-006). To m
 ## JetBrains IDEs
 
 JetBrains plugin source is in `editors/jetbrains/` and integrates with `agnix-lsp` through LSP4IJ.
+Install from the [JetBrains Marketplace](https://plugins.jetbrains.com/plugin/30087-agnix).
 
 ### Build and Run
 

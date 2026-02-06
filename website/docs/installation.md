@@ -18,6 +18,7 @@ Alternative installs:
 
 Install extension from the marketplace and point server path if needed. Full details:
 
+- [Install from VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=avifenesh.agnix)
 - [VS Code integration guide](https://github.com/avifenesh/agnix/blob/main/editors/vscode/README.md)
 
 ### Neovim
@@ -30,6 +31,7 @@ Use the Neovim plugin and attach `agnix-lsp` in your LSP config.
 
 Install the plugin and configure executable path.
 
+- [Install from JetBrains Marketplace](https://plugins.jetbrains.com/plugin/30087-agnix)
 - [JetBrains integration guide](https://github.com/avifenesh/agnix/blob/main/editors/jetbrains/README.md)
 
 ### Other editors
