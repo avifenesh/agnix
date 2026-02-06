@@ -126,7 +126,12 @@ def render_autofix(rule: dict) -> str:
     fix = rule.get("fix", {})
     if not fix.get("autofix"):
         return "No"
-    safety = fix.get("fix_safety", "unknown")
+    safety = fix.get("fix_safety")
+    if not safety:
+        raise ValueError(f"Rule {rule['id']} has autofix=true but missing fix_safety")
+    valid = ("safe", "unsafe", "safe/unsafe")
+    if safety not in valid:
+        raise ValueError(f"Rule {rule['id']} has invalid fix_safety: '{safety}'. Expected one of: {valid}")
     return f"Yes ({safety})"
 
 

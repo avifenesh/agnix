@@ -85,6 +85,16 @@ pub struct Evidence {
     pub tests: TestCoverage,
 }
 
+/// Auto-fix metadata for a rule
+#[derive(Debug, Clone, Deserialize)]
+pub struct FixMetadata {
+    /// Whether this rule has auto-fix support
+    pub autofix: bool,
+    /// Safety classification (only present when autofix is true)
+    #[serde(default)]
+    pub fix_safety: Option<String>,
+}
+
 /// Rule definition from rules.json
 #[derive(Debug, Deserialize)]
 struct RulesIndex {
@@ -101,6 +111,8 @@ struct RuleEntry {
     category: String,
     /// Evidence metadata (required for all rules)
     evidence: Evidence,
+    /// Auto-fix metadata (required for all rules)
+    fix: FixMetadata,
 }
 
 fn workspace_root() -> &'static Path {
@@ -724,6 +736,60 @@ fn test_tool_rule_prefixes_consistency() {
              TOOL_RULE_PREFIXES and VALID_TOOLS must be consistent.",
             tool,
             prefix
+        );
+    }
+}
+
+// ============================================================================
+// Fix Metadata Validation Tests
+// ============================================================================
+
+#[test]
+fn test_all_rules_have_fix_metadata() {
+    let rules_index = load_rules_json();
+    let valid_fix_safety = ["safe", "unsafe", "safe/unsafe"];
+
+    for rule in &rules_index.rules {
+        if rule.fix.autofix {
+            // Rules with autofix must have a valid fix_safety value
+            let safety = rule.fix.fix_safety.as_deref().unwrap_or("");
+            assert!(
+                valid_fix_safety.contains(&safety),
+                "Rule {} has autofix=true but invalid fix_safety: '{}'. Expected one of: {:?}",
+                rule.id,
+                safety,
+                valid_fix_safety
+            );
+        } else {
+            // Rules without autofix should not have fix_safety
+            assert!(
+                rule.fix.fix_safety.is_none(),
+                "Rule {} has autofix=false but fix_safety is set to '{}'",
+                rule.id,
+                rule.fix.fix_safety.as_deref().unwrap_or("")
+            );
+        }
+    }
+}
+
+#[test]
+fn test_autofix_count_matches_documentation() {
+    let rules_index = load_rules_json();
+    let autofix_count = rules_index.rules.iter().filter(|r| r.fix.autofix).count();
+
+    // VALIDATION-RULES.md documents the autofix count in the footer
+    let validation_rules_path = workspace_root().join("knowledge-base/VALIDATION-RULES.md");
+    let content = fs::read_to_string(&validation_rules_path)
+        .unwrap_or_else(|e| panic!("Failed to read {}: {}", validation_rules_path.display(), e));
+
+    // Look for the pattern "Auto-Fixable: N rules (N%)"
+    let re = Regex::new(r"Auto-Fixable\*\*:\s*(\d+)\s*rules").unwrap();
+    if let Some(cap) = re.captures(&content) {
+        let documented_count: usize = cap[1].parse().unwrap();
+        assert_eq!(
+            autofix_count, documented_count,
+            "rules.json has {} auto-fixable rules but VALIDATION-RULES.md documents {}",
+            autofix_count, documented_count
         );
     }
 }
