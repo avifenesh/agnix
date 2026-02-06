@@ -52,14 +52,12 @@ impl AgnixExtension {
         &mut self,
         language_server_id: &LanguageServerId,
     ) -> Result<String> {
-        let (platform, _) = zed::current_platform();
+        let (platform, arch) = zed::current_platform();
         let bin = binary_name(platform);
 
-        // Check cached path first
+        // Return cached path immediately (trust the cache once set)
         if let Some(ref path) = self.cached_binary_path {
-            if fs::metadata(path).is_ok_and(|m| m.is_file()) {
-                return Ok(path.clone());
-            }
+            return Ok(path.clone());
         }
 
         // Determine the latest release from GitHub
@@ -72,6 +70,12 @@ impl AgnixExtension {
         )?;
 
         let version = &release.version;
+
+        // Reject version strings with path traversal characters
+        if version.contains('/') || version.contains('\\') || version.contains("..") {
+            return Err(format!("invalid release version: {version}"));
+        }
+
         let version_dir = format!("agnix-lsp-{version}");
         let binary_path = format!("{version_dir}/{bin}");
 
@@ -82,7 +86,6 @@ impl AgnixExtension {
         }
 
         // Download the appropriate asset for this platform
-        let (platform, arch) = zed::current_platform();
         let (asset_name, file_type) = asset_for_platform(platform, arch)?;
 
         let asset = release
@@ -90,6 +93,14 @@ impl AgnixExtension {
             .iter()
             .find(|a| a.name == asset_name)
             .ok_or_else(|| format!("no release asset found matching {asset_name}"))?;
+
+        // Validate download URL uses HTTPS from GitHub
+        if !asset.download_url.starts_with("https://") {
+            return Err(format!(
+                "refusing non-HTTPS download URL: {}",
+                asset.download_url
+            ));
+        }
 
         zed::download_file(&asset.download_url, &version_dir, file_type)
             .map_err(|e| format!("failed to download {asset_name}: {e}"))?;
