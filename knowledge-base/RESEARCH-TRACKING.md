@@ -86,7 +86,7 @@ Authoritative sources monitored for changes that may affect validation rules.
 | Codex CLI - AGENTS.md | https://developers.openai.com/codex/guides/agents-md/ | spec-drift.yml (weekly) | AGM-001 through AGM-006, XP-001 through XP-006 |
 | OpenCode - Rules | https://opencode.ai/docs/rules/ | spec-drift.yml (weekly) | XP-001 through XP-006 |
 | Cursor - Rules | https://cursor.com/docs/context/rules | spec-drift.yml (monthly) | CUR-001 through CUR-006 |
-| GitHub Copilot | https://docs.github.com/en/copilot/customizing-copilot | spec-drift.yml (monthly) | COP-001 through COP-004 |
+| GitHub Copilot | https://docs.github.com/en/copilot/customizing-copilot | spec-drift.yml (monthly) | COP-001 through COP-006 |
 | Cline - Rules | https://docs.cline.bot/features/cline-rules/overview | spec-drift.yml (monthly) | -- |
 
 ### Community Sources

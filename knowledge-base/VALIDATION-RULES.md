@@ -993,7 +993,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | Claude Memory | 10 | 7 | 3 | 0 | 3 |
 | AGENTS.md | 6 | 1 | 5 | 0 | 2 |
 | Claude Plugins | 6 | 6 | 0 | 0 | 1 |
-| GitHub Copilot | 4 | 3 | 1 | 0 | 1 |
+| GitHub Copilot | 6 | 5 | 1 | 0 | 1 |
 | Cursor | 6 | 3 | 3 | 0 | 1 |
 | MCP | 8 | 7 | 1 | 0 | 1 |
 | XML | 3 | 3 | 0 | 0 | 1 |
@@ -1030,7 +1030,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 
 ---
 
-**Total Coverage**: 100 validation rules across 15 categories
+**Total Coverage**: 102 validation rules across 15 categories
 **Knowledge Base**: 11,036 lines, 320KB, 75+ sources
 **Certainty**: 76 HIGH, 23 MEDIUM, 1 LOW
 **Auto-Fixable**: 22 rules (22%)

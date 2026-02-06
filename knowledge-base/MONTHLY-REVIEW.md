@@ -115,7 +115,7 @@ After completing the review:
 
 #### Current State
 
-- **Rules**: 100 validation rules across 15 categories
+- **Rules**: 102 validation rules across 15 categories
 - **Sources monitored**: 12 sources in `.github/spec-baselines.json`
 - **Tests**: 1500+ passing tests
 
@@ -125,7 +125,7 @@ After completing the review:
 |--------------|------------|-----------------|
 | Claude Code (CC-SK, CC-HK, CC-MEM, CC-AG, CC-PL) | 50+ | Comprehensive |
 | Cursor (CUR-*) | 6 | Good - covers core validation |
-| GitHub Copilot (COP-*) | 4 | Adequate - covers instruction files |
+| GitHub Copilot (COP-*) | 6 | Good - covers instruction files and validation |
 | AGENTS.md (AGM-*) | 6 | Good - covers structure and cross-platform |
 | MCP (MCP-*) | 8 | Good - covers protocol compliance |
 | Agent Skills (AS-*) | 16 | Comprehensive |

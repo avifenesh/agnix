@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- COP-005: Validate `excludeAgent` field contains valid agent identifiers
+- COP-006: Enforce file length limit (150,000 characters) for GitHub Copilot instruction files
+
 ## [0.9.3] - 2026-02-06
 
 ### Fixed
