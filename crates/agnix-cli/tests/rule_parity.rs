@@ -1,6 +1,6 @@
 //! Rule parity integration tests.
 //!
-//! Ensures all 100 rules from knowledge-base/rules.json are:
+//! Ensures all 102 rules from knowledge-base/rules.json are:
 //! 1. Registered in SARIF output (sarif.rs)
 //! 2. Implemented in agnix-core/src/rules/*.rs
 //! 3. Covered by test fixtures in tests/fixtures/
@@ -285,7 +285,10 @@ fn infer_fixture_coverage(rules: &[RuleEntry]) -> HashMap<String, Vec<String>> {
         ("claude-plugins", vec!["valid/plugins", "invalid/plugins"]),
         ("agents-md", vec!["agents_md"]),
         ("mcp", vec!["mcp"]),
-        ("copilot", vec!["copilot", "copilot-invalid"]),
+        (
+            "copilot",
+            vec!["copilot", "copilot-invalid", "copilot-too-long"],
+        ),
         ("cursor", vec!["cursor", "cursor-invalid", "cursor-legacy"]),
         ("xml", vec!["xml"]),
         ("references", vec!["refs"]),
@@ -444,8 +447,8 @@ fn test_rules_json_integrity() {
     // Check total count matches expected
     assert_eq!(
         rules_index.rules.len(),
-        100,
-        "Expected 100 rules in rules.json, found {}",
+        102,
+        "Expected 102 rules in rules.json, found {}",
         rules_index.rules.len()
     );
 
@@ -537,11 +540,11 @@ fn test_rules_json_matches_validation_rules_md() {
 fn test_sarif_rule_count() {
     let sarif_rules = extract_sarif_rule_ids();
 
-    // SARIF should have exactly 100 rules to match rules.json
+    // SARIF should have exactly 102 rules to match rules.json
     assert_eq!(
         sarif_rules.len(),
-        100,
-        "SARIF should have 100 rules, found {}. Missing or extra rules detected.",
+        102,
+        "SARIF should have 102 rules, found {}. Missing or extra rules detected.",
         sarif_rules.len()
     );
 }

@@ -1,6 +1,6 @@
 # Rules Reference
 
-This section contains all `100` validation rules generated from `knowledge-base/rules.json`.
+This section contains all `102` validation rules generated from `knowledge-base/rules.json`.
 `25` rules have automatic fixes.
 
 | Rule | Name | Severity | Category | Auto-Fix |
@@ -83,6 +83,8 @@ This section contains all `100` validation rules generated from `knowledge-base/
 | [COP-002](./generated/cop-002.md) | Invalid Frontmatter in Scoped Instructions | HIGH | GitHub Copilot | No |
 | [COP-003](./generated/cop-003.md) | Invalid Glob Pattern in applyTo | HIGH | GitHub Copilot | No |
 | [COP-004](./generated/cop-004.md) | Unknown Frontmatter Keys | MEDIUM | GitHub Copilot | Yes (safe) |
+| [COP-005](./generated/cop-005.md) | Invalid excludeAgent Value | HIGH | GitHub Copilot | No |
+| [COP-006](./generated/cop-006.md) | File Length Limit | MEDIUM | GitHub Copilot | No |
 | [CUR-001](./generated/cur-001.md) | Empty Cursor Rule File | HIGH | Cursor | No |
 | [CUR-002](./generated/cur-002.md) | Missing Frontmatter in .mdc File | MEDIUM | Cursor | No |
 | [CUR-003](./generated/cur-003.md) | Invalid YAML Frontmatter | HIGH | Cursor | No |

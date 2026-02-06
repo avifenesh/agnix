@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- COP-005: Validate `excludeAgent` field contains valid agent identifiers
+- COP-006: Warn when global Copilot instruction file exceeds ~4000 characters
 - Fix metadata (`autofix`, `fix_safety`) for all 100 rules in rules.json
 - Fix metadata schema validation parity test
 - Autofix count parity test (rules.json vs VALIDATION-RULES.md)
@@ -20,7 +22,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Generated website rule pages now include Auto-Fix metadata
 - Website rules index table includes Auto-Fix column
 - `generate-docs-rules.py` renders fix metadata with strict validation
-
 ## [0.9.3] - 2026-02-06
 
 ### Fixed
@@ -338,7 +339,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Quick-fix code actions from Fix objects
   - Hover documentation for frontmatter fields
   - Document content caching for performance
-  - Supports all 100 agnix validation rules with severity mapping
+  - Supports all 102 agnix validation rules with severity mapping
   - Workspace boundary validation for security (prevents path traversal)
   - Config caching optimization for performance
   - Editor support for VS Code, Neovim, Helix, and other LSP-compatible editors
@@ -352,7 +353,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Case-insensitive tool name matching
   - Takes precedence over legacy `target` field for flexibility
 - VS Code extension with full LSP integration (#22)
-  - Real-time diagnostics for all 100 validation rules
+  - Real-time diagnostics for all 102 validation rules
   - Status bar indicator showing agnix validation status
   - Syntax highlighting for SKILL.md YAML frontmatter
   - Commands: 'Restart Language Server' and 'Show Output Channel'

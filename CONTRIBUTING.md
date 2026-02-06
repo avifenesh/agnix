@@ -61,7 +61,7 @@ Rule IDs follow the format `[PREFIX]-[NUMBER]` where the prefix indicates the ca
 | `CC-PL-` | Claude Code Plugins | CC-PL-001 through CC-PL-006 |
 | `MCP-` | Model Context Protocol | MCP-001 through MCP-008 |
 | `CUR-` | Cursor | CUR-001 through CUR-006 |
-| `COP-` | GitHub Copilot | COP-001 through COP-004 |
+| `COP-` | GitHub Copilot | COP-001 through COP-006 |
 | `AGM-` | AGENTS.md | AGM-001 through AGM-006 |
 | `XP-` | Cross-Platform | XP-001 through XP-006 |
 | `PE-` | Prompt Engineering | PE-001 through PE-004 |

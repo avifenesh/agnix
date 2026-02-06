@@ -1,6 +1,6 @@
 # agnix Technical Reference
 
-> Linter for agent configs. 100 rules across 15 categories.
+> Linter for agent configs. 102 rules across 15 categories.
 
 ## What agnix Validates
 
@@ -17,7 +17,7 @@
 | MCP | tool definitions | 8 |
 | XML | all .md files | 3 |
 | References | @imports | 2 |
-| GitHub Copilot | .github/copilot-instructions.md, .github/instructions/*.instructions.md | 4 |
+| GitHub Copilot | .github/copilot-instructions.md, .github/instructions/*.instructions.md | 6 |
 | Cursor Project Rules | .cursor/rules/*.mdc, .cursorrules | 6 |
 | Version Awareness | .agnix.toml | 1 |
 
@@ -35,7 +35,7 @@ agnix/
 │   ├── agnix-lsp/      # LSP server
 │   └── agnix-mcp/      # MCP server
 ├── editors/            # Neovim, VS Code, JetBrains, Zed integrations
-├── knowledge-base/     # 100 rules documented
+├── knowledge-base/     # 102 rules documented
 ├── scripts/            # Build/dev automation scripts
 ├── website/            # Docusaurus documentation website
 └── tests/fixtures/     # Test cases

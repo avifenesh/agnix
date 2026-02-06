@@ -678,9 +678,23 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 
 <a id="cop-004"></a>
 ### COP-004 [MEDIUM] Unknown Frontmatter Keys
-**Requirement**: Scoped instruction frontmatter SHOULD only contain known keys (applyTo)
-**Detection**: Check for keys other than `applyTo` in frontmatter
+**Requirement**: Scoped instruction frontmatter SHOULD only contain known keys (`applyTo`, `excludeAgent`)
+**Detection**: Check for keys other than `applyTo` and `excludeAgent` in frontmatter
 **Fix**: Remove unknown keys
+**Source**: docs.github.com/en/copilot/customizing-copilot
+
+<a id="cop-005"></a>
+### COP-005 [HIGH] Invalid excludeAgent Value
+**Requirement**: The `excludeAgent` frontmatter field in scoped instruction files MUST be either `"code-review"` or `"coding-agent"`
+**Detection**: Parse frontmatter, validate `excludeAgent` value against allowed set
+**Fix**: Use a valid `excludeAgent` value
+**Source**: docs.github.com/en/copilot/customizing-copilot
+
+<a id="cop-006"></a>
+### COP-006 [MEDIUM] File Length Limit
+**Requirement**: Global instruction files (`.github/copilot-instructions.md`) SHOULD not exceed ~4000 characters
+**Detection**: Check `content.chars().count() > 4000`
+**Fix**: Reduce content or split into scoped instruction files
 **Source**: docs.github.com/en/copilot/customizing-copilot
 
 ---
@@ -997,7 +1011,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | Claude Memory | 10 | 7 | 3 | 0 | 2 |
 | AGENTS.md | 6 | 1 | 5 | 0 | 0 |
 | Claude Plugins | 6 | 6 | 0 | 0 | 1 |
-| GitHub Copilot | 4 | 3 | 1 | 0 | 1 |
+| GitHub Copilot | 6 | 4 | 2 | 0 | 1 |
 | Cursor | 6 | 3 | 3 | 0 | 1 |
 | MCP | 8 | 7 | 1 | 0 | 2 |
 | XML | 3 | 3 | 0 | 0 | 3 |
@@ -1005,7 +1019,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | Prompt Eng | 4 | 0 | 4 | 0 | 0 |
 | Cross-Platform | 6 | 4 | 2 | 0 | 0 |
 | Version Awareness | 1 | 0 | 0 | 1 | 0 |
-| **TOTAL** | **100** | **76** | **23** | **1** | **25** |
+| **TOTAL** | **102** | **77** | **24** | **1** | **25** |
 
 ---
 
@@ -1034,7 +1048,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 
 ---
 
-**Total Coverage**: 100 validation rules across 15 categories
+**Total Coverage**: 102 validation rules across 15 categories
 **Knowledge Base**: 11,036 lines, 320KB, 75+ sources
 **Certainty**: 76 HIGH, 23 MEDIUM, 1 LOW
 **Auto-Fixable**: 25 rules (25%)

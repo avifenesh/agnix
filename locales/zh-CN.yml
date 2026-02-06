@@ -295,7 +295,13 @@ rules:
     suggestion: "使用有效的 glob 语法，如 '**/*.ts' 或 'src/**/*.js'"
   cop_004:
     message: "Copilot 指令文件中未知的 frontmatter 键 '%{key}'"
-    suggestion: "删除未知键 '%{key}'。只认可 'applyTo'。"
+    suggestion: "删除未知键 '%{key}'。只认可 'applyTo' 和 'excludeAgent'。"
+  cop_005:
+    message: "无效的 excludeAgent 值 '%{value}'。有效值: 'code-review'、'coding-agent'"
+    suggestion: "为 excludeAgent 使用 'code-review' 或 'coding-agent'"
+  cop_006:
+    message: "Copilot 指令文件超过推荐长度（%{len} 个字符，限制约 4000）"
+    suggestion: "减少内容长度或拆分为范围限定的指令文件"
 
   # --- Cursor (cursor.rs) ---
   cur_001:

@@ -2906,6 +2906,30 @@ Run npm install and npm build.
             diagnostics.iter().any(|d| d.rule == "COP-004"),
             "Expected COP-004 from unknown-keys.instructions.md fixture"
         );
+
+        // COP-005: Invalid excludeAgent value
+        let bad_exclude_agent =
+            copilot_invalid_dir.join(".github/instructions/bad-exclude-agent.instructions.md");
+        let diagnostics = validate_file(&bad_exclude_agent, &config).unwrap();
+        assert!(
+            diagnostics.iter().any(|d| d.rule == "COP-005"),
+            "Expected COP-005 from bad-exclude-agent.instructions.md fixture"
+        );
+    }
+
+    #[test]
+    fn test_validate_copilot_006_too_long() {
+        let fixtures_dir = get_fixtures_dir();
+        let copilot_too_long_dir = fixtures_dir.join("copilot-too-long");
+        let config = LintConfig::default();
+
+        let long_global = copilot_too_long_dir.join(".github/copilot-instructions.md");
+        let diagnostics = validate_file(&long_global, &config).unwrap();
+        assert!(
+            diagnostics.iter().any(|d| d.rule == "COP-006"),
+            "Expected COP-006 from copilot-too-long fixture, got: {:?}",
+            diagnostics.iter().map(|d| &d.rule).collect::<Vec<_>>()
+        );
     }
 
     #[test]
