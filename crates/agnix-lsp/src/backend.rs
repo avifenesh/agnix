@@ -4,7 +4,9 @@
 //! real-time validation of agent configuration files.
 
 use std::collections::HashMap;
+use std::future::Future;
 use std::path::{Component, Path, PathBuf};
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 
 use tokio::sync::RwLock;
@@ -64,6 +66,64 @@ fn normalize_path(path: &Path) -> PathBuf {
     components.iter().collect()
 }
 
+const MAX_CONFIG_REVALIDATION_CONCURRENCY: usize = 8;
+
+fn config_revalidation_concurrency(document_count: usize) -> usize {
+    if document_count == 0 {
+        return 0;
+    }
+
+    let available = std::thread::available_parallelism()
+        .map(|count| count.get())
+        .unwrap_or(4);
+
+    document_count.min(available.clamp(1, MAX_CONFIG_REVALIDATION_CONCURRENCY))
+}
+
+async fn for_each_bounded<T, I, F, Fut>(
+    items: I,
+    max_concurrency: usize,
+    operation: F,
+) -> Vec<tokio::task::JoinError>
+where
+    T: Send + 'static,
+    I: IntoIterator<Item = T>,
+    F: Fn(T) -> Fut + Send + Sync + 'static,
+    Fut: Future<Output = ()> + Send + 'static,
+{
+    let mut join_set = tokio::task::JoinSet::new();
+    let mut join_errors = Vec::new();
+    let mut items = items.into_iter();
+    let max_concurrency = max_concurrency.max(1);
+    let operation = Arc::new(operation);
+
+    for _ in 0..max_concurrency {
+        let Some(item) = items.next() else {
+            break;
+        };
+
+        let operation = Arc::clone(&operation);
+        join_set.spawn(async move {
+            operation(item).await;
+        });
+    }
+
+    while let Some(result) = join_set.join_next().await {
+        if let Err(error) = result {
+            join_errors.push(error);
+        }
+
+        if let Some(item) = items.next() {
+            let operation = Arc::clone(&operation);
+            join_set.spawn(async move {
+                operation(item).await;
+            });
+        }
+    }
+
+    join_errors
+}
+
 /// LSP backend that handles validation requests.
 ///
 /// The backend maintains a connection to the LSP client and validates
@@ -74,15 +134,21 @@ fn normalize_path(path: &Path) -> PathBuf {
 ///
 /// Both `LintConfig` and `ValidatorRegistry` are cached and reused across
 /// validations to avoid repeated allocations.
+#[derive(Clone)]
 pub struct Backend {
     client: Client,
     /// Cached lint configuration reused across validations.
     /// Wrapped in RwLock to allow loading from .agnix.toml after initialize().
-    config: RwLock<Arc<agnix_core::LintConfig>>,
+    config: Arc<RwLock<Arc<agnix_core::LintConfig>>>,
     /// Workspace root path for boundary validation (security).
     /// Set during initialize() from the client's root_uri.
-    workspace_root: RwLock<Option<PathBuf>>,
-    documents: RwLock<HashMap<Url, Arc<String>>>,
+    workspace_root: Arc<RwLock<Option<PathBuf>>>,
+    /// Canonicalized workspace root cached at initialize() to avoid blocking I/O on hot paths.
+    workspace_root_canonical: Arc<RwLock<Option<PathBuf>>>,
+    documents: Arc<RwLock<HashMap<Url, Arc<String>>>>,
+    /// Monotonic generation incremented on each config change.
+    /// Used to drop stale diagnostics from older revalidation batches.
+    config_generation: Arc<AtomicU64>,
     /// Cached validator registry reused across validations.
     /// Immutable after construction; Arc enables sharing across spawn_blocking tasks.
     registry: Arc<agnix_core::ValidatorRegistry>,
@@ -93,9 +159,11 @@ impl Backend {
     pub fn new(client: Client) -> Self {
         Self {
             client,
-            config: RwLock::new(Arc::new(agnix_core::LintConfig::default())),
-            workspace_root: RwLock::new(None),
-            documents: RwLock::new(HashMap::new()),
+            config: Arc::new(RwLock::new(Arc::new(agnix_core::LintConfig::default()))),
+            workspace_root: Arc::new(RwLock::new(None)),
+            workspace_root_canonical: Arc::new(RwLock::new(None)),
+            documents: Arc::new(RwLock::new(HashMap::new())),
+            config_generation: Arc::new(AtomicU64::new(0)),
             registry: Arc::new(agnix_core::ValidatorRegistry::with_defaults()),
         }
     }
@@ -132,7 +200,11 @@ impl Backend {
     ///
     /// Used for did_change events where we have the content in memory.
     /// This avoids reading from disk and provides real-time feedback.
-    async fn validate_from_content_and_publish(&self, uri: Url) {
+    async fn validate_from_content_and_publish(
+        &self,
+        uri: Url,
+        expected_config_generation: Option<u64>,
+    ) {
         let file_path = match uri.to_file_path() {
             Ok(p) => p,
             Err(()) => {
@@ -145,13 +217,18 @@ impl Backend {
 
         // Security: Validate file is within workspace boundaries
         if let Some(ref workspace_root) = *self.workspace_root.read().await {
-            let canonical_path = match file_path.canonicalize() {
-                Ok(p) => p,
-                Err(_) => normalize_path(&file_path),
+            let (canonical_path, canonical_root) = match file_path.canonicalize() {
+                Ok(path) => {
+                    let root = self
+                        .workspace_root_canonical
+                        .read()
+                        .await
+                        .clone()
+                        .unwrap_or_else(|| normalize_path(workspace_root));
+                    (path, root)
+                }
+                Err(_) => (normalize_path(&file_path), normalize_path(workspace_root)),
             };
-            let canonical_root = workspace_root
-                .canonicalize()
-                .unwrap_or_else(|_| normalize_path(workspace_root));
 
             if !canonical_path.starts_with(&canonical_root) {
                 self.client
@@ -165,14 +242,23 @@ impl Backend {
         }
 
         // Get content from cache
-        let content = {
+        let (content, expected_content) = {
             let docs = self.documents.read().await;
             match docs.get(&uri) {
-                Some(c) => Arc::clone(c),
+                Some(cached) => {
+                    let snapshot = Arc::clone(cached);
+                    (Arc::clone(&snapshot), Some(snapshot))
+                }
                 None => {
                     // Fall back to file-based validation
                     drop(docs);
                     let diagnostics = self.validate_file(file_path).await;
+                    if !self
+                        .should_publish_diagnostics(&uri, expected_config_generation, None)
+                        .await
+                    {
+                        return;
+                    }
                     self.client
                         .publish_diagnostics(uri, diagnostics, None)
                         .await;
@@ -212,9 +298,49 @@ impl Backend {
             )],
         };
 
+        if !self
+            .should_publish_diagnostics(&uri, expected_config_generation, expected_content.as_ref())
+            .await
+        {
+            return;
+        }
+
         self.client
             .publish_diagnostics(uri, diagnostics, None)
             .await;
+    }
+
+    /// In config-change batch revalidation mode, only publish if the batch generation is current
+    /// and the document is still open.
+    async fn should_publish_diagnostics(
+        &self,
+        uri: &Url,
+        expected_config_generation: Option<u64>,
+        expected_content: Option<&Arc<String>>,
+    ) -> bool {
+        let docs = self.documents.read().await;
+        let current_content = docs.get(uri);
+
+        if let Some(expected) = expected_content {
+            let Some(current) = current_content else {
+                return false;
+            };
+            if !Arc::ptr_eq(current, expected) {
+                return false;
+            }
+        }
+
+        if let Some(expected_generation) = expected_config_generation {
+            if self.config_generation.load(Ordering::SeqCst) != expected_generation {
+                return false;
+            }
+
+            if current_content.is_none() {
+                return false;
+            }
+        }
+
+        true
     }
 
     /// Get cached document content for a URI.
@@ -230,6 +356,11 @@ impl LanguageServer for Backend {
         if let Some(root_uri) = params.root_uri {
             if let Ok(root_path) = root_uri.to_file_path() {
                 *self.workspace_root.write().await = Some(root_path.clone());
+                *self.workspace_root_canonical.write().await = Some(
+                    root_path
+                        .canonicalize()
+                        .unwrap_or_else(|_| normalize_path(&root_path)),
+                );
 
                 // Try to load config from .agnix.toml in workspace root
                 let config_path = root_path.join(".agnix.toml");
@@ -289,7 +420,7 @@ impl LanguageServer for Backend {
             let mut docs = self.documents.write().await;
             docs.insert(uri.clone(), Arc::new(text));
         }
-        self.validate_from_content_and_publish(uri).await;
+        self.validate_from_content_and_publish(uri, None).await;
     }
 
     async fn did_change(&self, params: DidChangeTextDocumentParams) {
@@ -299,12 +430,12 @@ impl LanguageServer for Backend {
                 let mut docs = self.documents.write().await;
                 docs.insert(uri.clone(), Arc::new(change.text));
             }
-            self.validate_from_content_and_publish(uri).await;
+            self.validate_from_content_and_publish(uri, None).await;
         }
     }
 
     async fn did_save(&self, params: DidSaveTextDocumentParams) {
-        self.validate_from_content_and_publish(params.text_document.uri)
+        self.validate_from_content_and_publish(params.text_document.uri, None)
             .await;
     }
 
@@ -405,6 +536,7 @@ impl LanguageServer for Backend {
             vscode_config.merge_into_lint_config(&mut new_config);
             *config_guard = Arc::new(new_config);
         }
+        let revalidation_generation = self.config_generation.fetch_add(1, Ordering::SeqCst) + 1;
 
         // Re-validate all open documents with new config
         let documents: Vec<Url> = {
@@ -412,10 +544,29 @@ impl LanguageServer for Backend {
             docs.keys().cloned().collect()
         };
 
-        // Validate documents sequentially (avoids futures dependency)
-        // For typical workloads (<10 open files), sequential is acceptable
-        for uri in documents {
-            self.validate_from_content_and_publish(uri).await;
+        if documents.is_empty() {
+            return;
+        }
+
+        let max_concurrency = config_revalidation_concurrency(documents.len());
+        let backend = self.clone();
+        let join_errors = for_each_bounded(documents, max_concurrency, move |uri| {
+            let backend = backend.clone();
+            async move {
+                backend
+                    .validate_from_content_and_publish(uri, Some(revalidation_generation))
+                    .await;
+            }
+        })
+        .await;
+
+        for error in join_errors {
+            self.client
+                .log_message(
+                    MessageType::ERROR,
+                    format!("Revalidation task failed after config change: {}", error),
+                )
+                .await;
         }
     }
 }
@@ -1456,6 +1607,158 @@ This is a test project.
         // Should complete without error (logs warning and returns early)
     }
 
+    /// Test bounded helper used by did_change_configuration.
+    #[test]
+    fn test_config_revalidation_concurrency_bounds() {
+        let expected_cap = std::thread::available_parallelism()
+            .map(|count| count.get())
+            .unwrap_or(4)
+            .clamp(1, MAX_CONFIG_REVALIDATION_CONCURRENCY);
+
+        assert_eq!(config_revalidation_concurrency(0), 0);
+        assert_eq!(config_revalidation_concurrency(1), 1);
+        assert_eq!(
+            config_revalidation_concurrency(MAX_CONFIG_REVALIDATION_CONCURRENCY * 4),
+            expected_cap
+        );
+    }
+
+    /// Test bounded helper handles empty inputs with no task errors.
+    #[tokio::test]
+    async fn test_for_each_bounded_empty_input() {
+        let errors = for_each_bounded(Vec::<usize>::new(), 3, |_| async {}).await;
+        assert!(errors.is_empty());
+    }
+
+    /// Test bounded helper reports join errors when inner tasks panic.
+    #[tokio::test]
+    async fn test_for_each_bounded_collects_join_errors() {
+        let errors = for_each_bounded(vec![0usize, 1, 2], 2, |idx| async move {
+            if idx == 1 {
+                panic!("intentional panic for join error coverage");
+            }
+        })
+        .await;
+
+        assert_eq!(errors.len(), 1);
+        assert!(errors[0].is_panic());
+    }
+
+    /// Test generation guard for config-change batch publishing.
+    #[tokio::test]
+    async fn test_should_publish_diagnostics_guard() {
+        let (service, _socket) = LspService::new(Backend::new);
+        let backend = service.inner();
+
+        let temp_dir = tempfile::tempdir().unwrap();
+        let path = temp_dir.path().join("SKILL.md");
+        std::fs::write(&path, "# test").unwrap();
+        let uri = Url::from_file_path(&path).unwrap();
+
+        let snapshot = Arc::new("# test".to_string());
+        backend
+            .documents
+            .write()
+            .await
+            .insert(uri.clone(), Arc::clone(&snapshot));
+        backend.config_generation.store(7, Ordering::SeqCst);
+
+        assert!(
+            backend
+                .should_publish_diagnostics(&uri, Some(7), Some(&snapshot))
+                .await
+        );
+        assert!(
+            !backend
+                .should_publish_diagnostics(&uri, Some(6), Some(&snapshot))
+                .await
+        );
+
+        // New content (new Arc) means stale validation result should not publish.
+        backend
+            .documents
+            .write()
+            .await
+            .insert(uri.clone(), Arc::new("# updated".to_string()));
+        assert!(
+            !backend
+                .should_publish_diagnostics(&uri, Some(7), Some(&snapshot))
+                .await
+        );
+
+        backend.documents.write().await.remove(&uri);
+        assert!(
+            !backend
+                .should_publish_diagnostics(&uri, Some(7), Some(&snapshot))
+                .await
+        );
+
+        assert!(backend.should_publish_diagnostics(&uri, None, None).await);
+    }
+
+    /// Test bounded helper used by did_change_configuration.
+    #[tokio::test]
+    async fn test_did_change_configuration_concurrency_bound_helper() {
+        use std::sync::atomic::{AtomicUsize, Ordering};
+        use std::time::Duration;
+        use tokio::sync::Barrier;
+
+        let max_concurrency = 3usize;
+        let in_flight = Arc::new(AtomicUsize::new(0));
+        let peak_in_flight = Arc::new(AtomicUsize::new(0));
+        let completed = Arc::new(AtomicUsize::new(0));
+        let ready = Arc::new(Barrier::new(max_concurrency + 1));
+        let release = Arc::new(Barrier::new(max_concurrency + 1));
+        let total_items = 12usize;
+
+        let run = tokio::spawn(for_each_bounded(0..total_items, max_concurrency, {
+            let in_flight = Arc::clone(&in_flight);
+            let peak_in_flight = Arc::clone(&peak_in_flight);
+            let completed = Arc::clone(&completed);
+            let ready = Arc::clone(&ready);
+            let release = Arc::clone(&release);
+            move |idx| {
+                let in_flight = Arc::clone(&in_flight);
+                let peak_in_flight = Arc::clone(&peak_in_flight);
+                let completed = Arc::clone(&completed);
+                let ready = Arc::clone(&ready);
+                let release = Arc::clone(&release);
+
+                async move {
+                    let current = in_flight.fetch_add(1, Ordering::SeqCst) + 1;
+                    peak_in_flight.fetch_max(current, Ordering::SeqCst);
+
+                    if idx < max_concurrency {
+                        ready.wait().await;
+                        release.wait().await;
+                    } else {
+                        tokio::task::yield_now().await;
+                    }
+
+                    in_flight.fetch_sub(1, Ordering::SeqCst);
+                    completed.fetch_add(1, Ordering::SeqCst);
+                }
+            }
+        }));
+
+        // Wait for the first wave of tasks to all be in-flight at once.
+        tokio::time::timeout(Duration::from_secs(2), ready.wait())
+            .await
+            .expect("timed out waiting for first wave");
+        assert_eq!(peak_in_flight.load(Ordering::SeqCst), max_concurrency);
+        tokio::time::timeout(Duration::from_secs(2), release.wait())
+            .await
+            .expect("timed out releasing first wave");
+
+        let join_errors = tokio::time::timeout(Duration::from_secs(2), run)
+            .await
+            .expect("timed out waiting for bounded worker completion")
+            .unwrap();
+
+        assert!(join_errors.is_empty());
+        assert_eq!(completed.load(Ordering::SeqCst), total_items);
+    }
+
     /// Test that did_change_configuration triggers revalidation.
     #[tokio::test]
     async fn test_did_change_configuration_triggers_revalidation() {
@@ -1513,6 +1816,72 @@ model: sonnet
             .await;
 
         // Should complete without error - open document was revalidated
+    }
+
+    /// Test that config changes revalidate all currently open documents.
+    #[tokio::test]
+    async fn test_did_change_configuration_triggers_revalidation_for_multiple_documents() {
+        let (service, _socket) = LspService::new(Backend::new);
+
+        let temp_dir = tempfile::tempdir().unwrap();
+        let root_uri = Url::from_file_path(temp_dir.path()).unwrap();
+        service
+            .inner()
+            .initialize(InitializeParams {
+                root_uri: Some(root_uri),
+                ..Default::default()
+            })
+            .await
+            .unwrap();
+
+        let document_count = 6usize;
+
+        for i in 0..document_count {
+            let skill_path = temp_dir.path().join(format!("skill-{i}/SKILL.md"));
+            std::fs::create_dir_all(skill_path.parent().unwrap()).unwrap();
+            std::fs::write(
+                &skill_path,
+                format!(
+                    r#"---
+name: test-skill-{i}
+version: 1.0.0
+model: sonnet
+---
+
+# Test Skill {i}
+"#
+                ),
+            )
+            .unwrap();
+
+            let uri = Url::from_file_path(&skill_path).unwrap();
+            service
+                .inner()
+                .did_open(DidOpenTextDocumentParams {
+                    text_document: TextDocumentItem {
+                        uri,
+                        language_id: "markdown".to_string(),
+                        version: 1,
+                        text: std::fs::read_to_string(&skill_path).unwrap(),
+                    },
+                })
+                .await;
+        }
+
+        let settings = serde_json::json!({
+            "severity": "Error",
+            "rules": {
+                "skills": false
+            }
+        });
+
+        service
+            .inner()
+            .did_change_configuration(DidChangeConfigurationParams { settings })
+            .await;
+
+        let open_documents = service.inner().documents.read().await.len();
+        assert_eq!(open_documents, document_count);
     }
 
     /// Test that empty settings object doesn't crash.
