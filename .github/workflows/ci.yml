@@ -95,7 +95,7 @@ jobs:
           save-if: ${{ github.ref == 'refs/heads/main' }}
       - uses: taiki-e/install-action@650c5ca14212efbbf3e580844b04bdccf68dac31 # v2
         with:
-          tool: cargo-llvm-cov
+          tool: cargo-llvm-cov@0.6.16
       - uses: taiki-e/install-action@cd05dcd6eb73067dda063b97a15b7060049dacd9 # nextest
       - name: Generate coverage
         run: cargo llvm-cov nextest --workspace --lcov --output-path lcov.info
