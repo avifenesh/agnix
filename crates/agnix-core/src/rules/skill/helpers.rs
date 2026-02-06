@@ -40,6 +40,8 @@ pub(super) fn is_regex_escape(s: &str) -> bool {
     static REGEX_ESCAPE_CHARS: &[char] = &[
         'n', 's', 'd', 'w', 't', 'r', 'b', '|', '.', '/', '$', '^', '+', '*', '?', '{', '}', '[',
         ']', '(', ')', 'S', 'D', 'W', 'B',
+        // PCRE-specific assertions and features
+        'K', 'A', 'Z', 'z', 'G', 'p', 'P', 'x', 'X',
     ];
 
     // Check if this looks like a regex pattern (contains common regex escapes)
