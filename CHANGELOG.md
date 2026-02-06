@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added Docusaurus website under `website/` with versioned docs and local search
   - Added rule-doc generation from `knowledge-base/rules.json` via `scripts/generate-docs-rules.py`
   - Added docs parity test (`crates/agnix-cli/tests/docs_website_parity.rs`) and CI workflow (`.github/workflows/docs-site.yml`)
+- CI: code coverage reporting with cargo-llvm-cov and Codecov integration (#238)
 - JetBrains plugin: archive extraction tests for AgnixBinaryDownloader (#255)
   - 19 tests covering TAR.GZ/ZIP extraction, binary selection, path traversal protection
   - Refactored extraction methods to companion object for testability
