@@ -381,3 +381,429 @@ repos:
   - url: https://github.com/avifenesh/agnix
     categories: [claude-code, claude-code-hooks, self-test]
     status: pending
+
+  # ===== Round 2: 150 additional repos =====
+
+  # MCP (30 more)
+  - url: https://github.com/8bit-wraith/mcp
+    categories: [mcp]
+    status: pending
+  - url: https://github.com/andreax79/otp-mcp
+    categories: [mcp]
+    status: pending
+  - url: https://github.com/Angus-repo/docio-mcp
+    categories: [mcp]
+    status: pending
+  - url: https://github.com/aurevives/mcp-gemini-cli
+    categories: [mcp]
+    status: pending
+  - url: https://github.com/cklose2000/pinescript-mcp-server
+    categories: [mcp]
+    status: pending
+  - url: https://github.com/evangstav/personal-mcp
+    categories: [mcp]
+    status: pending
+  - url: https://github.com/HarshitRV/sarcasm-mcp
+    categories: [mcp]
+    status: pending
+  - url: https://github.com/hongkongkiwi/actionlint-mcp
+    categories: [mcp]
+    status: pending
+  - url: https://github.com/hustshawn/mcp-configs
+    categories: [mcp]
+    status: pending
+  - url: https://github.com/jeanniardJ/mcp-fullstack-docs-server
+    categories: [mcp]
+    status: pending
+  - url: https://github.com/jeannier/homebrew-mcp
+    categories: [mcp]
+    status: pending
+  - url: https://github.com/jerfowler/agent-comm-mcp-server
+    categories: [mcp]
+    status: pending
+  - url: https://github.com/leeray75/mcp-hello-world-server
+    categories: [mcp]
+    status: pending
+  - url: https://github.com/leonardust/my-playwright-mcp
+    categories: [mcp]
+    status: pending
+  - url: https://github.com/lillianassefa/ai-protocol-mcp
+    categories: [mcp]
+    status: pending
+  - url: https://github.com/medright/evr_pg_mcp
+    categories: [mcp]
+    status: pending
+  - url: https://github.com/omri10007/MCP_specialist_agent
+    categories: [mcp]
+    status: pending
+  - url: https://github.com/ProjectAtlantis-dev/atlantis-mcp-server
+    categories: [mcp]
+    status: pending
+  - url: https://github.com/ryaker/KMSmcp
+    categories: [mcp]
+    status: pending
+  - url: https://github.com/sandraschi/local-llm-mcp
+    categories: [mcp]
+    status: pending
+  - url: https://github.com/schuerstedt/ragmcp
+    categories: [mcp]
+    status: pending
+  - url: https://github.com/sreekanth534/mcp_nauto
+    categories: [mcp]
+    status: pending
+  - url: https://github.com/tenacl/koreandict-mcp-server
+    categories: [mcp]
+    status: pending
+  - url: https://github.com/timbuchinger/mcp-pinecone-notes
+    categories: [mcp]
+    status: pending
+  - url: https://github.com/toasted-iron-studios/godot-agent-mcp
+    categories: [mcp]
+    status: pending
+  - url: https://github.com/tomer132246/X96Dbg-MCP-Server-Plugin
+    categories: [mcp]
+    status: pending
+  - url: https://github.com/udibo/deno-mcp
+    categories: [mcp]
+    status: pending
+  - url: https://github.com/vanisoul/my-mcpx
+    categories: [mcp]
+    status: pending
+  - url: https://github.com/vpress000/To-Do-Manager-MCP-Server
+    categories: [mcp]
+    status: pending
+
+  # Claude Code (6 more)
+  - url: https://github.com/andrewjohnharvey/claude-sdlc
+    categories: [claude-code]
+    status: pending
+  - url: https://github.com/CoorpAcademy/claude-workshop
+    categories: [claude-code]
+    status: pending
+  - url: https://github.com/jaffrepaul/ai-flashcards-claude
+    categories: [claude-code]
+    status: pending
+  - url: https://github.com/NickLennonLiu/claude-code-python
+    categories: [claude-code]
+    status: pending
+  - url: https://github.com/PrashamTrivedi/claudeSettings
+    categories: [claude-code]
+    status: pending
+  - url: https://github.com/stallboy/claude-code-marketplace
+    categories: [claude-code]
+    status: pending
+
+  # Cursor (2 more)
+  - url: https://github.com/cmnemoi/cursor-rules
+    categories: [cursor]
+    status: pending
+  - url: https://github.com/Kabi10/Cursor
+    categories: [cursor]
+    status: pending
+
+  # Copilot (2 more)
+  - url: https://github.com/bkrauska/bkrauska-copilot-files
+    categories: [github-copilot]
+    status: pending
+  - url: https://github.com/rocket-martue/github-copilot-custom-instructions
+    categories: [github-copilot]
+    status: pending
+
+  # Web/App projects with agent configs
+  - url: https://github.com/aaravindan101/fastapi-demo
+    categories: [web-dev]
+    status: pending
+  - url: https://github.com/adowning/hono-sb-nuxtdash
+    categories: [web-dev]
+    status: pending
+  - url: https://github.com/AGIONGO/lexgest-frontend
+    categories: [web-dev]
+    status: pending
+  - url: https://github.com/alejandro221996/my_quiniela_app
+    categories: [web-dev]
+    status: pending
+  - url: https://github.com/ansh/deeperseeker-app
+    categories: [web-dev]
+    status: pending
+  - url: https://github.com/awfixer-platform/webhookmaster
+    categories: [web-dev]
+    status: pending
+  - url: https://github.com/Brawl345/Image-Reverse-Search-WebExtension
+    categories: [web-dev]
+    status: pending
+  - url: https://github.com/dapi/masha
+    categories: [web-dev]
+    status: pending
+  - url: https://github.com/dave-b-b/react-achievements
+    categories: [web-dev]
+    status: pending
+  - url: https://github.com/dlaytonj2/DougalDogsWebsite
+    categories: [web-dev]
+    status: pending
+  - url: https://github.com/EarneyGit/Branch-app-restaurent
+    categories: [web-dev]
+    status: pending
+  - url: https://github.com/EthGri345/elyndra-voss-website
+    categories: [web-dev]
+    status: pending
+  - url: https://github.com/flyingwebie/LaunchKit
+    categories: [web-dev]
+    status: pending
+  - url: https://github.com/HafizBkr/Coworking-frontend
+    categories: [web-dev]
+    status: pending
+  - url: https://github.com/Hiroshi0900/treasure-ar-app
+    categories: [web-dev]
+    status: pending
+  - url: https://github.com/HundredVisionsGuy/webcode-tk
+    categories: [web-dev]
+    status: pending
+  - url: https://github.com/iwanmota/shopping-website
+    categories: [web-dev]
+    status: pending
+  - url: https://github.com/JessicaSachs/webpm
+    categories: [web-dev]
+    status: pending
+  - url: https://github.com/jongchoon580325/webgallery-kim
+    categories: [web-dev]
+    status: pending
+  - url: https://github.com/Kele-Bingtang/teek-design-vue3
+    categories: [web-dev]
+    status: pending
+  - url: https://github.com/Kikk79/Website
+    categories: [web-dev]
+    status: pending
+  - url: https://github.com/kozy4324/blog-app
+    categories: [web-dev]
+    status: pending
+  - url: https://github.com/KQuiggins/NextJS_AutoOutlet
+    categories: [web-dev]
+    status: pending
+  - url: https://github.com/lethaldosestudios/cross-list-app
+    categories: [web-dev]
+    status: pending
+  - url: https://github.com/ma2Cta/oogiri-app
+    categories: [web-dev]
+    status: pending
+  - url: https://github.com/MannyJMusic/basa-app
+    categories: [web-dev]
+    status: pending
+  - url: https://github.com/mdubourg001/fast-check-frontend
+    categories: [web-dev]
+    status: pending
+  - url: https://github.com/mzakany23/ncsh-dashboard
+    categories: [web-dev]
+    status: pending
+  - url: https://github.com/orchestraplatform/orchestra-api
+    categories: [web-dev]
+    status: pending
+  - url: https://github.com/Pataco80/capriati-sa-nextjs
+    categories: [web-dev]
+    status: pending
+  - url: https://github.com/Pataco80/next-radix-shadcn-theme
+    categories: [web-dev]
+    status: pending
+  - url: https://github.com/patrick11514/FamilyAPP
+    categories: [web-dev]
+    status: pending
+  - url: https://github.com/Phonesavang/template_nuxt3
+    categories: [web-dev]
+    status: pending
+  - url: https://github.com/ree-gupta/caboodle-website
+    categories: [web-dev]
+    status: pending
+  - url: https://github.com/reillyjodonnell/react-debugger
+    categories: [web-dev]
+    status: pending
+  - url: https://github.com/steven-the-qa/socialqa-web-ts
+    categories: [web-dev]
+    status: pending
+  - url: https://github.com/SubZane/cantonese-app
+    categories: [web-dev]
+    status: pending
+  - url: https://github.com/suzuki-shunsuke/validate-pr-review-app
+    categories: [web-dev]
+    status: pending
+  - url: https://github.com/SystemVirtue/DJAMMS_Appwrite_v2
+    categories: [web-dev]
+    status: pending
+
+  # AI/Agent projects
+  - url: https://github.com/0xMarcio/syntax9.ai
+    categories: [general-ai]
+    status: pending
+  - url: https://github.com/adilmoujahid/p5js-ai-editor
+    categories: [general-ai]
+    status: pending
+  - url: https://github.com/aguywithcode/secret-lair-inventory-manager
+    categories: [general-ai]
+    status: pending
+  - url: https://github.com/Alen-guo/SoundScape-AI
+    categories: [general-ai]
+    status: pending
+  - url: https://github.com/app-sre/hcm-ai-playground
+    categories: [general-ai]
+    status: pending
+  - url: https://github.com/Bitsec-AI/subnet
+    categories: [general-ai]
+    status: pending
+  - url: https://github.com/bobmatnyc/ai-power-rankings
+    categories: [general-ai]
+    status: pending
+  - url: https://github.com/cagojeiger/prototype-termai
+    categories: [general-ai]
+    status: pending
+  - url: https://github.com/CanAISolutions/canai-build
+    categories: [general-ai]
+    status: pending
+  - url: https://github.com/Catafal/aura-P.A.-agent
+    categories: [general-ai]
+    status: pending
+  - url: https://github.com/ccnn2509/app-seo-ai
+    categories: [general-ai]
+    status: pending
+  - url: https://github.com/ChoonwooLim/artifex.ai-studio-pro
+    categories: [general-ai]
+    status: pending
+  - url: https://github.com/Cloud-Linuxer/gpt-oss
+    categories: [general-ai]
+    status: pending
+  - url: https://github.com/craig2812/ai-operator
+    categories: [general-ai]
+    status: pending
+  - url: https://github.com/dailybeast/tdb-headless-web
+    categories: [general-ai]
+    status: pending
+  - url: https://github.com/darbotlabs/Darbot-Windows-Agent
+    categories: [general-ai]
+    status: pending
+  - url: https://github.com/Designs-for-Life-Studios/soma_agent
+    categories: [general-ai]
+    status: pending
+  - url: https://github.com/djav1985/v-chatgpt-social-status-feeds
+    categories: [general-ai]
+    status: pending
+  - url: https://github.com/emielregis2/SmartFlowAI
+    categories: [general-ai]
+    status: pending
+  - url: https://github.com/exiao/chatkit-link
+    categories: [general-ai]
+    status: pending
+  - url: https://github.com/FeruzTech/Room2AI
+    categories: [general-ai]
+    status: pending
+  - url: https://github.com/GurthBro0ks/slimyai_setup
+    categories: [general-ai]
+    status: pending
+  - url: https://github.com/imagewize/moiraine-child
+    categories: [general-ai]
+    status: pending
+  - url: https://github.com/jeeeppe/EmailGen
+    categories: [general-ai]
+    status: pending
+  - url: https://github.com/jewzaam/git-checkout-main
+    categories: [general-ai]
+    status: pending
+  - url: https://github.com/kay8723/CookMate-AI
+    categories: [general-ai]
+    status: pending
+  - url: https://github.com/kaznum/REACT-RAILS-TODO-APP-by-speckit
+    categories: [general-ai]
+    status: pending
+  - url: https://github.com/khvni/clem-ai
+    categories: [general-ai]
+    status: pending
+  - url: https://github.com/ksy2728/AI-GO
+    categories: [general-ai]
+    status: pending
+  - url: https://github.com/lolinux2002/dressmeup.ai
+    categories: [general-ai]
+    status: pending
+  - url: https://github.com/mainliufeng/dotfiles
+    categories: [general-ai]
+    status: pending
+  - url: https://github.com/michaeloboyle/brainstorm-collaboration
+    categories: [general-ai]
+    status: pending
+  - url: https://github.com/microsoft/windows-ai-studio-templates
+    categories: [general-ai]
+    status: pending
+  - url: https://github.com/mossimka/FoodSnapAI
+    categories: [general-ai]
+    status: pending
+  - url: https://github.com/Nantero1/ai-first-devops-toolkit
+    categories: [general-ai]
+    status: pending
+  - url: https://github.com/Nuzair46/app0
+    categories: [general-ai]
+    status: pending
+  - url: https://github.com/pcarioufr/llm-2000
+    categories: [general-ai]
+    status: pending
+  - url: https://github.com/PHMbench/Awesome-PHM-Paper-Agent
+    categories: [general-ai]
+    status: pending
+  - url: https://github.com/plan-net/agentic-solution-policiytracker
+    categories: [general-ai]
+    status: pending
+  - url: https://github.com/rhofkens/business-idea-multi-agent
+    categories: [general-ai]
+    status: pending
+  - url: https://github.com/shiranon/gemini-pwa-vue
+    categories: [general-ai]
+    status: pending
+  - url: https://github.com/spencerneutron/RaiderGrader
+    categories: [general-ai]
+    status: pending
+  - url: https://github.com/wangchangdog/railway-todo-app
+    categories: [general-ai]
+    status: pending
+  - url: https://github.com/ymayank97/onchain-treasury-ai
+    categories: [general-ai]
+    status: pending
+
+  # Tools & utilities
+  - url: https://github.com/AlexorAle/Bot-Trading
+    categories: [tools]
+    status: pending
+  - url: https://github.com/ayeuhugyu/PepperBot
+    categories: [tools]
+    status: pending
+  - url: https://github.com/catfist/pytools
+    categories: [tools]
+    status: pending
+  - url: https://github.com/chlee1252/read-later-chrome-extension
+    categories: [tools]
+    status: pending
+  - url: https://github.com/CritterCodes/efd-toolpad
+    categories: [tools]
+    status: pending
+  - url: https://github.com/etrobot/kfilter
+    categories: [tools]
+    status: pending
+  - url: https://github.com/gitborlando/utils
+    categories: [tools]
+    status: pending
+  - url: https://github.com/gyuha/gitlab-jira-helper
+    categories: [tools]
+    status: pending
+  - url: https://github.com/kelvin6365/rocksdev.tools
+    categories: [tools]
+    status: pending
+
+  # Other / mixed
+  - url: https://github.com/0xCAFEBABEx0/zeus
+    categories: [other]
+    status: pending
+  - url: https://github.com/10KB/manjikaze
+    categories: [other]
+    status: pending
+  - url: https://github.com/161sam/InfoTerminal
+    categories: [other]
+    status: pending
+  - url: https://github.com/2mawi2/para
+    categories: [other]
+    status: pending
+  - url: https://github.com/70-10/blog
+    categories: [other]
+    status: pending

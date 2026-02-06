@@ -443,6 +443,13 @@ fn is_likely_type_parameter(name: &str) -> bool {
             | "TableName"
             | "DeviceID"
             | "FieldName"
+            | "HashMap"
+            | "HashSet"
+            | "Vec"
+            | "List"
+            | "Array"
+            | "Map"
+            | "Set"
     )
 }
 
@@ -486,6 +493,21 @@ fn scan_xml_tags_in_text(
             // within agent instructions.
             if !is_closing && is_likely_type_parameter(&name) {
                 continue;
+            }
+
+            // Skip path template placeholders like <feature> in
+            // "lib/features/<feature>/data/". These are variable placeholders
+            // in file path documentation, not XML tags.
+            if !is_closing {
+                let full_match = cap.get(0).unwrap();
+                let match_start = full_match.start();
+                let match_end = full_match.end();
+                let preceded_by_slash =
+                    match_start > 0 && text.as_bytes().get(match_start - 1) == Some(&b'/');
+                let followed_by_slash = text.as_bytes().get(match_end) == Some(&b'/');
+                if preceded_by_slash || followed_by_slash {
+                    continue;
+                }
             }
             let start = cap.get(0).unwrap().start();
             let end = cap.get(0).unwrap().end();
