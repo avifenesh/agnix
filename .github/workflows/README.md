@@ -51,6 +51,9 @@ taiki-e/install-action@nextest: cd05dcd6eb73067dda063b97a15b7060049dacd9
 # Security
 github/codeql-action@v3:       2588666de8825e1e9dc4e2329a4c985457d55b32
 
+# Coverage
+codecov/codecov-action@v5:     671740ac38dd9b0130fbe1cec585b89eea48d3de
+
 # Release
 softprops/action-gh-release@v2: a06a81a03ee405af7f2048a818ed3f03bbf83c7b
 
@@ -75,7 +78,7 @@ When a new version of an action is released:
 
 | Workflow | Trigger | Purpose |
 |----------|---------|---------|
-| ci.yml | push/PR to main | Lint, test, build |
+| ci.yml | push/PR to main | Lint, test, coverage, build |
 | release.yml | tag push (v*) | Build and publish releases |
 | security.yml | push/PR/schedule | CodeQL analysis and security audit |
 | test-action.yml | push/PR (action paths) | Test the GitHub Action |

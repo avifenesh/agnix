@@ -34,7 +34,7 @@ agnix/
 │   ├── agnix-cli/      # CLI binary
 │   ├── agnix-lsp/      # LSP server
 │   └── agnix-mcp/      # MCP server
-├── editors/            # Neovim, VS Code, JetBrains integrations
+├── editors/            # Neovim, VS Code, JetBrains, Zed integrations
 ├── knowledge-base/     # 100 rules documented
 ├── scripts/            # Build/dev automation scripts
 ├── website/            # Docusaurus documentation website

@@ -7,13 +7,14 @@
     <a href="https://crates.io/crates/agnix-cli"><img src="https://img.shields.io/crates/v/agnix-cli.svg" alt="Crates.io"></a>
     <a href="https://github.com/avifenesh/agnix/releases"><img src="https://img.shields.io/github/v/release/avifenesh/agnix" alt="Release"></a>
     <a href="https://github.com/avifenesh/agnix/actions/workflows/ci.yml"><img src="https://github.com/avifenesh/agnix/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+    <a href="https://codecov.io/gh/avifenesh/agnix"><img src="https://codecov.io/gh/avifenesh/agnix/branch/main/graph/badge.svg" alt="Coverage"></a>
     <a href="LICENSE-MIT"><img src="https://img.shields.io/badge/license-MIT%2FApache--2.0-blue.svg" alt="License"></a>
   </p>
 </div>
 
 The linter for your AI coding stack -- skills, hooks, memory, plugins, MCP, and agent configs. CLI, LSP server, and IDE plugins for Claude Code, Cursor, GitHub Copilot, Codex CLI, and more.
 
-**100 validation rules** | **Auto-fix** | **[VS Code](https://marketplace.visualstudio.com/items?itemName=avifenesh.agnix) + [JetBrains](https://plugins.jetbrains.com/plugin/30087-agnix) + Neovim** | **GitHub Action**
+**100 validation rules** | **Auto-fix** | **[VS Code](https://marketplace.visualstudio.com/items?itemName=avifenesh.agnix) + [JetBrains](https://plugins.jetbrains.com/plugin/30087-agnix) + Neovim + Zed** | **GitHub Action**
 
 <p align="center">
   <a href="https://avifenesh.github.io/agnix/"><img src="https://img.shields.io/badge/Website-Documentation-0A7E8C?style=for-the-badge" alt="Website"></a>
@@ -73,7 +74,7 @@ The AI coding landscape is chaos. Every tool wants your config in a different fo
 - **Unbundled stack, fragmented configs** - Developers mix Cursor + Claude Code + Copilot. A config that works in one tool [silently fails in another](https://arnav.tech/beyond-copilot-cursor-and-claude-code-the-unbundled-coding-ai-tools-stack).
 - **Inconsistent patterns become chaos amplifiers** - When your config follows wrong patterns, [AI assistants amplify the mistakes](https://www.augmentcode.com/guides/enterprise-coding-standards-12-rules-for-ai-ready-teams), not just ignore them.
 
-agnix validates configs against 116 rules derived from official specs, research papers, and real-world testing. Catch issues before they reach your IDE.
+agnix validates configs against 100 rules derived from official specs, research papers, and real-world testing. Catch issues before they reach your IDE.
 
 ## Install
 
@@ -100,7 +101,8 @@ Real-time diagnostics as you type, quick-fix code actions, hover documentation.
 |--------|---------|---------|
 | **VS Code** | [Install from VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=avifenesh.agnix) | [Website guide](https://avifenesh.github.io/agnix/docs/editor-integration) |
 | **JetBrains** | [Install from JetBrains Marketplace](https://plugins.jetbrains.com/plugin/30087-agnix) | [Website guide](https://avifenesh.github.io/agnix/docs/editor-integration) |
-| **Neovim** | `{ "avifenesh/agnix.nvim" }` | [Website guide](https://avifenesh.github.io/agnix/docs/editor-integration) |
+| **Neovim** | `{ "avifenesh/agnix.nvim" }` | [Neovim docs](editors/neovim/README.md) |
+| **Zed** | Search "agnix" in Extensions | [Zed docs](editors/zed/README.md) |
 
 ### GitHub Action
 

@@ -8,6 +8,9 @@ members = [
     "crates/agnix-mcp",
     # "crates/agnix-wasm", # Coming later
 ]
+exclude = [
+    "editors/zed", # Standalone WASM crate, not part of workspace
+]
 
 [workspace.package]
 version = "0.7.2"

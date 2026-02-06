@@ -1,0 +1,16 @@
+id = "agnix"
+name = "Agnix"
+version = "0.1.0"
+schema_version = 1
+authors = ["Avi Fenesh <avifenesh@gmail.com>"]
+description = "Linter for agent configurations (skills, hooks, memory, plugins, MCP)"
+repository = "https://github.com/avifenesh/agnix"
+
+[language_servers.agnix-lsp]
+name = "agnix"
+languages = ["Markdown", "JSON", "MDC"]
+
+[language_servers.agnix-lsp.language_ids]
+"Markdown" = "markdown"
+"JSON" = "json"
+"MDC" = "markdown"

@@ -1,0 +1,13 @@
+[package]
+name = "agnix-zed"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+publish = false
+description = "Zed extension for agnix - lint agent configurations"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+zed_extension_api = "0.7.0"

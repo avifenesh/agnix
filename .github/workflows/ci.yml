@@ -81,6 +81,32 @@ jobs:
       - run: cargo nextest run --workspace
       - run: cargo test --doc --workspace
 
+  coverage:
+    name: Code Coverage
+    runs-on: ubuntu-latest
+    needs: clippy
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: dtolnay/rust-toolchain@4be9e76fd7c4901c61fb841f559994984270fce7 # stable
+        with:
+          components: llvm-tools-preview
+      - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2
+        with:
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+      - uses: taiki-e/install-action@650c5ca14212efbbf3e580844b04bdccf68dac31 # v2
+        with:
+          tool: cargo-llvm-cov@0.6.16
+      - uses: taiki-e/install-action@cd05dcd6eb73067dda063b97a15b7060049dacd9 # nextest
+      - name: Generate coverage
+        run: cargo llvm-cov nextest --workspace --lcov --output-path lcov.info
+      - name: Upload to Codecov
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
+        with:
+          files: lcov.info
+          flags: unittests
+          fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}
+
   benchmark-iai:
     name: Instruction Count Benchmarks
     runs-on: ubuntu-latest
@@ -101,6 +127,21 @@ jobs:
         # iai-callgrind measures instruction counts (100% deterministic)
         # Results are compared against baseline in target/iai/
         # Exit code 1 if regression detected above threshold
+
+  zed-extension:
+    name: Zed Extension
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: dtolnay/rust-toolchain@4be9e76fd7c4901c61fb841f559994984270fce7 # stable
+        with:
+          targets: wasm32-wasip1
+      - name: Build WASM
+        run: cargo build --target wasm32-wasip1
+        working-directory: editors/zed
+      - name: Run tests
+        run: cargo test
+        working-directory: editors/zed
 
   binary-size:
     name: Binary Size Check
