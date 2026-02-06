@@ -6,10 +6,10 @@ use crate::{
     rules::Validator,
     schemas::hooks::{Hook, HooksSchema, SettingsSchema},
 };
-use once_cell::sync::Lazy;
 use regex::Regex;
 use rust_i18n::t;
 use std::path::Path;
+use std::sync::OnceLock;
 
 pub struct HooksValidator;
 
@@ -23,81 +23,91 @@ struct DangerousPattern {
     reason: &'static str,
 }
 
-static DANGEROUS_PATTERNS: Lazy<Vec<DangerousPattern>> = Lazy::new(|| {
-    let patterns: &[(&str, &str)] = &[
-        (
-            r"rm\s+-rf\s+/",
-            "Recursive delete from root is extremely dangerous",
-        ),
-        (
-            r"rm\s+-rf\s+\*",
-            "Recursive delete with wildcard could delete unintended files",
-        ),
-        (
-            r"rm\s+-rf\s+\.\.",
-            "Recursive delete of parent directories is dangerous",
-        ),
-        (
-            r"git\s+reset\s+--hard",
-            "Hard reset discards uncommitted changes permanently",
-        ),
-        (
-            r"git\s+clean\s+-fd",
-            "Git clean -fd removes untracked files permanently",
-        ),
-        (
-            r"git\s+push\s+.*--force",
-            "Force push can overwrite remote history",
-        ),
-        (r"drop\s+database", "Dropping database is irreversible"),
-        (r"drop\s+table", "Dropping table is irreversible"),
-        (r"truncate\s+table", "Truncating table deletes all data"),
-        (
-            r"curl\s+.*\|\s*sh",
-            "Piping curl to shell is a security risk",
-        ),
-        (
-            r"curl\s+.*\|\s*bash",
-            "Piping curl to bash is a security risk",
-        ),
-        (
-            r"wget\s+.*\|\s*sh",
-            "Piping wget to shell is a security risk",
-        ),
-        (r"chmod\s+777", "chmod 777 gives everyone full access"),
-        (
-            r">\s*/dev/sd[a-z]",
-            "Writing directly to block devices can destroy data",
-        ),
-        (r"mkfs\.", "Formatting filesystem destroys all data"),
-        (r"dd\s+if=.*of=/dev/", "dd to device can destroy data"),
-    ];
-    patterns
+static DANGEROUS_PATTERNS: OnceLock<Vec<DangerousPattern>> = OnceLock::new();
+static SCRIPT_PATTERNS: OnceLock<Vec<Regex>> = OnceLock::new();
+
+fn dangerous_patterns() -> &'static Vec<DangerousPattern> {
+    DANGEROUS_PATTERNS.get_or_init(|| {
+        let patterns: &[(&str, &str)] = &[
+            (
+                r"rm\s+-rf\s+/",
+                "Recursive delete from root is extremely dangerous",
+            ),
+            (
+                r"rm\s+-rf\s+\*",
+                "Recursive delete with wildcard could delete unintended files",
+            ),
+            (
+                r"rm\s+-rf\s+\.\.",
+                "Recursive delete of parent directories is dangerous",
+            ),
+            (
+                r"git\s+reset\s+--hard",
+                "Hard reset discards uncommitted changes permanently",
+            ),
+            (
+                r"git\s+clean\s+-fd",
+                "Git clean -fd removes untracked files permanently",
+            ),
+            (
+                r"git\s+push\s+.*--force",
+                "Force push can overwrite remote history",
+            ),
+            (r"drop\s+database", "Dropping database is irreversible"),
+            (r"drop\s+table", "Dropping table is irreversible"),
+            (r"truncate\s+table", "Truncating table deletes all data"),
+            (
+                r"curl\s+.*\|\s*sh",
+                "Piping curl to shell is a security risk",
+            ),
+            (
+                r"curl\s+.*\|\s*bash",
+                "Piping curl to bash is a security risk",
+            ),
+            (
+                r"wget\s+.*\|\s*sh",
+                "Piping wget to shell is a security risk",
+            ),
+            (r"chmod\s+777", "chmod 777 gives everyone full access"),
+            (
+                r">\s*/dev/sd[a-z]",
+                "Writing directly to block devices can destroy data",
+            ),
+            (r"mkfs\.", "Formatting filesystem destroys all data"),
+            (r"dd\s+if=.*of=/dev/", "dd to device can destroy data"),
+        ];
+        patterns
+            .iter()
+            .map(|&(pattern, reason)| {
+                let regex = Regex::new(&format!("(?i){}", pattern)).unwrap_or_else(|_| {
+                    panic!("BUG: invalid dangerous pattern regex: {}", pattern)
+                });
+                DangerousPattern {
+                    regex,
+                    pattern,
+                    reason,
+                }
+            })
+            .collect()
+    })
+}
+
+fn script_patterns() -> &'static Vec<Regex> {
+    SCRIPT_PATTERNS.get_or_init(|| {
+        [
+            r#"["']?([^\s"']+\.sh)["']?\b"#,
+            r#"["']?([^\s"']+\.bash)["']?\b"#,
+            r#"["']?([^\s"']+\.py)["']?\b"#,
+            r#"["']?([^\s"']+\.js)["']?\b"#,
+            r#"["']?([^\s"']+\.ts)["']?\b"#,
+        ]
         .iter()
-        .map(|&(pattern, reason)| {
-            let regex =
-                Regex::new(&format!("(?i){}", pattern)).expect("Invalid dangerous pattern regex");
-            DangerousPattern {
-                regex,
-                pattern,
-                reason,
-            }
+        .map(|p| {
+            Regex::new(p).unwrap_or_else(|_| panic!("BUG: invalid script pattern regex: {}", p))
         })
         .collect()
-});
-
-static SCRIPT_PATTERNS: Lazy<Vec<Regex>> = Lazy::new(|| {
-    [
-        r#"["']?([^\s"']+\.sh)["']?\b"#,
-        r#"["']?([^\s"']+\.bash)["']?\b"#,
-        r#"["']?([^\s"']+\.py)["']?\b"#,
-        r#"["']?([^\s"']+\.js)["']?\b"#,
-        r#"["']?([^\s"']+\.ts)["']?\b"#,
-    ]
-    .iter()
-    .map(|p| Regex::new(p).expect("Invalid script pattern regex"))
-    .collect()
-});
+    })
+}
 
 /// CC-HK-005: Missing type field
 fn validate_cc_hk_005_missing_type_field(
@@ -287,7 +297,7 @@ fn validate_cc_hk_004_matcher_forbidden(
 }
 
 fn check_dangerous_patterns(command: &str) -> Option<(&'static str, &'static str)> {
-    for dp in DANGEROUS_PATTERNS.iter() {
+    for dp in dangerous_patterns().iter() {
         if dp.regex.is_match(command) {
             return Some((dp.pattern, dp.reason));
         }
@@ -297,7 +307,7 @@ fn check_dangerous_patterns(command: &str) -> Option<(&'static str, &'static str
 
 fn extract_script_paths(command: &str) -> Vec<String> {
     let mut paths = Vec::new();
-    for re in SCRIPT_PATTERNS.iter() {
+    for re in script_patterns().iter() {
         for caps in re.captures_iter(command) {
             if let Some(m) = caps.get(1) {
                 let path = m.as_str().trim_matches(|c| c == '"' || c == '\'');
@@ -856,6 +866,12 @@ mod tests {
     fn validate(content: &str) -> Vec<Diagnostic> {
         let validator = HooksValidator;
         validator.validate(Path::new("settings.json"), content, &LintConfig::default())
+    }
+
+    #[test]
+    fn test_regex_patterns_compile() {
+        let _ = dangerous_patterns();
+        let _ = script_patterns();
     }
 
     #[test]

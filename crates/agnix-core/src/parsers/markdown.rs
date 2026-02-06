@@ -10,9 +10,10 @@ use pulldown_cmark::{Event, Options, Parser, Tag, TagEnd};
 use regex::Regex;
 use std::ops::Range;
 use std::panic::{self, AssertUnwindSafe};
-use std::sync::OnceLock;
 
-static XML_TAG_REGEX: OnceLock<Regex> = OnceLock::new();
+use crate::regex_util::static_regex;
+
+static_regex!(fn xml_tag_regex, r"<(/?)([a-zA-Z_][a-zA-Z0-9_-]*)(?:\s+[^>]*?)?(/?)>");
 
 /// Maximum size (in bytes) for content processed by regex operations.
 /// This prevents ReDoS attacks by limiting input size to 64KB.
@@ -399,8 +400,7 @@ fn scan_xml_tags_in_text(
     // - Group 2: tag name
     // - Group 3: "/" if self-closing tag (e.g., <br/> or <img src="..." />)
     // The (?:\s+[^>]*?)? handles attributes like <a id="foo"> or <img src="bar">
-    let re = XML_TAG_REGEX
-        .get_or_init(|| Regex::new(r"<(/?)([a-zA-Z_][a-zA-Z0-9_-]*)(?:\s+[^>]*?)?(/?)>").unwrap());
+    let re = xml_tag_regex();
 
     for cap in re.captures_iter(text) {
         let is_closing = cap.get(1).is_some_and(|m| m.as_str() == "/");
@@ -461,6 +461,11 @@ fn is_probable_import_path(path: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_regex_patterns_compile() {
+        let _ = xml_tag_regex();
+    }
 
     #[test]
     fn test_extract_imports() {

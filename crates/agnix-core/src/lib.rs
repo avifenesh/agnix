@@ -30,6 +30,7 @@ pub mod fixes;
 pub mod fs;
 pub mod i18n;
 pub mod parsers;
+mod regex_util;
 mod rules;
 mod schemas;
 
