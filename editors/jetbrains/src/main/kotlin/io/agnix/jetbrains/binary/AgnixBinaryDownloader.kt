@@ -243,7 +243,14 @@ class AgnixBinaryDownloader {
             }
 
             indicator?.fraction = 1.0
-            logger.info("Successfully downloaded agnix-lsp to: ${binaryPath.absolutePath}")
+
+            // Write version marker so the resolver can detect stale binaries
+            val pluginVersion = AgnixBinaryResolver.getPluginVersion()
+            if (pluginVersion != null) {
+                AgnixBinaryResolver.writeVersionMarker(pluginVersion)
+            }
+
+            logger.info("Successfully downloaded agnix-lsp $pluginVersion to: ${binaryPath.absolutePath}")
 
             // Clear resolver cache so it picks up the new binary
             AgnixBinaryResolver.clearCache()
@@ -259,10 +266,16 @@ class AgnixBinaryDownloader {
     }
 
     /**
-     * Get the download URL for the latest release asset.
+     * Get the download URL for a release asset matching the plugin version,
+     * falling back to /latest/ if the version is unavailable.
      */
     private fun getDownloadUrl(assetName: String): String {
-        return "https://github.com/$GITHUB_REPO/releases/latest/download/$assetName"
+        val pluginVersion = AgnixBinaryResolver.getPluginVersion()
+        return if (pluginVersion != null) {
+            "https://github.com/$GITHUB_REPO/releases/download/v$pluginVersion/$assetName"
+        } else {
+            "https://github.com/$GITHUB_REPO/releases/latest/download/$assetName"
+        }
     }
 
     /**

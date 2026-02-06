@@ -11,6 +11,12 @@ import {
 } from 'vscode-languageclient/node';
 import { downloadFile } from './download-file';
 import { ClientLifecycleController } from './clientLifecycle';
+import {
+  readVersionMarker,
+  writeVersionMarker,
+  isDownloadedBinary,
+  buildReleaseUrl,
+} from './version-check';
 
 const execAsync = promisify(exec);
 
@@ -284,7 +290,7 @@ function getPlatformInfo(): PlatformInfo | null {
 /**
  * Download and install agnix-lsp from GitHub releases.
  */
-async function downloadAndInstallLsp(): Promise<string | null> {
+async function downloadAndInstallLsp(version?: string): Promise<string | null> {
   const platformInfo = getPlatformInfo();
   if (!platformInfo) {
     vscode.window.showErrorMessage(
@@ -293,7 +299,8 @@ async function downloadAndInstallLsp(): Promise<string | null> {
     return null;
   }
 
-  const releaseUrl = `https://github.com/${GITHUB_REPO}/releases/latest/download/${platformInfo.asset}`;
+  const targetVersion = version || extensionContext.extension.packageJSON.version;
+  const releaseUrl = buildReleaseUrl(GITHUB_REPO, targetVersion, platformInfo.asset);
 
   // Create storage directory
   const storageUri = extensionContext.globalStorageUri;
@@ -306,7 +313,7 @@ async function downloadAndInstallLsp(): Promise<string | null> {
     await vscode.window.withProgress(
       {
         location: vscode.ProgressLocation.Notification,
-        title: 'Installing agnix-lsp',
+        title: version ? 'Updating agnix-lsp' : 'Installing agnix-lsp',
         cancellable: false,
       },
       async (progress) => {
@@ -351,8 +358,9 @@ async function downloadAndInstallLsp(): Promise<string | null> {
 
     // Verify binary exists
     if (fs.existsSync(binaryPath)) {
-      outputChannel.appendLine(`agnix-lsp installed at: ${binaryPath}`);
-      vscode.window.showInformationMessage('agnix-lsp installed successfully');
+      writeVersionMarker(storageUri.fsPath, targetVersion);
+      outputChannel.appendLine(`agnix-lsp ${targetVersion} installed at: ${binaryPath}`);
+      vscode.window.showInformationMessage(`agnix-lsp ${targetVersion} installed successfully`);
       return binaryPath;
     } else {
       throw new Error('Binary not found after extraction');
@@ -363,6 +371,39 @@ async function downloadAndInstallLsp(): Promise<string | null> {
     vscode.window.showErrorMessage(`Failed to install agnix-lsp: ${message}`);
     return null;
   }
+}
+
+/**
+ * Check if a downloaded binary matches the extension version.
+ * Returns the binary path if up-to-date, re-downloads if stale, or null on failure.
+ * User-configured or PATH binaries are returned as-is without version checks.
+ */
+async function ensureBinaryVersionMatch(
+  lspPath: string
+): Promise<string | null> {
+  const storagePath = extensionContext.globalStorageUri.fsPath;
+  if (!isDownloadedBinary(lspPath, storagePath)) {
+    return lspPath;
+  }
+
+  const extensionVersion: string =
+    extensionContext.extension.packageJSON.version;
+  const installedVersion = readVersionMarker(storagePath);
+
+  if (installedVersion === extensionVersion) {
+    outputChannel.appendLine(
+      `agnix-lsp ${installedVersion} matches extension version`
+    );
+    return lspPath;
+  }
+
+  outputChannel.appendLine(
+    installedVersion
+      ? `agnix-lsp version mismatch: binary=${installedVersion}, extension=${extensionVersion}. Updating...`
+      : `No version marker found for agnix-lsp. Updating to ${extensionVersion}...`
+  );
+
+  return downloadAndInstallLsp(extensionVersion);
 }
 
 /**
@@ -526,6 +567,11 @@ async function startClient(): Promise<void> {
 
 async function startClientInternal(): Promise<LanguageClient | undefined> {
   let lspPath = findLspBinary();
+
+  // Check version for auto-downloaded binaries and re-download if stale
+  if (lspPath) {
+    lspPath = await ensureBinaryVersionMatch(lspPath);
+  }
 
   if (!lspPath) {
     updateStatusBar('error', 'agnix-lsp not found');

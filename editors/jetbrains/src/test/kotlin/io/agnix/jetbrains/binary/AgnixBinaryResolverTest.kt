@@ -139,4 +139,50 @@ class AgnixBinaryResolverTest {
         assertNotNull(binaryName)
         assertTrue(binaryName == "agnix-lsp" || binaryName == "agnix-lsp.exe")
     }
+
+    @Test
+    fun `VERSION_MARKER_FILE constant is correct`() {
+        assertEquals(".agnix-lsp-version", AgnixBinaryResolver.VERSION_MARKER_FILE)
+    }
+
+    @Test
+    fun `readVersionMarker returns null when no marker exists`() {
+        val storageDir = AgnixBinaryResolver.getStorageDirectory()
+        val markerFile = File(storageDir, AgnixBinaryResolver.VERSION_MARKER_FILE)
+
+        // Remove marker if it exists
+        if (markerFile.exists()) {
+            markerFile.delete()
+        }
+
+        assertNull(AgnixBinaryResolver.readVersionMarker())
+    }
+
+    @Test
+    fun `writeVersionMarker and readVersionMarker roundtrip`() {
+        val storageDir = AgnixBinaryResolver.getStorageDirectory()
+        storageDir.mkdirs()
+        val markerFile = File(storageDir, AgnixBinaryResolver.VERSION_MARKER_FILE)
+
+        try {
+            AgnixBinaryResolver.writeVersionMarker("1.2.3")
+            assertEquals("1.2.3", AgnixBinaryResolver.readVersionMarker())
+        } finally {
+            markerFile.delete()
+        }
+    }
+
+    @Test
+    fun `readVersionMarker trims whitespace`() {
+        val storageDir = AgnixBinaryResolver.getStorageDirectory()
+        storageDir.mkdirs()
+        val markerFile = File(storageDir, AgnixBinaryResolver.VERSION_MARKER_FILE)
+
+        try {
+            markerFile.writeText("  0.9.1\n")
+            assertEquals("0.9.1", AgnixBinaryResolver.readVersionMarker())
+        } finally {
+            markerFile.delete()
+        }
+    }
 }

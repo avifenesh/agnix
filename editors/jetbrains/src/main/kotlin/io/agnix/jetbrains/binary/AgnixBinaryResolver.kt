@@ -1,7 +1,9 @@
 package io.agnix.jetbrains.binary
 
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.extensions.PluginId
 import java.io.File
 
 /**
@@ -20,6 +22,8 @@ object AgnixBinaryResolver {
 
     const val BINARY_NAME = "agnix-lsp"
     const val BINARY_NAME_WINDOWS = "agnix-lsp.exe"
+    const val VERSION_MARKER_FILE = ".agnix-lsp-version"
+    private const val PLUGIN_ID = "io.agnix.jetbrains"
 
     // Cache for resolved binary path - cleared when settings change or binary is downloaded
     @Volatile
@@ -46,16 +50,61 @@ object AgnixBinaryResolver {
     }
 
     /**
-     * Get the path to the downloaded binary, if it exists.
+     * Get the path to the downloaded binary, if it exists and its version matches the plugin.
+     * Returns null if the binary is missing or its version marker doesn't match,
+     * signalling that a re-download is needed.
      */
     fun getDownloadedBinaryPath(): String? {
         val binaryInfo = PlatformInfo.getBinaryInfo() ?: return null
         val binaryFile = File(getStorageDirectory(), binaryInfo.binaryName)
 
-        return if (binaryFile.exists() && binaryFile.canExecute()) {
-            binaryFile.absolutePath
-        } else {
+        if (!binaryFile.exists() || !binaryFile.canExecute()) {
+            return null
+        }
+
+        val pluginVersion = getPluginVersion()
+        val installedVersion = readVersionMarker()
+        if (pluginVersion != null && installedVersion != pluginVersion) {
+            logger.info(
+                if (installedVersion != null)
+                    "agnix-lsp version mismatch: binary=$installedVersion, plugin=$pluginVersion"
+                else
+                    "No version marker found for agnix-lsp, plugin=$pluginVersion"
+            )
+            return null
+        }
+
+        return binaryFile.absolutePath
+    }
+
+    /**
+     * Get the current plugin version from the plugin descriptor.
+     */
+    fun getPluginVersion(): String? {
+        return PluginManagerCore.getPlugin(PluginId.getId(PLUGIN_ID))?.version
+    }
+
+    /**
+     * Read the version marker from the storage directory.
+     */
+    fun readVersionMarker(): String? {
+        val markerFile = File(getStorageDirectory(), VERSION_MARKER_FILE)
+        return try {
+            if (markerFile.exists()) markerFile.readText().trim() else null
+        } catch (_: Exception) {
             null
+        }
+    }
+
+    /**
+     * Write the version marker to the storage directory.
+     */
+    fun writeVersionMarker(version: String) {
+        val markerFile = File(getStorageDirectory(), VERSION_MARKER_FILE)
+        try {
+            markerFile.writeText(version)
+        } catch (e: Exception) {
+            logger.warn("Failed to write version marker", e)
         }
     }
 
