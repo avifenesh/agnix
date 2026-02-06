@@ -389,19 +389,17 @@ impl<'a> ValidationContext<'a> {
         }
 
         // AS-009: Description contains XML tags
-        if self.config.is_rule_enabled("AS-009") {
-            if description_xml_regex().is_match(description) {
-                self.diagnostics.push(
-                    Diagnostic::error(
-                        self.path.to_path_buf(),
-                        description_line,
-                        description_col,
-                        "AS-009",
-                        t!("rules.as_009.message"),
-                    )
-                    .with_suggestion(t!("rules.as_009.suggestion")),
-                );
-            }
+        if self.config.is_rule_enabled("AS-009") && description_xml_regex().is_match(description) {
+            self.diagnostics.push(
+                Diagnostic::error(
+                    self.path.to_path_buf(),
+                    description_line,
+                    description_col,
+                    "AS-009",
+                    t!("rules.as_009.message"),
+                )
+                .with_suggestion(t!("rules.as_009.suggestion")),
+            );
         }
 
         // AS-010: Description should include trigger phrase
