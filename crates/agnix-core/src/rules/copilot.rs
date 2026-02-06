@@ -772,6 +772,22 @@ excludeAgent: "invalid-agent"
         assert!(cop_005.is_empty());
     }
 
+    #[test]
+    fn test_cop_005_case_sensitive() {
+        let content = "---\napplyTo: \"**/*.ts\"\nexcludeAgent: \"Code-Review\"\n---\n# Instructions\n";
+        let diagnostics = validate_scoped(content);
+        let cop_005: Vec<_> = diagnostics.iter().filter(|d| d.rule == "COP-005").collect();
+        assert_eq!(cop_005.len(), 1, "Mixed-case value should trigger COP-005");
+    }
+
+    #[test]
+    fn test_cop_005_empty_string() {
+        let content = "---\napplyTo: \"**/*.ts\"\nexcludeAgent: \"\"\n---\n# Instructions\n";
+        let diagnostics = validate_scoped(content);
+        let cop_005: Vec<_> = diagnostics.iter().filter(|d| d.rule == "COP-005").collect();
+        assert_eq!(cop_005.len(), 1, "Empty excludeAgent should trigger COP-005");
+    }
+
     // ===== COP-006: File Length Limit =====
 
     #[test]
@@ -784,10 +800,16 @@ excludeAgent: "invalid-agent"
 
     #[test]
     fn test_cop_006_long_file() {
-        let diagnostics = validate_global(&make_long_content());
+        let long_content = make_long_content();
+        let expected_len = long_content.len().to_string();
+        let diagnostics = validate_global(&long_content);
         let cop_006: Vec<_> = diagnostics.iter().filter(|d| d.rule == "COP-006").collect();
         assert_eq!(cop_006.len(), 1);
         assert_eq!(cop_006[0].level, DiagnosticLevel::Warning);
+        assert!(
+            cop_006[0].message.contains(&expected_len),
+            "Diagnostic message should contain the file length"
+        );
     }
 
     #[test]
