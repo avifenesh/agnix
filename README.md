@@ -15,13 +15,11 @@ The linter for your AI coding stack -- skills, hooks, memory, plugins, MCP, and 
 
 **100 validation rules** | **Auto-fix** | **[VS Code](https://marketplace.visualstudio.com/items?itemName=avifenesh.agnix) + [JetBrains](https://plugins.jetbrains.com/plugin/30087-agnix) + Neovim** | **GitHub Action**
 
-Website: [avifenesh.github.io/agnix](https://avifenesh.github.io/agnix/)
-
-Quick links:
-- [Documentation website](https://avifenesh.github.io/agnix/docs/intro)
-- [Installation guide](https://avifenesh.github.io/agnix/docs/installation)
-- [Editor integration](https://avifenesh.github.io/agnix/docs/editor-integration)
-- [Rules reference](https://avifenesh.github.io/agnix/docs/rules)
+<p align="center">
+  <a href="https://avifenesh.github.io/agnix/"><img src="https://img.shields.io/badge/Website-Documentation-0A7E8C?style=for-the-badge" alt="Website"></a>
+  <a href="https://marketplace.visualstudio.com/items?itemName=avifenesh.agnix"><img src="https://img.shields.io/badge/VS%20Code-Install-007ACC?style=for-the-badge" alt="Install VS Code Extension"></a>
+  <a href="https://plugins.jetbrains.com/plugin/30087-agnix"><img src="https://img.shields.io/badge/JetBrains-Install-000000?style=for-the-badge" alt="Install JetBrains Plugin"></a>
+</p>
 
 ## Quick Start
 
