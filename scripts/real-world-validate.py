@@ -77,8 +77,11 @@ def run_agnix(agnix_bin: str, repo_path: Path, timeout: int = 120) -> dict:
 
     start = time.monotonic()
     try:
+        # Run from the repo directory so agnix picks up the repo's .agnix.toml
+        # (or uses defaults if none exists) rather than inheriting the parent project's config
         result = subprocess.run(
-            cmd, capture_output=True, text=True, timeout=timeout
+            cmd, capture_output=True, text=True, timeout=timeout,
+            cwd=str(repo_path) if repo_path.is_dir() else str(repo_path.parent),
         )
         wall_time_ms = int((time.monotonic() - start) * 1000)
 
