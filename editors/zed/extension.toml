@@ -1,6 +1,6 @@
 id = "agnix"
 name = "Agnix"
-version = "0.9.2"
+version = "0.9.3"
 schema_version = 1
 authors = ["Avi Fenesh <avifenesh@gmail.com>"]
 description = "Linter for agent configurations (skills, hooks, memory, plugins, MCP)"
