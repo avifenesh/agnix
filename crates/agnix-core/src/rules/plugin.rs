@@ -1,8 +1,12 @@
 //! Plugin manifest validation (CC-PL-001 to CC-PL-005)
 
 use crate::{
-    config::LintConfig, diagnostics::Diagnostic, rules::Validator, schemas::plugin::PluginSchema,
+    config::LintConfig,
+    diagnostics::{Diagnostic, Fix},
+    rules::Validator,
+    schemas::plugin::PluginSchema,
 };
+use regex::Regex;
 use rust_i18n::t;
 use std::path::Path;
 
@@ -82,16 +86,29 @@ impl Validator for PluginValidator {
         if config.is_rule_enabled("CC-PL-005") {
             if let Some(name) = raw_value.get("name").and_then(|v| v.as_str()) {
                 if name.trim().is_empty() {
-                    diagnostics.push(
-                        Diagnostic::error(
-                            path.to_path_buf(),
-                            1,
-                            0,
-                            "CC-PL-005",
-                            t!("rules.cc_pl_005.message"),
-                        )
-                        .with_suggestion(t!("rules.cc_pl_005.suggestion")),
-                    );
+                    let mut diagnostic = Diagnostic::error(
+                        path.to_path_buf(),
+                        1,
+                        0,
+                        "CC-PL-005",
+                        t!("rules.cc_pl_005.message"),
+                    )
+                    .with_suggestion(t!("rules.cc_pl_005.suggestion"));
+
+                    // Unsafe auto-fix: populate empty plugin name with a deterministic placeholder.
+                    if let Some((start, end, _)) =
+                        find_unique_json_string_value_range(content, "name")
+                    {
+                        diagnostic = diagnostic.with_fix(Fix::replace(
+                            start,
+                            end,
+                            "my-plugin",
+                            "Set plugin name to 'my-plugin'",
+                            false,
+                        ));
+                    }
+
+                    diagnostics.push(diagnostic);
                 }
             }
         }
@@ -150,6 +167,24 @@ fn check_required_field(
 
 fn is_valid_semver(version: &str) -> bool {
     semver::Version::parse(version).is_ok()
+}
+
+/// Find a unique string value span for a JSON key.
+/// Returns (value_start, value_end, value_content_without_quotes).
+fn find_unique_json_string_value_range(content: &str, key: &str) -> Option<(usize, usize, String)> {
+    let pattern = format!(r#""{}"\s*:\s*"([^"]*)""#, regex::escape(key));
+    let re = Regex::new(&pattern).ok()?;
+    let mut captures = re.captures_iter(content);
+    let first = captures.next()?;
+    if captures.next().is_some() {
+        return None;
+    }
+    let value_match = first.get(1)?;
+    Some((
+        value_match.start(),
+        value_match.end(),
+        value_match.as_str().to_string(),
+    ))
 }
 
 #[cfg(test)]
@@ -312,7 +347,14 @@ mod tests {
             &LintConfig::default(),
         );
 
-        assert!(diagnostics.iter().any(|d| d.rule == "CC-PL-005"));
+        let cc_pl_005 = diagnostics
+            .iter()
+            .find(|d| d.rule == "CC-PL-005")
+            .expect("CC-PL-005 should be reported");
+        assert!(cc_pl_005.has_fixes());
+        let fix = &cc_pl_005.fixes[0];
+        assert_eq!(fix.replacement, "my-plugin");
+        assert!(!fix.safe);
     }
 
     // ===== CC-PL-006: Plugin Parse Error =====

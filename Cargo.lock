@@ -4,7 +4,7 @@ version = 4
 
 [[package]]
 name = "agnix-cli"
-version = "0.7.2"
+version = "0.8.1"
 dependencies = [
  "agnix-core",
  "agnix-rules",
@@ -32,7 +32,7 @@ dependencies = [
 
 [[package]]
 name = "agnix-core"
-version = "0.7.2"
+version = "0.8.1"
 dependencies = [
  "agnix-rules",
  "anyhow",
@@ -59,7 +59,7 @@ dependencies = [
 
 [[package]]
 name = "agnix-lsp"
-version = "0.7.2"
+version = "0.8.1"
 dependencies = [
  "agnix-core",
  "anyhow",
@@ -74,7 +74,7 @@ dependencies = [
 
 [[package]]
 name = "agnix-mcp"
-version = "0.7.2"
+version = "0.8.1"
 dependencies = [
  "agnix-core",
  "agnix-rules",
@@ -91,7 +91,7 @@ dependencies = [
 
 [[package]]
 name = "agnix-rules"
-version = "0.7.2"
+version = "0.8.1"
 dependencies = [
  "serde_json",
 ]

@@ -1,7 +1,9 @@
 ---
 id: cc-mem-010
-title: "CC-MEM-010 README Duplication"
+title: "CC-MEM-010: README Duplication - Claude Memory"
 sidebar_label: "CC-MEM-010"
+description: "agnix rule CC-MEM-010 checks for readme duplication in claude memory files. Severity: MEDIUM. See examples and fix guidance."
+keywords: ["CC-MEM-010", "readme duplication", "claude memory", "validation", "agnix", "linter"]
 ---
 
 ## Summary

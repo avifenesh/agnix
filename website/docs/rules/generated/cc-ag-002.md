@@ -1,7 +1,9 @@
 ---
 id: cc-ag-002
-title: "CC-AG-002 Missing Description Field"
+title: "CC-AG-002: Missing Description Field - Claude Agents"
 sidebar_label: "CC-AG-002"
+description: "agnix rule CC-AG-002 checks for missing description field in claude agents files. Severity: HIGH. See examples and fix guidance."
+keywords: ["CC-AG-002", "missing description field", "claude agents", "validation", "agnix", "linter"]
 ---
 
 ## Summary

@@ -1,39 +1,55 @@
+---
+title: Installation
+description: "Install agnix via npm, Homebrew, Cargo, or download pre-built binaries."
+---
+
 # Installation
 
-## CLI
+## npm (recommended)
+
+Works on all platforms. Includes pre-built binaries.
 
 ```bash
 npm install -g agnix
 ```
 
-Alternative installs:
+Or run without installing:
 
-- Homebrew: `brew tap avifenesh/agnix && brew install agnix`
-- Cargo: `cargo install agnix-cli`
-- Releases: [GitHub releases](https://github.com/avifenesh/agnix/releases)
+```bash
+npx agnix .
+```
 
-## Editor integrations
+## Homebrew (macOS / Linux)
 
-### VS Code
+```bash
+brew tap avifenesh/agnix && brew install agnix
+```
 
-Install extension from the marketplace and point server path if needed. Full details:
+## Cargo (Rust toolchain)
 
-- [VS Code integration guide](https://github.com/avifenesh/agnix/blob/main/editors/vscode/README.md)
+```bash
+cargo install agnix-cli
+```
 
-### Neovim
+## Pre-built binaries
 
-Use the Neovim plugin and attach `agnix-lsp` in your LSP config.
+Download from [GitHub Releases](https://github.com/avifenesh/agnix/releases) for your platform.
 
-- [Neovim integration guide](https://github.com/avifenesh/agnix/blob/main/editors/neovim/README.md)
+## Verify installation
 
-### JetBrains
+```bash
+agnix --version
+```
 
-Install the plugin and configure executable path.
+## Editor extensions
 
-- [JetBrains integration guide](https://github.com/avifenesh/agnix/blob/main/editors/jetbrains/README.md)
+agnix ships editor integrations powered by the `agnix-lsp` server:
 
-### Other editors
+| Editor | Install |
+|--------|---------|
+| VS Code | [Marketplace](https://marketplace.visualstudio.com/items?itemName=avifenesh.agnix) |
+| JetBrains | [Plugin](https://plugins.jetbrains.com/plugin/30087-agnix) |
+| Neovim | [Plugin](https://github.com/avifenesh/agnix/tree/main/editors/neovim) |
+| Zed | [Extension](https://github.com/avifenesh/agnix/tree/main/editors/zed) |
 
-Status and setup notes for supported editors:
-
-- [Editor setup matrix](https://github.com/avifenesh/agnix/blob/main/docs/EDITOR-SETUP.md)
+See [Editor Integration](./editor-integration.md) for setup details.

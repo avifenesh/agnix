@@ -1,7 +1,9 @@
 ---
 id: cc-sk-008
-title: "CC-SK-008 Unknown Tool Name"
+title: "CC-SK-008: Unknown Tool Name - Claude Skills"
 sidebar_label: "CC-SK-008"
+description: "agnix rule CC-SK-008 checks for unknown tool name in claude skills files. Severity: HIGH. See examples and fix guidance."
+keywords: ["CC-SK-008", "unknown tool name", "claude skills", "validation", "agnix", "linter"]
 ---
 
 ## Summary

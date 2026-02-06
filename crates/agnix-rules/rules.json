@@ -6,7 +6,9 @@
   "schema": {
     "evidence": {
       "source_type": "spec|vendor_docs|vendor_code|paper|community",
-      "source_urls": ["array of URLs"],
+      "source_urls": [
+        "array of URLs"
+      ],
       "verified_on": "ISO date string",
       "applies_to": {
         "tool": "tool name (optional)",
@@ -29,11 +31,19 @@
       "category": "agent-skills",
       "evidence": {
         "source_type": "spec",
-        "source_urls": ["https://agentskills.io/specification"],
+        "source_urls": [
+          "https://agentskills.io/specification"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "spec_revision": "1.0" },
+        "applies_to": {
+          "spec_revision": "1.0"
+        },
         "normative_level": "MUST",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -43,11 +53,19 @@
       "category": "agent-skills",
       "evidence": {
         "source_type": "spec",
-        "source_urls": ["https://agentskills.io/specification"],
+        "source_urls": [
+          "https://agentskills.io/specification"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "spec_revision": "1.0" },
+        "applies_to": {
+          "spec_revision": "1.0"
+        },
         "normative_level": "MUST",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -57,11 +75,19 @@
       "category": "agent-skills",
       "evidence": {
         "source_type": "spec",
-        "source_urls": ["https://agentskills.io/specification"],
+        "source_urls": [
+          "https://agentskills.io/specification"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "spec_revision": "1.0" },
+        "applies_to": {
+          "spec_revision": "1.0"
+        },
         "normative_level": "MUST",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -71,11 +97,19 @@
       "category": "agent-skills",
       "evidence": {
         "source_type": "spec",
-        "source_urls": ["https://agentskills.io/specification"],
+        "source_urls": [
+          "https://agentskills.io/specification"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "spec_revision": "1.0" },
+        "applies_to": {
+          "spec_revision": "1.0"
+        },
         "normative_level": "MUST",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -85,11 +119,19 @@
       "category": "agent-skills",
       "evidence": {
         "source_type": "spec",
-        "source_urls": ["https://agentskills.io/specification"],
+        "source_urls": [
+          "https://agentskills.io/specification"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "spec_revision": "1.0" },
+        "applies_to": {
+          "spec_revision": "1.0"
+        },
         "normative_level": "MUST",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -99,11 +141,19 @@
       "category": "agent-skills",
       "evidence": {
         "source_type": "spec",
-        "source_urls": ["https://agentskills.io/specification"],
+        "source_urls": [
+          "https://agentskills.io/specification"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "spec_revision": "1.0" },
+        "applies_to": {
+          "spec_revision": "1.0"
+        },
         "normative_level": "MUST",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -113,11 +163,19 @@
       "category": "agent-skills",
       "evidence": {
         "source_type": "vendor_docs",
-        "source_urls": ["https://platform.claude.com/docs"],
+        "source_urls": [
+          "https://platform.claude.com/docs"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "tool": "claude-code" },
+        "applies_to": {
+          "tool": "claude-code"
+        },
         "normative_level": "MUST",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -127,11 +185,19 @@
       "category": "agent-skills",
       "evidence": {
         "source_type": "spec",
-        "source_urls": ["https://agentskills.io/specification"],
+        "source_urls": [
+          "https://agentskills.io/specification"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "spec_revision": "1.0" },
+        "applies_to": {
+          "spec_revision": "1.0"
+        },
         "normative_level": "MUST",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -141,11 +207,19 @@
       "category": "agent-skills",
       "evidence": {
         "source_type": "vendor_docs",
-        "source_urls": ["https://platform.claude.com/docs"],
+        "source_urls": [
+          "https://platform.claude.com/docs"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "tool": "claude-code" },
+        "applies_to": {
+          "tool": "claude-code"
+        },
         "normative_level": "MUST",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -160,9 +234,15 @@
           "https://platform.claude.com/docs"
         ],
         "verified_on": "2026-02-04",
-        "applies_to": { "tool": "claude-code" },
+        "applies_to": {
+          "tool": "claude-code"
+        },
         "normative_level": "SHOULD",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -172,11 +252,19 @@
       "category": "agent-skills",
       "evidence": {
         "source_type": "spec",
-        "source_urls": ["https://agentskills.io/specification"],
+        "source_urls": [
+          "https://agentskills.io/specification"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "spec_revision": "1.0" },
+        "applies_to": {
+          "spec_revision": "1.0"
+        },
         "normative_level": "MUST",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -191,9 +279,15 @@
           "https://agentskills.io"
         ],
         "verified_on": "2026-02-04",
-        "applies_to": { "tool": "claude-code" },
+        "applies_to": {
+          "tool": "claude-code"
+        },
         "normative_level": "SHOULD",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -203,11 +297,19 @@
       "category": "agent-skills",
       "evidence": {
         "source_type": "spec",
-        "source_urls": ["https://agentskills.io/specification"],
+        "source_urls": [
+          "https://agentskills.io/specification"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "spec_revision": "1.0" },
+        "applies_to": {
+          "spec_revision": "1.0"
+        },
         "normative_level": "MUST",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -217,11 +319,19 @@
       "category": "agent-skills",
       "evidence": {
         "source_type": "spec",
-        "source_urls": ["https://agentskills.io/specification"],
+        "source_urls": [
+          "https://agentskills.io/specification"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "spec_revision": "1.0" },
+        "applies_to": {
+          "spec_revision": "1.0"
+        },
         "normative_level": "MUST",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -231,11 +341,19 @@
       "category": "agent-skills",
       "evidence": {
         "source_type": "vendor_docs",
-        "source_urls": ["https://platform.claude.com/docs"],
+        "source_urls": [
+          "https://platform.claude.com/docs"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "tool": "claude-code" },
+        "applies_to": {
+          "tool": "claude-code"
+        },
         "normative_level": "MUST",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -245,11 +363,19 @@
       "category": "agent-skills",
       "evidence": {
         "source_type": "spec",
-        "source_urls": ["https://agentskills.io/specification"],
+        "source_urls": [
+          "https://agentskills.io/specification"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "spec_revision": "1.0" },
+        "applies_to": {
+          "spec_revision": "1.0"
+        },
         "normative_level": "MUST",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -259,11 +385,19 @@
       "category": "claude-skills",
       "evidence": {
         "source_type": "vendor_docs",
-        "source_urls": ["https://code.claude.com/docs/en/skills"],
+        "source_urls": [
+          "https://code.claude.com/docs/en/skills"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "tool": "claude-code" },
+        "applies_to": {
+          "tool": "claude-code"
+        },
         "normative_level": "MUST",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -273,11 +407,19 @@
       "category": "claude-skills",
       "evidence": {
         "source_type": "vendor_docs",
-        "source_urls": ["https://code.claude.com/docs/en/skills"],
+        "source_urls": [
+          "https://code.claude.com/docs/en/skills"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "tool": "claude-code" },
+        "applies_to": {
+          "tool": "claude-code"
+        },
         "normative_level": "MUST",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -287,11 +429,19 @@
       "category": "claude-skills",
       "evidence": {
         "source_type": "vendor_docs",
-        "source_urls": ["https://code.claude.com/docs/en/skills"],
+        "source_urls": [
+          "https://code.claude.com/docs/en/skills"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "tool": "claude-code" },
+        "applies_to": {
+          "tool": "claude-code"
+        },
         "normative_level": "MUST",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -301,11 +451,19 @@
       "category": "claude-skills",
       "evidence": {
         "source_type": "vendor_docs",
-        "source_urls": ["https://code.claude.com/docs/en/skills"],
+        "source_urls": [
+          "https://code.claude.com/docs/en/skills"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "tool": "claude-code" },
+        "applies_to": {
+          "tool": "claude-code"
+        },
         "normative_level": "MUST",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -315,11 +473,19 @@
       "category": "claude-skills",
       "evidence": {
         "source_type": "vendor_docs",
-        "source_urls": ["https://code.claude.com/docs/en/sub-agents"],
+        "source_urls": [
+          "https://code.claude.com/docs/en/sub-agents"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "tool": "claude-code" },
+        "applies_to": {
+          "tool": "claude-code"
+        },
         "normative_level": "MUST",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -329,11 +495,19 @@
       "category": "claude-skills",
       "evidence": {
         "source_type": "vendor_docs",
-        "source_urls": ["https://code.claude.com/docs/en/skills"],
+        "source_urls": [
+          "https://code.claude.com/docs/en/skills"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "tool": "claude-code" },
+        "applies_to": {
+          "tool": "claude-code"
+        },
         "normative_level": "MUST",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -343,11 +517,19 @@
       "category": "claude-skills",
       "evidence": {
         "source_type": "community",
-        "source_urls": ["https://github.com/anthropics/awesome-slash"],
+        "source_urls": [
+          "https://github.com/anthropics/awesome-slash"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "tool": "claude-code" },
+        "applies_to": {
+          "tool": "claude-code"
+        },
         "normative_level": "SHOULD",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -357,11 +539,19 @@
       "category": "claude-skills",
       "evidence": {
         "source_type": "vendor_docs",
-        "source_urls": ["https://code.claude.com/docs/en/settings"],
+        "source_urls": [
+          "https://code.claude.com/docs/en/settings"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "tool": "claude-code" },
+        "applies_to": {
+          "tool": "claude-code"
+        },
         "normative_level": "MUST",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -371,11 +561,19 @@
       "category": "claude-skills",
       "evidence": {
         "source_type": "vendor_docs",
-        "source_urls": ["https://platform.claude.com/docs"],
+        "source_urls": [
+          "https://platform.claude.com/docs"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "tool": "claude-code" },
+        "applies_to": {
+          "tool": "claude-code"
+        },
         "normative_level": "SHOULD",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -385,11 +583,19 @@
       "category": "claude-hooks",
       "evidence": {
         "source_type": "vendor_docs",
-        "source_urls": ["https://code.claude.com/docs/en/hooks"],
+        "source_urls": [
+          "https://code.claude.com/docs/en/hooks"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "tool": "claude-code" },
+        "applies_to": {
+          "tool": "claude-code"
+        },
         "normative_level": "MUST",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -399,11 +605,19 @@
       "category": "claude-hooks",
       "evidence": {
         "source_type": "vendor_docs",
-        "source_urls": ["https://code.claude.com/docs/en/hooks"],
+        "source_urls": [
+          "https://code.claude.com/docs/en/hooks"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "tool": "claude-code" },
+        "applies_to": {
+          "tool": "claude-code"
+        },
         "normative_level": "MUST",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -413,11 +627,19 @@
       "category": "claude-hooks",
       "evidence": {
         "source_type": "vendor_docs",
-        "source_urls": ["https://code.claude.com/docs/en/hooks"],
+        "source_urls": [
+          "https://code.claude.com/docs/en/hooks"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "tool": "claude-code" },
+        "applies_to": {
+          "tool": "claude-code"
+        },
         "normative_level": "MUST",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -427,11 +649,19 @@
       "category": "claude-hooks",
       "evidence": {
         "source_type": "vendor_docs",
-        "source_urls": ["https://code.claude.com/docs/en/hooks"],
+        "source_urls": [
+          "https://code.claude.com/docs/en/hooks"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "tool": "claude-code" },
+        "applies_to": {
+          "tool": "claude-code"
+        },
         "normative_level": "MUST",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -441,11 +671,19 @@
       "category": "claude-hooks",
       "evidence": {
         "source_type": "vendor_docs",
-        "source_urls": ["https://code.claude.com/docs/en/hooks"],
+        "source_urls": [
+          "https://code.claude.com/docs/en/hooks"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "tool": "claude-code" },
+        "applies_to": {
+          "tool": "claude-code"
+        },
         "normative_level": "MUST",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -455,11 +693,19 @@
       "category": "claude-hooks",
       "evidence": {
         "source_type": "vendor_docs",
-        "source_urls": ["https://code.claude.com/docs/en/hooks"],
+        "source_urls": [
+          "https://code.claude.com/docs/en/hooks"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "tool": "claude-code" },
+        "applies_to": {
+          "tool": "claude-code"
+        },
         "normative_level": "MUST",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -469,11 +715,19 @@
       "category": "claude-hooks",
       "evidence": {
         "source_type": "vendor_docs",
-        "source_urls": ["https://code.claude.com/docs/en/hooks"],
+        "source_urls": [
+          "https://code.claude.com/docs/en/hooks"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "tool": "claude-code" },
+        "applies_to": {
+          "tool": "claude-code"
+        },
         "normative_level": "MUST",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -483,11 +737,19 @@
       "category": "claude-hooks",
       "evidence": {
         "source_type": "vendor_docs",
-        "source_urls": ["https://code.claude.com/docs/en/hooks"],
+        "source_urls": [
+          "https://code.claude.com/docs/en/hooks"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "tool": "claude-code" },
+        "applies_to": {
+          "tool": "claude-code"
+        },
         "normative_level": "MUST",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -497,11 +759,19 @@
       "category": "claude-hooks",
       "evidence": {
         "source_type": "community",
-        "source_urls": ["https://github.com/anthropics/awesome-slash"],
+        "source_urls": [
+          "https://github.com/anthropics/awesome-slash"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "tool": "claude-code" },
+        "applies_to": {
+          "tool": "claude-code"
+        },
         "normative_level": "SHOULD",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -511,11 +781,19 @@
       "category": "claude-hooks",
       "evidence": {
         "source_type": "vendor_docs",
-        "source_urls": ["https://code.claude.com/docs/en/hooks"],
+        "source_urls": [
+          "https://code.claude.com/docs/en/hooks"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "tool": "claude-code" },
+        "applies_to": {
+          "tool": "claude-code"
+        },
         "normative_level": "SHOULD",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -525,11 +803,19 @@
       "category": "claude-hooks",
       "evidence": {
         "source_type": "vendor_docs",
-        "source_urls": ["https://code.claude.com/docs/en/hooks"],
+        "source_urls": [
+          "https://code.claude.com/docs/en/hooks"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "tool": "claude-code" },
+        "applies_to": {
+          "tool": "claude-code"
+        },
         "normative_level": "MUST",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -539,11 +825,19 @@
       "category": "claude-hooks",
       "evidence": {
         "source_type": "vendor_docs",
-        "source_urls": ["https://code.claude.com/docs/en/hooks"],
+        "source_urls": [
+          "https://code.claude.com/docs/en/hooks"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "tool": "claude-code" },
+        "applies_to": {
+          "tool": "claude-code"
+        },
         "normative_level": "MUST",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -553,11 +847,19 @@
       "category": "claude-agents",
       "evidence": {
         "source_type": "vendor_docs",
-        "source_urls": ["https://code.claude.com/docs/en/sub-agents"],
+        "source_urls": [
+          "https://code.claude.com/docs/en/sub-agents"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "tool": "claude-code" },
+        "applies_to": {
+          "tool": "claude-code"
+        },
         "normative_level": "MUST",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -567,11 +869,19 @@
       "category": "claude-agents",
       "evidence": {
         "source_type": "vendor_docs",
-        "source_urls": ["https://code.claude.com/docs/en/sub-agents"],
+        "source_urls": [
+          "https://code.claude.com/docs/en/sub-agents"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "tool": "claude-code" },
+        "applies_to": {
+          "tool": "claude-code"
+        },
         "normative_level": "MUST",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -581,11 +891,19 @@
       "category": "claude-agents",
       "evidence": {
         "source_type": "vendor_docs",
-        "source_urls": ["https://code.claude.com/docs/en/sub-agents"],
+        "source_urls": [
+          "https://code.claude.com/docs/en/sub-agents"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "tool": "claude-code" },
+        "applies_to": {
+          "tool": "claude-code"
+        },
         "normative_level": "MUST",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -595,11 +913,19 @@
       "category": "claude-agents",
       "evidence": {
         "source_type": "vendor_docs",
-        "source_urls": ["https://code.claude.com/docs/en/sub-agents"],
+        "source_urls": [
+          "https://code.claude.com/docs/en/sub-agents"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "tool": "claude-code" },
+        "applies_to": {
+          "tool": "claude-code"
+        },
         "normative_level": "MUST",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -609,11 +935,19 @@
       "category": "claude-agents",
       "evidence": {
         "source_type": "vendor_docs",
-        "source_urls": ["https://code.claude.com/docs/en/sub-agents"],
+        "source_urls": [
+          "https://code.claude.com/docs/en/sub-agents"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "tool": "claude-code" },
+        "applies_to": {
+          "tool": "claude-code"
+        },
         "normative_level": "MUST",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -623,11 +957,19 @@
       "category": "claude-agents",
       "evidence": {
         "source_type": "vendor_docs",
-        "source_urls": ["https://code.claude.com/docs/en/sub-agents"],
+        "source_urls": [
+          "https://code.claude.com/docs/en/sub-agents"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "tool": "claude-code" },
+        "applies_to": {
+          "tool": "claude-code"
+        },
         "normative_level": "MUST",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -637,11 +979,19 @@
       "category": "claude-agents",
       "evidence": {
         "source_type": "vendor_docs",
-        "source_urls": ["https://code.claude.com/docs/en/sub-agents"],
+        "source_urls": [
+          "https://code.claude.com/docs/en/sub-agents"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "tool": "claude-code" },
+        "applies_to": {
+          "tool": "claude-code"
+        },
         "normative_level": "MUST",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -651,11 +1001,19 @@
       "category": "claude-memory",
       "evidence": {
         "source_type": "vendor_docs",
-        "source_urls": ["https://code.claude.com/docs/en/memory"],
+        "source_urls": [
+          "https://code.claude.com/docs/en/memory"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "tool": "claude-code" },
+        "applies_to": {
+          "tool": "claude-code"
+        },
         "normative_level": "MUST",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -665,11 +1023,19 @@
       "category": "claude-memory",
       "evidence": {
         "source_type": "vendor_docs",
-        "source_urls": ["https://code.claude.com/docs/en/memory"],
+        "source_urls": [
+          "https://code.claude.com/docs/en/memory"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "tool": "claude-code" },
+        "applies_to": {
+          "tool": "claude-code"
+        },
         "normative_level": "MUST",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -679,11 +1045,19 @@
       "category": "claude-memory",
       "evidence": {
         "source_type": "vendor_docs",
-        "source_urls": ["https://code.claude.com/docs/en/memory"],
+        "source_urls": [
+          "https://code.claude.com/docs/en/memory"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "tool": "claude-code" },
+        "applies_to": {
+          "tool": "claude-code"
+        },
         "normative_level": "MUST",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -693,11 +1067,19 @@
       "category": "claude-memory",
       "evidence": {
         "source_type": "community",
-        "source_urls": ["https://github.com/anthropics/awesome-slash"],
+        "source_urls": [
+          "https://github.com/anthropics/awesome-slash"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "tool": "claude-code" },
+        "applies_to": {
+          "tool": "claude-code"
+        },
         "normative_level": "SHOULD",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -712,9 +1094,15 @@
           "https://arxiv.org/abs/2201.11903"
         ],
         "verified_on": "2026-02-04",
-        "applies_to": { "tool": "claude-code" },
+        "applies_to": {
+          "tool": "claude-code"
+        },
         "normative_level": "SHOULD",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -724,11 +1112,17 @@
       "category": "claude-memory",
       "evidence": {
         "source_type": "paper",
-        "source_urls": ["https://arxiv.org/abs/2201.11903"],
+        "source_urls": [
+          "https://arxiv.org/abs/2201.11903"
+        ],
         "verified_on": "2026-02-04",
         "applies_to": {},
         "normative_level": "SHOULD",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -738,11 +1132,17 @@
       "category": "claude-memory",
       "evidence": {
         "source_type": "paper",
-        "source_urls": ["https://arxiv.org/abs/2201.11903"],
+        "source_urls": [
+          "https://arxiv.org/abs/2201.11903"
+        ],
         "verified_on": "2026-02-04",
         "applies_to": {},
         "normative_level": "SHOULD",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -752,11 +1152,17 @@
       "category": "claude-memory",
       "evidence": {
         "source_type": "paper",
-        "source_urls": ["https://aclanthology.org/2024.tacl-1.9/"],
+        "source_urls": [
+          "https://aclanthology.org/2024.tacl-1.9/"
+        ],
         "verified_on": "2026-02-04",
         "applies_to": {},
         "normative_level": "SHOULD",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -766,11 +1172,19 @@
       "category": "claude-memory",
       "evidence": {
         "source_type": "vendor_docs",
-        "source_urls": ["https://code.claude.com/docs/en/memory"],
+        "source_urls": [
+          "https://code.claude.com/docs/en/memory"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "tool": "claude-code" },
+        "applies_to": {
+          "tool": "claude-code"
+        },
         "normative_level": "SHOULD",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -780,11 +1194,19 @@
       "category": "claude-memory",
       "evidence": {
         "source_type": "community",
-        "source_urls": ["https://github.com/anthropics/awesome-slash"],
+        "source_urls": [
+          "https://github.com/anthropics/awesome-slash"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "tool": "claude-code" },
+        "applies_to": {
+          "tool": "claude-code"
+        },
         "normative_level": "SHOULD",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -802,7 +1224,11 @@
         "verified_on": "2026-02-04",
         "applies_to": {},
         "normative_level": "MUST",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -819,7 +1245,11 @@
         "verified_on": "2026-02-04",
         "applies_to": {},
         "normative_level": "SHOULD",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -829,11 +1259,19 @@
       "category": "agents-md",
       "evidence": {
         "source_type": "vendor_docs",
-        "source_urls": ["https://docs.windsurf.com/windsurf/cascade/memories"],
+        "source_urls": [
+          "https://docs.windsurf.com/windsurf/cascade/memories"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "tool": "windsurf" },
+        "applies_to": {
+          "tool": "windsurf"
+        },
         "normative_level": "SHOULD",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -850,7 +1288,11 @@
         "verified_on": "2026-02-04",
         "applies_to": {},
         "normative_level": "BEST_PRACTICE",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -867,7 +1309,11 @@
         "verified_on": "2026-02-04",
         "applies_to": {},
         "normative_level": "SHOULD",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -885,7 +1331,11 @@
         "verified_on": "2026-02-04",
         "applies_to": {},
         "normative_level": "BEST_PRACTICE",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -895,11 +1345,19 @@
       "category": "claude-plugins",
       "evidence": {
         "source_type": "vendor_docs",
-        "source_urls": ["https://code.claude.com/docs/en/plugins"],
+        "source_urls": [
+          "https://code.claude.com/docs/en/plugins"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "tool": "claude-code" },
+        "applies_to": {
+          "tool": "claude-code"
+        },
         "normative_level": "MUST",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -909,11 +1367,19 @@
       "category": "claude-plugins",
       "evidence": {
         "source_type": "vendor_docs",
-        "source_urls": ["https://code.claude.com/docs/en/plugins-reference"],
+        "source_urls": [
+          "https://code.claude.com/docs/en/plugins-reference"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "tool": "claude-code" },
+        "applies_to": {
+          "tool": "claude-code"
+        },
         "normative_level": "MUST",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -923,11 +1389,19 @@
       "category": "claude-plugins",
       "evidence": {
         "source_type": "vendor_docs",
-        "source_urls": ["https://code.claude.com/docs/en/plugins-reference"],
+        "source_urls": [
+          "https://code.claude.com/docs/en/plugins-reference"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "tool": "claude-code" },
+        "applies_to": {
+          "tool": "claude-code"
+        },
         "normative_level": "MUST",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -937,11 +1411,19 @@
       "category": "claude-plugins",
       "evidence": {
         "source_type": "vendor_docs",
-        "source_urls": ["https://code.claude.com/docs/en/plugins-reference"],
+        "source_urls": [
+          "https://code.claude.com/docs/en/plugins-reference"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "tool": "claude-code" },
+        "applies_to": {
+          "tool": "claude-code"
+        },
         "normative_level": "MUST",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -951,11 +1433,19 @@
       "category": "claude-plugins",
       "evidence": {
         "source_type": "vendor_docs",
-        "source_urls": ["https://code.claude.com/docs/en/plugins-reference"],
+        "source_urls": [
+          "https://code.claude.com/docs/en/plugins-reference"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "tool": "claude-code" },
+        "applies_to": {
+          "tool": "claude-code"
+        },
         "normative_level": "MUST",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -965,11 +1455,19 @@
       "category": "claude-plugins",
       "evidence": {
         "source_type": "vendor_docs",
-        "source_urls": ["https://code.claude.com/docs/en/plugins-reference"],
+        "source_urls": [
+          "https://code.claude.com/docs/en/plugins-reference"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "tool": "claude-code" },
+        "applies_to": {
+          "tool": "claude-code"
+        },
         "normative_level": "MUST",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -979,11 +1477,19 @@
       "category": "mcp",
       "evidence": {
         "source_type": "spec",
-        "source_urls": ["https://modelcontextprotocol.io/specification"],
+        "source_urls": [
+          "https://modelcontextprotocol.io/specification"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "spec_revision": "2025-06-18" },
+        "applies_to": {
+          "spec_revision": "2025-06-18"
+        },
         "normative_level": "MUST",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -993,11 +1499,19 @@
       "category": "mcp",
       "evidence": {
         "source_type": "spec",
-        "source_urls": ["https://modelcontextprotocol.io/docs/concepts/tools"],
+        "source_urls": [
+          "https://modelcontextprotocol.io/docs/concepts/tools"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "spec_revision": "2025-06-18" },
+        "applies_to": {
+          "spec_revision": "2025-06-18"
+        },
         "normative_level": "MUST",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -1007,11 +1521,19 @@
       "category": "mcp",
       "evidence": {
         "source_type": "spec",
-        "source_urls": ["https://modelcontextprotocol.io/specification"],
+        "source_urls": [
+          "https://modelcontextprotocol.io/specification"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "spec_revision": "2025-06-18" },
+        "applies_to": {
+          "spec_revision": "2025-06-18"
+        },
         "normative_level": "MUST",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -1021,11 +1543,19 @@
       "category": "mcp",
       "evidence": {
         "source_type": "spec",
-        "source_urls": ["https://modelcontextprotocol.io/docs/concepts/tools"],
+        "source_urls": [
+          "https://modelcontextprotocol.io/docs/concepts/tools"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "spec_revision": "2025-06-18" },
+        "applies_to": {
+          "spec_revision": "2025-06-18"
+        },
         "normative_level": "SHOULD",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -1035,11 +1565,19 @@
       "category": "mcp",
       "evidence": {
         "source_type": "spec",
-        "source_urls": ["https://modelcontextprotocol.io/specification"],
+        "source_urls": [
+          "https://modelcontextprotocol.io/specification"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "spec_revision": "2025-06-18" },
+        "applies_to": {
+          "spec_revision": "2025-06-18"
+        },
         "normative_level": "MUST",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -1049,11 +1587,19 @@
       "category": "mcp",
       "evidence": {
         "source_type": "spec",
-        "source_urls": ["https://modelcontextprotocol.io/docs/concepts/tools"],
+        "source_urls": [
+          "https://modelcontextprotocol.io/docs/concepts/tools"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "spec_revision": "2025-06-18" },
+        "applies_to": {
+          "spec_revision": "2025-06-18"
+        },
         "normative_level": "MUST",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -1063,11 +1609,19 @@
       "category": "mcp",
       "evidence": {
         "source_type": "spec",
-        "source_urls": ["https://modelcontextprotocol.io/specification"],
+        "source_urls": [
+          "https://modelcontextprotocol.io/specification"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "spec_revision": "2025-06-18" },
+        "applies_to": {
+          "spec_revision": "2025-06-18"
+        },
         "normative_level": "MUST",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -1077,11 +1631,19 @@
       "category": "mcp",
       "evidence": {
         "source_type": "spec",
-        "source_urls": ["https://modelcontextprotocol.io/specification"],
+        "source_urls": [
+          "https://modelcontextprotocol.io/specification"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "spec_revision": "2025-06-18" },
+        "applies_to": {
+          "spec_revision": "2025-06-18"
+        },
         "normative_level": "SHOULD",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -1091,11 +1653,19 @@
       "category": "copilot",
       "evidence": {
         "source_type": "vendor_docs",
-        "source_urls": ["https://docs.github.com/en/copilot/customizing-copilot"],
+        "source_urls": [
+          "https://docs.github.com/en/copilot/customizing-copilot"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "tool": "github-copilot" },
+        "applies_to": {
+          "tool": "github-copilot"
+        },
         "normative_level": "MUST",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -1105,11 +1675,19 @@
       "category": "copilot",
       "evidence": {
         "source_type": "vendor_docs",
-        "source_urls": ["https://docs.github.com/en/copilot/customizing-copilot"],
+        "source_urls": [
+          "https://docs.github.com/en/copilot/customizing-copilot"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "tool": "github-copilot" },
+        "applies_to": {
+          "tool": "github-copilot"
+        },
         "normative_level": "MUST",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -1119,11 +1697,19 @@
       "category": "copilot",
       "evidence": {
         "source_type": "vendor_docs",
-        "source_urls": ["https://docs.github.com/en/copilot/customizing-copilot"],
+        "source_urls": [
+          "https://docs.github.com/en/copilot/customizing-copilot"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "tool": "github-copilot" },
+        "applies_to": {
+          "tool": "github-copilot"
+        },
         "normative_level": "MUST",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -1133,11 +1719,19 @@
       "category": "copilot",
       "evidence": {
         "source_type": "vendor_docs",
-        "source_urls": ["https://docs.github.com/en/copilot/customizing-copilot"],
+        "source_urls": [
+          "https://docs.github.com/en/copilot/customizing-copilot"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "tool": "github-copilot" },
+        "applies_to": {
+          "tool": "github-copilot"
+        },
         "normative_level": "SHOULD",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -1147,11 +1741,19 @@
       "category": "cursor",
       "evidence": {
         "source_type": "vendor_docs",
-        "source_urls": ["https://docs.cursor.com/en/context"],
+        "source_urls": [
+          "https://docs.cursor.com/en/context"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "tool": "cursor" },
+        "applies_to": {
+          "tool": "cursor"
+        },
         "normative_level": "MUST",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -1161,11 +1763,19 @@
       "category": "cursor",
       "evidence": {
         "source_type": "vendor_docs",
-        "source_urls": ["https://docs.cursor.com/en/context"],
+        "source_urls": [
+          "https://docs.cursor.com/en/context"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "tool": "cursor" },
+        "applies_to": {
+          "tool": "cursor"
+        },
         "normative_level": "SHOULD",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -1175,11 +1785,19 @@
       "category": "cursor",
       "evidence": {
         "source_type": "vendor_docs",
-        "source_urls": ["https://docs.cursor.com/en/context"],
+        "source_urls": [
+          "https://docs.cursor.com/en/context"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "tool": "cursor" },
+        "applies_to": {
+          "tool": "cursor"
+        },
         "normative_level": "MUST",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -1189,11 +1807,19 @@
       "category": "cursor",
       "evidence": {
         "source_type": "vendor_docs",
-        "source_urls": ["https://docs.cursor.com/en/context"],
+        "source_urls": [
+          "https://docs.cursor.com/en/context"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "tool": "cursor" },
+        "applies_to": {
+          "tool": "cursor"
+        },
         "normative_level": "MUST",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -1203,11 +1829,19 @@
       "category": "cursor",
       "evidence": {
         "source_type": "vendor_docs",
-        "source_urls": ["https://docs.cursor.com/en/context"],
+        "source_urls": [
+          "https://docs.cursor.com/en/context"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "tool": "cursor" },
+        "applies_to": {
+          "tool": "cursor"
+        },
         "normative_level": "SHOULD",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -1217,11 +1851,19 @@
       "category": "cursor",
       "evidence": {
         "source_type": "vendor_docs",
-        "source_urls": ["https://docs.cursor.com/en/context"],
+        "source_urls": [
+          "https://docs.cursor.com/en/context"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "tool": "cursor" },
+        "applies_to": {
+          "tool": "cursor"
+        },
         "normative_level": "SHOULD",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -1231,11 +1873,17 @@
       "category": "xml",
       "evidence": {
         "source_type": "vendor_docs",
-        "source_urls": ["https://platform.claude.com/docs"],
+        "source_urls": [
+          "https://platform.claude.com/docs"
+        ],
         "verified_on": "2026-02-04",
         "applies_to": {},
         "normative_level": "MUST",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -1245,11 +1893,17 @@
       "category": "xml",
       "evidence": {
         "source_type": "vendor_docs",
-        "source_urls": ["https://www.w3.org/TR/xml/"],
+        "source_urls": [
+          "https://www.w3.org/TR/xml/"
+        ],
         "verified_on": "2026-02-04",
         "applies_to": {},
         "normative_level": "MUST",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -1259,11 +1913,17 @@
       "category": "xml",
       "evidence": {
         "source_type": "vendor_docs",
-        "source_urls": ["https://www.w3.org/TR/xml/"],
+        "source_urls": [
+          "https://www.w3.org/TR/xml/"
+        ],
         "verified_on": "2026-02-04",
         "applies_to": {},
         "normative_level": "MUST",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -1273,11 +1933,19 @@
       "category": "references",
       "evidence": {
         "source_type": "vendor_docs",
-        "source_urls": ["https://code.claude.com/docs/en/memory"],
+        "source_urls": [
+          "https://code.claude.com/docs/en/memory"
+        ],
         "verified_on": "2026-02-04",
-        "applies_to": { "tool": "claude-code" },
+        "applies_to": {
+          "tool": "claude-code"
+        },
         "normative_level": "MUST",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -1287,11 +1955,17 @@
       "category": "references",
       "evidence": {
         "source_type": "community",
-        "source_urls": ["https://spec.commonmark.org/"],
+        "source_urls": [
+          "https://spec.commonmark.org/"
+        ],
         "verified_on": "2026-02-04",
         "applies_to": {},
         "normative_level": "SHOULD",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -1301,11 +1975,17 @@
       "category": "prompt-engineering",
       "evidence": {
         "source_type": "paper",
-        "source_urls": ["https://aclanthology.org/2024.tacl-1.9/"],
+        "source_urls": [
+          "https://aclanthology.org/2024.tacl-1.9/"
+        ],
         "verified_on": "2026-02-04",
         "applies_to": {},
         "normative_level": "SHOULD",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -1315,11 +1995,17 @@
       "category": "prompt-engineering",
       "evidence": {
         "source_type": "paper",
-        "source_urls": ["https://arxiv.org/abs/2201.11903"],
+        "source_urls": [
+          "https://arxiv.org/abs/2201.11903"
+        ],
         "verified_on": "2026-02-04",
         "applies_to": {},
         "normative_level": "SHOULD",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -1336,7 +2022,11 @@
         "verified_on": "2026-02-04",
         "applies_to": {},
         "normative_level": "SHOULD",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -1346,11 +2036,17 @@
       "category": "prompt-engineering",
       "evidence": {
         "source_type": "vendor_docs",
-        "source_urls": ["https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview"],
+        "source_urls": [
+          "https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview"
+        ],
         "verified_on": "2026-02-04",
         "applies_to": {},
         "normative_level": "SHOULD",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -1367,7 +2063,11 @@
         "verified_on": "2026-02-04",
         "applies_to": {},
         "normative_level": "MUST",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -1387,7 +2087,11 @@
         "verified_on": "2026-02-04",
         "applies_to": {},
         "normative_level": "SHOULD",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -1404,7 +2108,11 @@
         "verified_on": "2026-02-04",
         "applies_to": {},
         "normative_level": "SHOULD",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -1421,7 +2129,11 @@
         "verified_on": "2026-02-04",
         "applies_to": {},
         "normative_level": "SHOULD",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -1438,7 +2150,11 @@
         "verified_on": "2026-02-04",
         "applies_to": {},
         "normative_level": "MUST",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -1455,7 +2171,11 @@
         "verified_on": "2026-02-04",
         "applies_to": {},
         "normative_level": "SHOULD",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     },
     {
@@ -1465,11 +2185,17 @@
       "category": "version-awareness",
       "evidence": {
         "source_type": "community",
-        "source_urls": ["https://github.com/avifenesh/agnix/issues/104"],
+        "source_urls": [
+          "https://github.com/avifenesh/agnix/issues/104"
+        ],
         "verified_on": "2026-02-04",
         "applies_to": {},
         "normative_level": "BEST_PRACTICE",
-        "tests": { "unit": true, "fixtures": true, "e2e": false }
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
       }
     }
   ],
@@ -1549,5 +2275,747 @@
       "count": 1,
       "description": "Version-aware validation rules"
     }
+  },
+  "authoring": {
+    "version": "1.0.0",
+    "families": [
+      {
+        "id": "skill",
+        "keys": [
+          {
+            "key": "name",
+            "docs": "Skill identifier in kebab-case. Must be unique and stable.",
+            "rules": [
+              "AS-002",
+              "AS-004",
+              "AS-005",
+              "AS-006"
+            ],
+            "values": [],
+            "snippet": "name: my-skill"
+          },
+          {
+            "key": "description",
+            "docs": "Describe when to use the skill. Include a clear trigger phrase.",
+            "rules": [
+              "AS-003",
+              "AS-008",
+              "AS-010"
+            ],
+            "values": [],
+            "snippet": "description: Use when user wants to ..."
+          },
+          {
+            "key": "allowed-tools",
+            "docs": "Comma-separated tool allowlist. Restrict scope for safety.",
+            "rules": [
+              "CC-SK-007",
+              "CC-SK-008"
+            ],
+            "values": [
+              "Read",
+              "Write",
+              "Edit",
+              "Bash(git:*)",
+              "Grep",
+              "Glob",
+              "Task"
+            ],
+            "snippet": "allowed-tools: Read, Grep, Bash(git:*)"
+          },
+          {
+            "key": "argument-hint",
+            "docs": "Optional hint shown to users for skill arguments.",
+            "rules": [
+              "AS-016"
+            ],
+            "values": [],
+            "snippet": "argument-hint: path/to/file"
+          },
+          {
+            "key": "disable-model-invocation",
+            "docs": "Disable automatic model invocation for dangerous or manual workflows.",
+            "rules": [
+              "CC-SK-006"
+            ],
+            "values": [
+              "true",
+              "false"
+            ],
+            "snippet": "disable-model-invocation: true"
+          },
+          {
+            "key": "user-invocable",
+            "docs": "Whether users can invoke this skill directly.",
+            "rules": [
+              "AS-016"
+            ],
+            "values": [
+              "true",
+              "false"
+            ],
+            "snippet": "user-invocable: true"
+          },
+          {
+            "key": "model",
+            "docs": "Optional Claude model override.",
+            "rules": [
+              "CC-SK-001"
+            ],
+            "values": [
+              "sonnet",
+              "opus",
+              "haiku",
+              "inherit"
+            ],
+            "snippet": "model: sonnet"
+          },
+          {
+            "key": "context",
+            "docs": "Execution context mode for sub-agent usage.",
+            "rules": [
+              "CC-SK-002",
+              "CC-SK-003",
+              "CC-SK-004"
+            ],
+            "values": [
+              "fork"
+            ],
+            "snippet": "context: fork"
+          },
+          {
+            "key": "agent",
+            "docs": "Optional agent to run when context is fork.",
+            "rules": [
+              "CC-SK-003",
+              "CC-SK-004",
+              "CC-SK-005"
+            ],
+            "values": [
+              "Explore",
+              "Plan",
+              "general-purpose"
+            ],
+            "snippet": "agent: general-purpose"
+          },
+          {
+            "key": "compatibility",
+            "docs": "Optional compatibility notes for tools or versions.",
+            "rules": [
+              "AS-011"
+            ],
+            "values": [],
+            "snippet": "compatibility: Claude Code >= 1.0"
+          },
+          {
+            "key": "license",
+            "docs": "Optional license identifier for the skill package.",
+            "rules": [
+              "AS-016"
+            ],
+            "values": [],
+            "snippet": "license: MIT"
+          },
+          {
+            "key": "metadata",
+            "docs": "Optional metadata map for additional machine-readable hints.",
+            "rules": [
+              "AS-016"
+            ],
+            "values": [],
+            "snippet": "metadata:\n  owner: team-platform"
+          }
+        ],
+        "snippets": [
+          {
+            "label": "SKILL frontmatter",
+            "body": "---\nname: my-skill\ndescription: Use when user wants to ...\nmodel: sonnet\nallowed-tools: Read, Grep\n---\n",
+            "docs": "Base SKILL.md frontmatter scaffold.",
+            "rules": [
+              "AS-001",
+              "AS-002",
+              "AS-003"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "agent",
+        "keys": [
+          {
+            "key": "name",
+            "docs": "Agent identifier.",
+            "rules": [
+              "CC-AG-001"
+            ],
+            "values": [],
+            "snippet": "name: my-agent"
+          },
+          {
+            "key": "description",
+            "docs": "Explain what this agent does.",
+            "rules": [
+              "CC-AG-002"
+            ],
+            "values": [],
+            "snippet": "description: Handles focused tasks"
+          },
+          {
+            "key": "tools",
+            "docs": "Allowed tools for this agent.",
+            "rules": [
+              "CC-AG-006"
+            ],
+            "values": [
+              "Read",
+              "Write",
+              "Edit",
+              "Bash",
+              "Grep",
+              "Glob",
+              "Task"
+            ],
+            "snippet": "tools:\n  - Read\n  - Grep"
+          },
+          {
+            "key": "disallowedTools",
+            "docs": "Tools this agent must never use.",
+            "rules": [
+              "CC-AG-006"
+            ],
+            "values": [
+              "Bash"
+            ],
+            "snippet": "disallowedTools:\n  - Bash"
+          },
+          {
+            "key": "model",
+            "docs": "Model selection for this agent.",
+            "rules": [
+              "CC-AG-003"
+            ],
+            "values": [
+              "sonnet",
+              "opus",
+              "haiku",
+              "inherit"
+            ],
+            "snippet": "model: sonnet"
+          },
+          {
+            "key": "permissionMode",
+            "docs": "Permission interaction policy.",
+            "rules": [
+              "CC-AG-004"
+            ],
+            "values": [
+              "default",
+              "acceptEdits",
+              "dontAsk",
+              "bypassPermissions",
+              "plan"
+            ],
+            "snippet": "permissionMode: default"
+          },
+          {
+            "key": "skills",
+            "docs": "Preloaded skills for this agent.",
+            "rules": [
+              "CC-AG-005"
+            ],
+            "values": [],
+            "snippet": "skills:\n  - code-review"
+          },
+          {
+            "key": "hooks",
+            "docs": "Hook configuration for agent lifecycle.",
+            "rules": [
+              "CC-AG-007"
+            ],
+            "values": [],
+            "snippet": "hooks: {}"
+          }
+        ],
+        "snippets": [
+          {
+            "label": "Agent frontmatter",
+            "body": "---\nname: my-agent\ndescription: Handles focused tasks\nmodel: sonnet\npermissionMode: default\n---\n",
+            "docs": "Base Claude sub-agent frontmatter scaffold.",
+            "rules": [
+              "CC-AG-001",
+              "CC-AG-002"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "hooks",
+        "keys": [
+          {
+            "key": "hooks",
+            "docs": "Root hooks object keyed by event name.",
+            "rules": [
+              "CC-HK-001"
+            ],
+            "values": [],
+            "snippet": "\"hooks\": {}"
+          },
+          {
+            "key": "matcher",
+            "docs": "Matcher for tool events only.",
+            "rules": [
+              "CC-HK-003",
+              "CC-HK-004"
+            ],
+            "values": [
+              "*",
+              "Bash",
+              "Read",
+              "Write"
+            ],
+            "snippet": "\"matcher\": \"*\""
+          },
+          {
+            "key": "type",
+            "docs": "Hook type.",
+            "rules": [
+              "CC-HK-005"
+            ],
+            "values": [
+              "command",
+              "prompt"
+            ],
+            "snippet": "\"type\": \"command\""
+          },
+          {
+            "key": "command",
+            "docs": "Shell command to execute for command hooks.",
+            "rules": [
+              "CC-HK-006",
+              "CC-HK-009"
+            ],
+            "values": [],
+            "snippet": "\"command\": \"echo hello\""
+          },
+          {
+            "key": "prompt",
+            "docs": "Prompt template for prompt hooks.",
+            "rules": [
+              "CC-HK-002",
+              "CC-HK-007"
+            ],
+            "values": [],
+            "snippet": "\"prompt\": \"Summarize this change\""
+          },
+          {
+            "key": "timeout",
+            "docs": "Positive integer timeout in seconds.",
+            "rules": [
+              "CC-HK-010",
+              "CC-HK-011"
+            ],
+            "values": [
+              "30",
+              "60",
+              "600"
+            ],
+            "snippet": "\"timeout\": 30"
+          }
+        ],
+        "snippets": [
+          {
+            "label": "Hooks matcher block",
+            "body": "{\n  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"*\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"echo hello\",\n            \"timeout\": 30\n          }\n        ]\n      }\n    ]\n  }\n}",
+            "docs": "Starter hooks JSON structure.",
+            "rules": [
+              "CC-HK-001",
+              "CC-HK-003",
+              "CC-HK-005"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "plugin",
+        "keys": [
+          {
+            "key": "name",
+            "docs": "Plugin name.",
+            "rules": [
+              "CC-PL-004",
+              "CC-PL-005"
+            ],
+            "values": [],
+            "snippet": "\"name\": \"my-plugin\""
+          },
+          {
+            "key": "description",
+            "docs": "Plugin description.",
+            "rules": [
+              "CC-PL-004"
+            ],
+            "values": [],
+            "snippet": "\"description\": \"Plugin description\""
+          },
+          {
+            "key": "version",
+            "docs": "Semver version string.",
+            "rules": [
+              "CC-PL-003",
+              "CC-PL-004"
+            ],
+            "values": [
+              "1.0.0"
+            ],
+            "snippet": "\"version\": \"1.0.0\""
+          },
+          {
+            "key": "author",
+            "docs": "Author metadata object.",
+            "rules": [
+              "CC-PL-006"
+            ],
+            "values": [],
+            "snippet": "\"author\": { \"name\": \"Your Name\" }"
+          },
+          {
+            "key": "homepage",
+            "docs": "Project homepage URL.",
+            "rules": [
+              "CC-PL-006"
+            ],
+            "values": [],
+            "snippet": "\"homepage\": \"https://example.com\""
+          },
+          {
+            "key": "repository",
+            "docs": "Repository URL.",
+            "rules": [
+              "CC-PL-006"
+            ],
+            "values": [],
+            "snippet": "\"repository\": \"https://github.com/org/repo\""
+          },
+          {
+            "key": "license",
+            "docs": "License identifier.",
+            "rules": [
+              "CC-PL-006"
+            ],
+            "values": [
+              "MIT",
+              "Apache-2.0"
+            ],
+            "snippet": "\"license\": \"MIT\""
+          },
+          {
+            "key": "keywords",
+            "docs": "Search/discovery keywords.",
+            "rules": [
+              "CC-PL-006"
+            ],
+            "values": [],
+            "snippet": "\"keywords\": [\"agent\", \"linter\"]"
+          }
+        ],
+        "snippets": [
+          {
+            "label": "Plugin manifest",
+            "body": "{\n  \"name\": \"my-plugin\",\n  \"description\": \"Plugin description\",\n  \"version\": \"1.0.0\"\n}",
+            "docs": "Starter plugin.json manifest.",
+            "rules": [
+              "CC-PL-004"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "mcp",
+        "keys": [
+          {
+            "key": "jsonrpc",
+            "docs": "JSON-RPC protocol version.",
+            "rules": [
+              "MCP-001"
+            ],
+            "values": [
+              "2.0"
+            ],
+            "snippet": "\"jsonrpc\": \"2.0\""
+          },
+          {
+            "key": "protocolVersion",
+            "docs": "MCP negotiated protocol version.",
+            "rules": [
+              "MCP-008"
+            ],
+            "values": [
+              "2025-06-18"
+            ],
+            "snippet": "\"protocolVersion\": \"2025-06-18\""
+          },
+          {
+            "key": "method",
+            "docs": "JSON-RPC method name.",
+            "rules": [
+              "MCP-008"
+            ],
+            "values": [
+              "initialize"
+            ],
+            "snippet": "\"method\": \"initialize\""
+          },
+          {
+            "key": "id",
+            "docs": "Request identifier.",
+            "rules": [
+              "MCP-007"
+            ],
+            "values": [
+              "1"
+            ],
+            "snippet": "\"id\": 1"
+          },
+          {
+            "key": "params",
+            "docs": "Request parameters object.",
+            "rules": [
+              "MCP-008"
+            ],
+            "values": [],
+            "snippet": "\"params\": {}"
+          },
+          {
+            "key": "result",
+            "docs": "Response result payload.",
+            "rules": [
+              "MCP-008"
+            ],
+            "values": [],
+            "snippet": "\"result\": {}"
+          },
+          {
+            "key": "error",
+            "docs": "Response error payload.",
+            "rules": [
+              "MCP-007"
+            ],
+            "values": [],
+            "snippet": "\"error\": {}"
+          },
+          {
+            "key": "mcpServers",
+            "docs": "MCP server map configuration.",
+            "rules": [
+              "MCP-007"
+            ],
+            "values": [],
+            "snippet": "\"mcpServers\": {}"
+          },
+          {
+            "key": "tools",
+            "docs": "Array of MCP tool definitions.",
+            "rules": [
+              "MCP-002"
+            ],
+            "values": [],
+            "snippet": "\"tools\": []"
+          },
+          {
+            "key": "name",
+            "docs": "MCP tool name.",
+            "rules": [
+              "MCP-002"
+            ],
+            "values": [],
+            "snippet": "\"name\": \"tool-name\""
+          },
+          {
+            "key": "description",
+            "docs": "MCP tool description.",
+            "rules": [
+              "MCP-002",
+              "MCP-004"
+            ],
+            "values": [],
+            "snippet": "\"description\": \"Describe what this tool does\""
+          },
+          {
+            "key": "inputSchema",
+            "docs": "JSON Schema for tool inputs.",
+            "rules": [
+              "MCP-002",
+              "MCP-003"
+            ],
+            "values": [],
+            "snippet": "\"inputSchema\": { \"type\": \"object\", \"properties\": {} }"
+          },
+          {
+            "key": "requiresApproval",
+            "docs": "Whether user approval is required before tool execution.",
+            "rules": [
+              "MCP-005"
+            ],
+            "values": [
+              "true",
+              "false"
+            ],
+            "snippet": "\"requiresApproval\": true"
+          },
+          {
+            "key": "confirmation",
+            "docs": "Human-facing confirmation prompt.",
+            "rules": [
+              "MCP-005"
+            ],
+            "values": [],
+            "snippet": "\"confirmation\": \"Are you sure?\""
+          },
+          {
+            "key": "annotations",
+            "docs": "Optional metadata annotations (treat as untrusted).",
+            "rules": [
+              "MCP-006"
+            ],
+            "values": [],
+            "snippet": "\"annotations\": {}"
+          }
+        ],
+        "snippets": [
+          {
+            "label": "MCP initialize request",
+            "body": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 1,\n  \"method\": \"initialize\",\n  \"params\": {\n    \"protocolVersion\": \"2025-06-18\"\n  }\n}",
+            "docs": "Initialize request scaffold.",
+            "rules": [
+              "MCP-001",
+              "MCP-008"
+            ]
+          },
+          {
+            "label": "MCP tool",
+            "body": "{\n  \"name\": \"tool-name\",\n  \"description\": \"Describe what this tool does\",\n  \"inputSchema\": {\n    \"type\": \"object\",\n    \"properties\": {}\n  },\n  \"requiresApproval\": true\n}",
+            "docs": "Tool definition scaffold.",
+            "rules": [
+              "MCP-002",
+              "MCP-003",
+              "MCP-005"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "copilot",
+        "keys": [
+          {
+            "key": "applyTo",
+            "docs": "Glob pattern selecting files for scoped instruction.",
+            "rules": [
+              "COP-002",
+              "COP-003",
+              "COP-004"
+            ],
+            "values": [
+              "**/*.ts",
+              "**/*.rs",
+              "**/*.py"
+            ],
+            "snippet": "applyTo: \"**/*.ts\""
+          }
+        ],
+        "snippets": [
+          {
+            "label": "Copilot scoped frontmatter",
+            "body": "---\napplyTo: \"**/*.ts\"\n---\n",
+            "docs": "Scoped Copilot instruction frontmatter.",
+            "rules": [
+              "COP-002",
+              "COP-003"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "cursor",
+        "keys": [
+          {
+            "key": "description",
+            "docs": "Human-readable rule summary.",
+            "rules": [
+              "CUR-003"
+            ],
+            "values": [],
+            "snippet": "description: TypeScript rules"
+          },
+          {
+            "key": "globs",
+            "docs": "Glob pattern(s) selecting files for this rule.",
+            "rules": [
+              "CUR-004",
+              "CUR-005"
+            ],
+            "values": [
+              "**/*.ts",
+              "**/*.tsx",
+              "**/*.rs"
+            ],
+            "snippet": "globs: \"**/*.ts\""
+          },
+          {
+            "key": "alwaysApply",
+            "docs": "Always apply this rule regardless of filename matching.",
+            "rules": [
+              "CUR-005"
+            ],
+            "values": [
+              "true",
+              "false"
+            ],
+            "snippet": "alwaysApply: false"
+          }
+        ],
+        "snippets": [
+          {
+            "label": "Cursor .mdc frontmatter",
+            "body": "---\ndescription: TypeScript rules\nglobs: \"**/*.ts\"\nalwaysApply: false\n---\n",
+            "docs": "Cursor rule frontmatter scaffold.",
+            "rules": [
+              "CUR-003",
+              "CUR-004",
+              "CUR-005"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "claude-agents",
+        "keys": [],
+        "snippets": [
+          {
+            "label": "Project Context section",
+            "body": "## Project Context\nDescribe the repository purpose, architecture, and constraints.\n",
+            "docs": "Recommended AGENTS/CLAUDE section scaffold.",
+            "rules": [
+              "AGM-004"
+            ]
+          },
+          {
+            "label": "Workflow section",
+            "body": "## Workflow\n1. Explore current state\n2. Implement minimal safe changes\n3. Run tests and report results\n",
+            "docs": "Workflow scaffold for agent guidance docs.",
+            "rules": [
+              "AGM-002"
+            ]
+          },
+          {
+            "label": "Code comment directive",
+            "body": "::code-comment{title=\"[P2] Issue\" body=\"Describe the issue clearly.\" file=\"/path/to/file\" start=1 end=1}",
+            "docs": "Inline review directive scaffold.",
+            "rules": [
+              "AGM-001"
+            ]
+          }
+        ]
+      }
+    ]
   }
 }

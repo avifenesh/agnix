@@ -1,7 +1,9 @@
 ---
 id: cc-hk-006
-title: "CC-HK-006 Missing Command Field"
+title: "CC-HK-006: Missing Command Field - Claude Hooks"
 sidebar_label: "CC-HK-006"
+description: "agnix rule CC-HK-006 checks for missing command field in claude hooks files. Severity: HIGH. See examples and fix guidance."
+keywords: ["CC-HK-006", "missing command field", "claude hooks", "validation", "agnix", "linter"]
 ---
 
 ## Summary

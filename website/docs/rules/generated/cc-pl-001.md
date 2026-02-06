@@ -1,7 +1,9 @@
 ---
 id: cc-pl-001
-title: "CC-PL-001 Plugin Manifest Not in .claude-plugin/"
+title: "CC-PL-001: Plugin Manifest Not in .claude-plugin/"
 sidebar_label: "CC-PL-001"
+description: "agnix rule CC-PL-001 checks for plugin manifest not in .claude-plugin/ in claude plugins files. Severity: HIGH. See examples and fix guidance."
+keywords: ["CC-PL-001", "plugin manifest not in .claude-plugin/", "claude plugins", "validation", "agnix", "linter"]
 ---
 
 ## Summary

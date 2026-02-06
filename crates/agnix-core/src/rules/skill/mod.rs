@@ -3,7 +3,7 @@
 use crate::{
     config::LintConfig,
     diagnostics::{Diagnostic, Fix},
-    parsers::frontmatter::{split_frontmatter, FrontmatterParts},
+    parsers::frontmatter::{FrontmatterParts, split_frontmatter},
     regex_util::static_regex,
     rules::Validator,
     schemas::skill::SkillSchema,
@@ -45,6 +45,7 @@ struct PathMatch {
 }
 
 static_regex!(fn name_format_regex, r"^[a-z0-9]+(-[a-z0-9]+)*$");
+static_regex!(fn consecutive_hyphen_regex, r"-{2,}");
 static_regex!(fn description_xml_regex, r"<[^>]+>");
 static_regex!(fn reference_path_regex, "(?i)\\b(?:references?|refs)[/\\\\][^\\s)\\]}>\"']+");
 static_regex!(fn windows_path_regex, r"(?i)\b(?:[a-z]:)?[a-z0-9._-]+(?:\\[a-z0-9._-]+)+\b");
@@ -199,6 +200,10 @@ impl<'a> ValidationContext<'a> {
         frontmatter_value_byte_range(self.content, &self.parts, key)
     }
 
+    fn frontmatter_key_line_byte_range(&self, key: &str) -> Option<(usize, usize)> {
+        frontmatter_key_line_byte_range(self.content, &self.parts, key)
+    }
+
     /// AS-001, AS-016: Validate frontmatter structure and parse
     fn validate_frontmatter_structure(&mut self) {
         let (frontmatter_line, frontmatter_col) = self.line_col_at(self.parts.frontmatter_start);
@@ -322,30 +327,66 @@ impl<'a> ValidationContext<'a> {
         if self.config.is_rule_enabled("AS-005")
             && (name_trimmed.starts_with('-') || name_trimmed.ends_with('-'))
         {
-            self.diagnostics.push(
-                Diagnostic::error(
-                    self.path.to_path_buf(),
-                    name_line,
-                    name_col,
-                    "AS-005",
-                    t!("rules.as_005.message", name = name_trimmed),
-                )
-                .with_suggestion(t!("rules.as_005.suggestion")),
-            );
+            let mut diagnostic = Diagnostic::error(
+                self.path.to_path_buf(),
+                name_line,
+                name_col,
+                "AS-005",
+                t!("rules.as_005.message", name = name_trimmed),
+            )
+            .with_suggestion(t!("rules.as_005.suggestion"));
+
+            // Safe auto-fix: trim leading/trailing hyphens.
+            if let Some((start, end)) = self.frontmatter_value_byte_range("name") {
+                let fixed_name = name_trimmed.trim_matches('-').to_string();
+                if !fixed_name.is_empty()
+                    && fixed_name != name_trimmed
+                    && name_format_regex().is_match(&fixed_name)
+                {
+                    diagnostic = diagnostic.with_fix(Fix::replace(
+                        start,
+                        end,
+                        fixed_name,
+                        "Remove leading/trailing hyphens from skill name",
+                        true,
+                    ));
+                }
+            }
+
+            self.diagnostics.push(diagnostic);
         }
 
         // AS-006: Name cannot contain consecutive hyphens
         if self.config.is_rule_enabled("AS-006") && name_trimmed.contains("--") {
-            self.diagnostics.push(
-                Diagnostic::error(
-                    self.path.to_path_buf(),
-                    name_line,
-                    name_col,
-                    "AS-006",
-                    t!("rules.as_006.message", name = name_trimmed),
-                )
-                .with_suggestion(t!("rules.as_006.suggestion")),
-            );
+            let mut diagnostic = Diagnostic::error(
+                self.path.to_path_buf(),
+                name_line,
+                name_col,
+                "AS-006",
+                t!("rules.as_006.message", name = name_trimmed),
+            )
+            .with_suggestion(t!("rules.as_006.suggestion"));
+
+            // Safe auto-fix: collapse repeated hyphens.
+            if let Some((start, end)) = self.frontmatter_value_byte_range("name") {
+                let fixed_name = consecutive_hyphen_regex()
+                    .replace_all(name_trimmed, "-")
+                    .to_string();
+                if !fixed_name.is_empty()
+                    && fixed_name != name_trimmed
+                    && name_format_regex().is_match(&fixed_name)
+                {
+                    diagnostic = diagnostic.with_fix(Fix::replace(
+                        start,
+                        end,
+                        fixed_name,
+                        "Collapse consecutive hyphens in skill name",
+                        true,
+                    ));
+                }
+            }
+
+            self.diagnostics.push(diagnostic);
         }
 
         // AS-007: Reserved name
@@ -468,23 +509,34 @@ impl<'a> ValidationContext<'a> {
         if self.config.is_rule_enabled("CC-SK-001") {
             if let Some(model) = &schema.model {
                 if !VALID_MODELS.contains(&model.as_str()) {
-                    self.diagnostics.push(
-                        Diagnostic::error(
-                            self.path.to_path_buf(),
-                            model_line,
-                            model_col,
-                            "CC-SK-001",
-                            t!(
-                                "rules.cc_sk_001.message",
-                                model = model.as_str(),
-                                valid = VALID_MODELS.join(", ")
-                            ),
-                        )
-                        .with_suggestion(t!(
-                            "rules.cc_sk_001.suggestion",
+                    let mut diagnostic = Diagnostic::error(
+                        self.path.to_path_buf(),
+                        model_line,
+                        model_col,
+                        "CC-SK-001",
+                        t!(
+                            "rules.cc_sk_001.message",
+                            model = model.as_str(),
                             valid = VALID_MODELS.join(", ")
-                        )),
-                    );
+                        ),
+                    )
+                    .with_suggestion(t!(
+                        "rules.cc_sk_001.suggestion",
+                        valid = VALID_MODELS.join(", ")
+                    ));
+
+                    // Unsafe auto-fix: default invalid model to sonnet.
+                    if let Some((start, end)) = self.frontmatter_value_byte_range("model") {
+                        diagnostic = diagnostic.with_fix(Fix::replace(
+                            start,
+                            end,
+                            "sonnet",
+                            "Replace invalid model with 'sonnet'",
+                            false,
+                        ));
+                    }
+
+                    self.diagnostics.push(diagnostic);
                 }
             }
         }
@@ -493,16 +545,27 @@ impl<'a> ValidationContext<'a> {
         if self.config.is_rule_enabled("CC-SK-002") {
             if let Some(context) = &schema.context {
                 if context != "fork" {
-                    self.diagnostics.push(
-                        Diagnostic::error(
-                            self.path.to_path_buf(),
-                            context_line,
-                            context_col,
-                            "CC-SK-002",
-                            t!("rules.cc_sk_002.message", context = context.as_str()),
-                        )
-                        .with_suggestion(t!("rules.cc_sk_002.suggestion")),
-                    );
+                    let mut diagnostic = Diagnostic::error(
+                        self.path.to_path_buf(),
+                        context_line,
+                        context_col,
+                        "CC-SK-002",
+                        t!("rules.cc_sk_002.message", context = context.as_str()),
+                    )
+                    .with_suggestion(t!("rules.cc_sk_002.suggestion"));
+
+                    // Unsafe auto-fix: normalize context to fork.
+                    if let Some((start, end)) = self.frontmatter_value_byte_range("context") {
+                        diagnostic = diagnostic.with_fix(Fix::replace(
+                            start,
+                            end,
+                            "fork",
+                            "Replace invalid context with 'fork'",
+                            false,
+                        ));
+                    }
+
+                    self.diagnostics.push(diagnostic);
                 }
             }
         }
@@ -512,16 +575,26 @@ impl<'a> ValidationContext<'a> {
             && schema.context.as_deref() == Some("fork")
             && schema.agent.is_none()
         {
-            self.diagnostics.push(
-                Diagnostic::error(
-                    self.path.to_path_buf(),
-                    context_line,
-                    context_col,
-                    "CC-SK-003",
-                    t!("rules.cc_sk_003.message"),
-                )
-                .with_suggestion(t!("rules.cc_sk_003.suggestion")),
-            );
+            let mut diagnostic = Diagnostic::error(
+                self.path.to_path_buf(),
+                context_line,
+                context_col,
+                "CC-SK-003",
+                t!("rules.cc_sk_003.message"),
+            )
+            .with_suggestion(t!("rules.cc_sk_003.suggestion"));
+
+            // Unsafe auto-fix: add default agent when context is fork.
+            if let Some((_, context_line_end)) = self.frontmatter_key_line_byte_range("context") {
+                diagnostic = diagnostic.with_fix(Fix::insert(
+                    context_line_end,
+                    "agent: general-purpose\n",
+                    "Add required 'agent' for context: fork",
+                    false,
+                ));
+            }
+
+            self.diagnostics.push(diagnostic);
         }
 
         // CC-SK-004: Agent without context
@@ -529,16 +602,38 @@ impl<'a> ValidationContext<'a> {
             && schema.agent.is_some()
             && schema.context.as_deref() != Some("fork")
         {
-            self.diagnostics.push(
-                Diagnostic::error(
-                    self.path.to_path_buf(),
-                    agent_line,
-                    agent_col,
-                    "CC-SK-004",
-                    t!("rules.cc_sk_004.message"),
-                )
-                .with_suggestion(t!("rules.cc_sk_004.suggestion")),
-            );
+            let mut diagnostic = Diagnostic::error(
+                self.path.to_path_buf(),
+                agent_line,
+                agent_col,
+                "CC-SK-004",
+                t!("rules.cc_sk_004.message"),
+            )
+            .with_suggestion(t!("rules.cc_sk_004.suggestion"));
+
+            // Unsafe auto-fix:
+            // - if context exists, normalize to fork
+            // - otherwise insert context before agent key
+            if let Some((start, end)) = self.frontmatter_value_byte_range("context") {
+                diagnostic = diagnostic.with_fix(Fix::replace(
+                    start,
+                    end,
+                    "fork",
+                    "Set context to 'fork' when agent is configured",
+                    false,
+                ));
+            } else if let Some((agent_line_start, _)) =
+                self.frontmatter_key_line_byte_range("agent")
+            {
+                diagnostic = diagnostic.with_fix(Fix::insert(
+                    agent_line_start,
+                    "context: fork\n",
+                    "Add required 'context: fork' for agent usage",
+                    false,
+                ));
+            }
+
+            self.diagnostics.push(diagnostic);
         }
     }
 
@@ -762,16 +857,34 @@ impl<'a> ValidationContext<'a> {
             let paths = extract_windows_paths(body_raw);
             for win_path in paths {
                 let (line, col) = self.line_col_at(self.parts.body_start + win_path.start);
-                self.diagnostics.push(
-                    Diagnostic::error(
-                        self.path.to_path_buf(),
-                        line,
-                        col,
-                        "AS-014",
-                        t!("rules.as_014.message", path = win_path.path.as_str()),
-                    )
-                    .with_suggestion(t!("rules.as_014.suggestion")),
-                );
+                let mut diagnostic = Diagnostic::error(
+                    self.path.to_path_buf(),
+                    line,
+                    col,
+                    "AS-014",
+                    t!("rules.as_014.message", path = win_path.path.as_str()),
+                )
+                .with_suggestion(t!("rules.as_014.suggestion"));
+
+                // Safe auto-fix: normalize path separators in-place.
+                let replacement = win_path.path.replace('\\', "/");
+                let abs_start = self.parts.body_start + win_path.start;
+                let abs_end = abs_start + win_path.path.len();
+                if replacement != win_path.path
+                    && abs_end <= self.content.len()
+                    && self.content.is_char_boundary(abs_start)
+                    && self.content.is_char_boundary(abs_end)
+                {
+                    diagnostic = diagnostic.with_fix(Fix::replace(
+                        abs_start,
+                        abs_end,
+                        replacement,
+                        "Normalize Windows path separators to '/'",
+                        true,
+                    ));
+                }
+
+                self.diagnostics.push(diagnostic);
             }
         }
     }

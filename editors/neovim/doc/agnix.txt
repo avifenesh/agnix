@@ -2,7 +2,7 @@
 
 Author:  Avi Fenesh
 License: MIT
-Version: 0.7.2
+Version: 0.8.1
 
 ==============================================================================
 CONTENTS                                                     *agnix-contents*

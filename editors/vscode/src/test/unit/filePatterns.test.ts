@@ -262,7 +262,29 @@ describe('Fix Preview Logic', () => {
       return `Line ${lineNum}: replace text`;
     }
 
-    return `${changes.length} changes`;
+    let inserts = 0;
+    let deletes = 0;
+    let replaces = 0;
+
+    for (const change of changes) {
+      if (change.newText === '') {
+        deletes++;
+      } else if (change.range.isEmpty) {
+        inserts++;
+      } else {
+        replaces++;
+      }
+    }
+
+    const parts: string[] = [];
+    if (replaces > 0) parts.push(`${replaces} replace${replaces > 1 ? 's' : ''}`);
+    if (inserts > 0) parts.push(`${inserts} insert${inserts > 1 ? 's' : ''}`);
+    if (deletes > 0) parts.push(`${deletes} delete${deletes > 1 ? 's' : ''}`);
+
+    if (parts.length === 0) {
+      return `${changes.length} changes`;
+    }
+    return `${changes.length} changes (${parts.join(', ')})`;
   }
 
   describe('getEditSummary', () => {
@@ -339,7 +361,41 @@ describe('Fix Preview Logic', () => {
           newText: 'c',
         },
       ];
-      assert.strictEqual(getEditSummary(changes), '3 changes');
+      assert.strictEqual(getEditSummary(changes), '3 changes (3 replaces)');
+    });
+
+    it('should summarize mixed change types', () => {
+      const changes: MockTextEdit[] = [
+        {
+          range: {
+            start: { line: 1, character: 0 },
+            end: { line: 1, character: 3 },
+            isEmpty: false,
+          },
+          newText: 'abc',
+        },
+        {
+          range: {
+            start: { line: 2, character: 2 },
+            end: { line: 2, character: 2 },
+            isEmpty: true,
+          },
+          newText: 'x',
+        },
+        {
+          range: {
+            start: { line: 3, character: 0 },
+            end: { line: 3, character: 1 },
+            isEmpty: false,
+          },
+          newText: '',
+        },
+      ];
+
+      assert.strictEqual(
+        getEditSummary(changes),
+        '3 changes (1 replace, 1 insert, 1 delete)'
+      );
     });
   });
 
@@ -351,6 +407,36 @@ describe('Fix Preview Logic', () => {
 
       assert.strictEqual(safeFix.isPreferred, true);
       assert.strictEqual(unsafeFix.isPreferred, false);
+    });
+  });
+
+  describe('Agnix action filtering', () => {
+    const AGNIX_RULE_RE = /^(AS|CC|PE|MCP|AGM|COP|CUR|XML|XP)-/;
+
+    function isAgnixDiagnostic(diag: { source?: string; code?: string }): boolean {
+      return diag.source === 'agnix' || AGNIX_RULE_RE.test(diag.code || '');
+    }
+
+    function filterAgnixFixActions(
+      actions: Array<{ edit?: object; diagnostics?: Array<{ source?: string; code?: string }> }>
+    ) {
+      return actions.filter((action) => {
+        if (!action.edit) return false;
+        const diagnostics = action.diagnostics || [];
+        return diagnostics.some(isAgnixDiagnostic);
+      });
+    }
+
+    it('should keep only actions with agnix diagnostics', () => {
+      const actions = [
+        { edit: {}, diagnostics: [{ source: 'agnix', code: 'AS-004' }] },
+        { edit: {}, diagnostics: [{ source: 'eslint', code: 'no-unused-vars' }] },
+        { edit: undefined, diagnostics: [{ source: 'agnix', code: 'AS-005' }] },
+      ];
+
+      const filtered = filterAgnixFixActions(actions);
+      assert.strictEqual(filtered.length, 1);
+      assert.strictEqual(filtered[0].diagnostics?.[0].code, 'AS-004');
     });
   });
 });

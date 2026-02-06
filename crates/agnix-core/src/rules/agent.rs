@@ -3,8 +3,12 @@
 //! Validates Claude Code subagent definitions in `.claude/agents/*.md`
 
 use crate::{
-    config::LintConfig, diagnostics::Diagnostic, fs::FileSystem,
-    parsers::frontmatter::parse_frontmatter, rules::Validator, schemas::agent::AgentSchema,
+    config::LintConfig,
+    diagnostics::{Diagnostic, Fix},
+    fs::FileSystem,
+    parsers::frontmatter::split_frontmatter,
+    rules::Validator,
+    schemas::agent::AgentSchema,
 };
 use rust_i18n::t;
 use std::collections::HashSet;
@@ -26,6 +30,73 @@ pub struct AgentValidator;
 
 /// Maximum directory traversal depth to prevent unbounded filesystem walking
 const MAX_TRAVERSAL_DEPTH: usize = 10;
+
+/// Find the byte range of a scalar frontmatter value for a key.
+/// Returns the value-only range (without quotes) in full-content byte offsets.
+fn frontmatter_value_byte_range(content: &str, key: &str) -> Option<(usize, usize)> {
+    let parts = split_frontmatter(content);
+    if !parts.has_frontmatter || !parts.has_closing {
+        return None;
+    }
+
+    let frontmatter = &parts.frontmatter;
+    let mut offset = 0usize;
+    let bytes = frontmatter.as_bytes();
+
+    for line in frontmatter.lines() {
+        let trimmed = line.trim_start();
+        if trimmed.starts_with('#') || trimmed.is_empty() {
+            let line_end = offset + line.len();
+            if line_end < bytes.len() && bytes[line_end] == b'\n' {
+                offset = line_end + 1;
+            } else {
+                offset = line_end;
+            }
+            continue;
+        }
+
+        if let Some(rest) = trimmed.strip_prefix(key) {
+            if let Some(after_colon) = rest.trim_start().strip_prefix(':') {
+                let leading_ws = line.len() - trimmed.len();
+                let ws_after_key = rest.len() - rest.trim_start().len();
+                let key_end = leading_ws + key.len() + ws_after_key + 1; // ':'
+
+                let value_str = after_colon.trim_start();
+                if value_str.is_empty() {
+                    return None;
+                }
+
+                let value_offset_in_line = key_end + (after_colon.len() - value_str.len());
+                let (value_start, value_len) = if let Some(inner) = value_str.strip_prefix('"') {
+                    let end_quote = inner.find('"')?;
+                    (value_offset_in_line + 1, end_quote)
+                } else if let Some(inner) = value_str.strip_prefix('\'') {
+                    let end_quote = inner.find('\'')?;
+                    (value_offset_in_line + 1, end_quote)
+                } else {
+                    let value_end = value_str
+                        .find(" #")
+                        .or_else(|| value_str.find("\t#"))
+                        .unwrap_or(value_str.len());
+                    (value_offset_in_line, value_end)
+                };
+
+                let abs_start = parts.frontmatter_start + offset + value_start;
+                let abs_end = abs_start + value_len;
+                return Some((abs_start, abs_end));
+            }
+        }
+
+        let line_end = offset + line.len();
+        if line_end < bytes.len() && bytes[line_end] == b'\n' {
+            offset = line_end + 1;
+        } else {
+            offset = line_end;
+        }
+    }
+
+    None
+}
 
 impl AgentValidator {
     /// Find the project root by looking for .claude directory.
@@ -100,15 +171,20 @@ impl Validator for AgentValidator {
             return diagnostics;
         }
 
-        // Parse frontmatter
-        let schema: AgentSchema = match parse_frontmatter(content) {
-            Ok((s, _body)) => s,
+        // Parse frontmatter directly to preserve serde_yaml error location
+        let parts = split_frontmatter(content);
+        let schema: AgentSchema = match serde_yaml::from_str(&parts.frontmatter) {
+            Ok(s) => s,
             Err(e) => {
                 if config.is_rule_enabled("CC-AG-007") {
+                    let (line, column) = e
+                        .location()
+                        .map(|loc| (loc.line(), loc.column()))
+                        .unwrap_or((1, 0));
                     diagnostics.push(Diagnostic::error(
                         path.to_path_buf(),
-                        1,
-                        0,
+                        line,
+                        column,
                         "CC-AG-007",
                         t!("rules.cc_ag_007.parse_error", error = e.to_string()),
                     ));
@@ -158,23 +234,34 @@ impl Validator for AgentValidator {
         if config.is_rule_enabled("CC-AG-003") {
             if let Some(model) = &schema.model {
                 if !VALID_MODELS.contains(&model.as_str()) {
-                    diagnostics.push(
-                        Diagnostic::error(
-                            path.to_path_buf(),
-                            1,
-                            0,
-                            "CC-AG-003",
-                            t!(
-                                "rules.cc_ag_003.message",
-                                model = model.as_str(),
-                                valid = VALID_MODELS.join(", ")
-                            ),
-                        )
-                        .with_suggestion(t!(
-                            "rules.cc_ag_003.suggestion",
+                    let mut diagnostic = Diagnostic::error(
+                        path.to_path_buf(),
+                        1,
+                        0,
+                        "CC-AG-003",
+                        t!(
+                            "rules.cc_ag_003.message",
+                            model = model.as_str(),
                             valid = VALID_MODELS.join(", ")
-                        )),
-                    );
+                        ),
+                    )
+                    .with_suggestion(t!(
+                        "rules.cc_ag_003.suggestion",
+                        valid = VALID_MODELS.join(", ")
+                    ));
+
+                    // Unsafe auto-fix: default invalid model to sonnet.
+                    if let Some((start, end)) = frontmatter_value_byte_range(content, "model") {
+                        diagnostic = diagnostic.with_fix(Fix::replace(
+                            start,
+                            end,
+                            "sonnet",
+                            "Replace invalid model with 'sonnet'",
+                            false,
+                        ));
+                    }
+
+                    diagnostics.push(diagnostic);
                 }
             }
         }
@@ -183,23 +270,36 @@ impl Validator for AgentValidator {
         if config.is_rule_enabled("CC-AG-004") {
             if let Some(mode) = &schema.permission_mode {
                 if !VALID_PERMISSION_MODES.contains(&mode.as_str()) {
-                    diagnostics.push(
-                        Diagnostic::error(
-                            path.to_path_buf(),
-                            1,
-                            0,
-                            "CC-AG-004",
-                            t!(
-                                "rules.cc_ag_004.message",
-                                mode = mode.as_str(),
-                                valid = VALID_PERMISSION_MODES.join(", ")
-                            ),
-                        )
-                        .with_suggestion(t!(
-                            "rules.cc_ag_004.suggestion",
+                    let mut diagnostic = Diagnostic::error(
+                        path.to_path_buf(),
+                        1,
+                        0,
+                        "CC-AG-004",
+                        t!(
+                            "rules.cc_ag_004.message",
+                            mode = mode.as_str(),
                             valid = VALID_PERMISSION_MODES.join(", ")
-                        )),
-                    );
+                        ),
+                    )
+                    .with_suggestion(t!(
+                        "rules.cc_ag_004.suggestion",
+                        valid = VALID_PERMISSION_MODES.join(", ")
+                    ));
+
+                    // Unsafe auto-fix: normalize invalid permission mode to default.
+                    if let Some((start, end)) =
+                        frontmatter_value_byte_range(content, "permissionMode")
+                    {
+                        diagnostic = diagnostic.with_fix(Fix::replace(
+                            start,
+                            end,
+                            "default",
+                            "Replace invalid permissionMode with 'default'",
+                            false,
+                        ));
+                    }
+
+                    diagnostics.push(diagnostic);
                 }
             }
         }
@@ -368,9 +468,11 @@ Agent instructions"#;
 
         assert_eq!(cc_ag_002.len(), 1);
         assert_eq!(cc_ag_002[0].level, DiagnosticLevel::Error);
-        assert!(cc_ag_002[0]
-            .message
-            .contains("missing required 'description'"));
+        assert!(
+            cc_ag_002[0]
+                .message
+                .contains("missing required 'description'")
+        );
     }
 
     #[test]
@@ -428,6 +530,27 @@ Agent instructions"#;
         assert_eq!(cc_ag_003[0].level, DiagnosticLevel::Error);
         assert!(cc_ag_003[0].message.contains("Invalid model"));
         assert!(cc_ag_003[0].message.contains("gpt-4"));
+    }
+
+    #[test]
+    fn test_cc_ag_003_has_unsafe_fix() {
+        let content = r#"---
+name: my-agent
+description: A test agent
+model: gpt-4
+---
+Agent instructions"#;
+
+        let diagnostics = validate(content);
+        let cc_ag_003 = diagnostics
+            .iter()
+            .find(|d| d.rule == "CC-AG-003")
+            .expect("CC-AG-003 should be reported");
+
+        assert!(cc_ag_003.has_fixes());
+        let fix = &cc_ag_003.fixes[0];
+        assert_eq!(fix.replacement, "sonnet");
+        assert!(!fix.safe);
     }
 
     #[test]
@@ -540,6 +663,27 @@ Agent instructions"#;
         assert_eq!(cc_ag_004[0].level, DiagnosticLevel::Error);
         assert!(cc_ag_004[0].message.contains("Invalid permissionMode"));
         assert!(cc_ag_004[0].message.contains("admin"));
+    }
+
+    #[test]
+    fn test_cc_ag_004_has_unsafe_fix() {
+        let content = r#"---
+name: my-agent
+description: A test agent
+permissionMode: admin
+---
+Agent instructions"#;
+
+        let diagnostics = validate(content);
+        let cc_ag_004 = diagnostics
+            .iter()
+            .find(|d| d.rule == "CC-AG-004")
+            .expect("CC-AG-004 should be reported");
+
+        assert!(cc_ag_004.has_fixes());
+        let fix = &cc_ag_004.fixes[0];
+        assert_eq!(fix.replacement, "default");
+        assert!(!fix.safe);
     }
 
     #[test]
@@ -889,9 +1033,11 @@ Agent instructions"#;
             .collect();
 
         assert_eq!(parse_errors.len(), 1);
-        assert!(parse_errors[0]
-            .message
-            .contains("must have YAML frontmatter"));
+        assert!(
+            parse_errors[0]
+                .message
+                .contains("must have YAML frontmatter")
+        );
     }
 
     #[test]
@@ -1570,6 +1716,80 @@ Body"#;
                 mode
             );
         }
+    }
+
+    // ===== CC-AG-007 line/column accuracy tests =====
+
+    #[test]
+    fn test_cc_ag_007_type_error_reports_error_line() {
+        // tools should be a list, not a string - error should be on the tools line (line 4)
+        let content = "---\nname: test\ndescription: test\ntools: not-a-list\n---\nBody";
+
+        let diagnostics = validate(content);
+        let parse_errors: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-AG-007")
+            .collect();
+
+        assert_eq!(parse_errors.len(), 1);
+        assert_eq!(
+            parse_errors[0].line, 4,
+            "Expected error on line 4 (tools field), got {}",
+            parse_errors[0].line
+        );
+    }
+
+    #[test]
+    fn test_cc_ag_007_invalid_yaml_reports_correct_line() {
+        // Invalid YAML on line 2
+        let content = "---\nname: [invalid yaml\n---\nBody";
+
+        let diagnostics = validate(content);
+        let parse_errors: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-AG-007")
+            .collect();
+
+        assert_eq!(parse_errors.len(), 1);
+        assert!(
+            parse_errors[0].line > 1,
+            "Expected error line > 1, got {}",
+            parse_errors[0].line
+        );
+    }
+
+    #[test]
+    fn test_cc_ag_007_reports_column() {
+        // tools should be a list, not a string
+        let content = "---\nname: test\ndescription: test\ntools: not-a-list\n---\nBody";
+
+        let diagnostics = validate(content);
+        let parse_errors: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-AG-007")
+            .collect();
+
+        assert_eq!(parse_errors.len(), 1);
+        assert!(
+            parse_errors[0].column > 0,
+            "Expected column > 0 when location is available, got {}",
+            parse_errors[0].column
+        );
+    }
+
+    #[test]
+    fn test_cc_ag_007_missing_frontmatter_still_reports_line_1() {
+        let content = "Just agent instructions without frontmatter";
+
+        let diagnostics = validate(content);
+        let parse_errors: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-AG-007")
+            .collect();
+
+        assert_eq!(parse_errors.len(), 1);
+        assert_eq!(parse_errors[0].line, 1);
+        assert_eq!(parse_errors[0].column, 0);
     }
 
     #[test]

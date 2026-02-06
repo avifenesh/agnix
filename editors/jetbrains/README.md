@@ -4,6 +4,7 @@ JetBrains IDE integration for agnix using LSP4IJ.
 
 <!-- Plugin description -->
 Real-time validation for AI agent configuration files in JetBrains IDEs.
+Install from the [JetBrains Marketplace](https://plugins.jetbrains.com/plugin/30087-agnix).
 
 Features:
 

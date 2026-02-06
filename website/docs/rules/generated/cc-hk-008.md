@@ -1,7 +1,9 @@
 ---
 id: cc-hk-008
-title: "CC-HK-008 Script File Not Found"
+title: "CC-HK-008: Script File Not Found - Claude Hooks"
 sidebar_label: "CC-HK-008"
+description: "agnix rule CC-HK-008 checks for script file not found in claude hooks files. Severity: HIGH. See examples and fix guidance."
+keywords: ["CC-HK-008", "script file not found", "claude hooks", "validation", "agnix", "linter"]
 ---
 
 ## Summary

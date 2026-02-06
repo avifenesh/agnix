@@ -2,13 +2,15 @@
 
 use crate::{
     config::LintConfig,
-    diagnostics::Diagnostic,
+    diagnostics::{Diagnostic, Fix},
     rules::Validator,
     schemas::mcp::{
-        extract_request_protocol_version, extract_response_protocol_version, is_initialize_message,
-        is_initialize_response, validate_json_schema_structure, McpConfigSchema, McpToolSchema,
+        McpConfigSchema, McpToolSchema, extract_request_protocol_version,
+        extract_response_protocol_version, is_initialize_message, is_initialize_response,
+        validate_json_schema_structure,
     },
 };
+use regex::Regex;
 use rust_i18n::t;
 use std::path::Path;
 
@@ -24,6 +26,45 @@ fn find_json_field_location(content: &str, field_name: &str) -> (usize, usize) {
         return (line, col);
     }
     (1, 0)
+}
+
+/// Find a unique value span for a JSON scalar key (string/number/bool/null).
+/// Returns the full value span (including quotes for strings).
+fn find_unique_json_scalar_value_span(content: &str, key: &str) -> Option<(usize, usize)> {
+    let pattern = format!(
+        r#"("{}"\s*:\s*)((?:"[^"]*")|(?:-?\d+(?:\.\d+)?)|(?:true|false|null))"#,
+        regex::escape(key)
+    );
+    let re = Regex::new(&pattern).ok()?;
+    let mut captures = re.captures_iter(content);
+    let first = captures.next()?;
+    if captures.next().is_some() {
+        return None;
+    }
+    let value = first.get(2)?;
+    Some((value.start(), value.end()))
+}
+
+/// Find a unique string value span for a key with a known current value.
+/// Returns the value-only span (without quotes).
+fn find_unique_json_string_value_span(
+    content: &str,
+    key: &str,
+    current_value: &str,
+) -> Option<(usize, usize)> {
+    let pattern = format!(
+        r#"("{}"\s*:\s*)"({})""#,
+        regex::escape(key),
+        regex::escape(current_value)
+    );
+    let re = Regex::new(&pattern).ok()?;
+    let mut captures = re.captures_iter(content);
+    let first = captures.next()?;
+    if captures.next().is_some() {
+        return None;
+    }
+    let value = first.get(2)?;
+    Some((value.start(), value.end()))
 }
 
 /// Find the line number of a tool in a tools array (0-indexed)
@@ -214,28 +255,50 @@ fn validate_jsonrpc_version(
         let (line, col) = find_json_field_location(content, "jsonrpc");
         if let Some(version) = jsonrpc.as_str() {
             if version != "2.0" {
-                diagnostics.push(
-                    Diagnostic::error(
-                        path.to_path_buf(),
-                        line,
-                        col,
-                        "MCP-001",
-                        t!("rules.mcp_001.invalid_version", version = version),
-                    )
-                    .with_suggestion(t!("rules.mcp_001.suggestion")),
-                );
-            }
-        } else {
-            diagnostics.push(
-                Diagnostic::error(
+                let mut diagnostic = Diagnostic::error(
                     path.to_path_buf(),
                     line,
                     col,
                     "MCP-001",
-                    t!("rules.mcp_001.not_string"),
+                    t!("rules.mcp_001.invalid_version", version = version),
                 )
-                .with_suggestion(t!("rules.mcp_001.suggestion")),
-            );
+                .with_suggestion(t!("rules.mcp_001.suggestion"));
+
+                // Safe auto-fix: enforce jsonrpc: "2.0"
+                if let Some((start, end)) = find_unique_json_scalar_value_span(content, "jsonrpc") {
+                    diagnostic = diagnostic.with_fix(Fix::replace(
+                        start,
+                        end,
+                        "\"2.0\"",
+                        "Set jsonrpc version to \"2.0\"",
+                        true,
+                    ));
+                }
+
+                diagnostics.push(diagnostic);
+            }
+        } else {
+            let mut diagnostic = Diagnostic::error(
+                path.to_path_buf(),
+                line,
+                col,
+                "MCP-001",
+                t!("rules.mcp_001.not_string"),
+            )
+            .with_suggestion(t!("rules.mcp_001.suggestion"));
+
+            // Safe auto-fix: normalize non-string jsonrpc values to "2.0"
+            if let Some((start, end)) = find_unique_json_scalar_value_span(content, "jsonrpc") {
+                diagnostic = diagnostic.with_fix(Fix::replace(
+                    start,
+                    end,
+                    "\"2.0\"",
+                    "Set jsonrpc version to \"2.0\"",
+                    true,
+                ));
+            }
+
+            diagnostics.push(diagnostic);
         }
     }
     // Note: jsonrpc field is only required for JSON-RPC messages, not tool definitions
@@ -278,6 +341,23 @@ fn validate_protocol_version(
                     diag = diag.with_assumption(t!("rules.mcp_008.assumption"));
                 }
 
+                // Unsafe auto-fix only when version is explicitly pinned.
+                if version_pinned {
+                    if let Some((start, end)) = find_unique_json_string_value_span(
+                        content,
+                        "protocolVersion",
+                        actual_version.as_str(),
+                    ) {
+                        diag = diag.with_fix(Fix::replace(
+                            start,
+                            end,
+                            expected_version,
+                            "Align protocolVersion with pinned MCP revision",
+                            false,
+                        ));
+                    }
+                }
+
                 diagnostics.push(diag);
             }
         }
@@ -307,6 +387,23 @@ fn validate_protocol_version(
 
                 if !version_pinned {
                     diag = diag.with_assumption(t!("rules.mcp_008.assumption"));
+                }
+
+                // Unsafe auto-fix only when version is explicitly pinned.
+                if version_pinned {
+                    if let Some((start, end)) = find_unique_json_string_value_span(
+                        content,
+                        "protocolVersion",
+                        actual_version.as_str(),
+                    ) {
+                        diag = diag.with_fix(Fix::replace(
+                            start,
+                            end,
+                            expected_version,
+                            "Align protocolVersion with pinned MCP revision",
+                            false,
+                        ));
+                    }
                 }
 
                 diagnostics.push(diag);
@@ -501,16 +598,30 @@ mod tests {
     fn test_mcp_001_invalid_jsonrpc_version() {
         let content = r#"{"jsonrpc": "1.0", "method": "test"}"#;
         let diagnostics = validate(content);
-        assert!(diagnostics.iter().any(|d| d.rule == "MCP-001"));
-        assert!(diagnostics[0].message.contains("Invalid JSON-RPC version"));
+        let mcp_001 = diagnostics
+            .iter()
+            .find(|d| d.rule == "MCP-001")
+            .expect("MCP-001 should be reported");
+        assert!(mcp_001.message.contains("Invalid JSON-RPC version"));
+        assert!(mcp_001.has_fixes());
+        let fix = &mcp_001.fixes[0];
+        assert_eq!(fix.replacement, "\"2.0\"");
+        assert!(fix.safe);
     }
 
     #[test]
     fn test_mcp_001_jsonrpc_not_string() {
         let content = r#"{"jsonrpc": 2.0, "method": "test"}"#;
         let diagnostics = validate(content);
-        assert!(diagnostics.iter().any(|d| d.rule == "MCP-001"));
-        assert!(diagnostics[0].message.contains("must be a string"));
+        let mcp_001 = diagnostics
+            .iter()
+            .find(|d| d.rule == "MCP-001")
+            .expect("MCP-001 should be reported");
+        assert!(mcp_001.message.contains("must be a string"));
+        assert!(mcp_001.has_fixes());
+        let fix = &mcp_001.fixes[0];
+        assert_eq!(fix.replacement, "\"2.0\"");
+        assert!(fix.safe);
     }
 
     #[test]
@@ -629,9 +740,11 @@ mod tests {
         }"#;
         let diagnostics = validate(content);
         assert!(diagnostics.iter().any(|d| d.rule == "MCP-003"));
-        assert!(diagnostics
-            .iter()
-            .any(|d| d.message.contains("Invalid JSON Schema type")));
+        assert!(
+            diagnostics
+                .iter()
+                .any(|d| d.message.contains("Invalid JSON Schema type"))
+        );
     }
 
     #[test]
@@ -643,9 +756,11 @@ mod tests {
         }"#;
         let diagnostics = validate(content);
         assert!(diagnostics.iter().any(|d| d.rule == "MCP-003"));
-        assert!(diagnostics
-            .iter()
-            .any(|d| d.message.contains("must be an object")));
+        assert!(
+            diagnostics
+                .iter()
+                .any(|d| d.message.contains("must be an object"))
+        );
     }
 
     #[test]
@@ -741,9 +856,11 @@ mod tests {
         }"#;
         let diagnostics = validate(content);
         assert!(diagnostics.iter().any(|d| d.rule == "MCP-005"));
-        assert!(diagnostics
-            .iter()
-            .any(|d| d.message.contains("consent mechanism")));
+        assert!(
+            diagnostics
+                .iter()
+                .any(|d| d.message.contains("consent mechanism"))
+        );
     }
 
     #[test]
@@ -794,9 +911,11 @@ mod tests {
         }"#;
         let diagnostics = validate(content);
         assert!(diagnostics.iter().any(|d| d.rule == "MCP-006"));
-        assert!(diagnostics
-            .iter()
-            .any(|d| d.message.contains("annotations")));
+        assert!(
+            diagnostics
+                .iter()
+                .any(|d| d.message.contains("annotations"))
+        );
     }
 
     #[test]
@@ -930,6 +1049,10 @@ mod tests {
         assert!(mcp_008[0].message.contains("Protocol version mismatch"));
         assert!(mcp_008[0].message.contains("2024-11-05"));
         assert!(mcp_008[0].message.contains("2025-06-18"));
+        assert!(
+            !mcp_008[0].has_fixes(),
+            "Unpinned protocol mismatch should be suggestion-only"
+        );
     }
 
     #[test]
@@ -1064,6 +1187,10 @@ mod tests {
         let assumption = diag.assumption.as_ref().unwrap();
         assert!(assumption.contains("Using default MCP protocol version"));
         assert!(assumption.contains("[spec_revisions]"));
+        assert!(
+            !diag.has_fixes(),
+            "Unpinned protocol mismatch should not emit auto-fix"
+        );
     }
 
     #[test]
@@ -1086,6 +1213,9 @@ mod tests {
         let diag = mcp_008.unwrap();
         // Should NOT have an assumption note when version is pinned
         assert!(diag.assumption.is_none());
+        assert!(diag.has_fixes(), "Pinned mismatch should emit auto-fix");
+        assert_eq!(diag.fixes[0].replacement, "2025-06-18");
+        assert!(!diag.fixes[0].safe);
     }
 
     #[test]
@@ -1108,6 +1238,9 @@ mod tests {
         let diag = mcp_008.unwrap();
         // Should NOT have an assumption note when version is pinned via legacy field
         assert!(diag.assumption.is_none());
+        assert!(diag.has_fixes(), "Pinned mismatch should emit auto-fix");
+        assert_eq!(diag.fixes[0].replacement, "2025-06-18");
+        assert!(!diag.fixes[0].safe);
     }
 
     #[test]

@@ -1,7 +1,9 @@
 ---
 id: cc-hk-001
-title: "CC-HK-001 Invalid Hook Event"
+title: "CC-HK-001: Invalid Hook Event - Claude Hooks"
 sidebar_label: "CC-HK-001"
+description: "agnix rule CC-HK-001 checks for invalid hook event in claude hooks files. Severity: HIGH. See examples and fix guidance."
+keywords: ["CC-HK-001", "invalid hook event", "claude hooks", "validation", "agnix", "linter"]
 ---
 
 ## Summary

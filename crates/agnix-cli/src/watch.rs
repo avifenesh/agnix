@@ -1,11 +1,11 @@
 //! Watch mode implementation for continuous validation
 
-use notify_debouncer_mini::{new_debouncer, notify::RecursiveMode, DebounceEventResult};
+use notify_debouncer_mini::{DebounceEventResult, new_debouncer, notify::RecursiveMode};
 use rust_i18n::t;
 use std::path::Path;
+use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::channel;
-use std::sync::Arc;
 use std::time::Duration;
 
 /// Run validation in watch mode, re-running on file changes

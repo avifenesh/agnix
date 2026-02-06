@@ -13,9 +13,8 @@ use crate::{
     diagnostics::Diagnostic,
     rules::Validator,
     schemas::agents_md::{
-        check_character_limit, check_markdown_validity, check_project_context,
-        check_section_headers, find_unguarded_platform_features, MarkdownIssueType,
-        WINDSURF_CHAR_LIMIT,
+        MarkdownIssueType, WINDSURF_CHAR_LIMIT, check_character_limit, check_markdown_validity,
+        check_project_context, check_section_headers, find_unguarded_platform_features,
     },
 };
 use rust_i18n::t;

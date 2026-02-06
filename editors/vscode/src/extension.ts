@@ -203,6 +203,38 @@ const AGNIX_FILE_PATTERNS = [
   '**/.cursor/rules/*.mdc',
 ];
 
+const AGNIX_RULE_RE = /^(AS|CC|PE|MCP|AGM|COP|CUR|XML|XP)-/;
+
+function isAgnixDiagnostic(diagnostic: vscode.Diagnostic): boolean {
+  const code = diagnostic.code?.toString() || '';
+  return diagnostic.source === 'agnix' || AGNIX_RULE_RE.test(code);
+}
+
+function extractRuleIds(diagnostics: readonly vscode.Diagnostic[] | undefined): string[] {
+  if (!diagnostics || diagnostics.length === 0) {
+    return [];
+  }
+  const ids = diagnostics
+    .map((d) => d.code?.toString() || '')
+    .filter((code) => AGNIX_RULE_RE.test(code));
+  return Array.from(new Set(ids));
+}
+
+function filterAgnixFixActions(
+  actions: readonly vscode.CodeAction[] | undefined
+): vscode.CodeAction[] {
+  if (!actions) {
+    return [];
+  }
+  return actions.filter((action) => {
+    if (!action.edit) {
+      return false;
+    }
+    const diagnostics = action.diagnostics || [];
+    return diagnostics.some(isAgnixDiagnostic);
+  });
+}
+
 /**
  * Get platform-specific download info for agnix-lsp.
  */
@@ -785,9 +817,7 @@ async function fixAllInFile(): Promise<void> {
 
   // Get all code actions for the document
   const diagnostics = vscode.languages.getDiagnostics(editor.document.uri);
-  const agnixDiagnostics = diagnostics.filter(
-    (d) => d.source === 'agnix' || d.code?.toString().match(/^(AS|CC|PE|MCP|AGM|COP|CUR|XML|XP)-/)
-  );
+  const agnixDiagnostics = diagnostics.filter(isAgnixDiagnostic);
 
   if (agnixDiagnostics.length === 0) {
     vscode.window.showInformationMessage('No agnix issues found in this file');
@@ -802,26 +832,35 @@ async function fixAllInFile(): Promise<void> {
     vscode.CodeActionKind.QuickFix.value
   );
 
-  if (!actions || actions.length === 0) {
+  const agnixActions = filterAgnixFixActions(actions);
+
+  if (agnixActions.length === 0) {
     vscode.window.showInformationMessage(
-      'No automatic fixes available for current issues'
+      `No automatic agnix fixes available (${agnixDiagnostics.length} issue${agnixDiagnostics.length === 1 ? '' : 's'})`
     );
     return;
   }
 
-  let fixCount = 0;
-  for (const action of actions) {
+  let applied = 0;
+  let safeApplied = 0;
+  for (const action of agnixActions) {
     if (action.edit) {
       await vscode.workspace.applyEdit(action.edit);
-      fixCount++;
+      applied++;
+      if (action.isPreferred === true) {
+        safeApplied++;
+      }
     }
   }
 
-  if (fixCount > 0) {
-    vscode.window.showInformationMessage(`Applied ${fixCount} fixes`);
+  if (applied > 0) {
+    const reviewApplied = applied - safeApplied;
+    vscode.window.showInformationMessage(
+      `Applied ${applied} agnix fixes (${safeApplied} safe, ${reviewApplied} review)`
+    );
   } else {
     vscode.window.showInformationMessage(
-      'No automatic fixes could be applied'
+      'No automatic agnix fixes could be applied'
     );
   }
 }
@@ -845,6 +884,13 @@ async function previewFixes(): Promise<void> {
   }
 
   const document = editor.document;
+  const diagnostics = vscode.languages.getDiagnostics(document.uri);
+  const agnixDiagnostics = diagnostics.filter(isAgnixDiagnostic);
+  if (agnixDiagnostics.length === 0) {
+    vscode.window.showInformationMessage('No agnix issues found in this file');
+    return;
+  }
+
   const actions = await vscode.commands.executeCommand<vscode.CodeAction[]>(
     'vscode.executeCodeActionProvider',
     document.uri,
@@ -852,29 +898,32 @@ async function previewFixes(): Promise<void> {
     vscode.CodeActionKind.QuickFix.value
   );
 
-  if (!actions || actions.length === 0) {
-    vscode.window.showInformationMessage('No fixes available for this file');
+  const agnixActions = filterAgnixFixActions(actions);
+
+  if (agnixActions.length === 0) {
+    vscode.window.showInformationMessage(
+      `No automatic agnix fixes available (${agnixDiagnostics.length} issue${agnixDiagnostics.length === 1 ? '' : 's'})`
+    );
     return;
   }
 
   // Build quick pick items with confidence indicators
-  const items: (vscode.QuickPickItem & { action: vscode.CodeAction })[] = actions
-    .filter((a) => a.edit)
+  const items: (vscode.QuickPickItem & { action: vscode.CodeAction })[] = agnixActions
     .map((action) => {
       const isSafe = action.isPreferred === true;
       const confidence = isSafe ? '$(check) Safe' : '$(warning) Review';
+      const ruleIds = extractRuleIds(action.diagnostics);
+      const rulesText = ruleIds.length > 0 ? `Rules: ${ruleIds.join(', ')}` : 'Rules unavailable';
       return {
         label: `${confidence}  ${action.title}`,
         description: getEditSummary(action.edit!, document),
-        detail: isSafe
-          ? 'This fix is safe to apply automatically'
-          : 'Review this fix before applying',
+        detail: `${isSafe ? 'Safe to apply automatically' : 'Review before applying'} • ${rulesText}`,
         action,
       };
     });
 
   if (items.length === 0) {
-    vscode.window.showInformationMessage('No fixes available for this file');
+    vscode.window.showInformationMessage('No automatic agnix fixes available for this file');
     return;
   }
 
@@ -887,14 +936,20 @@ async function previewFixes(): Promise<void> {
   };
 
   const safeCount = items.filter((i) => i.action.isPreferred === true).length;
-  const applyAllSafeItem = {
+  const applyAllSafeItem: vscode.QuickPickItem & { action: vscode.CodeAction } = {
     label: '$(shield) Apply All Safe Fixes',
     description: `${safeCount} safe fixes`,
     detail: 'Only apply fixes marked as safe',
+    picked: safeCount === items.length,
     action: null as unknown as vscode.CodeAction,
   };
 
-  const allItems = [applyAllItem, applyAllSafeItem, { label: '', kind: vscode.QuickPickItemKind.Separator } as any, ...items];
+  const allItems: (vscode.QuickPickItem & { action: vscode.CodeAction })[] = [applyAllItem];
+  if (safeCount > 0) {
+    allItems.push(applyAllSafeItem);
+  }
+  allItems.push({ label: '', kind: vscode.QuickPickItemKind.Separator, action: null as unknown as vscode.CodeAction });
+  allItems.push(...items);
 
   const selected = await vscode.window.showQuickPick(allItems, {
     title: `agnix Fixes Preview (${items.length} available)`,
@@ -912,7 +967,7 @@ async function previewFixes(): Promise<void> {
     return;
   }
 
-  if (selected.label === '$(shield) Apply All Safe Fixes') {
+  if (safeCount > 0 && selected.label === '$(shield) Apply All Safe Fixes') {
     const safeActions = items.filter((i) => i.action.isPreferred === true).map((i) => i.action);
     await applyAllFixes(safeActions);
     return;
@@ -943,7 +998,29 @@ function getEditSummary(edit: vscode.WorkspaceEdit, document: vscode.TextDocumen
     return `Line ${lineNum}: replace text`;
   }
 
-  return `${changes.length} changes`;
+  let inserts = 0;
+  let deletes = 0;
+  let replaces = 0;
+
+  for (const change of changes) {
+    if (change.newText === '') {
+      deletes++;
+    } else if (change.range.isEmpty) {
+      inserts++;
+    } else {
+      replaces++;
+    }
+  }
+
+  const parts: string[] = [];
+  if (replaces > 0) parts.push(`${replaces} replace${replaces > 1 ? 's' : ''}`);
+  if (inserts > 0) parts.push(`${inserts} insert${inserts > 1 ? 's' : ''}`);
+  if (deletes > 0) parts.push(`${deletes} delete${deletes > 1 ? 's' : ''}`);
+
+  if (parts.length === 0) {
+    return `${changes.length} changes`;
+  }
+  return `${changes.length} changes (${parts.join(', ')})`;
 }
 
 /**
@@ -1004,29 +1081,53 @@ async function showFixPreview(
   );
 
   try {
+    const changedLines = new Set<number>();
+    for (const change of changes) {
+      const startLine = change.range.start.line;
+      const endLine = Math.max(change.range.end.line, startLine);
+      for (let line = startLine; line <= endLine; line++) {
+        changedLines.add(line);
+      }
+    }
+
     // Show diff
     await vscode.commands.executeCommand(
       'vscode.diff',
       originalUri,
       previewUri,
-      `${path.basename(document.fileName)}: Fix Preview - ${action.title}`,
+      `${path.basename(document.fileName)}: Fix Preview (${changedLines.size} changed line${changedLines.size === 1 ? '' : 's'}) - ${action.title}`,
       { preview: true }
     );
 
     // Ask user to apply
     const isSafe = action.isPreferred === true;
     const confidence = isSafe ? 'Safe fix' : 'Review recommended';
+    const ruleIds = extractRuleIds(action.diagnostics);
+    const rulesText = ruleIds.length > 0 ? ` (${ruleIds.join(', ')})` : '';
 
     const choice = await vscode.window.showInformationMessage(
-      `${confidence}: ${action.title}`,
+      `${confidence}${rulesText}: ${action.title}`,
       { modal: false },
       'Apply Fix',
+      'Open Rule Doc',
       'Cancel'
     );
 
     if (choice === 'Apply Fix') {
       await vscode.workspace.applyEdit(action.edit);
       vscode.window.showInformationMessage('Fix applied');
+    } else if (choice === 'Open Rule Doc') {
+      if (ruleIds.length === 1) {
+        await showRuleDoc(ruleIds[0]);
+      } else if (ruleIds.length > 1) {
+        vscode.window.showInformationMessage(
+          `This fix maps to multiple rules: ${ruleIds.join(', ')}`
+        );
+      } else {
+        vscode.window.showInformationMessage(
+          'Rule documentation is unavailable for this fix'
+        );
+      }
     }
   } finally {
     registration.dispose();
@@ -1069,6 +1170,13 @@ async function fixAllSafeInFile(): Promise<void> {
     return;
   }
 
+  const diagnostics = vscode.languages.getDiagnostics(editor.document.uri);
+  const agnixDiagnostics = diagnostics.filter(isAgnixDiagnostic);
+  if (agnixDiagnostics.length === 0) {
+    vscode.window.showInformationMessage('No agnix issues found in this file');
+    return;
+  }
+
   const actions = await vscode.commands.executeCommand<vscode.CodeAction[]>(
     'vscode.executeCodeActionProvider',
     editor.document.uri,
@@ -1076,17 +1184,20 @@ async function fixAllSafeInFile(): Promise<void> {
     vscode.CodeActionKind.QuickFix.value
   );
 
-  if (!actions || actions.length === 0) {
-    vscode.window.showInformationMessage('No fixes available for this file');
+  const agnixActions = filterAgnixFixActions(actions);
+  if (agnixActions.length === 0) {
+    vscode.window.showInformationMessage(
+      `No automatic agnix fixes available (${agnixDiagnostics.length} issue${agnixDiagnostics.length === 1 ? '' : 's'})`
+    );
     return;
   }
 
   // Filter to only safe fixes (isPreferred = true)
-  const safeActions = actions.filter((a) => a.isPreferred === true && a.edit);
+  const safeActions = agnixActions.filter((a) => a.isPreferred === true && a.edit);
 
   if (safeActions.length === 0) {
     vscode.window.showInformationMessage(
-      'No safe fixes available. Use "Preview Fixes" to review all fixes.'
+      `No safe fixes available (${agnixActions.length} review fix${agnixActions.length === 1 ? '' : 'es'} available). Use "Preview Fixes" to review.`
     );
     return;
   }
@@ -1099,13 +1210,13 @@ async function fixAllSafeInFile(): Promise<void> {
     }
   }
 
-  const skipped = actions.filter((a) => a.edit).length - fixCount;
+  const skipped = agnixActions.length - fixCount;
   if (skipped > 0) {
     vscode.window.showInformationMessage(
-      `Applied ${fixCount} safe fixes (${skipped} fixes skipped - use Preview to review)`
+      `Applied ${fixCount} safe agnix fixes (${skipped} review fixes skipped)`
     );
   } else {
-    vscode.window.showInformationMessage(`Applied ${fixCount} safe fixes`);
+    vscode.window.showInformationMessage(`Applied ${fixCount} safe agnix fixes`);
   }
 }
 

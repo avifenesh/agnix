@@ -22,6 +22,7 @@
 
 rust_i18n::i18n!("../../locales", fallback = "en");
 
+pub mod authoring;
 pub mod config;
 pub mod diagnostics;
 pub mod eval;
@@ -40,12 +41,12 @@ use std::path::{Path, PathBuf};
 use rayon::iter::ParallelBridge;
 use rayon::prelude::*;
 use rust_i18n::t;
-use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::Mutex;
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 
-pub use config::{generate_schema, ConfigWarning, LintConfig};
+pub use config::{ConfigWarning, LintConfig, generate_schema};
 pub use diagnostics::{Diagnostic, DiagnosticLevel, Fix, LintError, LintResult};
-pub use fixes::{apply_fixes, apply_fixes_with_fs, FixResult};
+pub use fixes::{FixResult, apply_fixes, apply_fixes_with_fs};
 pub use fs::{FileSystem, MockFileSystem, RealFileSystem};
 pub use rules::Validator;
 
@@ -1762,15 +1763,21 @@ allowed-tools: Read Write
             "Should detect both AGENTS.md files, got {:?}",
             agm_006
         );
-        assert!(agm_006
-            .iter()
-            .any(|d| d.file.to_string_lossy().contains("subdir")));
-        assert!(agm_006
-            .iter()
-            .any(|d| d.message.contains("Nested AGENTS.md")));
-        assert!(agm_006
-            .iter()
-            .any(|d| d.message.contains("Multiple AGENTS.md files")));
+        assert!(
+            agm_006
+                .iter()
+                .any(|d| d.file.to_string_lossy().contains("subdir"))
+        );
+        assert!(
+            agm_006
+                .iter()
+                .any(|d| d.message.contains("Nested AGENTS.md"))
+        );
+        assert!(
+            agm_006
+                .iter()
+                .any(|d| d.message.contains("Multiple AGENTS.md files"))
+        );
     }
 
     #[test]
@@ -1833,9 +1840,11 @@ allowed-tools: Read Write
             "Should detect both AGENTS.md files, got {:?}",
             agm_006
         );
-        assert!(agm_006
-            .iter()
-            .all(|d| d.message.contains("Multiple AGENTS.md files")));
+        assert!(
+            agm_006
+                .iter()
+                .all(|d| d.message.contains("Multiple AGENTS.md files"))
+        );
     }
 
     #[test]
@@ -2964,7 +2973,11 @@ Use idiomatic Rust patterns.
         assert!(
             result.diagnostics.iter().any(|d| d.rule == "COP-001"),
             "validate_project should find .github/copilot-instructions.md and report COP-001. Found: {:?}",
-            result.diagnostics.iter().map(|d| &d.rule).collect::<Vec<_>>()
+            result
+                .diagnostics
+                .iter()
+                .map(|d| &d.rule)
+                .collect::<Vec<_>>()
         );
     }
 

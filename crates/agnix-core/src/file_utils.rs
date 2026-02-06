@@ -120,7 +120,7 @@ pub fn safe_write_file(path: &Path, content: &str) -> LintResult<()> {
                     return Err(LintError::FileWrite {
                         path: path.to_path_buf(),
                         source: e,
-                    })
+                    });
                 }
             }
         }

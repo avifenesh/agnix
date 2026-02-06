@@ -1,7 +1,9 @@
 ---
 id: cc-sk-004
-title: "CC-SK-004 Agent Without Context"
+title: "CC-SK-004: Agent Without Context - Claude Skills"
 sidebar_label: "CC-SK-004"
+description: "agnix rule CC-SK-004 checks for agent without context in claude skills files. Severity: HIGH. See examples and fix guidance."
+keywords: ["CC-SK-004", "agent without context", "claude skills", "validation", "agnix", "linter"]
 ---
 
 ## Summary

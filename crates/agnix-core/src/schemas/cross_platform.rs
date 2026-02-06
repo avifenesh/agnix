@@ -1502,9 +1502,11 @@ Then `npm run build` to build the project.
 "#;
         let results = extract_build_commands(content);
         assert_eq!(results.len(), 2);
-        assert!(results
-            .iter()
-            .all(|r| r.package_manager == PackageManager::Npm));
+        assert!(
+            results
+                .iter()
+                .all(|r| r.package_manager == PackageManager::Npm)
+        );
     }
 
     #[test]
@@ -1523,9 +1525,11 @@ Use pnpm install for dependencies.
         let content = "yarn add express\nyarn test";
         let results = extract_build_commands(content);
         assert_eq!(results.len(), 2);
-        assert!(results
-            .iter()
-            .all(|r| r.package_manager == PackageManager::Yarn));
+        assert!(
+            results
+                .iter()
+                .all(|r| r.package_manager == PackageManager::Yarn)
+        );
     }
 
     #[test]
@@ -1533,9 +1537,11 @@ Use pnpm install for dependencies.
         let content = "bun install\nbun run build";
         let results = extract_build_commands(content);
         assert_eq!(results.len(), 2);
-        assert!(results
-            .iter()
-            .all(|r| r.package_manager == PackageManager::Bun));
+        assert!(
+            results
+                .iter()
+                .all(|r| r.package_manager == PackageManager::Bun)
+        );
     }
 
     #[test]
@@ -1612,9 +1618,11 @@ Use pnpm install for dependencies.
         let results = extract_tool_constraints(content);
         assert!(!results.is_empty());
         assert!(results.iter().any(|r| r.tool_name == "Read"));
-        assert!(results
-            .iter()
-            .all(|r| r.constraint_type == ConstraintType::Allow));
+        assert!(
+            results
+                .iter()
+                .all(|r| r.constraint_type == ConstraintType::Allow)
+        );
     }
 
     #[test]
@@ -1623,9 +1631,11 @@ Use pnpm install for dependencies.
         let results = extract_tool_constraints(content);
         assert!(!results.is_empty());
         assert!(results.iter().any(|r| r.tool_name == "Bash"));
-        assert!(results
-            .iter()
-            .any(|r| r.constraint_type == ConstraintType::Disallow));
+        assert!(
+            results
+                .iter()
+                .any(|r| r.constraint_type == ConstraintType::Disallow)
+        );
     }
 
     #[test]
@@ -1746,10 +1756,12 @@ Use pnpm install for dependencies.
 
         let issue = detect_precedence_issues(&layers);
         assert!(issue.is_some());
-        assert!(issue
-            .unwrap()
-            .description
-            .contains("without documented precedence"));
+        assert!(
+            issue
+                .unwrap()
+                .description
+                .contains("without documented precedence")
+        );
     }
 
     #[test]

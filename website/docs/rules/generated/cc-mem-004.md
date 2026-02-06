@@ -1,7 +1,9 @@
 ---
 id: cc-mem-004
-title: "CC-MEM-004 Invalid Command Reference"
+title: "CC-MEM-004: Invalid Command Reference - Claude Memory"
 sidebar_label: "CC-MEM-004"
+description: "agnix rule CC-MEM-004 checks for invalid command reference in claude memory files. Severity: MEDIUM. See examples and fix guidance."
+keywords: ["CC-MEM-004", "invalid command reference", "claude memory", "validation", "agnix", "linter"]
 ---
 
 ## Summary

@@ -153,9 +153,9 @@ Body"#;
 fn test_as_011_compatibility_too_long() {
     let long_compat = "b".repeat(501);
     let content = format!(
-            "---\nname: test-skill\ndescription: Use when validating compatibility\ncompatibility: {}\n---\nBody",
-            long_compat
-        );
+        "---\nname: test-skill\ndescription: Use when validating compatibility\ncompatibility: {}\n---\nBody",
+        long_compat
+    );
 
     let validator = SkillValidator;
     let diagnostics = validator.validate(Path::new("test.md"), &content, &LintConfig::default());
@@ -2428,4 +2428,157 @@ Body"#;
     let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
 
     assert!(!diagnostics.iter().any(|d| d.rule == "CC-SK-005"));
+}
+
+// ===== Additional auto-fix coverage for new rules =====
+
+#[test]
+fn test_as_005_has_safe_fix() {
+    let content = r#"---
+name: -bad-name
+description: Use when testing
+---
+Body"#;
+
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+    let as_005 = diagnostics
+        .iter()
+        .find(|d| d.rule == "AS-005")
+        .expect("AS-005 should be reported");
+
+    assert!(as_005.has_fixes());
+    let fix = &as_005.fixes[0];
+    assert_eq!(fix.replacement, "bad-name");
+    assert!(fix.safe);
+}
+
+#[test]
+fn test_as_006_has_safe_fix() {
+    let content = r#"---
+name: bad--name
+description: Use when testing
+---
+Body"#;
+
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+    let as_006 = diagnostics
+        .iter()
+        .find(|d| d.rule == "AS-006")
+        .expect("AS-006 should be reported");
+
+    assert!(as_006.has_fixes());
+    let fix = &as_006.fixes[0];
+    assert_eq!(fix.replacement, "bad-name");
+    assert!(fix.safe);
+}
+
+#[test]
+fn test_as_014_has_safe_fix() {
+    let content = r#"---
+name: test-skill
+description: Use when testing
+---
+See references\guide.md for details."#;
+
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+    let as_014 = diagnostics
+        .iter()
+        .find(|d| d.rule == "AS-014")
+        .expect("AS-014 should be reported");
+
+    assert!(as_014.has_fixes());
+    let fix = &as_014.fixes[0];
+    assert_eq!(fix.replacement, "references/guide.md");
+    assert!(fix.safe);
+}
+
+#[test]
+fn test_cc_sk_001_has_unsafe_fix() {
+    let content = r#"---
+name: test-skill
+description: Use when testing
+model: gpt-4
+---
+Body"#;
+
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+    let cc_sk_001 = diagnostics
+        .iter()
+        .find(|d| d.rule == "CC-SK-001")
+        .expect("CC-SK-001 should be reported");
+
+    assert!(cc_sk_001.has_fixes());
+    let fix = &cc_sk_001.fixes[0];
+    assert_eq!(fix.replacement, "sonnet");
+    assert!(!fix.safe);
+}
+
+#[test]
+fn test_cc_sk_002_has_unsafe_fix() {
+    let content = r#"---
+name: test-skill
+description: Use when testing
+context: split
+---
+Body"#;
+
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+    let cc_sk_002 = diagnostics
+        .iter()
+        .find(|d| d.rule == "CC-SK-002")
+        .expect("CC-SK-002 should be reported");
+
+    assert!(cc_sk_002.has_fixes());
+    let fix = &cc_sk_002.fixes[0];
+    assert_eq!(fix.replacement, "fork");
+    assert!(!fix.safe);
+}
+
+#[test]
+fn test_cc_sk_003_has_insert_fix() {
+    let content = r#"---
+name: test-skill
+description: Use when testing
+context: fork
+---
+Body"#;
+
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+    let cc_sk_003 = diagnostics
+        .iter()
+        .find(|d| d.rule == "CC-SK-003")
+        .expect("CC-SK-003 should be reported");
+
+    assert!(cc_sk_003.has_fixes());
+    let fix = &cc_sk_003.fixes[0];
+    assert!(fix.replacement.contains("agent: general-purpose"));
+    assert!(!fix.safe);
+}
+
+#[test]
+fn test_cc_sk_004_has_insert_or_replace_fix() {
+    let content = r#"---
+name: test-skill
+description: Use when testing
+agent: Explore
+---
+Body"#;
+
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+    let cc_sk_004 = diagnostics
+        .iter()
+        .find(|d| d.rule == "CC-SK-004")
+        .expect("CC-SK-004 should be reported");
+
+    assert!(cc_sk_004.has_fixes());
+    let fix = &cc_sk_004.fixes[0];
+    assert!(fix.replacement.contains("context: fork") || fix.replacement == "fork");
+    assert!(!fix.safe);
 }

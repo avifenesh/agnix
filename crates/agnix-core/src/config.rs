@@ -1052,10 +1052,12 @@ disabled_rules = ["CC-AG-002"]
         assert!(config.rules.skills);
         assert!(!config.rules.hooks);
         assert!(config.rules.agents);
-        assert!(config
-            .rules
-            .disabled_rules
-            .contains(&"CC-AG-002".to_string()));
+        assert!(
+            config
+                .rules
+                .disabled_rules
+                .contains(&"CC-AG-002".to_string())
+        );
 
         // Check rule enablement
         assert!(config.is_rule_enabled("CC-AG-001"));
@@ -3066,11 +3068,13 @@ disabled_rules = []
         assert_eq!(warnings.len(), 1);
         assert!(warnings[0].field == "mcp_protocol_version");
         assert!(warnings[0].message.contains("deprecated"));
-        assert!(warnings[0]
-            .suggestion
-            .as_ref()
-            .unwrap()
-            .contains("spec_revisions.mcp_protocol"));
+        assert!(
+            warnings[0]
+                .suggestion
+                .as_ref()
+                .unwrap()
+                .contains("spec_revisions.mcp_protocol")
+        );
     }
 
     #[test]

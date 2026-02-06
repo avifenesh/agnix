@@ -258,6 +258,89 @@ fn main() {
     }
     generated_code.push_str("];\n");
 
+    // =========================================================================
+    // Extract authoring metadata catalogs from top-level authoring section
+    // =========================================================================
+    let authoring = rules
+        .get("authoring")
+        .cloned()
+        .unwrap_or(serde_json::Value::Null);
+    let authoring_version = authoring
+        .get("version")
+        .and_then(|v| v.as_str())
+        .unwrap_or("0.0.0");
+
+    // Validate authoring version (basic semver-like shape)
+    let is_valid_version = |version: &str| -> bool {
+        !version.is_empty()
+            && version.len() <= 32
+            && version
+                .chars()
+                .all(|c| c.is_ascii_digit() || c == '.' || c == '-' || c.is_ascii_alphabetic())
+    };
+
+    if !is_valid_version(authoring_version) {
+        panic!(
+            "authoring.version '{}' is invalid: expected a short semver-like string",
+            authoring_version
+        );
+    }
+
+    let mut authoring_families: BTreeSet<String> = BTreeSet::new();
+    if let Some(families) = authoring.get("families").and_then(|f| f.as_array()) {
+        for (idx, family) in families.iter().enumerate() {
+            let id = family
+                .get("id")
+                .and_then(|v| v.as_str())
+                .unwrap_or_else(|| {
+                    panic!(
+                        "authoring.families[{}].id must be a string in rules.json",
+                        idx
+                    )
+                });
+            let valid_family = !id.is_empty()
+                && id.len() <= 64
+                && id
+                    .chars()
+                    .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '-');
+            if !valid_family {
+                panic!(
+                    "authoring.families[{}].id '{}' is invalid: use lowercase letters, digits, and hyphens",
+                    idx, id
+                );
+            }
+            authoring_families.insert(id.to_string());
+        }
+    }
+
+    let authoring_json_str = serde_json::to_string(&authoring)
+        .expect("BUG: failed to serialize authoring catalog to JSON string");
+
+    generated_code.push_str("\n/// Authoring catalog schema version.\n");
+    generated_code.push_str(&format!(
+        "pub const AUTHORING_VERSION: &str = \"{}\";\n\n",
+        escape_str(authoring_version)
+    ));
+
+    generated_code
+        .push_str("/// Authoring family IDs derived from rules.json authoring.families.\n");
+    generated_code.push_str("pub const AUTHORING_FAMILIES: &[&str] = &[\n");
+    for family in &authoring_families {
+        generated_code.push_str(&format!("    \"{}\",\n", escape_str(family)));
+    }
+    generated_code.push_str("];\n\n");
+
+    generated_code.push_str(
+        "/// Raw authoring catalog JSON (top-level `authoring` section from rules.json).\n",
+    );
+    generated_code.push_str(
+        "/// This is generated at build time to keep rules.json as the source of truth.\n",
+    );
+    generated_code.push_str(&format!(
+        "pub const AUTHORING_CATALOG_JSON: &str = \"{}\";\n",
+        escape_str(&authoring_json_str)
+    ));
+
     // Write to OUT_DIR
     let out_dir = env::var("OUT_DIR").unwrap();
     let dest_path = Path::new(&out_dir).join("rules_data.rs");

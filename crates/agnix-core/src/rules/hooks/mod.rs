@@ -310,7 +310,7 @@ impl Validator for HooksValidator {
 
         // CC-HK-011: Invalid timeout value
         if config.is_rule_enabled("CC-HK-011") {
-            validate_cc_hk_011_invalid_timeout_values(&raw_value, path, &mut diagnostics);
+            validate_cc_hk_011_invalid_timeout_values(&raw_value, path, content, &mut diagnostics);
         }
 
         let settings: SettingsSchema = match serde_json::from_value(raw_value) {
@@ -371,6 +371,7 @@ impl Validator for HooksValidator {
                         &matcher.matcher,
                         matcher_idx,
                         path,
+                        content,
                         &mut diagnostics,
                     );
                 }

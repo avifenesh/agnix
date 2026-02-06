@@ -1,7 +1,9 @@
 ---
 id: cc-mem-001
-title: "CC-MEM-001 Invalid Import Path"
+title: "CC-MEM-001: Invalid Import Path - Claude Memory"
 sidebar_label: "CC-MEM-001"
+description: "agnix rule CC-MEM-001 checks for invalid import path in claude memory files. Severity: HIGH. See examples and fix guidance."
+keywords: ["CC-MEM-001", "invalid import path", "claude memory", "validation", "agnix", "linter"]
 ---
 
 ## Summary

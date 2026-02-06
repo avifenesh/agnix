@@ -1,7 +1,9 @@
 ---
 id: cc-pl-003
-title: "CC-PL-003 Invalid Semver"
+title: "CC-PL-003: Invalid Semver - Claude Plugins"
 sidebar_label: "CC-PL-003"
+description: "agnix rule CC-PL-003 checks for invalid semver in claude plugins files. Severity: HIGH. See examples and fix guidance."
+keywords: ["CC-PL-003", "invalid semver", "claude plugins", "validation", "agnix", "linter"]
 ---
 
 ## Summary

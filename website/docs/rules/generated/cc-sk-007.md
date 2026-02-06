@@ -1,7 +1,9 @@
 ---
 id: cc-sk-007
-title: "CC-SK-007 Unrestricted Bash"
+title: "CC-SK-007: Unrestricted Bash - Claude Skills"
 sidebar_label: "CC-SK-007"
+description: "agnix rule CC-SK-007 checks for unrestricted bash in claude skills files. Severity: HIGH. See examples and fix guidance."
+keywords: ["CC-SK-007", "unrestricted bash", "claude skills", "validation", "agnix", "linter"]
 ---
 
 ## Summary

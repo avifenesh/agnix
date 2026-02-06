@@ -331,10 +331,12 @@ anotherUnknown: 123
         let result = parse_mdc_frontmatter(content).unwrap();
         assert_eq!(result.unknown_keys.len(), 2);
         assert!(result.unknown_keys.iter().any(|k| k.key == "unknownKey"));
-        assert!(result
-            .unknown_keys
-            .iter()
-            .any(|k| k.key == "anotherUnknown"));
+        assert!(
+            result
+                .unknown_keys
+                .iter()
+                .any(|k| k.key == "anotherUnknown")
+        );
     }
 
     #[test]

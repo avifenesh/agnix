@@ -1,7 +1,9 @@
 ---
 id: cc-pl-004
-title: "CC-PL-004 Missing Required Plugin Field"
+title: "CC-PL-004: Missing Required Plugin Field - Claude Plugins"
 sidebar_label: "CC-PL-004"
+description: "agnix rule CC-PL-004 checks for missing required plugin field in claude plugins files. Severity: HIGH. See examples and fix guidance."
+keywords: ["CC-PL-004", "missing required plugin field", "claude plugins", "validation", "agnix", "linter"]
 ---
 
 ## Summary

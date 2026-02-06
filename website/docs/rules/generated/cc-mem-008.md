@@ -1,7 +1,9 @@
 ---
 id: cc-mem-008
-title: "CC-MEM-008 Critical Content in Middle"
+title: "CC-MEM-008: Critical Content in Middle - Claude Memory"
 sidebar_label: "CC-MEM-008"
+description: "agnix rule CC-MEM-008 checks for critical content in middle in claude memory files. Severity: HIGH. See examples and fix guidance."
+keywords: ["CC-MEM-008", "critical content in middle", "claude memory", "validation", "agnix", "linter"]
 ---
 
 ## Summary

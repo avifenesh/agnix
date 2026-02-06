@@ -112,9 +112,11 @@ This skill has an invalid name.
         let diagnostics = result.unwrap();
         // Should have at least one error for invalid name
         assert!(!diagnostics.is_empty());
-        assert!(diagnostics
-            .iter()
-            .any(|d| d.rule.contains("AS-004") || d.rule.contains("CC-SK")));
+        assert!(
+            diagnostics
+                .iter()
+                .any(|d| d.rule.contains("AS-004") || d.rule.contains("CC-SK"))
+        );
     }
 
     #[test]
@@ -823,6 +825,22 @@ unknownfield: value
             Some(HoverProviderCapability::Simple(true)) => {}
             _ => panic!("Expected hover capability"),
         }
+    }
+
+    #[tokio::test]
+    async fn test_initialize_advertises_completion_capability() {
+        let (service, _socket) = LspService::new(Backend::new);
+
+        let result = service
+            .inner()
+            .initialize(InitializeParams::default())
+            .await
+            .unwrap();
+
+        assert!(
+            result.capabilities.completion_provider.is_some(),
+            "Expected completion capability"
+        );
     }
 
     #[tokio::test]

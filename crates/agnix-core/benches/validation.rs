@@ -16,13 +16,13 @@
 
 mod fixtures;
 
-use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
+use criterion::{BenchmarkId, Criterion, Throughput, black_box, criterion_group, criterion_main};
 use std::path::Path;
 use tempfile::TempDir;
 
 use agnix_core::{
-    detect_file_type, validate_file, validate_file_with_registry, validate_project, LintConfig,
-    ValidatorRegistry,
+    LintConfig, ValidatorRegistry, detect_file_type, validate_file, validate_file_with_registry,
+    validate_project,
 };
 
 use fixtures::{create_memory_test_project, create_scale_project};

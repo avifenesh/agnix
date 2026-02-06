@@ -27,6 +27,7 @@ rust_i18n::i18n!("../../locales", fallback = "en");
 
 mod backend;
 mod code_actions;
+mod completion_provider;
 mod diagnostic_mapper;
 mod hover_provider;
 mod locale;

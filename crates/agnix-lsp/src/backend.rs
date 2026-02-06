@@ -6,15 +6,16 @@
 use std::collections::HashMap;
 use std::future::Future;
 use std::path::{Component, Path, PathBuf};
-use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicU64, Ordering};
 
 use tokio::sync::RwLock;
 use tower_lsp::jsonrpc::Result;
 use tower_lsp::lsp_types::*;
 use tower_lsp::{Client, LanguageServer};
 
-use crate::code_actions::fixes_to_code_actions;
+use crate::code_actions::fixes_to_code_actions_with_diagnostic;
+use crate::completion_provider::completion_items_for_document;
 use crate::diagnostic_mapper::{deserialize_fixes, to_lsp_diagnostics};
 use crate::hover_provider::hover_at_position;
 use crate::vscode_config::VsCodeConfig;
@@ -394,6 +395,11 @@ impl LanguageServer for Backend {
                 )),
                 code_action_provider: Some(CodeActionProviderCapability::Simple(true)),
                 hover_provider: Some(HoverProviderCapability::Simple(true)),
+                completion_provider: Some(CompletionOptions {
+                    resolve_provider: Some(false),
+                    trigger_characters: Some(vec![":".to_string(), "\"".to_string()]),
+                    ..Default::default()
+                }),
                 ..Default::default()
             },
             server_info: Some(ServerInfo {
@@ -476,7 +482,12 @@ impl LanguageServer for Backend {
             // Deserialize fixes from diagnostic.data
             let fixes = deserialize_fixes(diag.data.as_ref());
             if !fixes.is_empty() {
-                actions.extend(fixes_to_code_actions(uri, &fixes, content.as_str()));
+                actions.extend(fixes_to_code_actions_with_diagnostic(
+                    uri,
+                    &fixes,
+                    content.as_str(),
+                    diag,
+                ));
             }
         }
 
@@ -502,8 +513,38 @@ impl LanguageServer for Backend {
             None => return Ok(None),
         };
 
+        let file_type = uri
+            .to_file_path()
+            .ok()
+            .map(|path| agnix_core::detect_file_type(&path))
+            .unwrap_or(agnix_core::FileType::Unknown);
+        if matches!(file_type, agnix_core::FileType::Unknown) {
+            return Ok(None);
+        }
+
         // Get hover info for the position
-        Ok(hover_at_position(content.as_str(), position))
+        Ok(hover_at_position(file_type, content.as_str(), position))
+    }
+
+    async fn completion(&self, params: CompletionParams) -> Result<Option<CompletionResponse>> {
+        let uri = &params.text_document_position.text_document.uri;
+        let position = params.text_document_position.position;
+        let path = match uri.to_file_path() {
+            Ok(path) => path,
+            Err(_) => return Ok(None),
+        };
+
+        let content = match self.get_document_content(uri).await {
+            Some(c) => c,
+            None => return Ok(None),
+        };
+
+        let items = completion_items_for_document(&path, content.as_str(), position);
+        if items.is_empty() {
+            Ok(None)
+        } else {
+            Ok(Some(CompletionResponse::Array(items)))
+        }
     }
 
     async fn did_change_configuration(&self, params: DidChangeConfigurationParams) {
@@ -611,12 +652,63 @@ mod tests {
             _ => panic!("Expected FULL text document sync capability"),
         }
 
+        assert!(
+            init_result.capabilities.completion_provider.is_some(),
+            "Expected completion provider capability"
+        );
+
         // Verify server info
         let server_info = init_result
             .server_info
             .expect("server_info should be present");
         assert_eq!(server_info.name, "agnix-lsp");
         assert!(server_info.version.is_some());
+    }
+
+    #[tokio::test]
+    async fn test_completion_returns_skill_frontmatter_candidates() {
+        let (service, _socket) = LspService::new(Backend::new);
+
+        let temp_dir = tempfile::tempdir().unwrap();
+        let skill_path = temp_dir.path().join("SKILL.md");
+        let content = "---\nna\n---\n";
+        std::fs::write(&skill_path, content).unwrap();
+        let uri = Url::from_file_path(&skill_path).unwrap();
+
+        service
+            .inner()
+            .did_open(DidOpenTextDocumentParams {
+                text_document: TextDocumentItem {
+                    uri: uri.clone(),
+                    language_id: "markdown".to_string(),
+                    version: 1,
+                    text: content.to_string(),
+                },
+            })
+            .await;
+
+        let completion = service
+            .inner()
+            .completion(CompletionParams {
+                text_document_position: TextDocumentPositionParams {
+                    text_document: TextDocumentIdentifier { uri },
+                    position: Position {
+                        line: 1,
+                        character: 1,
+                    },
+                },
+                work_done_progress_params: WorkDoneProgressParams::default(),
+                partial_result_params: PartialResultParams::default(),
+                context: None,
+            })
+            .await
+            .unwrap();
+
+        let items = match completion {
+            Some(CompletionResponse::Array(items)) => items,
+            _ => panic!("Expected completion items"),
+        };
+        assert!(items.iter().any(|item| item.label == "name"));
     }
 
     /// Test that shutdown() returns Ok.

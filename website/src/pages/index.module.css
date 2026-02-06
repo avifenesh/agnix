@@ -1,34 +1,356 @@
-.heroBanner {
-  padding: 5rem 0 4rem;
+/* === Hero Section === */
+
+.hero {
+  padding: 4rem 0 3rem;
   text-align: center;
-  background: radial-gradient(circle at top left, #d6f3f7, #f4f6f8 55%, #ffffff 100%);
+  background: linear-gradient(180deg, var(--ag-surface) 0%, var(--ag-surface-raised) 100%);
 }
 
 .heroLogo {
-  width: 96px;
-  height: 96px;
+  width: 80px;
+  height: 80px;
   margin-bottom: 1rem;
 }
 
 .heroTitle {
-  font-size: 3rem;
-  margin-bottom: 0.5rem;
+  font-size: clamp(1.75rem, 4vw, 2.75rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  margin-bottom: 0.75rem;
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .heroSubtitle {
-  color: #334155;
-  font-size: 1.15rem;
+  color: var(--ag-text-secondary);
+  font-size: clamp(0.95rem, 2vw, 1.1rem);
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* === Install Block === */
+
+.installBlock {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: var(--ag-code-bg);
+  color: #e2e8f0;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.95rem;
   margin-bottom: 1.5rem;
 }
 
+.installBlock code {
+  background: none;
+  border: none;
+  padding: 0;
+  color: #f1f5f9;
+  font-size: inherit;
+}
+
+.prompt {
+  color: #94a3b8;
+  user-select: none;
+}
+
+.copyButton {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 2px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  transition: color 0.15s;
+}
+
+.copyButton:hover {
+  color: #e2e8f0;
+}
+
+/* === CTA Buttons === */
+
+.heroCtas {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+}
+
+.ctaPrimary {
+  border-radius: 2rem;
+}
+
+/* GitHub button: dark filled with icon */
+.ctaGithub {
+  border-radius: 2rem;
+  background: #24292f;
+  color: #fff;
+  border: 1px solid #24292f;
+}
+
+.ctaGithub:hover {
+  background: #32383f;
+  color: #fff;
+  text-decoration: none;
+}
+
+html[data-theme='dark'] .ctaGithub {
+  background: #f0f0f0;
+  color: #24292f;
+  border-color: #f0f0f0;
+}
+
+html[data-theme='dark'] .ctaGithub:hover {
+  background: #ffffff;
+  color: #24292f;
+}
+
+/* === Badges === */
+
+.badges {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.badges a {
+  line-height: 0;
+}
+
+.badges img {
+  height: 20px;
+}
+
+.starNudge {
+  margin-top: 1rem;
+  margin-bottom: 0;
+  font-size: 0.85rem;
+  color: var(--ag-text-secondary);
+}
+
+.starNudge a {
+  color: var(--ifm-color-primary);
+  text-decoration: none;
+}
+
+.starNudge a:hover {
+  text-decoration: underline;
+}
+
+/* === Terminal Demo === */
+
+.terminal {
+  padding: 2rem 0;
+  background: var(--ag-surface-raised);
+}
+
+.terminalWindow {
+  max-width: 680px;
+  margin: 0 auto;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--ag-border);
+  background: var(--ag-code-bg);
+}
+
+.terminalBar {
+  display: flex;
+  gap: 6px;
+  padding: 10px 14px;
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.terminalDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #3a3a3c;
+}
+
+.terminalDot:first-child {
+  background: #ff5f57;
+}
+
+.terminalDot:nth-child(2) {
+  background: #febc2e;
+}
+
+.terminalDot:nth-child(3) {
+  background: #28c840;
+}
+
+.terminalBody {
+  margin: 0;
+  padding: 1rem 1.25rem;
+  color: #cbd5e1;
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.82rem;
+  line-height: 1.6;
+  overflow-x: auto;
+  white-space: pre;
+}
+
+.terminalBody code {
+  background: none;
+  border: none;
+  padding: 0;
+  color: inherit;
+  font-size: inherit;
+}
+
+/* === Features === */
+
 .features {
-  padding: 2rem 0 3rem;
+  padding: 3rem 0;
+  background: var(--ag-surface-raised);
 }
 
 .featureCard {
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 1rem;
+  border: 1px solid var(--ag-border);
+  border-radius: 10px;
+  padding: 1.25rem;
   height: 100%;
-  background: #ffffff;
+  background: var(--ag-surface);
+  transition: border-color 0.2s;
+}
+
+.featureCard:hover {
+  border-color: var(--ifm-color-primary);
+}
+
+.featureCard h3 {
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+}
+
+.featureCard p {
+  color: var(--ag-text-secondary);
+  font-size: 0.92rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* === Supported Tools === */
+
+.tools {
+  padding: 3rem 0;
+  background: var(--ag-surface);
+}
+
+.sectionTitle {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  font-size: 1.5rem;
+}
+
+.toolGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
+  gap: 1rem;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.toolCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--ag-border);
+  border-radius: 8px;
+  background: var(--ag-surface-raised);
+}
+
+.toolCard strong {
+  font-size: 0.95rem;
+}
+
+.toolCard span {
+  color: var(--ag-text-secondary);
+  font-size: 0.82rem;
+  font-family: var(--ifm-font-family-monospace);
+}
+
+/* === Stats === */
+
+.stats {
+  padding: 2.5rem 0;
+  background: var(--ag-surface-raised);
+  border-top: 1px solid var(--ag-border);
+  border-bottom: 1px solid var(--ag-border);
+}
+
+.statsRow {
+  display: flex;
+  justify-content: center;
+  gap: 3rem;
+  flex-wrap: wrap;
+}
+
+.statItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.statValue {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--ifm-color-primary);
+  line-height: 1;
+}
+
+.statLabel {
+  font-size: 0.85rem;
+  color: var(--ag-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* === Bottom CTA === */
+
+.bottomCta {
+  padding: 3rem 0;
+  text-align: center;
+  background: var(--ag-surface);
+}
+
+.bottomCtaText {
+  color: var(--ag-text-secondary);
+  font-size: 0.95rem;
+  margin-bottom: 1.25rem;
+}
+
+/* === Mobile === */
+
+@media (max-width: 640px) {
+  .heroCtas :global(.button) {
+    width: 100%;
+    max-width: 320px;
+  }
+
+  .statsRow {
+    gap: 2rem;
+  }
+
+  .installBlock {
+    font-size: 0.85rem;
+  }
+
+  .terminalBody {
+    font-size: 0.72rem;
+  }
 }

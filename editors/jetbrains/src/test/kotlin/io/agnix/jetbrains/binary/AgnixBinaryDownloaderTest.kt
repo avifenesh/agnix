@@ -52,7 +52,7 @@ class AgnixBinaryDownloaderTest {
 
         val relative = AgnixBinaryDownloader.resolveTrustedRedirectUrl(
             "https://github.com/avifenesh/agnix/releases/latest/download/agnix-lsp.tar.gz",
-            "/avifenesh/agnix/releases/download/v0.7.2/agnix-lsp.tar.gz"
+            "/avifenesh/agnix/releases/download/v0.8.0/agnix-lsp.tar.gz"
         )
         assertTrue(relative.startsWith("https://github.com/"))
     }

@@ -381,10 +381,12 @@ When the user asks to read the file, think step by step:
 "#;
         let results = find_cot_on_simple_tasks(content);
         assert_eq!(results.len(), 1);
-        assert!(results[0]
-            .phrase
-            .to_lowercase()
-            .contains("think step by step"));
+        assert!(
+            results[0]
+                .phrase
+                .to_lowercase()
+                .contains("think step by step")
+        );
     }
 
     #[test]
@@ -435,12 +437,16 @@ Code could be formatted better.
 "#;
         let results = find_weak_imperative_language(content);
         assert_eq!(results.len(), 2);
-        assert!(results
-            .iter()
-            .any(|r| r.weak_term.to_lowercase() == "should"));
-        assert!(results
-            .iter()
-            .any(|r| r.weak_term.to_lowercase() == "could"));
+        assert!(
+            results
+                .iter()
+                .any(|r| r.weak_term.to_lowercase() == "should")
+        );
+        assert!(
+            results
+                .iter()
+                .any(|r| r.weak_term.to_lowercase() == "could")
+        );
     }
 
     #[test]

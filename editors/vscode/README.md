@@ -1,6 +1,7 @@
 # agnix - Agent Config Linter
 
 Real-time validation for AI agent configuration files in VS Code.
+Install from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=avifenesh.agnix).
 
 **100 rules** | **Real-time diagnostics** | **Auto-fix** | **Multi-tool support**
 

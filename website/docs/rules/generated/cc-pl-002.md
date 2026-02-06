@@ -1,7 +1,9 @@
 ---
 id: cc-pl-002
-title: "CC-PL-002 Components in .claude-plugin/"
+title: "CC-PL-002: Components in .claude-plugin/ - Claude Plugins"
 sidebar_label: "CC-PL-002"
+description: "agnix rule CC-PL-002 checks for components in .claude-plugin/ in claude plugins files. Severity: HIGH. See examples and fix guidance."
+keywords: ["CC-PL-002", "components in .claude-plugin/", "claude plugins", "validation", "agnix", "linter"]
 ---
 
 ## Summary

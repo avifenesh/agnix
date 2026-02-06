@@ -236,9 +236,11 @@ mod tests {
         );
         let lsp_diag = to_lsp_diagnostic(&diag);
         assert!(lsp_diag.message.contains("Error message"));
-        assert!(lsp_diag
-            .message
-            .contains("Suggestion: Try doing this instead"));
+        assert!(
+            lsp_diag
+                .message
+                .contains("Suggestion: Try doing this instead")
+        );
     }
 
     #[test]

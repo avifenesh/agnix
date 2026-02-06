@@ -5,7 +5,9 @@
 
 use agnix_core::Fix;
 use std::collections::HashMap;
-use tower_lsp::lsp_types::{CodeAction, CodeActionKind, TextEdit, Url, WorkspaceEdit};
+use tower_lsp::lsp_types::{
+    CodeAction, CodeActionKind, Diagnostic as LspDiagnostic, TextEdit, Url, WorkspaceEdit,
+};
 
 use crate::position::byte_range_to_lsp_range;
 
@@ -24,6 +26,16 @@ use crate::position::byte_range_to_lsp_range;
 ///
 /// A CodeAction with a WorkspaceEdit to apply the fix.
 pub fn fix_to_code_action(uri: &Url, fix: &Fix, content: &str) -> CodeAction {
+    fix_to_code_action_with_diagnostic(uri, fix, content, None)
+}
+
+/// Convert an agnix-core Fix to an LSP CodeAction with optional source diagnostic metadata.
+pub fn fix_to_code_action_with_diagnostic(
+    uri: &Url,
+    fix: &Fix,
+    content: &str,
+    diagnostic: Option<&LspDiagnostic>,
+) -> CodeAction {
     let range = byte_range_to_lsp_range(content, fix.start_byte, fix.end_byte);
 
     let text_edit = TextEdit {
@@ -43,7 +55,7 @@ pub fn fix_to_code_action(uri: &Url, fix: &Fix, content: &str) -> CodeAction {
     CodeAction {
         title: fix.description.clone(),
         kind: Some(CodeActionKind::QUICKFIX),
-        diagnostics: None,
+        diagnostics: diagnostic.map(|d| vec![d.clone()]),
         edit: Some(workspace_edit),
         command: None,
         is_preferred: Some(fix.safe),
@@ -58,7 +70,20 @@ pub fn fix_to_code_action(uri: &Url, fix: &Fix, content: &str) -> CodeAction {
 pub fn fixes_to_code_actions(uri: &Url, fixes: &[Fix], content: &str) -> Vec<CodeAction> {
     fixes
         .iter()
-        .map(|fix| fix_to_code_action(uri, fix, content))
+        .map(|fix| fix_to_code_action_with_diagnostic(uri, fix, content, None))
+        .collect()
+}
+
+/// Convert multiple fixes to code actions and attach the originating diagnostic.
+pub fn fixes_to_code_actions_with_diagnostic(
+    uri: &Url,
+    fixes: &[Fix],
+    content: &str,
+    diagnostic: &LspDiagnostic,
+) -> Vec<CodeAction> {
+    fixes
+        .iter()
+        .map(|fix| fix_to_code_action_with_diagnostic(uri, fix, content, Some(diagnostic)))
         .collect()
 }
 

@@ -239,7 +239,7 @@ mod tests {
 
     #[test]
     fn clean_version_accepted() {
-        let version = "v0.7.2";
+        let version = "v0.8.0";
         assert!(
             !(version.contains('/') || version.contains('\\') || version.contains("..")),
             "clean semver should be accepted"
@@ -248,7 +248,7 @@ mod tests {
 
     #[test]
     fn trusted_github_url_accepted() {
-        let url = "https://github.com/avifenesh/agnix/releases/download/v0.7.2/agnix-lsp.tar.gz";
+        let url = "https://github.com/avifenesh/agnix/releases/download/v0.8.0/agnix-lsp.tar.gz";
         let is_trusted = url.starts_with("https://github.com/")
             || url.starts_with("https://objects.githubusercontent.com/");
         assert!(is_trusted, "github.com URL should be trusted");
@@ -272,7 +272,7 @@ mod tests {
 
     #[test]
     fn http_url_rejected() {
-        let url = "http://github.com/avifenesh/agnix/releases/download/v0.7.2/agnix-lsp.tar.gz";
+        let url = "http://github.com/avifenesh/agnix/releases/download/v0.8.0/agnix-lsp.tar.gz";
         let is_trusted = url.starts_with("https://github.com/")
             || url.starts_with("https://objects.githubusercontent.com/");
         assert!(!is_trusted, "HTTP URL should be rejected");

@@ -58,6 +58,16 @@ pub fn valid_tools() -> &'static [&'static str] {
     VALID_TOOLS
 }
 
+/// Returns authoring family IDs derived from rules.json `authoring.families`.
+pub fn authoring_families() -> &'static [&'static str] {
+    AUTHORING_FAMILIES
+}
+
+/// Returns the raw authoring catalog JSON generated from rules.json.
+pub fn authoring_catalog_json() -> &'static str {
+    AUTHORING_CATALOG_JSON
+}
+
 /// Returns the tool name for a given rule ID prefix, if any.
 ///
 /// Only returns a tool if ALL rules with that prefix have the same tool.
@@ -199,6 +209,35 @@ mod tests {
         let tools = valid_tools();
         assert!(!tools.is_empty());
         assert!(tools.contains(&"claude-code"));
+    }
+
+    // ===== AUTHORING catalog tests =====
+
+    #[test]
+    fn test_authoring_families_not_empty() {
+        assert!(
+            !AUTHORING_FAMILIES.is_empty(),
+            "AUTHORING_FAMILIES should not be empty"
+        );
+    }
+
+    #[test]
+    fn test_authoring_families_contains_core_families() {
+        let families = authoring_families();
+        assert!(families.contains(&"skill"));
+        assert!(families.contains(&"agent"));
+        assert!(families.contains(&"hooks"));
+        assert!(families.contains(&"mcp"));
+    }
+
+    #[test]
+    fn test_authoring_catalog_json_is_valid_json() {
+        let parsed: serde_json::Value = serde_json::from_str(authoring_catalog_json())
+            .expect("AUTHORING_CATALOG_JSON should be valid JSON");
+        assert!(
+            parsed.is_object(),
+            "authoring catalog should be a JSON object"
+        );
     }
 
     // ===== TOOL_RULE_PREFIXES Tests =====

@@ -831,10 +831,12 @@ mod tests {
         // metadata() follows symlinks and should detect the cycle
         let result = fs.metadata(Path::new("/test/a"));
         assert!(result.is_err());
-        assert!(result
-            .unwrap_err()
-            .to_string()
-            .contains("too many levels of symbolic links"));
+        assert!(
+            result
+                .unwrap_err()
+                .to_string()
+                .contains("too many levels of symbolic links")
+        );
     }
 
     #[test]
@@ -847,10 +849,12 @@ mod tests {
         // canonicalize() follows symlinks and should detect the cycle
         let result = fs.canonicalize(Path::new("/test/a"));
         assert!(result.is_err());
-        assert!(result
-            .unwrap_err()
-            .to_string()
-            .contains("too many levels of symbolic links"));
+        assert!(
+            result
+                .unwrap_err()
+                .to_string()
+                .contains("too many levels of symbolic links")
+        );
     }
 
     #[test]
@@ -911,10 +915,12 @@ mod tests {
             result.is_err(),
             "Should fail when exceeding MAX_SYMLINK_DEPTH"
         );
-        assert!(result
-            .unwrap_err()
-            .to_string()
-            .contains("too many levels of symbolic links"));
+        assert!(
+            result
+                .unwrap_err()
+                .to_string()
+                .contains("too many levels of symbolic links")
+        );
     }
 
     // ===== Unix-specific symlink tests for RealFileSystem =====

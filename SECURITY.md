@@ -164,7 +164,7 @@ cargo install agnix-cli --features telemetry
 
 ## Security Updates
 
-Security fixes are released as patch versions (e.g., 0.7.1 -> 0.7.2) and announced in:
+Security fixes are released as patch versions (e.g., 0.8.0 -> 0.8.1) and announced in:
 
 - GitHub Releases
 - CHANGELOG.md

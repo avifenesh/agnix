@@ -1,7 +1,9 @@
 ---
 id: cc-mem-005
-title: "CC-MEM-005 Generic Instruction"
+title: "CC-MEM-005: Generic Instruction - Claude Memory"
 sidebar_label: "CC-MEM-005"
+description: "agnix rule CC-MEM-005 checks for generic instruction in claude memory files. Severity: HIGH. See examples and fix guidance."
+keywords: ["CC-MEM-005", "generic instruction", "claude memory", "validation", "agnix", "linter"]
 ---
 
 ## Summary

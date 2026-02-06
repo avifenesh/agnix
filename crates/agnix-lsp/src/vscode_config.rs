@@ -13,8 +13,8 @@
 //! - The `merge_into_lint_config` method applies VS Code settings on top of
 //!   existing config (from .agnix.toml), giving VS Code settings priority
 
-use agnix_core::config::{RuleConfig, SeverityLevel, SpecRevisions, TargetTool, ToolVersions};
 use agnix_core::LintConfig;
+use agnix_core::config::{RuleConfig, SeverityLevel, SpecRevisions, TargetTool, ToolVersions};
 use serde::{Deserialize, Serialize};
 
 /// VS Code configuration received from workspace/didChangeConfiguration.

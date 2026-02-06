@@ -305,8 +305,8 @@ mod tests {
         assert!(!looks_like_path("markdown_file")); // Contains "md" but doesn't end with .md
         assert!(!looks_like_path("claude_md_parser")); // Contains ".md" but doesn't END with it
         assert!(!looks_like_path("my_json_handler")); // Contains "json" substring
-                                                      // Note: "file.tar.gz" would contain ".gz" but our detector doesn't catch that
-                                                      // This is acceptable as .gz isn't a path, it's an extension
+        // Note: "file.tar.gz" would contain ".gz" but our detector doesn't catch that
+        // This is acceptable as .gz isn't a path, it's an extension
     }
 
     #[test]
@@ -322,7 +322,7 @@ mod tests {
         assert!(!is_valid_rule_id("AS"));
         // Invalid: leading zero is still valid format
         assert!(is_valid_rule_id("AS-001")); // 001 is valid
-                                             // Invalid: too many dashes
+        // Invalid: too many dashes
         assert!(!is_valid_rule_id("A-B-C-001"));
         // Invalid: empty parts
         assert!(!is_valid_rule_id("--001"));

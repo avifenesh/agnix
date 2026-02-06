@@ -566,10 +566,12 @@ Run npm install and npm build.
 "#;
         let result = check_project_context(content);
         assert!(result.is_some());
-        assert!(result
-            .unwrap()
-            .description
-            .contains("Missing project context"));
+        assert!(
+            result
+                .unwrap()
+                .description
+                .contains("Missing project context")
+        );
     }
 
     #[test]
@@ -683,12 +685,16 @@ agent: something
         ];
         let results = find_multiple_agents_md(&paths);
         assert_eq!(results.len(), 2);
-        assert!(results
-            .iter()
-            .any(|r| r.path.to_string_lossy().contains("project/AGENTS.md")));
-        assert!(results
-            .iter()
-            .any(|r| r.path.to_string_lossy().contains("subdir")));
+        assert!(
+            results
+                .iter()
+                .any(|r| r.path.to_string_lossy().contains("project/AGENTS.md"))
+        );
+        assert!(
+            results
+                .iter()
+                .any(|r| r.path.to_string_lossy().contains("subdir"))
+        );
     }
 
     #[test]
@@ -733,12 +739,16 @@ agent: something
             .map(|r| r.path.to_string_lossy().to_string())
             .collect();
         assert!(result_paths.iter().any(|p| p.contains("project/AGENTS.md")));
-        assert!(result_paths
-            .iter()
-            .any(|p| p.contains("project/a/AGENTS.md")));
-        assert!(result_paths
-            .iter()
-            .any(|p| p.contains("project/a/b/AGENTS.md")));
+        assert!(
+            result_paths
+                .iter()
+                .any(|p| p.contains("project/a/AGENTS.md"))
+        );
+        assert!(
+            result_paths
+                .iter()
+                .any(|p| p.contains("project/a/b/AGENTS.md"))
+        );
     }
 
     #[test]

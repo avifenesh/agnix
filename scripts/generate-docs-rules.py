@@ -147,13 +147,34 @@ def render_rule(rule: dict) -> str:
     fixtures = str(tests.get("fixtures", False)).lower()
     e2e = str(tests.get("e2e", False)).lower()
 
-    title = json.dumps(f"{rule_id} {name}")
+    cat_label = CATEGORY_LABELS.get(category, category)
+
+    # SEO-optimized title (under 60 chars when possible)
+    seo_title = f"{rule_id}: {name} - {cat_label}"
+    if len(seo_title) > 60:
+        seo_title = f"{rule_id}: {name}"
+    title = json.dumps(seo_title)
     sidebar_label = json.dumps(rule_id)
+
+    # SEO meta description (120-160 chars)
+    seo_desc = (
+        f"agnix rule {rule_id} checks for {name.lower()} in {cat_label.lower()} files. "
+        f"Severity: {severity}. See examples and fix guidance."
+    )
+    if len(seo_desc) > 160:
+        seo_desc = seo_desc[:157] + "..."
+    description = json.dumps(seo_desc)
+
+    # SEO keywords (quote each to avoid YAML colon issues)
+    kw_list = [rule_id, name.lower(), cat_label.lower(), "validation", "agnix", "linter"]
+    keywords = ", ".join(json.dumps(kw) for kw in kw_list)
 
     return f"""---
 id: {slug(rule_id)}
 title: {title}
 sidebar_label: {sidebar_label}
+description: {description}
+keywords: [{keywords}]
 ---
 
 ## Summary

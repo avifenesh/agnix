@@ -1,7 +1,9 @@
 ---
 id: cc-sk-005
-title: "CC-SK-005 Invalid Agent Type"
+title: "CC-SK-005: Invalid Agent Type - Claude Skills"
 sidebar_label: "CC-SK-005"
+description: "agnix rule CC-SK-005 checks for invalid agent type in claude skills files. Severity: HIGH. See examples and fix guidance."
+keywords: ["CC-SK-005", "invalid agent type", "claude skills", "validation", "agnix", "linter"]
 ---
 
 ## Summary

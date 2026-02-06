@@ -3,13 +3,31 @@
 use crate::{
     config::LintConfig,
     diagnostics::{Diagnostic, Fix},
-    parsers::markdown::{check_xml_balance_with_content_end, extract_xml_tags, XmlBalanceError},
+    parsers::markdown::{
+        XmlBalanceError, XmlTag, check_xml_balance_with_content_end, extract_xml_tags,
+    },
     rules::Validator,
 };
 use rust_i18n::t;
 use std::path::Path;
 
 pub struct XmlValidator;
+
+fn find_unique_closing_tag_span(
+    tags: &[XmlTag],
+    line: usize,
+    column: usize,
+    name: &str,
+) -> Option<(usize, usize)> {
+    let mut matches = tags.iter().filter(|tag| {
+        tag.is_closing && tag.line == line && tag.column == column && tag.name == name
+    });
+    let first = matches.next()?;
+    if matches.next().is_some() {
+        return None;
+    }
+    Some((first.start_byte, first.end_byte))
+}
 
 impl Validator for XmlValidator {
     fn validate(&self, path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic> {
@@ -75,9 +93,23 @@ impl Validator for XmlValidator {
                         expected = expected
                     );
 
-                    let diagnostic =
+                    let mut diagnostic =
                         Diagnostic::error(path.to_path_buf(), line, column, rule_id, message)
                             .with_suggestion(suggestion);
+
+                    // Unsafe auto-fix: rewrite mismatched closing tag to expected closing tag.
+                    if let Some((start, end)) =
+                        find_unique_closing_tag_span(&tags, line, column, &found)
+                    {
+                        diagnostic = diagnostic.with_fix(Fix::replace(
+                            start,
+                            end,
+                            format!("</{}>", expected),
+                            format!("Replace </{}> with </{}>", found, expected),
+                            false,
+                        ));
+                    }
+
                     diagnostics.push(diagnostic);
                 }
                 XmlBalanceError::UnmatchedClosing { tag, line, column } => {
@@ -88,9 +120,22 @@ impl Validator for XmlValidator {
                     let message = t!("rules.xml_003.message", tag = tag);
                     let suggestion = t!("rules.xml_003.suggestion", tag = tag);
 
-                    let diagnostic =
+                    let mut diagnostic =
                         Diagnostic::error(path.to_path_buf(), line, column, rule_id, message)
                             .with_suggestion(suggestion);
+
+                    // Unsafe auto-fix: remove unmatched closing tag.
+                    if let Some((start, end)) =
+                        find_unique_closing_tag_span(&tags, line, column, &tag)
+                    {
+                        diagnostic = diagnostic.with_fix(Fix::delete(
+                            start,
+                            end,
+                            format!("Remove unmatched closing tag </{}>", tag),
+                            false,
+                        ));
+                    }
+
                     diagnostics.push(diagnostic);
                 }
             }
@@ -170,10 +215,12 @@ mod tests {
         // Find the XML-002 diagnostic
         let xml_002 = diagnostics.iter().find(|d| d.rule == "XML-002");
         assert!(xml_002.is_some(), "Expected XML-002 diagnostic");
-        assert!(xml_002
-            .unwrap()
-            .message
-            .contains("Expected '</inner>' but found '</outer>'"));
+        assert!(
+            xml_002
+                .unwrap()
+                .message
+                .contains("Expected '</inner>' but found '</outer>'")
+        );
     }
 
     // XML-003: Unmatched closing tag produces XML-003 rule ID
@@ -330,27 +377,30 @@ mod tests {
     }
 
     #[test]
-    fn test_xml_002_no_fix_yet() {
-        // XML-002 (mismatch) doesn't have auto-fix in this implementation
+    fn test_xml_002_has_unsafe_fix() {
         let content = "<outer><inner></outer></inner>";
         let validator = XmlValidator;
         let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
 
         let xml_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XML-002").collect();
         assert!(!xml_002.is_empty());
-        // No fix for XML-002
-        assert!(!xml_002[0].has_fixes());
+        assert!(xml_002[0].has_fixes());
+        let fix = &xml_002[0].fixes[0];
+        assert_eq!(fix.replacement, "</inner>");
+        assert!(!fix.safe);
     }
 
     #[test]
-    fn test_xml_003_no_fix() {
-        // XML-003 (unmatched closing) doesn't have auto-fix
+    fn test_xml_003_has_unsafe_fix() {
         let content = "</orphan>";
         let validator = XmlValidator;
         let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
 
         assert_eq!(diagnostics.len(), 1);
         assert_eq!(diagnostics[0].rule, "XML-003");
-        assert!(!diagnostics[0].has_fixes());
+        assert!(diagnostics[0].has_fixes());
+        let fix = &diagnostics[0].fixes[0];
+        assert!(fix.is_deletion());
+        assert!(!fix.safe);
     }
 }

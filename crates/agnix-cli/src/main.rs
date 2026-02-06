@@ -14,11 +14,11 @@ mod watch;
 use telemetry_stub as telemetry;
 
 use agnix_core::{
-    apply_fixes,
+    ValidationResult, apply_fixes,
     config::{LintConfig, TargetTool},
     diagnostics::{Diagnostic, DiagnosticLevel},
-    eval::{evaluate_manifest_file, EvalFormat},
-    generate_schema, validate_project, ValidationResult,
+    eval::{EvalFormat, evaluate_manifest_file},
+    generate_schema, validate_project,
 };
 use clap::{Parser, Subcommand, ValueEnum};
 use colored::*;
@@ -221,7 +221,7 @@ fn main() {
 
     // Initialize tracing for verbose mode (only for text output to avoid corrupting JSON/SARIF)
     if cli.verbose && matches!(cli.format, OutputFormat::Text) {
-        use tracing_subscriber::{fmt, prelude::*, EnvFilter};
+        use tracing_subscriber::{EnvFilter, fmt, prelude::*};
 
         let filter = EnvFilter::try_from_default_env()
             .unwrap_or_else(|_| EnvFilter::new("agnix=debug,agnix_core=debug"));

@@ -17,6 +17,7 @@ use agnix_core::{
     validate_file as core_validate_file, validate_project as core_validate_project,
 };
 use rmcp::{
+    ServerHandler, ServiceExt,
     handler::server::{tool::ToolRouter, wrapper::Parameters},
     model::{
         CallToolResult, Content, ErrorData as McpError, Implementation, ProtocolVersion,
@@ -24,7 +25,6 @@ use rmcp::{
     },
     schemars, tool, tool_handler, tool_router,
     transport::stdio,
-    ServerHandler, ServiceExt,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -484,10 +484,10 @@ async fn main() -> anyhow::Result<()> {
 #[cfg(test)]
 mod tests {
     use super::{
-        apply_tool_selection, parse_tools, ToolsInput, ValidateFileInput, ValidateProjectInput,
+        ToolsInput, ValidateFileInput, ValidateProjectInput, apply_tool_selection, parse_tools,
     };
-    use agnix_core::config::TargetTool;
     use agnix_core::LintConfig;
+    use agnix_core::config::TargetTool;
     use serde_json::json;
 
     #[test]

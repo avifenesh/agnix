@@ -26,7 +26,7 @@ use iai_callgrind::{library_benchmark, library_benchmark_group, main};
 use std::hint::black_box;
 use std::path::PathBuf;
 
-use agnix_core::{validate_file_with_registry, validate_project, LintConfig, ValidatorRegistry};
+use agnix_core::{LintConfig, ValidatorRegistry, validate_file_with_registry, validate_project};
 
 use fixtures::{create_scale_project, create_single_skill_file};
 

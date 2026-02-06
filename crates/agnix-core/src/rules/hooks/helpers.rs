@@ -146,6 +146,7 @@ pub(super) fn validate_cc_hk_005_missing_type_field(
 pub(super) fn validate_cc_hk_011_invalid_timeout_values(
     raw_value: &serde_json::Value,
     path: &Path,
+    content: &str,
     diagnostics: &mut Vec<Diagnostic>,
 ) {
     if let Some(hooks_obj) = raw_value.get("hooks").and_then(|h| h.as_object()) {
@@ -175,19 +176,37 @@ pub(super) fn validate_cc_hk_011_invalid_timeout_values(
                                         "hooks.{}[{}].hooks[{}]",
                                         event, matcher_idx, hook_idx
                                     );
-                                    diagnostics.push(
-                                        Diagnostic::error(
-                                            path.to_path_buf(),
-                                            1,
-                                            0,
-                                            "CC-HK-011",
-                                            t!(
-                                                "rules.cc_hk_011.message",
-                                                location = hook_location.as_str()
-                                            ),
-                                        )
-                                        .with_suggestion(t!("rules.cc_hk_011.suggestion")),
-                                    );
+                                    let mut diagnostic = Diagnostic::error(
+                                        path.to_path_buf(),
+                                        1,
+                                        0,
+                                        "CC-HK-011",
+                                        t!(
+                                            "rules.cc_hk_011.message",
+                                            location = hook_location.as_str()
+                                        ),
+                                    )
+                                    .with_suggestion(t!("rules.cc_hk_011.suggestion"));
+
+                                    // Unsafe auto-fix: replace invalid timeout with conservative default 30s.
+                                    // Emit only when the exact key/value pair is uniquely located.
+                                    if let Ok(serialized) = serde_json::to_string(timeout_val) {
+                                        if let Some((start, end)) = find_unique_json_key_value_span(
+                                            content,
+                                            "timeout",
+                                            &serialized,
+                                        ) {
+                                            diagnostic = diagnostic.with_fix(Fix::replace(
+                                                start,
+                                                end,
+                                                "30",
+                                                "Set timeout to 30 seconds",
+                                                false,
+                                            ));
+                                        }
+                                    }
+
+                                    diagnostics.push(diagnostic);
                                 }
                             }
                         }
@@ -271,24 +290,38 @@ pub(super) fn validate_cc_hk_004_matcher_forbidden(
     matcher: &Option<String>,
     matcher_idx: usize,
     path: &Path,
+    content: &str,
     diagnostics: &mut Vec<Diagnostic>,
 ) {
     if !HooksSchema::is_tool_event(event) && matcher.is_some() {
         let hook_location = format!("hooks.{}[{}]", event, matcher_idx);
-        diagnostics.push(
-            Diagnostic::error(
-                path.to_path_buf(),
-                1,
-                0,
-                "CC-HK-004",
-                t!(
-                    "rules.cc_hk_004.message",
-                    event = event,
-                    location = hook_location.as_str()
-                ),
-            )
-            .with_suggestion(t!("rules.cc_hk_004.suggestion")),
-        );
+        let mut diagnostic = Diagnostic::error(
+            path.to_path_buf(),
+            1,
+            0,
+            "CC-HK-004",
+            t!(
+                "rules.cc_hk_004.message",
+                event = event,
+                location = hook_location.as_str()
+            ),
+        )
+        .with_suggestion(t!("rules.cc_hk_004.suggestion"));
+
+        // Safe auto-fix: remove matcher line on non-tool events.
+        // Emit only when we can uniquely identify the exact matcher property.
+        if let Some(matcher_value) = matcher {
+            if let Some((start, end)) = find_unique_matcher_line_span(content, matcher_value) {
+                diagnostic = diagnostic.with_fix(Fix::delete(
+                    start,
+                    end,
+                    "Remove matcher from non-tool event",
+                    true,
+                ));
+            }
+        }
+
+        diagnostics.push(diagnostic);
     }
 }
 
@@ -400,4 +433,42 @@ pub(super) fn find_event_key_position(content: &str, event: &str) -> Option<(usi
         caps.get(1)
             .map(|key_match| (key_match.start(), key_match.end()))
     })
+}
+
+/// Find a unique JSON key/value span for a specific key and serialized value.
+/// Returns the value span only (not including the key/colon).
+fn find_unique_json_key_value_span(
+    content: &str,
+    key: &str,
+    serialized_value: &str,
+) -> Option<(usize, usize)> {
+    let pattern = format!(
+        r#"("{}"\s*:\s*)({})"#,
+        regex::escape(key),
+        regex::escape(serialized_value)
+    );
+    let re = Regex::new(&pattern).ok()?;
+    let mut captures = re.captures_iter(content);
+    let first = captures.next()?;
+    if captures.next().is_some() {
+        return None;
+    }
+    let value_match = first.get(2)?;
+    Some((value_match.start(), value_match.end()))
+}
+
+/// Find a unique matcher line span that can be safely deleted.
+/// Includes trailing newline when present.
+fn find_unique_matcher_line_span(content: &str, matcher_value: &str) -> Option<(usize, usize)> {
+    let pattern = format!(
+        r#"(?m)^[ \t]*"matcher"\s*:\s*"{}"\s*,?\r?\n?"#,
+        regex::escape(matcher_value)
+    );
+    let re = Regex::new(&pattern).ok()?;
+    let mut matches = re.find_iter(content);
+    let first = matches.next()?;
+    if matches.next().is_some() {
+        return None;
+    }
+    Some((first.start(), first.end()))
 }

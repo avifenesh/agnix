@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.1] - 2026-02-06
+
+### Added
+- Authoring metadata and completion system (`authoring` module) with context-aware suggestions and hover docs for all config file types
+- LSP completion provider with intelligent key/value/snippet suggestions
+- Auto-fix support across validators: skills (AS-005, AS-006, CC-SK-001, CC-SK-003, CC-SK-005), agents (CC-AG-003, CC-AG-004), hooks (CC-HK-011), plugins (CC-PL-005), MCP (MCP-001)
+- Safety tagging for all auto-fixes (safe vs unsafe)
+
+### Changed
+- LSP hover provider simplified by delegating to `agnix_core::authoring` module
+- Agent and skill validators now use `split_frontmatter()` directly for better error location and fix generation
+
+### Fixed
+- CC-AG-007 parse error diagnostics now report the actual error line/column instead of always line 1
+
+## [0.8.0] - 2026-02-06
+
 ### Added
 - Real-world validation harness (`scripts/real-world-validate.py`) with 121 curated repos (`tests/real-world/repos.yaml`) (#184)
 - XP-001: detect `@import` syntax in AGENTS.md files (Claude Code specific)
@@ -44,6 +61,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Supports explicit null to revert to auto-detection
 
 ### Changed
+- Documentation and website navigation now include direct install links for VS Code and JetBrains extensions, plus a prominent website link in the README.
 - Core: introduce `static_regex!` macro for validated regex initialization (#246)
   - Replaces bare `.unwrap()` on `Regex::new()` with descriptive `.expect()` messages
   - Migrates 36 `OnceLock<Regex>` patterns across 7 files to use the macro

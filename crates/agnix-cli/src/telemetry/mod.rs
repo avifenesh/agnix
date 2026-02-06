@@ -33,7 +33,7 @@ mod client;
 mod queue;
 
 pub use config::TelemetryConfig;
-pub use events::{is_valid_rule_id, TelemetryEvent, ValidationRunEvent};
+pub use events::{TelemetryEvent, ValidationRunEvent, is_valid_rule_id};
 pub use queue::EventQueue;
 
 #[cfg(feature = "telemetry")]

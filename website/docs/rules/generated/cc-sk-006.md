@@ -1,7 +1,9 @@
 ---
 id: cc-sk-006
-title: "CC-SK-006 Dangerous Auto-Invocation"
+title: "CC-SK-006: Dangerous Auto-Invocation - Claude Skills"
 sidebar_label: "CC-SK-006"
+description: "agnix rule CC-SK-006 checks for dangerous auto-invocation in claude skills files. Severity: HIGH. See examples and fix guidance."
+keywords: ["CC-SK-006", "dangerous auto-invocation", "claude skills", "validation", "agnix", "linter"]
 ---
 
 ## Summary

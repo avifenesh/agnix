@@ -7,16 +7,41 @@
 //! - COP-004: Unknown frontmatter keys (MEDIUM) - warn about unrecognized keys
 
 use crate::{
+    FileType,
     config::LintConfig,
-    diagnostics::Diagnostic,
+    diagnostics::{Diagnostic, Fix},
     rules::Validator,
     schemas::copilot::{is_body_empty, is_content_empty, parse_frontmatter, validate_glob_pattern},
-    FileType,
 };
 use rust_i18n::t;
 use std::path::Path;
 
 pub struct CopilotValidator;
+
+fn line_byte_range(content: &str, line_number: usize) -> Option<(usize, usize)> {
+    if line_number == 0 {
+        return None;
+    }
+
+    let mut current_line = 1usize;
+    let mut line_start = 0usize;
+
+    for (idx, ch) in content.char_indices() {
+        if current_line == line_number && ch == '\n' {
+            return Some((line_start, idx + 1));
+        }
+        if ch == '\n' {
+            current_line += 1;
+            line_start = idx + 1;
+        }
+    }
+
+    if current_line == line_number {
+        Some((line_start, content.len()))
+    } else {
+        None
+    }
+}
 
 impl Validator for CopilotValidator {
     fn validate(&self, path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic> {
@@ -161,16 +186,26 @@ impl Validator for CopilotValidator {
         // COP-004: Unknown frontmatter keys (WARNING)
         if config.is_rule_enabled("COP-004") {
             for unknown in &parsed.unknown_keys {
-                diagnostics.push(
-                    Diagnostic::warning(
-                        path.to_path_buf(),
-                        unknown.line,
-                        unknown.column,
-                        "COP-004",
-                        t!("rules.cop_004.message", key = unknown.key.as_str()),
-                    )
-                    .with_suggestion(t!("rules.cop_004.suggestion", key = unknown.key.as_str())),
-                );
+                let mut diagnostic = Diagnostic::warning(
+                    path.to_path_buf(),
+                    unknown.line,
+                    unknown.column,
+                    "COP-004",
+                    t!("rules.cop_004.message", key = unknown.key.as_str()),
+                )
+                .with_suggestion(t!("rules.cop_004.suggestion", key = unknown.key.as_str()));
+
+                // Safe auto-fix: remove unknown top-level frontmatter key line.
+                if let Some((start, end)) = line_byte_range(content, unknown.line) {
+                    diagnostic = diagnostic.with_fix(Fix::delete(
+                        start,
+                        end,
+                        format!("Remove unknown frontmatter key '{}'", unknown.key),
+                        true,
+                    ));
+                }
+
+                diagnostics.push(diagnostic);
             }
         }
 
@@ -362,6 +397,11 @@ anotherBadKey: 123
         assert_eq!(cop_004[0].level, DiagnosticLevel::Warning);
         assert!(cop_004.iter().any(|d| d.message.contains("unknownKey")));
         assert!(cop_004.iter().any(|d| d.message.contains("anotherBadKey")));
+        assert!(
+            cop_004.iter().all(|d| d.has_fixes()),
+            "All unknown key diagnostics should include safe deletion fixes"
+        );
+        assert!(cop_004.iter().all(|d| d.fixes[0].safe));
     }
 
     #[test]

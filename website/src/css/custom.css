@@ -1,18 +1,92 @@
+/* === Color System === */
+/* Teal palette derived from agnix logo (hue ~174) */
+
 :root {
-  --ifm-color-primary: #0f766e;
-  --ifm-color-primary-dark: #0d665f;
-  --ifm-color-primary-darker: #0c6059;
-  --ifm-color-primary-darkest: #0a4f49;
-  --ifm-color-primary-light: #11867d;
-  --ifm-color-primary-lighter: #129084;
-  --ifm-color-primary-lightest: #15aa9b;
+  --site-primary-hue-saturation: 174 55%;
+  --ifm-color-primary: hsl(174, 55%, 28%);
+  --ifm-color-primary-dark: hsl(174, 55%, 25%);
+  --ifm-color-primary-darker: hsl(174, 55%, 23%);
+  --ifm-color-primary-darkest: hsl(174, 55%, 18%);
+  --ifm-color-primary-light: hsl(174, 55%, 34%);
+  --ifm-color-primary-lighter: hsl(174, 55%, 38%);
+  --ifm-color-primary-lightest: hsl(174, 55%, 45%);
+
   --ifm-code-font-size: 95%;
+  --ifm-heading-font-weight: 600;
+  --ifm-font-family-base: system-ui, -apple-system, 'Segoe UI', Roboto,
+    sans-serif;
+  --ifm-font-family-monospace: ui-monospace, 'SFMono-Regular', 'SF Mono',
+    Menlo, Consolas, monospace;
+  --ifm-global-radius: 6px;
+
+  --ag-surface: #ffffff;
+  --ag-surface-raised: #f8fafc;
+  --ag-border: #e2e8f0;
+  --ag-text-secondary: #64748b;
+  --ag-code-bg: #1e293b;
 }
+
+html[data-theme='dark'] {
+  --ifm-color-primary: hsl(174, 55%, 48%);
+  --ifm-color-primary-dark: hsl(174, 55%, 44%);
+  --ifm-color-primary-darker: hsl(174, 55%, 41%);
+  --ifm-color-primary-darkest: hsl(174, 55%, 35%);
+  --ifm-color-primary-light: hsl(174, 55%, 55%);
+  --ifm-color-primary-lighter: hsl(174, 55%, 60%);
+  --ifm-color-primary-lightest: hsl(174, 55%, 68%);
+
+  --ag-surface: #1b1b1d;
+  --ag-surface-raised: #242526;
+  --ag-border: #3a3a3c;
+  --ag-text-secondary: #a1a1aa;
+  --ag-code-bg: #0f172a;
+}
+
+/* === Navbar === */
 
 .navbar {
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--ag-border);
+  backdrop-filter: blur(8px);
 }
 
+.header-github-link::before {
+  content: '';
+  width: 24px;
+  height: 24px;
+  display: flex;
+  background: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12' fill='%23586069'/%3E%3C/svg%3E")
+    no-repeat;
+}
+
+html[data-theme='dark'] .header-github-link::before {
+  background: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12' fill='%23c9d1d9'/%3E%3C/svg%3E")
+    no-repeat;
+}
+
+/* === Footer === */
+
 .footer {
-  border-top: 1px solid #1f2937;
+  border-top: 1px solid var(--ag-border);
+}
+
+/* === Code Blocks === */
+
+.prism-code {
+  font-size: 0.9rem;
+}
+
+/* Ensure Docusaurus code blocks have visible contrast in light mode */
+:root {
+  --prism-background-color: #f6f8fa;
+  --ifm-code-background: #f0f2f5;
+}
+
+html[data-theme='dark'] {
+  --prism-background-color: #161b22;
+  --ifm-code-background: rgba(110, 118, 129, 0.2);
+}
+
+/* Inline code contrast */
+code {
+  border: 1px solid var(--ag-border);
 }
