@@ -784,14 +784,20 @@ fn test_autofix_count_matches_documentation() {
 
     // Look for the pattern "Auto-Fixable: N rules (N%)"
     let re = Regex::new(r"Auto-Fixable\*\*:\s*(\d+)\s*rules").unwrap();
-    if let Some(cap) = re.captures(&content) {
-        let documented_count: usize = cap[1].parse().unwrap();
-        assert_eq!(
-            autofix_count, documented_count,
-            "rules.json has {} auto-fixable rules but VALIDATION-RULES.md documents {}",
-            autofix_count, documented_count
-        );
-    }
+    let cap = re.captures(&content).unwrap_or_else(|| {
+        panic!(
+            "Could not find documented auto-fixable rule count in {} using pattern {:?}. \
+             The footer format may have changed.",
+            validation_rules_path.display(),
+            re.as_str()
+        )
+    });
+    let documented_count: usize = cap[1].parse().unwrap();
+    assert_eq!(
+        autofix_count, documented_count,
+        "rules.json has {} auto-fixable rules but VALIDATION-RULES.md documents {}",
+        autofix_count, documented_count
+    );
 }
 
 #[test]

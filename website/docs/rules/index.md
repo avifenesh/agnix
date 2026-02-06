@@ -40,7 +40,7 @@ This section contains all `100` validation rules generated from `knowledge-base/
 | [CC-HK-008](./generated/cc-hk-008.md) | Script File Not Found | HIGH | Claude Hooks | No |
 | [CC-HK-009](./generated/cc-hk-009.md) | Dangerous Command Pattern | HIGH | Claude Hooks | No |
 | [CC-HK-010](./generated/cc-hk-010.md) | Timeout Policy | MEDIUM | Claude Hooks | No |
-| [CC-HK-011](./generated/cc-hk-011.md) | Invalid Timeout Value | HIGH | Claude Hooks | Yes (safe) |
+| [CC-HK-011](./generated/cc-hk-011.md) | Invalid Timeout Value | HIGH | Claude Hooks | Yes (unsafe) |
 | [CC-HK-012](./generated/cc-hk-012.md) | Hooks Parse Error | HIGH | Claude Hooks | No |
 | [CC-AG-001](./generated/cc-ag-001.md) | Missing Name Field | HIGH | Claude Agents | No |
 | [CC-AG-002](./generated/cc-ag-002.md) | Missing Description Field | HIGH | Claude Agents | No |
@@ -55,7 +55,7 @@ This section contains all `100` validation rules generated from `knowledge-base/
 | [CC-MEM-004](./generated/cc-mem-004.md) | Invalid Command Reference | MEDIUM | Claude Memory | No |
 | [CC-MEM-005](./generated/cc-mem-005.md) | Generic Instruction | HIGH | Claude Memory | Yes (safe) |
 | [CC-MEM-006](./generated/cc-mem-006.md) | Negative Without Positive | HIGH | Claude Memory | No |
-| [CC-MEM-007](./generated/cc-mem-007.md) | Weak Constraint Language | HIGH | Claude Memory | Yes (unsafe) |
+| [CC-MEM-007](./generated/cc-mem-007.md) | Weak Constraint Language | HIGH | Claude Memory | Yes (safe/unsafe) |
 | [CC-MEM-008](./generated/cc-mem-008.md) | Critical Content in Middle | HIGH | Claude Memory | No |
 | [CC-MEM-009](./generated/cc-mem-009.md) | Token Count Exceeded | MEDIUM | Claude Memory | No |
 | [CC-MEM-010](./generated/cc-mem-010.md) | README Duplication | MEDIUM | Claude Memory | No |

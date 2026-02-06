@@ -12,7 +12,7 @@ keywords: ["CC-MEM-007", "weak constraint language", "claude memory", "validatio
 - **Severity**: `HIGH`
 - **Category**: `Claude Memory`
 - **Normative Level**: `SHOULD`
-- **Auto-Fix**: `Yes (unsafe)`
+- **Auto-Fix**: `Yes (safe/unsafe)`
 - **Verified On**: `2026-02-04`
 
 ## Applicability

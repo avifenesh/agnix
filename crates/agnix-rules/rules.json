@@ -940,7 +940,7 @@
       },
       "fix": {
         "autofix": true,
-        "fix_safety": "safe"
+        "fix_safety": "unsafe"
       }
     },
     {
@@ -1316,7 +1316,7 @@
       },
       "fix": {
         "autofix": true,
-        "fix_safety": "unsafe"
+        "fix_safety": "safe/unsafe"
       }
     },
     {

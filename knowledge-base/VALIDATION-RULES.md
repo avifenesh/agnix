@@ -962,7 +962,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | AS-005 | Strip leading/trailing hyphens | safe |
 | AS-006 | Collapse consecutive hyphens | safe |
 | AS-010 | Prepend "Use when user wants to " | unsafe |
-| AS-014 | Normalize model to valid value | safe |
+| AS-014 | Normalize Windows path separators | safe |
 | CC-SK-001 | Default invalid model to sonnet | unsafe |
 | CC-SK-002 | Normalize context to fork | unsafe |
 | CC-SK-003 | Add default agent for fork context | unsafe |
@@ -970,11 +970,11 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | CC-SK-007 | Suggest Bash(git:*) matcher | unsafe |
 | CC-HK-001 | Correct event name casing/typo | safe/unsafe |
 | CC-HK-004 | Clamp timeout to valid range | safe |
-| CC-HK-011 | Remove redundant wildcard matcher | safe |
+| CC-HK-011 | Remove redundant wildcard matcher | unsafe |
 | CC-AG-003 | Default invalid model to sonnet | unsafe |
 | CC-AG-004 | Default invalid permission mode | unsafe |
 | CC-MEM-005 | Remove generic instruction line | safe |
-| CC-MEM-007 | Replace weak language with strong | unsafe |
+| CC-MEM-007 | Replace weak language with strong | safe/unsafe |
 | CC-PL-005 | Normalize plugin name | unsafe |
 | MCP-001 | Set jsonrpc to "2.0" | safe |
 | MCP-008 | Update protocolVersion | unsafe |
