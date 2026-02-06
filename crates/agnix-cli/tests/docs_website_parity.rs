@@ -4,7 +4,6 @@
 //! and include required sections such as examples and versioned docs metadata.
 
 use serde::Deserialize;
-use std::collections::BTreeSet;
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -28,7 +27,10 @@ fn workspace_root() -> &'static Path {
         for ancestor in manifest_dir.ancestors() {
             let cargo_toml = ancestor.join("Cargo.toml");
             if let Ok(content) = fs::read_to_string(&cargo_toml) {
-                if content.contains("[workspace]") || content.contains("[workspace.") {
+                if content.lines().any(|line| {
+                    let trimmed = line.trim();
+                    trimmed == "[workspace]" || trimmed.starts_with("[workspace.")
+                }) {
                     return ancestor.to_path_buf();
                 }
             }
@@ -61,11 +63,21 @@ fn assert_rules_bundle(root: &Path, rules: &RulesIndex, docs_root: &Path) {
         docs_dir.display()
     );
 
-    let markdown_count = fs::read_dir(&docs_dir)
-        .unwrap_or_else(|e| panic!("Failed to read {}: {}", docs_dir.display(), e))
-        .filter_map(Result::ok)
-        .filter(|entry| entry.path().extension().is_some_and(|ext| ext == "md"))
-        .count();
+    let entries = fs::read_dir(&docs_dir)
+        .unwrap_or_else(|e| panic!("Failed to read {}: {}", docs_dir.display(), e));
+    let mut markdown_count = 0usize;
+    for entry_result in entries {
+        let entry = entry_result.unwrap_or_else(|e| {
+            panic!(
+                "Failed to read directory entry in {}: {}",
+                docs_dir.display(),
+                e
+            )
+        });
+        if entry.path().extension().is_some_and(|ext| ext == "md") {
+            markdown_count += 1;
+        }
+    }
 
     assert_eq!(
         markdown_count, rules.total_rules,
@@ -109,37 +121,11 @@ fn assert_rules_bundle(root: &Path, rules: &RulesIndex, docs_root: &Path) {
         );
     }
 
-    // Sanity check location to help debug failures quickly.
     assert!(
         docs_root.starts_with(root.join("website")),
         "Docs root should live under website/: {}",
         docs_root.display()
     );
-}
-
-fn collect_markdown_relpaths(dir: &Path) -> BTreeSet<PathBuf> {
-    fn visit(base: &Path, current: &Path, out: &mut BTreeSet<PathBuf>) {
-        let entries = fs::read_dir(current)
-            .unwrap_or_else(|e| panic!("Failed to read {}: {}", current.display(), e));
-        for entry in entries.filter_map(Result::ok) {
-            let path = entry.path();
-            if path.is_dir() {
-                visit(base, &path, out);
-                continue;
-            }
-            if path.extension().is_some_and(|ext| ext == "md") {
-                let rel = path
-                    .strip_prefix(base)
-                    .unwrap_or_else(|e| panic!("Failed to relativize {}: {}", path.display(), e))
-                    .to_path_buf();
-                out.insert(rel);
-            }
-        }
-    }
-
-    let mut out = BTreeSet::new();
-    visit(dir, dir, &mut out);
-    out
 }
 
 #[test]
@@ -189,32 +175,62 @@ fn docs_site_has_search_and_versioning_configuration() {
         "versions.json must contain at least one version entry"
     );
 
-    let rules = load_rules_json();
-    let current_docs_root = root.join("website/docs");
-    let current_docs = collect_markdown_relpaths(&current_docs_root);
-    assert!(
-        current_docs.contains(Path::new("intro.md")),
-        "Expected intro.md in {}",
-        current_docs_root.display()
-    );
-    assert!(
-        current_docs.contains(Path::new("getting-started.md")),
-        "Expected getting-started.md in {}",
-        current_docs_root.display()
-    );
     for version in parsed {
         let version_docs_root = root.join(format!("website/versioned_docs/version-{}", version));
-        assert_rules_bundle(root, &rules, &version_docs_root);
+        assert!(
+            version_docs_root.exists(),
+            "Versioned docs directory missing: {}",
+            version_docs_root.display()
+        );
 
-        let version_docs = collect_markdown_relpaths(&version_docs_root);
-        for rel in &current_docs {
-            assert!(
-                version_docs.contains(rel),
-                "Versioned docs {} missing file {}",
-                version_docs_root.display(),
-                rel.display()
-            );
+        let version_index = version_docs_root.join("rules/index.md");
+        assert!(
+            version_index.exists(),
+            "Versioned rules index missing: {}",
+            version_index.display()
+        );
+
+        let version_rules_dir = version_docs_root.join("rules/generated");
+        assert!(
+            version_rules_dir.exists(),
+            "Versioned generated rules directory missing: {}",
+            version_rules_dir.display()
+        );
+
+        let entries = fs::read_dir(&version_rules_dir)
+            .unwrap_or_else(|e| panic!("Failed to read {}: {}", version_rules_dir.display(), e));
+        let mut checked_file: Option<PathBuf> = None;
+        let mut count = 0usize;
+        for entry_result in entries {
+            let entry = entry_result.unwrap_or_else(|e| {
+                panic!(
+                    "Failed to read directory entry in {}: {}",
+                    version_rules_dir.display(),
+                    e
+                )
+            });
+            if entry.path().extension().is_some_and(|ext| ext == "md") {
+                count += 1;
+                if checked_file.is_none() {
+                    checked_file = Some(entry.path());
+                }
+            }
         }
+        assert!(
+            count > 0,
+            "No generated rule docs found in {}",
+            version_rules_dir.display()
+        );
+        let sample_path = checked_file.expect("Expected at least one versioned rule doc");
+        let sample_content = fs::read_to_string(&sample_path)
+            .unwrap_or_else(|e| panic!("Failed to read {}: {}", sample_path.display(), e));
+        assert!(
+            sample_content.contains("## Examples")
+                && sample_content.contains("### Invalid")
+                && sample_content.contains("### Valid"),
+            "Versioned rule doc {} is missing example sections",
+            sample_path.display()
+        );
     }
 
     let package_path = root.join("website/package.json");

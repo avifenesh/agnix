@@ -11,7 +11,6 @@ ROOT = Path(__file__).resolve().parents[1]
 RULES_JSON = ROOT / "knowledge-base" / "rules.json"
 OUTPUT_DIR = ROOT / "website" / "docs" / "rules" / "generated"
 INDEX_PATH = ROOT / "website" / "docs" / "rules" / "index.md"
-VERSIONED_DOCS_DIR = ROOT / "website" / "versioned_docs"
 
 CATEGORY_LABELS: Dict[str, str] = {
     "agent-skills": "Agent Skills",
@@ -233,13 +232,6 @@ def main() -> int:
         target_index_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
     write_docs(OUTPUT_DIR, INDEX_PATH)
-
-    if VERSIONED_DOCS_DIR.exists():
-        for version_dir in VERSIONED_DOCS_DIR.glob("version-*"):
-            write_docs(
-                version_dir / "rules" / "generated",
-                version_dir / "rules" / "index.md",
-            )
 
     print(f"Generated {len(rules)} rule documentation pages in {OUTPUT_DIR}")
     return 0
