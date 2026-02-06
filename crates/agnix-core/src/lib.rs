@@ -1,3 +1,7 @@
+// The if-let pattern `if config.is_rule_enabled("X") { if condition { ... } }`
+// is used intentionally throughout validators for readability.
+#![allow(clippy::collapsible_if)]
+
 //! # agnix-core
 //!
 //! Core validation engine for agent configurations.

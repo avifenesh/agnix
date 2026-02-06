@@ -21,6 +21,7 @@ pub(super) fn extract_reference_paths(body: &str) -> Vec<PathMatch> {
     let mut paths = Vec::new();
     let mut seen = HashSet::new();
     for m in re.find_iter(body) {
+        #[allow(clippy::collapsible_if)]
         if let Some((trimmed, delta)) = trim_path_token_with_offset(m.as_str()) {
             if seen.insert(trimmed.clone()) {
                 paths.push(PathMatch {

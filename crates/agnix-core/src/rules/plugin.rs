@@ -40,6 +40,7 @@ impl Validator for PluginValidator {
             );
         }
 
+        #[allow(clippy::collapsible_if)]
         if config.is_rule_enabled("CC-PL-002") && is_in_claude_plugin {
             if let Some(plugin_dir) = plugin_dir {
                 let fs = config.fs();

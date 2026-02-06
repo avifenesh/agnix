@@ -60,6 +60,7 @@ impl Validator for AgentsMdValidator {
         }
 
         // AGM-002: Missing Section Headers (WARNING)
+        #[allow(clippy::collapsible_if)]
         if config.is_rule_enabled("AGM-002") {
             if let Some(issue) = check_section_headers(content) {
                 diagnostics.push(
@@ -76,6 +77,7 @@ impl Validator for AgentsMdValidator {
         }
 
         // AGM-003: Character Limit (WARNING)
+        #[allow(clippy::collapsible_if)]
         if config.is_rule_enabled("AGM-003") {
             if let Some(exceeded) = check_character_limit(content, WINDSURF_CHAR_LIMIT) {
                 diagnostics.push(

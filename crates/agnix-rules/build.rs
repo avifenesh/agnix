@@ -175,10 +175,9 @@ fn main() {
             .and_then(|e| e.get("applies_to"))
             .and_then(|a| a.get("tool"))
             .and_then(|t| t.as_str())
+            .filter(|t| !t.is_empty())
         {
-            if !tool.is_empty() {
-                tools.insert(tool.to_string());
-            }
+            tools.insert(tool.to_string());
         }
     }
 
@@ -357,10 +356,8 @@ fn extract_rule_prefix(rule_id: &str) -> Option<String> {
     // Find the last hyphen. If it exists and is followed by only digits,
     // we've found our prefix. This is more efficient than splitting into a vector
     // and correctly handles edge cases like trailing hyphens.
-    if let Some((prefix, suffix)) = rule_id.rsplit_once('-') {
-        if !suffix.is_empty() && suffix.chars().all(|c| c.is_ascii_digit()) {
-            return Some(format!("{}-", prefix));
-        }
-    }
-    None
+    rule_id
+        .rsplit_once('-')
+        .filter(|(_, suffix)| !suffix.is_empty() && suffix.chars().all(|c| c.is_ascii_digit()))
+        .map(|(prefix, _)| format!("{}-", prefix))
 }

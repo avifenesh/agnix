@@ -1,3 +1,5 @@
+#![allow(clippy::collapsible_if, dead_code)]
+
 //! # agnix-lsp
 //!
 //! Language Server Protocol implementation for agnix.

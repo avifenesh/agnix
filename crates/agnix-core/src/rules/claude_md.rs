@@ -55,6 +55,7 @@ impl Validator for ClaudeMdValidator {
         }
 
         // CC-MEM-009: Token count exceeded
+        #[allow(clippy::collapsible_if)]
         if config.is_rule_enabled("CC-MEM-009") {
             if let Some(exceeded) = check_token_count(content) {
                 diagnostics.push(

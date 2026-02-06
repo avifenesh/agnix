@@ -55,6 +55,7 @@ fn frontmatter_value_byte_range(content: &str, key: &str) -> Option<(usize, usiz
             continue;
         }
 
+        #[allow(clippy::collapsible_if)]
         if let Some(rest) = trimmed.strip_prefix(key) {
             if let Some(after_colon) = rest.trim_start().strip_prefix(':') {
                 let leading_ws = line.len() - trimmed.len();
