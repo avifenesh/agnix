@@ -291,8 +291,8 @@ pub fn detect_file_type(path: &Path) -> FileType {
         {
             FileType::CursorRule
         }
-        // Legacy Cursor rules file (.cursorrules)
-        ".cursorrules" => FileType::CursorRulesLegacy,
+        // Legacy Cursor rules file (.cursorrules or .cursorrules.md)
+        ".cursorrules" | ".cursorrules.md" => FileType::CursorRulesLegacy,
         name if name.ends_with(".md") => {
             // Agent directories take precedence over filename exclusions.
             // Files like agents/README.md should be validated as agent configs.

@@ -63,6 +63,14 @@ fn dangerous_patterns() -> &'static Vec<DangerousPattern> {
             ),
             (r"mkfs\.", "Formatting filesystem destroys all data"),
             (r"dd\s+if=.*of=/dev/", "dd to device can destroy data"),
+            (
+                r"\|\|\s*true\s*$",
+                "Error suppression with '|| true' silently hides hook failures",
+            ),
+            (
+                r"2>\s*/dev/null",
+                "Redirecting stderr to /dev/null hides error messages",
+            ),
         ];
         patterns
             .iter()
