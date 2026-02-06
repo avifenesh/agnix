@@ -1,0 +1,27 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Claude Memory",
+  "scopeName": "text.claude.memory",
+  "patterns": [
+    {
+      "include": "#comment-directives"
+    },
+    {
+      "include": "text.html.markdown"
+    }
+  ],
+  "repository": {
+    "comment-directives": {
+      "patterns": [
+        {
+          "match": "^\\s*(IMPORTANT|NOTE|WARNING|TODO|CRITICAL|NEVER|ALWAYS|MUST|DO NOT)\\b",
+          "captures": {
+            "1": {
+              "name": "keyword.control.directive.claude-memory"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

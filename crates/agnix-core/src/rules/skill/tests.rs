@@ -2582,3 +2582,263 @@ Body"#;
     assert!(fix.replacement.contains("context: fork") || fix.replacement == "fork");
     assert!(!fix.safe);
 }
+
+// ===== AS-001 Auto-fix Tests =====
+
+#[test]
+fn test_as_001_has_fix() {
+    let content = "This is just body content without any frontmatter.";
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+    let as_001 = diagnostics
+        .iter()
+        .find(|d| d.rule == "AS-001")
+        .expect("AS-001 should be reported");
+    assert!(as_001.has_fixes());
+    let fix = &as_001.fixes[0];
+    assert!(fix.replacement.contains("---"));
+    assert!(fix.replacement.contains("name:"));
+    assert!(fix.replacement.contains("description:"));
+    assert!(!fix.safe);
+}
+
+#[test]
+fn test_as_001_fix_inserts_at_beginning() {
+    let content = "This is just body content without any frontmatter.";
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+    let as_001 = diagnostics
+        .iter()
+        .find(|d| d.rule == "AS-001")
+        .expect("AS-001 should be reported");
+    assert!(as_001.has_fixes());
+    let fix = &as_001.fixes[0];
+    assert!(fix.is_insertion());
+    assert_eq!(fix.start_byte, 0);
+}
+
+#[test]
+fn test_as_001_fix_applied_produces_valid_frontmatter() {
+    let content = "Body content here";
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+    let as_001 = diagnostics
+        .iter()
+        .find(|d| d.rule == "AS-001")
+        .expect("AS-001 should be reported");
+    let fix = &as_001.fixes[0];
+
+    // Apply fix
+    let mut fixed = content.to_string();
+    fixed.replace_range(fix.start_byte..fix.end_byte, &fix.replacement);
+    assert!(fixed.starts_with("---\n"));
+    assert!(fixed.contains("---\n"));
+    // The fixed content should now have valid frontmatter
+    let parts = split_frontmatter(&fixed);
+    assert!(parts.has_frontmatter);
+    assert!(parts.has_closing);
+}
+
+// ===== AS-002 Auto-fix Tests =====
+
+#[test]
+fn test_as_002_has_fix() {
+    let content = r#"---
+description: Use when testing
+---
+Body"#;
+
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+    let as_002 = diagnostics
+        .iter()
+        .find(|d| d.rule == "AS-002")
+        .expect("AS-002 should be reported");
+    assert!(as_002.has_fixes());
+    let fix = &as_002.fixes[0];
+    assert!(fix.replacement.contains("name:"));
+    assert!(!fix.safe);
+}
+
+#[test]
+fn test_as_002_fix_inserts_after_opening_delimiter() {
+    let content = r#"---
+description: Use when testing
+---
+Body"#;
+
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+    let as_002 = diagnostics
+        .iter()
+        .find(|d| d.rule == "AS-002")
+        .expect("AS-002 should be reported");
+    let fix = &as_002.fixes[0];
+    assert!(fix.is_insertion());
+    // Should insert right after "---" (at position 3)
+    assert_eq!(fix.start_byte, 3);
+}
+
+#[test]
+fn test_as_002_fix_applied_adds_name() {
+    let content = r#"---
+description: Use when testing
+---
+Body"#;
+
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+    let as_002 = diagnostics
+        .iter()
+        .find(|d| d.rule == "AS-002")
+        .expect("AS-002 should be reported");
+    let fix = &as_002.fixes[0];
+
+    // Apply fix
+    let mut fixed = content.to_string();
+    fixed.replace_range(fix.start_byte..fix.end_byte, &fix.replacement);
+    assert!(fixed.contains("name: my-skill"));
+}
+
+// ===== AS-003 Auto-fix Tests =====
+
+#[test]
+fn test_as_003_has_fix() {
+    let content = r#"---
+name: test-skill
+---
+Body"#;
+
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+    let as_003 = diagnostics
+        .iter()
+        .find(|d| d.rule == "AS-003")
+        .expect("AS-003 should be reported");
+    assert!(as_003.has_fixes());
+    let fix = &as_003.fixes[0];
+    assert!(fix.replacement.contains("description:"));
+    assert!(!fix.safe);
+}
+
+#[test]
+fn test_as_003_fix_inserts_in_frontmatter() {
+    let content = r#"---
+name: test-skill
+---
+Body"#;
+
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+    let as_003 = diagnostics
+        .iter()
+        .find(|d| d.rule == "AS-003")
+        .expect("AS-003 should be reported");
+    let fix = &as_003.fixes[0];
+    assert!(fix.is_insertion());
+}
+
+#[test]
+fn test_as_003_fix_applied_adds_description() {
+    let content = r#"---
+name: test-skill
+---
+Body"#;
+
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+    let as_003 = diagnostics
+        .iter()
+        .find(|d| d.rule == "AS-003")
+        .expect("AS-003 should be reported");
+    let fix = &as_003.fixes[0];
+
+    // Apply fix
+    let mut fixed = content.to_string();
+    fixed.replace_range(fix.start_byte..fix.end_byte, &fix.replacement);
+    assert!(fixed.contains("description: TODO - describe this skill"));
+}
+
+// ===== AS-009 Auto-fix Tests =====
+
+#[test]
+fn test_as_009_has_fix() {
+    let content = r#"---
+name: test-skill
+description: Use when validating <xml> tags
+---
+Body"#;
+
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+    let as_009 = diagnostics
+        .iter()
+        .find(|d| d.rule == "AS-009")
+        .expect("AS-009 should be reported");
+    assert!(as_009.has_fixes());
+    let fix = &as_009.fixes[0];
+    assert!(!fix.replacement.contains('<'));
+    assert!(!fix.replacement.contains('>'));
+    assert!(!fix.safe);
+}
+
+#[test]
+fn test_as_009_fix_strips_xml_tags() {
+    let content = r#"---
+name: test-skill
+description: Use when validating <xml> tags
+---
+Body"#;
+
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+    let as_009 = diagnostics
+        .iter()
+        .find(|d| d.rule == "AS-009")
+        .expect("AS-009 should be reported");
+    let fix = &as_009.fixes[0];
+
+    // Apply fix
+    let mut fixed = content.to_string();
+    fixed.replace_range(fix.start_byte..fix.end_byte, &fix.replacement);
+    // After fix, description should not contain XML tags
+    let parts = split_frontmatter(&fixed);
+    assert!(!parts.frontmatter.contains('<'));
+    assert!(!parts.frontmatter.contains('>'));
+    assert!(parts.frontmatter.contains("Use when validating"));
+    assert!(parts.frontmatter.contains("tags"));
+}
+
+#[test]
+fn test_as_009_fix_preserves_text_between_tags() {
+    let content = r#"---
+name: test-skill
+description: Use when <b>testing</b> <i>things</i>
+---
+Body"#;
+
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+    let as_009 = diagnostics
+        .iter()
+        .find(|d| d.rule == "AS-009")
+        .expect("AS-009 should be reported");
+    let fix = &as_009.fixes[0];
+    // The replacement should contain the text without XML tags
+    assert!(fix.replacement.contains("testing"));
+    assert!(fix.replacement.contains("things"));
+    assert!(!fix.replacement.contains("<b>"));
+    assert!(!fix.replacement.contains("</b>"));
+}

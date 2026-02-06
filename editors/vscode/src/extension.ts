@@ -440,10 +440,15 @@ export async function activate(
   context.subscriptions.push(
     vscode.languages.registerCodeLensProvider(
       [
-        { scheme: 'file', language: 'markdown' },
         { scheme: 'file', language: 'skill-markdown' },
+        { scheme: 'file', language: 'claude-memory' },
+        { scheme: 'file', language: 'agents-md' },
+        { scheme: 'file', language: 'cursor-rule' },
+        { scheme: 'file', language: 'copilot-instructions' },
+        { scheme: 'file', language: 'claude-hooks' },
+        { scheme: 'file', language: 'mcp-config' },
+        { scheme: 'file', language: 'markdown' },
         { scheme: 'file', language: 'json' },
-        { scheme: 'file', pattern: '**/*.mdc' },
       ],
       codeLensProvider
     )
@@ -580,10 +585,27 @@ async function startClientInternal(): Promise<LanguageClient | undefined> {
 
   const clientOptions: LanguageClientOptions = {
     documentSelector: [
-      { scheme: 'file', language: 'markdown' },
+      // Custom language IDs (preferred: precise file association)
       { scheme: 'file', language: 'skill-markdown' },
-      { scheme: 'file', language: 'json' },
-      { scheme: 'file', pattern: '**/*.mdc' },
+      { scheme: 'file', language: 'claude-memory' },
+      { scheme: 'file', language: 'agents-md' },
+      { scheme: 'file', language: 'cursor-rule' },
+      { scheme: 'file', language: 'copilot-instructions' },
+      { scheme: 'file', language: 'claude-hooks' },
+      { scheme: 'file', language: 'mcp-config' },
+      // Fallback: pattern-based selectors for files that may not have
+      // the custom language ID applied yet (e.g., first open before
+      // VS Code associates the language)
+      { scheme: 'file', language: 'markdown', pattern: '**/SKILL.md' },
+      { scheme: 'file', language: 'markdown', pattern: '**/CLAUDE.md' },
+      { scheme: 'file', language: 'markdown', pattern: '**/CLAUDE.local.md' },
+      { scheme: 'file', language: 'markdown', pattern: '**/AGENTS.md' },
+      { scheme: 'file', language: 'markdown', pattern: '**/AGENTS.local.md' },
+      { scheme: 'file', language: 'json', pattern: '**/.claude/settings.json' },
+      { scheme: 'file', language: 'json', pattern: '**/.claude/settings.local.json' },
+      { scheme: 'file', language: 'json', pattern: '**/plugin.json' },
+      { scheme: 'file', language: 'json', pattern: '**/*.mcp.json' },
+      { scheme: 'file', language: 'json', pattern: '**/mcp.json' },
     ],
     synchronize: {
       fileEvents: AGNIX_FILE_PATTERNS.map((pattern) =>

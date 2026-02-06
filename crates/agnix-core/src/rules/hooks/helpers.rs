@@ -101,6 +101,7 @@ fn script_patterns() -> &'static Vec<Regex> {
 pub(super) fn validate_cc_hk_005_missing_type_field(
     raw_value: &serde_json::Value,
     path: &Path,
+    content: &str,
     diagnostics: &mut Vec<Diagnostic>,
 ) {
     if let Some(hooks_obj) = raw_value.get("hooks").and_then(|h| h.as_object()) {
@@ -112,19 +113,47 @@ pub(super) fn validate_cc_hk_005_missing_type_field(
                             if hook.get("type").is_none() {
                                 let hook_location =
                                     format!("hooks.{}[{}].hooks[{}]", event, matcher_idx, hook_idx);
-                                diagnostics.push(
-                                    Diagnostic::error(
-                                        path.to_path_buf(),
-                                        1,
-                                        0,
-                                        "CC-HK-005",
-                                        t!(
-                                            "rules.cc_hk_005.message",
-                                            location = hook_location.as_str()
+
+                                // Infer type from existing fields
+                                let inferred_type = if hook.get("command").is_some() {
+                                    "command"
+                                } else if hook.get("prompt").is_some() {
+                                    "prompt"
+                                } else {
+                                    "command" // default
+                                };
+
+                                let mut diagnostic = Diagnostic::error(
+                                    path.to_path_buf(),
+                                    1,
+                                    0,
+                                    "CC-HK-005",
+                                    t!(
+                                        "rules.cc_hk_005.message",
+                                        location = hook_location.as_str()
+                                    ),
+                                )
+                                .with_suggestion(t!("rules.cc_hk_005.suggestion"));
+
+                                // Add auto-fix: insert inferred type field
+                                if let Some(pos) = find_hook_brace_position(
+                                    content,
+                                    event,
+                                    matcher_idx,
+                                    hook_idx,
+                                ) {
+                                    diagnostic = diagnostic.with_fix(Fix::insert(
+                                        pos,
+                                        format!(" \"type\": \"{}\",", inferred_type),
+                                        format!(
+                                            "Add missing 'type' field as '{}'",
+                                            inferred_type
                                         ),
-                                    )
-                                    .with_suggestion(t!("rules.cc_hk_005.suggestion")),
-                                );
+                                        false, // unsafe - we're guessing the type
+                                    ));
+                                }
+
+                                diagnostics.push(diagnostic);
                             }
                         }
                     }
@@ -453,4 +482,123 @@ fn find_unique_matcher_line_span(content: &str, matcher_value: &str) -> Option<(
         return None;
     }
     Some((first.start(), first.end()))
+}
+
+/// Find the byte position just after the opening `{` of a specific hook object.
+///
+/// Navigates the JSON structure to locate the hook at
+/// `hooks.<event>[<matcher_idx>].hooks[<hook_idx>]` and returns the byte offset
+/// immediately after its opening brace. Returns `None` if the structure cannot be
+/// found (e.g., indices out of range or malformed JSON).
+pub(super) fn find_hook_brace_position(
+    content: &str,
+    event: &str,
+    matcher_idx: usize,
+    hook_idx: usize,
+) -> Option<usize> {
+    let bytes = content.as_bytes();
+
+    // Step 1: Find the event key in the content
+    let event_key = format!("\"{}\"", event);
+    let event_pos = content.find(&event_key)? + event_key.len();
+
+    // Step 2: Find the opening '[' of the matchers array after the event key
+    let mut pos = event_pos;
+    while pos < bytes.len() && bytes[pos] != b'[' {
+        pos += 1;
+    }
+    if pos >= bytes.len() {
+        return None;
+    }
+    pos += 1; // skip '['
+
+    // Step 3: Navigate to the matcher_idx-th object in the matchers array
+    let mut depth = 0i32;
+    let mut current_matcher = 0usize;
+    let mut in_string = false;
+    let mut prev_ch = 0u8;
+    let mut matcher_start = None;
+
+    while pos < bytes.len() {
+        let ch = bytes[pos];
+        if in_string {
+            if ch == b'"' && prev_ch != b'\\' {
+                in_string = false;
+            }
+        } else {
+            match ch {
+                b'"' => in_string = true,
+                b'{' => {
+                    if depth == 0 {
+                        if current_matcher == matcher_idx {
+                            matcher_start = Some(pos);
+                        }
+                        current_matcher += 1;
+                    }
+                    depth += 1;
+                }
+                b'}' => {
+                    depth -= 1;
+                }
+                b']' if depth == 0 => break,
+                _ => {}
+            }
+        }
+        prev_ch = ch;
+        pos += 1;
+    }
+
+    let matcher_start = matcher_start?;
+
+    // Step 4: Within the matcher object, find the "hooks" array
+    let hooks_key = "\"hooks\"";
+    let matcher_content = &content[matcher_start..];
+    let hooks_pos = matcher_content.find(hooks_key)? + hooks_key.len();
+    pos = matcher_start + hooks_pos;
+
+    // Find the opening '[' of the hooks array
+    while pos < bytes.len() && bytes[pos] != b'[' {
+        pos += 1;
+    }
+    if pos >= bytes.len() {
+        return None;
+    }
+    pos += 1; // skip '['
+
+    // Step 5: Navigate to the hook_idx-th object in the hooks array
+    depth = 0;
+    let mut current_hook = 0usize;
+    in_string = false;
+    prev_ch = 0;
+
+    while pos < bytes.len() {
+        let ch = bytes[pos];
+        if in_string {
+            if ch == b'"' && prev_ch != b'\\' {
+                in_string = false;
+            }
+        } else {
+            match ch {
+                b'"' => in_string = true,
+                b'{' => {
+                    if depth == 0 && current_hook == hook_idx {
+                        return Some(pos + 1); // Position just after '{'
+                    }
+                    if depth == 0 {
+                        current_hook += 1;
+                    }
+                    depth += 1;
+                }
+                b'}' => {
+                    depth -= 1;
+                }
+                b']' if depth == 0 => break,
+                _ => {}
+            }
+        }
+        prev_ch = ch;
+        pos += 1;
+    }
+
+    None
 }

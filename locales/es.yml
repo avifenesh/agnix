@@ -198,6 +198,7 @@ rules:
   cc_mem_006:
     message: "Instruccion negativa '%{text}' sin alternativa positiva"
     suggestion: "Agrega una alternativa positiva: 'En su lugar, haz...' o 'Usa X en su lugar.'"
+    fix: "Agregar alternativa positiva a instruccion solo negativa"
   cc_mem_007:
     message: "Restriccion debil '%{text}' en seccion critica '%{section}'"
     suggestion: "Usa lenguaje fuerte en secciones criticas: 'must', 'always', 'required'."

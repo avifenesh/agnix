@@ -123,16 +123,31 @@ impl Validator for PluginValidator {
         if config.is_rule_enabled("CC-PL-003") {
             let version = schema.version.trim();
             if !version.is_empty() && !is_valid_semver(version) {
-                diagnostics.push(
-                    Diagnostic::error(
-                        path.to_path_buf(),
-                        1,
-                        0,
-                        "CC-PL-003",
-                        t!("rules.cc_pl_003.message", version = schema.version.as_str()),
-                    )
-                    .with_suggestion(t!("rules.cc_pl_003.suggestion")),
-                );
+                let mut diag = Diagnostic::error(
+                    path.to_path_buf(),
+                    1,
+                    0,
+                    "CC-PL-003",
+                    t!("rules.cc_pl_003.message", version = schema.version.as_str()),
+                )
+                .with_suggestion(t!("rules.cc_pl_003.suggestion"));
+
+                // Add fix if the version can be normalized to valid semver
+                if let Some(normalized) = normalize_semver(version) {
+                    if let Some((start, end, _)) =
+                        find_unique_json_string_value_range(content, "version")
+                    {
+                        diag = diag.with_fix(Fix::replace(
+                            start,
+                            end,
+                            &normalized,
+                            format!("Normalize version to '{}'", normalized),
+                            true,
+                        ));
+                    }
+                }
+
+                diagnostics.push(diag);
             }
         }
 
@@ -167,6 +182,40 @@ fn check_required_field(
 
 fn is_valid_semver(version: &str) -> bool {
     semver::Version::parse(version).is_ok()
+}
+
+/// Attempt to normalize a version string to valid semver.
+/// Returns Some(normalized) if normalization is possible, None otherwise.
+/// Examples: "1.0" -> "1.0.0", "v1.0.0" -> "1.0.0", "v2.1" -> "2.1.0"
+fn normalize_semver(version: &str) -> Option<String> {
+    let trimmed = version.trim();
+    // Strip leading 'v' or 'V'
+    let stripped = trimmed
+        .strip_prefix('v')
+        .or_else(|| trimmed.strip_prefix('V'))
+        .unwrap_or(trimmed);
+
+    // Already valid after stripping prefix?
+    if semver::Version::parse(stripped).is_ok() {
+        if stripped != trimmed {
+            return Some(stripped.to_string());
+        }
+        return None; // Already valid, no normalization needed
+    }
+
+    // Try appending .0 for "X.Y" format
+    let with_patch = format!("{}.0", stripped);
+    if semver::Version::parse(&with_patch).is_ok() {
+        return Some(with_patch);
+    }
+
+    // Try appending .0.0 for "X" format
+    let with_minor_patch = format!("{}.0.0", stripped);
+    if semver::Version::parse(&with_minor_patch).is_ok() {
+        return Some(with_minor_patch);
+    }
+
+    None
 }
 
 /// Find a unique string value span for a JSON key.
@@ -601,6 +650,148 @@ mod tests {
         );
 
         assert!(!diagnostics.iter().any(|d| d.rule == "CC-PL-005"));
+    }
+
+    // ===== CC-PL-003 Auto-fix Tests =====
+
+    #[test]
+    fn test_cc_pl_003_has_fix_for_missing_patch() {
+        let temp = TempDir::new().unwrap();
+        let plugin_path = temp.path().join(".claude-plugin").join("plugin.json");
+        write_plugin(
+            &plugin_path,
+            r#"{"name":"test-plugin","description":"desc","version":"1.0"}"#,
+        );
+
+        let validator = PluginValidator;
+        let diagnostics = validator.validate(
+            &plugin_path,
+            &fs::read_to_string(&plugin_path).unwrap(),
+            &LintConfig::default(),
+        );
+
+        let cc_pl_003 = diagnostics
+            .iter()
+            .find(|d| d.rule == "CC-PL-003")
+            .expect("CC-PL-003 should be reported");
+        assert!(cc_pl_003.has_fixes());
+        let fix = &cc_pl_003.fixes[0];
+        assert_eq!(fix.replacement, "1.0.0");
+        assert!(fix.safe);
+    }
+
+    #[test]
+    fn test_cc_pl_003_has_fix_for_v_prefix() {
+        let temp = TempDir::new().unwrap();
+        let plugin_path = temp.path().join(".claude-plugin").join("plugin.json");
+        write_plugin(
+            &plugin_path,
+            r#"{"name":"test-plugin","description":"desc","version":"v1.0.0"}"#,
+        );
+
+        let validator = PluginValidator;
+        let diagnostics = validator.validate(
+            &plugin_path,
+            &fs::read_to_string(&plugin_path).unwrap(),
+            &LintConfig::default(),
+        );
+
+        let cc_pl_003 = diagnostics
+            .iter()
+            .find(|d| d.rule == "CC-PL-003")
+            .expect("CC-PL-003 should be reported");
+        assert!(cc_pl_003.has_fixes());
+        let fix = &cc_pl_003.fixes[0];
+        assert_eq!(fix.replacement, "1.0.0");
+        assert!(fix.safe);
+    }
+
+    #[test]
+    fn test_cc_pl_003_fix_applied_produces_valid_json() {
+        let content = r#"{"name":"test-plugin","description":"desc","version":"v2.1"}"#;
+        let temp = TempDir::new().unwrap();
+        let plugin_path = temp.path().join(".claude-plugin").join("plugin.json");
+        write_plugin(&plugin_path, content);
+
+        let validator = PluginValidator;
+        let diagnostics = validator.validate(
+            &plugin_path,
+            &fs::read_to_string(&plugin_path).unwrap(),
+            &LintConfig::default(),
+        );
+
+        let cc_pl_003 = diagnostics
+            .iter()
+            .find(|d| d.rule == "CC-PL-003")
+            .expect("CC-PL-003 should be reported");
+        assert!(cc_pl_003.has_fixes());
+        let fix = &cc_pl_003.fixes[0];
+
+        // Apply fix
+        let mut fixed = content.to_string();
+        fixed.replace_range(fix.start_byte..fix.end_byte, &fix.replacement);
+        // Verify it's valid JSON with valid semver
+        let parsed: serde_json::Value =
+            serde_json::from_str(&fixed).expect("Fixed content should be valid JSON");
+        let version = parsed.get("version").and_then(|v| v.as_str()).unwrap();
+        assert!(
+            semver::Version::parse(version).is_ok(),
+            "Fixed version '{}' should be valid semver",
+            version
+        );
+    }
+
+    #[test]
+    fn test_cc_pl_003_no_fix_for_totally_invalid() {
+        let temp = TempDir::new().unwrap();
+        let plugin_path = temp.path().join(".claude-plugin").join("plugin.json");
+        write_plugin(
+            &plugin_path,
+            r#"{"name":"test-plugin","description":"desc","version":"not-a-version"}"#,
+        );
+
+        let validator = PluginValidator;
+        let diagnostics = validator.validate(
+            &plugin_path,
+            &fs::read_to_string(&plugin_path).unwrap(),
+            &LintConfig::default(),
+        );
+
+        let cc_pl_003 = diagnostics
+            .iter()
+            .find(|d| d.rule == "CC-PL-003")
+            .expect("CC-PL-003 should be reported");
+        // Should have no fix for completely invalid version strings
+        assert!(!cc_pl_003.has_fixes());
+    }
+
+    #[test]
+    fn test_normalize_semver_missing_patch() {
+        assert_eq!(normalize_semver("1.0"), Some("1.0.0".to_string()));
+        assert_eq!(normalize_semver("2.3"), Some("2.3.0".to_string()));
+    }
+
+    #[test]
+    fn test_normalize_semver_v_prefix() {
+        assert_eq!(normalize_semver("v1.0.0"), Some("1.0.0".to_string()));
+        assert_eq!(normalize_semver("V2.0.0"), Some("2.0.0".to_string()));
+        assert_eq!(normalize_semver("v1.2"), Some("1.2.0".to_string()));
+    }
+
+    #[test]
+    fn test_normalize_semver_major_only() {
+        assert_eq!(normalize_semver("1"), Some("1.0.0".to_string()));
+    }
+
+    #[test]
+    fn test_normalize_semver_already_valid() {
+        assert_eq!(normalize_semver("1.0.0"), None);
+    }
+
+    #[test]
+    fn test_normalize_semver_garbage() {
+        assert_eq!(normalize_semver("not-a-version"), None);
+        assert_eq!(normalize_semver("abc"), None);
     }
 
     #[test]

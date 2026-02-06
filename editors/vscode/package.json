@@ -270,6 +270,74 @@
           "SKILL.md"
         ],
         "configuration": "./language-configuration.json"
+      },
+      {
+        "id": "claude-memory",
+        "aliases": [
+          "Claude Memory"
+        ],
+        "filenames": [
+          "CLAUDE.md",
+          "CLAUDE.local.md"
+        ],
+        "configuration": "./language-configuration.json"
+      },
+      {
+        "id": "agents-md",
+        "aliases": [
+          "Agents Markdown"
+        ],
+        "filenames": [
+          "AGENTS.md",
+          "AGENTS.local.md",
+          "AGENTS.override.md"
+        ],
+        "configuration": "./language-configuration.json"
+      },
+      {
+        "id": "cursor-rule",
+        "aliases": [
+          "Cursor Rule"
+        ],
+        "extensions": [
+          ".mdc"
+        ],
+        "configuration": "./language-configuration.json"
+      },
+      {
+        "id": "copilot-instructions",
+        "aliases": [
+          "Copilot Instructions"
+        ],
+        "filenames": [
+          "copilot-instructions.md"
+        ],
+        "filenamePatterns": [
+          "*.instructions.md"
+        ],
+        "configuration": "./language-configuration.json"
+      },
+      {
+        "id": "claude-hooks",
+        "aliases": [
+          "Claude Hooks Configuration"
+        ],
+        "filenamePatterns": [
+          ".claude/settings.json",
+          ".claude/settings.local.json"
+        ]
+      },
+      {
+        "id": "mcp-config",
+        "aliases": [
+          "MCP Configuration"
+        ],
+        "extensions": [
+          ".mcp.json"
+        ],
+        "filenames": [
+          "mcp.json"
+        ]
       }
     ],
     "grammars": [
@@ -277,6 +345,40 @@
         "language": "skill-markdown",
         "scopeName": "text.skill.markdown",
         "path": "./syntaxes/skill-frontmatter.tmLanguage.json",
+        "embeddedLanguages": {
+          "meta.embedded.block.yaml": "yaml",
+          "meta.embedded.block.markdown": "markdown"
+        }
+      },
+      {
+        "language": "claude-memory",
+        "scopeName": "text.claude.memory",
+        "path": "./syntaxes/claude-memory.tmLanguage.json",
+        "embeddedLanguages": {
+          "meta.embedded.block.markdown": "markdown"
+        }
+      },
+      {
+        "language": "agents-md",
+        "scopeName": "text.claude.memory",
+        "path": "./syntaxes/claude-memory.tmLanguage.json",
+        "embeddedLanguages": {
+          "meta.embedded.block.markdown": "markdown"
+        }
+      },
+      {
+        "language": "cursor-rule",
+        "scopeName": "text.cursor.rule",
+        "path": "./syntaxes/cursor-rule.tmLanguage.json",
+        "embeddedLanguages": {
+          "meta.embedded.block.yaml": "yaml",
+          "meta.embedded.block.markdown": "markdown"
+        }
+      },
+      {
+        "language": "copilot-instructions",
+        "scopeName": "text.copilot.instructions",
+        "path": "./syntaxes/copilot-instructions.tmLanguage.json",
         "embeddedLanguages": {
           "meta.embedded.block.yaml": "yaml",
           "meta.embedded.block.markdown": "markdown"
@@ -415,29 +517,29 @@
         {
           "command": "agnix.validateFile",
           "group": "agnix@1",
-          "when": "resourceFilename =~ /SKILL\\.md$|CLAUDE\\.md$|AGENTS\\.md$|\\.mcp\\.json$|\\.mdc$/"
+          "when": "resourceLangId =~ /skill-markdown|claude-memory|agents-md|cursor-rule|copilot-instructions|claude-hooks|mcp-config/ || resourceFilename =~ /SKILL\\.md$|CLAUDE\\.md$|CLAUDE\\.local\\.md$|AGENTS\\.md$|AGENTS\\.local\\.md$|\\.mcp\\.json$|mcp\\.json$|\\.mdc$|plugin\\.json$|copilot-instructions\\.md$|\\.instructions\\.md$|settings\\.json$/"
         },
         {
           "command": "agnix.fixAll",
           "group": "agnix@2",
-          "when": "resourceFilename =~ /SKILL\\.md$|CLAUDE\\.md$|AGENTS\\.md$|\\.mcp\\.json$|\\.mdc$/"
+          "when": "resourceLangId =~ /skill-markdown|claude-memory|agents-md|cursor-rule|copilot-instructions|claude-hooks|mcp-config/ || resourceFilename =~ /SKILL\\.md$|CLAUDE\\.md$|CLAUDE\\.local\\.md$|AGENTS\\.md$|AGENTS\\.local\\.md$|\\.mcp\\.json$|mcp\\.json$|\\.mdc$|plugin\\.json$|copilot-instructions\\.md$|\\.instructions\\.md$|settings\\.json$/"
         },
         {
           "command": "agnix.previewFixes",
           "group": "agnix@3",
-          "when": "resourceFilename =~ /SKILL\\.md$|CLAUDE\\.md$|AGENTS\\.md$|\\.mcp\\.json$|\\.mdc$/"
+          "when": "resourceLangId =~ /skill-markdown|claude-memory|agents-md|cursor-rule|copilot-instructions|claude-hooks|mcp-config/ || resourceFilename =~ /SKILL\\.md$|CLAUDE\\.md$|CLAUDE\\.local\\.md$|AGENTS\\.md$|AGENTS\\.local\\.md$|\\.mcp\\.json$|mcp\\.json$|\\.mdc$|plugin\\.json$|copilot-instructions\\.md$|\\.instructions\\.md$|settings\\.json$/"
         },
         {
           "command": "agnix.fixAllSafe",
           "group": "agnix@4",
-          "when": "resourceFilename =~ /SKILL\\.md$|CLAUDE\\.md$|AGENTS\\.md$|\\.mcp\\.json$|\\.mdc$/"
+          "when": "resourceLangId =~ /skill-markdown|claude-memory|agents-md|cursor-rule|copilot-instructions|claude-hooks|mcp-config/ || resourceFilename =~ /SKILL\\.md$|CLAUDE\\.md$|CLAUDE\\.local\\.md$|AGENTS\\.md$|AGENTS\\.local\\.md$|\\.mcp\\.json$|mcp\\.json$|\\.mdc$|plugin\\.json$|copilot-instructions\\.md$|\\.instructions\\.md$|settings\\.json$/"
         }
       ],
       "explorer/context": [
         {
           "command": "agnix.validateFile",
           "group": "agnix@1",
-          "when": "resourceFilename =~ /SKILL\\.md$|CLAUDE\\.md$|AGENTS\\.md$|\\.mcp\\.json$|\\.mdc$/"
+          "when": "resourceLangId =~ /skill-markdown|claude-memory|agents-md|cursor-rule|copilot-instructions|claude-hooks|mcp-config/ || resourceFilename =~ /SKILL\\.md$|CLAUDE\\.md$|CLAUDE\\.local\\.md$|AGENTS\\.md$|AGENTS\\.local\\.md$|\\.mcp\\.json$|mcp\\.json$|\\.mdc$|plugin\\.json$|copilot-instructions\\.md$|\\.instructions\\.md$|settings\\.json$/"
         }
       ],
       "commandPalette": [

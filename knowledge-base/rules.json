@@ -28,6 +28,7 @@
       "id": "AS-001",
       "name": "Missing Frontmatter",
       "severity": "HIGH",
+      "auto_fixable": true,
       "category": "agent-skills",
       "evidence": {
         "source_type": "spec",
@@ -50,6 +51,7 @@
       "id": "AS-002",
       "name": "Missing Required Field: name",
       "severity": "HIGH",
+      "auto_fixable": true,
       "category": "agent-skills",
       "evidence": {
         "source_type": "spec",
@@ -72,6 +74,7 @@
       "id": "AS-003",
       "name": "Missing Required Field: description",
       "severity": "HIGH",
+      "auto_fixable": true,
       "category": "agent-skills",
       "evidence": {
         "source_type": "spec",
@@ -94,6 +97,7 @@
       "id": "AS-004",
       "name": "Invalid Name Format",
       "severity": "HIGH",
+      "auto_fixable": true,
       "category": "agent-skills",
       "evidence": {
         "source_type": "spec",
@@ -116,6 +120,7 @@
       "id": "AS-005",
       "name": "Name Starts/Ends with Hyphen",
       "severity": "HIGH",
+      "auto_fixable": true,
       "category": "agent-skills",
       "evidence": {
         "source_type": "spec",
@@ -138,6 +143,7 @@
       "id": "AS-006",
       "name": "Consecutive Hyphens in Name",
       "severity": "HIGH",
+      "auto_fixable": true,
       "category": "agent-skills",
       "evidence": {
         "source_type": "spec",
@@ -160,6 +166,7 @@
       "id": "AS-007",
       "name": "Reserved Name",
       "severity": "HIGH",
+      "auto_fixable": false,
       "category": "agent-skills",
       "evidence": {
         "source_type": "vendor_docs",
@@ -182,6 +189,7 @@
       "id": "AS-008",
       "name": "Description Too Short",
       "severity": "HIGH",
+      "auto_fixable": false,
       "category": "agent-skills",
       "evidence": {
         "source_type": "spec",
@@ -204,6 +212,7 @@
       "id": "AS-009",
       "name": "Description Contains XML",
       "severity": "HIGH",
+      "auto_fixable": true,
       "category": "agent-skills",
       "evidence": {
         "source_type": "vendor_docs",
@@ -226,6 +235,7 @@
       "id": "AS-010",
       "name": "Missing Trigger Phrase",
       "severity": "MEDIUM",
+      "auto_fixable": true,
       "category": "agent-skills",
       "evidence": {
         "source_type": "community",
@@ -249,6 +259,7 @@
       "id": "AS-011",
       "name": "Compatibility Too Long",
       "severity": "HIGH",
+      "auto_fixable": false,
       "category": "agent-skills",
       "evidence": {
         "source_type": "spec",
@@ -271,6 +282,7 @@
       "id": "AS-012",
       "name": "Content Exceeds 500 Lines",
       "severity": "MEDIUM",
+      "auto_fixable": false,
       "category": "agent-skills",
       "evidence": {
         "source_type": "vendor_docs",
@@ -294,6 +306,7 @@
       "id": "AS-013",
       "name": "File Reference Too Deep",
       "severity": "HIGH",
+      "auto_fixable": false,
       "category": "agent-skills",
       "evidence": {
         "source_type": "spec",
@@ -316,6 +329,7 @@
       "id": "AS-014",
       "name": "Windows Path Separator",
       "severity": "HIGH",
+      "auto_fixable": true,
       "category": "agent-skills",
       "evidence": {
         "source_type": "spec",
@@ -338,6 +352,7 @@
       "id": "AS-015",
       "name": "Upload Size Exceeds 8MB",
       "severity": "HIGH",
+      "auto_fixable": false,
       "category": "agent-skills",
       "evidence": {
         "source_type": "vendor_docs",
@@ -360,6 +375,7 @@
       "id": "AS-016",
       "name": "Skill Parse Error",
       "severity": "HIGH",
+      "auto_fixable": false,
       "category": "agent-skills",
       "evidence": {
         "source_type": "spec",
@@ -382,6 +398,7 @@
       "id": "CC-SK-001",
       "name": "Invalid Model Value",
       "severity": "HIGH",
+      "auto_fixable": true,
       "category": "claude-skills",
       "evidence": {
         "source_type": "vendor_docs",
@@ -404,6 +421,7 @@
       "id": "CC-SK-002",
       "name": "Invalid Context Value",
       "severity": "HIGH",
+      "auto_fixable": true,
       "category": "claude-skills",
       "evidence": {
         "source_type": "vendor_docs",
@@ -426,6 +444,7 @@
       "id": "CC-SK-003",
       "name": "Context Without Agent",
       "severity": "HIGH",
+      "auto_fixable": true,
       "category": "claude-skills",
       "evidence": {
         "source_type": "vendor_docs",
@@ -448,6 +467,7 @@
       "id": "CC-SK-004",
       "name": "Agent Without Context",
       "severity": "HIGH",
+      "auto_fixable": true,
       "category": "claude-skills",
       "evidence": {
         "source_type": "vendor_docs",
@@ -470,6 +490,7 @@
       "id": "CC-SK-005",
       "name": "Invalid Agent Type",
       "severity": "HIGH",
+      "auto_fixable": false,
       "category": "claude-skills",
       "evidence": {
         "source_type": "vendor_docs",
@@ -492,6 +513,7 @@
       "id": "CC-SK-006",
       "name": "Dangerous Auto-Invocation",
       "severity": "HIGH",
+      "auto_fixable": false,
       "category": "claude-skills",
       "evidence": {
         "source_type": "vendor_docs",
@@ -514,6 +536,7 @@
       "id": "CC-SK-007",
       "name": "Unrestricted Bash",
       "severity": "HIGH",
+      "auto_fixable": true,
       "category": "claude-skills",
       "evidence": {
         "source_type": "community",
@@ -536,6 +559,7 @@
       "id": "CC-SK-008",
       "name": "Unknown Tool Name",
       "severity": "HIGH",
+      "auto_fixable": false,
       "category": "claude-skills",
       "evidence": {
         "source_type": "vendor_docs",
@@ -558,6 +582,7 @@
       "id": "CC-SK-009",
       "name": "Too Many Injections",
       "severity": "MEDIUM",
+      "auto_fixable": false,
       "category": "claude-skills",
       "evidence": {
         "source_type": "vendor_docs",
@@ -580,6 +605,7 @@
       "id": "CC-HK-001",
       "name": "Invalid Hook Event",
       "severity": "HIGH",
+      "auto_fixable": true,
       "category": "claude-hooks",
       "evidence": {
         "source_type": "vendor_docs",
@@ -602,6 +628,7 @@
       "id": "CC-HK-002",
       "name": "Prompt Hook on Wrong Event",
       "severity": "HIGH",
+      "auto_fixable": false,
       "category": "claude-hooks",
       "evidence": {
         "source_type": "vendor_docs",
@@ -624,6 +651,7 @@
       "id": "CC-HK-003",
       "name": "Missing Matcher for Tool Events",
       "severity": "HIGH",
+      "auto_fixable": false,
       "category": "claude-hooks",
       "evidence": {
         "source_type": "vendor_docs",
@@ -646,6 +674,7 @@
       "id": "CC-HK-004",
       "name": "Matcher on Non-Tool Event",
       "severity": "HIGH",
+      "auto_fixable": true,
       "category": "claude-hooks",
       "evidence": {
         "source_type": "vendor_docs",
@@ -668,6 +697,7 @@
       "id": "CC-HK-005",
       "name": "Missing Type Field",
       "severity": "HIGH",
+      "auto_fixable": true,
       "category": "claude-hooks",
       "evidence": {
         "source_type": "vendor_docs",
@@ -690,6 +720,7 @@
       "id": "CC-HK-006",
       "name": "Missing Command Field",
       "severity": "HIGH",
+      "auto_fixable": false,
       "category": "claude-hooks",
       "evidence": {
         "source_type": "vendor_docs",
@@ -712,6 +743,7 @@
       "id": "CC-HK-007",
       "name": "Missing Prompt Field",
       "severity": "HIGH",
+      "auto_fixable": false,
       "category": "claude-hooks",
       "evidence": {
         "source_type": "vendor_docs",
@@ -734,6 +766,7 @@
       "id": "CC-HK-008",
       "name": "Script File Not Found",
       "severity": "HIGH",
+      "auto_fixable": false,
       "category": "claude-hooks",
       "evidence": {
         "source_type": "vendor_docs",
@@ -756,6 +789,7 @@
       "id": "CC-HK-009",
       "name": "Dangerous Command Pattern",
       "severity": "HIGH",
+      "auto_fixable": false,
       "category": "claude-hooks",
       "evidence": {
         "source_type": "community",
@@ -778,6 +812,7 @@
       "id": "CC-HK-010",
       "name": "Timeout Policy",
       "severity": "MEDIUM",
+      "auto_fixable": true,
       "category": "claude-hooks",
       "evidence": {
         "source_type": "vendor_docs",
@@ -800,6 +835,7 @@
       "id": "CC-HK-011",
       "name": "Invalid Timeout Value",
       "severity": "HIGH",
+      "auto_fixable": true,
       "category": "claude-hooks",
       "evidence": {
         "source_type": "vendor_docs",
@@ -822,6 +858,7 @@
       "id": "CC-HK-012",
       "name": "Hooks Parse Error",
       "severity": "HIGH",
+      "auto_fixable": false,
       "category": "claude-hooks",
       "evidence": {
         "source_type": "vendor_docs",
@@ -844,6 +881,7 @@
       "id": "CC-AG-001",
       "name": "Missing Name Field",
       "severity": "HIGH",
+      "auto_fixable": true,
       "category": "claude-agents",
       "evidence": {
         "source_type": "vendor_docs",
@@ -866,6 +904,7 @@
       "id": "CC-AG-002",
       "name": "Missing Description Field",
       "severity": "HIGH",
+      "auto_fixable": true,
       "category": "claude-agents",
       "evidence": {
         "source_type": "vendor_docs",
@@ -888,6 +927,7 @@
       "id": "CC-AG-003",
       "name": "Invalid Model Value",
       "severity": "HIGH",
+      "auto_fixable": true,
       "category": "claude-agents",
       "evidence": {
         "source_type": "vendor_docs",
@@ -910,6 +950,7 @@
       "id": "CC-AG-004",
       "name": "Invalid Permission Mode",
       "severity": "HIGH",
+      "auto_fixable": true,
       "category": "claude-agents",
       "evidence": {
         "source_type": "vendor_docs",
@@ -932,6 +973,7 @@
       "id": "CC-AG-005",
       "name": "Referenced Skill Not Found",
       "severity": "HIGH",
+      "auto_fixable": false,
       "category": "claude-agents",
       "evidence": {
         "source_type": "vendor_docs",
@@ -954,6 +996,7 @@
       "id": "CC-AG-006",
       "name": "Tool/Disallowed Conflict",
       "severity": "HIGH",
+      "auto_fixable": false,
       "category": "claude-agents",
       "evidence": {
         "source_type": "vendor_docs",
@@ -976,6 +1019,7 @@
       "id": "CC-AG-007",
       "name": "Agent Parse Error",
       "severity": "HIGH",
+      "auto_fixable": false,
       "category": "claude-agents",
       "evidence": {
         "source_type": "vendor_docs",
@@ -998,6 +1042,7 @@
       "id": "CC-MEM-001",
       "name": "Invalid Import Path",
       "severity": "HIGH",
+      "auto_fixable": false,
       "category": "claude-memory",
       "evidence": {
         "source_type": "vendor_docs",
@@ -1020,6 +1065,7 @@
       "id": "CC-MEM-002",
       "name": "Circular Import",
       "severity": "HIGH",
+      "auto_fixable": false,
       "category": "claude-memory",
       "evidence": {
         "source_type": "vendor_docs",
@@ -1042,6 +1088,7 @@
       "id": "CC-MEM-003",
       "name": "Import Depth Exceeds 5",
       "severity": "HIGH",
+      "auto_fixable": false,
       "category": "claude-memory",
       "evidence": {
         "source_type": "vendor_docs",
@@ -1064,6 +1111,7 @@
       "id": "CC-MEM-004",
       "name": "Invalid Command Reference",
       "severity": "MEDIUM",
+      "auto_fixable": false,
       "category": "claude-memory",
       "evidence": {
         "source_type": "community",
@@ -1086,6 +1134,7 @@
       "id": "CC-MEM-005",
       "name": "Generic Instruction",
       "severity": "HIGH",
+      "auto_fixable": true,
       "category": "claude-memory",
       "evidence": {
         "source_type": "community",
@@ -1109,6 +1158,7 @@
       "id": "CC-MEM-006",
       "name": "Negative Without Positive",
       "severity": "HIGH",
+      "auto_fixable": true,
       "category": "claude-memory",
       "evidence": {
         "source_type": "paper",
@@ -1129,6 +1179,7 @@
       "id": "CC-MEM-007",
       "name": "Weak Constraint Language",
       "severity": "HIGH",
+      "auto_fixable": true,
       "category": "claude-memory",
       "evidence": {
         "source_type": "paper",
@@ -1149,6 +1200,7 @@
       "id": "CC-MEM-008",
       "name": "Critical Content in Middle",
       "severity": "HIGH",
+      "auto_fixable": false,
       "category": "claude-memory",
       "evidence": {
         "source_type": "paper",
@@ -1169,6 +1221,7 @@
       "id": "CC-MEM-009",
       "name": "Token Count Exceeded",
       "severity": "MEDIUM",
+      "auto_fixable": false,
       "category": "claude-memory",
       "evidence": {
         "source_type": "vendor_docs",
@@ -1191,6 +1244,7 @@
       "id": "CC-MEM-010",
       "name": "README Duplication",
       "severity": "MEDIUM",
+      "auto_fixable": false,
       "category": "claude-memory",
       "evidence": {
         "source_type": "community",
@@ -1213,6 +1267,7 @@
       "id": "AGM-001",
       "name": "Valid Markdown Structure",
       "severity": "HIGH",
+      "auto_fixable": false,
       "category": "agents-md",
       "evidence": {
         "source_type": "community",
@@ -1235,6 +1290,7 @@
       "id": "AGM-002",
       "name": "Missing Section Headers",
       "severity": "MEDIUM",
+      "auto_fixable": false,
       "category": "agents-md",
       "evidence": {
         "source_type": "community",
@@ -1256,6 +1312,7 @@
       "id": "AGM-003",
       "name": "Character Limit (Windsurf)",
       "severity": "MEDIUM",
+      "auto_fixable": false,
       "category": "agents-md",
       "evidence": {
         "source_type": "vendor_docs",
@@ -1278,6 +1335,7 @@
       "id": "AGM-004",
       "name": "Missing Project Context",
       "severity": "MEDIUM",
+      "auto_fixable": false,
       "category": "agents-md",
       "evidence": {
         "source_type": "community",
@@ -1299,6 +1357,7 @@
       "id": "AGM-005",
       "name": "Platform-Specific Features Without Guard",
       "severity": "MEDIUM",
+      "auto_fixable": false,
       "category": "agents-md",
       "evidence": {
         "source_type": "community",
@@ -1320,6 +1379,7 @@
       "id": "AGM-006",
       "name": "Nested AGENTS.md Hierarchy",
       "severity": "MEDIUM",
+      "auto_fixable": false,
       "category": "agents-md",
       "evidence": {
         "source_type": "community",
@@ -1342,6 +1402,7 @@
       "id": "CC-PL-001",
       "name": "Plugin Manifest Not in .claude-plugin/",
       "severity": "HIGH",
+      "auto_fixable": false,
       "category": "claude-plugins",
       "evidence": {
         "source_type": "vendor_docs",
@@ -1364,6 +1425,7 @@
       "id": "CC-PL-002",
       "name": "Components in .claude-plugin/",
       "severity": "HIGH",
+      "auto_fixable": false,
       "category": "claude-plugins",
       "evidence": {
         "source_type": "vendor_docs",
@@ -1386,6 +1448,7 @@
       "id": "CC-PL-003",
       "name": "Invalid Semver",
       "severity": "HIGH",
+      "auto_fixable": true,
       "category": "claude-plugins",
       "evidence": {
         "source_type": "vendor_docs",
@@ -1408,6 +1471,7 @@
       "id": "CC-PL-004",
       "name": "Missing Required Plugin Field",
       "severity": "HIGH",
+      "auto_fixable": false,
       "category": "claude-plugins",
       "evidence": {
         "source_type": "vendor_docs",
@@ -1430,6 +1494,7 @@
       "id": "CC-PL-005",
       "name": "Empty Plugin Name",
       "severity": "HIGH",
+      "auto_fixable": true,
       "category": "claude-plugins",
       "evidence": {
         "source_type": "vendor_docs",
@@ -1452,6 +1517,7 @@
       "id": "CC-PL-006",
       "name": "Plugin Parse Error",
       "severity": "HIGH",
+      "auto_fixable": false,
       "category": "claude-plugins",
       "evidence": {
         "source_type": "vendor_docs",
@@ -1474,6 +1540,7 @@
       "id": "MCP-001",
       "name": "Invalid JSON-RPC Version",
       "severity": "HIGH",
+      "auto_fixable": true,
       "category": "mcp",
       "evidence": {
         "source_type": "spec",
@@ -1496,6 +1563,7 @@
       "id": "MCP-002",
       "name": "Missing Required Tool Field",
       "severity": "HIGH",
+      "auto_fixable": false,
       "category": "mcp",
       "evidence": {
         "source_type": "spec",
@@ -1518,6 +1586,7 @@
       "id": "MCP-003",
       "name": "Invalid JSON Schema",
       "severity": "HIGH",
+      "auto_fixable": false,
       "category": "mcp",
       "evidence": {
         "source_type": "spec",
@@ -1540,6 +1609,7 @@
       "id": "MCP-004",
       "name": "Missing Tool Description",
       "severity": "HIGH",
+      "auto_fixable": true,
       "category": "mcp",
       "evidence": {
         "source_type": "spec",
@@ -1562,6 +1632,7 @@
       "id": "MCP-005",
       "name": "Tool Without User Consent",
       "severity": "HIGH",
+      "auto_fixable": true,
       "category": "mcp",
       "evidence": {
         "source_type": "spec",
@@ -1584,6 +1655,7 @@
       "id": "MCP-006",
       "name": "Untrusted Annotations",
       "severity": "HIGH",
+      "auto_fixable": false,
       "category": "mcp",
       "evidence": {
         "source_type": "spec",
@@ -1606,6 +1678,7 @@
       "id": "MCP-007",
       "name": "MCP Parse Error",
       "severity": "HIGH",
+      "auto_fixable": false,
       "category": "mcp",
       "evidence": {
         "source_type": "spec",
@@ -1628,6 +1701,7 @@
       "id": "MCP-008",
       "name": "Protocol Version Mismatch",
       "severity": "MEDIUM",
+      "auto_fixable": true,
       "category": "mcp",
       "evidence": {
         "source_type": "spec",
@@ -1650,6 +1724,7 @@
       "id": "COP-001",
       "name": "Empty Copilot Instruction File",
       "severity": "HIGH",
+      "auto_fixable": true,
       "category": "copilot",
       "evidence": {
         "source_type": "vendor_docs",
@@ -1672,6 +1747,7 @@
       "id": "COP-002",
       "name": "Invalid Frontmatter in Scoped Instructions",
       "severity": "HIGH",
+      "auto_fixable": true,
       "category": "copilot",
       "evidence": {
         "source_type": "vendor_docs",
@@ -1694,6 +1770,7 @@
       "id": "COP-003",
       "name": "Invalid Glob Pattern in applyTo",
       "severity": "HIGH",
+      "auto_fixable": false,
       "category": "copilot",
       "evidence": {
         "source_type": "vendor_docs",
@@ -1716,6 +1793,7 @@
       "id": "COP-004",
       "name": "Unknown Frontmatter Keys",
       "severity": "MEDIUM",
+      "auto_fixable": true,
       "category": "copilot",
       "evidence": {
         "source_type": "vendor_docs",
@@ -1738,6 +1816,7 @@
       "id": "CUR-001",
       "name": "Empty Cursor Rule File",
       "severity": "HIGH",
+      "auto_fixable": true,
       "category": "cursor",
       "evidence": {
         "source_type": "vendor_docs",
@@ -1760,6 +1839,7 @@
       "id": "CUR-002",
       "name": "Missing Frontmatter in .mdc File",
       "severity": "MEDIUM",
+      "auto_fixable": true,
       "category": "cursor",
       "evidence": {
         "source_type": "vendor_docs",
@@ -1782,6 +1862,7 @@
       "id": "CUR-003",
       "name": "Invalid YAML Frontmatter",
       "severity": "HIGH",
+      "auto_fixable": false,
       "category": "cursor",
       "evidence": {
         "source_type": "vendor_docs",
@@ -1804,6 +1885,7 @@
       "id": "CUR-004",
       "name": "Invalid Glob Pattern in globs Field",
       "severity": "HIGH",
+      "auto_fixable": false,
       "category": "cursor",
       "evidence": {
         "source_type": "vendor_docs",
@@ -1826,6 +1908,7 @@
       "id": "CUR-005",
       "name": "Unknown Frontmatter Keys",
       "severity": "MEDIUM",
+      "auto_fixable": true,
       "category": "cursor",
       "evidence": {
         "source_type": "vendor_docs",
@@ -1848,6 +1931,7 @@
       "id": "CUR-006",
       "name": "Legacy .cursorrules File Detected",
       "severity": "MEDIUM",
+      "auto_fixable": true,
       "category": "cursor",
       "evidence": {
         "source_type": "vendor_docs",
@@ -1870,6 +1954,7 @@
       "id": "XML-001",
       "name": "Unclosed XML Tag",
       "severity": "HIGH",
+      "auto_fixable": true,
       "category": "xml",
       "evidence": {
         "source_type": "vendor_docs",
@@ -1890,6 +1975,7 @@
       "id": "XML-002",
       "name": "Mismatched Closing Tag",
       "severity": "HIGH",
+      "auto_fixable": true,
       "category": "xml",
       "evidence": {
         "source_type": "vendor_docs",
@@ -1910,6 +1996,7 @@
       "id": "XML-003",
       "name": "Unmatched Closing Tag",
       "severity": "HIGH",
+      "auto_fixable": true,
       "category": "xml",
       "evidence": {
         "source_type": "vendor_docs",
@@ -1930,6 +2017,7 @@
       "id": "REF-001",
       "name": "Import File Not Found",
       "severity": "HIGH",
+      "auto_fixable": false,
       "category": "references",
       "evidence": {
         "source_type": "vendor_docs",
@@ -1952,6 +2040,7 @@
       "id": "REF-002",
       "name": "Broken Markdown Link",
       "severity": "HIGH",
+      "auto_fixable": false,
       "category": "references",
       "evidence": {
         "source_type": "community",
@@ -1972,6 +2061,7 @@
       "id": "PE-001",
       "name": "Lost in the Middle",
       "severity": "MEDIUM",
+      "auto_fixable": false,
       "category": "prompt-engineering",
       "evidence": {
         "source_type": "paper",
@@ -1992,6 +2082,7 @@
       "id": "PE-002",
       "name": "Chain-of-Thought on Simple Task",
       "severity": "MEDIUM",
+      "auto_fixable": false,
       "category": "prompt-engineering",
       "evidence": {
         "source_type": "paper",
@@ -2012,6 +2103,7 @@
       "id": "PE-003",
       "name": "Weak Imperative Language",
       "severity": "MEDIUM",
+      "auto_fixable": false,
       "category": "prompt-engineering",
       "evidence": {
         "source_type": "paper",
@@ -2033,6 +2125,7 @@
       "id": "PE-004",
       "name": "Ambiguous Instructions",
       "severity": "MEDIUM",
+      "auto_fixable": false,
       "category": "prompt-engineering",
       "evidence": {
         "source_type": "vendor_docs",
@@ -2053,6 +2146,7 @@
       "id": "XP-001",
       "name": "Platform-Specific Feature in Generic Config",
       "severity": "HIGH",
+      "auto_fixable": false,
       "category": "cross-platform",
       "evidence": {
         "source_type": "community",
@@ -2074,6 +2168,7 @@
       "id": "XP-002",
       "name": "AGENTS.md Platform Compatibility",
       "severity": "HIGH",
+      "auto_fixable": false,
       "category": "cross-platform",
       "evidence": {
         "source_type": "community",
@@ -2098,6 +2193,7 @@
       "id": "XP-003",
       "name": "Hard-Coded Platform Paths",
       "severity": "HIGH",
+      "auto_fixable": false,
       "category": "cross-platform",
       "evidence": {
         "source_type": "community",
@@ -2119,6 +2215,7 @@
       "id": "XP-004",
       "name": "Conflicting Build/Test Commands",
       "severity": "MEDIUM",
+      "auto_fixable": false,
       "category": "cross-platform",
       "evidence": {
         "source_type": "community",
@@ -2140,6 +2237,7 @@
       "id": "XP-005",
       "name": "Conflicting Tool Constraints",
       "severity": "HIGH",
+      "auto_fixable": false,
       "category": "cross-platform",
       "evidence": {
         "source_type": "community",
@@ -2161,6 +2259,7 @@
       "id": "XP-006",
       "name": "Multiple Layers Without Documented Precedence",
       "severity": "MEDIUM",
+      "auto_fixable": false,
       "category": "cross-platform",
       "evidence": {
         "source_type": "community",
@@ -2182,6 +2281,7 @@
       "id": "VER-001",
       "name": "No Tool/Spec Versions Pinned",
       "severity": "LOW",
+      "auto_fixable": false,
       "category": "version-awareness",
       "evidence": {
         "source_type": "community",

@@ -1,0 +1,54 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Copilot Instructions",
+  "scopeName": "text.copilot.instructions",
+  "patterns": [
+    {
+      "include": "#frontmatter"
+    },
+    {
+      "include": "text.html.markdown"
+    }
+  ],
+  "repository": {
+    "frontmatter": {
+      "begin": "\\A(-{3})\\s*$",
+      "beginCaptures": {
+        "1": {
+          "name": "punctuation.definition.frontmatter.begin.copilot"
+        }
+      },
+      "end": "^(-{3})\\s*$",
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.frontmatter.end.copilot"
+        }
+      },
+      "name": "meta.embedded.block.yaml",
+      "contentName": "meta.embedded.block.yaml",
+      "patterns": [
+        {
+          "include": "#copilot-keys"
+        },
+        {
+          "include": "source.yaml"
+        }
+      ]
+    },
+    "copilot-keys": {
+      "patterns": [
+        {
+          "match": "^\\s*(applyTo|description|title|globs)\\s*(:)",
+          "captures": {
+            "1": {
+              "name": "keyword.control.copilot.key"
+            },
+            "2": {
+              "name": "punctuation.separator.key-value.yaml"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

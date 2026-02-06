@@ -1,0 +1,54 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Cursor Rule",
+  "scopeName": "text.cursor.rule",
+  "patterns": [
+    {
+      "include": "#frontmatter"
+    },
+    {
+      "include": "text.html.markdown"
+    }
+  ],
+  "repository": {
+    "frontmatter": {
+      "begin": "\\A(-{3})\\s*$",
+      "beginCaptures": {
+        "1": {
+          "name": "punctuation.definition.frontmatter.begin.cursor"
+        }
+      },
+      "end": "^(-{3})\\s*$",
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.frontmatter.end.cursor"
+        }
+      },
+      "name": "meta.embedded.block.yaml",
+      "contentName": "meta.embedded.block.yaml",
+      "patterns": [
+        {
+          "include": "#cursor-keys"
+        },
+        {
+          "include": "source.yaml"
+        }
+      ]
+    },
+    "cursor-keys": {
+      "patterns": [
+        {
+          "match": "^\\s*(description|globs|alwaysApply|title)\\s*(:)",
+          "captures": {
+            "1": {
+              "name": "keyword.control.cursor.key"
+            },
+            "2": {
+              "name": "punctuation.separator.key-value.yaml"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

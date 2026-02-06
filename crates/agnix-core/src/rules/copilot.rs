@@ -92,7 +92,13 @@ impl Validator for CopilotValidator {
                             "COP-001",
                             t!("rules.cop_001.message_empty"),
                         )
-                        .with_suggestion(t!("rules.cop_001.suggestion_empty")),
+                        .with_suggestion(t!("rules.cop_001.suggestion_empty"))
+                        .with_fix(Fix::insert(
+                            0,
+                            "# Copilot Instructions\n\nAdd your coding instructions here.\n",
+                            "Insert instruction template",
+                            false,
+                        )),
                     );
                 }
             }
@@ -117,7 +123,13 @@ impl Validator for CopilotValidator {
                             "COP-002",
                             t!("rules.cop_002.message_missing"),
                         )
-                        .with_suggestion(t!("rules.cop_002.suggestion_add_frontmatter")),
+                        .with_suggestion(t!("rules.cop_002.suggestion_add_frontmatter"))
+                        .with_fix(Fix::insert(
+                            0,
+                            "---\napplyTo: \"**/*\"\n---\n",
+                            "Insert required frontmatter with applyTo field",
+                            false,
+                        )),
                     );
                 }
                 return diagnostics;
@@ -144,16 +156,25 @@ impl Validator for CopilotValidator {
             // Check for missing applyTo field
             if let Some(ref schema) = parsed.schema {
                 if schema.apply_to.is_none() {
-                    diagnostics.push(
-                        Diagnostic::error(
-                            path.to_path_buf(),
-                            parsed.start_line,
-                            0,
-                            "COP-002",
-                            t!("rules.cop_002.message_missing_apply_to"),
-                        )
-                        .with_suggestion(t!("rules.cop_002.suggestion_add_apply_to")),
-                    );
+                    let mut diag = Diagnostic::error(
+                        path.to_path_buf(),
+                        parsed.start_line,
+                        0,
+                        "COP-002",
+                        t!("rules.cop_002.message_missing_apply_to"),
+                    )
+                    .with_suggestion(t!("rules.cop_002.suggestion_add_apply_to"));
+
+                    if let Some(insert_pos) = content.find("---").map(|p| p + 3) {
+                        diag = diag.with_fix(Fix::insert(
+                            insert_pos,
+                            "\napplyTo: \"**/*\"",
+                            "Add required 'applyTo' field",
+                            false,
+                        ));
+                    }
+
+                    diagnostics.push(diag);
                 }
             }
         }
@@ -632,5 +653,152 @@ Body"#;
                 rule
             );
         }
+    }
+
+    // ===== COP-001 Auto-Fix Tests =====
+
+    #[test]
+    fn test_cop_001_empty_global_has_fix() {
+        let diagnostics = validate_global("");
+        let diag = diagnostics
+            .iter()
+            .find(|d| d.rule == "COP-001")
+            .expect("COP-001 should be reported");
+
+        assert!(diag.has_fixes(), "COP-001 for empty global file should have a fix");
+        let fix = &diag.fixes[0];
+        assert!(fix.is_insertion(), "Fix should be an insertion");
+        assert!(!fix.safe, "Fix should be unsafe");
+        assert_eq!(fix.start_byte, 0, "Fix should insert at beginning of file");
+        assert!(
+            fix.replacement.contains("# Copilot Instructions"),
+            "Fix should contain instruction header"
+        );
+        assert!(
+            fix.replacement.contains("Add your coding instructions here."),
+            "Fix should contain placeholder text"
+        );
+    }
+
+    #[test]
+    fn test_cop_001_fix_produces_valid_content() {
+        let content = "";
+        let diagnostics = validate_global(content);
+        let diag = diagnostics
+            .iter()
+            .find(|d| d.rule == "COP-001")
+            .expect("COP-001 should be reported");
+
+        let fix = &diag.fixes[0];
+        let result = format!("{}{}", &fix.replacement, &content[fix.end_byte..]);
+
+        // Validate the result - should no longer trigger COP-001
+        let result_diagnostics = validate_global(&result);
+        assert!(
+            !result_diagnostics.iter().any(|d| d.rule == "COP-001"),
+            "Applied fix should resolve COP-001"
+        );
+    }
+
+    // ===== COP-002 Auto-Fix Tests =====
+
+    #[test]
+    fn test_cop_002_missing_frontmatter_has_fix() {
+        let content = "# Instructions without frontmatter";
+        let diagnostics = validate_scoped(content);
+        let diag = diagnostics
+            .iter()
+            .find(|d| d.rule == "COP-002")
+            .expect("COP-002 should be reported");
+
+        assert!(diag.has_fixes(), "COP-002 for missing frontmatter should have a fix");
+        let fix = &diag.fixes[0];
+        assert!(fix.is_insertion(), "Fix should be an insertion");
+        assert!(!fix.safe, "Fix should be unsafe");
+        assert_eq!(fix.start_byte, 0, "Fix should insert at beginning of file");
+        assert!(
+            fix.replacement.contains("applyTo:"),
+            "Fix should contain applyTo field"
+        );
+        assert!(
+            fix.replacement.contains("---\n"),
+            "Fix should contain frontmatter delimiters"
+        );
+    }
+
+    #[test]
+    fn test_cop_002_missing_frontmatter_fix_produces_valid_content() {
+        let content = "# Instructions without frontmatter\n\nSome instructions.";
+        let diagnostics = validate_scoped(content);
+        let diag = diagnostics
+            .iter()
+            .find(|d| d.rule == "COP-002")
+            .expect("COP-002 should be reported");
+
+        let fix = &diag.fixes[0];
+        let result = format!("{}{}", &fix.replacement, content);
+
+        // Validate the result - should no longer trigger COP-002
+        let result_diagnostics = validate_scoped(&result);
+        assert!(
+            !result_diagnostics.iter().any(|d| d.rule == "COP-002"),
+            "Applied fix should resolve COP-002"
+        );
+    }
+
+    #[test]
+    fn test_cop_002_missing_apply_to_has_fix() {
+        let content = "---\n---\n# Instructions\n";
+        let diagnostics = validate_scoped(content);
+        let cop_002: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "COP-002")
+            .collect();
+        assert!(!cop_002.is_empty(), "COP-002 should be reported for missing applyTo");
+
+        let diag = cop_002
+            .iter()
+            .find(|d| d.message.contains("applyTo"))
+            .expect("Should have a COP-002 about missing applyTo");
+
+        assert!(diag.has_fixes(), "COP-002 for missing applyTo should have a fix");
+        let fix = &diag.fixes[0];
+        assert!(fix.is_insertion(), "Fix should be an insertion");
+        assert!(!fix.safe, "Fix should be unsafe");
+        assert_eq!(
+            fix.start_byte, 3,
+            "Fix should insert after opening ---"
+        );
+        assert!(
+            fix.replacement.contains("applyTo:"),
+            "Fix should add applyTo field"
+        );
+    }
+
+    #[test]
+    fn test_cop_002_missing_apply_to_fix_produces_valid_content() {
+        let content = "---\n---\n# Instructions\n";
+        let diagnostics = validate_scoped(content);
+        let diag = diagnostics
+            .iter()
+            .filter(|d| d.rule == "COP-002")
+            .find(|d| d.has_fixes())
+            .expect("Should have a COP-002 with fix");
+
+        let fix = &diag.fixes[0];
+        // Apply the fix
+        let mut result = content.to_string();
+        result.insert_str(fix.start_byte, &fix.replacement);
+
+        // Validate the result - should no longer trigger COP-002 for missing applyTo
+        let result_diagnostics = validate_scoped(&result);
+        let apply_to_errors: Vec<_> = result_diagnostics
+            .iter()
+            .filter(|d| d.rule == "COP-002" && d.message.contains("applyTo"))
+            .collect();
+        assert!(
+            apply_to_errors.is_empty(),
+            "Applied fix should resolve COP-002 for missing applyTo"
+        );
     }
 }

@@ -2,7 +2,7 @@
 
 use crate::{
     config::LintConfig,
-    diagnostics::Diagnostic,
+    diagnostics::{Diagnostic, Fix},
     rules::Validator,
     schemas::hooks::{Hook, HooksSchema, SettingsSchema},
 };
@@ -97,6 +97,10 @@ fn validate_cc_hk_010_command_timeout(
     hook_location: &str,
     version_pinned: bool,
     path: &Path,
+    content: &str,
+    event: &str,
+    matcher_idx: usize,
+    hook_idx: usize,
     diagnostics: &mut Vec<Diagnostic>,
 ) {
     if timeout.is_none() {
@@ -114,6 +118,16 @@ fn validate_cc_hk_010_command_timeout(
 
         if !version_pinned {
             diag = diag.with_assumption(t!("rules.cc_hk_010.assumption"));
+        }
+
+        // Add auto-fix: insert default command timeout
+        if let Some(pos) = find_hook_brace_position(content, event, matcher_idx, hook_idx) {
+            diag = diag.with_fix(Fix::insert(
+                pos,
+                " \"timeout\": 120,".to_string(),
+                "Add default command timeout of 120 seconds".to_string(),
+                false,
+            ));
         }
 
         diagnostics.push(diag);
@@ -198,6 +212,10 @@ fn validate_cc_hk_010_prompt_timeout(
     hook_location: &str,
     version_pinned: bool,
     path: &Path,
+    content: &str,
+    event: &str,
+    matcher_idx: usize,
+    hook_idx: usize,
     diagnostics: &mut Vec<Diagnostic>,
 ) {
     if timeout.is_none() {
@@ -215,6 +233,16 @@ fn validate_cc_hk_010_prompt_timeout(
 
         if !version_pinned {
             diag = diag.with_assumption(t!("rules.cc_hk_010.assumption"));
+        }
+
+        // Add auto-fix: insert default prompt timeout
+        if let Some(pos) = find_hook_brace_position(content, event, matcher_idx, hook_idx) {
+            diag = diag.with_fix(Fix::insert(
+                pos,
+                " \"timeout\": 30,".to_string(),
+                "Add default prompt timeout of 30 seconds".to_string(),
+                false,
+            ));
         }
 
         diagnostics.push(diag);
@@ -302,7 +330,7 @@ impl Validator for HooksValidator {
 
         // CC-HK-005: Missing type field (early return on failure)
         if config.is_rule_enabled("CC-HK-005") {
-            validate_cc_hk_005_missing_type_field(&raw_value, path, &mut diagnostics);
+            validate_cc_hk_005_missing_type_field(&raw_value, path, content, &mut diagnostics);
             if diagnostics.iter().any(|d| d.rule == "CC-HK-005") {
                 return diagnostics;
             }
@@ -400,6 +428,10 @@ impl Validator for HooksValidator {
                                     &hook_location,
                                     config.is_claude_code_version_pinned(),
                                     path,
+                                    content,
+                                    event,
+                                    matcher_idx,
+                                    hook_idx,
                                     &mut diagnostics,
                                 );
                             }
@@ -446,6 +478,10 @@ impl Validator for HooksValidator {
                                     &hook_location,
                                     config.is_claude_code_version_pinned(),
                                     path,
+                                    content,
+                                    event,
+                                    matcher_idx,
+                                    hook_idx,
                                     &mut diagnostics,
                                 );
                             }

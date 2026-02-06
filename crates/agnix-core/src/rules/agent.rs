@@ -197,16 +197,40 @@ impl Validator for AgentValidator {
         if config.is_rule_enabled("CC-AG-001")
             && schema.name.as_deref().unwrap_or("").trim().is_empty()
         {
-            diagnostics.push(
-                Diagnostic::error(
-                    path.to_path_buf(),
-                    1,
-                    0,
-                    "CC-AG-001",
-                    t!("rules.cc_ag_001.message"),
-                )
-                .with_suggestion(t!("rules.cc_ag_001.suggestion")),
-            );
+            let derived_name = path
+                .file_stem()
+                .and_then(|s| s.to_str())
+                .unwrap_or("my-agent");
+
+            let mut diag = Diagnostic::error(
+                path.to_path_buf(),
+                1,
+                0,
+                "CC-AG-001",
+                t!("rules.cc_ag_001.message"),
+            )
+            .with_suggestion(t!("rules.cc_ag_001.suggestion"));
+
+            if schema.name.is_none() {
+                if let Some(insert_pos) = content.find("---").map(|p| p + 3) {
+                    diag = diag.with_fix(Fix::insert(
+                        insert_pos,
+                        format!("\nname: {}", derived_name),
+                        format!("Add name field derived from filename: '{}'", derived_name),
+                        false,
+                    ));
+                }
+            } else if let Some((start, end)) = frontmatter_value_byte_range(content, "name") {
+                diag = diag.with_fix(Fix::replace(
+                    start,
+                    end,
+                    derived_name,
+                    format!("Set name to '{}'", derived_name),
+                    false,
+                ));
+            }
+
+            diagnostics.push(diag);
         }
 
         // CC-AG-002: Missing description field
@@ -218,16 +242,39 @@ impl Validator for AgentValidator {
                 .trim()
                 .is_empty()
         {
-            diagnostics.push(
-                Diagnostic::error(
-                    path.to_path_buf(),
-                    1,
-                    0,
-                    "CC-AG-002",
-                    t!("rules.cc_ag_002.message"),
-                )
-                .with_suggestion(t!("rules.cc_ag_002.suggestion")),
-            );
+            let mut diag = Diagnostic::error(
+                path.to_path_buf(),
+                1,
+                0,
+                "CC-AG-002",
+                t!("rules.cc_ag_002.message"),
+            )
+            .with_suggestion(t!("rules.cc_ag_002.suggestion"));
+
+            if schema.description.is_none() {
+                let parts = split_frontmatter(content);
+                if parts.has_frontmatter && parts.has_closing {
+                    let insert_pos = parts.frontmatter_start + parts.frontmatter.len();
+                    diag = diag.with_fix(Fix::insert(
+                        insert_pos,
+                        "\ndescription: TODO - add a description for this agent",
+                        "Add placeholder description field",
+                        false,
+                    ));
+                }
+            } else if let Some((start, end)) =
+                frontmatter_value_byte_range(content, "description")
+            {
+                diag = diag.with_fix(Fix::replace(
+                    start,
+                    end,
+                    "TODO - add a description for this agent",
+                    "Set placeholder description",
+                    false,
+                ));
+            }
+
+            diagnostics.push(diag);
         }
 
         // CC-AG-003: Invalid model value
@@ -1808,5 +1855,158 @@ Body"#;
             .filter(|d| d.rule == "CC-AG-006")
             .collect();
         assert!(cc_ag_006.is_empty());
+    }
+
+    // ===== CC-AG-001 Auto-Fix Tests =====
+
+    #[test]
+    fn test_cc_ag_001_fix_insert_name_from_filename() {
+        let content = "---\ndescription: A test agent\n---\nAgent instructions here";
+
+        let validator = AgentValidator;
+        let diagnostics = validator.validate(
+            Path::new("agents/test-agent.md"),
+            content,
+            &LintConfig::default(),
+        );
+
+        let diag = diagnostics
+            .iter()
+            .find(|d| d.rule == "CC-AG-001")
+            .expect("CC-AG-001 should be reported");
+
+        assert!(diag.has_fixes(), "CC-AG-001 should have a fix");
+        let fix = &diag.fixes[0];
+        assert!(fix.is_insertion(), "Fix should be an insertion");
+        assert!(!fix.safe, "Fix should be unsafe");
+        assert_eq!(fix.start_byte, 3, "Insert position should be after opening ---");
+        assert!(
+            fix.replacement.contains("test-agent"),
+            "Fix should derive name from filename"
+        );
+
+        // Apply fix and verify content
+        let mut result = content.to_string();
+        result.insert_str(fix.start_byte, &fix.replacement);
+        assert!(result.contains("name: test-agent"));
+    }
+
+    #[test]
+    fn test_cc_ag_001_fix_replace_empty_name() {
+        let content = "---\nname: \"\"\ndescription: A test agent\n---\nAgent instructions";
+
+        let diagnostics = validate(content);
+        let diag = diagnostics
+            .iter()
+            .find(|d| d.rule == "CC-AG-001")
+            .expect("CC-AG-001 should be reported");
+
+        assert!(diag.has_fixes(), "CC-AG-001 with empty name should have a fix");
+        let fix = &diag.fixes[0];
+        // For empty quoted string, frontmatter_value_byte_range finds the empty value
+        assert!(!fix.safe, "Fix should be unsafe");
+        assert_eq!(fix.replacement, "test-agent");
+    }
+
+    #[test]
+    fn test_cc_ag_001_fix_uses_filename_stem() {
+        let content = "---\ndescription: A test agent\n---\nBody";
+
+        let validator = AgentValidator;
+        let diagnostics = validator.validate(
+            Path::new("agents/my-custom-agent.md"),
+            content,
+            &LintConfig::default(),
+        );
+
+        let diag = diagnostics
+            .iter()
+            .find(|d| d.rule == "CC-AG-001")
+            .expect("CC-AG-001 should be reported");
+
+        assert!(diag.has_fixes());
+        let fix = &diag.fixes[0];
+        assert!(
+            fix.replacement.contains("my-custom-agent"),
+            "Fix should use 'my-custom-agent' from filename"
+        );
+    }
+
+    // ===== CC-AG-002 Auto-Fix Tests =====
+
+    #[test]
+    fn test_cc_ag_002_fix_insert_description() {
+        let content = "---\nname: my-agent\n---\nAgent instructions";
+
+        let diagnostics = validate(content);
+        let diag = diagnostics
+            .iter()
+            .find(|d| d.rule == "CC-AG-002")
+            .expect("CC-AG-002 should be reported");
+
+        assert!(diag.has_fixes(), "CC-AG-002 should have a fix");
+        let fix = &diag.fixes[0];
+        assert!(fix.is_insertion(), "Fix should be an insertion");
+        assert!(!fix.safe, "Fix should be unsafe");
+        assert!(
+            fix.replacement.contains("description:"),
+            "Fix should insert description field"
+        );
+        assert!(
+            fix.replacement.contains("TODO"),
+            "Fix should have placeholder text"
+        );
+
+        // Apply fix and verify content
+        let mut result = content.to_string();
+        result.insert_str(fix.start_byte, &fix.replacement);
+        assert!(result.contains("description: TODO - add a description for this agent"));
+        // Verify the result still has valid frontmatter structure
+        assert!(result.starts_with("---\n"));
+        assert!(result.contains("\n---\n"));
+    }
+
+    #[test]
+    fn test_cc_ag_002_fix_replace_empty_description() {
+        let content = "---\nname: my-agent\ndescription: \"\"\n---\nAgent instructions";
+
+        let diagnostics = validate(content);
+        let diag = diagnostics
+            .iter()
+            .find(|d| d.rule == "CC-AG-002")
+            .expect("CC-AG-002 should be reported");
+
+        assert!(diag.has_fixes(), "CC-AG-002 with empty description should have a fix");
+        let fix = &diag.fixes[0];
+        assert!(!fix.safe, "Fix should be unsafe");
+        assert_eq!(
+            fix.replacement, "TODO - add a description for this agent",
+            "Fix should set placeholder description"
+        );
+    }
+
+    #[test]
+    fn test_cc_ag_002_fix_insert_position_after_last_field() {
+        let content = "---\nname: my-agent\nmodel: sonnet\n---\nBody";
+
+        let diagnostics = validate(content);
+        let diag = diagnostics
+            .iter()
+            .find(|d| d.rule == "CC-AG-002")
+            .expect("CC-AG-002 should be reported");
+
+        assert!(diag.has_fixes());
+        let fix = &diag.fixes[0];
+
+        // Apply fix and verify position is correct (before closing ---)
+        let mut result = content.to_string();
+        result.insert_str(fix.start_byte, &fix.replacement);
+        // The result should have description before the closing ---
+        let closing_pos = result.rfind("\n---").unwrap();
+        let desc_pos = result.find("description:").unwrap();
+        assert!(
+            desc_pos < closing_pos,
+            "description should appear before closing ---"
+        );
     }
 }

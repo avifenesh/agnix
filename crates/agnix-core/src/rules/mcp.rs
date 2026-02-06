@@ -67,6 +67,65 @@ fn find_unique_json_string_value_span(
     Some((value.start(), value.end()))
 }
 
+/// Find the byte position of the closing `}` of a tool object at the given index.
+fn find_tool_close_brace(content: &str, tool_index: usize) -> Option<usize> {
+    // First find the tool opening brace
+    let (line, _) = find_tool_location(content, tool_index);
+    if line <= 1 && tool_index > 0 {
+        return None;
+    }
+
+    // Find the tool start position (byte offset of the line)
+    let mut current_line = 1usize;
+    let mut pos = 0usize;
+    for (idx, ch) in content.char_indices() {
+        if current_line == line {
+            pos = idx;
+            break;
+        }
+        if ch == '\n' {
+            current_line += 1;
+        }
+    }
+
+    // Now find the matching closing brace
+    let bytes = content.as_bytes();
+    let mut depth = 0i32;
+    let mut in_string = false;
+    let mut prev = 0u8;
+
+    // Find opening { first
+    while pos < bytes.len() && bytes[pos] != b'{' {
+        pos += 1;
+    }
+    if pos >= bytes.len() {
+        return None;
+    }
+
+    for i in pos..bytes.len() {
+        let ch = bytes[i];
+        if in_string {
+            if ch == b'"' && prev != b'\\' {
+                in_string = false;
+            }
+        } else {
+            match ch {
+                b'"' => in_string = true,
+                b'{' => depth += 1,
+                b'}' => {
+                    depth -= 1;
+                    if depth == 0 {
+                        return Some(i);
+                    }
+                }
+                _ => {}
+            }
+        }
+        prev = ch;
+    }
+    None
+}
+
 /// Find the line number of a tool in a tools array (0-indexed)
 fn find_tool_location(content: &str, tool_index: usize) -> (usize, usize) {
     // Find "tools" first, then count opening braces
@@ -522,34 +581,58 @@ fn validate_tool(
     if config.is_rule_enabled("MCP-004") && has_desc && !tool.has_meaningful_description() {
         let (line, col) = find_field("description");
         let desc_len = tool.description.as_ref().map(|d| d.len()).unwrap_or(0);
-        diagnostics.push(
-            Diagnostic::warning(
-                path.to_path_buf(),
-                line,
-                col,
-                "MCP-004",
-                t!(
-                    "rules.mcp_004.message",
-                    prefix = tool_prefix.as_str(),
-                    len = desc_len
-                ),
-            )
-            .with_suggestion(t!("rules.mcp_004.suggestion")),
-        );
+        let mut diag = Diagnostic::warning(
+            path.to_path_buf(),
+            line,
+            col,
+            "MCP-004",
+            t!(
+                "rules.mcp_004.message",
+                prefix = tool_prefix.as_str(),
+                len = desc_len
+            ),
+        )
+        .with_suggestion(t!("rules.mcp_004.suggestion"));
+
+        // Add fix to replace short description with a more meaningful one
+        if tool.description.is_some() {
+            if let Some((start, end)) = find_unique_json_scalar_value_span(content, "description") {
+                let tool_name = tool.name.as_deref().unwrap_or("tool");
+                diag = diag.with_fix(Fix::replace(
+                    start,
+                    end,
+                    format!("\"A tool that performs {} operations\"", tool_name),
+                    "Replace with more descriptive text",
+                    false,
+                ));
+            }
+        }
+
+        diagnostics.push(diag);
     }
 
     // MCP-005: Tool without user consent mechanism
     if config.is_rule_enabled("MCP-005") && !tool.has_consent_fields() {
-        diagnostics.push(
-            Diagnostic::warning(
-                path.to_path_buf(),
-                tool_loc.0,
-                tool_loc.1,
-                "MCP-005",
-                t!("rules.mcp_005.message", prefix = tool_prefix.as_str()),
-            )
-            .with_suggestion(t!("rules.mcp_005.suggestion")),
-        );
+        let mut diag = Diagnostic::warning(
+            path.to_path_buf(),
+            tool_loc.0,
+            tool_loc.1,
+            "MCP-005",
+            t!("rules.mcp_005.message", prefix = tool_prefix.as_str()),
+        )
+        .with_suggestion(t!("rules.mcp_005.suggestion"));
+
+        // Add fix to insert requiresApproval before tool's closing brace
+        if let Some(insert_pos) = find_tool_close_brace(content, tool_index) {
+            diag = diag.with_fix(Fix::insert(
+                insert_pos,
+                ",\n            \"requiresApproval\": true",
+                "Add 'requiresApproval: true' for user consent",
+                false,
+            ));
+        }
+
+        diagnostics.push(diag);
     }
 
     // MCP-006: Untrusted annotations
@@ -1390,6 +1473,161 @@ mod tests {
         // MCP-006 SHOULD trigger (annotations present = warning)
         let mcp_006: Vec<_> = diagnostics.iter().filter(|d| d.rule == "MCP-006").collect();
         assert!(!mcp_006.is_empty(), "MCP-006 should warn about annotations");
+    }
+
+    // ===== MCP-005 Auto-fix Tests =====
+
+    #[test]
+    fn test_mcp_005_has_fix() {
+        let content = r#"{
+            "name": "test-tool",
+            "description": "A test tool for testing",
+            "inputSchema": {"type": "object"}
+        }"#;
+        let diagnostics = validate(content);
+        let mcp_005 = diagnostics
+            .iter()
+            .find(|d| d.rule == "MCP-005")
+            .expect("MCP-005 should be reported");
+        assert!(mcp_005.has_fixes());
+        let fix = &mcp_005.fixes[0];
+        assert!(fix.replacement.contains("requiresApproval"));
+        assert!(fix.replacement.contains("true"));
+        assert!(!fix.safe);
+    }
+
+    #[test]
+    fn test_mcp_005_fix_produces_valid_json() {
+        let content = r#"{
+            "name": "test-tool",
+            "description": "A test tool for testing",
+            "inputSchema": {"type": "object"}
+        }"#;
+        let diagnostics = validate(content);
+        let mcp_005 = diagnostics
+            .iter()
+            .find(|d| d.rule == "MCP-005")
+            .expect("MCP-005 should be reported");
+        assert!(mcp_005.has_fixes());
+        let fix = &mcp_005.fixes[0];
+
+        // Apply fix
+        let mut fixed = content.to_string();
+        fixed.replace_range(fix.start_byte..fix.end_byte, &fix.replacement);
+        // Verify the result parses as valid JSON
+        let parsed: serde_json::Value = serde_json::from_str(&fixed)
+            .expect("Fixed content should be valid JSON");
+        assert_eq!(
+            parsed.get("requiresApproval").and_then(|v| v.as_bool()),
+            Some(true)
+        );
+    }
+
+    #[test]
+    fn test_mcp_005_fix_in_tools_array() {
+        let content = r#"{
+            "tools": [
+                {
+                    "name": "tool1",
+                    "description": "First tool description",
+                    "inputSchema": {"type": "object"}
+                }
+            ]
+        }"#;
+        let diagnostics = validate(content);
+        let mcp_005 = diagnostics
+            .iter()
+            .find(|d| d.rule == "MCP-005")
+            .expect("MCP-005 should be reported");
+        assert!(mcp_005.has_fixes());
+        let fix = &mcp_005.fixes[0];
+
+        // Apply fix
+        let mut fixed = content.to_string();
+        fixed.replace_range(fix.start_byte..fix.end_byte, &fix.replacement);
+        // Verify the result parses as valid JSON
+        let parsed: serde_json::Value = serde_json::from_str(&fixed)
+            .expect("Fixed content should be valid JSON");
+        let tool = &parsed["tools"][0];
+        assert_eq!(
+            tool.get("requiresApproval").and_then(|v| v.as_bool()),
+            Some(true)
+        );
+    }
+
+    // ===== MCP-004 Auto-fix Tests =====
+
+    #[test]
+    fn test_mcp_004_has_fix() {
+        let content = r#"{
+            "name": "test-tool",
+            "description": "Short",
+            "inputSchema": {"type": "object"}
+        }"#;
+        let diagnostics = validate(content);
+        let mcp_004 = diagnostics
+            .iter()
+            .find(|d| d.rule == "MCP-004")
+            .expect("MCP-004 should be reported");
+        assert!(mcp_004.has_fixes());
+        let fix = &mcp_004.fixes[0];
+        assert!(fix.replacement.contains("test-tool"));
+        assert!(!fix.safe);
+    }
+
+    #[test]
+    fn test_mcp_004_fix_produces_valid_json() {
+        let content = r#"{
+            "name": "test-tool",
+            "description": "Short",
+            "inputSchema": {"type": "object"}
+        }"#;
+        let diagnostics = validate(content);
+        let mcp_004 = diagnostics
+            .iter()
+            .find(|d| d.rule == "MCP-004")
+            .expect("MCP-004 should be reported");
+        assert!(mcp_004.has_fixes());
+        let fix = &mcp_004.fixes[0];
+
+        // Apply fix
+        let mut fixed = content.to_string();
+        fixed.replace_range(fix.start_byte..fix.end_byte, &fix.replacement);
+        let parsed: serde_json::Value = serde_json::from_str(&fixed)
+            .expect("Fixed content should be valid JSON");
+        let desc = parsed
+            .get("description")
+            .and_then(|v| v.as_str())
+            .unwrap();
+        assert!(desc.len() >= 10, "Fixed description should be meaningful");
+    }
+
+    // ===== find_tool_close_brace Tests =====
+
+    #[test]
+    fn test_find_tool_close_brace_single_tool() {
+        let content = r#"{
+            "name": "test-tool",
+            "description": "A test tool"
+        }"#;
+        let pos = find_tool_close_brace(content, 0);
+        assert!(pos.is_some());
+        assert_eq!(content.as_bytes()[pos.unwrap()], b'}');
+    }
+
+    #[test]
+    fn test_find_tool_close_brace_tools_array() {
+        let content = r#"{
+            "tools": [
+                {"name": "tool1", "description": "First"},
+                {"name": "tool2", "description": "Second"}
+            ]
+        }"#;
+        let pos0 = find_tool_close_brace(content, 0);
+        let pos1 = find_tool_close_brace(content, 1);
+        assert!(pos0.is_some());
+        assert!(pos1.is_some());
+        assert!(pos0.unwrap() < pos1.unwrap());
     }
 
     #[test]

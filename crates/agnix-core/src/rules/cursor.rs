@@ -57,16 +57,25 @@ impl Validator for CursorValidator {
 
         // CUR-006: Legacy .cursorrules detected (WARNING)
         if is_legacy && config.is_rule_enabled("CUR-006") {
-            diagnostics.push(
-                Diagnostic::warning(
-                    path.to_path_buf(),
-                    1,
+            let mut diag_006 = Diagnostic::warning(
+                path.to_path_buf(),
+                1,
+                0,
+                "CUR-006",
+                t!("rules.cur_006.message"),
+            )
+            .with_suggestion(t!("rules.cur_006.suggestion"));
+
+            if !is_content_empty(content) {
+                diag_006 = diag_006.with_fix(Fix::insert(
                     0,
-                    "CUR-006",
-                    t!("rules.cur_006.message"),
-                )
-                .with_suggestion(t!("rules.cur_006.suggestion")),
-            );
+                    "---\ndescription: Migrated from .cursorrules\nglobs: \"**/*\"\nalwaysApply: true\n---\n",
+                    "Add .mdc frontmatter (copy content to .cursor/rules/migrated.mdc afterwards)",
+                    false,
+                ));
+            }
+
+            diagnostics.push(diag_006);
             // For legacy files, just check if empty and return
             if config.is_rule_enabled("CUR-001") && is_content_empty(content) {
                 diagnostics.push(
@@ -109,7 +118,13 @@ impl Validator for CursorValidator {
                         "CUR-001",
                         t!("rules.cur_001.message_empty"),
                     )
-                    .with_suggestion(t!("rules.cur_001.suggestion_empty")),
+                    .with_suggestion(t!("rules.cur_001.suggestion_empty"))
+                    .with_fix(Fix::insert(
+                        0,
+                        "---\ndescription: TODO - describe this rule\nglobs: \"**/*\"\n---\n# Rule Title\n\nAdd your rule content here.\n",
+                        "Insert .mdc rule template",
+                        false,
+                    )),
                 );
             }
         }
@@ -128,7 +143,13 @@ impl Validator for CursorValidator {
                             "CUR-002",
                             t!("rules.cur_002.message"),
                         )
-                        .with_suggestion(t!("rules.cur_002.suggestion")),
+                        .with_suggestion(t!("rules.cur_002.suggestion"))
+                        .with_fix(Fix::insert(
+                            0,
+                            "---\ndescription: TODO - describe this rule\nglobs: \"**/*\"\n---\n",
+                            "Insert recommended frontmatter",
+                            false,
+                        )),
                     );
                 }
                 return diagnostics;
@@ -742,5 +763,170 @@ Body"#;
                 rule
             );
         }
+    }
+
+    // ===== CUR-001 Auto-Fix Tests =====
+
+    #[test]
+    fn test_cur_001_empty_file_has_fix() {
+        let diagnostics = validate_mdc("");
+        let diag = diagnostics
+            .iter()
+            .find(|d| d.rule == "CUR-001")
+            .expect("CUR-001 should be reported");
+
+        assert!(diag.has_fixes(), "CUR-001 for empty file should have a fix");
+        let fix = &diag.fixes[0];
+        assert!(fix.is_insertion(), "Fix should be an insertion");
+        assert!(!fix.safe, "Fix should be unsafe");
+        assert_eq!(fix.start_byte, 0, "Fix should insert at beginning of file");
+        assert!(
+            fix.replacement.contains("---\n"),
+            "Fix should contain frontmatter delimiters"
+        );
+        assert!(
+            fix.replacement.contains("description:"),
+            "Fix should contain description field"
+        );
+        assert!(
+            fix.replacement.contains("globs:"),
+            "Fix should contain globs field"
+        );
+        assert!(
+            fix.replacement.contains("# Rule Title"),
+            "Fix should contain body template"
+        );
+    }
+
+    #[test]
+    fn test_cur_001_empty_file_fix_produces_valid_mdc() {
+        let content = "";
+        let diagnostics = validate_mdc(content);
+        let diag = diagnostics
+            .iter()
+            .find(|d| d.rule == "CUR-001")
+            .expect("CUR-001 should be reported");
+
+        let fix = &diag.fixes[0];
+        let result = format!("{}{}", &fix.replacement, &content[fix.end_byte..]);
+
+        // Validate the result - should no longer trigger CUR-001 or CUR-002
+        let result_diagnostics = validate_mdc(&result);
+        assert!(
+            !result_diagnostics.iter().any(|d| d.rule == "CUR-001"),
+            "Applied fix should resolve CUR-001"
+        );
+        assert!(
+            !result_diagnostics.iter().any(|d| d.rule == "CUR-002"),
+            "Applied fix should not trigger CUR-002"
+        );
+    }
+
+    // ===== CUR-002 Auto-Fix Tests =====
+
+    #[test]
+    fn test_cur_002_missing_frontmatter_has_fix() {
+        let content = "# Rules without frontmatter";
+        let diagnostics = validate_mdc(content);
+        let diag = diagnostics
+            .iter()
+            .find(|d| d.rule == "CUR-002")
+            .expect("CUR-002 should be reported");
+
+        assert!(diag.has_fixes(), "CUR-002 should have a fix");
+        let fix = &diag.fixes[0];
+        assert!(fix.is_insertion(), "Fix should be an insertion");
+        assert!(!fix.safe, "Fix should be unsafe");
+        assert_eq!(fix.start_byte, 0, "Fix should insert at beginning of file");
+        assert!(
+            fix.replacement.contains("---\n"),
+            "Fix should contain frontmatter delimiters"
+        );
+        assert!(
+            fix.replacement.contains("description:"),
+            "Fix should contain description field"
+        );
+        assert!(
+            fix.replacement.contains("globs:"),
+            "Fix should contain globs field"
+        );
+    }
+
+    #[test]
+    fn test_cur_002_fix_produces_valid_mdc() {
+        let content = "# Rules without frontmatter\n\nSome rule content.";
+        let diagnostics = validate_mdc(content);
+        let diag = diagnostics
+            .iter()
+            .find(|d| d.rule == "CUR-002")
+            .expect("CUR-002 should be reported");
+
+        let fix = &diag.fixes[0];
+        let result = format!("{}{}", &fix.replacement, content);
+
+        // Validate the result - should no longer trigger CUR-002
+        let result_diagnostics = validate_mdc(&result);
+        assert!(
+            !result_diagnostics.iter().any(|d| d.rule == "CUR-002"),
+            "Applied fix should resolve CUR-002"
+        );
+    }
+
+    // ===== CUR-006 Auto-Fix Tests =====
+
+    #[test]
+    fn test_cur_006_legacy_with_content_has_fix() {
+        let content = "Some legacy cursor rules.";
+        let diagnostics = validate_legacy(content);
+        let diag = diagnostics
+            .iter()
+            .find(|d| d.rule == "CUR-006")
+            .expect("CUR-006 should be reported");
+
+        assert!(diag.has_fixes(), "CUR-006 with content should have a fix");
+        let fix = &diag.fixes[0];
+        assert!(fix.is_insertion(), "Fix should be an insertion");
+        assert!(!fix.safe, "Fix should be unsafe");
+        assert_eq!(fix.start_byte, 0, "Fix should insert at beginning of file");
+        assert!(
+            fix.replacement.contains("Migrated from .cursorrules"),
+            "Fix description should mention migration"
+        );
+        assert!(
+            fix.replacement.contains("alwaysApply: true"),
+            "Fix should set alwaysApply to true"
+        );
+    }
+
+    #[test]
+    fn test_cur_006_legacy_empty_no_fix() {
+        let content = "";
+        let diagnostics = validate_legacy(content);
+        let diag = diagnostics
+            .iter()
+            .find(|d| d.rule == "CUR-006")
+            .expect("CUR-006 should be reported");
+
+        assert!(
+            !diag.has_fixes(),
+            "CUR-006 for empty legacy file should not have a fix"
+        );
+    }
+
+    #[test]
+    fn test_cur_006_fix_wraps_content_with_frontmatter() {
+        let content = "Use TypeScript strict mode.\nAlways write tests.";
+        let diagnostics = validate_legacy(content);
+        let diag = diagnostics
+            .iter()
+            .find(|d| d.rule == "CUR-006")
+            .expect("CUR-006 should be reported");
+
+        let fix = &diag.fixes[0];
+        let result = format!("{}{}", &fix.replacement, content);
+
+        // Result should have frontmatter followed by original content
+        assert!(result.starts_with("---\n"));
+        assert!(result.contains("---\nUse TypeScript strict mode."));
     }
 }

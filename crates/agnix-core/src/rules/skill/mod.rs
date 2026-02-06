@@ -212,16 +212,24 @@ impl<'a> ValidationContext<'a> {
         if self.config.is_rule_enabled("AS-001")
             && (!self.parts.has_frontmatter || !self.parts.has_closing)
         {
-            self.diagnostics.push(
-                Diagnostic::error(
-                    self.path.to_path_buf(),
-                    frontmatter_line,
-                    frontmatter_col,
-                    "AS-001",
-                    t!("rules.as_001.message"),
-                )
-                .with_suggestion(t!("rules.as_001.suggestion")),
-            );
+            let mut diag = Diagnostic::error(
+                self.path.to_path_buf(),
+                frontmatter_line,
+                frontmatter_col,
+                "AS-001",
+                t!("rules.as_001.message"),
+            )
+            .with_suggestion(t!("rules.as_001.suggestion"));
+
+            // Add fix to insert frontmatter template at beginning
+            diag = diag.with_fix(Fix::insert(
+                0,
+                "---\nname: my-skill\ndescription: TODO - describe this skill\n---\n",
+                "Insert frontmatter template",
+                false,
+            ));
+
+            self.diagnostics.push(diag);
         }
 
         if self.parts.has_frontmatter && self.parts.has_closing {
@@ -251,30 +259,50 @@ impl<'a> ValidationContext<'a> {
 
         // AS-002: Missing name field
         if self.config.is_rule_enabled("AS-002") && frontmatter.name.is_none() {
-            self.diagnostics.push(
-                Diagnostic::error(
-                    self.path.to_path_buf(),
-                    name_line,
-                    name_col,
-                    "AS-002",
-                    t!("rules.as_002.message"),
-                )
-                .with_suggestion(t!("rules.as_002.suggestion")),
-            );
+            let mut diag = Diagnostic::error(
+                self.path.to_path_buf(),
+                name_line,
+                name_col,
+                "AS-002",
+                t!("rules.as_002.message"),
+            )
+            .with_suggestion(t!("rules.as_002.suggestion"));
+
+            // Add fix to insert name field after opening ---
+            if let Some(pos) = self.content.find("---").map(|p| p + 3) {
+                diag = diag.with_fix(Fix::insert(
+                    pos,
+                    "\nname: my-skill",
+                    "Add missing name field",
+                    false,
+                ));
+            }
+
+            self.diagnostics.push(diag);
         }
 
         // AS-003: Missing description field
         if self.config.is_rule_enabled("AS-003") && frontmatter.description.is_none() {
-            self.diagnostics.push(
-                Diagnostic::error(
-                    self.path.to_path_buf(),
-                    description_line,
-                    description_col,
-                    "AS-003",
-                    t!("rules.as_003.message"),
-                )
-                .with_suggestion(t!("rules.as_003.suggestion")),
-            );
+            let mut diag = Diagnostic::error(
+                self.path.to_path_buf(),
+                description_line,
+                description_col,
+                "AS-003",
+                t!("rules.as_003.message"),
+            )
+            .with_suggestion(t!("rules.as_003.suggestion"));
+
+            // Add fix to insert description in frontmatter
+            // Insert at the end of the frontmatter content (before closing ---)
+            let insert_pos = self.parts.frontmatter_start + self.parts.frontmatter.len();
+            diag = diag.with_fix(Fix::insert(
+                insert_pos,
+                "\ndescription: TODO - describe this skill",
+                "Add missing description field",
+                false,
+            ));
+
+            self.diagnostics.push(diag);
         }
     }
 
@@ -431,16 +459,33 @@ impl<'a> ValidationContext<'a> {
 
         // AS-009: Description contains XML tags
         if self.config.is_rule_enabled("AS-009") && description_xml_regex().is_match(description) {
-            self.diagnostics.push(
-                Diagnostic::error(
-                    self.path.to_path_buf(),
-                    description_line,
-                    description_col,
-                    "AS-009",
-                    t!("rules.as_009.message"),
-                )
-                .with_suggestion(t!("rules.as_009.suggestion")),
-            );
+            let mut diag = Diagnostic::error(
+                self.path.to_path_buf(),
+                description_line,
+                description_col,
+                "AS-009",
+                t!("rules.as_009.message"),
+            )
+            .with_suggestion(t!("rules.as_009.suggestion"));
+
+            // Add fix to strip XML tags from description
+            if let Some((start, end)) = self.frontmatter_value_byte_range("description") {
+                let stripped = description_xml_regex()
+                    .replace_all(description_trimmed, "")
+                    .trim()
+                    .to_string();
+                if !stripped.is_empty() {
+                    diag = diag.with_fix(Fix::replace(
+                        start,
+                        end,
+                        &stripped,
+                        "Remove XML tags from description",
+                        false,
+                    ));
+                }
+            }
+
+            self.diagnostics.push(diag);
         }
 
         // AS-010: Description should include trigger phrase

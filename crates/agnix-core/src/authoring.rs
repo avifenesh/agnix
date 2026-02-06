@@ -296,15 +296,55 @@ pub fn hover_doc(file_type: FileType, key: &str) -> Option<HoverDoc> {
     let family = family_for_file_type(file_type)?;
     let entry = family.keys.iter().find(|entry| entry.key == key)?;
 
-    let rules = if entry.rules.is_empty() {
+    let file_type_label = file_type_display_name(file_type);
+
+    let rules_section = if entry.rules.is_empty() {
         String::new()
     } else {
-        format!("\n\nRules: {}", entry.rules.join(", "))
+        let mut parts = Vec::new();
+        for rule_id in &entry.rules {
+            if let Some(name) = agnix_rules::get_rule_name(rule_id) {
+                parts.push(format!("- **{}**: {}", rule_id, name));
+            } else {
+                parts.push(format!("- **{}**", rule_id));
+            }
+        }
+        format!("\n\n---\n\n**Related rules** ({})\n\n{}", file_type_label, parts.join("\n"))
+    };
+
+    let values_section = if entry.values.is_empty() {
+        String::new()
+    } else {
+        format!(
+            "\n\nAllowed values: `{}`",
+            entry.values.join("`, `")
+        )
     };
 
     Some(HoverDoc {
-        markdown: format!("**{}**\n\n{}{}", entry.key, entry.docs, rules),
+        markdown: format!(
+            "**{}** *({})* \n\n{}{}{}",
+            entry.key, file_type_label, entry.docs, values_section, rules_section
+        ),
     })
+}
+
+/// Human-readable display name for a file type.
+fn file_type_display_name(file_type: FileType) -> &'static str {
+    match file_type {
+        FileType::Skill => "Skill",
+        FileType::ClaudeMd => "Claude Memory",
+        FileType::Agent => "Agent",
+        FileType::Hooks => "Hooks",
+        FileType::Plugin => "Plugin",
+        FileType::Mcp => "MCP",
+        FileType::Copilot => "Copilot",
+        FileType::CopilotScoped => "Copilot Scoped",
+        FileType::CursorRule => "Cursor Rule",
+        FileType::CursorRulesLegacy => "Cursor Rules (Legacy)",
+        FileType::GenericMarkdown => "Markdown",
+        FileType::Unknown => "Unknown",
+    }
 }
 
 #[cfg(test)]
@@ -371,6 +411,10 @@ mod tests {
         let markdown = hover.unwrap().markdown;
         assert!(markdown.contains("model"));
         assert!(markdown.contains("CC-SK-001"));
+        // Enhanced hover includes file type label
+        assert!(markdown.contains("Skill"));
+        // Enhanced hover includes rule names
+        assert!(markdown.contains("Related rules"));
     }
 
     #[test]

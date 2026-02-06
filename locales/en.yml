@@ -198,6 +198,7 @@ rules:
   cc_mem_006:
     message: "Negative instruction '%{text}' without positive alternative"
     suggestion: "Add a positive alternative: 'Instead, do...' or 'Use X instead.'"
+    fix: "Append positive alternative to negative-only instruction"
   cc_mem_007:
     message: "Weak constraint '%{text}' in critical section '%{section}'"
     suggestion: "Use strong language in critical sections: 'must', 'always', 'required'."

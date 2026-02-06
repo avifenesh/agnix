@@ -198,6 +198,7 @@ rules:
   cc_mem_006:
     message: "否定指令 '%{text}' 没有积极替代方案"
     suggestion: "添加积极替代方案: '改为做...' 或 '使用 X 代替。'"
+    fix: "在仅否定指令后追加积极替代方案"
   cc_mem_007:
     message: "关键部分 '%{section}' 中的弱约束 '%{text}'"
     suggestion: "在关键部分使用强语言: 'must'、'always'、'required'。"

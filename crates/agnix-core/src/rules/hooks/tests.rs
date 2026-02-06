@@ -2449,3 +2449,397 @@ fn test_cc_hk_002_prompt_disallowed_events() {
         );
     }
 }
+
+// ===== find_hook_brace_position Tests =====
+
+#[test]
+fn test_find_hook_brace_position_simple() {
+    let content = r#"{"hooks": {"Stop": [{"hooks": [{"type": "command", "command": "echo"}]}]}}"#;
+    let pos = find_hook_brace_position(content, "Stop", 0, 0);
+    assert!(pos.is_some());
+    let pos = pos.unwrap();
+    // Position should be just after the opening { of the hook object
+    assert_eq!(content.as_bytes()[pos - 1], b'{');
+}
+
+#[test]
+fn test_find_hook_brace_position_second_hook() {
+    let content = r#"{"hooks": {"Stop": [{"hooks": [{"type": "command"}, {"type": "prompt"}]}]}}"#;
+    let pos = find_hook_brace_position(content, "Stop", 0, 1);
+    assert!(pos.is_some());
+    let pos = pos.unwrap();
+    assert_eq!(content.as_bytes()[pos - 1], b'{');
+    // Verify the content after this position starts with the second hook's fields
+    assert!(content[pos..].starts_with("\"type\": \"prompt\""));
+}
+
+#[test]
+fn test_find_hook_brace_position_second_matcher() {
+    let content = r#"{"hooks": {"PreToolUse": [{"matcher": "Bash", "hooks": [{"type": "command"}]}, {"matcher": "Write", "hooks": [{"type": "command"}]}]}}"#;
+    let pos = find_hook_brace_position(content, "PreToolUse", 1, 0);
+    assert!(pos.is_some());
+    let pos = pos.unwrap();
+    assert_eq!(content.as_bytes()[pos - 1], b'{');
+    assert!(content[pos..].starts_with("\"type\": \"command\""));
+}
+
+#[test]
+fn test_find_hook_brace_position_not_found() {
+    let content = r#"{"hooks": {"Stop": [{"hooks": [{"type": "command"}]}]}}"#;
+    // Out of bounds hook index
+    let pos = find_hook_brace_position(content, "Stop", 0, 5);
+    assert!(pos.is_none());
+}
+
+#[test]
+fn test_find_hook_brace_position_missing_event() {
+    let content = r#"{"hooks": {"Stop": [{"hooks": [{"type": "command"}]}]}}"#;
+    let pos = find_hook_brace_position(content, "NonExistent", 0, 0);
+    assert!(pos.is_none());
+}
+
+// ===== CC-HK-005 Auto-fix Tests =====
+
+#[test]
+fn test_cc_hk_005_has_autofix_for_command_hook() {
+    let content = r#"{
+            "hooks": {
+                "Stop": [
+                    {
+                        "hooks": [
+                            { "command": "echo 'missing type'" }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+    let diagnostics = validate(content);
+    let cc_hk_005: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-005")
+        .collect();
+
+    assert_eq!(cc_hk_005.len(), 1);
+    assert!(cc_hk_005[0].has_fixes());
+
+    let fix = &cc_hk_005[0].fixes[0];
+    assert!(!fix.safe); // Unsafe because we're guessing the type
+    assert!(fix.replacement.contains("\"type\": \"command\""));
+    assert!(fix.description.contains("command"));
+}
+
+#[test]
+fn test_cc_hk_005_has_autofix_for_prompt_hook() {
+    let content = r#"{
+            "hooks": {
+                "Stop": [
+                    {
+                        "hooks": [
+                            { "prompt": "Summarize" }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+    let diagnostics = validate(content);
+    let cc_hk_005: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-005")
+        .collect();
+
+    assert_eq!(cc_hk_005.len(), 1);
+    assert!(cc_hk_005[0].has_fixes());
+
+    let fix = &cc_hk_005[0].fixes[0];
+    assert!(!fix.safe);
+    assert!(fix.replacement.contains("\"type\": \"prompt\""));
+    assert!(fix.description.contains("prompt"));
+}
+
+#[test]
+fn test_cc_hk_005_autofix_defaults_to_command() {
+    // When hook has neither command nor prompt field, default to "command"
+    let content = r#"{
+            "hooks": {
+                "Stop": [
+                    {
+                        "hooks": [
+                            { "timeout": 30 }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+    let diagnostics = validate(content);
+    let cc_hk_005: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-005")
+        .collect();
+
+    assert_eq!(cc_hk_005.len(), 1);
+    assert!(cc_hk_005[0].has_fixes());
+
+    let fix = &cc_hk_005[0].fixes[0];
+    assert!(fix.replacement.contains("\"type\": \"command\""));
+}
+
+#[test]
+fn test_cc_hk_005_autofix_applies_correctly() {
+    let content = r#"{"hooks": {"Stop": [{"hooks": [{"command": "echo test"}]}]}}"#;
+
+    let diagnostics = validate(content);
+    let cc_hk_005: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-005")
+        .collect();
+
+    assert_eq!(cc_hk_005.len(), 1);
+    assert!(cc_hk_005[0].has_fixes());
+
+    let fix = &cc_hk_005[0].fixes[0];
+    // Apply the fix
+    let mut fixed = content.to_string();
+    fixed.replace_range(fix.start_byte..fix.end_byte, &fix.replacement);
+
+    // The fixed content should contain the type field
+    assert!(fixed.contains("\"type\": \"command\""));
+    // And should still contain the original command field
+    assert!(fixed.contains("\"command\": \"echo test\""));
+}
+
+#[test]
+fn test_cc_hk_005_multiple_hooks_each_get_autofix() {
+    let content = r#"{
+            "hooks": {
+                "Stop": [
+                    {
+                        "hooks": [
+                            { "command": "echo first" },
+                            { "prompt": "Summarize" }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+    let diagnostics = validate(content);
+    let cc_hk_005: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-005")
+        .collect();
+
+    assert_eq!(cc_hk_005.len(), 2);
+    // Both should have fixes
+    assert!(cc_hk_005[0].has_fixes());
+    assert!(cc_hk_005[1].has_fixes());
+
+    // First hook has "command" -> should infer "command"
+    assert!(cc_hk_005[0].fixes[0]
+        .replacement
+        .contains("\"type\": \"command\""));
+    // Second hook has "prompt" -> should infer "prompt"
+    assert!(cc_hk_005[1].fixes[0]
+        .replacement
+        .contains("\"type\": \"prompt\""));
+}
+
+// ===== CC-HK-010 Auto-fix Tests =====
+
+#[test]
+fn test_cc_hk_010_command_no_timeout_has_autofix() {
+    let content = r#"{
+            "hooks": {
+                "PreToolUse": [
+                    {
+                        "matcher": "Bash",
+                        "hooks": [
+                            { "type": "command", "command": "echo test" }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+    let diagnostics = validate(content);
+    let cc_hk_010: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-010")
+        .collect();
+
+    assert_eq!(cc_hk_010.len(), 1);
+    assert!(cc_hk_010[0].has_fixes());
+
+    let fix = &cc_hk_010[0].fixes[0];
+    assert!(!fix.safe); // Unsafe - we're adding a default value
+    assert!(fix.replacement.contains("\"timeout\": 120"));
+    assert!(fix.description.contains("120 seconds"));
+}
+
+#[test]
+fn test_cc_hk_010_prompt_no_timeout_has_autofix() {
+    let content = r#"{
+            "hooks": {
+                "Stop": [
+                    {
+                        "hooks": [
+                            { "type": "prompt", "prompt": "Summarize session" }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+    let diagnostics = validate(content);
+    let cc_hk_010: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-010")
+        .collect();
+
+    assert_eq!(cc_hk_010.len(), 1);
+    assert!(cc_hk_010[0].has_fixes());
+
+    let fix = &cc_hk_010[0].fixes[0];
+    assert!(!fix.safe);
+    assert!(fix.replacement.contains("\"timeout\": 30"));
+    assert!(fix.description.contains("30 seconds"));
+}
+
+#[test]
+fn test_cc_hk_010_command_timeout_exceeds_default_no_autofix() {
+    // When timeout is present but exceeds default, there should be NO auto-fix
+    // (we only add fixes when timeout is missing entirely)
+    let content = r#"{
+            "hooks": {
+                "PreToolUse": [
+                    {
+                        "matcher": "Bash",
+                        "hooks": [
+                            { "type": "command", "command": "echo test", "timeout": 700 }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+    let diagnostics = validate(content);
+    let cc_hk_010: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-010")
+        .collect();
+
+    assert_eq!(cc_hk_010.len(), 1);
+    assert!(!cc_hk_010[0].has_fixes());
+}
+
+#[test]
+fn test_cc_hk_010_command_autofix_applies_correctly() {
+    let content =
+        r#"{"hooks": {"PreToolUse": [{"matcher": "Bash", "hooks": [{"type": "command", "command": "echo test"}]}]}}"#;
+
+    let diagnostics = validate(content);
+    let cc_hk_010: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-010")
+        .collect();
+
+    assert_eq!(cc_hk_010.len(), 1);
+    assert!(cc_hk_010[0].has_fixes());
+
+    let fix = &cc_hk_010[0].fixes[0];
+    // Apply the fix
+    let mut fixed = content.to_string();
+    fixed.replace_range(fix.start_byte..fix.end_byte, &fix.replacement);
+
+    // The fixed content should now contain the timeout field
+    assert!(fixed.contains("\"timeout\": 120"));
+    // And should still contain the original fields
+    assert!(fixed.contains("\"type\": \"command\""));
+    assert!(fixed.contains("\"command\": \"echo test\""));
+}
+
+#[test]
+fn test_cc_hk_010_prompt_autofix_applies_correctly() {
+    let content =
+        r#"{"hooks": {"Stop": [{"hooks": [{"type": "prompt", "prompt": "Summarize"}]}]}}"#;
+
+    let diagnostics = validate(content);
+    let cc_hk_010: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-010")
+        .collect();
+
+    assert_eq!(cc_hk_010.len(), 1);
+    assert!(cc_hk_010[0].has_fixes());
+
+    let fix = &cc_hk_010[0].fixes[0];
+    // Apply the fix
+    let mut fixed = content.to_string();
+    fixed.replace_range(fix.start_byte..fix.end_byte, &fix.replacement);
+
+    // The fixed content should now contain the timeout field
+    assert!(fixed.contains("\"timeout\": 30"));
+    assert!(fixed.contains("\"type\": \"prompt\""));
+    assert!(fixed.contains("\"prompt\": \"Summarize\""));
+}
+
+#[test]
+fn test_cc_hk_010_with_timeout_no_autofix() {
+    // When a valid timeout is already present, no auto-fix should be emitted
+    let content = r#"{
+            "hooks": {
+                "PreToolUse": [
+                    {
+                        "matcher": "Bash",
+                        "hooks": [
+                            { "type": "command", "command": "echo test", "timeout": 30 }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+    let diagnostics = validate(content);
+    let cc_hk_010: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-010")
+        .collect();
+
+    assert_eq!(cc_hk_010.len(), 0);
+}
+
+#[test]
+fn test_cc_hk_010_multiple_missing_timeouts_each_get_autofix() {
+    let content = r#"{
+            "hooks": {
+                "PreToolUse": [
+                    {
+                        "matcher": "*",
+                        "hooks": [
+                            { "type": "command", "command": "echo 'no timeout'" },
+                            { "type": "command", "command": "echo 'also no timeout'" }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+    let diagnostics = validate(content);
+    let cc_hk_010: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-010")
+        .collect();
+
+    assert_eq!(cc_hk_010.len(), 2);
+    assert!(cc_hk_010[0].has_fixes());
+    assert!(cc_hk_010[1].has_fixes());
+    // Both should have timeout 120 for command hooks
+    assert!(cc_hk_010[0].fixes[0]
+        .replacement
+        .contains("\"timeout\": 120"));
+    assert!(cc_hk_010[1].fixes[0]
+        .replacement
+        .contains("\"timeout\": 120"));
+}

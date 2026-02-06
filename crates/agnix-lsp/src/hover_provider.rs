@@ -17,6 +17,9 @@ pub fn get_field_at_position(content: &str, position: Position) -> Option<String
     let trimmed = line.trim_start();
     if let Some(colon_pos) = trimmed.find(':') {
         let mut field = trimmed[..colon_pos].trim();
+        // Strip JSON structural characters ({, [, commas) before the key
+        field = field.trim_start_matches(|c: char| c == '{' || c == '[' || c == ',');
+        field = field.trim();
         field = field.trim_matches('"').trim_matches('\'');
 
         if !field.is_empty()

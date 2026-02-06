@@ -74,16 +74,42 @@ impl Validator for ClaudeMdValidator {
         if config.is_rule_enabled("CC-MEM-006") {
             let negatives = find_negative_without_positive(content);
             for neg in negatives {
-                diagnostics.push(
-                    Diagnostic::warning(
-                        path.to_path_buf(),
-                        neg.line,
-                        neg.column,
-                        "CC-MEM-006",
-                        t!("rules.cc_mem_006.message", text = neg.text.as_str()),
-                    )
-                    .with_suggestion(t!("rules.cc_mem_006.suggestion")),
-                );
+                let mut diag = Diagnostic::warning(
+                    path.to_path_buf(),
+                    neg.line,
+                    neg.column,
+                    "CC-MEM-006",
+                    t!("rules.cc_mem_006.message", text = neg.text.as_str()),
+                )
+                .with_suggestion(t!("rules.cc_mem_006.suggestion"));
+
+                // Add auto-fix: append positive alternative hint at end of line
+                // Compute line end byte position from line number (neg.line is 1-indexed)
+                let mut byte_offset = 0usize;
+                for (i, line) in content.lines().enumerate() {
+                    if i + 1 == neg.line {
+                        byte_offset += line.len();
+                        break;
+                    }
+                    byte_offset += line.len();
+                    // Skip past line ending
+                    let next_byte = content.as_bytes().get(byte_offset);
+                    if next_byte == Some(&b'\r') {
+                        byte_offset += 2; // CRLF
+                    } else if next_byte == Some(&b'\n') {
+                        byte_offset += 1; // LF
+                    }
+                }
+                let line_end = byte_offset;
+
+                diag = diag.with_fix(Fix::insert(
+                    line_end,
+                    "; instead, [add positive alternative here]",
+                    t!("rules.cc_mem_006.fix"),
+                    false,
+                ));
+
+                diagnostics.push(diag);
             }
         }
 
@@ -431,6 +457,93 @@ mod tests {
             .filter(|d| d.rule == "CC-MEM-006")
             .collect();
         assert!(mem006.is_empty());
+    }
+
+    // ===== Auto-fix Tests for CC-MEM-006 =====
+
+    #[test]
+    fn test_cc_mem_006_has_fix() {
+        let content = "Never use var in JavaScript.";
+        let validator = ClaudeMdValidator;
+        let diagnostics =
+            validator.validate(Path::new("CLAUDE.md"), content, &LintConfig::default());
+
+        let mem006: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-MEM-006")
+            .collect();
+        assert_eq!(mem006.len(), 1);
+        assert!(mem006[0].has_fixes(), "CC-MEM-006 should have an auto-fix");
+        assert!(!mem006[0].fixes[0].safe, "CC-MEM-006 fix should be unsafe");
+    }
+
+    #[test]
+    fn test_cc_mem_006_fix_is_insertion() {
+        let content = "Never use var in JavaScript.";
+        let validator = ClaudeMdValidator;
+        let diagnostics =
+            validator.validate(Path::new("CLAUDE.md"), content, &LintConfig::default());
+
+        let mem006: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-MEM-006")
+            .collect();
+        assert_eq!(mem006.len(), 1);
+
+        let fix = &mem006[0].fixes[0];
+        assert!(fix.is_insertion(), "CC-MEM-006 fix should be an insertion");
+        assert_eq!(fix.start_byte, content.len());
+        assert_eq!(fix.end_byte, content.len());
+        assert!(fix.replacement.contains("; instead, "));
+    }
+
+    #[test]
+    fn test_cc_mem_006_fix_application() {
+        let content = "Never use var in JavaScript.";
+        let validator = ClaudeMdValidator;
+        let diagnostics =
+            validator.validate(Path::new("CLAUDE.md"), content, &LintConfig::default());
+
+        let mem006: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-MEM-006")
+            .collect();
+        assert_eq!(mem006.len(), 1);
+
+        let fix = &mem006[0].fixes[0];
+        let mut fixed = content.to_string();
+        fixed.insert_str(fix.start_byte, &fix.replacement);
+
+        assert_eq!(
+            fixed,
+            "Never use var in JavaScript.; instead, [add positive alternative here]"
+        );
+    }
+
+    #[test]
+    fn test_cc_mem_006_fix_multiline() {
+        let content = "Line one.\nDon't use globals.\nLine three.";
+        let validator = ClaudeMdValidator;
+        let diagnostics =
+            validator.validate(Path::new("CLAUDE.md"), content, &LintConfig::default());
+
+        let mem006: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-MEM-006")
+            .collect();
+        assert_eq!(mem006.len(), 1);
+
+        let fix = &mem006[0].fixes[0];
+        // The fix should insert at the end of "Don't use globals." (byte 28, before '\n')
+        assert_eq!(fix.start_byte, 28);
+
+        let mut fixed = content.to_string();
+        fixed.insert_str(fix.start_byte, &fix.replacement);
+
+        assert_eq!(
+            fixed,
+            "Line one.\nDon't use globals.; instead, [add positive alternative here]\nLine three."
+        );
     }
 
     // CC-MEM-007: Weak constraint language
