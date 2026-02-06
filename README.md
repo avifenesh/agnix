@@ -11,165 +11,14 @@
   </p>
 </div>
 
-Validates AI agent configs across Claude Code, Cursor, GitHub Copilot, Codex CLI, and more.
+The linter for your AI coding stack -- skills, hooks, memory, plugins, MCP, and agent configs. CLI, LSP server, and IDE plugins for Claude Code, Cursor, GitHub Copilot, Codex CLI, and more.
 
-**100 rules** | **1600+ tests** | **Parallel validation** | **LSP server** | **MCP server**
-
-## Why agnix?
-
-The AI coding landscape is chaos. Every tool wants your config in a different format:
-
-| Tool | Config File | Format |
-|------|-------------|--------|
-| Claude Code | `CLAUDE.md`, `.claude/settings.json` | Markdown + JSON |
-| Cursor | `.cursor/rules/*.mdc` | MDC |
-| GitHub Copilot | `.github/copilot-instructions.md` | Markdown |
-| Codex CLI | `AGENTS.md` | Markdown |
-| MCP | `*.mcp.json` | JSON Schema |
-
-**The problems are real:**
-
-- **Skills don't auto-trigger** - Vercel's research found [skills invoke at 0%](https://vercel.com/blog/agents-md-outperforms-skills-in-our-agent-evals) without explicit prompting. Wrong syntax means your skill never runs.
-- **Almost-right is worse than wrong** - [66% of developers](https://survey.stackoverflow.co/2025/ai) cite "AI solutions that are almost right" as their biggest frustration. Broken configs cause exactly this.
-- **Unbundled stack, fragmented configs** - Developers mix Cursor + Claude Code + Copilot. A config that works in one tool [silently fails in another](https://arnav.tech/beyond-copilot-cursor-and-claude-code-the-unbundled-coding-ai-tools-stack).
-- **Inconsistent patterns become chaos amplifiers** - When your config follows wrong patterns, [AI assistants amplify the mistakes](https://www.augmentcode.com/guides/enterprise-coding-standards-12-rules-for-ai-ready-teams), not just ignore them.
-
-agnix validates configs against 100 rules derived from official specs, research papers, and real-world testing. Catch issues before they reach your IDE.
-
-## Features
-
-**Validation**: Skills, Hooks, Agents, Plugins, MCP, Memory, Prompt Engineering, XML, Imports, Cross-platform, AGENTS.md, Copilot, Cursor, Version Awareness
-
-**Tools**: Claude Code, Cursor, GitHub Copilot, Codex CLI, AGENTS.md ecosystem
-
-**Integration**: LSP server, VS Code extension, Neovim plugin, GitHub Action, auto-fix (`--fix`)
-
-**Localization**: English, Spanish, Chinese (Simplified) with `--locale` flag
-
-## Internationalization (i18n)
-
-agnix supports multiple languages for diagnostic messages and CLI output.
-
-### Supported Languages
-
-| Code | Language |
-|------|----------|
-| `en` | English (default) |
-| `es` | Spanish |
-| `zh-CN` | Chinese (Simplified) |
-
-### Setting the Locale
-
-```bash
-# CLI flag (highest priority)
-agnix --locale es .
-
-# Environment variable
-AGNIX_LOCALE=zh-CN agnix .
-
-# List available locales
-agnix --list-locales
-```
-
-You can also set the locale in `.agnix.toml`:
-
-```toml
-locale = "es"
-```
-
-See [docs/TRANSLATING.md](docs/TRANSLATING.md) for contributing translations.
-
-## Security
-
-agnix implements multiple security measures:
-
-- **ReDoS Protection**: Regex operations limited to 64KB input
-- **File Size Limits**: Maximum 1 MiB per file
-- **File Count Limits**: Configurable maximum files (default 10,000)
-- **Symlink Rejection**: Never follows symbolic links
-- **Fuzz Testing**: Continuous fuzzing with cargo-fuzz
-- **Path Traversal Detection**: Import validation prevents directory escape
-
-See [SECURITY.md](SECURITY.md) for reporting vulnerabilities and [knowledge-base/SECURITY-MODEL.md](knowledge-base/SECURITY-MODEL.md) for detailed threat model and implementation.
-
-## Installation
-
-```bash
-# npm (easiest - all platforms)
-npm install -g agnix
-
-# Homebrew (macOS/Linux)
-brew tap avifenesh/agnix
-brew install agnix
-
-# Cargo (all platforms)
-cargo install agnix-cli
-
-# Pre-built binaries
-# Download from https://github.com/avifenesh/agnix/releases
-```
-
-## Claude Code Skill
-
-Use `/agnix` directly in Claude Code via [awesome-slash](https://github.com/avifenesh/awesome-slash) (300+ stars):
-
-```bash
-# Claude Code
-/plugin marketplace add avifenesh/awesome-slash
-/plugin install agnix@awesome-slash
-
-# Or via npm (all platforms)
-npm install -g awesome-slash && awesome-slash
-```
-
-Then run `/agnix` to validate your project, `/agnix --fix` to auto-fix issues.
+**116 validation rules** | **Auto-fix** | **VS Code + JetBrains + Neovim** | **GitHub Action**
 
 ## Quick Start
 
-```bash
-# Run without installing
-npx agnix .
-
-# Validate current directory
-agnix .
-
-# Apply automatic fixes
-agnix --fix .
-
-# Strict mode (warnings = errors)
-agnix --strict .
-
-# Target specific tool
-agnix --target claude-code .
-
-# Generate JSON Schema for config
-agnix schema                     # Output to stdout
-agnix schema --output schema.json  # Save to file
-
-# Telemetry (opt-in usage analytics)
-agnix telemetry status   # Check status
-agnix telemetry enable   # Enable (opt-in)
-agnix telemetry disable  # Disable
-```
-
-See [Configuration Reference](docs/CONFIGURATION.md) for all options.
-
-## Documentation Website
-
-- Live site (GitHub Pages): <https://avifenesh.github.io/agnix/>
-- Canonical long-form docs: `README.md`, `SPEC.md`, and `knowledge-base/`
-- Website content: `website/docs/` (with generated rules pages from `knowledge-base/rules.json`)
-- Local docs development:
-
-```bash
-npm --prefix website ci
-npm --prefix website run build
-npm --prefix website start
-```
-
-## Output
-
-```
+```console
+$ npx agnix .
 Validating: .
 
 CLAUDE.md:15:1 warning: Generic instruction 'Be helpful and accurate' [fixable]
@@ -184,9 +33,70 @@ Found 1 error, 1 warning
 hint: Run with --fix to apply fixes
 ```
 
-**Formats**: `--format json` | `--format sarif` (GitHub Code Scanning)
+<p align="center">
+  <img src="assets/vscode-validation.png" alt="VS Code validation" width="49%">
+  <img src="editors/jetbrains/assets/jetbrains-validation.png" alt="JetBrains validation" width="49%">
+</p>
 
-## GitHub Action
+<p align="center">
+  Like what you see?
+  <a href="https://github.com/avifenesh/agnix/stargazers">Give it a star</a>
+  -- it helps other developers find agnix.
+</p>
+
+## Why agnix?
+
+The AI coding landscape is chaos. Every tool wants your config in a different format:
+
+| Tool | Config Files | Format |
+|------|-------------|--------|
+| Claude Code | `CLAUDE.md`, `.claude/settings.json` | Markdown + JSON |
+| Skills | `.claude/skills/*/SKILL.md` | Markdown with frontmatter |
+| Hooks | `.claude/settings.json` hooks | JSON |
+| Agents | `.claude/agents/*.md` | Markdown |
+| Plugins | `.claude/plugins/` | JSON |
+| Cursor | `.cursor/rules/*.mdc`, `.cursorrules` | MDC |
+| GitHub Copilot | `.github/copilot-instructions.md` | Markdown |
+| Codex CLI / AGENTS.md | `AGENTS.md`, `AGENTS.local.md` | Markdown |
+| MCP | `*.mcp.json` | JSON Schema |
+
+**The problems are real:**
+
+- **Skills don't auto-trigger** - Vercel's research found [skills invoke at 0%](https://vercel.com/blog/agents-md-outperforms-skills-in-our-agent-evals) without explicit prompting. Wrong syntax means your skill never runs.
+- **Almost-right is worse than wrong** - [66% of developers](https://survey.stackoverflow.co/2025/ai) cite "AI solutions that are almost right" as their biggest frustration. Broken configs cause exactly this.
+- **Unbundled stack, fragmented configs** - Developers mix Cursor + Claude Code + Copilot. A config that works in one tool [silently fails in another](https://arnav.tech/beyond-copilot-cursor-and-claude-code-the-unbundled-coding-ai-tools-stack).
+- **Inconsistent patterns become chaos amplifiers** - When your config follows wrong patterns, [AI assistants amplify the mistakes](https://www.augmentcode.com/guides/enterprise-coding-standards-12-rules-for-ai-ready-teams), not just ignore them.
+
+agnix validates configs against 116 rules derived from official specs, research papers, and real-world testing. Catch issues before they reach your IDE.
+
+## Install
+
+### CLI
+
+```bash
+# npm (recommended, all platforms)
+npm install -g agnix
+
+# Homebrew (macOS/Linux)
+brew tap avifenesh/agnix && brew install agnix
+
+# Cargo
+cargo install agnix-cli
+
+# Pre-built binaries: https://github.com/avifenesh/agnix/releases
+```
+
+### Editor Extensions
+
+Real-time diagnostics as you type, quick-fix code actions, hover documentation.
+
+| Editor | Install | Details |
+|--------|---------|---------|
+| **VS Code** | Search "agnix" in Extensions | [VS Code docs](editors/vscode/README.md) |
+| **JetBrains** | LSP4IJ-based plugin | [JetBrains docs](editors/jetbrains/README.md) |
+| **Neovim** | `{ "avifenesh/agnix.nvim" }` | [Neovim docs](editors/neovim/README.md) |
+
+### GitHub Action
 
 ```yaml
 - name: Validate agent configs
@@ -195,7 +105,8 @@ hint: Run with --fix to apply fixes
     target: 'claude-code'
 ```
 
-With SARIF upload to GitHub Code Scanning:
+<details>
+<summary>SARIF upload to GitHub Code Scanning</summary>
 
 ```yaml
 - name: Validate agent configs
@@ -210,9 +121,9 @@ With SARIF upload to GitHub Code Scanning:
     sarif_file: ${{ steps.agnix.outputs.sarif-file }}
 ```
 
-See [full action documentation](docs/CONFIGURATION.md#github-action) for all inputs and outputs.
+</details>
 
-## Pre-commit Hook
+### Pre-commit Hook
 
 ```yaml
 # .pre-commit-config.yaml
@@ -223,30 +134,29 @@ repos:
       - id: agnix
 ```
 
-## Editor Integration
+### Claude Code Skill
+
+Use `/agnix` directly in Claude Code via [awesome-slash](https://github.com/avifenesh/awesome-slash):
 
 ```bash
-cargo install agnix-lsp
+# Add the plugin
+/plugin marketplace add avifenesh/awesome-slash
+/plugin install agnix@awesome-slash
+
+# Or via npm
+npm install -g awesome-slash && awesome-slash
 ```
 
-Real-time diagnostics as you type, quick-fix code actions, hover documentation.
+Then run `/agnix` to validate your project, `/agnix --fix` to auto-fix issues.
 
-![VS Code validation example](assets/vscode-validation.png)
-![JetBrains validation example](editors/jetbrains/assets/jetbrains-validation.png)
-
-**VS Code extension** includes a comprehensive settings UI for configuring all validation options. Changes apply immediately without server restart. See [VS Code extension](editors/vscode/README.md) for details.
-
-**Neovim plugin** with automatic LSP attachment, commands, Telescope integration, and health checks. See [Neovim plugin](editors/neovim/README.md) for details.
-
-See [Editor Setup](docs/EDITOR-SETUP.md) for VS Code, Neovim, Helix, Cursor, and JetBrains status.
-
-## MCP Server
-
-Expose agnix validation as MCP tools for AI assistants:
+### MCP Server
 
 ```bash
 cargo install agnix-mcp
 ```
+
+<details>
+<summary>MCP server details</summary>
 
 **Tools available:**
 - `validate_file` - Validate a single config file
@@ -266,64 +176,44 @@ cargo install agnix-mcp
 }
 ```
 
-The server follows MCP best practices with rich parameter schemas and structured JSON output.
-
 `validate_file` and `validate_project` support multi-tool filtering via `tools`:
 - `tools` (preferred): comma-separated string (`"claude-code,cursor"`) or string array (`["claude-code","cursor"]`)
 - `target` (legacy fallback): used only when `tools` is missing or empty
 - tool names follow agnix canonical tool metadata (for example `windsurf`), with compatibility aliases accepted (`copilot`, `claudecode`)
 
-## Configuration
+</details>
 
-```toml
-# .agnix.toml
-target = "ClaudeCode"
-
-[rules]
-disabled_rules = ["PE-003"]
-```
-
-See [Configuration Reference](docs/CONFIGURATION.md) for full options.
-
-## Performance
-
-agnix uses deterministic benchmarking with iai-callgrind to ensure consistent CI performance testing.
-
-### Targets
-
-| Metric | Target | Typical |
-|--------|--------|---------|
-| Single file | < 100ms | < 10ms |
-| 1000 files | < 5s | ~2s |
-| Peak memory | < 100MB | ~50MB |
-
-### Running Benchmarks
+## Usage
 
 ```bash
-# Fast feedback during development (wall-clock)
-./scripts/bench.sh criterion
+# Validate current directory
+agnix .
 
-# Pre-PR validation (instruction counts, matches CI)
-./scripts/bench.sh iai
+# Apply automatic fixes
+agnix --fix .
 
-# Check binary size
-./scripts/bench.sh bloat
+# Strict mode (warnings = errors)
+agnix --strict .
+
+# Target specific tool
+agnix --target claude-code .
+
+# JSON or SARIF output
+agnix --format json .
+agnix --format sarif .
 ```
 
-### CI Integration
+See [Configuration Reference](docs/CONFIGURATION.md) for all options including `.agnix.toml` config file.
 
-- PRs automatically run iai-callgrind benchmarks
-- Regressions block merge (instruction count increase above threshold)
-- Zero false positives from system load variance
+## Features
 
-### Requirements
-
-- **iai-callgrind**: Requires Valgrind (Linux/macOS)
-  - Linux: `sudo apt-get install valgrind`
-  - macOS: `brew install valgrind` (experimental on ARM)
-- **Windows**: Use Criterion only; CI benchmarks run on Linux
-
-See [SPEC.md](SPEC.md#performance-characteristics) for detailed methodology and interpretation.
+- **Validation across 15 categories**: Skills, Hooks, Agents, Plugins, MCP, Memory, Prompt Engineering, XML, Imports, Cross-platform, AGENTS.md, Copilot, Cursor, Version Awareness
+- **Auto-fix**: `--fix` applies safe corrections, `--dry-run` previews them
+- **LSP server**: Real-time diagnostics in any editor that supports LSP
+- **MCP server**: Expose validation as AI-assistant tools
+- **Parallel validation**: Uses rayon for fast multi-file processing
+- **Localization**: English, Spanish, Chinese (Simplified) with `--locale` flag
+- **Cross-platform**: Linux, macOS, Windows
 
 ## Supported Tools
 
@@ -336,6 +226,34 @@ See [SPEC.md](SPEC.md#performance-characteristics) for detailed methodology and 
 | [MCP](https://modelcontextprotocol.io) | MCP-* | *.mcp.json |
 | [AGENTS.md](https://agentsmd.org) | AGM-*, XP-* | AGENTS.md, AGENTS.local.md, AGENTS.override.md |
 
+## Contributing
+
+Contributions are welcome and appreciated. See [CONTRIBUTING.md](CONTRIBUTING.md) for the full development guide.
+
+### Found Something Off?
+
+agnix validates against 116 rules, but the agent config ecosystem moves fast.
+If a rule is wrong, missing, or too noisy -- we want to know.
+
+[Report a bug](https://github.com/avifenesh/agnix/issues/new) |
+[Request a rule](https://github.com/avifenesh/agnix/issues/new)
+
+Your real-world configs are the best test suite we could ask for.
+
+### Contribute Code
+
+Good first issues are labeled and ready:
+[**good first issues**](https://github.com/avifenesh/agnix/labels/good%20first%20issue)
+
+Adding a new rule is one of the best ways to get started. Each rule is
+self-contained with clear inputs, outputs, and test patterns.
+
+### Other Ways to Participate
+
+- Star this repository to follow updates
+- Share your experience on social media
+- Help with [translations](docs/TRANSLATING.md)
+
 ## Development
 
 ```bash
@@ -344,48 +262,13 @@ cargo test        # Run tests
 cargo run --bin agnix -- .  # Run CLI
 ```
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for development guidelines.
+## Security
 
-## Project Structure
-
-```
-crates/
-  agnix-core/     # Validation engine (1600+ tests)
-  agnix-cli/      # CLI binary
-  agnix-lsp/      # Language server
-  agnix-mcp/      # MCP server
-  agnix-rules/    # Rule metadata
-editors/
-  neovim/         # Neovim plugin
-  vscode/         # VS Code extension
-  jetbrains/      # JetBrains IDE plugin
-knowledge-base/   # 100 rules documentation
-scripts/          # Developer automation scripts
-website/          # Docusaurus documentation website
-```
-
-## What's Included
-
-- **100 validation rules** across 15 categories
-- **1600+ tests** ensuring reliability
-- **CLI** with colored output, JSON/SARIF formats
-- **LSP server** for real-time editor diagnostics
-- **MCP server** for AI assistant integration
-- **VS Code extension** with syntax highlighting
-- **JetBrains IDE plugin** under `editors/jetbrains/` (LSP4IJ-based)
-- **Neovim plugin** with LSP integration and Telescope support
-- **GitHub Action** for CI/CD integration
-- **Auto-fix** infrastructure (--fix, --dry-run, --fix-safe)
-- **Parallel validation** using rayon
-- **Cross-platform** support (Linux, macOS, Windows)
+agnix implements ReDoS protection, file size limits, symlink rejection, path traversal detection, and fuzz testing. See [SECURITY.md](SECURITY.md) for reporting vulnerabilities and [knowledge-base/SECURITY-MODEL.md](knowledge-base/SECURITY-MODEL.md) for the detailed threat model.
 
 ## Roadmap
 
 See [GitHub Issues](https://github.com/avifenesh/agnix/issues) for the full roadmap.
-
-**Editor integrations**: Zed extension
-
-**Features**: Additional rule categories
 
 ## License
 
