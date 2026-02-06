@@ -656,24 +656,26 @@ Body"#;
 
     #[test]
     fn test_all_cop_rules_can_be_disabled() {
-        let rules = ["COP-001", "COP-002", "COP-003", "COP-004"];
+        let rules = ["COP-001", "COP-002", "COP-003", "COP-004", "COP-005", "COP-006"];
+        let long_content = make_long_content();
 
         for rule in rules {
             let mut config = LintConfig::default();
             config.rules.disabled_rules = vec![rule.to_string()];
 
-            // Content that could trigger each rule
-            let content = match rule {
-                "COP-001" => "",
-                _ => "---\nunknown: value\n---\n",
+            // Content and path that could trigger each rule
+            let (content, path): (&str, &str) = match rule {
+                "COP-001" => ("", ".github/copilot-instructions.md"),
+                "COP-005" => (
+                    "---\napplyTo: \"**/*.ts\"\nexcludeAgent: \"invalid\"\n---\nBody",
+                    ".github/instructions/test.instructions.md",
+                ),
+                "COP-006" => (&long_content, ".github/copilot-instructions.md"),
+                _ => ("---\nunknown: value\n---\n", ".github/copilot-instructions.md"),
             };
 
             let validator = CopilotValidator;
-            let diagnostics = validator.validate(
-                Path::new(".github/copilot-instructions.md"),
-                content,
-                &config,
-            );
+            let diagnostics = validator.validate(Path::new(path), content, &config);
 
             assert!(
                 !diagnostics.iter().any(|d| d.rule == rule),
@@ -681,5 +683,151 @@ Body"#;
                 rule
             );
         }
+    }
+
+    /// Generate long content for COP-006 tests (>4000 chars)
+    fn make_long_content() -> String {
+        let mut s = String::from("# Copilot Instructions\n\n");
+        while s.len() <= 4001 {
+            s.push_str("Follow consistent naming conventions for variables and functions.\n");
+        }
+        s
+    }
+
+    fn validate_global_with_config(content: &str, config: &LintConfig) -> Vec<Diagnostic> {
+        let validator = CopilotValidator;
+        validator.validate(
+            Path::new(".github/copilot-instructions.md"),
+            content,
+            config,
+        )
+    }
+
+    // ===== COP-005: Invalid excludeAgent Value =====
+
+    #[test]
+    fn test_cop_005_invalid_exclude_agent() {
+        let content = r#"---
+applyTo: "**/*.ts"
+excludeAgent: "invalid-agent"
+---
+# Instructions
+"#;
+        let diagnostics = validate_scoped(content);
+        let cop_005: Vec<_> = diagnostics.iter().filter(|d| d.rule == "COP-005").collect();
+        assert_eq!(cop_005.len(), 1);
+        assert_eq!(cop_005[0].level, DiagnosticLevel::Error);
+        assert!(cop_005[0].message.contains("invalid-agent"));
+    }
+
+    #[test]
+    fn test_cop_005_valid_code_review() {
+        let content = r#"---
+applyTo: "**/*.ts"
+excludeAgent: "code-review"
+---
+# Instructions
+"#;
+        let diagnostics = validate_scoped(content);
+        let cop_005: Vec<_> = diagnostics.iter().filter(|d| d.rule == "COP-005").collect();
+        assert!(cop_005.is_empty());
+    }
+
+    #[test]
+    fn test_cop_005_valid_coding_agent() {
+        let content = r#"---
+applyTo: "**/*.ts"
+excludeAgent: "coding-agent"
+---
+# Instructions
+"#;
+        let diagnostics = validate_scoped(content);
+        let cop_005: Vec<_> = diagnostics.iter().filter(|d| d.rule == "COP-005").collect();
+        assert!(cop_005.is_empty());
+    }
+
+    #[test]
+    fn test_cop_005_absent_exclude_agent() {
+        let content = r#"---
+applyTo: "**/*.ts"
+---
+# Instructions
+"#;
+        let diagnostics = validate_scoped(content);
+        let cop_005: Vec<_> = diagnostics.iter().filter(|d| d.rule == "COP-005").collect();
+        assert!(cop_005.is_empty());
+    }
+
+    #[test]
+    fn test_cop_005_global_file_no_trigger() {
+        let content = r#"---
+applyTo: "**/*.ts"
+excludeAgent: "invalid-agent"
+---
+# Instructions
+"#;
+        // Global files should not trigger COP-005 (scoped-only rule)
+        let diagnostics = validate_global(content);
+        let cop_005: Vec<_> = diagnostics.iter().filter(|d| d.rule == "COP-005").collect();
+        assert!(cop_005.is_empty());
+    }
+
+    // ===== COP-006: File Length Limit =====
+
+    #[test]
+    fn test_cop_006_short_file() {
+        let content = "# Short copilot instructions\n\nFollow the coding standards.";
+        let diagnostics = validate_global(content);
+        let cop_006: Vec<_> = diagnostics.iter().filter(|d| d.rule == "COP-006").collect();
+        assert!(cop_006.is_empty());
+    }
+
+    #[test]
+    fn test_cop_006_long_file() {
+        let diagnostics = validate_global(&make_long_content());
+        let cop_006: Vec<_> = diagnostics.iter().filter(|d| d.rule == "COP-006").collect();
+        assert_eq!(cop_006.len(), 1);
+        assert_eq!(cop_006[0].level, DiagnosticLevel::Warning);
+    }
+
+    #[test]
+    fn test_cop_006_exact_boundary() {
+        // 4000 chars should pass
+        let content_4000 = "x".repeat(4000);
+        let diagnostics = validate_global(&content_4000);
+        let cop_006: Vec<_> = diagnostics.iter().filter(|d| d.rule == "COP-006").collect();
+        assert!(cop_006.is_empty(), "4000 chars should not trigger COP-006");
+
+        // 4001 chars should warn
+        let content_4001 = "x".repeat(4001);
+        let diagnostics = validate_global(&content_4001);
+        let cop_006: Vec<_> = diagnostics.iter().filter(|d| d.rule == "COP-006").collect();
+        assert_eq!(
+            cop_006.len(),
+            1,
+            "4001 chars should trigger COP-006"
+        );
+    }
+
+    #[test]
+    fn test_cop_006_scoped_file_no_trigger() {
+        // Scoped files should not trigger COP-006
+        let mut content = String::from("---\napplyTo: \"**/*.ts\"\n---\n# Instructions\n\n");
+        while content.len() <= 5000 {
+            content.push_str("Follow consistent naming conventions for all variables.\n");
+        }
+        let diagnostics = validate_scoped(&content);
+        let cop_006: Vec<_> = diagnostics.iter().filter(|d| d.rule == "COP-006").collect();
+        assert!(cop_006.is_empty());
+    }
+
+    #[test]
+    fn test_cop_006_disabled() {
+        let mut config = LintConfig::default();
+        config.rules.disabled_rules = vec!["COP-006".to_string()];
+
+        let diagnostics = validate_global_with_config(&make_long_content(), &config);
+        let cop_006: Vec<_> = diagnostics.iter().filter(|d| d.rule == "COP-006").collect();
+        assert!(cop_006.is_empty());
     }
 }
