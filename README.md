@@ -13,7 +13,7 @@
 
 The linter for your AI coding stack -- skills, hooks, memory, plugins, MCP, and agent configs. CLI, LSP server, and IDE plugins for Claude Code, Cursor, GitHub Copilot, Codex CLI, and more.
 
-**116 validation rules** | **Auto-fix** | **VS Code + JetBrains + Neovim** | **GitHub Action**
+**116 validation rules** | **Auto-fix** | **VS Code + JetBrains + Neovim + Zed** | **GitHub Action**
 
 ## Quick Start
 
@@ -95,6 +95,7 @@ Real-time diagnostics as you type, quick-fix code actions, hover documentation.
 | **VS Code** | Search "agnix" in Extensions | [VS Code docs](editors/vscode/README.md) |
 | **JetBrains** | LSP4IJ-based plugin | [JetBrains docs](editors/jetbrains/README.md) |
 | **Neovim** | `{ "avifenesh/agnix.nvim" }` | [Neovim docs](editors/neovim/README.md) |
+| **Zed** | Search "agnix" in Extensions | [Zed docs](editors/zed/README.md) |
 
 ### GitHub Action
 

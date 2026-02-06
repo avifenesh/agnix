@@ -102,6 +102,21 @@ jobs:
         # Results are compared against baseline in target/iai/
         # Exit code 1 if regression detected above threshold
 
+  zed-extension:
+    name: Zed Extension
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: dtolnay/rust-toolchain@4be9e76fd7c4901c61fb841f559994984270fce7 # stable
+        with:
+          targets: wasm32-wasip1
+      - name: Build WASM
+        run: cargo build --target wasm32-wasip1
+        working-directory: editors/zed
+      - name: Run tests
+        run: cargo test
+        working-directory: editors/zed
+
   binary-size:
     name: Binary Size Check
     runs-on: ubuntu-latest

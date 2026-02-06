@@ -52,7 +52,8 @@ crates/
 editors/
 ├── neovim/         # Neovim plugin
 ├── vscode/         # VS Code extension
-└── jetbrains/      # JetBrains IDE plugin
+├── jetbrains/      # JetBrains IDE plugin
+└── zed/            # Zed extension
 knowledge-base/     # 100 rules, 75+ sources, rules.json
 tests/fixtures/     # Test cases by category
 ```
