@@ -1,6 +1,6 @@
 # agnix Knowledge Base - Master Index
 
-> 139 validation rules across 17 categories, sourced from 75+ references
+> 142 validation rules across 18 categories, sourced from 75+ references
 
 
 ---
@@ -81,7 +81,7 @@ knowledge-base/
 | **AGENTS.md** | 5 | - | - | 6 rules |
 | **Cursor** | 2 | - | - | 9 rules |
 | **awesome-slash** | 12 | - | - | 70 patterns |
-| **Total** | **75+** | **117KB** | **160KB** | **139 rules** |
+| **Total** | **75+** | **117KB** | **160KB** | **142 rules** |
 
 
 ### Validation Rules by Category
@@ -105,7 +105,8 @@ knowledge-base/
 | Cline | 3 | 2 | 1 | 0 | 1 |
 | OpenCode | 3 | 3 | 0 | 0 | 0 |
 | Version Awareness | 1 | 0 | 0 | 1 | 0 |
-| **TOTAL** | **139** | **100** | **37** | **2** | **32** |
+| Codex CLI | 3 | 2 | 1 | 0 | 0 |
+| **TOTAL** | **142** | **102** | **38** | **2** | **32** |
 
 
 ---
@@ -270,7 +271,7 @@ Total Size:           650KB
 Standards Covered:     5 (Agent Skills, MCP, Claude Code, Multi-Platform, Prompt Eng)
 Sources Consulted:    75+ (specs, docs, research papers, repos)
 Research Agents:       5 (10+ sources each)
-Validation Rules:     139 rules
+Validation Rules:     142 rules
 Auto-Fixable Rules:   32 rules
 
 Test Fixtures:        116 files
