@@ -277,10 +277,10 @@ pub struct LintConfig {
     /// Tools to validate for (e.g., ["claude-code", "cursor"])
     /// When specified, agnix automatically enables rules for these tools
     /// and disables rules for tools not in the list.
-    /// Valid values: "claude-code", "cursor", "codex", "copilot", "generic"
+    /// Valid values: "claude-code", "cursor", "codex", "copilot", "github-copilot", "cline", "opencode", "gemini-cli", "generic"
     #[serde(default)]
     #[schemars(
-        description = "Tools to validate for. Valid values: \"claude-code\", \"cursor\", \"codex\", \"copilot\", \"generic\""
+        description = "Tools to validate for. Valid values: \"claude-code\", \"cursor\", \"codex\", \"copilot\", \"github-copilot\", \"cline\", \"opencode\", \"gemini-cli\", \"generic\""
     )]
     pub tools: Vec<String>,
 
