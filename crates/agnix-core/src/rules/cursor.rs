@@ -69,18 +69,14 @@ fn yaml_block_byte_range(content: &str, start_line: usize) -> Option<(usize, usi
 
     // Extend to include subsequent indented lines (list items under the key)
     let mut current_line = start_line + 1;
-    loop {
-        if let Some((next_start, next_end)) = line_byte_range(content, current_line) {
-            let line_text = &content[next_start..next_end.min(content.len())];
-            // Stop if the line is not indented (new top-level key or closing ---)
-            if !line_text.starts_with(' ') && !line_text.starts_with('\t') {
-                break;
-            }
-            block_end = next_end;
-            current_line += 1;
-        } else {
+    while let Some((next_start, next_end)) = line_byte_range(content, current_line) {
+        let line_text = &content[next_start..next_end.min(content.len())];
+        // Stop if the line is not indented (new top-level key or closing ---)
+        if !line_text.starts_with(' ') && !line_text.starts_with('\t') {
             break;
         }
+        block_end = next_end;
+        current_line += 1;
     }
 
     Some((block_start, block_end))
