@@ -538,10 +538,13 @@ pub fn validate_project_with_registry(
     let max_files = config.max_files_to_validate;
 
     // Stream file walk directly into parallel validation (no intermediate Vec)
-    // Note: hidden(false) includes .github directory for Copilot instruction files
+    // Note: hidden(false) includes .github, .codex, .claude, .cursor directories
+    // Note: git_exclude(false) prevents .git/info/exclude from hiding config dirs
+    //       that users may locally exclude (e.g. .codex/) but still need linting
     let mut diagnostics: Vec<Diagnostic> = WalkBuilder::new(&walk_root)
         .hidden(false)
         .git_ignore(true)
+        .git_exclude(false)
         .filter_entry({
             let exclude_patterns = Arc::clone(&exclude_patterns);
             let root_path = root_path.clone();
@@ -3068,6 +3071,59 @@ Use idiomatic Rust patterns.
                 .iter()
                 .map(|d| &d.rule)
                 .collect::<Vec<_>>()
+        );
+    }
+
+    #[test]
+    fn test_validate_project_finds_codex_hidden_dir() {
+        // Test validate_project walks .codex directory (hidden dot-directory)
+        let temp = tempfile::TempDir::new().unwrap();
+        let codex_dir = temp.path().join(".codex");
+        std::fs::create_dir_all(&codex_dir).unwrap();
+
+        // Create config.toml with invalid approvalMode (should trigger CDX-001)
+        let file_path = codex_dir.join("config.toml");
+        std::fs::write(&file_path, "approvalMode = \"yolo\"").unwrap();
+
+        let config = LintConfig::default();
+        let result = validate_project(temp.path(), &config).unwrap();
+
+        assert!(
+            result.diagnostics.iter().any(|d| d.rule == "CDX-001"),
+            "validate_project should find .codex/config.toml and report CDX-001. Found: {:?}",
+            result
+                .diagnostics
+                .iter()
+                .map(|d| &d.rule)
+                .collect::<Vec<_>>()
+        );
+    }
+
+    #[test]
+    fn test_validate_project_finds_codex_invalid_fixtures() {
+        // Test validate_project on the actual codex-invalid fixture directory
+        let fixtures_dir = get_fixtures_dir();
+        let codex_invalid_dir = fixtures_dir.join("codex-invalid");
+
+        let config = LintConfig::default();
+        let result = validate_project(&codex_invalid_dir, &config).unwrap();
+
+        // Should find CDX-001 and CDX-002 from .codex/config.toml
+        assert!(
+            result.diagnostics.iter().any(|d| d.rule == "CDX-001"),
+            "Should report CDX-001 from .codex/config.toml. Rules found: {:?}",
+            result.diagnostics.iter().map(|d| &d.rule).collect::<Vec<_>>()
+        );
+        assert!(
+            result.diagnostics.iter().any(|d| d.rule == "CDX-002"),
+            "Should report CDX-002 from .codex/config.toml. Rules found: {:?}",
+            result.diagnostics.iter().map(|d| &d.rule).collect::<Vec<_>>()
+        );
+        // Should find CDX-003 from AGENTS.override.md
+        assert!(
+            result.diagnostics.iter().any(|d| d.rule == "CDX-003"),
+            "Should report CDX-003 from AGENTS.override.md. Rules found: {:?}",
+            result.diagnostics.iter().map(|d| &d.rule).collect::<Vec<_>>()
         );
     }
 
