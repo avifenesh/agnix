@@ -481,7 +481,8 @@ where
     }
 }
 
-/// CC-HK-013: Async on non-command hook (raw JSON check)
+/// CC-HK-013: Async on non-command hook (raw JSON check).
+/// Only flags known non-command types (prompt/agent); unknown types are handled by CC-HK-016.
 pub(super) fn validate_cc_hk_013_async_field(
     raw_value: &serde_json::Value,
     path: &Path,
