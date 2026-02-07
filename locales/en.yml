@@ -69,6 +69,7 @@ rules:
   cc_sk_005:
     message: "Invalid agent type '%{agent}'. Must be Explore, Plan, general-purpose, or a custom kebab-case name (1-64 chars)"
     suggestion: "Use a built-in agent (Explore, Plan, general-purpose) or a custom kebab-case name"
+    fix: "Replace invalid agent with 'general-purpose'"
   cc_sk_006:
     message: "Dangerous skill '%{name}' must set 'disable-model-invocation: true' to prevent accidental invocation"
     suggestion: "Add 'disable-model-invocation: true' to the frontmatter"
@@ -161,6 +162,7 @@ rules:
   cc_hk_016:
     message: "Unknown hook type '%{hook_type}' at %{location}"
     suggestion: "Valid hook types are: command, prompt, agent"
+    fix: "Change hook type to '%{fixed}'"
   cc_hk_017:
     message: "Prompt/agent hook at %{location} does not reference $ARGUMENTS"
     suggestion: "Include $ARGUMENTS in the prompt to receive event context"
@@ -257,6 +259,7 @@ rules:
   cc_ag_012:
     message: "permissionMode 'bypassPermissions' disables all safety checks"
     suggestion: "Consider using 'dontAsk' or 'acceptEdits' for a safer permission mode"
+    fix: "Replace 'bypassPermissions' with 'default'"
   cc_ag_013:
     message: "Invalid skill name format '%{name}'. Must be lowercase with hyphens"
     suggestion: "Use kebab-case format (e.g., 'my-skill-name')"
@@ -371,6 +374,7 @@ rules:
     message_invalid_yaml: "Invalid YAML frontmatter: %{error}"
     message_missing_apply_to: "Scoped Copilot instruction file missing required 'applyTo' field"
     suggestion_add_frontmatter: "Add YAML frontmatter with --- markers and applyTo field"
+    fix: "Insert template frontmatter with applyTo field"
     suggestion_fix_yaml: "Fix the YAML syntax in frontmatter"
     suggestion_add_apply_to: "Add 'applyTo: \"**/*.ts\"' or similar glob pattern"
   cop_003:
@@ -397,6 +401,7 @@ rules:
   cur_002:
     message: "Cursor .mdc file missing recommended frontmatter"
     suggestion: "Add YAML frontmatter with --- markers and description/globs fields"
+    fix: "Insert template frontmatter with description and globs fields"
   cur_003:
     message: "Invalid YAML frontmatter: %{error}"
     suggestion: "Fix the YAML syntax in frontmatter"
@@ -450,6 +455,7 @@ rules:
     message: "Invalid share mode '%{value}'. Valid values: 'manual', 'auto', 'disabled'"
     type_error: "Field 'share' must be a string. Valid values: 'manual', 'auto', 'disabled'"
     suggestion: "Use 'manual', 'auto', or 'disabled' for the share field"
+    fix: "Change share mode to '%{fixed}'"
   oc_002:
     not_found: "Instruction path '%{path}' does not exist"
     invalid_glob: "Instruction path '%{path}' has invalid glob syntax"
@@ -465,10 +471,12 @@ rules:
     message: "Invalid approvalMode '%{value}'. Valid values: 'suggest', 'auto-edit', 'full-auto'"
     type_error: "Field 'approvalMode' must be a string. Valid values: 'suggest', 'auto-edit', 'full-auto'"
     suggestion: "Use 'suggest', 'auto-edit', or 'full-auto' for the approvalMode field"
+    fix: "Change approvalMode to '%{fixed}'"
   cdx_002:
     message: "Invalid fullAutoErrorMode '%{value}'. Valid values: 'ask-user', 'ignore-and-continue'"
     type_error: "Field 'fullAutoErrorMode' must be a string. Valid values: 'ask-user', 'ignore-and-continue'"
     suggestion: "Use 'ask-user' or 'ignore-and-continue' for the fullAutoErrorMode field"
+    fix: "Change fullAutoErrorMode to '%{fixed}'"
   cdx_003:
     message: "AGENTS.override.md should not be in version control"
     suggestion: "Add AGENTS.override.md to .gitignore (it contains user-specific overrides)"

@@ -3453,3 +3453,43 @@ fn test_cc_sk_013_whitespace_only_body_fork() {
         "Whitespace-only body with fork context should trigger CC-SK-013"
     );
 }
+
+// ===== CC-SK-005 auto-fix tests =====
+
+#[test]
+fn test_cc_sk_005_autofix_invalid_agent() {
+    let content = "---\nname: my-skill\ndescription: Use when testing\ncontext: fork\nagent: INVALID_AGENT\n---\nRun the tests.";
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+    let cc_sk_005: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-SK-005")
+        .collect();
+    assert_eq!(cc_sk_005.len(), 1);
+    assert!(
+        cc_sk_005[0].has_fixes(),
+        "CC-SK-005 should have auto-fix for invalid agent"
+    );
+    let fix = &cc_sk_005[0].fixes[0];
+    assert!(!fix.safe, "CC-SK-005 fix should be unsafe");
+    assert_eq!(
+        fix.replacement, "general-purpose",
+        "Fix should replace with 'general-purpose'"
+    );
+    // Verify the fix targets the correct bytes
+    let target = &content[fix.start_byte..fix.end_byte];
+    assert_eq!(target, "INVALID_AGENT");
+}
+
+#[test]
+fn test_cc_sk_005_no_fix_for_valid_agent() {
+    // Valid built-in agent should not trigger CC-SK-005
+    let content = "---\nname: my-skill\ndescription: Use when testing\ncontext: fork\nagent: general-purpose\n---\nRun the tests.";
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+    let cc_sk_005: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-SK-005")
+        .collect();
+    assert!(cc_sk_005.is_empty());
+}

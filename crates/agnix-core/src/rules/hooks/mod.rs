@@ -402,7 +402,7 @@ impl Validator for HooksValidator {
         // CC-HK-016: Validate hook type (check for unknown types first)
         // Run before field-specific rules so unknown types short-circuit early
         if config.is_rule_enabled("CC-HK-016") {
-            validate_cc_hk_016_unknown_type(&raw_value, path, &mut diagnostics);
+            validate_cc_hk_016_unknown_type(&raw_value, path, content, &mut diagnostics);
             if diagnostics.iter().any(|d| d.rule == "CC-HK-016") {
                 return diagnostics;
             }

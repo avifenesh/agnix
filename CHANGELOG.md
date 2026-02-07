@@ -63,8 +63,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Auto-fix implementations added for 8 rules: CC-SK-011 (unsafe), CC-HK-013 (safe), CC-HK-015 (safe), CC-HK-018 (safe), CUR-008 (safe), COP-005 (unsafe), CC-AG-008 (unsafe), MCP-011 (unsafe)
-- Auto-fix table in VALIDATION-RULES.md expanded from 7 to 40 rules with safety classification
-- Auto-fixable count updated to 40 rules (27%)
+- Auto-fix pack 2: 8 additional rules with unsafe auto-fixes: CC-SK-005, CC-AG-012, CUR-002, COP-002, CDX-001, CDX-002, OC-001, CC-HK-016
+- Auto-fix table in VALIDATION-RULES.md expanded from 7 to 48 rules with safety classification
+- Auto-fixable count updated to 48 rules (33%)
 - Generated website rule pages now include Auto-Fix metadata
 - Website rules index table includes Auto-Fix column
 - `generate-docs-rules.py` renders fix metadata with strict validation

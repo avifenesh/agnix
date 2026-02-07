@@ -723,16 +723,29 @@ impl Validator for AgentValidator {
         if config.is_rule_enabled("CC-AG-012") {
             if let Some(mode) = &schema.permission_mode {
                 if mode == "bypassPermissions" {
-                    diagnostics.push(
-                        Diagnostic::warning(
-                            path.to_path_buf(),
-                            1,
-                            0,
-                            "CC-AG-012",
-                            t!("rules.cc_ag_012.message"),
-                        )
-                        .with_suggestion(t!("rules.cc_ag_012.suggestion")),
-                    );
+                    let mut diagnostic = Diagnostic::warning(
+                        path.to_path_buf(),
+                        1,
+                        0,
+                        "CC-AG-012",
+                        t!("rules.cc_ag_012.message"),
+                    )
+                    .with_suggestion(t!("rules.cc_ag_012.suggestion"));
+
+                    // Unsafe auto-fix: replace 'bypassPermissions' with 'default'.
+                    if let Some((start, end)) =
+                        frontmatter_value_byte_range(content, "permissionMode")
+                    {
+                        diagnostic = diagnostic.with_fix(Fix::replace(
+                            start,
+                            end,
+                            "default",
+                            t!("rules.cc_ag_012.fix"),
+                            false,
+                        ));
+                    }
+
+                    diagnostics.push(diagnostic);
                 }
             }
         }
@@ -2851,6 +2864,29 @@ Agent instructions"#;
             .filter(|d| d.rule == "CC-AG-013")
             .collect();
         assert_eq!(cc_ag_013.len(), 0);
+    }
+
+    // ===== CC-AG-012 auto-fix tests =====
+
+    #[test]
+    fn test_cc_ag_012_has_autofix() {
+        let content = "---\nname: my-agent\ndescription: A test agent\npermissionMode: bypassPermissions\n---\nAgent instructions";
+        let diagnostics = validate(content);
+        let cc_ag_012: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-AG-012")
+            .collect();
+        assert_eq!(cc_ag_012.len(), 1);
+        assert!(cc_ag_012[0].has_fixes(), "CC-AG-012 should have auto-fix");
+        let fix = &cc_ag_012[0].fixes[0];
+        assert!(!fix.safe, "CC-AG-012 fix should be unsafe");
+        assert_eq!(
+            fix.replacement, "default",
+            "Fix should replace with 'default'"
+        );
+        // Verify the fix targets the correct bytes
+        let target = &content[fix.start_byte..fix.end_byte];
+        assert_eq!(target, "bypassPermissions");
     }
 
     #[test]

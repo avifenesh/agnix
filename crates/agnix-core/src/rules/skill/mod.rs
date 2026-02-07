@@ -645,16 +645,27 @@ impl<'a> ValidationContext<'a> {
             if let Some(agent) = &schema.agent {
                 if !is_valid_agent(agent) {
                     let (agent_line, agent_col) = self.frontmatter_key_line_col("agent");
-                    self.diagnostics.push(
-                        Diagnostic::error(
-                            self.path.to_path_buf(),
-                            agent_line,
-                            agent_col,
-                            "CC-SK-005",
-                            t!("rules.cc_sk_005.message", agent = agent.as_str()),
-                        )
-                        .with_suggestion(t!("rules.cc_sk_005.suggestion")),
-                    );
+                    let mut diagnostic = Diagnostic::error(
+                        self.path.to_path_buf(),
+                        agent_line,
+                        agent_col,
+                        "CC-SK-005",
+                        t!("rules.cc_sk_005.message", agent = agent.as_str()),
+                    )
+                    .with_suggestion(t!("rules.cc_sk_005.suggestion"));
+
+                    // Unsafe auto-fix: replace invalid agent with 'general-purpose'.
+                    if let Some((start, end)) = self.frontmatter_value_byte_range("agent") {
+                        diagnostic = diagnostic.with_fix(Fix::replace(
+                            start,
+                            end,
+                            "general-purpose",
+                            t!("rules.cc_sk_005.fix"),
+                            false,
+                        ));
+                    }
+
+                    self.diagnostics.push(diagnostic);
                 }
             }
         }

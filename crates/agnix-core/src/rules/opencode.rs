@@ -7,7 +7,7 @@
 
 use crate::{
     config::LintConfig,
-    diagnostics::Diagnostic,
+    diagnostics::{Diagnostic, Fix},
     rules::Validator,
     schemas::opencode::{
         VALID_SHARE_MODES, is_glob_pattern, parse_opencode_json, validate_glob_pattern,
@@ -15,6 +15,8 @@ use crate::{
 };
 use rust_i18n::t;
 use std::path::Path;
+
+use crate::rules::{find_closest_value, find_unique_json_string_value_span};
 
 pub struct OpenCodeValidator;
 
@@ -63,16 +65,31 @@ impl Validator for OpenCodeValidator {
             } else if let Some(ref share_value) = schema.share {
                 if !VALID_SHARE_MODES.contains(&share_value.as_str()) {
                     let line = find_key_line(content, "share").unwrap_or(1);
-                    diagnostics.push(
-                        Diagnostic::error(
-                            path.to_path_buf(),
-                            line,
-                            0,
-                            "OC-001",
-                            t!("rules.oc_001.message", value = share_value.as_str()),
-                        )
-                        .with_suggestion(t!("rules.oc_001.suggestion")),
-                    );
+                    let mut diagnostic = Diagnostic::error(
+                        path.to_path_buf(),
+                        line,
+                        0,
+                        "OC-001",
+                        t!("rules.oc_001.message", value = share_value.as_str()),
+                    )
+                    .with_suggestion(t!("rules.oc_001.suggestion"));
+
+                    // Unsafe auto-fix: replace with closest valid share mode.
+                    if let Some(suggested) = find_closest_value(share_value, VALID_SHARE_MODES) {
+                        if let Some((start, end)) =
+                            find_unique_json_string_value_span(content, "share", share_value)
+                        {
+                            diagnostic = diagnostic.with_fix(Fix::replace(
+                                start,
+                                end,
+                                suggested,
+                                t!("rules.oc_001.fix", fixed = suggested),
+                                false,
+                            ));
+                        }
+                    }
+
+                    diagnostics.push(diagnostic);
                 }
             }
         }
@@ -276,6 +293,59 @@ mod tests {
         let diagnostics = validate(r#"{"share": "disabled"}"#);
         let oc_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "OC-001").collect();
         assert!(oc_001.is_empty());
+    }
+
+    #[test]
+    fn test_oc_001_autofix_case_insensitive() {
+        // "Manual" is a case-insensitive match to "manual"
+        let diagnostics = validate(r#"{"share": "Manual"}"#);
+        let oc_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "OC-001").collect();
+        assert_eq!(oc_001.len(), 1);
+        assert!(
+            oc_001[0].has_fixes(),
+            "OC-001 should have auto-fix for case mismatch"
+        );
+        let fix = &oc_001[0].fixes[0];
+        assert!(!fix.safe, "OC-001 fix should be unsafe");
+        assert_eq!(fix.replacement, "manual", "Fix should suggest 'manual'");
+    }
+
+    #[test]
+    fn test_oc_001_no_autofix_when_duplicate() {
+        // JSON with two "share" keys (duplicate keys are technically valid JSON
+        // but our regex uniqueness guard should catch this and suppress autofix).
+        let content = r#"{"share": "Manual", "nested": {"share": "Manual"}}"#;
+        let diagnostics = validate(content);
+        let oc_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "OC-001").collect();
+        assert_eq!(oc_001.len(), 1);
+        assert!(
+            !oc_001[0].has_fixes(),
+            "OC-001 should not have auto-fix when share value appears multiple times"
+        );
+    }
+
+    #[test]
+    fn test_oc_001_no_autofix_nonsense() {
+        let diagnostics = validate(r#"{"share": "public"}"#);
+        let oc_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "OC-001").collect();
+        assert_eq!(oc_001.len(), 1);
+        // "public" has no close match - should NOT get a fix
+        assert!(
+            !oc_001[0].has_fixes(),
+            "OC-001 should not auto-fix nonsense values"
+        );
+    }
+
+    #[test]
+    fn test_oc_001_autofix_targets_correct_bytes() {
+        let content = r#"{"share": "Manual"}"#;
+        let diagnostics = validate(content);
+        let oc_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "OC-001").collect();
+        assert_eq!(oc_001.len(), 1);
+        assert!(oc_001[0].has_fixes());
+        let fix = &oc_001[0].fixes[0];
+        let target = &content[fix.start_byte..fix.end_byte];
+        assert_eq!(target, "Manual", "Fix should target the inner value");
     }
 
     #[test]
