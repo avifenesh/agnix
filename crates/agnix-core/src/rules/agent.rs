@@ -561,7 +561,7 @@ impl Validator for AgentValidator {
                                                                         t!(
                                                                             "rules.cc_ag_011.message",
                                                                             error = format!(
-                                                                                "hook type '{}' in {}.matchers[{}].hooks[{}] is invalid, must be 'command' or 'prompt'",
+                                                                                "hook type '{}' in hooks.{}[{}].hooks[{}] is invalid, must be 'command' or 'prompt'",
                                                                                 invalid_type, event_name, i, j
                                                                             )
                                                                         ),
@@ -579,7 +579,7 @@ impl Validator for AgentValidator {
                                                                         t!(
                                                                             "rules.cc_ag_011.message",
                                                                             error = format!(
-                                                                                "hook in {}.matchers[{}].hooks[{}] is missing required 'type' field",
+                                                                                "hook in hooks.{}[{}].hooks[{}] is missing required 'type' field",
                                                                                 event_name, i, j
                                                                             )
                                                                         ),
@@ -598,7 +598,7 @@ impl Validator for AgentValidator {
                                                                 t!(
                                                                     "rules.cc_ag_011.message",
                                                                     error = format!(
-                                                                        "hook in {}.matchers[{}].hooks[{}] must be an object",
+                                                                        "hook in hooks.{}[{}].hooks[{}] must be an object",
                                                                         event_name, i, j
                                                                     )
                                                                 ),
@@ -617,7 +617,7 @@ impl Validator for AgentValidator {
                                                         t!(
                                                             "rules.cc_ag_011.message",
                                                             error = format!(
-                                                                "'hooks' field in {}.matchers[{}] must be an array",
+                                                                "'hooks' field in hooks.{}[{}] must be an array",
                                                                 event_name, i
                                                             )
                                                         ),
@@ -636,7 +636,7 @@ impl Validator for AgentValidator {
                                                     t!(
                                                         "rules.cc_ag_011.message",
                                                         error = format!(
-                                                            "matcher in {}.matchers[{}] is missing required 'hooks' array",
+                                                            "matcher in hooks.{}[{}] is missing required 'hooks' array",
                                                             event_name, i
                                                         )
                                                     ),
@@ -655,7 +655,7 @@ impl Validator for AgentValidator {
                                             t!(
                                                 "rules.cc_ag_011.message",
                                                 error = format!(
-                                                    "matcher in {}.matchers[{}] must be an object",
+                                                    "matcher in hooks.{}[{}] must be an object",
                                                     event_name, i
                                                 )
                                             ),
