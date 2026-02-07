@@ -550,4 +550,196 @@ mod tests {
         // No fixes means no results
         assert!(results.is_empty());
     }
+
+    // ===== Edge Case: Ordering and Overlap Tests =====
+
+    #[test]
+    fn test_fix_three_non_overlapping_descending() {
+        let content = "aaaa_bbbb_cccc_dddd_eeee_ffff";
+        // Fixes at positions 20-24, 10-14, 0-4 (already sorted descending)
+        let fixes = vec![
+            Fix::replace(20, 24, "EEEE", "Fix third", true),
+            Fix::replace(10, 14, "CCCC", "Fix second", true),
+            Fix::replace(0, 4, "AAAA", "Fix first", true),
+        ];
+        let fix_refs: Vec<&Fix> = fixes.iter().collect();
+
+        let (result, applied) = apply_fixes_to_content(content, &fix_refs);
+
+        assert_eq!(applied.len(), 3);
+        assert!(result.contains("AAAA"));
+        assert!(result.contains("CCCC"));
+        assert!(result.contains("EEEE"));
+    }
+
+    #[test]
+    fn test_fix_overlapping_middle_skipped() {
+        let content = "0123456789abcdef";
+        // Sorted descending: 10-14 first, then 6-12 (overlaps), then 0-4
+        let fixes = vec![
+            Fix::replace(10, 14, "XX", "Fix at 10", true),
+            Fix::replace(6, 12, "YY", "Fix at 6 (overlaps)", true),
+            Fix::replace(0, 4, "ZZ", "Fix at 0", true),
+        ];
+        let fix_refs: Vec<&Fix> = fixes.iter().collect();
+
+        let (result, applied) = apply_fixes_to_content(content, &fix_refs);
+
+        // Fix at 10-14 applied, fix at 6-12 skipped (end_byte 12 > last_start 10),
+        // fix at 0-4 applied (end_byte 4 < last_start 10, but after the overlap skip,
+        // last_start is still 10 from the first fix)
+        assert_eq!(
+            applied.len(),
+            2,
+            "Only two non-overlapping fixes should apply"
+        );
+        assert!(result.contains("XX"), "Fix at 10-14 should be applied");
+        assert!(result.contains("ZZ"), "Fix at 0-4 should be applied");
+        assert!(
+            !result.contains("YY"),
+            "Overlapping fix at 6-12 should be skipped"
+        );
+    }
+
+    #[test]
+    fn test_fix_adjacent_fixes() {
+        let content = "hello world";
+        // Sorted descending: (5,6) first, then (0,5)
+        // end_byte 5 == last_start 5 -> NOT > so both should apply
+        let fixes = vec![
+            Fix::replace(5, 6, "_", "Replace space", true),
+            Fix::replace(0, 5, "HELLO", "Uppercase first word", true),
+        ];
+        let fix_refs: Vec<&Fix> = fixes.iter().collect();
+
+        let (result, applied) = apply_fixes_to_content(content, &fix_refs);
+
+        assert_eq!(applied.len(), 2, "Adjacent fixes should both apply");
+        assert_eq!(result, "HELLO_world");
+    }
+
+    #[test]
+    fn test_fix_same_position_insertions() {
+        let content = "hello";
+        // Two insertions at the same position. Their application order depends on their
+        // order in the slice, as the sort by `start_byte` is stable.
+        let fixes = vec![
+            Fix::insert(5, "!", "Add exclamation", true),
+            Fix::insert(5, "?", "Add question", true),
+        ];
+        let mut fix_refs: Vec<&Fix> = fixes.iter().collect();
+        // `apply_fixes_to_content` expects fixes to be sorted descending by start_byte.
+        fix_refs.sort_by(|a, b| b.start_byte.cmp(&a.start_byte));
+
+        let (result, applied) = apply_fixes_to_content(content, &fix_refs);
+
+        assert_eq!(
+            applied.len(),
+            2,
+            "Same-position insertions should both apply"
+        );
+
+        // The fixes are applied in the order they appear in the sorted slice.
+        // Since the sort is stable for equal `start_byte`, "!" is applied first, then "?".
+        // 1. "hello" -> "hello!"
+        // 2. "hello!" -> "hello?!" (at index 5 of the modified string)
+        assert_eq!(result, "hello?!");
+    }
+
+    #[test]
+    fn test_fix_length_changing_preserves_positions() {
+        let content = "short___long_text";
+        // Sorted descending: 12-17 first, then 0-5
+        let fixes = vec![
+            Fix::replace(12, 17, "replacement_that_is_longer", "Fix second", true),
+            Fix::replace(0, 5, "S", "Fix first", true),
+        ];
+        let fix_refs: Vec<&Fix> = fixes.iter().collect();
+
+        let (result, applied) = apply_fixes_to_content(content, &fix_refs);
+
+        assert_eq!(applied.len(), 2, "Both fixes should apply");
+        assert!(
+            result.starts_with("S"),
+            "First 5 chars should be replaced with 'S'"
+        );
+        assert!(
+            result.contains("replacement_that_is_longer"),
+            "Later range should be replaced"
+        );
+    }
+
+    #[test]
+    fn test_fix_end_before_start_skipped() {
+        let content = "hello";
+        // Invalid fix: start_byte > end_byte (end_byte < start_byte)
+        let fix = Fix {
+            start_byte: 3,
+            end_byte: 1,
+            replacement: "X".to_string(),
+            description: "Invalid fix".to_string(),
+            safe: true,
+        };
+
+        let (result, applied) = apply_fixes_to_content(content, &[&fix]);
+
+        assert_eq!(result, "hello", "Content should be unchanged");
+        assert!(applied.is_empty(), "Invalid fix should be skipped");
+    }
+
+    #[test]
+    fn test_fix_unicode_content_boundaries() {
+        // \u{00e9} is precomposed e-acute: 2 bytes (0xc3, 0xa9)
+        let content = "caf\u{00e9} is great";
+        // 'c'=0, 'a'=1, 'f'=2, '\u{00e9}'=3-4 (2 bytes), ' '=5
+        // Fix byte 3 to 5 (the e-acute), replace with "e"
+        let fix = Fix::replace(3, 5, "e", "Normalize accent", true);
+
+        let (result, applied) = apply_fixes_to_content(content, &[&fix]);
+
+        assert_eq!(result, "cafe is great");
+        assert_eq!(applied.len(), 1);
+    }
+
+    #[test]
+    fn test_fix_crlf_content() {
+        let content = "hello\r\nworld";
+        // Replace \r\n (bytes 5-7) with \n
+        let fix = Fix::replace(5, 7, "\n", "Normalize line ending", true);
+
+        let (result, applied) = apply_fixes_to_content(content, &[&fix]);
+
+        assert_eq!(result, "hello\nworld");
+        assert_eq!(applied.len(), 1);
+    }
+
+    #[test]
+    fn test_fix_utf8_boundary_skip() {
+        // \u{00e9} = 2 bytes: 0xc3 at byte 3, 0xa9 at byte 4
+        let content = "caf\u{00e9}";
+        // Fix starting at byte 4 (mid-codepoint continuation byte) should be skipped
+        let fix = Fix::replace(4, 5, "X", "Mid-codepoint fix", true);
+
+        let (result, applied) = apply_fixes_to_content(content, &[&fix]);
+
+        assert_eq!(
+            result, "caf\u{00e9}",
+            "Content should be unchanged when fix targets mid-codepoint"
+        );
+        assert!(
+            applied.is_empty(),
+            "Fix at non-char-boundary should be skipped"
+        );
+    }
+
+    #[test]
+    fn test_fix_replacement_with_unicode() {
+        let content = "hello world";
+        let fix = Fix::replace(6, 11, "\u{4e16}\u{754c}", "Replace with CJK", true);
+
+        let (result, applied) = apply_fixes_to_content(content, &[&fix]);
+
+        assert_eq!(result, "hello \u{4e16}\u{754c}");
+        assert_eq!(applied.len(), 1);
+    }
 }
