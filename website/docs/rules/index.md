@@ -1,7 +1,7 @@
 # Rules Reference
 
-This section contains all `124` validation rules generated from `knowledge-base/rules.json`.
-`28` rules have automatic fixes.
+This section contains all `127` validation rules generated from `knowledge-base/rules.json`.
+`29` rules have automatic fixes.
 
 | Rule | Name | Severity | Category | Auto-Fix |
 |------|------|----------|----------|----------|
@@ -113,6 +113,9 @@ This section contains all `124` validation rules generated from `knowledge-base/
 | [CUR-004](./generated/cur-004.md) | Invalid Glob Pattern in globs Field | HIGH | Cursor | No |
 | [CUR-005](./generated/cur-005.md) | Unknown Frontmatter Keys | MEDIUM | Cursor | Yes (safe) |
 | [CUR-006](./generated/cur-006.md) | Legacy .cursorrules File Detected | MEDIUM | Cursor | No |
+| [CLN-001](./generated/cln-001.md) | Empty Cline Rules File | HIGH | Cline | No |
+| [CLN-002](./generated/cln-002.md) | Invalid Paths Glob in Cline Rules | HIGH | Cline | No |
+| [CLN-003](./generated/cln-003.md) | Unknown Frontmatter Key in Cline Rules | MEDIUM | Cline | Yes (safe) |
 | [XML-001](./generated/xml-001.md) | Unclosed XML Tag | HIGH | XML | Yes (unsafe) |
 | [XML-002](./generated/xml-002.md) | Mismatched Closing Tag | HIGH | XML | Yes (unsafe) |
 | [XML-003](./generated/xml-003.md) | Unmatched Closing Tag | HIGH | XML | Yes (unsafe) |

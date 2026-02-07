@@ -86,6 +86,10 @@ pub enum FileType {
     CursorRule,
     /// Legacy Cursor rules file (.cursorrules)
     CursorRulesLegacy,
+    /// Cline rules single file (.clinerules)
+    ClineRules,
+    /// Cline rules folder files (.clinerules/*.md)
+    ClineRulesFolder,
     /// Other .md files (for XML/import checks)
     GenericMarkdown,
     /// Skip validation
@@ -164,6 +168,8 @@ impl ValidatorRegistry {
             (FileType::CursorRulesLegacy, cursor_validator),
             (FileType::CursorRulesLegacy, prompt_validator),
             (FileType::CursorRulesLegacy, claude_md_validator),
+            (FileType::ClineRules, cline_validator),
+            (FileType::ClineRulesFolder, cline_validator),
             (FileType::GenericMarkdown, cross_platform_validator),
             (FileType::GenericMarkdown, xml_validator),
             (FileType::GenericMarkdown, imports_validator),
@@ -231,6 +237,10 @@ fn copilot_validator() -> Box<dyn Validator> {
 
 fn cursor_validator() -> Box<dyn Validator> {
     Box::new(rules::cursor::CursorValidator)
+}
+
+fn cline_validator() -> Box<dyn Validator> {
+    Box::new(rules::cline::ClineValidator)
 }
 
 /// Returns true if the file is inside a documentation directory that
@@ -302,6 +312,12 @@ pub fn detect_file_type(path: &Path) -> FileType {
         }
         // Legacy Cursor rules file (.cursorrules or .cursorrules.md)
         ".cursorrules" | ".cursorrules.md" => FileType::CursorRulesLegacy,
+        // Cline rules single file (.clinerules without extension)
+        ".clinerules" => FileType::ClineRules,
+        // Cline rules folder (.clinerules/*.md)
+        name if name.ends_with(".md") && parent == Some(".clinerules") => {
+            FileType::ClineRulesFolder
+        }
         name if name.ends_with(".md") => {
             // Agent directories take precedence over filename exclusions.
             // Files like agents/README.md should be validated as agent configs.

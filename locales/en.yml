@@ -396,6 +396,19 @@ rules:
     suggestion: "Create .cursor/rules/ directory and add .mdc files with frontmatter for better organization"
     legacy_empty: "Cursor rules file is empty"
 
+  # --- Cline (cline.rs) ---
+  cln_001:
+    message_empty: "Cline rules file is empty"
+    message_no_content: "Cline rules file has no content after frontmatter"
+    suggestion_empty: "Add rules content to the file"
+    suggestion_no_content: "Add rules content after the frontmatter"
+  cln_002:
+    message: "Invalid glob pattern '%{pattern}': %{error}"
+    suggestion: "Use valid glob syntax like '**/*.ts' or 'src/**/*.js'"
+  cln_003:
+    message: "Unknown frontmatter key '%{key}' in Cline rules file"
+    suggestion: "Remove unknown key '%{key}'. Only 'paths' is a recognized frontmatter key."
+
   # --- Prompt engineering (prompt.rs) ---
   pe_001:
     message: "Critical keyword '%{keyword}' at %{percent} percent of document (40-60 percent is the 'lost in the middle' zone)"

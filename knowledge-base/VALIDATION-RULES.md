@@ -900,6 +900,31 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 
 ---
 
+## CLINE RULES (CLN)
+
+<a id="cln-001"></a>
+### CLN-001 [HIGH] Empty Cline Rules File
+**Requirement**: `.clinerules` file or files in `.clinerules/` folder MUST have non-empty content
+**Detection**: `content.trim().is_empty()` after stripping frontmatter
+**Fix**: Add meaningful rules content
+**Source**: docs.cline.bot/features/cline-rules
+
+<a id="cln-002"></a>
+### CLN-002 [HIGH] Invalid Paths Glob in Cline Rules
+**Requirement**: `paths` frontmatter field in `.clinerules/*.md` MUST contain valid glob patterns
+**Detection**: Attempt to parse as glob pattern
+**Fix**: Correct the glob syntax
+**Source**: docs.cline.bot/features/cline-rules
+
+<a id="cln-003"></a>
+### CLN-003 [MEDIUM] Unknown Frontmatter Key in Cline Rules
+**Requirement**: Only `paths` SHOULD be used as frontmatter key in `.clinerules/*.md` files
+**Detection**: Compare keys against known set (`paths`)
+**Fix**: [AUTO-FIX] Remove unknown frontmatter key
+**Source**: docs.cline.bot/features/cline-rules
+
+---
+
 ## UNIVERSAL RULES (XML)
 
 <a id="xml-001"></a>
@@ -1169,13 +1194,14 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | Claude Plugins | 6 | 6 | 0 | 0 | 1 |
 | GitHub Copilot | 6 | 4 | 2 | 0 | 1 |
 | Cursor | 6 | 3 | 3 | 0 | 1 |
+| Cline | 3 | 2 | 1 | 0 | 1 |
 | MCP | 12 | 10 | 2 | 0 | 3 |
 | XML | 3 | 3 | 0 | 0 | 3 |
 | References | 2 | 2 | 0 | 0 | 0 |
 | Prompt Eng | 4 | 0 | 4 | 0 | 0 |
 | Cross-Platform | 6 | 4 | 2 | 0 | 0 |
 | Version Awareness | 1 | 0 | 0 | 1 | 0 |
-| **TOTAL** | **124** | **91** | **31** | **2** | **28** |
+| **TOTAL** | **127** | **93** | **32** | **2** | **29** |
 
 ---
 
@@ -1204,7 +1230,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 
 ---
 
-**Total Coverage**: 124 validation rules across 15 categories
+**Total Coverage**: 127 validation rules across 16 categories
 **Knowledge Base**: 11,036 lines, 320KB, 75+ sources
-**Certainty**: 91 HIGH, 31 MEDIUM, 2 LOW
-**Auto-Fixable**: 28 rules (23%)
+**Certainty**: 93 HIGH, 32 MEDIUM, 2 LOW
+**Auto-Fixable**: 29 rules (23%)
