@@ -299,3 +299,42 @@ jobs:
           push-to: avifenesh/extensions
         env:
           COMMITTER_TOKEN: ${{ secrets.COMMITTER_TOKEN }}
+
+  version-docs:
+    name: Version Docs & Update Site Data
+    needs: release
+    runs-on: ubuntu-latest
+    if: ${{ !contains(github.ref, '-') }}
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          ref: main
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '20'
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.x'
+
+      - name: Install website dependencies
+        run: npm --prefix website ci
+
+      - name: Regenerate site data and rule docs
+        run: python3 scripts/generate-docs-rules.py
+
+      - name: Extract version from tag
+        id: version
+        run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Cut versioned docs snapshot
+        run: npm --prefix website run version:cut -- ${{ steps.version.outputs.version }}
+
+      - name: Commit and push versioned docs
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "docs: version ${{ steps.version.outputs.version }} docs and update site data [skip ci]" || echo "No changes to commit"
+          git push origin main
