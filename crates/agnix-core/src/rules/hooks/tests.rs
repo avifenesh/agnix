@@ -2473,7 +2473,7 @@ fn test_cc_hk_013_async_on_prompt_hook() {
         .collect();
 
     assert_eq!(cc_hk_013.len(), 1);
-    assert_eq!(cc_hk_013[0].level, DiagnosticLevel::Warning);
+    assert_eq!(cc_hk_013[0].level, DiagnosticLevel::Error);
     assert!(cc_hk_013[0].message.contains("async"));
     assert!(cc_hk_013[0].message.contains("prompt"));
 }

@@ -1,4 +1,4 @@
-//! Hooks validation rules (CC-HK-001 to CC-HK-012)
+//! Hooks validation rules (CC-HK-001 to CC-HK-018)
 
 use crate::{
     config::LintConfig,
@@ -490,7 +490,6 @@ impl Validator for HooksValidator {
                             command,
                             timeout,
                             model,
-                            ..
                         } => {
                             // CC-HK-010: Command timeout policy
                             if config.is_rule_enabled("CC-HK-010") {

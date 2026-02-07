@@ -480,7 +480,7 @@ pub(super) fn validate_cc_hk_013_async_field(
                                         event, matcher_idx, hook_idx
                                     );
                                     diagnostics.push(
-                                        Diagnostic::warning(
+                                        Diagnostic::error(
                                             path.to_path_buf(),
                                             1,
                                             0,
