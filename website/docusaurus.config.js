@@ -1,5 +1,7 @@
 // @ts-check
 
+const siteData = require('./src/data/siteData.json');
+
 const config = {
   title: 'agnix',
   tagline: 'Lint agent configurations before they break your workflow',
@@ -35,7 +37,7 @@ const config = {
         '@type': 'SoftwareApplication',
         name: 'agnix',
         description:
-          'Linter for AI agent configurations. 145 validation rules for Skills, Hooks, MCP, Memory, and Plugins across Claude Code, Copilot, Cursor, Cline, and more.',
+          `Linter for AI agent configurations. ${siteData.totalRules} validation rules for Skills, Hooks, MCP, Memory, and Plugins across Claude Code, Copilot, Cursor, Cline, and more.`,
         applicationCategory: 'DeveloperApplication',
         operatingSystem: 'Windows, macOS, Linux',
         url: 'https://avifenesh.github.io/agnix/',
