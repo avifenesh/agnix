@@ -7,5 +7,5 @@ model: sonnet
 allowed-tools: Read Write Grep Glob
 ---
 
-This skill has valid context and agent configuration.
-The context: fork and agent fields are properly paired.
+Read the source code and analyze it for quality issues.
+Check for common patterns and generate a report.
