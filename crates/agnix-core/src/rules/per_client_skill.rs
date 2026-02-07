@@ -181,6 +181,25 @@ fn line_col_at(offset: usize, line_starts: &[usize]) -> (usize, usize) {
     (low + 1, offset.saturating_sub(line_start) + 1)
 }
 
+/// Advance `fm_offset` past the current line and its newline terminator.
+fn advance_past_line(fm_offset: usize, line_len: usize, fm_bytes: &[u8]) -> usize {
+    let line_end = fm_offset + line_len;
+    if line_end < fm_bytes.len() {
+        if fm_bytes[line_end] == b'\n' {
+            line_end + 1
+        } else if line_end + 1 < fm_bytes.len()
+            && fm_bytes[line_end] == b'\r'
+            && fm_bytes[line_end + 1] == b'\n'
+        {
+            line_end + 2
+        } else {
+            line_end
+        }
+    } else {
+        line_end
+    }
+}
+
 pub struct PerClientSkillValidator;
 
 impl Validator for PerClientSkillValidator {
@@ -194,7 +213,6 @@ impl Validator for PerClientSkillValidator {
 
         let client = detect_client(path);
 
-        // Nothing to check for Claude Code (supports everything) or Unknown
         let per_client_rule = rule_id_for_client(client);
         let has_per_client = per_client_rule
             .map(|r| config.is_rule_enabled(r))
@@ -207,72 +225,41 @@ impl Validator for PerClientSkillValidator {
 
         let line_starts = compute_line_starts(content);
         let frontmatter_str = &parts.frontmatter;
-
-        // Track the byte offset within the frontmatter string
-        let mut fm_offset = 0usize;
         let fm_bytes = frontmatter_str.as_bytes();
+        let mut fm_offset = 0usize;
 
         for line in frontmatter_str.lines() {
             let trimmed = line.trim_start();
-            if trimmed.is_empty() || trimmed.starts_with('#') {
-                // Advance past line + newline
-                let line_end = fm_offset + line.len();
-                if line_end < fm_bytes.len() {
-                    if fm_bytes[line_end] == b'\n' {
-                        fm_offset = line_end + 1;
-                    } else if line_end + 1 < fm_bytes.len()
-                        && fm_bytes[line_end] == b'\r'
-                        && fm_bytes[line_end + 1] == b'\n'
-                    {
-                        fm_offset = line_end + 2;
-                    } else {
-                        fm_offset = line_end;
-                    }
-                } else {
-                    fm_offset = line_end;
-                }
+            let leading_ws = line.len() - trimmed.len();
+
+            // Skip empty lines, comments, and indented lines (nested YAML values
+            // like sub-keys under `metadata:` are not top-level fields)
+            if trimmed.is_empty() || trimmed.starts_with('#') || leading_ws > 0 {
+                fm_offset = advance_past_line(fm_offset, line.len(), fm_bytes);
                 continue;
             }
 
-            // Extract key from "key: value" or "key:" pattern
-            let key = if let Some(colon_pos) = trimmed.find(':') {
-                trimmed[..colon_pos].trim()
-            } else {
-                // Advance past line + newline
-                let line_end = fm_offset + line.len();
-                if line_end < fm_bytes.len() {
-                    if fm_bytes[line_end] == b'\n' {
-                        fm_offset = line_end + 1;
-                    } else if line_end + 1 < fm_bytes.len()
-                        && fm_bytes[line_end] == b'\r'
-                        && fm_bytes[line_end + 1] == b'\n'
-                    {
-                        fm_offset = line_end + 2;
-                    } else {
-                        fm_offset = line_end;
-                    }
-                } else {
-                    fm_offset = line_end;
+            // Extract key from top-level "key: value" or "key:" pattern
+            let key = match trimmed.find(':') {
+                Some(colon_pos) => trimmed[..colon_pos].trim(),
+                None => {
+                    fm_offset = advance_past_line(fm_offset, line.len(), fm_bytes);
+                    continue;
                 }
-                continue;
             };
 
             // Only check extension fields (universal fields are fine everywhere)
             if EXTENSION_FIELDS.contains(&key) {
-                // Absolute byte offset of the key in full content
-                let leading_ws = line.len() - trimmed.len();
-                let abs_key_start = parts.frontmatter_start + fm_offset + leading_ws;
+                let abs_key_start = parts.frontmatter_start + fm_offset;
                 let (line_num, col) = line_col_at(abs_key_start, &line_starts);
 
-                // Compute byte range for the full line (key: value)
+                // Compute byte range for the full line including trailing newline
                 let abs_line_start = parts.frontmatter_start + fm_offset;
                 let mut abs_line_end = abs_line_start + line.len();
-                // Include the trailing newline if present
                 if abs_line_end < content.len() && content.as_bytes()[abs_line_end] == b'\n' {
                     abs_line_end += 1;
                 } else if abs_line_end + 1 < content.len()
                     && content.as_bytes()[abs_line_end] == b'\r'
-                    && abs_line_end + 1 < content.len()
                     && content.as_bytes()[abs_line_end + 1] == b'\n'
                 {
                     abs_line_end += 2;
@@ -286,36 +273,41 @@ impl Validator for PerClientSkillValidator {
                             let msg_key = format!("rules.{}.message", i18n_key);
                             let sug_key = format!("rules.{}.suggestion", i18n_key);
 
-                            let diagnostic = Diagnostic::warning(
-                                path.to_path_buf(),
-                                line_num,
-                                col,
-                                rule_id,
-                                t!(&msg_key, field = key, client = client_display_name(client)),
-                            )
-                            .with_suggestion(t!(
-                                &sug_key,
-                                field = key,
-                                client = client_display_name(client)
-                            ))
-                            .with_fix(Fix::delete(
-                                abs_line_start,
-                                abs_line_end,
-                                format!(
-                                    "Remove unsupported field '{}' for {}",
-                                    key,
-                                    client_display_name(client)
-                                ),
-                                true,
-                            ));
-
-                            diagnostics.push(diagnostic);
+                            diagnostics.push(
+                                Diagnostic::warning(
+                                    path.to_path_buf(),
+                                    line_num,
+                                    col,
+                                    rule_id,
+                                    t!(
+                                        &msg_key,
+                                        field = key,
+                                        client = client_display_name(client)
+                                    ),
+                                )
+                                .with_suggestion(t!(
+                                    &sug_key,
+                                    field = key,
+                                    client = client_display_name(client)
+                                ))
+                                .with_fix(Fix::delete(
+                                    abs_line_start,
+                                    abs_line_end,
+                                    format!(
+                                        "Remove unsupported field '{}' for {}",
+                                        key,
+                                        client_display_name(client)
+                                    ),
+                                    true,
+                                )),
+                            );
                         }
                     }
                 }
 
-                // XP-SK-001: cross-platform portability warning for non-ClaudeCode clients
-                if has_xp && client != SkillClient::ClaudeCode && client != SkillClient::Unknown {
+                // XP-SK-001: cross-platform portability warning for any skill
+                // with non-universal fields, except Claude Code (which supports all)
+                if has_xp && client != SkillClient::ClaudeCode {
                     diagnostics.push(
                         Diagnostic::info(
                             path.to_path_buf(),
@@ -329,22 +321,7 @@ impl Validator for PerClientSkillValidator {
                 }
             }
 
-            // Advance past line + newline
-            let line_end = fm_offset + line.len();
-            if line_end < fm_bytes.len() {
-                if fm_bytes[line_end] == b'\n' {
-                    fm_offset = line_end + 1;
-                } else if line_end + 1 < fm_bytes.len()
-                    && fm_bytes[line_end] == b'\r'
-                    && fm_bytes[line_end + 1] == b'\n'
-                {
-                    fm_offset = line_end + 2;
-                } else {
-                    fm_offset = line_end;
-                }
-            } else {
-                fm_offset = line_end;
-            }
+            fm_offset = advance_past_line(fm_offset, line.len(), fm_bytes);
         }
 
         diagnostics
@@ -663,13 +640,29 @@ mod tests {
     }
 
     #[test]
-    fn test_xp_sk_001_does_not_fire_for_unknown() {
+    fn test_xp_sk_001_fires_for_unknown() {
         let content = make_skill("name: my-skill\ndescription: A test\nmodel: opus", "Body");
         let diags = validate("SKILL.md", &content);
         let xp_diags: Vec<_> = diags.iter().filter(|d| d.rule == "XP-SK-001").collect();
+        assert_eq!(
+            xp_diags.len(),
+            1,
+            "XP-SK-001 should fire for root-level skills with non-universal fields"
+        );
+    }
+
+    #[test]
+    fn test_indented_keys_not_flagged() {
+        let content = make_skill(
+            "name: my-skill\ndescription: A test\nmetadata:\n  model: some-value\n  context: note",
+            "Body",
+        );
+        let diags = validate(".cursor/skills/my-skill/SKILL.md", &content);
+        let cr_diags: Vec<_> = diags.iter().filter(|d| d.rule == "CR-SK-001").collect();
         assert!(
-            xp_diags.is_empty(),
-            "XP-SK-001 should not fire for unknown client"
+            cr_diags.is_empty(),
+            "Indented keys under metadata should not trigger per-client warnings, got {:?}",
+            cr_diags
         );
     }
 
