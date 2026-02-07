@@ -1438,7 +1438,7 @@ fn test_cc_hk_010_prompt_hook_no_timeout() {
 
     assert_eq!(cc_hk_010.len(), 1);
     assert_eq!(cc_hk_010[0].level, DiagnosticLevel::Warning);
-    assert!(cc_hk_010[0].message.contains("Prompt hook"));
+    assert!(cc_hk_010[0].message.contains("Prompt/agent hook"));
 }
 
 #[test]
