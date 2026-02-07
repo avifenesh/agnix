@@ -259,13 +259,16 @@ impl Validator for AgentValidator {
                         .unwrap_or((1, 0));
                     let raw_error = e.to_string();
                     let friendly_error = humanize_yaml_error(&raw_error);
-                    diagnostics.push(Diagnostic::error(
-                        path.to_path_buf(),
-                        line,
-                        column,
-                        "CC-AG-007",
-                        t!("rules.cc_ag_007.parse_error", error = friendly_error),
-                    ));
+                    diagnostics.push(
+                        Diagnostic::error(
+                            path.to_path_buf(),
+                            line,
+                            column,
+                            "CC-AG-007",
+                            t!("rules.cc_ag_007.parse_error", error = friendly_error),
+                        )
+                        .with_suggestion(t!("rules.cc_ag_007.parse_error_suggestion")),
+                    );
                 }
                 return diagnostics;
             }
@@ -3012,5 +3015,32 @@ Agent instructions"#;
         assert!(!AgentValidator::is_valid_skill_name_format("my--skill"));
         assert!(!AgentValidator::is_valid_skill_name_format("has space"));
         assert!(!AgentValidator::is_valid_skill_name_format("has.dot"));
+    }
+
+    // ===== CC-AG-007 parse error suggestion test =====
+
+    #[test]
+    fn test_cc_ag_007_parse_error_has_suggestion() {
+        let content = "---\n invalid: [yaml\n---\ncontent";
+
+        let diagnostics = validate(content);
+        let parse_errors: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-AG-007")
+            .collect();
+
+        assert_eq!(parse_errors.len(), 1);
+        assert!(
+            parse_errors[0].suggestion.is_some(),
+            "CC-AG-007 parse error should have a suggestion"
+        );
+        assert!(
+            parse_errors[0]
+                .suggestion
+                .as_ref()
+                .unwrap()
+                .contains("YAML frontmatter syntax"),
+            "Suggestion should mention YAML frontmatter syntax"
+        );
     }
 }

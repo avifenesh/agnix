@@ -75,16 +75,16 @@ impl Validator for CodexValidator {
 
         // If TOML is broken, emit a diagnostic so users can fix invalid syntax
         if let Some(parse_error) = &parsed.parse_error {
-            diagnostics.push(Diagnostic::error(
-                path.to_path_buf(),
-                parse_error.line,
-                parse_error.column,
-                "CDX-000",
-                format!(
-                    "Failed to parse .codex/config.toml as TOML: {}",
-                    parse_error.message
-                ),
-            ));
+            diagnostics.push(
+                Diagnostic::error(
+                    path.to_path_buf(),
+                    parse_error.line,
+                    parse_error.column,
+                    "CDX-000",
+                    t!("rules.cdx_000.message", error = parse_error.message),
+                )
+                .with_suggestion(t!("rules.cdx_000.suggestion")),
+            );
             return diagnostics;
         }
 
@@ -797,5 +797,44 @@ notify = true
         let map = build_key_line_map(content);
         assert_eq!(map.get("approvalModeExtra"), Some(&1));
         assert_eq!(map.get("approvalMode"), Some(&2));
+    }
+
+    // ===== CDX-000 suggestion test =====
+
+    #[test]
+    fn test_cdx_000_has_suggestion() {
+        let content = "this is not valid toml {{{}}}";
+        let diagnostics = validate_config(content);
+
+        let cdx_000: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CDX-000").collect();
+        assert_eq!(cdx_000.len(), 1);
+        assert!(
+            cdx_000[0].suggestion.is_some(),
+            "CDX-000 should have a suggestion"
+        );
+        assert!(
+            cdx_000[0]
+                .suggestion
+                .as_ref()
+                .unwrap()
+                .contains("TOML syntax"),
+            "CDX-000 suggestion should mention TOML syntax"
+        );
+    }
+
+    #[test]
+    fn test_cdx_000_uses_localized_message() {
+        let content = "this is not valid toml {{{}}}";
+        let diagnostics = validate_config(content);
+
+        let cdx_000: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CDX-000").collect();
+        assert_eq!(cdx_000.len(), 1);
+        assert!(
+            cdx_000[0]
+                .message
+                .contains("Failed to parse .codex/config.toml as TOML"),
+            "CDX-000 message should use localized text, got: {}",
+            cdx_000[0].message
+        );
     }
 }

@@ -52,6 +52,7 @@ rules:
     suggestion: "Remove large assets or split the skill into smaller parts"
   as_016:
     message: "Failed to parse SKILL.md: %{error}"
+    suggestion: "Check YAML frontmatter syntax -- ensure proper indentation, colon spacing, and matching quotes"
 
   # --- Claude Code Skills (skill/mod.rs) ---
   cc_sk_001:
@@ -148,6 +149,7 @@ rules:
     suggestion: "Set timeout to a positive integer like 30"
   cc_hk_012:
     message: "Failed to parse hooks configuration: %{error}"
+    suggestion: "Validate JSON syntax in hooks configuration -- check for missing commas, brackets, or unquoted keys"
   cc_hk_013:
     message: "async field is only valid on command hooks, not %{hook_type} hooks at %{location}"
     suggestion: "Remove the async field or change the hook type to command"
@@ -185,7 +187,7 @@ rules:
     missing_schema_suggestion: "Add 'inputSchema' field with JSON Schema definition"
   mcp_003:
     message: "%{prefix}Invalid inputSchema: %{error}"
-    suggestion: "Fix JSON Schema structure"
+    suggestion: "Fix JSON Schema structure -- valid 'type' values are: string, number, integer, boolean, object, array, null"
   mcp_004:
     message: "%{prefix}Tool description is too short (%{len} chars), should be at least 10 characters"
     suggestion: "Add a meaningful description explaining what the tool does"
@@ -194,9 +196,10 @@ rules:
     suggestion: "Consider adding 'requiresApproval: true' for tools that modify data or have side effects"
   mcp_006:
     message: "%{prefix}Tool has annotations that should be validated before trusting"
-    suggestion: "Ensure annotations are from a trusted source before relying on them"
+    suggestion: "Verify annotation values independently -- annotations are self-reported by the server and may be inaccurate or malicious"
   mcp_007:
     message: "Failed to parse MCP configuration: %{error}"
+    suggestion: "Validate JSON syntax -- check for missing commas, brackets, or unquoted keys"
   mcp_008:
     message: "Protocol version mismatch: found '%{found}', expected '%{expected}'"
     request_suggestion: "Consider updating to protocol version '%{expected}' for compatibility"
@@ -243,6 +246,7 @@ rules:
     message: "Agent file must have YAML frontmatter"
     suggestion: "Add frontmatter between --- markers"
     parse_error: "Failed to parse agent frontmatter: %{error}"
+    parse_error_suggestion: "Check YAML frontmatter syntax -- ensure proper indentation, colon spacing, and matching quotes"
   cc_ag_008:
     message: "Invalid memory scope '%{scope}'. Must be 'user', 'project', or 'local'"
     suggestion: "Use one of: user, project, local"
@@ -301,7 +305,7 @@ rules:
   # --- AGENTS.md (agents_md.rs) ---
   agm_001:
     message: "Invalid markdown: %{description}"
-    suggestion: "Fix the markdown syntax error"
+    suggestion: "Fix the markdown syntax error -- check for unclosed tags, mismatched headers, or invalid link syntax"
   agm_002:
     # messages come from schemas::agents_md, not the validator directly
   agm_003:
@@ -442,7 +446,7 @@ rules:
   # --- Gemini CLI (gemini_md.rs) ---
   gm_001:
     message: "Invalid markdown: %{description}"
-    suggestion: "Fix the markdown syntax error"
+    suggestion: "Fix the markdown syntax error -- check for unclosed tags, mismatched headers, or invalid link syntax"
   gm_002:
     message: "No markdown headers found in GEMINI.md instruction file"
     suggestion: "Add section headers (# Title, ## Section) for better organization"
@@ -467,6 +471,9 @@ rules:
     suggestion: "Fix the JSON syntax in opencode.json"
 
   # --- Codex CLI (codex.rs) ---
+  cdx_000:
+    message: "Failed to parse .codex/config.toml as TOML: %{error}"
+    suggestion: "Validate TOML syntax -- check for missing quotes, brackets, or invalid key-value pairs"
   cdx_001:
     message: "Invalid approvalMode '%{value}'. Valid values: 'suggest', 'auto-edit', 'full-auto'"
     type_error: "Field 'approvalMode' must be a string. Valid values: 'suggest', 'auto-edit', 'full-auto'"
@@ -513,6 +520,7 @@ rules:
     suggestion: "Set a non-empty plugin name"
   cc_pl_006:
     message: "Failed to parse plugin.json: %{error}"
+    suggestion: "Validate JSON syntax in plugin.json -- check for missing commas, brackets, or unquoted keys"
   cc_pl_007:
     message: "Invalid component path in '%{field}': '%{path}' must be relative (no absolute paths or '..' traversal)"
     suggestion: "Use a relative path starting with './' (e.g., './skills/')"
@@ -533,7 +541,9 @@ rules:
 
   # --- File-level errors (lib.rs) ---
   file_read_error: "Failed to validate file: %{error}"
+  file_read_error_suggestion: "Check file permissions and ensure the file is not locked by another process"
   xp_004_read_error: "Failed to read instruction file: %{error}"
+  xp_004_read_error_suggestion: "Check file permissions and ensure the file exists and is readable"
 
 # ===========================================================================
 # Core - Config warnings, eval output, LintError

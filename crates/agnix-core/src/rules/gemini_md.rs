@@ -411,4 +411,29 @@ Run npm test.
             crate::FileType::GeminiMd
         );
     }
+
+    // ===== GM-001 improved suggestion test =====
+
+    #[test]
+    fn test_gm_001_suggestion_mentions_unclosed_tags() {
+        let content = r#"```unclosed
+Some content"#;
+        let diagnostics = validate(content);
+
+        let gm_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "GM-001").collect();
+        assert!(
+            !gm_001.is_empty(),
+            "GM-001 should fire for unclosed code block"
+        );
+        assert!(
+            gm_001[0].suggestion.is_some(),
+            "GM-001 should have a suggestion"
+        );
+        let suggestion = gm_001[0].suggestion.as_ref().unwrap();
+        assert!(
+            suggestion.contains("unclosed tags"),
+            "GM-001 suggestion should mention 'unclosed tags', got: {}",
+            suggestion
+        );
+    }
 }

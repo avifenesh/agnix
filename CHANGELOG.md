@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Auto-fix span finding** - Replaced 8 dynamic `Regex::new()` calls with byte-level scanning in auto-fix helpers, eliminating regex compilation overhead entirely (closes #325)
 
 ### Changed
+- **Actionable diagnostic suggestions** - All parse error diagnostics now include actionable suggestions (AS-016, CC-HK-012, MCP-007, CC-AG-007, CC-PL-006, CDX-000, file-level errors); improved 4 generic suggestions with concrete guidance (MCP-003 lists valid JSON Schema types, MCP-006 warns about self-reported annotations, AGM-001/GM-001 specify common markdown issues)
 - **Website landing page** - Updated stats (145 rules, 2300+ tests, 10+ tools), added Cline/OpenCode/Gemini CLI/Roo Code/Kiro CLI to tools grid, visual redesign with Outfit font, syntax-highlighted terminal, scroll reveal animations, and open-ended "And many more" tool card
 
 ### Added

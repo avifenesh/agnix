@@ -3493,3 +3493,28 @@ fn test_cc_sk_005_no_fix_for_valid_agent() {
         .collect();
     assert!(cc_sk_005.is_empty());
 }
+
+// ===== AS-016 suggestion test =====
+
+#[test]
+fn test_as_016_has_suggestion() {
+    let content = "---\n invalid: [yaml\n---\ncontent";
+
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+    let parse_errors: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-016").collect();
+    assert_eq!(parse_errors.len(), 1);
+    assert!(
+        parse_errors[0].suggestion.is_some(),
+        "AS-016 should have a suggestion"
+    );
+    assert!(
+        parse_errors[0]
+            .suggestion
+            .as_ref()
+            .unwrap()
+            .contains("YAML frontmatter syntax"),
+        "AS-016 suggestion should mention YAML frontmatter syntax"
+    );
+}
