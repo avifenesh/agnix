@@ -2813,6 +2813,33 @@ fn test_fixture_unknown_hook_type() {
     assert_eq!(cc_hk_016.len(), 1);
 }
 
+#[test]
+fn test_cc_hk_016_non_string_type() {
+    let content = r#"{
+            "hooks": {
+                "Stop": [
+                    {
+                        "hooks": [
+                            { "type": 123, "command": "echo bad" }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+    let diagnostics = validate(content);
+    let cc_hk_016: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-016")
+        .collect();
+
+    assert_eq!(
+        cc_hk_016.len(),
+        1,
+        "Non-string type value should trigger CC-HK-016"
+    );
+}
+
 // ===== CC-HK-017 Tests: Prompt Hook Missing $ARGUMENTS =====
 
 #[test]

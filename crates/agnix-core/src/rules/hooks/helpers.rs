@@ -545,8 +545,17 @@ pub(super) fn validate_cc_hk_016_unknown_type(
 ) {
     let valid_types = ["command", "prompt", "agent"];
     for_each_raw_hook(raw_value, |event, matcher_idx, hook_idx, hook| {
-        if let Some(hook_type) = hook.get("type").and_then(|t| t.as_str()) {
-            if !valid_types.contains(&hook_type) {
+        if let Some(type_value) = hook.get("type") {
+            let hook_type_str;
+            let is_invalid = if let Some(s) = type_value.as_str() {
+                hook_type_str = s.to_string();
+                !valid_types.contains(&s)
+            } else {
+                // Non-string type value (number, bool, null, etc.) is always invalid
+                hook_type_str = type_value.to_string();
+                true
+            };
+            if is_invalid {
                 let hook_location = format!("hooks.{}[{}].hooks[{}]", event, matcher_idx, hook_idx);
                 diagnostics.push(
                     Diagnostic::error(
@@ -556,7 +565,7 @@ pub(super) fn validate_cc_hk_016_unknown_type(
                         "CC-HK-016",
                         t!(
                             "rules.cc_hk_016.message",
-                            hook_type = hook_type,
+                            hook_type = hook_type_str.as_str(),
                             location = hook_location.as_str()
                         ),
                     )

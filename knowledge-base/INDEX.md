@@ -84,22 +84,22 @@ knowledge-base/
 
 | Category | Rules | HIGH | MEDIUM | LOW | Auto-Fix |
 |----------|-------|------|--------|-----|----------|
-| Agent Skills | 16 | 14 | 2 | 0 | 6 |
-| Claude Skills | 15 | 12 | 3 | 0 | 3 |
-| Claude Hooks | 18 | 13 | 4 | 1 | 2 |
-| Claude Agents | 7 | 7 | 0 | 0 | 1 |
+| Agent Skills | 16 | 14 | 2 | 0 | 5 |
+| Claude Skills | 15 | 12 | 3 | 0 | 7 |
+| Claude Hooks | 18 | 13 | 4 | 1 | 3 |
+| Claude Agents | 7 | 7 | 0 | 0 | 2 |
 | Claude Memory | 10 | 7 | 3 | 0 | 2 |
-| AGENTS.md | 6 | 1 | 5 | 0 | 2 |
+| AGENTS.md | 6 | 1 | 5 | 0 | 0 |
 | Claude Plugins | 6 | 6 | 0 | 0 | 1 |
-| GitHub Copilot | 6 | 4 | 2 | 0 | 0 |
-| MCP | 8 | 7 | 1 | 0 | 1 |
-| XML | 3 | 3 | 0 | 0 | 1 |
+| GitHub Copilot | 6 | 4 | 2 | 0 | 1 |
+| MCP | 8 | 7 | 1 | 0 | 2 |
+| XML | 3 | 3 | 0 | 0 | 3 |
 | References | 2 | 2 | 0 | 0 | 0 |
-| Prompt Eng | 4 | 0 | 4 | 0 | 1 |
+| Prompt Eng | 4 | 0 | 4 | 0 | 0 |
 | Cross-Platform | 6 | 4 | 2 | 0 | 0 |
 | Cursor | 6 | 3 | 3 | 0 | 1 |
 | Version Awareness | 1 | 0 | 0 | 1 | 0 |
-| **TOTAL** | **114** | **83** | **29** | **2** | **22** |
+| **TOTAL** | **114** | **83** | **29** | **2** | **27** |
 
 ---
 
@@ -263,7 +263,7 @@ Standards Covered:     5 (Agent Skills, MCP, Claude Code, Multi-Platform, Prompt
 Sources Consulted:    75+ (specs, docs, research papers, repos)
 Research Agents:       5 (10+ sources each)
 Validation Rules:     114 rules
-Auto-Fixable Rules:   22 rules
+Auto-Fixable Rules:   27 rules
 Test Fixtures:        116 files
 Platforms Analyzed:   9 (Claude Code, Codex CLI, OpenCode, Copilot, Cursor, Cline, Roo-Cline, Continue.dev, Aider)
 ```
