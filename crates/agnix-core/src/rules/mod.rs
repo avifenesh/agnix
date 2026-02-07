@@ -123,23 +123,43 @@ pub(crate) fn find_yaml_value_range<T: FrontmatterRanges>(
 /// Find the closest valid value for an invalid input.
 /// Returns an exact case-insensitive match first, then a substring match,
 /// or None if no plausible match is found.
+///
+/// Uses ASCII case folding — all valid values in agnix are ASCII identifiers
+/// (agent names, scope names, transport types). The 3-byte minimum for
+/// substring matching uses byte length, which equals char count for ASCII.
 pub(crate) fn find_closest_value<'a>(invalid: &str, valid_values: &[&'a str]) -> Option<&'a str> {
-    let lower = invalid.to_lowercase();
-    // Skip empty strings - no meaningful match possible
-    if lower.is_empty() {
+    if invalid.is_empty() {
         return None;
     }
-    // Case-insensitive exact match
+    // Case-insensitive exact match (no allocation)
     for &v in valid_values {
-        if v.to_lowercase() == lower {
+        if v.eq_ignore_ascii_case(invalid) {
             return Some(v);
         }
     }
-    // Substring match (invalid contains valid or valid contains invalid)
+    // Substring match — require minimum 3 chars to avoid spurious matches
+    if invalid.len() < 3 {
+        return None;
+    }
+    let lower = invalid.to_ascii_lowercase();
     valid_values
         .iter()
-        .find(|&&v| v.to_lowercase().contains(&lower) || lower.contains(&v.to_lowercase()))
+        .find(|&&v| {
+            contains_ignore_ascii_case(v.as_bytes(), lower.as_bytes())
+                || contains_ignore_ascii_case(lower.as_bytes(), v.as_bytes())
+        })
         .copied()
+}
+
+/// Check if `haystack` contains `needle` using ASCII case-insensitive comparison.
+/// Zero allocations — operates directly on byte slices.
+fn contains_ignore_ascii_case(haystack: &[u8], needle: &[u8]) -> bool {
+    if needle.is_empty() || needle.len() > haystack.len() {
+        return false;
+    }
+    haystack
+        .windows(needle.len())
+        .any(|window| window.eq_ignore_ascii_case(needle))
 }
 
 #[cfg(test)]
@@ -193,6 +213,27 @@ mod tests {
         assert_eq!(
             find_closest_value("User", &["user", "project", "local"]),
             Some("user")
+        );
+    }
+
+    #[test]
+    fn test_find_closest_value_short_input_no_substring() {
+        // Inputs shorter than 3 chars should only match exactly, not as substrings
+        assert_eq!(
+            find_closest_value("ss", &["stdio", "http", "sse"]),
+            None,
+            "2-char input should not substring-match"
+        );
+        assert_eq!(
+            find_closest_value("a", &["coding-agent", "code-review"]),
+            None,
+            "1-char input should not substring-match"
+        );
+        // But short exact matches still work
+        assert_eq!(
+            find_closest_value("SS", &["stdio", "http", "ss"]),
+            Some("ss"),
+            "2-char exact match (case-insensitive) should still work"
         );
     }
 }
