@@ -990,8 +990,8 @@ impl<'a> ValidationContext<'a> {
             ""
         };
 
-        // Check if the body contains imperative verbs
-        if !body.is_empty() && !imperative_verb_regex().is_match(body) {
+        // Check if the body is empty or lacks imperative verbs
+        if body.trim().is_empty() || !imperative_verb_regex().is_match(body) {
             let (line, col) = self.frontmatter_key_line_col("context");
             self.diagnostics.push(
                 Diagnostic::warning(
@@ -1025,7 +1025,8 @@ impl<'a> ValidationContext<'a> {
             let trimmed = line.trim_start();
             if let Some(rest) = trimmed.strip_prefix(field_name) {
                 if let Some(after_colon) = rest.trim_start().strip_prefix(':') {
-                    let value_str = after_colon.trim();
+                    // Strip inline YAML comments before checking the value
+                    let value_str = after_colon.split('#').next().unwrap_or("").trim();
                     // Check for quoted boolean strings
                     let is_quoted_bool = value_str == "\"true\""
                         || value_str == "\"false\""

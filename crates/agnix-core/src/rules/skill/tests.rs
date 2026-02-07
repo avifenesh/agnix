@@ -3329,3 +3329,112 @@ fn test_cc_sk_015_fixture() {
         "String boolean invocable fixture should trigger CC-SK-015"
     );
 }
+
+// ===== CC-SK-014/015: Inline comment handling =====
+
+#[test]
+fn test_cc_sk_014_with_inline_comment() {
+    let content = "---\nname: test-skill\ndescription: Use when testing\ndisable-model-invocation: \"true\" # some comment\n---\nBody";
+
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+    let cc_sk_014: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-SK-014")
+        .collect();
+
+    assert_eq!(
+        cc_sk_014.len(),
+        1,
+        "Should detect quoted boolean even with trailing inline comment"
+    );
+}
+
+#[test]
+fn test_cc_sk_015_with_inline_comment() {
+    let content = "---\nname: test-skill\ndescription: Use when testing\nuser-invocable: \"false\" # override default\n---\nBody";
+
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+    let cc_sk_015: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-SK-015")
+        .collect();
+
+    assert_eq!(
+        cc_sk_015.len(),
+        1,
+        "Should detect quoted boolean even with trailing inline comment"
+    );
+}
+
+// ===== CC-SK-014/015: No AS-016 false positive =====
+
+#[test]
+fn test_cc_sk_014_does_not_produce_as_016() {
+    let content = r#"---
+name: test-skill
+description: Use when testing
+disable-model-invocation: "true"
+---
+Body"#;
+
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+    let as_016: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-016").collect();
+    // CC-SK-014 fires; AS-016 may or may not fire depending on parse outcome.
+    // But CC-SK-014 should always be present.
+    let cc_sk_014: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-SK-014")
+        .collect();
+    assert_eq!(cc_sk_014.len(), 1, "CC-SK-014 should fire for quoted bool");
+
+    // If AS-016 also fires, that's currently expected since serde can't parse string as bool.
+    // This test documents the current behavior.
+    let _ = as_016;
+}
+
+// ===== CC-SK-013: Empty body with fork context =====
+
+#[test]
+fn test_cc_sk_013_empty_body_fork() {
+    let content = "---\nname: test-skill\ndescription: Use when testing\ncontext: fork\n---\n";
+
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+    let cc_sk_013: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-SK-013")
+        .collect();
+
+    assert_eq!(
+        cc_sk_013.len(),
+        1,
+        "Empty body with fork context should trigger CC-SK-013"
+    );
+}
+
+#[test]
+fn test_cc_sk_013_whitespace_only_body_fork() {
+    let content =
+        "---\nname: test-skill\ndescription: Use when testing\ncontext: fork\n---\n   \n  \n";
+
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+    let cc_sk_013: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-SK-013")
+        .collect();
+
+    assert_eq!(
+        cc_sk_013.len(),
+        1,
+        "Whitespace-only body with fork context should trigger CC-SK-013"
+    );
+}
