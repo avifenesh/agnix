@@ -89,6 +89,10 @@ This section contains all `124` validation rules generated from `knowledge-base/
 | [CC-PL-004](./generated/cc-pl-004.md) | Missing Required Plugin Field | HIGH | Claude Plugins | No |
 | [CC-PL-005](./generated/cc-pl-005.md) | Empty Plugin Name | HIGH | Claude Plugins | Yes (unsafe) |
 | [CC-PL-006](./generated/cc-pl-006.md) | Plugin Parse Error | HIGH | Claude Plugins | No |
+| [CC-PL-007](./generated/cc-pl-007.md) | Invalid Component Path | HIGH | Claude Plugins | Yes (safe) |
+| [CC-PL-008](./generated/cc-pl-008.md) | Component Inside .claude-plugin | HIGH | Claude Plugins | No |
+| [CC-PL-009](./generated/cc-pl-009.md) | Invalid Author Object | MEDIUM | Claude Plugins | No |
+| [CC-PL-010](./generated/cc-pl-010.md) | Invalid Homepage URL | MEDIUM | Claude Plugins | No |
 | [MCP-001](./generated/mcp-001.md) | Invalid JSON-RPC Version | HIGH | MCP | Yes (safe) |
 | [MCP-002](./generated/mcp-002.md) | Missing Required Tool Field | HIGH | MCP | No |
 | [MCP-003](./generated/mcp-003.md) | Invalid JSON Schema | HIGH | MCP | No |

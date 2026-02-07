@@ -1,0 +1,6 @@
+{
+    "name": "test-plugin",
+    "description": "A test plugin",
+    "version": "1.0.0",
+    "homepage": "not-a-url"
+}

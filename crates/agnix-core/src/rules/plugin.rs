@@ -1,4 +1,4 @@
-//! Plugin manifest validation (CC-PL-001 to CC-PL-005)
+//! Plugin manifest validation (CC-PL-001 to CC-PL-010)
 
 use crate::{
     config::LintConfig,
@@ -114,6 +114,77 @@ impl Validator for PluginValidator {
             }
         }
 
+        // CC-PL-007: Invalid component path
+        if config.is_rule_enabled("CC-PL-007") {
+            let path_fields = ["commands", "agents", "skills", "hooks"];
+            for field in path_fields {
+                check_component_paths(&raw_value, field, path, content, &mut diagnostics);
+            }
+        }
+
+        // CC-PL-008: Component inside .claude-plugin
+        if config.is_rule_enabled("CC-PL-008") {
+            let path_fields = ["commands", "agents", "skills", "hooks"];
+            for field in path_fields {
+                check_component_inside_claude_plugin(&raw_value, field, path, &mut diagnostics);
+            }
+        }
+
+        // CC-PL-009: Invalid author object
+        if config.is_rule_enabled("CC-PL-009") {
+            if let Some(author) = raw_value.get("author") {
+                if author.is_object() {
+                    let name_empty = author
+                        .get("name")
+                        .and_then(|n| n.as_str())
+                        .map(|n| n.trim().is_empty())
+                        .unwrap_or(true);
+                    if name_empty {
+                        diagnostics.push(
+                            Diagnostic::warning(
+                                path.to_path_buf(),
+                                1,
+                                0,
+                                "CC-PL-009",
+                                t!("rules.cc_pl_009.message"),
+                            )
+                            .with_suggestion(t!("rules.cc_pl_009.suggestion")),
+                        );
+                    }
+                } else {
+                    // author is present but not an object
+                    diagnostics.push(
+                        Diagnostic::warning(
+                            path.to_path_buf(),
+                            1,
+                            0,
+                            "CC-PL-009",
+                            t!("rules.cc_pl_009.message"),
+                        )
+                        .with_suggestion(t!("rules.cc_pl_009.suggestion")),
+                    );
+                }
+            }
+        }
+
+        // CC-PL-010: Invalid homepage URL
+        if config.is_rule_enabled("CC-PL-010") {
+            if let Some(homepage) = raw_value.get("homepage").and_then(|v| v.as_str()) {
+                if !homepage.is_empty() && !is_valid_url(homepage) {
+                    diagnostics.push(
+                        Diagnostic::warning(
+                            path.to_path_buf(),
+                            1,
+                            0,
+                            "CC-PL-010",
+                            t!("rules.cc_pl_010.message", url = homepage),
+                        )
+                        .with_suggestion(t!("rules.cc_pl_010.suggestion")),
+                    );
+                }
+            }
+        }
+
         let schema: PluginSchema = match serde_json::from_value(raw_value.clone()) {
             Ok(schema) => schema,
             Err(_) => {
@@ -186,6 +257,130 @@ fn find_unique_json_string_value_range(content: &str, key: &str) -> Option<(usiz
         value_match.end(),
         value_match.as_str().to_string(),
     ))
+}
+
+/// Check if a path string is invalid for a component path.
+/// Must be relative (no absolute paths), must not use `..` traversal.
+fn is_invalid_component_path(p: &str) -> bool {
+    let trimmed = p.trim();
+    if trimmed.is_empty() {
+        return false;
+    }
+    // Absolute paths: starts with `/`, `\`, or contains `:` (Windows drive letter)
+    if trimmed.starts_with('/') || trimmed.starts_with('\\') || trimmed.contains(":\\") {
+        return true;
+    }
+    // Parent directory traversal
+    if trimmed == ".." || trimmed.starts_with("../") || trimmed.starts_with("..\\") {
+        return true;
+    }
+    // Embedded traversal
+    trimmed.contains("/../") || trimmed.contains("\\..\\")
+}
+
+/// Check if a path can be autofixed by prepending `./`.
+fn is_autofixable_path(p: &str) -> bool {
+    let trimmed = p.trim();
+    // Not empty, not absolute, no traversal, and doesn't already start with ./
+    !trimmed.is_empty()
+        && !trimmed.starts_with('/')
+        && !trimmed.starts_with('\\')
+        && !trimmed.contains(":\\")
+        && !trimmed.starts_with("..")
+        && !trimmed.contains("/..")
+        && !trimmed.contains("\\..")
+        && !trimmed.starts_with("./")
+        && !trimmed.starts_with(".\\")
+}
+
+/// Check if a path starts with `.claude-plugin/`.
+fn path_inside_claude_plugin(p: &str) -> bool {
+    let trimmed = p.trim();
+    trimmed.starts_with(".claude-plugin/")
+        || trimmed.starts_with(".claude-plugin\\")
+        || trimmed == ".claude-plugin"
+}
+
+/// Extract string paths from a JSON value that can be a string or array of strings.
+fn extract_paths(value: &serde_json::Value) -> Vec<String> {
+    match value {
+        serde_json::Value::String(s) => vec![s.clone()],
+        serde_json::Value::Array(arr) => arr.iter().filter_map(|v| v.as_str().map(String::from)).collect(),
+        _ => vec![],
+    }
+}
+
+/// CC-PL-007: Validate component paths are relative without `..` traversal.
+fn check_component_paths(
+    raw_value: &serde_json::Value,
+    field: &str,
+    path: &Path,
+    content: &str,
+    diagnostics: &mut Vec<Diagnostic>,
+) {
+    if let Some(val) = raw_value.get(field) {
+        for p in extract_paths(val) {
+            if is_invalid_component_path(&p) {
+                let mut diagnostic = Diagnostic::error(
+                    path.to_path_buf(),
+                    1,
+                    0,
+                    "CC-PL-007",
+                    t!("rules.cc_pl_007.message", field = field, path = p.as_str()),
+                )
+                .with_suggestion(t!("rules.cc_pl_007.suggestion"));
+
+                // Safe auto-fix: for relative paths missing ./ prefix, prepend it.
+                // Only when the field has a single string value (not arrays).
+                if is_autofixable_path(&p) {
+                    if let Some((start, end, _)) =
+                        find_unique_json_string_value_range(content, field)
+                    {
+                        let fixed = format!("./{}", p.trim());
+                        diagnostic = diagnostic.with_fix(Fix::replace(
+                            start,
+                            end,
+                            &fixed,
+                            &format!("Prepend './' to path: '{}'", p.trim()),
+                            true,
+                        ));
+                    }
+                }
+
+                diagnostics.push(diagnostic);
+            }
+        }
+    }
+}
+
+/// CC-PL-008: Detect component paths pointing inside .claude-plugin/.
+fn check_component_inside_claude_plugin(
+    raw_value: &serde_json::Value,
+    field: &str,
+    path: &Path,
+    diagnostics: &mut Vec<Diagnostic>,
+) {
+    if let Some(val) = raw_value.get(field) {
+        for p in extract_paths(val) {
+            if path_inside_claude_plugin(&p) {
+                diagnostics.push(
+                    Diagnostic::error(
+                        path.to_path_buf(),
+                        1,
+                        0,
+                        "CC-PL-008",
+                        t!("rules.cc_pl_008.message", field = field, path = p.as_str()),
+                    )
+                    .with_suggestion(t!("rules.cc_pl_008.suggestion")),
+                );
+            }
+        }
+    }
+}
+
+/// Check if a URL is valid (http or https scheme).
+fn is_valid_url(url: &str) -> bool {
+    url.starts_with("http://") || url.starts_with("https://")
 }
 
 #[cfg(test)]
@@ -621,5 +816,523 @@ mod tests {
         );
 
         assert!(diagnostics.is_empty());
+    }
+
+    // ===== CC-PL-007: Invalid Component Path =====
+
+    #[test]
+    fn test_cc_pl_007_absolute_path() {
+        let temp = TempDir::new().unwrap();
+        let plugin_path = temp.path().join(".claude-plugin").join("plugin.json");
+        write_plugin(
+            &plugin_path,
+            r#"{"name":"test","description":"desc","version":"1.0.0","commands":"/usr/local/bin/cmd"}"#,
+        );
+
+        let validator = PluginValidator;
+        let diagnostics = validator.validate(
+            &plugin_path,
+            &fs::read_to_string(&plugin_path).unwrap(),
+            &LintConfig::default(),
+        );
+
+        assert!(diagnostics.iter().any(|d| d.rule == "CC-PL-007"));
+    }
+
+    #[test]
+    fn test_cc_pl_007_windows_absolute_path() {
+        let temp = TempDir::new().unwrap();
+        let plugin_path = temp.path().join(".claude-plugin").join("plugin.json");
+        write_plugin(
+            &plugin_path,
+            r#"{"name":"test","description":"desc","version":"1.0.0","skills":"C:\\Users\\skills"}"#,
+        );
+
+        let validator = PluginValidator;
+        let diagnostics = validator.validate(
+            &plugin_path,
+            &fs::read_to_string(&plugin_path).unwrap(),
+            &LintConfig::default(),
+        );
+
+        assert!(diagnostics.iter().any(|d| d.rule == "CC-PL-007"));
+    }
+
+    #[test]
+    fn test_cc_pl_007_traversal_path() {
+        let temp = TempDir::new().unwrap();
+        let plugin_path = temp.path().join(".claude-plugin").join("plugin.json");
+        write_plugin(
+            &plugin_path,
+            r#"{"name":"test","description":"desc","version":"1.0.0","agents":"../outside/agents"}"#,
+        );
+
+        let validator = PluginValidator;
+        let diagnostics = validator.validate(
+            &plugin_path,
+            &fs::read_to_string(&plugin_path).unwrap(),
+            &LintConfig::default(),
+        );
+
+        assert!(diagnostics.iter().any(|d| d.rule == "CC-PL-007"));
+    }
+
+    #[test]
+    fn test_cc_pl_007_embedded_traversal() {
+        let temp = TempDir::new().unwrap();
+        let plugin_path = temp.path().join(".claude-plugin").join("plugin.json");
+        write_plugin(
+            &plugin_path,
+            r#"{"name":"test","description":"desc","version":"1.0.0","hooks":"./valid/../escape"}"#,
+        );
+
+        let validator = PluginValidator;
+        let diagnostics = validator.validate(
+            &plugin_path,
+            &fs::read_to_string(&plugin_path).unwrap(),
+            &LintConfig::default(),
+        );
+
+        assert!(diagnostics.iter().any(|d| d.rule == "CC-PL-007"));
+    }
+
+    #[test]
+    fn test_cc_pl_007_array_of_paths() {
+        let temp = TempDir::new().unwrap();
+        let plugin_path = temp.path().join(".claude-plugin").join("plugin.json");
+        write_plugin(
+            &plugin_path,
+            r#"{"name":"test","description":"desc","version":"1.0.0","skills":["./valid","../invalid"]}"#,
+        );
+
+        let validator = PluginValidator;
+        let diagnostics = validator.validate(
+            &plugin_path,
+            &fs::read_to_string(&plugin_path).unwrap(),
+            &LintConfig::default(),
+        );
+
+        let pl_007: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-PL-007")
+            .collect();
+        assert_eq!(pl_007.len(), 1, "Only the invalid path should trigger CC-PL-007");
+    }
+
+    #[test]
+    fn test_cc_pl_007_valid_relative_path_no_error() {
+        let temp = TempDir::new().unwrap();
+        let plugin_path = temp.path().join(".claude-plugin").join("plugin.json");
+        write_plugin(
+            &plugin_path,
+            r#"{"name":"test","description":"desc","version":"1.0.0","commands":"./commands/"}"#,
+        );
+
+        let validator = PluginValidator;
+        let diagnostics = validator.validate(
+            &plugin_path,
+            &fs::read_to_string(&plugin_path).unwrap(),
+            &LintConfig::default(),
+        );
+
+        assert!(!diagnostics.iter().any(|d| d.rule == "CC-PL-007"));
+    }
+
+    #[test]
+    fn test_cc_pl_007_no_path_fields_no_error() {
+        let temp = TempDir::new().unwrap();
+        let plugin_path = temp.path().join(".claude-plugin").join("plugin.json");
+        write_plugin(
+            &plugin_path,
+            r#"{"name":"test","description":"desc","version":"1.0.0"}"#,
+        );
+
+        let validator = PluginValidator;
+        let diagnostics = validator.validate(
+            &plugin_path,
+            &fs::read_to_string(&plugin_path).unwrap(),
+            &LintConfig::default(),
+        );
+
+        assert!(!diagnostics.iter().any(|d| d.rule == "CC-PL-007"));
+    }
+
+    #[test]
+    fn test_cc_pl_007_disabled() {
+        let temp = TempDir::new().unwrap();
+        let plugin_path = temp.path().join(".claude-plugin").join("plugin.json");
+        write_plugin(
+            &plugin_path,
+            r#"{"name":"test","description":"desc","version":"1.0.0","commands":"/absolute"}"#,
+        );
+
+        let mut config = LintConfig::default();
+        config.rules.disabled_rules = vec!["CC-PL-007".to_string()];
+
+        let validator = PluginValidator;
+        let diagnostics = validator.validate(
+            &plugin_path,
+            &fs::read_to_string(&plugin_path).unwrap(),
+            &config,
+        );
+
+        assert!(!diagnostics.iter().any(|d| d.rule == "CC-PL-007"));
+    }
+
+    // ===== CC-PL-008: Component Inside .claude-plugin =====
+
+    #[test]
+    fn test_cc_pl_008_path_inside_claude_plugin() {
+        let temp = TempDir::new().unwrap();
+        let plugin_path = temp.path().join(".claude-plugin").join("plugin.json");
+        write_plugin(
+            &plugin_path,
+            r#"{"name":"test","description":"desc","version":"1.0.0","agents":".claude-plugin/agents"}"#,
+        );
+
+        let validator = PluginValidator;
+        let diagnostics = validator.validate(
+            &plugin_path,
+            &fs::read_to_string(&plugin_path).unwrap(),
+            &LintConfig::default(),
+        );
+
+        assert!(diagnostics.iter().any(|d| d.rule == "CC-PL-008"));
+    }
+
+    #[test]
+    fn test_cc_pl_008_array_with_mixed_paths() {
+        let temp = TempDir::new().unwrap();
+        let plugin_path = temp.path().join(".claude-plugin").join("plugin.json");
+        write_plugin(
+            &plugin_path,
+            r#"{"name":"test","description":"desc","version":"1.0.0","skills":["./valid",".claude-plugin/invalid"]}"#,
+        );
+
+        let validator = PluginValidator;
+        let diagnostics = validator.validate(
+            &plugin_path,
+            &fs::read_to_string(&plugin_path).unwrap(),
+            &LintConfig::default(),
+        );
+
+        assert!(diagnostics.iter().any(|d| d.rule == "CC-PL-008"));
+    }
+
+    #[test]
+    fn test_cc_pl_008_valid_path_no_error() {
+        let temp = TempDir::new().unwrap();
+        let plugin_path = temp.path().join(".claude-plugin").join("plugin.json");
+        write_plugin(
+            &plugin_path,
+            r#"{"name":"test","description":"desc","version":"1.0.0","skills":"./skills/"}"#,
+        );
+
+        let validator = PluginValidator;
+        let diagnostics = validator.validate(
+            &plugin_path,
+            &fs::read_to_string(&plugin_path).unwrap(),
+            &LintConfig::default(),
+        );
+
+        assert!(!diagnostics.iter().any(|d| d.rule == "CC-PL-008"));
+    }
+
+    #[test]
+    fn test_cc_pl_008_disabled() {
+        let temp = TempDir::new().unwrap();
+        let plugin_path = temp.path().join(".claude-plugin").join("plugin.json");
+        write_plugin(
+            &plugin_path,
+            r#"{"name":"test","description":"desc","version":"1.0.0","agents":".claude-plugin/agents"}"#,
+        );
+
+        let mut config = LintConfig::default();
+        config.rules.disabled_rules = vec!["CC-PL-008".to_string()];
+
+        let validator = PluginValidator;
+        let diagnostics = validator.validate(
+            &plugin_path,
+            &fs::read_to_string(&plugin_path).unwrap(),
+            &config,
+        );
+
+        assert!(!diagnostics.iter().any(|d| d.rule == "CC-PL-008"));
+    }
+
+    // ===== CC-PL-009: Invalid Author Object =====
+
+    #[test]
+    fn test_cc_pl_009_empty_author_name() {
+        let temp = TempDir::new().unwrap();
+        let plugin_path = temp.path().join(".claude-plugin").join("plugin.json");
+        write_plugin(
+            &plugin_path,
+            r#"{"name":"test","description":"desc","version":"1.0.0","author":{"name":""}}"#,
+        );
+
+        let validator = PluginValidator;
+        let diagnostics = validator.validate(
+            &plugin_path,
+            &fs::read_to_string(&plugin_path).unwrap(),
+            &LintConfig::default(),
+        );
+
+        assert!(diagnostics.iter().any(|d| d.rule == "CC-PL-009"));
+    }
+
+    #[test]
+    fn test_cc_pl_009_whitespace_author_name() {
+        let temp = TempDir::new().unwrap();
+        let plugin_path = temp.path().join(".claude-plugin").join("plugin.json");
+        write_plugin(
+            &plugin_path,
+            r#"{"name":"test","description":"desc","version":"1.0.0","author":{"name":"  "}}"#,
+        );
+
+        let validator = PluginValidator;
+        let diagnostics = validator.validate(
+            &plugin_path,
+            &fs::read_to_string(&plugin_path).unwrap(),
+            &LintConfig::default(),
+        );
+
+        assert!(diagnostics.iter().any(|d| d.rule == "CC-PL-009"));
+    }
+
+    #[test]
+    fn test_cc_pl_009_missing_author_name() {
+        let temp = TempDir::new().unwrap();
+        let plugin_path = temp.path().join(".claude-plugin").join("plugin.json");
+        write_plugin(
+            &plugin_path,
+            r#"{"name":"test","description":"desc","version":"1.0.0","author":{"email":"a@b.com"}}"#,
+        );
+
+        let validator = PluginValidator;
+        let diagnostics = validator.validate(
+            &plugin_path,
+            &fs::read_to_string(&plugin_path).unwrap(),
+            &LintConfig::default(),
+        );
+
+        assert!(diagnostics.iter().any(|d| d.rule == "CC-PL-009"));
+    }
+
+    #[test]
+    fn test_cc_pl_009_author_not_object() {
+        let temp = TempDir::new().unwrap();
+        let plugin_path = temp.path().join(".claude-plugin").join("plugin.json");
+        write_plugin(
+            &plugin_path,
+            r#"{"name":"test","description":"desc","version":"1.0.0","author":"just a string"}"#,
+        );
+
+        let validator = PluginValidator;
+        let diagnostics = validator.validate(
+            &plugin_path,
+            &fs::read_to_string(&plugin_path).unwrap(),
+            &LintConfig::default(),
+        );
+
+        assert!(diagnostics.iter().any(|d| d.rule == "CC-PL-009"));
+    }
+
+    #[test]
+    fn test_cc_pl_009_valid_author_no_error() {
+        let temp = TempDir::new().unwrap();
+        let plugin_path = temp.path().join(".claude-plugin").join("plugin.json");
+        write_plugin(
+            &plugin_path,
+            r#"{"name":"test","description":"desc","version":"1.0.0","author":{"name":"Test Author"}}"#,
+        );
+
+        let validator = PluginValidator;
+        let diagnostics = validator.validate(
+            &plugin_path,
+            &fs::read_to_string(&plugin_path).unwrap(),
+            &LintConfig::default(),
+        );
+
+        assert!(!diagnostics.iter().any(|d| d.rule == "CC-PL-009"));
+    }
+
+    #[test]
+    fn test_cc_pl_009_no_author_no_error() {
+        let temp = TempDir::new().unwrap();
+        let plugin_path = temp.path().join(".claude-plugin").join("plugin.json");
+        write_plugin(
+            &plugin_path,
+            r#"{"name":"test","description":"desc","version":"1.0.0"}"#,
+        );
+
+        let validator = PluginValidator;
+        let diagnostics = validator.validate(
+            &plugin_path,
+            &fs::read_to_string(&plugin_path).unwrap(),
+            &LintConfig::default(),
+        );
+
+        assert!(!diagnostics.iter().any(|d| d.rule == "CC-PL-009"));
+    }
+
+    #[test]
+    fn test_cc_pl_009_disabled() {
+        let temp = TempDir::new().unwrap();
+        let plugin_path = temp.path().join(".claude-plugin").join("plugin.json");
+        write_plugin(
+            &plugin_path,
+            r#"{"name":"test","description":"desc","version":"1.0.0","author":{"name":""}}"#,
+        );
+
+        let mut config = LintConfig::default();
+        config.rules.disabled_rules = vec!["CC-PL-009".to_string()];
+
+        let validator = PluginValidator;
+        let diagnostics = validator.validate(
+            &plugin_path,
+            &fs::read_to_string(&plugin_path).unwrap(),
+            &config,
+        );
+
+        assert!(!diagnostics.iter().any(|d| d.rule == "CC-PL-009"));
+    }
+
+    // ===== CC-PL-010: Invalid Homepage URL =====
+
+    #[test]
+    fn test_cc_pl_010_invalid_url() {
+        let temp = TempDir::new().unwrap();
+        let plugin_path = temp.path().join(".claude-plugin").join("plugin.json");
+        write_plugin(
+            &plugin_path,
+            r#"{"name":"test","description":"desc","version":"1.0.0","homepage":"not-a-url"}"#,
+        );
+
+        let validator = PluginValidator;
+        let diagnostics = validator.validate(
+            &plugin_path,
+            &fs::read_to_string(&plugin_path).unwrap(),
+            &LintConfig::default(),
+        );
+
+        assert!(diagnostics.iter().any(|d| d.rule == "CC-PL-010"));
+    }
+
+    #[test]
+    fn test_cc_pl_010_ftp_url() {
+        let temp = TempDir::new().unwrap();
+        let plugin_path = temp.path().join(".claude-plugin").join("plugin.json");
+        write_plugin(
+            &plugin_path,
+            r#"{"name":"test","description":"desc","version":"1.0.0","homepage":"ftp://example.com"}"#,
+        );
+
+        let validator = PluginValidator;
+        let diagnostics = validator.validate(
+            &plugin_path,
+            &fs::read_to_string(&plugin_path).unwrap(),
+            &LintConfig::default(),
+        );
+
+        assert!(diagnostics.iter().any(|d| d.rule == "CC-PL-010"));
+    }
+
+    #[test]
+    fn test_cc_pl_010_valid_https_url_no_error() {
+        let temp = TempDir::new().unwrap();
+        let plugin_path = temp.path().join(".claude-plugin").join("plugin.json");
+        write_plugin(
+            &plugin_path,
+            r#"{"name":"test","description":"desc","version":"1.0.0","homepage":"https://example.com"}"#,
+        );
+
+        let validator = PluginValidator;
+        let diagnostics = validator.validate(
+            &plugin_path,
+            &fs::read_to_string(&plugin_path).unwrap(),
+            &LintConfig::default(),
+        );
+
+        assert!(!diagnostics.iter().any(|d| d.rule == "CC-PL-010"));
+    }
+
+    #[test]
+    fn test_cc_pl_010_valid_http_url_no_error() {
+        let temp = TempDir::new().unwrap();
+        let plugin_path = temp.path().join(".claude-plugin").join("plugin.json");
+        write_plugin(
+            &plugin_path,
+            r#"{"name":"test","description":"desc","version":"1.0.0","homepage":"http://example.com"}"#,
+        );
+
+        let validator = PluginValidator;
+        let diagnostics = validator.validate(
+            &plugin_path,
+            &fs::read_to_string(&plugin_path).unwrap(),
+            &LintConfig::default(),
+        );
+
+        assert!(!diagnostics.iter().any(|d| d.rule == "CC-PL-010"));
+    }
+
+    #[test]
+    fn test_cc_pl_010_no_homepage_no_error() {
+        let temp = TempDir::new().unwrap();
+        let plugin_path = temp.path().join(".claude-plugin").join("plugin.json");
+        write_plugin(
+            &plugin_path,
+            r#"{"name":"test","description":"desc","version":"1.0.0"}"#,
+        );
+
+        let validator = PluginValidator;
+        let diagnostics = validator.validate(
+            &plugin_path,
+            &fs::read_to_string(&plugin_path).unwrap(),
+            &LintConfig::default(),
+        );
+
+        assert!(!diagnostics.iter().any(|d| d.rule == "CC-PL-010"));
+    }
+
+    #[test]
+    fn test_cc_pl_010_empty_homepage_no_error() {
+        let temp = TempDir::new().unwrap();
+        let plugin_path = temp.path().join(".claude-plugin").join("plugin.json");
+        write_plugin(
+            &plugin_path,
+            r#"{"name":"test","description":"desc","version":"1.0.0","homepage":""}"#,
+        );
+
+        let validator = PluginValidator;
+        let diagnostics = validator.validate(
+            &plugin_path,
+            &fs::read_to_string(&plugin_path).unwrap(),
+            &LintConfig::default(),
+        );
+
+        assert!(!diagnostics.iter().any(|d| d.rule == "CC-PL-010"));
+    }
+
+    #[test]
+    fn test_cc_pl_010_disabled() {
+        let temp = TempDir::new().unwrap();
+        let plugin_path = temp.path().join(".claude-plugin").join("plugin.json");
+        write_plugin(
+            &plugin_path,
+            r#"{"name":"test","description":"desc","version":"1.0.0","homepage":"not-a-url"}"#,
+        );
+
+        let mut config = LintConfig::default();
+        config.rules.disabled_rules = vec!["CC-PL-010".to_string()];
+
+        let validator = PluginValidator;
+        let diagnostics = validator.validate(
+            &plugin_path,
+            &fs::read_to_string(&plugin_path).unwrap(),
+            &config,
+        );
+
+        assert!(!diagnostics.iter().any(|d| d.rule == "CC-PL-010"));
     }
 }
