@@ -23,10 +23,7 @@ fn skip_whitespace(content: &[u8], pos: usize) -> usize {
 
 /// Find all byte positions where `"key"` appears followed by optional whitespace and `:`.
 /// Returns a vec of (key_start, key_end, after_colon) tuples.
-fn find_all_json_key_colon_positions(
-    content: &str,
-    key: &str,
-) -> Vec<(usize, usize, usize)> {
+fn find_all_json_key_colon_positions(content: &str, key: &str) -> Vec<(usize, usize, usize)> {
     debug_assert!(!key.contains('"'), "key must not contain quote characters");
     let bytes = content.as_bytes();
     let mut needle = String::with_capacity(key.len() + 2);
@@ -198,7 +195,7 @@ pub(crate) fn find_unique_json_field_line(
         };
 
         let mut end = val_end;
-        end = skip_ws_inline(bytes, end);
+        end = skip_whitespace(bytes, end);
         if end < bytes.len() && bytes[end] == b',' {
             end += 1;
         }
@@ -255,18 +252,17 @@ pub(crate) fn find_unique_json_matcher_line(
         }
 
         let val_start = skip_whitespace(bytes, *after_colon);
-        let (inner_start, inner_end, outer_end) =
-            match parse_string_value_at(bytes, val_start) {
-                Some(v) => v,
-                None => continue,
-            };
+        let (inner_start, inner_end, outer_end) = match parse_string_value_at(bytes, val_start) {
+            Some(v) => v,
+            None => continue,
+        };
 
         if &bytes[inner_start..inner_end] != matcher_value.as_bytes() {
             continue;
         }
 
         let mut end = outer_end;
-        end = skip_ws_inline(bytes, end);
+        end = skip_whitespace(bytes, end);
         if end < bytes.len() && bytes[end] == b',' {
             end += 1;
         }
@@ -351,8 +347,7 @@ pub(crate) fn find_unique_toml_string_value(
                 // Skip whitespace after '='
                 let val_pos = skip_whitespace(bytes, eq_pos + 1);
                 // Expect '"value"'
-                if let Some((inner_start, inner_end, _)) = parse_string_value_at(bytes, val_pos)
-                {
+                if let Some((inner_start, inner_end, _)) = parse_string_value_at(bytes, val_pos) {
                     if &bytes[inner_start..inner_end] == value_bytes {
                         if found.is_some() {
                             return None;
@@ -410,10 +405,7 @@ pub(crate) fn find_unique_json_string_value_range(
 /// Scalar types: `"string"`, `-?digits(.digits)?`, `true`, `false`, `null`.
 ///
 /// Replaces `find_unique_json_scalar_value_span` in rules/mcp.rs.
-pub(crate) fn find_unique_json_scalar_span(
-    content: &str,
-    key: &str,
-) -> Option<(usize, usize)> {
+pub(crate) fn find_unique_json_scalar_span(content: &str, key: &str) -> Option<(usize, usize)> {
     let bytes = content.as_bytes();
     let positions = find_all_json_key_colon_positions(content, key);
 
@@ -622,8 +614,7 @@ mod tests {
 
     #[test]
     fn matcher_line_duplicate() {
-        let content =
-            "{\n  \"matcher\": \"Bash\",\n  \"other\": 1,\n  \"matcher\": \"Bash\"\n}";
+        let content = "{\n  \"matcher\": \"Bash\",\n  \"other\": 1,\n  \"matcher\": \"Bash\"\n}";
         assert!(find_unique_json_matcher_line(content, "Bash").is_none());
     }
 
@@ -945,8 +936,7 @@ mod tests {
 
     #[test]
     fn event_key_span_crlf() {
-        let content =
-            "{\r\n  \"beforeCommand\": {\r\n    \"command\": \"echo\"\r\n  }\r\n}";
+        let content = "{\r\n  \"beforeCommand\": {\r\n    \"command\": \"echo\"\r\n  }\r\n}";
         let result = find_event_key_span(content, "beforeCommand");
         assert!(result.is_some());
         let (s, e) = result.unwrap();
