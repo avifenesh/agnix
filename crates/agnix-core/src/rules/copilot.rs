@@ -45,6 +45,34 @@ fn line_byte_range(content: &str, line_number: usize) -> Option<(usize, usize)> 
     }
 }
 
+/// Find the byte range of a YAML value for a given key in parsed frontmatter.
+/// Returns the value range (including quotes if present).
+fn find_yaml_value_range(
+    content: &str,
+    parsed: &crate::schemas::copilot::ParsedFrontmatter,
+    key: &str,
+) -> Option<(usize, usize)> {
+    for (idx, line) in parsed.raw.lines().enumerate() {
+        let trimmed = line.trim_start();
+        if let Some(rest) = trimmed.strip_prefix(key) {
+            if let Some(after_colon) = rest.trim_start().strip_prefix(':') {
+                let value_str = after_colon.split('#').next().unwrap_or("").trim();
+                if value_str.is_empty() {
+                    continue;
+                }
+                let line_num = parsed.start_line + 1 + idx;
+                let (line_start, _) = line_byte_range(content, line_num)?;
+                let line_content = &content[line_start..];
+                let val_offset = line_content.find(value_str)?;
+                let abs_start = line_start + val_offset;
+                let abs_end = abs_start + value_str.len();
+                return Some((abs_start, abs_end));
+            }
+        }
+    }
+    None
+}
+
 impl Validator for CopilotValidator {
     fn validate(&self, path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic> {
         let mut diagnostics = Vec::new();
@@ -245,16 +273,42 @@ impl Validator for CopilotValidator {
                             .map(|(i, _)| parsed.start_line + 1 + i)
                             .unwrap_or(parsed.start_line + 1);
 
-                        diagnostics.push(
-                            Diagnostic::error(
-                                path.to_path_buf(),
-                                line,
-                                0,
-                                "COP-005",
-                                t!("rules.cop_005.message", value = agent_value.as_str()),
-                            )
-                            .with_suggestion(t!("rules.cop_005.suggestion")),
-                        );
+                        let mut diagnostic = Diagnostic::error(
+                            path.to_path_buf(),
+                            line,
+                            0,
+                            "COP-005",
+                            t!("rules.cop_005.message", value = agent_value.as_str()),
+                        )
+                        .with_suggestion(t!("rules.cop_005.suggestion"));
+
+                        // Unsafe auto-fix: replace with closest valid agent value
+                        if let Some(closest) = super::find_closest_value(
+                            agent_value.as_str(),
+                            VALID_AGENTS,
+                        ) {
+                            if let Some((start, end)) =
+                                find_yaml_value_range(content, &parsed, "excludeAgent")
+                            {
+                                let replacement =
+                                    if content[start..end].starts_with('"') {
+                                        format!("\"{}\"", closest)
+                                    } else if content[start..end].starts_with('\'') {
+                                        format!("'{}'", closest)
+                                    } else {
+                                        closest.to_string()
+                                    };
+                                diagnostic = diagnostic.with_fix(Fix::replace(
+                                    start,
+                                    end,
+                                    replacement,
+                                    t!("rules.cop_005.fix", fixed = closest),
+                                    false,
+                                ));
+                            }
+                        }
+
+                        diagnostics.push(diagnostic);
                     }
                 }
             }

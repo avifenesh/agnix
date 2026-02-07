@@ -26,3 +26,73 @@ use std::path::Path;
 pub trait Validator {
     fn validate(&self, path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic>;
 }
+
+/// Find the closest valid value for an invalid input.
+/// Returns an exact case-insensitive match first, then a substring match,
+/// or None if no plausible match is found.
+pub(crate) fn find_closest_value<'a>(invalid: &str, valid_values: &[&'a str]) -> Option<&'a str> {
+    let lower = invalid.to_lowercase();
+    // Case-insensitive exact match
+    for &v in valid_values {
+        if v.to_lowercase() == lower {
+            return Some(v);
+        }
+    }
+    // Substring match (invalid contains valid or valid contains invalid)
+    for &v in valid_values {
+        if v.to_lowercase().contains(&lower) || lower.contains(&v.to_lowercase()) {
+            return Some(v);
+        }
+    }
+    None
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_find_closest_value_exact_case_insensitive() {
+        assert_eq!(
+            find_closest_value("Stdio", &["stdio", "http", "sse"]),
+            Some("stdio")
+        );
+        assert_eq!(
+            find_closest_value("HTTP", &["stdio", "http", "sse"]),
+            Some("http")
+        );
+    }
+
+    #[test]
+    fn test_find_closest_value_substring_match() {
+        assert_eq!(
+            find_closest_value("code", &["code-review", "coding-agent"]),
+            Some("code-review")
+        );
+        assert_eq!(
+            find_closest_value("coding-agent-v2", &["code-review", "coding-agent"]),
+            Some("coding-agent")
+        );
+    }
+
+    #[test]
+    fn test_find_closest_value_no_match() {
+        assert_eq!(
+            find_closest_value("nonsense", &["stdio", "http", "sse"]),
+            None
+        );
+        assert_eq!(
+            find_closest_value("xyz", &["code-review", "coding-agent"]),
+            None
+        );
+    }
+
+    #[test]
+    fn test_find_closest_value_exact_preferred_over_substring() {
+        // "user" matches exactly, not as substring of "user-project"
+        assert_eq!(
+            find_closest_value("User", &["user", "project", "local"]),
+            Some("user")
+        );
+    }
+}

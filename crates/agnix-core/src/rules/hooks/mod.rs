@@ -2,7 +2,7 @@
 
 use crate::{
     config::LintConfig,
-    diagnostics::Diagnostic,
+    diagnostics::{Diagnostic, Fix},
     rules::Validator,
     schemas::hooks::{Hook, HooksSchema, SettingsSchema},
 };
@@ -150,18 +150,29 @@ fn validate_cc_hk_010_command_timeout(
 fn validate_cc_hk_015_model_on_command(
     hook_location: &str,
     path: &Path,
+    content: &str,
     diagnostics: &mut Vec<Diagnostic>,
 ) {
-    diagnostics.push(
-        Diagnostic::warning(
-            path.to_path_buf(),
-            1,
-            0,
-            "CC-HK-015",
-            t!("rules.cc_hk_015.message", location = hook_location),
-        )
-        .with_suggestion(t!("rules.cc_hk_015.suggestion")),
-    );
+    let mut diagnostic = Diagnostic::warning(
+        path.to_path_buf(),
+        1,
+        0,
+        "CC-HK-015",
+        t!("rules.cc_hk_015.message", location = hook_location),
+    )
+    .with_suggestion(t!("rules.cc_hk_015.suggestion"));
+
+    // Safe auto-fix: remove the model field line
+    if let Some((start, end)) = find_unique_json_field_line_span(content, "model") {
+        diagnostic = diagnostic.with_fix(Fix::delete(
+            start,
+            end,
+            t!("rules.cc_hk_015.fix"),
+            true,
+        ));
+    }
+
+    diagnostics.push(diagnostic);
 }
 
 /// CC-HK-017: Prompt hook missing $ARGUMENTS
@@ -191,25 +202,38 @@ fn validate_cc_hk_018_matcher_ignored(
     matcher: &Option<String>,
     matcher_idx: usize,
     path: &Path,
+    content: &str,
     diagnostics: &mut Vec<Diagnostic>,
 ) {
     let ignored_events = ["UserPromptSubmit", "Stop"];
     if ignored_events.contains(&event) && matcher.is_some() {
         let hook_location = format!("hooks.{}[{}]", event, matcher_idx);
-        diagnostics.push(
-            Diagnostic::info(
-                path.to_path_buf(),
-                1,
-                0,
-                "CC-HK-018",
-                t!(
-                    "rules.cc_hk_018.message",
-                    location = hook_location.as_str(),
-                    event = event
-                ),
-            )
-            .with_suggestion(t!("rules.cc_hk_018.suggestion", event = event)),
-        );
+        let mut diagnostic = Diagnostic::info(
+            path.to_path_buf(),
+            1,
+            0,
+            "CC-HK-018",
+            t!(
+                "rules.cc_hk_018.message",
+                location = hook_location.as_str(),
+                event = event
+            ),
+        )
+        .with_suggestion(t!("rules.cc_hk_018.suggestion", event = event));
+
+        // Safe auto-fix: remove the matcher field line
+        if let Some(matcher_val) = matcher {
+            if let Some((start, end)) = find_unique_matcher_line_span(content, matcher_val) {
+                diagnostic = diagnostic.with_fix(Fix::delete(
+                    start,
+                    end,
+                    t!("rules.cc_hk_018.fix", event = event),
+                    true,
+                ));
+            }
+        }
+
+        diagnostics.push(diagnostic);
     }
 }
 
@@ -391,7 +415,7 @@ impl Validator for HooksValidator {
 
         // CC-HK-013: Async on non-command hook (only known types)
         if config.is_rule_enabled("CC-HK-013") {
-            validate_cc_hk_013_async_field(&raw_value, path, &mut diagnostics);
+            validate_cc_hk_013_async_field(&raw_value, path, content, &mut diagnostics);
         }
 
         // CC-HK-014: Once outside skill/agent frontmatter
@@ -469,6 +493,7 @@ impl Validator for HooksValidator {
                         &matcher.matcher,
                         matcher_idx,
                         path,
+                        content,
                         &mut diagnostics,
                     );
                 }
@@ -518,6 +543,7 @@ impl Validator for HooksValidator {
                                 validate_cc_hk_015_model_on_command(
                                     &hook_location,
                                     path,
+                                    content,
                                     &mut diagnostics,
                                 );
                             }

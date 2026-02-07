@@ -436,16 +436,33 @@ impl Validator for AgentValidator {
         if config.is_rule_enabled("CC-AG-008") {
             if let Some(memory) = &schema.memory {
                 if !VALID_MEMORY_SCOPES.contains(&memory.as_str()) {
-                    diagnostics.push(
-                        Diagnostic::error(
-                            path.to_path_buf(),
-                            1,
-                            0,
-                            "CC-AG-008",
-                            t!("rules.cc_ag_008.message", scope = memory.as_str()),
-                        )
-                        .with_suggestion(t!("rules.cc_ag_008.suggestion")),
-                    );
+                    let mut diagnostic = Diagnostic::error(
+                        path.to_path_buf(),
+                        1,
+                        0,
+                        "CC-AG-008",
+                        t!("rules.cc_ag_008.message", scope = memory.as_str()),
+                    )
+                    .with_suggestion(t!("rules.cc_ag_008.suggestion"));
+
+                    // Unsafe auto-fix: replace with closest valid memory scope
+                    if let Some(closest) =
+                        super::find_closest_value(memory.as_str(), VALID_MEMORY_SCOPES)
+                    {
+                        if let Some((start, end)) =
+                            frontmatter_value_byte_range(content, "memory")
+                        {
+                            diagnostic = diagnostic.with_fix(Fix::replace(
+                                start,
+                                end,
+                                closest,
+                                t!("rules.cc_ag_008.fix", fixed = closest),
+                                false,
+                            ));
+                        }
+                    }
+
+                    diagnostics.push(diagnostic);
                 }
             }
         }

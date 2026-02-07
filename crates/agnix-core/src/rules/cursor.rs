@@ -82,6 +82,38 @@ fn yaml_block_byte_range(content: &str, start_line: usize) -> Option<(usize, usi
     Some((block_start, block_end))
 }
 
+/// Find the byte range of a quoted YAML value for a given key in frontmatter.
+/// Returns the range including quotes (e.g., `"true"` or `'false'`).
+fn find_yaml_quoted_value_range(
+    content: &str,
+    parsed: &ParsedMdcFrontmatter,
+    key: &str,
+) -> Option<(usize, usize)> {
+    for (idx, line) in parsed.raw.lines().enumerate() {
+        let trimmed = line.trim_start();
+        if let Some(rest) = trimmed.strip_prefix(key) {
+            if let Some(after_colon) = rest.trim_start().strip_prefix(':') {
+                let value_str = after_colon.split('#').next().unwrap_or("").trim();
+                // Check for quoted value
+                if (value_str.starts_with('"') && value_str.ends_with('"'))
+                    || (value_str.starts_with('\'') && value_str.ends_with('\''))
+                {
+                    // Find the absolute byte offset of this value in the full content
+                    let line_num = parsed.start_line + 1 + idx;
+                    let (line_start, _) = line_byte_range(content, line_num)?;
+                    let line_content = &content[line_start..];
+                    // Find the quoted value within this line
+                    let val_offset = line_content.find(value_str)?;
+                    let abs_start = line_start + val_offset;
+                    let abs_end = abs_start + value_str.len();
+                    return Some((abs_start, abs_end));
+                }
+            }
+        }
+    }
+    None
+}
+
 impl Validator for CursorValidator {
     fn validate(&self, path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic> {
         let mut diagnostics = Vec::new();
@@ -249,19 +281,37 @@ impl Validator for CursorValidator {
             // Must be a boolean, not a quoted string like "true" or "false"
             if config.is_rule_enabled("CUR-008") {
                 if let Some(ref always_apply) = schema.always_apply {
-                    if always_apply.is_string() {
+                    if let crate::schemas::cursor::AlwaysApplyField::String(s) = always_apply {
                         let always_apply_line = find_field_line(&parsed, "alwaysApply:");
 
-                        diagnostics.push(
-                            Diagnostic::error(
-                                path.to_path_buf(),
-                                always_apply_line,
-                                0,
-                                "CUR-008",
-                                t!("rules.cur_008.message"),
-                            )
-                            .with_suggestion(t!("rules.cur_008.suggestion")),
-                        );
+                        let mut diagnostic = Diagnostic::error(
+                            path.to_path_buf(),
+                            always_apply_line,
+                            0,
+                            "CUR-008",
+                            t!("rules.cur_008.message"),
+                        )
+                        .with_suggestion(t!("rules.cur_008.suggestion"));
+
+                        // Safe auto-fix: convert quoted string to boolean
+                        let lower = s.to_lowercase();
+                        if lower == "true" || lower == "false" {
+                            let bool_str = if lower == "true" { "true" } else { "false" };
+                            // Find the quoted value in the raw frontmatter
+                            if let Some((start, end)) =
+                                find_yaml_quoted_value_range(content, &parsed, "alwaysApply")
+                            {
+                                diagnostic = diagnostic.with_fix(Fix::replace(
+                                    start,
+                                    end,
+                                    bool_str,
+                                    t!("rules.cur_008.fix", value = s.as_str(), fixed = bool_str),
+                                    true,
+                                ));
+                            }
+                        }
+
+                        diagnostics.push(diagnostic);
                     }
                 }
             }

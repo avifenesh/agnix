@@ -486,6 +486,7 @@ where
 pub(super) fn validate_cc_hk_013_async_field(
     raw_value: &serde_json::Value,
     path: &Path,
+    content: &str,
     diagnostics: &mut Vec<Diagnostic>,
 ) {
     let known_non_command = ["prompt", "agent"];
@@ -497,20 +498,32 @@ pub(super) fn validate_cc_hk_013_async_field(
                 if known_non_command.contains(&hook_type) {
                     let hook_location =
                         format!("hooks.{}[{}].hooks[{}]", event, matcher_idx, hook_idx);
-                    diagnostics.push(
-                        Diagnostic::error(
-                            path.to_path_buf(),
-                            1,
-                            0,
-                            "CC-HK-013",
-                            t!(
-                                "rules.cc_hk_013.message",
-                                hook_type = hook_type,
-                                location = hook_location.as_str()
-                            ),
-                        )
-                        .with_suggestion(t!("rules.cc_hk_013.suggestion")),
-                    );
+                    let mut diagnostic = Diagnostic::error(
+                        path.to_path_buf(),
+                        1,
+                        0,
+                        "CC-HK-013",
+                        t!(
+                            "rules.cc_hk_013.message",
+                            hook_type = hook_type,
+                            location = hook_location.as_str()
+                        ),
+                    )
+                    .with_suggestion(t!("rules.cc_hk_013.suggestion"));
+
+                    // Safe auto-fix: remove the async field line
+                    if let Some((start, end)) =
+                        find_unique_json_field_line_span(content, "async")
+                    {
+                        diagnostic = diagnostic.with_fix(Fix::delete(
+                            start,
+                            end,
+                            t!("rules.cc_hk_013.fix"),
+                            true,
+                        ));
+                    }
+
+                    diagnostics.push(diagnostic);
                 }
             }
         }
@@ -581,9 +594,32 @@ pub(super) fn validate_cc_hk_016_unknown_type(
     });
 }
 
+/// Find a unique JSON field line span that can be safely deleted.
+/// Matches a line like `  "field": value,\n` and returns byte range.
+/// Returns None if 0 or 2+ matches (uniqueness guard).
+pub(super) fn find_unique_json_field_line_span(
+    content: &str,
+    field_name: &str,
+) -> Option<(usize, usize)> {
+    let pattern = format!(
+        r#"(?m)^[ \t]*"{}"\s*:.*,?\r?\n?"#,
+        regex::escape(field_name)
+    );
+    let re = Regex::new(&pattern).ok()?;
+    let mut matches = re.find_iter(content);
+    let first = matches.next()?;
+    if matches.next().is_some() {
+        return None;
+    }
+    Some((first.start(), first.end()))
+}
+
 /// Find a unique matcher line span that can be safely deleted.
 /// Includes trailing newline when present.
-fn find_unique_matcher_line_span(content: &str, matcher_value: &str) -> Option<(usize, usize)> {
+pub(super) fn find_unique_matcher_line_span(
+    content: &str,
+    matcher_value: &str,
+) -> Option<(usize, usize)> {
     let pattern = format!(
         r#"(?m)^[ \t]*"matcher"\s*:\s*"{}"\s*,?\r?\n?"#,
         regex::escape(matcher_value)

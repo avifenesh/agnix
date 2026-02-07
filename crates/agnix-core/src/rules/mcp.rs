@@ -603,20 +603,38 @@ fn validate_server(
     if config.is_rule_enabled("MCP-011") {
         if let Some(ref server_type) = server.server_type {
             if !VALID_MCP_SERVER_TYPES.contains(&server_type.as_str()) {
-                diagnostics.push(
-                    Diagnostic::error(
-                        path.to_path_buf(),
-                        line,
-                        col,
-                        "MCP-011",
-                        t!(
-                            "rules.mcp_011.message",
-                            server = name,
-                            server_type = server_type.as_str()
-                        ),
-                    )
-                    .with_suggestion(t!("rules.mcp_011.suggestion")),
-                );
+                let mut diagnostic = Diagnostic::error(
+                    path.to_path_buf(),
+                    line,
+                    col,
+                    "MCP-011",
+                    t!(
+                        "rules.mcp_011.message",
+                        server = name,
+                        server_type = server_type.as_str()
+                    ),
+                )
+                .with_suggestion(t!("rules.mcp_011.suggestion"));
+
+                // Unsafe auto-fix: replace with closest valid server type
+                if let Some(closest) = super::find_closest_value(
+                    server_type.as_str(),
+                    VALID_MCP_SERVER_TYPES,
+                ) {
+                    if let Some((start, end)) =
+                        find_unique_json_string_value_span(content, "type", server_type)
+                    {
+                        diagnostic = diagnostic.with_fix(Fix::replace(
+                            start,
+                            end,
+                            closest,
+                            t!("rules.mcp_011.fix", fixed = closest),
+                            false,
+                        ));
+                    }
+                }
+
+                diagnostics.push(diagnostic);
                 // Skip further type-based validation since type is invalid
                 return;
             }

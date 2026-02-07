@@ -932,16 +932,28 @@ impl<'a> ValidationContext<'a> {
 
         if !user_invocable && disable_model {
             let (line, col) = self.frontmatter_key_line_col("user-invocable");
-            self.diagnostics.push(
-                Diagnostic::error(
-                    self.path.to_path_buf(),
-                    line,
-                    col,
-                    "CC-SK-011",
-                    t!("rules.cc_sk_011.message"),
-                )
-                .with_suggestion(t!("rules.cc_sk_011.suggestion")),
-            );
+            let mut diagnostic = Diagnostic::error(
+                self.path.to_path_buf(),
+                line,
+                col,
+                "CC-SK-011",
+                t!("rules.cc_sk_011.message"),
+            )
+            .with_suggestion(t!("rules.cc_sk_011.suggestion"));
+
+            // Unsafe auto-fix: remove disable-model-invocation line to allow model invocation
+            if let Some((start, end)) =
+                self.frontmatter_key_line_byte_range("disable-model-invocation")
+            {
+                diagnostic = diagnostic.with_fix(Fix::delete(
+                    start,
+                    end,
+                    t!("rules.cc_sk_011.fix"),
+                    false, // unsafe
+                ));
+            }
+
+            self.diagnostics.push(diagnostic);
         }
     }
 
