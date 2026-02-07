@@ -349,7 +349,9 @@ mod code_action_fix_tests {
         // Calculate byte offsets dynamically from the content string to avoid
         // brittle hardcoded values that break if the content changes.
         let bad_name = "Bad_Name";
-        let start_byte = content.find(bad_name).expect("content should contain 'Bad_Name'");
+        let start_byte = content
+            .find(bad_name)
+            .expect("content should contain 'Bad_Name'");
         let end_byte = start_byte + bad_name.len();
         let fix = Fix {
             start_byte,
@@ -424,7 +426,10 @@ mod code_action_fix_tests {
                 assert_eq!(action.title, "Convert to kebab-case");
                 assert_eq!(action.kind, Some(CodeActionKind::QUICKFIX));
                 assert_eq!(action.is_preferred, Some(true));
-                assert!(action.edit.is_some(), "Code action should have a workspace edit");
+                assert!(
+                    action.edit.is_some(),
+                    "Code action should have a workspace edit"
+                );
             }
             _ => panic!("Expected CodeAction, got Command"),
         }

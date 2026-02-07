@@ -244,10 +244,7 @@ mod tests {
             character: 2,
         };
         let hover = hover_at_position(FileType::Hooks, content, pos);
-        assert!(
-            hover.is_some(),
-            "Should get hover for Hooks 'type' field"
-        );
+        assert!(hover.is_some(), "Should get hover for Hooks 'type' field");
     }
 
     #[test]

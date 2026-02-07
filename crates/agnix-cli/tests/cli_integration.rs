@@ -2661,7 +2661,7 @@ fn test_autofix_rules_json_reports_fixes_available() {
         .unwrap();
     }
 
-    // 2. Hooks fixture (CC-HK-003: invalid event -> fixable)
+    // 2. Hooks fixture (CC-HK-001: invalid event -> fixable)
     let hooks_dir = temp_dir.path().join(".claude");
     fs::create_dir_all(&hooks_dir).unwrap();
     fs::write(
@@ -2669,7 +2669,12 @@ fn test_autofix_rules_json_reports_fixes_available() {
         r#"{
   "hooks": {
     "pretooluse": [
-      { "type": "command", "command": "echo ok" }
+      {
+        "matcher": "Bash",
+        "hooks": [
+          { "type": "command", "command": "echo ok" }
+        ]
+      }
     ]
   }
 }"#,
@@ -2703,13 +2708,30 @@ fn test_autofix_rules_json_reports_fixes_available() {
     let stdout = String::from_utf8_lossy(&output.stdout);
 
     // Verify that at least one fixable diagnostic exists from each family
-    // We check the rule prefix appears alongside [fixable] in the verbose output,
-    // or alternatively just check that there are fixable issues.
     assert!(
         stdout.contains("[fixable]"),
         "Expected at least one [fixable] diagnostic, got: {}",
         stdout
     );
+
+    // Per-family assertions: each fixture path must produce a [fixable] diagnostic.
+    // Rule IDs are not emitted in text output, so we match by fixture path segments.
+    let family_markers: &[(&str, &str)] = &[
+        ("AS-", "SKILL.md"),
+        ("CC-HK-", "settings.json"),
+        ("CC-AG-", "bad-agent.md"),
+        ("MCP-", ".mcp.json"),
+    ];
+    for (family, path_marker) in family_markers {
+        let has_fixable_in_family = stdout
+            .lines()
+            .any(|line| line.contains(path_marker) && line.contains("[fixable]"));
+        assert!(
+            has_fixable_in_family,
+            "Expected a [fixable] diagnostic for the {} family (path contains '{}'), got: {}",
+            family, path_marker, stdout
+        );
+    }
     // Verify the summary line reports a non-zero fixable count
     assert!(
         stdout.contains("automatically fixable"),
@@ -2911,28 +2933,31 @@ fn test_fix_copilot_scoped_missing_applyto() {
         .unwrap();
 
     let stdout = String::from_utf8_lossy(&output.stdout);
-    // Even if no COP-* fix fires, the test documents the assertion path.
-    // If it's fixable, run --fix and verify content changed.
-    if stdout.contains("[fixable]") {
-        let original = fs::read_to_string(&instr_path).unwrap();
 
-        let mut cmd2 = agnix();
-        // Note: --fix may still exit non-zero if unfixable diagnostics remain
-        // after applying available fixes.  We only assert the file was modified.
-        cmd2.arg(temp_dir.path().to_str().unwrap())
-            .arg("--fix")
-            .output()
-            .unwrap();
+    // The fixture must produce at least one [fixable] diagnostic; fail early
+    // so a COP-002 regression (missing fix) does not go unnoticed.
+    assert!(
+        stdout.contains("[fixable]"),
+        "Expected at least one [fixable] copilot diagnostic, got: {}",
+        stdout
+    );
 
-        let fixed = fs::read_to_string(&instr_path).unwrap();
-        // If --dry-run reported [fixable] diagnostics, --fix should modify the file
-        assert_ne!(
-            fixed, original,
-            "Fixable copilot diagnostics should result in file changes after --fix"
-        );
-    }
-    // If no fixable rules fire, that's acceptable -- this test ensures no panic
-    // and documents the copilot fixture path for future autofix rules.
+    let original = fs::read_to_string(&instr_path).unwrap();
+
+    let mut cmd2 = agnix();
+    // Note: --fix may still exit non-zero if unfixable diagnostics remain
+    // after applying available fixes.  We only assert the file was modified.
+    cmd2.arg(temp_dir.path().to_str().unwrap())
+        .arg("--fix")
+        .output()
+        .unwrap();
+
+    let fixed = fs::read_to_string(&instr_path).unwrap();
+    // --dry-run reported [fixable] diagnostics, so --fix must modify the file
+    assert_ne!(
+        fixed, original,
+        "Fixable copilot diagnostics should result in file changes after --fix"
+    );
 }
 
 #[test]
