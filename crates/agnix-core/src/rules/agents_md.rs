@@ -668,11 +668,11 @@ context: fork"#;
 Some content"#;
         let diagnostics = validate(content);
 
-        let agm_001: Vec<_> = diagnostics
-            .iter()
-            .filter(|d| d.rule == "AGM-001")
-            .collect();
-        assert!(!agm_001.is_empty(), "AGM-001 should fire for unclosed code block");
+        let agm_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AGM-001").collect();
+        assert!(
+            !agm_001.is_empty(),
+            "AGM-001 should fire for unclosed code block"
+        );
         assert!(
             agm_001[0].suggestion.is_some(),
             "AGM-001 should have a suggestion"

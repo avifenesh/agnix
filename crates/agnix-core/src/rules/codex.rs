@@ -819,10 +819,7 @@ notify = true
         let content = "this is not valid toml {{{}}}";
         let diagnostics = validate_config(content);
 
-        let cdx_000: Vec<_> = diagnostics
-            .iter()
-            .filter(|d| d.rule == "CDX-000")
-            .collect();
+        let cdx_000: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CDX-000").collect();
         assert_eq!(cdx_000.len(), 1);
         assert!(
             cdx_000[0].suggestion.is_some(),
@@ -843,13 +840,12 @@ notify = true
         let content = "this is not valid toml {{{}}}";
         let diagnostics = validate_config(content);
 
-        let cdx_000: Vec<_> = diagnostics
-            .iter()
-            .filter(|d| d.rule == "CDX-000")
-            .collect();
+        let cdx_000: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CDX-000").collect();
         assert_eq!(cdx_000.len(), 1);
         assert!(
-            cdx_000[0].message.contains("Failed to parse .codex/config.toml as TOML"),
+            cdx_000[0]
+                .message
+                .contains("Failed to parse .codex/config.toml as TOML"),
             "CDX-000 message should use localized text, got: {}",
             cdx_000[0].message
         );

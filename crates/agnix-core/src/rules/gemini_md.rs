@@ -420,11 +420,11 @@ Run npm test.
 Some content"#;
         let diagnostics = validate(content);
 
-        let gm_001: Vec<_> = diagnostics
-            .iter()
-            .filter(|d| d.rule == "GM-001")
-            .collect();
-        assert!(!gm_001.is_empty(), "GM-001 should fire for unclosed code block");
+        let gm_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "GM-001").collect();
+        assert!(
+            !gm_001.is_empty(),
+            "GM-001 should fire for unclosed code block"
+        );
         assert!(
             gm_001[0].suggestion.is_some(),
             "GM-001 should have a suggestion"

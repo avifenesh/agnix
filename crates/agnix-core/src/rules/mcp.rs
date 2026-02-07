@@ -2042,10 +2042,7 @@ mod tests {
         let content = r#"{ invalid json }"#;
         let diagnostics = validate(content);
 
-        let mcp_007: Vec<_> = diagnostics
-            .iter()
-            .filter(|d| d.rule == "MCP-007")
-            .collect();
+        let mcp_007: Vec<_> = diagnostics.iter().filter(|d| d.rule == "MCP-007").collect();
         assert_eq!(mcp_007.len(), 1);
         assert!(
             mcp_007[0].suggestion.is_some(),
@@ -2068,10 +2065,7 @@ mod tests {
         let content = r#"{"name": "test-tool", "description": "A test tool that does things", "inputSchema": {"type": "invalid"}}"#;
         let diagnostics = validate(content);
 
-        let mcp_003: Vec<_> = diagnostics
-            .iter()
-            .filter(|d| d.rule == "MCP-003")
-            .collect();
+        let mcp_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "MCP-003").collect();
         assert_eq!(mcp_003.len(), 1);
         assert!(
             mcp_003[0].suggestion.is_some(),
@@ -2103,10 +2097,7 @@ mod tests {
         }"#;
         let diagnostics = validate(content);
 
-        let mcp_006: Vec<_> = diagnostics
-            .iter()
-            .filter(|d| d.rule == "MCP-006")
-            .collect();
+        let mcp_006: Vec<_> = diagnostics.iter().filter(|d| d.rule == "MCP-006").collect();
         assert_eq!(mcp_006.len(), 1);
         assert!(
             mcp_006[0].suggestion.is_some(),
