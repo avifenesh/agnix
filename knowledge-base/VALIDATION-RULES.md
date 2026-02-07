@@ -286,7 +286,7 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 ### CC-SK-011 [HIGH] Unreachable Skill
 **Requirement**: Skill MUST NOT set both `user-invocable: false` and `disable-model-invocation: true`
 **Detection**: `user_invocable == false && disable_model_invocation == true`
-**Fix**: No auto-fix (intent unclear)
+**Fix**: Auto-fix (unsafe) -- remove `disable-model-invocation: true` line
 **Source**: code.claude.com/docs/en/skills
 
 <a id="cc-sk-012"></a>
@@ -415,7 +415,7 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 ### CC-HK-013 [HIGH] Async on Non-Command Hook
 **Requirement**: `async: true` MUST only appear on `type: "command"` hooks
 **Detection**: Check for `async` field on prompt or agent hook types
-**Fix**: Remove the async field or change hook type to command
+**Fix**: Auto-fix (safe) -- remove the `async` field line
 **Source**: code.claude.com/docs/en/hooks
 
 <a id="cc-hk-014"></a>
@@ -429,7 +429,7 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 ### CC-HK-015 [MEDIUM] Model on Command Hook
 **Requirement**: `model` field MUST only appear on prompt or agent hooks
 **Detection**: Check for `model` field on command hook types
-**Fix**: Remove the model field or change hook type to prompt/agent
+**Fix**: Auto-fix (safe) -- remove the `model` field line
 **Source**: code.claude.com/docs/en/hooks
 
 <a id="cc-hk-016"></a>
@@ -450,7 +450,7 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 ### CC-HK-018 [LOW] Matcher on UserPromptSubmit/Stop
 **Requirement**: Matchers on UserPromptSubmit and Stop events are silently ignored
 **Detection**: Check for matcher field on UserPromptSubmit or Stop events
-**Fix**: Remove the matcher field
+**Fix**: Auto-fix (safe) -- remove the `matcher` field line
 **Source**: code.claude.com/docs/en/hooks
 
 ---
@@ -510,7 +510,7 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 ### CC-AG-008 [HIGH] Invalid Memory Scope
 **Requirement**: `memory` field MUST be `user`, `project`, or `local`
 **Detection**: Check `memory` value against allowed list
-**Fix**: Use one of: user, project, local
+**Fix**: Auto-fix (unsafe) -- replace with closest valid memory scope
 **Source**: code.claude.com/docs/en/sub-agents
 
 <a id="cc-ag-009"></a>
@@ -837,7 +837,7 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 ### MCP-011 [HIGH] Invalid MCP server type
 **Requirement**: MCP server `type` MUST be `stdio`, `http`, or `sse`
 **Detection**: Server entry has a `type` field with an unrecognized value
-**Fix**: Change type to one of: `stdio`, `http`, `sse`
+**Fix**: Auto-fix (unsafe) -- replace with closest valid server type
 **Source**: modelcontextprotocol.io/specification
 
 <a id="mcp-012"></a>
@@ -884,7 +884,7 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 ### COP-005 [HIGH] Invalid excludeAgent Value
 **Requirement**: The `excludeAgent` frontmatter field in scoped instruction files MUST be either `"code-review"` or `"coding-agent"`
 **Detection**: Parse frontmatter, validate `excludeAgent` value against allowed set
-**Fix**: Use a valid `excludeAgent` value
+**Fix**: Auto-fix (unsafe) -- replace with closest valid excludeAgent value
 **Source**: docs.github.com/en/copilot/customizing-copilot
 
 <a id="cop-006"></a>
@@ -951,7 +951,7 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 ### CUR-008 [HIGH] Invalid alwaysApply Type
 **Requirement**: `alwaysApply` MUST be a boolean (`true`/`false`), not a quoted string
 **Detection**: `alwaysApply` value is a string (e.g., `"true"` or `"false"`) instead of a boolean
-**Fix**: Remove quotes around the value
+**Fix**: Auto-fix (safe) -- convert quoted string to unquoted boolean
 **Source**: docs.cursor.com/en/context
 
 <a id="cur-009"></a>
@@ -1300,21 +1300,31 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | CC-SK-003 | Add default agent for fork context | unsafe |
 | CC-SK-004 | Insert context: fork before agent key | unsafe |
 | CC-SK-007 | Suggest Bash(git:*) matcher | unsafe |
+| CC-SK-011 | Remove disable-model-invocation line | unsafe |
+| CC-SK-014 | Convert string to boolean | safe |
+| CC-SK-015 | Convert string to boolean | safe |
 | CC-HK-001 | Correct event name casing/typo | safe/unsafe |
 | CC-HK-004 | Clamp timeout to valid range | safe |
 | CC-HK-011 | Remove redundant wildcard matcher | unsafe |
+| CC-HK-013 | Remove async field | safe |
+| CC-HK-015 | Remove model field | safe |
+| CC-HK-018 | Remove matcher field | safe |
 | CC-AG-003 | Default invalid model to sonnet | unsafe |
 | CC-AG-004 | Default invalid permission mode | unsafe |
+| CC-AG-008 | Replace with closest memory scope | unsafe |
 | CC-MEM-005 | Remove generic instruction line | safe |
 | CC-MEM-007 | Replace weak language with strong | safe/unsafe |
 | CC-PL-005 | Normalize plugin name | unsafe |
 | CC-PL-007 | Prepend ./ to relative path | safe |
 | MCP-001 | Set jsonrpc to "2.0" | safe |
 | MCP-008 | Update protocolVersion | unsafe |
+| MCP-011 | Replace with closest server type | unsafe |
 | MCP-012 | Change sse to http | unsafe |
 | COP-004 | Remove unknown frontmatter key | safe |
+| COP-005 | Replace with closest excludeAgent value | unsafe |
 | CUR-005 | Remove unknown frontmatter key | safe |
 | CUR-007 | Remove redundant globs field | safe |
+| CUR-008 | Convert quoted string to boolean | safe |
 | CLN-003 | Remove unknown frontmatter key | unsafe |
 | XML-001 | Add missing closing tag | unsafe |
 | XML-002 | Fix mismatched closing tag | unsafe |
@@ -1327,25 +1337,25 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | Category | Total Rules | HIGH | MEDIUM | LOW | Auto-Fixable |
 |----------|-------------|------|--------|-----|--------------|
 | Agent Skills | 16 | 14 | 2 | 0 | 5 |
-| Claude Skills | 15 | 12 | 3 | 0 | 7 |
-| Claude Hooks | 18 | 13 | 4 | 1 | 3 |
-| Claude Agents | 13 | 12 | 1 | 0 | 2 |
+| Claude Skills | 15 | 12 | 3 | 0 | 8 |
+| Claude Hooks | 18 | 13 | 4 | 1 | 6 |
+| Claude Agents | 13 | 12 | 1 | 0 | 3 |
 | Claude Memory | 12 | 8 | 4 | 0 | 3 |
 | AGENTS.md | 6 | 1 | 5 | 0 | 0 |
 | Claude Plugins | 10 | 8 | 2 | 0 | 2 |
-| GitHub Copilot | 6 | 4 | 2 | 0 | 1 |
-| Cursor | 9 | 4 | 5 | 0 | 2 |
+| GitHub Copilot | 6 | 4 | 2 | 0 | 2 |
+| Cursor | 9 | 4 | 5 | 0 | 3 |
 | Cline | 3 | 2 | 1 | 0 | 1 |
 | OpenCode | 3 | 3 | 0 | 0 | 0 |
 | Gemini CLI | 3 | 1 | 2 | 0 | 0 |
 | Codex CLI | 3 | 2 | 1 | 0 | 0 |
-| MCP | 12 | 10 | 2 | 0 | 3 |
+| MCP | 12 | 10 | 2 | 0 | 4 |
 | XML | 3 | 3 | 0 | 0 | 3 |
 | References | 2 | 2 | 0 | 0 | 0 |
 | Prompt Eng | 4 | 0 | 4 | 0 | 0 |
 | Cross-Platform | 6 | 4 | 2 | 0 | 0 |
 | Version Awareness | 1 | 0 | 0 | 1 | 0 |
-| **TOTAL** | **145** | **103** | **40** | **2** | **32** |
+| **TOTAL** | **145** | **103** | **40** | **2** | **40** |
 
 
 ---
@@ -1379,5 +1389,5 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 
 **Knowledge Base**: 11,036 lines, 320KB, 75+ sources
 **Certainty**: 103 HIGH, 40 MEDIUM, 2 LOW
-**Auto-Fixable**: 32 rules (22%)
+**Auto-Fixable**: 40 rules (27%)
 

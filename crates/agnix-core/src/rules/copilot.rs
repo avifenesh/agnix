@@ -45,6 +45,18 @@ fn line_byte_range(content: &str, line_number: usize) -> Option<(usize, usize)> 
     }
 }
 
+/// Find the byte range of a YAML value for a given key in parsed frontmatter.
+/// Returns the value range (including quotes if present).
+/// Find the byte range of a YAML value (without quotes) for a given key.
+/// Wrapper around the shared helper for backward compatibility.
+fn find_yaml_value_range(
+    content: &str,
+    parsed: &crate::schemas::copilot::ParsedFrontmatter,
+    key: &str,
+) -> Option<(usize, usize)> {
+    crate::rules::find_yaml_value_range(content, parsed, key, false)
+}
+
 impl Validator for CopilotValidator {
     fn validate(&self, path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic> {
         let mut diagnostics = Vec::new();
@@ -245,16 +257,40 @@ impl Validator for CopilotValidator {
                             .map(|(i, _)| parsed.start_line + 1 + i)
                             .unwrap_or(parsed.start_line + 1);
 
-                        diagnostics.push(
-                            Diagnostic::error(
-                                path.to_path_buf(),
-                                line,
-                                0,
-                                "COP-005",
-                                t!("rules.cop_005.message", value = agent_value.as_str()),
-                            )
-                            .with_suggestion(t!("rules.cop_005.suggestion")),
-                        );
+                        let mut diagnostic = Diagnostic::error(
+                            path.to_path_buf(),
+                            line,
+                            0,
+                            "COP-005",
+                            t!("rules.cop_005.message", value = agent_value.as_str()),
+                        )
+                        .with_suggestion(t!("rules.cop_005.suggestion"));
+
+                        // Unsafe auto-fix: replace with closest valid agent value
+                        if let Some(closest) =
+                            super::find_closest_value(agent_value.as_str(), VALID_AGENTS)
+                        {
+                            if let Some((start, end)) =
+                                find_yaml_value_range(content, &parsed, "excludeAgent")
+                            {
+                                let replacement = if content[start..end].starts_with('"') {
+                                    format!("\"{}\"", closest)
+                                } else if content[start..end].starts_with('\'') {
+                                    format!("'{}'", closest)
+                                } else {
+                                    closest.to_string()
+                                };
+                                diagnostic = diagnostic.with_fix(Fix::replace(
+                                    start,
+                                    end,
+                                    replacement,
+                                    t!("rules.cop_005.fix", fixed = closest),
+                                    false,
+                                ));
+                            }
+                        }
+
+                        diagnostics.push(diagnostic);
                     }
                 }
             }
@@ -795,6 +831,18 @@ excludeAgent: "invalid-agent"
         let diagnostics = validate_scoped(content);
         let cop_005: Vec<_> = diagnostics.iter().filter(|d| d.rule == "COP-005").collect();
         assert_eq!(cop_005.len(), 1, "Mixed-case value should trigger COP-005");
+        // Case-insensitive match should produce an auto-fix
+        assert!(
+            cop_005[0].has_fixes(),
+            "COP-005 should have auto-fix for case mismatch"
+        );
+        let fix = &cop_005[0].fixes[0];
+        assert!(!fix.safe, "COP-005 fix should be unsafe");
+        assert!(
+            fix.replacement.contains("code-review"),
+            "Fix should suggest 'code-review', got: {}",
+            fix.replacement
+        );
     }
 
     #[test]
@@ -806,6 +854,25 @@ excludeAgent: "invalid-agent"
             cop_005.len(),
             1,
             "Empty excludeAgent should trigger COP-005"
+        );
+        // Empty string should NOT get a fix (no close match)
+        assert!(
+            !cop_005[0].has_fixes(),
+            "COP-005 should not auto-fix empty string"
+        );
+    }
+
+    #[test]
+    fn test_cop_005_autofix_nonsense() {
+        let content =
+            "---\napplyTo: \"**/*.ts\"\nexcludeAgent: \"nonsense\"\n---\n# Instructions\n";
+        let diagnostics = validate_scoped(content);
+        let cop_005: Vec<_> = diagnostics.iter().filter(|d| d.rule == "COP-005").collect();
+        assert_eq!(cop_005.len(), 1);
+        // "nonsense" has no close match - should NOT get a fix
+        assert!(
+            !cop_005[0].has_fixes(),
+            "COP-005 should not auto-fix nonsense values"
         );
     }
 

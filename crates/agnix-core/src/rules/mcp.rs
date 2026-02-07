@@ -603,20 +603,37 @@ fn validate_server(
     if config.is_rule_enabled("MCP-011") {
         if let Some(ref server_type) = server.server_type {
             if !VALID_MCP_SERVER_TYPES.contains(&server_type.as_str()) {
-                diagnostics.push(
-                    Diagnostic::error(
-                        path.to_path_buf(),
-                        line,
-                        col,
-                        "MCP-011",
-                        t!(
-                            "rules.mcp_011.message",
-                            server = name,
-                            server_type = server_type.as_str()
-                        ),
-                    )
-                    .with_suggestion(t!("rules.mcp_011.suggestion")),
-                );
+                let mut diagnostic = Diagnostic::error(
+                    path.to_path_buf(),
+                    line,
+                    col,
+                    "MCP-011",
+                    t!(
+                        "rules.mcp_011.message",
+                        server = name,
+                        server_type = server_type.as_str()
+                    ),
+                )
+                .with_suggestion(t!("rules.mcp_011.suggestion"));
+
+                // Unsafe auto-fix: replace with closest valid server type
+                if let Some(closest) =
+                    super::find_closest_value(server_type.as_str(), VALID_MCP_SERVER_TYPES)
+                {
+                    if let Some((start, end)) =
+                        find_unique_json_string_value_span(content, "type", server_type)
+                    {
+                        diagnostic = diagnostic.with_fix(Fix::replace(
+                            start,
+                            end,
+                            closest,
+                            t!("rules.mcp_011.fix", fixed = closest),
+                            false,
+                        ));
+                    }
+                }
+
+                diagnostics.push(diagnostic);
                 // Skip further type-based validation since type is invalid
                 return;
             }
@@ -1869,6 +1886,47 @@ mod tests {
         }"#;
         let diagnostics = validate(content);
         assert!(!diagnostics.iter().any(|d| d.rule == "MCP-011"));
+    }
+
+    #[test]
+    fn test_mcp_011_autofix_case_insensitive() {
+        let content = r#"{
+            "mcpServers": {
+                "bad-server": {
+                    "type": "Stdio",
+                    "command": "node"
+                }
+            }
+        }"#;
+        let diagnostics = validate(content);
+        let mcp_011: Vec<_> = diagnostics.iter().filter(|d| d.rule == "MCP-011").collect();
+        assert_eq!(mcp_011.len(), 1);
+        assert!(
+            mcp_011[0].has_fixes(),
+            "MCP-011 should have auto-fix for case mismatch"
+        );
+        let fix = &mcp_011[0].fixes[0];
+        assert!(!fix.safe, "MCP-011 fix should be unsafe");
+        assert_eq!(fix.replacement, "stdio", "Fix should suggest 'stdio'");
+    }
+
+    #[test]
+    fn test_mcp_011_no_autofix_nonsense() {
+        let content = r#"{
+            "mcpServers": {
+                "bad-server": {
+                    "type": "grpc"
+                }
+            }
+        }"#;
+        let diagnostics = validate(content);
+        let mcp_011: Vec<_> = diagnostics.iter().filter(|d| d.rule == "MCP-011").collect();
+        assert_eq!(mcp_011.len(), 1);
+        // "grpc" has no close match to stdio/http/sse - no fix
+        assert!(
+            !mcp_011[0].has_fixes(),
+            "MCP-011 should not auto-fix nonsense values"
+        );
     }
 
     // ===== MCP-012 Tests =====

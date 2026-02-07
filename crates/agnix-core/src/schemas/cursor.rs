@@ -92,6 +92,16 @@ pub struct ParsedMdcFrontmatter {
     pub parse_error: Option<String>,
 }
 
+impl crate::rules::FrontmatterRanges for ParsedMdcFrontmatter {
+    fn raw_content(&self) -> &str {
+        &self.raw
+    }
+
+    fn start_line(&self) -> usize {
+        self.start_line
+    }
+}
+
 /// An unknown key found in frontmatter
 #[derive(Debug, Clone)]
 pub struct UnknownKey {

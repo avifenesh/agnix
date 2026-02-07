@@ -88,6 +88,7 @@ rules:
   cc_sk_011:
     message: "Skill is unreachable: user-invocable is false and disable-model-invocation is true"
     suggestion: "Set user-invocable to true or disable-model-invocation to false"
+    fix: "Remove 'disable-model-invocation: true' to allow model invocation"
   cc_sk_012:
     message: "argument-hint is set but body does not reference $ARGUMENTS"
     suggestion: "Add $ARGUMENTS to the skill body or remove the argument-hint field"
@@ -149,12 +150,14 @@ rules:
   cc_hk_013:
     message: "async field is only valid on command hooks, not %{hook_type} hooks at %{location}"
     suggestion: "Remove the async field or change the hook type to command"
+    fix: "Remove 'async' field (has no effect on non-command hooks)"
   cc_hk_014:
     message: "once field at %{location} is only meaningful in skill/agent frontmatter hooks"
     suggestion: "Remove the once field from settings.json hooks"
   cc_hk_015:
     message: "model field is only valid on prompt/agent hooks, not command hooks at %{location}"
     suggestion: "Remove the model field or change the hook type to prompt/agent"
+    fix: "Remove 'model' field (has no effect on command hooks)"
   cc_hk_016:
     message: "Unknown hook type '%{hook_type}' at %{location}"
     suggestion: "Valid hook types are: command, prompt, agent"
@@ -164,6 +167,7 @@ rules:
   cc_hk_018:
     message: "Matcher at %{location} is silently ignored for '%{event}' events"
     suggestion: "Remove the matcher field as it has no effect on %{event} events"
+    fix: "Remove 'matcher' field (ignored on %{event} events)"
 
   # --- MCP (mcp.rs) ---
   mcp_001:
@@ -205,6 +209,7 @@ rules:
   mcp_011:
     message: "Server '%{server}' has invalid type '%{server_type}'. Must be 'stdio', 'http', or 'sse'"
     suggestion: "Use one of: stdio, http, sse"
+    fix: "Change server type to '%{fixed}'"
   mcp_012:
     message: "Server '%{server}' uses deprecated SSE transport"
     suggestion: "Consider changing type from 'sse' to 'http' (Streamable HTTP)"
@@ -239,6 +244,7 @@ rules:
   cc_ag_008:
     message: "Invalid memory scope '%{scope}'. Must be 'user', 'project', or 'local'"
     suggestion: "Use one of: user, project, local"
+    fix: "Change memory scope to '%{fixed}'"
   cc_ag_009:
     message: "Unknown tool '%{tool}' in tools list. Known tools: %{known}"
     suggestion: "Use a known Claude Code tool name"
@@ -376,6 +382,7 @@ rules:
   cop_005:
     message: "Invalid excludeAgent value '%{value}'. Valid values: 'code-review', 'coding-agent'"
     suggestion: "Use 'code-review' or 'coding-agent' for excludeAgent"
+    fix: "Change excludeAgent to '%{fixed}'"
   cop_006:
     message: "Copilot instruction file exceeds recommended length (%{len} characters, limit ~4000)"
     suggestion: "Reduce content length or split into scoped instruction files"
@@ -409,6 +416,7 @@ rules:
   cur_008:
     message: "alwaysApply must be a boolean (true/false), not a quoted string"
     suggestion: "Use alwaysApply: true or alwaysApply: false without quotes. YAML parses quoted values as strings."
+    fix: "Convert '%{value}' to boolean %{fixed}"
   cur_009:
     message: "Agent-requested rule has no description - the agent cannot determine when to apply it"
     suggestion: "Add a description field explaining when this rule should apply, or set alwaysApply or globs to control activation"

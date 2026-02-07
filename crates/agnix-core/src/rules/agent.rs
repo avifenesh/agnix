@@ -436,16 +436,32 @@ impl Validator for AgentValidator {
         if config.is_rule_enabled("CC-AG-008") {
             if let Some(memory) = &schema.memory {
                 if !VALID_MEMORY_SCOPES.contains(&memory.as_str()) {
-                    diagnostics.push(
-                        Diagnostic::error(
-                            path.to_path_buf(),
-                            1,
-                            0,
-                            "CC-AG-008",
-                            t!("rules.cc_ag_008.message", scope = memory.as_str()),
-                        )
-                        .with_suggestion(t!("rules.cc_ag_008.suggestion")),
-                    );
+                    let mut diagnostic = Diagnostic::error(
+                        path.to_path_buf(),
+                        1,
+                        0,
+                        "CC-AG-008",
+                        t!("rules.cc_ag_008.message", scope = memory.as_str()),
+                    )
+                    .with_suggestion(t!("rules.cc_ag_008.suggestion"));
+
+                    // Unsafe auto-fix: replace with closest valid memory scope
+                    if let Some(closest) =
+                        super::find_closest_value(memory.as_str(), VALID_MEMORY_SCOPES)
+                    {
+                        if let Some((start, end)) = frontmatter_value_byte_range(content, "memory")
+                        {
+                            diagnostic = diagnostic.with_fix(Fix::replace(
+                                start,
+                                end,
+                                closest,
+                                t!("rules.cc_ag_008.fix", fixed = closest),
+                                false,
+                            ));
+                        }
+                    }
+
+                    diagnostics.push(diagnostic);
                 }
             }
         }
@@ -2284,6 +2300,41 @@ Agent instructions"#;
             .filter(|d| d.rule == "CC-AG-008")
             .collect();
         assert_eq!(cc_ag_008.len(), 0);
+    }
+
+    #[test]
+    fn test_cc_ag_008_autofix_case_insensitive() {
+        let content =
+            "---\nname: my-agent\ndescription: A test agent\nmemory: User\n---\nAgent instructions";
+        let diagnostics = validate(content);
+        let cc_ag_008: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-AG-008")
+            .collect();
+        assert_eq!(cc_ag_008.len(), 1);
+        assert!(
+            cc_ag_008[0].has_fixes(),
+            "CC-AG-008 should have auto-fix for case mismatch"
+        );
+        let fix = &cc_ag_008[0].fixes[0];
+        assert!(!fix.safe, "CC-AG-008 fix should be unsafe");
+        assert_eq!(fix.replacement, "user", "Fix should suggest 'user'");
+    }
+
+    #[test]
+    fn test_cc_ag_008_no_autofix_nonsense() {
+        let content = "---\nname: my-agent\ndescription: A test agent\nmemory: global\n---\nAgent instructions";
+        let diagnostics = validate(content);
+        let cc_ag_008: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-AG-008")
+            .collect();
+        assert_eq!(cc_ag_008.len(), 1);
+        // "global" has no close match to user/project/local - no fix
+        assert!(
+            !cc_ag_008[0].has_fixes(),
+            "CC-AG-008 should not auto-fix nonsense values"
+        );
     }
 
     // ===== CC-AG-009 Tests: Invalid Tool Name in Tools List =====

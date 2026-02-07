@@ -486,6 +486,7 @@ where
 pub(super) fn validate_cc_hk_013_async_field(
     raw_value: &serde_json::Value,
     path: &Path,
+    content: &str,
     diagnostics: &mut Vec<Diagnostic>,
 ) {
     let known_non_command = ["prompt", "agent"];
@@ -497,20 +498,30 @@ pub(super) fn validate_cc_hk_013_async_field(
                 if known_non_command.contains(&hook_type) {
                     let hook_location =
                         format!("hooks.{}[{}].hooks[{}]", event, matcher_idx, hook_idx);
-                    diagnostics.push(
-                        Diagnostic::error(
-                            path.to_path_buf(),
-                            1,
-                            0,
-                            "CC-HK-013",
-                            t!(
-                                "rules.cc_hk_013.message",
-                                hook_type = hook_type,
-                                location = hook_location.as_str()
-                            ),
-                        )
-                        .with_suggestion(t!("rules.cc_hk_013.suggestion")),
-                    );
+                    let mut diagnostic = Diagnostic::error(
+                        path.to_path_buf(),
+                        1,
+                        0,
+                        "CC-HK-013",
+                        t!(
+                            "rules.cc_hk_013.message",
+                            hook_type = hook_type,
+                            location = hook_location.as_str()
+                        ),
+                    )
+                    .with_suggestion(t!("rules.cc_hk_013.suggestion"));
+
+                    // Safe auto-fix: remove the async field line
+                    if let Some((start, end)) = find_unique_json_field_line_span(content, "async") {
+                        diagnostic = diagnostic.with_fix(Fix::delete(
+                            start,
+                            end,
+                            t!("rules.cc_hk_013.fix"),
+                            true,
+                        ));
+                    }
+
+                    diagnostics.push(diagnostic);
                 }
             }
         }
@@ -581,9 +592,34 @@ pub(super) fn validate_cc_hk_016_unknown_type(
     });
 }
 
+/// Find a unique JSON field line span that can be safely deleted.
+/// Matches a line like `  "field": value,\n` and returns byte range.
+/// Returns None if 0 or 2+ matches (uniqueness guard).
+pub(super) fn find_unique_json_field_line_span(
+    content: &str,
+    field_name: &str,
+) -> Option<(usize, usize)> {
+    // Match only the field and its value (string, bool, null, number), not rest of line.
+    // This prevents deleting sibling properties on the same line.
+    let pattern = format!(
+        r#"(?m)^[ \t]*"{}"\s*:\s*(?:"[^"]*"|true|false|null|\d+(?:\.\d+)?)\s*,?\r?\n?"#,
+        regex::escape(field_name)
+    );
+    let re = Regex::new(&pattern).ok()?;
+    let mut matches = re.find_iter(content);
+    let first = matches.next()?;
+    if matches.next().is_some() {
+        return None;
+    }
+    Some((first.start(), first.end()))
+}
+
 /// Find a unique matcher line span that can be safely deleted.
 /// Includes trailing newline when present.
-fn find_unique_matcher_line_span(content: &str, matcher_value: &str) -> Option<(usize, usize)> {
+pub(super) fn find_unique_matcher_line_span(
+    content: &str,
+    matcher_value: &str,
+) -> Option<(usize, usize)> {
     let pattern = format!(
         r#"(?m)^[ \t]*"matcher"\s*:\s*"{}"\s*,?\r?\n?"#,
         regex::escape(matcher_value)
@@ -672,5 +708,52 @@ mod tests {
         // Should filter out URLs
         let paths = extract_script_paths("download https://example.com/script.sh");
         assert!(paths.is_empty(), "Should filter URLs");
+    }
+
+    // ===== find_unique_json_field_line_span tests =====
+
+    #[test]
+    fn test_find_unique_json_field_line_span_unique() {
+        let content = r#"{
+  "type": "prompt",
+  "async": true,
+  "prompt": "hello"
+}"#;
+        let result = find_unique_json_field_line_span(content, "async");
+        assert!(result.is_some(), "Should find unique async field");
+        let (start, end) = result.unwrap();
+        let matched = &content[start..end];
+        assert!(
+            matched.contains("\"async\""),
+            "Match should contain async field, got: {:?}",
+            matched
+        );
+    }
+
+    #[test]
+    fn test_find_unique_json_field_line_span_duplicate() {
+        // Two hooks both have "async" - should return None
+        let content = r#"{
+  "hooks": {
+    "Stop": [
+      { "hooks": [{ "type": "prompt", "async": true }] },
+      { "hooks": [{ "type": "prompt", "async": false }] }
+    ]
+  }
+}"#;
+        // The field appears twice, even though it's on two different lines
+        // Our regex matches lines with "async": ... and there are two
+        let result = find_unique_json_field_line_span(content, "async");
+        assert!(
+            result.is_none(),
+            "Should return None when async appears twice"
+        );
+    }
+
+    #[test]
+    fn test_find_unique_json_field_line_span_missing() {
+        let content = r#"{ "type": "command", "command": "echo hi" }"#;
+        let result = find_unique_json_field_line_span(content, "async");
+        assert!(result.is_none(), "Should return None when field is missing");
     }
 }
