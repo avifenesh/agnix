@@ -178,6 +178,107 @@ Body content here"#;
         // Should split at first closing ---
         assert!(parts.body.contains("middle"));
     }
+
+    // ===== Edge Case Tests =====
+
+    #[test]
+    fn test_split_frontmatter_crlf() {
+        let content = "---\r\nname: test\r\n---\r\nbody";
+        let parts = split_frontmatter(content);
+        // find("\n---") matches at "\r\n---" since \n is contained in \r\n
+        assert!(parts.has_frontmatter);
+        assert!(parts.has_closing);
+        assert!(parts.body.contains("body"));
+    }
+
+    #[test]
+    fn test_split_frontmatter_crlf_byte_offsets() {
+        let content = "---\r\nname: test\r\n---\r\nbody";
+        let parts = split_frontmatter(content);
+        assert!(parts.has_frontmatter);
+        assert!(parts.has_closing);
+
+        // Verify offsets are within bounds
+        assert!(parts.frontmatter_start <= content.len());
+        assert!(parts.body_start <= content.len());
+
+        // frontmatter_start is at byte 3 (after "---")
+        assert_eq!(parts.frontmatter_start, 3);
+
+        // The frontmatter string is from after "---" to where "\n---" is found.
+        // Content after "---": "\r\nname: test\r\n---\r\nbody"
+        // find("\n---") matches at position where \n is the \n in \r\n before ---
+        // The match is at index 14 in rest ("\r\nname: test\r" = 14 chars, then "\n---")
+        // So frontmatter = rest[..14] = "\r\nname: test\r"
+        assert_eq!(parts.frontmatter, "\r\nname: test\r");
+    }
+
+    #[test]
+    fn test_split_frontmatter_unicode_values() {
+        let content = "---\nname: \u{4f60}\u{597d}\ndescription: caf\u{00e9}\n---\nbody";
+        let parts = split_frontmatter(content);
+        assert!(parts.has_frontmatter);
+        assert!(parts.has_closing);
+        assert!(
+            parts.frontmatter.contains("\u{4f60}\u{597d}"),
+            "Frontmatter should contain CJK characters"
+        );
+        assert!(
+            parts.frontmatter.contains("caf\u{00e9}"),
+            "Frontmatter should contain accented character"
+        );
+    }
+
+    #[test]
+    fn test_split_frontmatter_escaped_quotes() {
+        let content = "---\nname: \"test\\\"skill\"\ndescription: test\n---\nbody";
+        let parts = split_frontmatter(content);
+        assert!(parts.has_frontmatter);
+        assert!(parts.has_closing);
+        assert!(
+            parts.frontmatter.contains("test\\\"skill"),
+            "Frontmatter should preserve escaped quotes"
+        );
+    }
+
+    #[test]
+    fn test_split_frontmatter_long_lines() {
+        let long_value = "x".repeat(5000);
+        let content = format!("---\nname: {}\n---\nbody", long_value);
+        let parts = split_frontmatter(&content);
+        assert!(parts.has_frontmatter);
+        assert!(parts.has_closing);
+        assert!(parts.frontmatter.contains(&long_value));
+    }
+
+    #[test]
+    fn test_split_frontmatter_empty_values() {
+        let content = "---\nname:\ndescription: test\n---\nbody";
+        let parts = split_frontmatter(content);
+        assert!(parts.has_frontmatter);
+        assert!(parts.has_closing);
+        // Parser splits without validating values
+        assert!(parts.frontmatter.contains("name:"));
+    }
+
+    #[test]
+    fn test_split_frontmatter_nested_yaml() {
+        let content = "---\nmetadata:\n  key1: val1\n  key2: val2\n---\nbody";
+        let parts = split_frontmatter(content);
+        assert!(parts.has_frontmatter);
+        assert!(parts.has_closing);
+        assert!(parts.frontmatter.contains("key1: val1"));
+        assert!(parts.frontmatter.contains("key2: val2"));
+    }
+
+    #[test]
+    fn test_split_frontmatter_mixed_line_endings() {
+        let content = "---\nname: test\r\ndescription: val\n---\nbody";
+        let parts = split_frontmatter(content);
+        // Should not panic and should detect frontmatter
+        assert!(parts.has_frontmatter);
+        assert!(parts.has_closing);
+    }
 }
 
 #[cfg(test)]
