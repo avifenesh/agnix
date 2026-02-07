@@ -9,9 +9,7 @@ use crate::{
     config::LintConfig,
     diagnostics::Diagnostic,
     rules::Validator,
-    schemas::codex::{
-        VALID_APPROVAL_MODES, VALID_FULL_AUTO_ERROR_MODES, parse_codex_toml,
-    },
+    schemas::codex::{VALID_APPROVAL_MODES, VALID_FULL_AUTO_ERROR_MODES, parse_codex_toml},
 };
 use rust_i18n::t;
 use std::collections::HashMap;
@@ -249,11 +247,7 @@ mod tests {
             let content = format!("approvalMode = \"{}\"", mode);
             let diagnostics = validate_config(&content);
             let cdx_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CDX-001").collect();
-            assert!(
-                cdx_001.is_empty(),
-                "Mode '{}' should be valid",
-                mode
-            );
+            assert!(cdx_001.is_empty(), "Mode '{}' should be valid", mode);
         }
     }
 
@@ -355,11 +349,7 @@ mod tests {
             let content = format!("fullAutoErrorMode = \"{}\"", mode);
             let diagnostics = validate_config(&content);
             let cdx_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CDX-002").collect();
-            assert!(
-                cdx_002.is_empty(),
-                "Mode '{}' should be valid",
-                mode
-            );
+            assert!(cdx_002.is_empty(), "Mode '{}' should be valid", mode);
         }
     }
 
@@ -435,7 +425,10 @@ mod tests {
         // AGENTS.override.MD (wrong extension case) should NOT trigger CDX-003
         let diagnostics = validate_claude_md("AGENTS.override.MD", "# test");
         let cdx_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CDX-003").collect();
-        assert!(cdx_003.is_empty(), "CDX-003 should not fire for AGENTS.override.MD");
+        assert!(
+            cdx_003.is_empty(),
+            "CDX-003 should not fire for AGENTS.override.MD"
+        );
     }
 
     #[test]
@@ -452,8 +445,7 @@ mod tests {
         let mut config = LintConfig::default();
         config.rules.codex = false;
 
-        let diagnostics =
-            validate_config_with_config("approvalMode = \"invalid\"", &config);
+        let diagnostics = validate_config_with_config("approvalMode = \"invalid\"", &config);
         let cdx_rules: Vec<_> = diagnostics
             .iter()
             .filter(|d| d.rule.starts_with("CDX-"))
@@ -466,8 +458,7 @@ mod tests {
         let mut config = LintConfig::default();
         config.rules.disabled_rules = vec!["CDX-001".to_string()];
 
-        let diagnostics =
-            validate_config_with_config("approvalMode = \"invalid\"", &config);
+        let diagnostics = validate_config_with_config("approvalMode = \"invalid\"", &config);
         let cdx_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CDX-001").collect();
         assert!(cdx_001.is_empty());
     }
@@ -539,8 +530,16 @@ notify = true
         let diagnostics = validate_config(content);
         let cdx_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CDX-001").collect();
         let cdx_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CDX-002").collect();
-        assert_eq!(cdx_001.len(), 1, "CDX-001 should fire for invalid approvalMode");
-        assert_eq!(cdx_002.len(), 1, "CDX-002 should fire for empty fullAutoErrorMode");
+        assert_eq!(
+            cdx_001.len(),
+            1,
+            "CDX-001 should fire for invalid approvalMode"
+        );
+        assert_eq!(
+            cdx_002.len(),
+            1,
+            "CDX-002 should fire for empty fullAutoErrorMode"
+        );
     }
 
     #[test]
@@ -549,8 +548,16 @@ notify = true
         let diagnostics = validate_config(content);
         let cdx_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CDX-001").collect();
         let cdx_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CDX-002").collect();
-        assert_eq!(cdx_001.len(), 1, "CDX-001 should fire for wrong-type approvalMode");
-        assert_eq!(cdx_002.len(), 1, "CDX-002 should fire for wrong-type fullAutoErrorMode");
+        assert_eq!(
+            cdx_001.len(),
+            1,
+            "CDX-001 should fire for wrong-type approvalMode"
+        );
+        assert_eq!(
+            cdx_002.len(),
+            1,
+            "CDX-002 should fire for wrong-type fullAutoErrorMode"
+        );
         assert!(cdx_001[0].message.contains("string"));
         assert!(cdx_002[0].message.contains("string"));
     }
@@ -572,7 +579,8 @@ notify = true
 
     #[test]
     fn test_find_key_line() {
-        let content = "model = \"o4-mini\"\napprovalMode = \"suggest\"\nfullAutoErrorMode = \"ask-user\"";
+        let content =
+            "model = \"o4-mini\"\napprovalMode = \"suggest\"\nfullAutoErrorMode = \"ask-user\"";
         assert_eq!(find_key_line(content, "model"), Some(1));
         assert_eq!(find_key_line(content, "approvalMode"), Some(2));
         assert_eq!(find_key_line(content, "fullAutoErrorMode"), Some(3));

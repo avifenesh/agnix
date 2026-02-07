@@ -124,6 +124,7 @@ def main() -> int:
         "cline": "Cline",
         "opencode": "OpenCode",
         "gemini-cli": "Gemini CLI",
+        "codex": "Codex CLI",
         "version-awareness": "Version Awareness",
     }
 
@@ -208,6 +209,7 @@ def main() -> int:
         "Cline": ["cline"],
         "OpenCode": ["opencode"],
         "Gemini CLI": ["gemini-cli"],
+        "Codex CLI": ["codex"],
         "Version Awareness": ["version-awareness"],
     }
     spec_sum = 0

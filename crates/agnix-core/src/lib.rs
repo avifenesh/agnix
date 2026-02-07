@@ -3177,18 +3177,30 @@ Use idiomatic Rust patterns.
         assert!(
             result.diagnostics.iter().any(|d| d.rule == "CDX-001"),
             "Should report CDX-001 from .codex/config.toml. Rules found: {:?}",
-            result.diagnostics.iter().map(|d| &d.rule).collect::<Vec<_>>()
+            result
+                .diagnostics
+                .iter()
+                .map(|d| &d.rule)
+                .collect::<Vec<_>>()
         );
         assert!(
             result.diagnostics.iter().any(|d| d.rule == "CDX-002"),
             "Should report CDX-002 from .codex/config.toml. Rules found: {:?}",
-            result.diagnostics.iter().map(|d| &d.rule).collect::<Vec<_>>()
+            result
+                .diagnostics
+                .iter()
+                .map(|d| &d.rule)
+                .collect::<Vec<_>>()
         );
         // Should find CDX-003 from AGENTS.override.md
         assert!(
             result.diagnostics.iter().any(|d| d.rule == "CDX-003"),
             "Should report CDX-003 from AGENTS.override.md. Rules found: {:?}",
-            result.diagnostics.iter().map(|d| &d.rule).collect::<Vec<_>>()
+            result
+                .diagnostics
+                .iter()
+                .map(|d| &d.rule)
+                .collect::<Vec<_>>()
         );
     }
 
