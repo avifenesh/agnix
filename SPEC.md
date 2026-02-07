@@ -8,7 +8,7 @@
 |------|-------|-------|
 | Skills | SKILL.md | 31 |
 | Hooks | settings.json | 18 |
-| Memory (Claude Code) | CLAUDE.md, CLAUDE.local.md | 12 |
+| Memory (Claude Code) | CLAUDE.md, CLAUDE.local.md, .claude/rules/*.md | 12 |
 | Instructions (Cross-Tool) | AGENTS.md, AGENTS.local.md, AGENTS.override.md | 6 |
 | Agents | agents/*.md | 13 |
 | Plugins | plugin.json | 6 |

@@ -22,6 +22,6 @@ npx agnix .
 ## Next steps
 
 - [Getting Started](./getting-started.md) -- install and run in 60 seconds
-- [Rules Reference](./rules/index.md) -- browse all 126 validation rules
+- [Rules Reference](./rules/index.md) -- browse all 129 validation rules
 - [Configuration](./configuration.md) -- customize with `.agnix.toml`
 - [Editor Integration](./editor-integration.md) -- set up real-time diagnostics
