@@ -6,7 +6,6 @@
 //! - CDX-003: AGENTS.override.md in version control (MEDIUM) - should be in .gitignore
 
 use crate::{
-    FileType,
     config::LintConfig,
     diagnostics::Diagnostic,
     rules::Validator,
@@ -24,10 +23,16 @@ impl Validator for CodexValidator {
     fn validate(&self, path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic> {
         let mut diagnostics = Vec::new();
 
-        let file_type = crate::detect_file_type(path);
+        // Determine whether this is a .md file (ClaudeMd) or a .toml file (CodexConfig)
+        // using a direct filename check instead of the full detect_file_type() call.
+        // This runs on every ClaudeMd file but the cost is negligible: a single
+        // OsStr comparison before early return.
+        let is_markdown = path
+            .file_name()
+            .and_then(|n| n.to_str())
+            .is_some_and(|name| name.ends_with(".md"));
 
-        // When registered for ClaudeMd, only check CDX-003 (AGENTS.override.md)
-        if file_type == FileType::ClaudeMd {
+        if is_markdown {
             if config.is_rule_enabled("CDX-003") {
                 if let Some(filename) = path.file_name().and_then(|n| n.to_str()) {
                     if filename == "AGENTS.override.md" {
@@ -289,6 +294,17 @@ mod tests {
     }
 
     #[test]
+    fn test_cdx_001_type_mismatch_float() {
+        let diagnostics = validate_config("approvalMode = 1.5");
+        let cdx_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CDX-001").collect();
+        assert_eq!(cdx_001.len(), 1);
+        assert!(
+            cdx_001[0].message.contains("string"),
+            "Expected type error message for float value"
+        );
+    }
+
+    #[test]
     fn test_cdx_001_type_mismatch_array() {
         let diagnostics = validate_config("approvalMode = [\"suggest\"]");
         let cdx_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CDX-001").collect();
@@ -415,6 +431,14 @@ mod tests {
     }
 
     #[test]
+    fn test_cdx_003_case_sensitive_extension() {
+        // AGENTS.override.MD (wrong extension case) should NOT trigger CDX-003
+        let diagnostics = validate_claude_md("AGENTS.override.MD", "# test");
+        let cdx_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CDX-003").collect();
+        assert!(cdx_003.is_empty(), "CDX-003 should not fire for AGENTS.override.MD");
+    }
+
+    #[test]
     fn test_cdx_003_not_triggered_on_config() {
         let diagnostics = validate_config("approvalMode = \"suggest\"");
         let cdx_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CDX-003").collect();
@@ -509,6 +533,17 @@ notify = true
     }
 
     #[test]
+    fn test_cdx_002_empty_with_cdx_001_invalid() {
+        // Both CDX-001 (invalid value) and CDX-002 (empty string) should fire together
+        let content = "approvalMode = \"invalid\"\nfullAutoErrorMode = \"\"";
+        let diagnostics = validate_config(content);
+        let cdx_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CDX-001").collect();
+        let cdx_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CDX-002").collect();
+        assert_eq!(cdx_001.len(), 1, "CDX-001 should fire for invalid approvalMode");
+        assert_eq!(cdx_002.len(), 1, "CDX-002 should fire for empty fullAutoErrorMode");
+    }
+
+    #[test]
     fn test_both_fields_wrong_type() {
         let content = "approvalMode = true\nfullAutoErrorMode = 123";
         let diagnostics = validate_config(content);
@@ -549,6 +584,20 @@ notify = true
         // "approvalMode" appears as part of a string value, not as a key
         let content = "comment = \"the approvalMode field\"\napprovalMode = \"suggest\"";
         assert_eq!(find_key_line(content, "approvalMode"), Some(2));
+    }
+
+    #[test]
+    fn test_find_key_line_at_start_of_content() {
+        // Key on the very first line with no preceding content
+        let content = "approvalMode = \"suggest\"";
+        assert_eq!(find_key_line(content, "approvalMode"), Some(1));
+    }
+
+    #[test]
+    fn test_find_key_line_with_leading_whitespace() {
+        // Key with leading whitespace (indented)
+        let content = "  approvalMode = \"suggest\"";
+        assert_eq!(find_key_line(content, "approvalMode"), Some(1));
     }
 
     #[test]

@@ -179,6 +179,8 @@ impl ValidatorRegistry {
             (FileType::ClineRulesFolder, cline_validator),
             (FileType::OpenCodeConfig, opencode_validator),
             (FileType::CodexConfig, codex_validator),
+            // CodexValidator on ClaudeMd catches AGENTS.override.md files (CDX-003).
+            // The validator early-returns for all other ClaudeMd filenames.
             (FileType::ClaudeMd, codex_validator),
             (FileType::GenericMarkdown, cross_platform_validator),
             (FileType::GenericMarkdown, xml_validator),
@@ -350,6 +352,8 @@ pub fn detect_file_type(path: &Path) -> FileType {
         // OpenCode configuration (opencode.json)
         "opencode.json" => FileType::OpenCodeConfig,
         // Codex CLI configuration (.codex/config.toml)
+        // Path safety: symlink rejection and size limits are enforced upstream
+        // by file_utils::safe_read_file before content reaches any validator.
         "config.toml" if parent == Some(".codex") => FileType::CodexConfig,
         name if name.ends_with(".md") => {
             // Agent directories take precedence over filename exclusions.
