@@ -218,6 +218,24 @@ rules:
     message: "Agent file must have YAML frontmatter"
     suggestion: "Add frontmatter between --- markers"
     parse_error: "Failed to parse agent frontmatter: %{error}"
+  cc_ag_008:
+    message: "Invalid memory scope '%{scope}'. Must be 'user', 'project', or 'local'"
+    suggestion: "Use one of: user, project, local"
+  cc_ag_009:
+    message: "Unknown tool '%{tool}' in tools list. Known tools: %{known}"
+    suggestion: "Use a known Claude Code tool name"
+  cc_ag_010:
+    message: "Unknown tool '%{tool}' in disallowedTools list. Known tools: %{known}"
+    suggestion: "Use a known Claude Code tool name"
+  cc_ag_011:
+    message: "Invalid hooks configuration in agent frontmatter: %{error}"
+    suggestion: "Ensure hooks follow the same schema as settings.json hooks"
+  cc_ag_012:
+    message: "permissionMode 'bypassPermissions' disables all safety checks"
+    suggestion: "Consider using 'dontAsk' or 'acceptEdits' for a safer permission mode"
+  cc_ag_013:
+    message: "Invalid skill name format '%{name}'. Must be lowercase with hyphens"
+    suggestion: "Use kebab-case format (e.g., 'my-skill-name')"
 
   # --- Claude MD (claude_md.rs) ---
   cc_mem_004:
