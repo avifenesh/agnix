@@ -1013,6 +1013,31 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 
 ---
 
+## GEMINI CLI RULES
+
+<a id="gm-001"></a>
+### GM-001 [HIGH] Invalid Markdown Structure in GEMINI.md
+**Requirement**: GEMINI.md MUST have valid markdown (no unclosed code blocks or malformed links)
+**Detection**: Parse markdown, check for unclosed ``` blocks and malformed [text]( links
+**Fix**: No auto-fix (manual correction required)
+**Source**: geminicli.com/docs/cli/gemini-md/
+
+<a id="gm-002"></a>
+### GM-002 [MEDIUM] Missing Section Headers in GEMINI.md
+**Requirement**: GEMINI.md SHOULD have markdown section headers for organization
+**Detection**: Scan for `^#+\s+.+` patterns, report if none found
+**Fix**: No auto-fix (headers must be authored by user)
+**Source**: geminicli.com/docs/cli/gemini-md/
+
+<a id="gm-003"></a>
+### GM-003 [MEDIUM] Missing Project Context in GEMINI.md
+**Requirement**: GEMINI.md SHOULD include a project context section describing purpose and tech stack
+**Detection**: Check for headers matching project/overview/about/description patterns or content referencing "this project"
+**Fix**: No auto-fix (project context must be authored by user)
+**Source**: geminicli.com/docs/cli/gemini-md/
+
+---
+
 ## UNIVERSAL RULES (XML)
 
 <a id="xml-001"></a>

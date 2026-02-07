@@ -1,7 +1,7 @@
 {
   "description": "Machine-readable source of truth for all validation rules. When adding a new rule, add it here AND in VALIDATION-RULES.md. CI parity tests enforce sync.",
   "version": "1.1.0",
-  "total_rules": 139,
+  "total_rules": 142,
   "last_updated": "2026-02-07",
   "schema": {
     "evidence": {
@@ -3487,6 +3487,81 @@
       }
     },
     {
+      "id": "GM-001",
+      "name": "Invalid Markdown Structure in GEMINI.md",
+      "severity": "HIGH",
+      "category": "gemini-cli",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://geminicli.com/docs/cli/gemini-md/"
+        ],
+        "verified_on": "2026-02-07",
+        "applies_to": {
+          "tool": "gemini-cli"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      }
+    },
+    {
+      "id": "GM-002",
+      "name": "Missing Section Headers in GEMINI.md",
+      "severity": "MEDIUM",
+      "category": "gemini-cli",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://geminicli.com/docs/cli/gemini-md/"
+        ],
+        "verified_on": "2026-02-07",
+        "applies_to": {
+          "tool": "gemini-cli"
+        },
+        "normative_level": "SHOULD",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      }
+    },
+    {
+      "id": "GM-003",
+      "name": "Missing Project Context in GEMINI.md",
+      "severity": "MEDIUM",
+      "category": "gemini-cli",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://geminicli.com/docs/cli/gemini-md/"
+        ],
+        "verified_on": "2026-02-07",
+        "applies_to": {
+          "tool": "gemini-cli"
+        },
+        "normative_level": "SHOULD",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      }
+    },
+    {
       "id": "VER-001",
       "name": "No Tool/Spec Versions Pinned",
       "severity": "LOW",
@@ -3565,6 +3640,16 @@
       "prefix": "CLN",
       "count": 3,
       "description": "Cline rules validation"
+    },
+    "opencode": {
+      "prefix": "OC",
+      "count": 3,
+      "description": "OpenCode configuration rules"
+    },
+    "gemini-cli": {
+      "prefix": "GM",
+      "count": 3,
+      "description": "Gemini CLI instruction file rules"
     },
     "xml": {
       "prefix": "XML",

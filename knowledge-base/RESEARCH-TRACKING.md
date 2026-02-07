@@ -41,7 +41,7 @@ Tools are organized by support tier (see [../CONTRIBUTING.md#tool-tier-system](.
 
 | Tool | Config Format | Documentation URL | Monitoring | Frequency | Last Reviewed | Rule Prefix |
 |------|---------------|-------------------|------------|-----------|---------------|-------------|
-| gemini cli | `GEMINI.md` | https://github.com/google-gemini/gemini-cli | Manual | As reported | 2026-02-05 | -- |
+| gemini cli | `GEMINI.md` | https://github.com/google-gemini/gemini-cli | Manual | As reported | 2026-02-05 | GM- |
 | continue | `.continue/config.json` | https://docs.continue.dev/ | Manual | As reported | 2026-02-05 | -- |
 | Antigravity | `.antigravity/config.yml` | TBD | Manual | As reported | 2026-02-05 | -- |
 
