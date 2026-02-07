@@ -42,6 +42,12 @@ This section contains all `102` validation rules generated from `knowledge-base/
 | [CC-HK-010](./generated/cc-hk-010.md) | Timeout Policy | MEDIUM | Claude Hooks | No |
 | [CC-HK-011](./generated/cc-hk-011.md) | Invalid Timeout Value | HIGH | Claude Hooks | Yes (unsafe) |
 | [CC-HK-012](./generated/cc-hk-012.md) | Hooks Parse Error | HIGH | Claude Hooks | No |
+| [CC-HK-013](./generated/cc-hk-013.md) | Async on Non-Command Hook | HIGH | Claude Hooks | No |
+| [CC-HK-014](./generated/cc-hk-014.md) | Once Outside Skill/Agent Frontmatter | MEDIUM | Claude Hooks | No |
+| [CC-HK-015](./generated/cc-hk-015.md) | Model on Command Hook | MEDIUM | Claude Hooks | No |
+| [CC-HK-016](./generated/cc-hk-016.md) | Validate Hook Type Agent | HIGH | Claude Hooks | No |
+| [CC-HK-017](./generated/cc-hk-017.md) | Prompt Hook Missing $ARGUMENTS | MEDIUM | Claude Hooks | No |
+| [CC-HK-018](./generated/cc-hk-018.md) | Matcher on UserPromptSubmit/Stop | LOW | Claude Hooks | No |
 | [CC-AG-001](./generated/cc-ag-001.md) | Missing Name Field | HIGH | Claude Agents | No |
 | [CC-AG-002](./generated/cc-ag-002.md) | Missing Description Field | HIGH | Claude Agents | No |
 | [CC-AG-003](./generated/cc-ag-003.md) | Invalid Model Value | HIGH | Claude Agents | Yes (unsafe) |

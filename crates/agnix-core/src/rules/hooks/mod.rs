@@ -146,6 +146,73 @@ fn validate_cc_hk_010_command_timeout(
     }
 }
 
+/// CC-HK-015: Model on command hook
+fn validate_cc_hk_015_model_on_command(
+    hook_location: &str,
+    path: &Path,
+    diagnostics: &mut Vec<Diagnostic>,
+) {
+    diagnostics.push(
+        Diagnostic::warning(
+            path.to_path_buf(),
+            1,
+            0,
+            "CC-HK-015",
+            t!("rules.cc_hk_015.message", location = hook_location),
+        )
+        .with_suggestion(t!("rules.cc_hk_015.suggestion")),
+    );
+}
+
+/// CC-HK-017: Prompt hook missing $ARGUMENTS
+fn validate_cc_hk_017_prompt_arguments(
+    prompt: &str,
+    hook_location: &str,
+    path: &Path,
+    diagnostics: &mut Vec<Diagnostic>,
+) {
+    if !prompt.contains("$ARGUMENTS") {
+        diagnostics.push(
+            Diagnostic::warning(
+                path.to_path_buf(),
+                1,
+                0,
+                "CC-HK-017",
+                t!("rules.cc_hk_017.message", location = hook_location),
+            )
+            .with_suggestion(t!("rules.cc_hk_017.suggestion")),
+        );
+    }
+}
+
+/// CC-HK-018: Matcher on UserPromptSubmit/Stop events (silently ignored)
+fn validate_cc_hk_018_matcher_ignored(
+    event: &str,
+    matcher: &Option<String>,
+    matcher_idx: usize,
+    path: &Path,
+    diagnostics: &mut Vec<Diagnostic>,
+) {
+    let ignored_events = ["UserPromptSubmit", "Stop"];
+    if ignored_events.contains(&event) && matcher.is_some() {
+        let hook_location = format!("hooks.{}[{}]", event, matcher_idx);
+        diagnostics.push(
+            Diagnostic::info(
+                path.to_path_buf(),
+                1,
+                0,
+                "CC-HK-018",
+                t!(
+                    "rules.cc_hk_018.message",
+                    location = hook_location.as_str(),
+                    event = event
+                ),
+            )
+            .with_suggestion(t!("rules.cc_hk_018.suggestion", event = event)),
+        );
+    }
+}
+
 /// CC-HK-002: Prompt hook on wrong event
 fn validate_cc_hk_002_prompt_event_type(
     event: &str,
@@ -274,9 +341,9 @@ impl Validator for HooksValidator {
     ///
     /// 1. **Category check** - Early return if hooks category disabled
     /// 2. **JSON parsing** - Parse raw JSON, report CC-HK-012 on failure
-    /// 3. **Pre-parse validation** - Raw JSON checks (CC-HK-005, CC-HK-011)
+    /// 3. **Pre-parse validation** - Raw JSON checks (CC-HK-005, CC-HK-011, CC-HK-013, CC-HK-014, CC-HK-016)
     /// 4. **Typed parsing** - Parse into SettingsSchema
-    /// 5. **Event iteration** - Validate each event and hook
+    /// 5. **Event iteration** - Validate each event and hook (CC-HK-015, CC-HK-017, CC-HK-018)
     fn validate(&self, path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic> {
         let mut diagnostics = Vec::new();
 
@@ -311,6 +378,24 @@ impl Validator for HooksValidator {
         // CC-HK-011: Invalid timeout value
         if config.is_rule_enabled("CC-HK-011") {
             validate_cc_hk_011_invalid_timeout_values(&raw_value, path, content, &mut diagnostics);
+        }
+
+        // CC-HK-013: Async on non-command hook
+        if config.is_rule_enabled("CC-HK-013") {
+            validate_cc_hk_013_async_field(&raw_value, path, &mut diagnostics);
+        }
+
+        // CC-HK-014: Once outside skill/agent frontmatter
+        if config.is_rule_enabled("CC-HK-014") {
+            validate_cc_hk_014_once_field(&raw_value, path, &mut diagnostics);
+        }
+
+        // CC-HK-016: Validate hook type (check for unknown types)
+        if config.is_rule_enabled("CC-HK-016") {
+            validate_cc_hk_016_unknown_type(&raw_value, path, &mut diagnostics);
+            if diagnostics.iter().any(|d| d.rule == "CC-HK-016") {
+                return diagnostics;
+            }
         }
 
         let settings: SettingsSchema = match serde_json::from_value(raw_value) {
@@ -376,6 +461,17 @@ impl Validator for HooksValidator {
                     );
                 }
 
+                // CC-HK-018: Matcher on UserPromptSubmit/Stop
+                if config.is_rule_enabled("CC-HK-018") {
+                    validate_cc_hk_018_matcher_ignored(
+                        event,
+                        &matcher.matcher,
+                        matcher_idx,
+                        path,
+                        &mut diagnostics,
+                    );
+                }
+
                 // --- Hook-level validation ---
                 for (hook_idx, hook) in matcher.hooks.iter().enumerate() {
                     let hook_location = format!(
@@ -391,7 +487,10 @@ impl Validator for HooksValidator {
 
                     match hook {
                         Hook::Command {
-                            command, timeout, ..
+                            command,
+                            timeout,
+                            model,
+                            ..
                         } => {
                             // CC-HK-010: Command timeout policy
                             if config.is_rule_enabled("CC-HK-010") {
@@ -408,6 +507,15 @@ impl Validator for HooksValidator {
                             if config.is_rule_enabled("CC-HK-006") {
                                 validate_cc_hk_006_command_field(
                                     command,
+                                    &hook_location,
+                                    path,
+                                    &mut diagnostics,
+                                );
+                            }
+
+                            // CC-HK-015: Model on command hook
+                            if config.is_rule_enabled("CC-HK-015") && model.is_some() {
+                                validate_cc_hk_015_model_on_command(
                                     &hook_location,
                                     path,
                                     &mut diagnostics,
@@ -468,6 +576,64 @@ impl Validator for HooksValidator {
                                     path,
                                     &mut diagnostics,
                                 );
+                            }
+
+                            // CC-HK-017: Prompt hook missing $ARGUMENTS
+                            if config.is_rule_enabled("CC-HK-017") {
+                                if let Some(p) = prompt {
+                                    validate_cc_hk_017_prompt_arguments(
+                                        p,
+                                        &hook_location,
+                                        path,
+                                        &mut diagnostics,
+                                    );
+                                }
+                            }
+                        }
+                        Hook::Agent {
+                            prompt, timeout, ..
+                        } => {
+                            // CC-HK-010: Agent timeout policy (same as prompt)
+                            if config.is_rule_enabled("CC-HK-010") {
+                                validate_cc_hk_010_prompt_timeout(
+                                    timeout,
+                                    &hook_location,
+                                    config.is_claude_code_version_pinned(),
+                                    path,
+                                    &mut diagnostics,
+                                );
+                            }
+
+                            // CC-HK-002: Agent hook on wrong event (same restriction as prompt)
+                            if config.is_rule_enabled("CC-HK-002") {
+                                validate_cc_hk_002_prompt_event_type(
+                                    event,
+                                    &hook_location,
+                                    path,
+                                    &mut diagnostics,
+                                );
+                            }
+
+                            // CC-HK-007: Missing prompt field
+                            if config.is_rule_enabled("CC-HK-007") {
+                                validate_cc_hk_007_prompt_field(
+                                    prompt,
+                                    &hook_location,
+                                    path,
+                                    &mut diagnostics,
+                                );
+                            }
+
+                            // CC-HK-017: Agent hook missing $ARGUMENTS
+                            if config.is_rule_enabled("CC-HK-017") {
+                                if let Some(p) = prompt {
+                                    validate_cc_hk_017_prompt_arguments(
+                                        p,
+                                        &hook_location,
+                                        path,
+                                        &mut diagnostics,
+                                    );
+                                }
                             }
                         }
                     }

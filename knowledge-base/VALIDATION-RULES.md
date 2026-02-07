@@ -369,6 +369,48 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 **Fix**: Fix JSON syntax errors in hooks configuration
 **Source**: code.claude.com/docs/en/hooks
 
+<a id="cc-hk-013"></a>
+### CC-HK-013 [HIGH] Async on Non-Command Hook
+**Requirement**: `async: true` MUST only appear on `type: "command"` hooks
+**Detection**: Check for `async` field on prompt or agent hook types
+**Fix**: Remove the async field or change hook type to command
+**Source**: code.claude.com/docs/en/hooks
+
+<a id="cc-hk-014"></a>
+### CC-HK-014 [MEDIUM] Once Outside Skill/Agent Frontmatter
+**Requirement**: `once` field SHOULD only appear in skill/agent frontmatter hooks
+**Detection**: Check for `once` field in settings.json hooks
+**Fix**: Remove the once field from settings.json hooks
+**Source**: code.claude.com/docs/en/hooks
+
+<a id="cc-hk-015"></a>
+### CC-HK-015 [MEDIUM] Model on Command Hook
+**Requirement**: `model` field MUST only appear on prompt or agent hooks
+**Detection**: Check for `model` field on command hook types
+**Fix**: Remove the model field or change hook type to prompt/agent
+**Source**: code.claude.com/docs/en/hooks
+
+<a id="cc-hk-016"></a>
+### CC-HK-016 [HIGH] Validate Hook Type Agent
+**Requirement**: `type: "agent"` MUST be recognized as a valid hook handler type
+**Detection**: Ensure agent type is accepted alongside command and prompt
+**Fix**: N/A (recognition rule)
+**Source**: code.claude.com/docs/en/hooks
+
+<a id="cc-hk-017"></a>
+### CC-HK-017 [MEDIUM] Prompt Hook Missing $ARGUMENTS
+**Requirement**: Prompt hooks SHOULD reference `$ARGUMENTS` to receive event data
+**Detection**: Check prompt text for `$ARGUMENTS` reference
+**Fix**: Include $ARGUMENTS in the prompt
+**Source**: code.claude.com/docs/en/hooks
+
+<a id="cc-hk-018"></a>
+### CC-HK-018 [LOW] Matcher on UserPromptSubmit/Stop
+**Requirement**: Matchers on UserPromptSubmit and Stop events are silently ignored
+**Detection**: Check for matcher field on UserPromptSubmit or Stop events
+**Fix**: Remove the matcher field
+**Source**: code.claude.com/docs/en/hooks
+
 ---
 
 ## CLAUDE CODE RULES (SUBAGENTS)

@@ -1,0 +1,20 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          { "type": "command", "command": "echo user submitted" }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "Write",
+        "hooks": [
+          { "type": "command", "command": "echo stopping" }
+        ]
+      }
+    ]
+  }
+}

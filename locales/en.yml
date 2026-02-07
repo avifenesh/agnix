@@ -98,7 +98,7 @@ rules:
     suggestion: "Remove the 'matcher' field"
   cc_hk_005:
     message: "Hook at %{location} is missing required 'type' field"
-    suggestion: "Add 'type': 'command' or 'type': 'prompt'"
+    suggestion: "Add 'type': 'command', 'type': 'prompt', or 'type': 'agent'"
   cc_hk_006:
     message: "Command hook at %{location} is missing required 'command' field"
     suggestion: "Add a 'command' field with the command to execute"
@@ -126,6 +126,24 @@ rules:
     suggestion: "Set timeout to a positive integer like 30"
   cc_hk_012:
     message: "Failed to parse hooks configuration: %{error}"
+  cc_hk_013:
+    message: "async field is only valid on command hooks, not %{hook_type} hooks at %{location}"
+    suggestion: "Remove the async field or change the hook type to command"
+  cc_hk_014:
+    message: "once field at %{location} is only meaningful in skill/agent frontmatter hooks"
+    suggestion: "Remove the once field from settings.json hooks"
+  cc_hk_015:
+    message: "model field is only valid on prompt/agent hooks, not command hooks at %{location}"
+    suggestion: "Remove the model field or change the hook type to prompt/agent"
+  cc_hk_016:
+    message: "Unknown hook type '%{hook_type}' at %{location}"
+    suggestion: "Valid hook types are: command, prompt, agent"
+  cc_hk_017:
+    message: "Prompt hook at %{location} does not reference $ARGUMENTS"
+    suggestion: "Include $ARGUMENTS in the prompt to receive event context"
+  cc_hk_018:
+    message: "Matcher at %{location} is silently ignored for '%{event}' events"
+    suggestion: "Remove the matcher field as it has no effect on %{event} events"
 
   # --- MCP (mcp.rs) ---
   mcp_001:
