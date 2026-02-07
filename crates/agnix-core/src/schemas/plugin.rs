@@ -37,6 +37,7 @@ pub struct PluginSchema {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AuthorInfo {
+    #[serde(default)]
     pub name: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub email: Option<String>,

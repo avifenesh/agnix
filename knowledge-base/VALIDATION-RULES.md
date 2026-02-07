@@ -729,6 +729,34 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 **Fix**: Fix JSON syntax errors in plugin.json
 **Source**: code.claude.com/docs/en/plugins-reference
 
+<a id="cc-pl-007"></a>
+### CC-PL-007 [HIGH] Invalid Component Path
+**Requirement**: Paths in `commands`, `agents`, `skills`, `hooks` MUST be relative (no absolute paths or `..` traversal)
+**Detection**: Check path fields for absolute paths (`/`, `C:\`) or parent traversal (`..`)
+**Fix**: Prepend `./` to relative paths [safe autofix]
+**Source**: code.claude.com/docs/en/plugins-reference
+
+<a id="cc-pl-008"></a>
+### CC-PL-008 [HIGH] Component Inside .claude-plugin
+**Requirement**: Component paths in manifest MUST NOT point inside `.claude-plugin/` directory
+**Detection**: Check if path fields reference `.claude-plugin/` subdirectories
+**Fix**: Suggest moving components to plugin root
+**Source**: code.claude.com/docs/en/plugins-reference
+
+<a id="cc-pl-009"></a>
+### CC-PL-009 [MEDIUM] Invalid Author Object
+**Requirement**: If `author` field is present, `author.name` SHOULD be a non-empty string
+**Detection**: Check `author.name` exists and is non-empty when `author` is present
+**Fix**: Manual fix required
+**Source**: code.claude.com/docs/en/plugins-reference
+
+<a id="cc-pl-010"></a>
+### CC-PL-010 [MEDIUM] Invalid Homepage URL
+**Requirement**: If `homepage` field is present, it SHOULD be a valid URL (http/https)
+**Detection**: Validate URL format with http/https scheme check
+**Fix**: Manual fix required
+**Source**: code.claude.com/docs/en/plugins-reference
+
 ---
 
 ## MCP RULES
@@ -1105,7 +1133,7 @@ Add these 15 rules:
 - AS-010 through AS-015 (Skills best practices)
 - CC-MEM-006 through CC-MEM-010 (Memory quality)
 - CC-AG-001 through CC-AG-013 (Agents)
-- CC-PL-001 through CC-PL-005 (Plugins)
+- CC-PL-001 through CC-PL-010 (Plugins)
 
 ### P2 (Week 5-6)
 Complete coverage:
@@ -1180,6 +1208,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | CC-MEM-005 | Remove generic instruction line | safe |
 | CC-MEM-007 | Replace weak language with strong | safe/unsafe |
 | CC-PL-005 | Normalize plugin name | unsafe |
+| CC-PL-007 | Prepend ./ to relative path | safe |
 | MCP-001 | Set jsonrpc to "2.0" | safe |
 | MCP-008 | Update protocolVersion | unsafe |
 | MCP-012 | Change sse to http | unsafe |
@@ -1202,7 +1231,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | Claude Agents | 13 | 12 | 1 | 0 | 2 |
 | Claude Memory | 12 | 8 | 4 | 0 | 3 |
 | AGENTS.md | 6 | 1 | 5 | 0 | 0 |
-| Claude Plugins | 6 | 6 | 0 | 0 | 1 |
+| Claude Plugins | 10 | 8 | 2 | 0 | 2 |
 | GitHub Copilot | 6 | 4 | 2 | 0 | 1 |
 | Cursor | 9 | 4 | 5 | 0 | 2 |
 | MCP | 12 | 10 | 2 | 0 | 3 |
@@ -1211,7 +1240,8 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | Prompt Eng | 4 | 0 | 4 | 0 | 0 |
 | Cross-Platform | 6 | 4 | 2 | 0 | 0 |
 | Version Awareness | 1 | 0 | 0 | 1 | 0 |
-| **TOTAL** | **129** | **93** | **34** | **2** | **30** |
+| **TOTAL** | **133** | **95** | **36** | **2** | **31** |
+
 
 ---
 
@@ -1240,7 +1270,9 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 
 ---
 
-**Total Coverage**: 129 validation rules across 15 categories
+**Total Coverage**: 133 validation rules across 15 categories
+
 **Knowledge Base**: 11,036 lines, 320KB, 75+ sources
-**Certainty**: 93 HIGH, 34 MEDIUM, 2 LOW
-**Auto-Fixable**: 30 rules (23%)
+**Certainty**: 95 HIGH, 36 MEDIUM, 2 LOW
+**Auto-Fixable**: 31 rules (23%)
+
