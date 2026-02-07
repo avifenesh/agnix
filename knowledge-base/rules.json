@@ -1070,7 +1070,7 @@
     },
     {
       "id": "CC-HK-017",
-      "name": "Prompt Hook Missing $ARGUMENTS",
+      "name": "Prompt/Agent Hook Missing $ARGUMENTS",
       "severity": "MEDIUM",
       "category": "claude-hooks",
       "evidence": {

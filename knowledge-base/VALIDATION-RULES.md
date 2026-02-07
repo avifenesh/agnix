@@ -398,10 +398,10 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 **Source**: code.claude.com/docs/en/hooks
 
 <a id="cc-hk-017"></a>
-### CC-HK-017 [MEDIUM] Prompt Hook Missing $ARGUMENTS
-**Requirement**: Prompt hooks SHOULD reference `$ARGUMENTS` to receive event data
-**Detection**: Check prompt text for `$ARGUMENTS` reference
-**Fix**: Include $ARGUMENTS in the prompt
+### CC-HK-017 [MEDIUM] Prompt/Agent Hook Missing $ARGUMENTS
+**Requirement**: Prompt and agent hooks SHOULD reference `$ARGUMENTS` to receive event data
+**Detection**: Check prompt or agent hook text for `$ARGUMENTS` reference
+**Fix**: Include `$ARGUMENTS` in the prompt or agent hook
 **Source**: code.claude.com/docs/en/hooks
 
 <a id="cc-hk-018"></a>

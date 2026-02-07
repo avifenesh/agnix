@@ -285,6 +285,7 @@ pub(super) fn validate_cc_hk_003_matcher_required(
 }
 
 /// CC-HK-004: Matcher on non-tool event
+/// Note: Stop and UserPromptSubmit are handled by CC-HK-018 instead (info-level).
 pub(super) fn validate_cc_hk_004_matcher_forbidden(
     event: &str,
     matcher: &Option<String>,
@@ -293,7 +294,10 @@ pub(super) fn validate_cc_hk_004_matcher_forbidden(
     content: &str,
     diagnostics: &mut Vec<Diagnostic>,
 ) {
-    if !HooksSchema::is_tool_event(event) && matcher.is_some() {
+    // Skip events handled by CC-HK-018 (matcher silently ignored rather than forbidden)
+    const CC_HK_018_EVENTS: &[&str] = &["UserPromptSubmit", "Stop"];
+    if !HooksSchema::is_tool_event(event) && matcher.is_some() && !CC_HK_018_EVENTS.contains(&event)
+    {
         let hook_location = format!("hooks.{}[{}]", event, matcher_idx);
         let mut diagnostic = Diagnostic::error(
             path.to_path_buf(),
@@ -457,44 +461,18 @@ fn find_unique_json_key_value_span(
     Some((value_match.start(), value_match.end()))
 }
 
-/// CC-HK-013: Async on non-command hook (raw JSON check)
-pub(super) fn validate_cc_hk_013_async_field(
-    raw_value: &serde_json::Value,
-    path: &Path,
-    diagnostics: &mut Vec<Diagnostic>,
-) {
+/// Iterate over all raw hook entries in the JSON value, calling `f` for each one.
+fn for_each_raw_hook<F>(raw_value: &serde_json::Value, mut f: F)
+where
+    F: FnMut(&str, usize, usize, &serde_json::Value),
+{
     if let Some(hooks_obj) = raw_value.get("hooks").and_then(|h| h.as_object()) {
         for (event, matchers) in hooks_obj {
             if let Some(matchers_arr) = matchers.as_array() {
                 for (matcher_idx, matcher) in matchers_arr.iter().enumerate() {
                     if let Some(hooks_arr) = matcher.get("hooks").and_then(|h| h.as_array()) {
                         for (hook_idx, hook) in hooks_arr.iter().enumerate() {
-                            if hook.get("async").is_some() {
-                                let hook_type = hook
-                                    .get("type")
-                                    .and_then(|t| t.as_str())
-                                    .unwrap_or("unknown");
-                                if hook_type != "command" {
-                                    let hook_location = format!(
-                                        "hooks.{}[{}].hooks[{}]",
-                                        event, matcher_idx, hook_idx
-                                    );
-                                    diagnostics.push(
-                                        Diagnostic::error(
-                                            path.to_path_buf(),
-                                            1,
-                                            0,
-                                            "CC-HK-013",
-                                            t!(
-                                                "rules.cc_hk_013.message",
-                                                hook_type = hook_type,
-                                                location = hook_location.as_str()
-                                            ),
-                                        )
-                                        .with_suggestion(t!("rules.cc_hk_013.suggestion")),
-                                    );
-                                }
-                            }
+                            f(event, matcher_idx, hook_idx, hook);
                         }
                     }
                 }
@@ -503,41 +481,60 @@ pub(super) fn validate_cc_hk_013_async_field(
     }
 }
 
+/// CC-HK-013: Async on non-command hook (raw JSON check)
+pub(super) fn validate_cc_hk_013_async_field(
+    raw_value: &serde_json::Value,
+    path: &Path,
+    diagnostics: &mut Vec<Diagnostic>,
+) {
+    for_each_raw_hook(raw_value, |event, matcher_idx, hook_idx, hook| {
+        if hook.get("async").is_some() {
+            let hook_type = hook
+                .get("type")
+                .and_then(|t| t.as_str())
+                .unwrap_or("unknown");
+            if hook_type != "command" {
+                let hook_location = format!("hooks.{}[{}].hooks[{}]", event, matcher_idx, hook_idx);
+                diagnostics.push(
+                    Diagnostic::error(
+                        path.to_path_buf(),
+                        1,
+                        0,
+                        "CC-HK-013",
+                        t!(
+                            "rules.cc_hk_013.message",
+                            hook_type = hook_type,
+                            location = hook_location.as_str()
+                        ),
+                    )
+                    .with_suggestion(t!("rules.cc_hk_013.suggestion")),
+                );
+            }
+        }
+    });
+}
+
 /// CC-HK-014: Once outside skill/agent frontmatter (raw JSON check)
 pub(super) fn validate_cc_hk_014_once_field(
     raw_value: &serde_json::Value,
     path: &Path,
     diagnostics: &mut Vec<Diagnostic>,
 ) {
-    if let Some(hooks_obj) = raw_value.get("hooks").and_then(|h| h.as_object()) {
-        for (event, matchers) in hooks_obj {
-            if let Some(matchers_arr) = matchers.as_array() {
-                for (matcher_idx, matcher) in matchers_arr.iter().enumerate() {
-                    if let Some(hooks_arr) = matcher.get("hooks").and_then(|h| h.as_array()) {
-                        for (hook_idx, hook) in hooks_arr.iter().enumerate() {
-                            if hook.get("once").is_some() {
-                                let hook_location =
-                                    format!("hooks.{}[{}].hooks[{}]", event, matcher_idx, hook_idx);
-                                diagnostics.push(
-                                    Diagnostic::warning(
-                                        path.to_path_buf(),
-                                        1,
-                                        0,
-                                        "CC-HK-014",
-                                        t!(
-                                            "rules.cc_hk_014.message",
-                                            location = hook_location.as_str()
-                                        ),
-                                    )
-                                    .with_suggestion(t!("rules.cc_hk_014.suggestion")),
-                                );
-                            }
-                        }
-                    }
-                }
-            }
+    for_each_raw_hook(raw_value, |event, matcher_idx, hook_idx, hook| {
+        if hook.get("once").is_some() {
+            let hook_location = format!("hooks.{}[{}].hooks[{}]", event, matcher_idx, hook_idx);
+            diagnostics.push(
+                Diagnostic::warning(
+                    path.to_path_buf(),
+                    1,
+                    0,
+                    "CC-HK-014",
+                    t!("rules.cc_hk_014.message", location = hook_location.as_str()),
+                )
+                .with_suggestion(t!("rules.cc_hk_014.suggestion")),
+            );
         }
-    }
+    });
 }
 
 /// CC-HK-016: Validate hook type "agent" - check for unknown types (raw JSON check)
@@ -547,40 +544,27 @@ pub(super) fn validate_cc_hk_016_unknown_type(
     diagnostics: &mut Vec<Diagnostic>,
 ) {
     let valid_types = ["command", "prompt", "agent"];
-    if let Some(hooks_obj) = raw_value.get("hooks").and_then(|h| h.as_object()) {
-        for (event, matchers) in hooks_obj {
-            if let Some(matchers_arr) = matchers.as_array() {
-                for (matcher_idx, matcher) in matchers_arr.iter().enumerate() {
-                    if let Some(hooks_arr) = matcher.get("hooks").and_then(|h| h.as_array()) {
-                        for (hook_idx, hook) in hooks_arr.iter().enumerate() {
-                            if let Some(hook_type) = hook.get("type").and_then(|t| t.as_str()) {
-                                if !valid_types.contains(&hook_type) {
-                                    let hook_location = format!(
-                                        "hooks.{}[{}].hooks[{}]",
-                                        event, matcher_idx, hook_idx
-                                    );
-                                    diagnostics.push(
-                                        Diagnostic::error(
-                                            path.to_path_buf(),
-                                            1,
-                                            0,
-                                            "CC-HK-016",
-                                            t!(
-                                                "rules.cc_hk_016.message",
-                                                hook_type = hook_type,
-                                                location = hook_location.as_str()
-                                            ),
-                                        )
-                                        .with_suggestion(t!("rules.cc_hk_016.suggestion")),
-                                    );
-                                }
-                            }
-                        }
-                    }
-                }
+    for_each_raw_hook(raw_value, |event, matcher_idx, hook_idx, hook| {
+        if let Some(hook_type) = hook.get("type").and_then(|t| t.as_str()) {
+            if !valid_types.contains(&hook_type) {
+                let hook_location = format!("hooks.{}[{}].hooks[{}]", event, matcher_idx, hook_idx);
+                diagnostics.push(
+                    Diagnostic::error(
+                        path.to_path_buf(),
+                        1,
+                        0,
+                        "CC-HK-016",
+                        t!(
+                            "rules.cc_hk_016.message",
+                            hook_type = hook_type,
+                            location = hook_location.as_str()
+                        ),
+                    )
+                    .with_suggestion(t!("rules.cc_hk_016.suggestion")),
+                );
             }
         }
-    }
+    });
 }
 
 /// Find a unique matcher line span that can be safely deleted.

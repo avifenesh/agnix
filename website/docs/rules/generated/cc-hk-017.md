@@ -1,9 +1,9 @@
 ---
 id: cc-hk-017
-title: "CC-HK-017: Prompt Hook Missing $ARGUMENTS - Claude Hooks"
+title: "CC-HK-017: Prompt/Agent Hook Missing $ARGUMENTS - Claude Hooks"
 sidebar_label: "CC-HK-017"
-description: "agnix rule CC-HK-017 checks for prompt hooks missing $ARGUMENTS reference in claude hooks files. Severity: MEDIUM. See examples and fix guidance."
-keywords: ["CC-HK-017", "prompt hook missing arguments", "claude hooks", "validation", "agnix", "linter"]
+description: "agnix rule CC-HK-017 checks for prompt/agent hooks missing $ARGUMENTS reference in claude hooks files. Severity: MEDIUM. See examples and fix guidance."
+keywords: ["CC-HK-017", "prompt hook missing arguments", "agent hook missing arguments", "claude hooks", "validation", "agnix", "linter"]
 ---
 
 ## Summary

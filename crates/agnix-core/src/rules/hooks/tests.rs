@@ -1022,6 +1022,7 @@ fn test_fixture_missing_matcher() {
 
 #[test]
 fn test_cc_hk_004_matcher_on_stop() {
+    // Stop events with matchers are handled by CC-HK-018 (info), not CC-HK-004 (error)
     let content = r#"{
             "hooks": {
                 "Stop": [
@@ -1040,10 +1041,14 @@ fn test_cc_hk_004_matcher_on_stop() {
         .iter()
         .filter(|d| d.rule == "CC-HK-004")
         .collect();
+    let cc_hk_018: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-018")
+        .collect();
 
-    assert_eq!(cc_hk_004.len(), 1);
-    assert_eq!(cc_hk_004[0].level, DiagnosticLevel::Error);
-    assert!(cc_hk_004[0].message.contains("must not have a matcher"));
+    assert_eq!(cc_hk_004.len(), 0, "Stop should not trigger CC-HK-004");
+    assert_eq!(cc_hk_018.len(), 1, "Stop should trigger CC-HK-018");
+    assert_eq!(cc_hk_018[0].level, DiagnosticLevel::Info);
 }
 
 #[test]
@@ -1097,7 +1102,7 @@ fn test_cc_hk_004_no_matcher_on_stop_ok() {
 fn test_cc_hk_004_has_safe_fix_when_unique_matcher_line() {
     let content = r#"{
             "hooks": {
-                "Stop": [
+                "SessionStart": [
                     {
                         "matcher": "Bash",
                         "hooks": [
@@ -1130,8 +1135,16 @@ fn test_fixture_matcher_on_wrong_event() {
         .iter()
         .filter(|d| d.rule == "CC-HK-004")
         .collect();
-    // Stop, SubagentStop, UserPromptSubmit, SessionStart all have matchers incorrectly
-    assert_eq!(cc_hk_004.len(), 4);
+    // SubagentStop and SessionStart trigger CC-HK-004
+    // Stop and UserPromptSubmit are handled by CC-HK-018 instead
+    assert_eq!(cc_hk_004.len(), 2);
+
+    let cc_hk_018: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-018")
+        .collect();
+    // Stop and UserPromptSubmit trigger CC-HK-018
+    assert_eq!(cc_hk_018.len(), 2);
 }
 
 // ===== CC-HK-005 Tests: Missing Type Field =====
@@ -2349,7 +2362,8 @@ fn test_cc_hk_003_all_tool_events_require_matcher() {
 
 #[test]
 fn test_cc_hk_004_non_tool_events_reject_matcher() {
-    let non_tool_events = ["Stop", "SubagentStop", "SessionStart"];
+    // Stop and UserPromptSubmit are handled by CC-HK-018 instead
+    let non_tool_events = ["SubagentStop", "SessionStart"];
 
     for event in non_tool_events {
         let content = format!(

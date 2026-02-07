@@ -103,7 +103,7 @@ rules:
     message: "Command hook at %{location} is missing required 'command' field"
     suggestion: "Add a 'command' field with the command to execute"
   cc_hk_007:
-    message: "Prompt hook at %{location} is missing required 'prompt' field"
+    message: "Prompt/agent hook at %{location} is missing required 'prompt' field"
     suggestion: "Add a 'prompt' field with the prompt text"
   cc_hk_008:
     message: "Script file not found at '%{script}' (resolved to '%{resolved}')"
@@ -139,7 +139,7 @@ rules:
     message: "Unknown hook type '%{hook_type}' at %{location}"
     suggestion: "Valid hook types are: command, prompt, agent"
   cc_hk_017:
-    message: "Prompt hook at %{location} does not reference $ARGUMENTS"
+    message: "Prompt/agent hook at %{location} does not reference $ARGUMENTS"
     suggestion: "Include $ARGUMENTS in the prompt to receive event context"
   cc_hk_018:
     message: "Matcher at %{location} is silently ignored for '%{event}' events"
