@@ -1,6 +1,6 @@
 # Rules Reference
 
-This section contains all `139` validation rules generated from `knowledge-base/rules.json`.
+This section contains all `142` validation rules generated from `knowledge-base/rules.json`.
 `32` rules have automatic fixes.
 
 
@@ -144,4 +144,7 @@ This section contains all `139` validation rules generated from `knowledge-base/
 | [OC-001](./generated/oc-001.md) | Invalid Share Mode | HIGH | OpenCode | No |
 | [OC-002](./generated/oc-002.md) | Invalid Instruction Path | HIGH | OpenCode | No |
 | [OC-003](./generated/oc-003.md) | opencode.json Parse Error | HIGH | OpenCode | No |
+| [GM-001](./generated/gm-001.md) | Invalid Markdown Structure in GEMINI.md | HIGH | Gemini CLI | No |
+| [GM-002](./generated/gm-002.md) | Missing Section Headers in GEMINI.md | MEDIUM | Gemini CLI | No |
+| [GM-003](./generated/gm-003.md) | Missing Project Context in GEMINI.md | MEDIUM | Gemini CLI | No |
 | [VER-001](./generated/ver-001.md) | No Tool/Spec Versions Pinned | LOW | Version Awareness | No |
