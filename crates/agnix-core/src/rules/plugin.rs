@@ -114,19 +114,18 @@ impl Validator for PluginValidator {
             }
         }
 
-        // CC-PL-007: Invalid component path
-        if config.is_rule_enabled("CC-PL-007") {
+        // CC-PL-007: Invalid component path / CC-PL-008: Component inside .claude-plugin
+        let pl_007_enabled = config.is_rule_enabled("CC-PL-007");
+        let pl_008_enabled = config.is_rule_enabled("CC-PL-008");
+        if pl_007_enabled || pl_008_enabled {
             let path_fields = ["commands", "agents", "skills", "hooks"];
             for field in path_fields {
-                check_component_paths(&raw_value, field, path, content, &mut diagnostics);
-            }
-        }
-
-        // CC-PL-008: Component inside .claude-plugin
-        if config.is_rule_enabled("CC-PL-008") {
-            let path_fields = ["commands", "agents", "skills", "hooks"];
-            for field in path_fields {
-                check_component_inside_claude_plugin(&raw_value, field, path, &mut diagnostics);
+                if pl_007_enabled {
+                    check_component_paths(&raw_value, field, path, content, &mut diagnostics);
+                }
+                if pl_008_enabled {
+                    check_component_inside_claude_plugin(&raw_value, field, path, &mut diagnostics);
+                }
             }
         }
 
@@ -169,18 +168,38 @@ impl Validator for PluginValidator {
 
         // CC-PL-010: Invalid homepage URL
         if config.is_rule_enabled("CC-PL-010") {
-            if let Some(homepage) = raw_value.get("homepage").and_then(|v| v.as_str()) {
-                if !homepage.is_empty() && !is_valid_url(homepage) {
-                    diagnostics.push(
-                        Diagnostic::warning(
-                            path.to_path_buf(),
-                            1,
-                            0,
-                            "CC-PL-010",
-                            t!("rules.cc_pl_010.message", url = homepage),
-                        )
-                        .with_suggestion(t!("rules.cc_pl_010.suggestion")),
-                    );
+            if let Some(homepage_val) = raw_value.get("homepage") {
+                match homepage_val.as_str() {
+                    Some(homepage) => {
+                        if !homepage.is_empty() && !is_valid_url(homepage) {
+                            diagnostics.push(
+                                Diagnostic::warning(
+                                    path.to_path_buf(),
+                                    1,
+                                    0,
+                                    "CC-PL-010",
+                                    t!("rules.cc_pl_010.message", url = homepage),
+                                )
+                                .with_suggestion(t!("rules.cc_pl_010.suggestion")),
+                            );
+                        }
+                    }
+                    None => {
+                        // homepage is present but not a string (e.g., number, object)
+                        diagnostics.push(
+                            Diagnostic::warning(
+                                path.to_path_buf(),
+                                1,
+                                0,
+                                "CC-PL-010",
+                                t!(
+                                    "rules.cc_pl_010.message",
+                                    url = homepage_val.to_string().as_str()
+                                ),
+                            )
+                            .with_suggestion(t!("rules.cc_pl_010.suggestion")),
+                        );
+                    }
                 }
             }
         }
@@ -266,39 +285,44 @@ fn is_invalid_component_path(p: &str) -> bool {
     if trimmed.is_empty() {
         return false;
     }
-    // Absolute paths: starts with `/`, `\`, or contains `:` (Windows drive letter)
-    if trimmed.starts_with('/') || trimmed.starts_with('\\') || trimmed.contains(":\\") {
+    // Absolute paths: starts with `/` or `\`
+    if trimmed.starts_with('/') || trimmed.starts_with('\\') {
         return true;
     }
-    // Parent directory traversal
-    if trimmed == ".." || trimmed.starts_with("../") || trimmed.starts_with("..\\") {
-        return true;
+    // Windows drive letter paths: C:\... or C:/...
+    if trimmed.len() >= 2 {
+        let bytes = trimmed.as_bytes();
+        if bytes[0].is_ascii_alphabetic() && bytes[1] == b':' {
+            return true;
+        }
     }
-    // Embedded traversal
-    trimmed.contains("/../") || trimmed.contains("\\..\\")
+    // Check for `..` traversal in any component (split on both / and \)
+    trimmed.split(['/', '\\']).any(|part| part == "..")
 }
 
-/// Check if a path can be autofixed by prepending `./`.
+/// Check if a path is a relative path missing a `./` prefix (autofixable).
+/// This is separate from `is_invalid_component_path`: paths like `skills/foo`
+/// are not absolute or traversal, but should have `./` prepended.
 fn is_autofixable_path(p: &str) -> bool {
     let trimmed = p.trim();
-    // Not empty, not absolute, no traversal, and doesn't already start with ./
+    // Must not be empty, not already have ./ prefix, and not be invalid
     !trimmed.is_empty()
-        && !trimmed.starts_with('/')
-        && !trimmed.starts_with('\\')
-        && !trimmed.contains(":\\")
-        && !trimmed.starts_with("..")
-        && !trimmed.contains("/..")
-        && !trimmed.contains("\\..")
         && !trimmed.starts_with("./")
         && !trimmed.starts_with(".\\")
+        && !is_invalid_component_path(trimmed)
 }
 
 /// Check if a path starts with `.claude-plugin/`.
+/// Normalizes an optional leading `./` or `.\\` before checking.
 fn path_inside_claude_plugin(p: &str) -> bool {
     let trimmed = p.trim();
-    trimmed.starts_with(".claude-plugin/")
-        || trimmed.starts_with(".claude-plugin\\")
-        || trimmed == ".claude-plugin"
+    let normalized = trimmed
+        .strip_prefix("./")
+        .or_else(|| trimmed.strip_prefix(".\\"))
+        .unwrap_or(trimmed);
+    normalized.starts_with(".claude-plugin/")
+        || normalized.starts_with(".claude-plugin\\")
+        || normalized == ".claude-plugin"
 }
 
 /// Extract string paths from a JSON value that can be a string or array of strings.
@@ -314,6 +338,7 @@ fn extract_paths(value: &serde_json::Value) -> Vec<String> {
 }
 
 /// CC-PL-007: Validate component paths are relative without `..` traversal.
+/// Also flags relative paths missing a `./` prefix (with safe autofix).
 fn check_component_paths(
     raw_value: &serde_json::Value,
     field: &str,
@@ -324,6 +349,19 @@ fn check_component_paths(
     if let Some(val) = raw_value.get(field) {
         for p in extract_paths(val) {
             if is_invalid_component_path(&p) {
+                // Absolute or traversal path: error without autofix
+                diagnostics.push(
+                    Diagnostic::error(
+                        path.to_path_buf(),
+                        1,
+                        0,
+                        "CC-PL-007",
+                        t!("rules.cc_pl_007.message", field = field, path = p.as_str()),
+                    )
+                    .with_suggestion(t!("rules.cc_pl_007.suggestion")),
+                );
+            } else if is_autofixable_path(&p) {
+                // Relative path missing ./ prefix: error with safe autofix
                 let mut diagnostic = Diagnostic::error(
                     path.to_path_buf(),
                     1,
@@ -333,21 +371,15 @@ fn check_component_paths(
                 )
                 .with_suggestion(t!("rules.cc_pl_007.suggestion"));
 
-                // Safe auto-fix: for relative paths missing ./ prefix, prepend it.
-                // Only when the field has a single string value (not arrays).
-                if is_autofixable_path(&p) {
-                    if let Some((start, end, _)) =
-                        find_unique_json_string_value_range(content, field)
-                    {
-                        let fixed = format!("./{}", p.trim());
-                        diagnostic = diagnostic.with_fix(Fix::replace(
-                            start,
-                            end,
-                            &fixed,
-                            format!("Prepend './' to path: '{}'", p.trim()),
-                            true,
-                        ));
-                    }
+                if let Some((start, end, _)) = find_unique_json_string_value_range(content, field) {
+                    let fixed = format!("./{}", p.trim());
+                    diagnostic = diagnostic.with_fix(Fix::replace(
+                        start,
+                        end,
+                        &fixed,
+                        format!("Prepend './' to path: '{}'", p.trim()),
+                        true,
+                    ));
                 }
 
                 diagnostics.push(diagnostic);
@@ -1341,5 +1373,150 @@ mod tests {
         );
 
         assert!(!diagnostics.iter().any(|d| d.rule == "CC-PL-010"));
+    }
+
+    // ===== Review feedback tests =====
+
+    #[test]
+    fn test_cc_pl_007_windows_forward_slash_absolute() {
+        let temp = TempDir::new().unwrap();
+        let plugin_path = temp.path().join(".claude-plugin").join("plugin.json");
+        write_plugin(
+            &plugin_path,
+            r#"{"name":"test","description":"desc","version":"1.0.0","commands":"C:/Users/skills"}"#,
+        );
+
+        let validator = PluginValidator;
+        let diagnostics = validator.validate(
+            &plugin_path,
+            &fs::read_to_string(&plugin_path).unwrap(),
+            &LintConfig::default(),
+        );
+
+        assert!(
+            diagnostics.iter().any(|d| d.rule == "CC-PL-007"),
+            "C:/ forward-slash Windows paths should be detected"
+        );
+    }
+
+    #[test]
+    fn test_cc_pl_007_trailing_traversal() {
+        let temp = TempDir::new().unwrap();
+        let plugin_path = temp.path().join(".claude-plugin").join("plugin.json");
+        write_plugin(
+            &plugin_path,
+            r#"{"name":"test","description":"desc","version":"1.0.0","hooks":"./foo/.."}"#,
+        );
+
+        let validator = PluginValidator;
+        let diagnostics = validator.validate(
+            &plugin_path,
+            &fs::read_to_string(&plugin_path).unwrap(),
+            &LintConfig::default(),
+        );
+
+        assert!(
+            diagnostics.iter().any(|d| d.rule == "CC-PL-007"),
+            "Trailing /.. should be detected as traversal"
+        );
+    }
+
+    #[test]
+    fn test_cc_pl_007_mixed_slash_traversal() {
+        let temp = TempDir::new().unwrap();
+        let plugin_path = temp.path().join(".claude-plugin").join("plugin.json");
+        write_plugin(
+            &plugin_path,
+            r#"{"name":"test","description":"desc","version":"1.0.0","agents":"./foo/..\\bar"}"#,
+        );
+
+        let validator = PluginValidator;
+        let diagnostics = validator.validate(
+            &plugin_path,
+            &fs::read_to_string(&plugin_path).unwrap(),
+            &LintConfig::default(),
+        );
+
+        assert!(
+            diagnostics.iter().any(|d| d.rule == "CC-PL-007"),
+            "Mixed slash traversal should be detected"
+        );
+    }
+
+    #[test]
+    fn test_cc_pl_007_autofixable_path() {
+        let temp = TempDir::new().unwrap();
+        let plugin_path = temp.path().join(".claude-plugin").join("plugin.json");
+        write_plugin(
+            &plugin_path,
+            r#"{"name":"test","description":"desc","version":"1.0.0","commands":"commands/run"}"#,
+        );
+
+        let validator = PluginValidator;
+        let diagnostics = validator.validate(
+            &plugin_path,
+            &fs::read_to_string(&plugin_path).unwrap(),
+            &LintConfig::default(),
+        );
+
+        let pl_007: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-PL-007")
+            .collect();
+        assert_eq!(
+            pl_007.len(),
+            1,
+            "Missing ./ prefix should trigger CC-PL-007"
+        );
+        assert!(!pl_007[0].fixes.is_empty(), "Should have a safe autofix");
+        assert!(pl_007[0].fixes[0].safe, "Autofix should be safe");
+        assert!(
+            pl_007[0].fixes[0].replacement.starts_with("./"),
+            "Autofix should prepend ./"
+        );
+    }
+
+    #[test]
+    fn test_cc_pl_008_dot_slash_prefix_bypass() {
+        let temp = TempDir::new().unwrap();
+        let plugin_path = temp.path().join(".claude-plugin").join("plugin.json");
+        write_plugin(
+            &plugin_path,
+            r#"{"name":"test","description":"desc","version":"1.0.0","agents":"./.claude-plugin/agents"}"#,
+        );
+
+        let validator = PluginValidator;
+        let diagnostics = validator.validate(
+            &plugin_path,
+            &fs::read_to_string(&plugin_path).unwrap(),
+            &LintConfig::default(),
+        );
+
+        assert!(
+            diagnostics.iter().any(|d| d.rule == "CC-PL-008"),
+            "./.claude-plugin/ should still be detected"
+        );
+    }
+
+    #[test]
+    fn test_cc_pl_010_non_string_homepage() {
+        let temp = TempDir::new().unwrap();
+        let plugin_path = temp.path().join(".claude-plugin").join("plugin.json");
+        write_plugin(
+            &plugin_path,
+            r#"{"name":"test","description":"desc","version":"1.0.0","homepage":123}"#,
+        );
+
+        let validator = PluginValidator;
+        let diagnostics = validator.validate(
+            &plugin_path,
+            &fs::read_to_string(&plugin_path).unwrap(),
+            &LintConfig::default(),
+        );
+
+        assert!(
+            diagnostics.iter().any(|d| d.rule == "CC-PL-010"),
+            "Non-string homepage should trigger CC-PL-010"
+        );
     }
 }
