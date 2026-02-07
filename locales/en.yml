@@ -517,6 +517,7 @@ core:
     file_too_big: "File too large: %{path} (%{size} bytes, limit %{limit} bytes)"
     file_not_regular: "Not a regular file: %{path}"
     invalid_exclude: "Invalid exclude pattern: %{pattern} (%{message})"
+    invalid_include: "Invalid include pattern: %{pattern} (%{message})"
   config:
     unknown_rule: "Unknown rule ID pattern '%{rule}'. Expected prefix: %{prefixes}"
     unknown_rule_suggestion: "Check the rule ID spelling or remove if invalid"
@@ -526,6 +527,8 @@ core:
     deprecated_target_suggestion: "Use the 'tools' array instead"
     deprecated_mcp_version: "Field 'mcp_protocol_version' is deprecated"
     deprecated_mcp_version_suggestion: "Use 'spec_revisions.mcp_protocol' instead"
+    invalid_files_pattern: "Invalid files pattern '%{pattern}': %{message}"
+    invalid_files_pattern_suggestion: "Fix the glob pattern syntax. Valid examples: 'docs/ai-rules/*.md', '**/*.rules.md'"
     load_warning: "Failed to parse config '%{path}': %{error}. Using defaults."
 
 # ===========================================================================
