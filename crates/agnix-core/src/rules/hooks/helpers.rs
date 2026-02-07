@@ -516,10 +516,8 @@ pub(super) fn validate_cc_hk_014_once_field(
                     if let Some(hooks_arr) = matcher.get("hooks").and_then(|h| h.as_array()) {
                         for (hook_idx, hook) in hooks_arr.iter().enumerate() {
                             if hook.get("once").is_some() {
-                                let hook_location = format!(
-                                    "hooks.{}[{}].hooks[{}]",
-                                    event, matcher_idx, hook_idx
-                                );
+                                let hook_location =
+                                    format!("hooks.{}[{}].hooks[{}]", event, matcher_idx, hook_idx);
                                 diagnostics.push(
                                     Diagnostic::warning(
                                         path.to_path_buf(),

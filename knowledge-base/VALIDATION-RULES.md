@@ -1048,7 +1048,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 |----------|-------------|------|--------|-----|--------------|
 | Agent Skills | 16 | 14 | 2 | 0 | 5 |
 | Claude Skills | 9 | 8 | 1 | 0 | 5 |
-| Claude Hooks | 12 | 11 | 1 | 0 | 3 |
+| Claude Hooks | 18 | 13 | 4 | 1 | 3 |
 | Claude Agents | 7 | 7 | 0 | 0 | 2 |
 | Claude Memory | 10 | 7 | 3 | 0 | 2 |
 | AGENTS.md | 6 | 1 | 5 | 0 | 0 |
@@ -1061,7 +1061,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | Prompt Eng | 4 | 0 | 4 | 0 | 0 |
 | Cross-Platform | 6 | 4 | 2 | 0 | 0 |
 | Version Awareness | 1 | 0 | 0 | 1 | 0 |
-| **TOTAL** | **102** | **77** | **24** | **1** | **25** |
+| **TOTAL** | **108** | **79** | **27** | **2** | **25** |
 
 ---
 
@@ -1090,7 +1090,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 
 ---
 
-**Total Coverage**: 102 validation rules across 15 categories
+**Total Coverage**: 108 validation rules across 15 categories
 **Knowledge Base**: 11,036 lines, 320KB, 75+ sources
 **Certainty**: 76 HIGH, 23 MEDIUM, 1 LOW
 **Auto-Fixable**: 25 rules (25%)

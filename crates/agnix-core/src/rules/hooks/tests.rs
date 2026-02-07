@@ -2592,9 +2592,8 @@ fn test_cc_hk_014_no_once_ok() {
 
 #[test]
 fn test_fixture_once_in_settings() {
-    let content = include_str!(
-        "../../../../../tests/fixtures/invalid/hooks/once-in-settings/settings.json"
-    );
+    let content =
+        include_str!("../../../../../tests/fixtures/invalid/hooks/once-in-settings/settings.json");
     let diagnostics = validate(content);
     let cc_hk_014: Vec<_> = diagnostics
         .iter()
@@ -2704,9 +2703,8 @@ fn test_cc_hk_015_no_model_on_command_ok() {
 
 #[test]
 fn test_fixture_model_on_command() {
-    let content = include_str!(
-        "../../../../../tests/fixtures/invalid/hooks/model-on-command/settings.json"
-    );
+    let content =
+        include_str!("../../../../../tests/fixtures/invalid/hooks/model-on-command/settings.json");
     let diagnostics = validate(content);
     let cc_hk_015: Vec<_> = diagnostics
         .iter()
@@ -2791,9 +2789,8 @@ fn test_cc_hk_016_command_and_prompt_still_valid() {
 
 #[test]
 fn test_fixture_unknown_hook_type() {
-    let content = include_str!(
-        "../../../../../tests/fixtures/invalid/hooks/unknown-hook-type/settings.json"
-    );
+    let content =
+        include_str!("../../../../../tests/fixtures/invalid/hooks/unknown-hook-type/settings.json");
     let diagnostics = validate(content);
     let cc_hk_016: Vec<_> = diagnostics
         .iter()
