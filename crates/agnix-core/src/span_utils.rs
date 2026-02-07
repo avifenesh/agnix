@@ -199,13 +199,17 @@ pub(crate) fn find_unique_json_field_line(
         }
 
         let val_start = skip_whitespace(bytes, *after_colon);
+        // Original regex didn't support negative numbers (no -?), reject them
+        if val_start < bytes.len() && bytes[val_start] == b'-' {
+            continue;
+        }
         let (_, val_end) = match parse_scalar_at(bytes, val_start) {
             Some(span) => span,
             None => continue,
         };
 
         let mut end = val_end;
-        end = skip_whitespace(bytes, end);
+        end = skip_inline_whitespace(bytes, end);
         if end < bytes.len() && bytes[end] == b',' {
             end += 1;
         }
@@ -263,7 +267,7 @@ pub(crate) fn find_unique_json_matcher_line(
         }
 
         let mut end = outer_end;
-        end = skip_whitespace(bytes, end);
+        end = skip_inline_whitespace(bytes, end);
         if end < bytes.len() && bytes[end] == b',' {
             end += 1;
         }
