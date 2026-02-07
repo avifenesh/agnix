@@ -1,6 +1,6 @@
 {
   "name": "agnix",
-  "version": "0.9.3",
+  "version": "0.10.0",
   "description": "Linter for AI agent configurations. Validates SKILL.md, CLAUDE.md, hooks, MCP, and more.",
   "keywords": [
     "agent",

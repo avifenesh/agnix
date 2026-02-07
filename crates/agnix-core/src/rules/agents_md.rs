@@ -60,42 +60,40 @@ impl Validator for AgentsMdValidator {
         }
 
         // AGM-002: Missing Section Headers (WARNING)
-        #[allow(clippy::collapsible_if)]
-        if config.is_rule_enabled("AGM-002") {
-            if let Some(issue) = check_section_headers(content) {
-                diagnostics.push(
-                    Diagnostic::warning(
-                        path.to_path_buf(),
-                        issue.line,
-                        issue.column,
-                        "AGM-002",
-                        issue.description,
-                    )
-                    .with_suggestion(issue.suggestion),
-                );
-            }
+        if config.is_rule_enabled("AGM-002")
+            && let Some(issue) = check_section_headers(content)
+        {
+            diagnostics.push(
+                Diagnostic::warning(
+                    path.to_path_buf(),
+                    issue.line,
+                    issue.column,
+                    "AGM-002",
+                    issue.description,
+                )
+                .with_suggestion(issue.suggestion),
+            );
         }
 
         // AGM-003: Character Limit (WARNING)
-        #[allow(clippy::collapsible_if)]
-        if config.is_rule_enabled("AGM-003") {
-            if let Some(exceeded) = check_character_limit(content, WINDSURF_CHAR_LIMIT) {
-                diagnostics.push(
-                    Diagnostic::warning(
-                        path.to_path_buf(),
-                        1,
-                        0,
-                        "AGM-003",
-                        t!(
-                            "rules.agm_003.message",
-                            filename = filename,
-                            chars = exceeded.char_count,
-                            limit = exceeded.limit
-                        ),
-                    )
-                    .with_suggestion(t!("rules.agm_003.suggestion")),
-                );
-            }
+        if config.is_rule_enabled("AGM-003")
+            && let Some(exceeded) = check_character_limit(content, WINDSURF_CHAR_LIMIT)
+        {
+            diagnostics.push(
+                Diagnostic::warning(
+                    path.to_path_buf(),
+                    1,
+                    0,
+                    "AGM-003",
+                    t!(
+                        "rules.agm_003.message",
+                        filename = filename,
+                        chars = exceeded.char_count,
+                        limit = exceeded.limit
+                    ),
+                )
+                .with_suggestion(t!("rules.agm_003.suggestion")),
+            );
         }
 
         // AGM-004: Missing Project Context (WARNING)

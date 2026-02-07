@@ -171,6 +171,7 @@ impl TelemetryConfig {
     }
 
     /// Get the telemetry endpoint URL.
+    #[allow(dead_code)] // Used when telemetry submission feature is compiled in
     pub fn endpoint(&self) -> &str {
         self.endpoint
             .as_deref()

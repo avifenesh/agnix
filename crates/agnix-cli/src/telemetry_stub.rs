@@ -6,7 +6,6 @@
 use std::collections::HashMap;
 
 #[path = "telemetry/config.rs"]
-#[allow(dead_code)]
 mod config;
 #[path = "telemetry/shared.rs"]
 mod shared;

@@ -55,24 +55,23 @@ impl Validator for ClaudeMdValidator {
         }
 
         // CC-MEM-009: Token count exceeded
-        #[allow(clippy::collapsible_if)]
-        if config.is_rule_enabled("CC-MEM-009") {
-            if let Some(exceeded) = check_token_count(content) {
-                diagnostics.push(
-                    Diagnostic::warning(
-                        path.to_path_buf(),
-                        1,
-                        0,
-                        "CC-MEM-009",
-                        t!(
-                            "rules.cc_mem_009.message",
-                            tokens = exceeded.estimated_tokens,
-                            limit = exceeded.limit
-                        ),
-                    )
-                    .with_suggestion(t!("rules.cc_mem_009.suggestion")),
-                );
-            }
+        if config.is_rule_enabled("CC-MEM-009")
+            && let Some(exceeded) = check_token_count(content)
+        {
+            diagnostics.push(
+                Diagnostic::warning(
+                    path.to_path_buf(),
+                    1,
+                    0,
+                    "CC-MEM-009",
+                    t!(
+                        "rules.cc_mem_009.message",
+                        tokens = exceeded.estimated_tokens,
+                        limit = exceeded.limit
+                    ),
+                )
+                .with_suggestion(t!("rules.cc_mem_009.suggestion")),
+            );
         }
 
         // CC-MEM-006: Negative without positive

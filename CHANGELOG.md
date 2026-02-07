@@ -7,17 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-02-07
+
 ### Performance
 - **Auto-fix span finding** - Replaced 8 dynamic `Regex::new()` calls with byte-level scanning in auto-fix helpers, eliminating regex compilation overhead entirely (closes #325)
-
-### Changed
-- **Actionable diagnostic suggestions** - All parse error diagnostics now include actionable suggestions (AS-016, CC-HK-012, MCP-007, CC-AG-007, CC-PL-006, CDX-000, file-level errors); improved 4 generic suggestions with concrete guidance (MCP-003 lists valid JSON Schema types, MCP-006 warns about self-reported annotations, AGM-001/GM-001 specify common markdown issues)
-- **Website landing page** - Updated stats (145 rules, 2300+ tests, 10+ tools), added Cline/OpenCode/Gemini CLI/Roo Code/Kiro CLI to tools grid, visual redesign with Outfit font, syntax-highlighted terminal, scroll reveal animations, and open-ended "And many more" tool card
 
 ### Added
 - **Website automation** - `generate-docs-rules.py` now generates `website/src/data/siteData.json` with dynamic stats (rule count, category count, autofix count, tool list); landing page and JSON-LD import generated data instead of hardcoding; `release.yml` `version-docs` job auto-cuts versioned docs on release
 - **GEMINI.md categorization** - `categorize_layer()` now recognizes `GEMINI.md` and `GEMINI.local.md` files as `LayerType::GeminiMd` for accurate XP-006 layer categorization
 - **Codex CLI support** - 3 new validation rules (CDX-001, CDX-002, CDX-003) for `.codex/config.toml` configuration files
+- **Cline support** - 3 new validation rules (CLN-001, CLN-002, CLN-003) for `.clinerules` configuration
+- **OpenCode support** - 3 new validation rules (OC-001, OC-002, OC-003) for `opencode.json` configuration
+- **GEMINI.md support** - 3 new validation rules (GM-001, GM-002, GM-003) for `GEMINI.md` files
 - CC-HK-013: `async` field only valid on command hooks (error)
 - CC-HK-014: `once` field only meaningful in skill/agent frontmatter (warning)
 - CC-HK-015: `model` field only valid on prompt/agent hooks (warning)
@@ -49,13 +50,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CUR-007: Warn when `alwaysApply: true` is set alongside `globs` (redundant) with safe auto-fix
 - CUR-008: Detect `alwaysApply` as quoted string instead of boolean (HIGH)
 - CUR-009: Warn when agent-requested rule has no description
-- OC-001: Validate `share` field in `opencode.json` is `"manual"`, `"auto"`, or `"disabled"` (HIGH)
-- OC-002: Validate instruction paths in `opencode.json` exist or are valid globs (HIGH)
-- OC-003: Validate `opencode.json` is parseable JSON/JSONC with line/column error reporting (HIGH)
-- GM-001: Validate GEMINI.md has valid markdown structure (HIGH)
-- GM-002: Warn when GEMINI.md has no section headers (MEDIUM)
-- GM-003: Warn when GEMINI.md has no project context section (MEDIUM)
-- Fix metadata (`autofix`, `fix_safety`) for all 100 rules in rules.json
+- CC-MEM-011: Validate `.claude/rules` frontmatter `description` field
+- CC-MEM-012: Validate `.claude/rules` frontmatter `globs` field format
+- Fix metadata (`autofix`, `fix_safety`) for all rules in rules.json
 - Fix metadata schema validation parity test
 - Autofix count parity test (rules.json vs VALIDATION-RULES.md)
 - Context-aware completions documented in all editor READMEs
@@ -67,6 +64,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Priority: exclude > include_as_memory > include_as_generic > built-in detection
 
 ### Changed
+- **Actionable diagnostic suggestions** - All parse error diagnostics now include actionable suggestions (AS-016, CC-HK-012, MCP-007, CC-AG-007, CC-PL-006, CDX-000, file-level errors); improved 4 generic suggestions with concrete guidance (MCP-003 lists valid JSON Schema types, MCP-006 warns about self-reported annotations, AGM-001/GM-001 specify common markdown issues)
+- **Website landing page** - Updated stats (145 rules, 2400+ tests, 10+ tools), added Cline/OpenCode/Gemini CLI/Roo Code/Kiro CLI to tools grid, visual redesign with Outfit font, syntax-highlighted terminal, scroll reveal animations, and open-ended "And many more" tool card
 - Auto-fix implementations added for 8 rules: CC-SK-011 (unsafe), CC-HK-013 (safe), CC-HK-015 (safe), CC-HK-018 (safe), CUR-008 (safe), COP-005 (unsafe), CC-AG-008 (unsafe), MCP-011 (unsafe)
 - Auto-fix pack 2: 8 additional rules with unsafe auto-fixes: CC-SK-005, CC-AG-012, CUR-002, COP-002, CDX-001, CDX-002, OC-001, CC-HK-016
 - Auto-fix table in VALIDATION-RULES.md expanded from 7 to 48 rules with safety classification
@@ -74,6 +73,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Generated website rule pages now include Auto-Fix metadata
 - Website rules index table includes Auto-Fix column
 - `generate-docs-rules.py` renders fix metadata with strict validation
+- Collapsed nested `if` patterns using Rust let-chains (stable since 1.87), removing stale `#[allow(clippy::collapsible_if)]` annotations
+- Moved `#[allow(dead_code)]` from module-level to method-level in telemetry stub for precision
+
 ## [0.9.3] - 2026-02-06
 
 ### Fixed

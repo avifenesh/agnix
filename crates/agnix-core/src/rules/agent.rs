@@ -114,37 +114,36 @@ fn frontmatter_value_byte_range(content: &str, key: &str) -> Option<(usize, usiz
             continue;
         }
 
-        #[allow(clippy::collapsible_if)]
-        if let Some(rest) = trimmed.strip_prefix(key) {
-            if let Some(after_colon) = rest.trim_start().strip_prefix(':') {
-                let leading_ws = line.len() - trimmed.len();
-                let ws_after_key = rest.len() - rest.trim_start().len();
-                let key_end = leading_ws + key.len() + ws_after_key + 1; // ':'
+        if let Some(rest) = trimmed.strip_prefix(key)
+            && let Some(after_colon) = rest.trim_start().strip_prefix(':')
+        {
+            let leading_ws = line.len() - trimmed.len();
+            let ws_after_key = rest.len() - rest.trim_start().len();
+            let key_end = leading_ws + key.len() + ws_after_key + 1; // ':'
 
-                let value_str = after_colon.trim_start();
-                if value_str.is_empty() {
-                    return None;
-                }
-
-                let value_offset_in_line = key_end + (after_colon.len() - value_str.len());
-                let (value_start, value_len) = if let Some(inner) = value_str.strip_prefix('"') {
-                    let end_quote = inner.find('"')?;
-                    (value_offset_in_line + 1, end_quote)
-                } else if let Some(inner) = value_str.strip_prefix('\'') {
-                    let end_quote = inner.find('\'')?;
-                    (value_offset_in_line + 1, end_quote)
-                } else {
-                    let value_end = value_str
-                        .find(" #")
-                        .or_else(|| value_str.find("\t#"))
-                        .unwrap_or(value_str.len());
-                    (value_offset_in_line, value_end)
-                };
-
-                let abs_start = parts.frontmatter_start + offset + value_start;
-                let abs_end = abs_start + value_len;
-                return Some((abs_start, abs_end));
+            let value_str = after_colon.trim_start();
+            if value_str.is_empty() {
+                return None;
             }
+
+            let value_offset_in_line = key_end + (after_colon.len() - value_str.len());
+            let (value_start, value_len) = if let Some(inner) = value_str.strip_prefix('"') {
+                let end_quote = inner.find('"')?;
+                (value_offset_in_line + 1, end_quote)
+            } else if let Some(inner) = value_str.strip_prefix('\'') {
+                let end_quote = inner.find('\'')?;
+                (value_offset_in_line + 1, end_quote)
+            } else {
+                let value_end = value_str
+                    .find(" #")
+                    .or_else(|| value_str.find("\t#"))
+                    .unwrap_or(value_str.len());
+                (value_offset_in_line, value_end)
+            };
+
+            let abs_start = parts.frontmatter_start + offset + value_start;
+            let abs_end = abs_start + value_len;
+            return Some((abs_start, abs_end));
         }
 
         let line_end = offset + line.len();
