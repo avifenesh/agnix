@@ -372,6 +372,19 @@ rules:
     message: "Error de analisis en opencode.json: %{error}"
     suggestion: "Corrige la sintaxis JSON en opencode.json"
 
+  # --- Codex CLI (codex.rs) ---
+  cdx_001:
+    message: "approvalMode invalido '%{value}'. Valores validos: 'suggest', 'auto-edit', 'full-auto'"
+    type_error: "El campo 'approvalMode' debe ser una cadena de texto. Valores validos: 'suggest', 'auto-edit', 'full-auto'"
+    suggestion: "Usa 'suggest', 'auto-edit' o 'full-auto' para el campo approvalMode"
+  cdx_002:
+    message: "fullAutoErrorMode invalido '%{value}'. Valores validos: 'ask-user', 'ignore-and-continue'"
+    type_error: "El campo 'fullAutoErrorMode' debe ser una cadena de texto. Valores validos: 'ask-user', 'ignore-and-continue'"
+    suggestion: "Usa 'ask-user' o 'ignore-and-continue' para el campo fullAutoErrorMode"
+  cdx_003:
+    message: "AGENTS.override.md no deberia estar en el control de versiones"
+    suggestion: "Agrega AGENTS.override.md a .gitignore (contiene configuraciones especificas del usuario)"
+
   # --- Prompt engineering (prompt.rs) ---
   pe_001:
     message: "Palabra clave critica '%{keyword}' al %{percent} por ciento del documento (40-60 por ciento es la zona 'perdido en el medio')"

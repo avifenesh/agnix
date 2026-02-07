@@ -94,6 +94,8 @@ pub enum FileType {
     ClineRulesFolder,
     /// OpenCode configuration (opencode.json)
     OpenCodeConfig,
+    /// Codex CLI configuration (.codex/config.toml)
+    CodexConfig,
     /// Other .md files (for XML/import checks)
     GenericMarkdown,
     /// Skip validation
@@ -176,6 +178,8 @@ impl ValidatorRegistry {
             (FileType::ClineRules, cline_validator),
             (FileType::ClineRulesFolder, cline_validator),
             (FileType::OpenCodeConfig, opencode_validator),
+            (FileType::CodexConfig, codex_validator),
+            (FileType::ClaudeMd, codex_validator),
             (FileType::GenericMarkdown, cross_platform_validator),
             (FileType::GenericMarkdown, xml_validator),
             (FileType::GenericMarkdown, imports_validator),
@@ -255,6 +259,10 @@ fn cline_validator() -> Box<dyn Validator> {
 
 fn opencode_validator() -> Box<dyn Validator> {
     Box::new(rules::opencode::OpenCodeValidator)
+}
+
+fn codex_validator() -> Box<dyn Validator> {
+    Box::new(rules::codex::CodexValidator)
 }
 
 /// Returns true if the file is inside a documentation directory that
@@ -341,6 +349,8 @@ pub fn detect_file_type(path: &Path) -> FileType {
         }
         // OpenCode configuration (opencode.json)
         "opencode.json" => FileType::OpenCodeConfig,
+        // Codex CLI configuration (.codex/config.toml)
+        "config.toml" if parent == Some(".codex") => FileType::CodexConfig,
         name if name.ends_with(".md") => {
             // Agent directories take precedence over filename exclusions.
             // Files like agents/README.md should be validated as agent configs.
@@ -1116,7 +1126,7 @@ mod tests {
     fn test_validators_for_claude_md() {
         let registry = ValidatorRegistry::with_defaults();
         let validators = registry.validators_for(FileType::ClaudeMd);
-        assert_eq!(validators.len(), 6);
+        assert_eq!(validators.len(), 7);
     }
 
     #[test]

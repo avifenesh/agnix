@@ -1,7 +1,7 @@
 {
   "description": "Machine-readable source of truth for all validation rules. When adding a new rule, add it here AND in VALIDATION-RULES.md. CI parity tests enforce sync.",
   "version": "1.1.0",
-  "total_rules": 139,
+  "total_rules": 142,
   "last_updated": "2026-02-07",
   "schema": {
     "evidence": {
@@ -3487,6 +3487,81 @@
       }
     },
     {
+      "id": "CDX-001",
+      "name": "Invalid Approval Mode",
+      "severity": "HIGH",
+      "category": "codex",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://github.com/openai/codex"
+        ],
+        "verified_on": "2026-02-07",
+        "applies_to": {
+          "tool": "codex"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      }
+    },
+    {
+      "id": "CDX-002",
+      "name": "Invalid Full Auto Error Mode",
+      "severity": "HIGH",
+      "category": "codex",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://github.com/openai/codex"
+        ],
+        "verified_on": "2026-02-07",
+        "applies_to": {
+          "tool": "codex"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      }
+    },
+    {
+      "id": "CDX-003",
+      "name": "AGENTS.override.md in Version Control",
+      "severity": "MEDIUM",
+      "category": "codex",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://github.com/openai/codex"
+        ],
+        "verified_on": "2026-02-07",
+        "applies_to": {
+          "tool": "codex"
+        },
+        "normative_level": "SHOULD",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      }
+    },
+    {
       "id": "VER-001",
       "name": "No Tool/Spec Versions Pinned",
       "severity": "LOW",
@@ -3565,6 +3640,11 @@
       "prefix": "CLN",
       "count": 3,
       "description": "Cline rules validation"
+    },
+    "codex": {
+      "prefix": "CDX",
+      "count": 3,
+      "description": "Codex CLI configuration validation"
     },
     "xml": {
       "prefix": "XML",

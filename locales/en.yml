@@ -441,6 +441,19 @@ rules:
     message: "opencode.json parse error: %{error}"
     suggestion: "Fix the JSON syntax in opencode.json"
 
+  # --- Codex CLI (codex.rs) ---
+  cdx_001:
+    message: "Invalid approvalMode '%{value}'. Valid values: 'suggest', 'auto-edit', 'full-auto'"
+    type_error: "Field 'approvalMode' must be a string. Valid values: 'suggest', 'auto-edit', 'full-auto'"
+    suggestion: "Use 'suggest', 'auto-edit', or 'full-auto' for the approvalMode field"
+  cdx_002:
+    message: "Invalid fullAutoErrorMode '%{value}'. Valid values: 'ask-user', 'ignore-and-continue'"
+    type_error: "Field 'fullAutoErrorMode' must be a string. Valid values: 'ask-user', 'ignore-and-continue'"
+    suggestion: "Use 'ask-user' or 'ignore-and-continue' for the fullAutoErrorMode field"
+  cdx_003:
+    message: "AGENTS.override.md should not be in version control"
+    suggestion: "Add AGENTS.override.md to .gitignore (it contains user-specific overrides)"
+
   # --- Prompt engineering (prompt.rs) ---
   pe_001:
     message: "Critical keyword '%{keyword}' at %{percent} percent of document (40-60 percent is the 'lost in the middle' zone)"

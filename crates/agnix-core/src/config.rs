@@ -226,6 +226,7 @@ impl<'a> DefaultRuleFilter<'a> {
             s if s.starts_with("CUR-") => self.rules.cursor,
             s if s.starts_with("CLN-") => self.rules.cline,
             s if s.starts_with("OC-") => self.rules.opencode,
+            s if s.starts_with("CDX-") => self.rules.codex,
             s if s.starts_with("PE-") => self.rules.prompt_engineering,
             // Unknown rules are enabled by default
             _ => true,
@@ -474,6 +475,11 @@ pub struct RuleConfig {
     #[schemars(description = "Enable OpenCode validation rules (OC-*)")]
     pub opencode: bool,
 
+    /// Enable Codex CLI validation (CDX-*)
+    #[serde(default = "default_true")]
+    #[schemars(description = "Enable Codex CLI validation rules (CDX-*)")]
+    pub codex: bool,
+
     /// Enable prompt engineering validation (PE-*)
     #[serde(default = "default_true")]
     #[schemars(description = "Enable prompt engineering validation rules (PE-*)")]
@@ -524,6 +530,7 @@ impl Default for RuleConfig {
             cursor: true,
             cline: true,
             opencode: true,
+            codex: true,
             prompt_engineering: true,
             generic_instructions: true,
             frontmatter_validation: true,
