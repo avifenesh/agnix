@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- CC-AG-008: Validate `memory` scope is `user`, `project`, or `local`
+- CC-AG-009: Validate tool names in agent `tools` list
+- CC-AG-010: Validate tool names in agent `disallowedTools` list
+- CC-AG-011: Validate `hooks` object schema in agent frontmatter
+- CC-AG-012: Warn on `permissionMode: bypassPermissions` usage
+- CC-AG-013: Validate skill name format in agent `skills` array
 - MCP-009: Validate `command` is present for stdio MCP servers (HIGH)
 - MCP-010: Validate `url` is present for http/sse MCP servers (HIGH)
 - MCP-011: Validate MCP server `type` is one of stdio, http, sse (HIGH)

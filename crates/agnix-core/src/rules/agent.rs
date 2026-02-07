@@ -535,7 +535,8 @@ impl Validator for AgentValidator {
                             "CC-AG-011",
                             t!(
                                 "rules.cc_ag_011.message",
-                                error = "hooks must be an object mapping event names to hook arrays"
+                                error =
+                                    "hooks must be an object mapping event names to hook arrays"
                             ),
                         )
                         .with_suggestion(t!("rules.cc_ag_011.suggestion")),
@@ -573,10 +574,7 @@ impl Validator for AgentValidator {
                                 1,
                                 0,
                                 "CC-AG-013",
-                                t!(
-                                    "rules.cc_ag_013.message",
-                                    name = skill_name.as_str()
-                                ),
+                                t!("rules.cc_ag_013.message", name = skill_name.as_str()),
                             )
                             .with_suggestion(t!("rules.cc_ag_013.suggestion")),
                         );
@@ -2528,8 +2526,7 @@ Agent instructions"#;
 
     #[test]
     fn test_fixture_invalid_memory() {
-        let content =
-            include_str!("../../../../tests/fixtures/invalid/agents/invalid-memory.md");
+        let content = include_str!("../../../../tests/fixtures/invalid/agents/invalid-memory.md");
         let diagnostics = validate(content);
         let cc_ag_008: Vec<_> = diagnostics
             .iter()
@@ -2564,8 +2561,7 @@ Agent instructions"#;
 
     #[test]
     fn test_fixture_invalid_hooks() {
-        let content =
-            include_str!("../../../../tests/fixtures/invalid/agents/invalid-hooks.md");
+        let content = include_str!("../../../../tests/fixtures/invalid/agents/invalid-hooks.md");
         let diagnostics = validate(content);
         let cc_ag_011: Vec<_> = diagnostics
             .iter()
@@ -2608,7 +2604,11 @@ Agent instructions"#;
             .iter()
             .filter(|d| d.level == DiagnosticLevel::Error)
             .collect();
-        assert!(errors.is_empty(), "Valid agent fixture should have no errors, got: {:?}", errors);
+        assert!(
+            errors.is_empty(),
+            "Valid agent fixture should have no errors, got: {:?}",
+            errors
+        );
     }
 
     // ===== is_valid_skill_name_format unit tests =====

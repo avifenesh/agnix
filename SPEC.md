@@ -10,7 +10,7 @@
 | Hooks | settings.json | 12 |
 | Memory (Claude Code) | CLAUDE.md, CLAUDE.local.md | 10 |
 | Instructions (Cross-Tool) | AGENTS.md, AGENTS.local.md, AGENTS.override.md | 6 |
-| Agents | agents/*.md | 7 |
+| Agents | agents/*.md | 13 |
 | Plugins | plugin.json | 6 |
 | Prompt Engineering | CLAUDE.md, AGENTS.md | 4 |
 | Cross-Platform | AGENTS.md | 6 |
