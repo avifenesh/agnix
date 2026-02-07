@@ -92,14 +92,14 @@ knowledge-base/
 | AGENTS.md | 6 | 1 | 5 | 0 | 2 |
 | Claude Plugins | 6 | 6 | 0 | 0 | 1 |
 | GitHub Copilot | 6 | 4 | 2 | 0 | 0 |
-| MCP | 12 | 10 | 2 | 0 | 2 |
+| MCP | 12 | 10 | 2 | 0 | 3 |
 | XML | 3 | 3 | 0 | 0 | 1 |
 | References | 2 | 2 | 0 | 0 | 0 |
 | Prompt Eng | 4 | 0 | 4 | 0 | 1 |
 | Cross-Platform | 6 | 4 | 2 | 0 | 0 |
 | Cursor | 6 | 3 | 3 | 0 | 1 |
 | Version Awareness | 1 | 0 | 0 | 1 | 0 |
-| **TOTAL** | **112** | **84** | **27** | **1** | **22** |
+| **TOTAL** | **112** | **84** | **27** | **1** | **23** |
 
 ---
 
