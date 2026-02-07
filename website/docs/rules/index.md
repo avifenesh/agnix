@@ -122,9 +122,9 @@ This section contains all `145` validation rules generated from `knowledge-base/
 | [CUR-007](./generated/cur-007.md) | alwaysApply with Redundant globs | MEDIUM | Cursor | Yes (safe) |
 | [CUR-008](./generated/cur-008.md) | Invalid alwaysApply Type | HIGH | Cursor | Yes (safe) |
 | [CUR-009](./generated/cur-009.md) | Missing Description for Agent-Requested Rule | MEDIUM | Cursor | No |
-| [CLN-001](./generated/cln-001.md) | Empty Cline Rules File | HIGH | cline | No |
-| [CLN-002](./generated/cln-002.md) | Invalid Paths Glob in Cline Rules | HIGH | cline | No |
-| [CLN-003](./generated/cln-003.md) | Unknown Frontmatter Key in Cline Rules | MEDIUM | cline | Yes (unsafe) |
+| [CLN-001](./generated/cln-001.md) | Empty Cline Rules File | HIGH | Cline | No |
+| [CLN-002](./generated/cln-002.md) | Invalid Paths Glob in Cline Rules | HIGH | Cline | No |
+| [CLN-003](./generated/cln-003.md) | Unknown Frontmatter Key in Cline Rules | MEDIUM | Cline | Yes (unsafe) |
 | [XML-001](./generated/xml-001.md) | Unclosed XML Tag | HIGH | XML | Yes (unsafe) |
 | [XML-002](./generated/xml-002.md) | Mismatched Closing Tag | HIGH | XML | Yes (unsafe) |
 | [XML-003](./generated/xml-003.md) | Unmatched Closing Tag | HIGH | XML | Yes (unsafe) |

@@ -29,6 +29,7 @@ CATEGORY_LABELS: Dict[str, str] = {
     "prompt-engineering": "Prompt Engineering",
     "cross-platform": "Cross-Platform",
     "cursor": "Cursor",
+    "cline": "Cline",
     "version-awareness": "Version Awareness",
 }
 

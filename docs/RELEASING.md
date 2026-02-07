@@ -113,9 +113,9 @@ the job will:
 
 1. Regenerate `website/src/data/siteData.json` and rule docs from `rules.json`
 2. Cut a Docusaurus versioned docs snapshot for the release
-3. Commit and push the changes to `main` with `[skip ci]`
+3. Commit and push the changes to `main`
 
-The docs-site workflow then deploys automatically on merge to main.
+The docs-site workflow then deploys automatically on push to main.
 
 After release, verify at https://agentskills.io that:
 - New version docs are live in the version dropdown
