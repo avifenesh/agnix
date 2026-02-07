@@ -34,6 +34,10 @@ pub struct AgentSchema {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub skills: Option<Vec<String>>,
 
+    /// Optional: memory scope (CC-AG-008)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub memory: Option<String>,
+
     /// Optional: hooks
     #[serde(skip_serializing_if = "Option::is_none")]
     pub hooks: Option<Value>,

@@ -506,6 +506,48 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 **Fix**: Fix YAML syntax errors in agent frontmatter
 **Source**: code.claude.com/docs/en/sub-agents
 
+<a id="cc-ag-008"></a>
+### CC-AG-008 [HIGH] Invalid Memory Scope
+**Requirement**: `memory` field MUST be `user`, `project`, or `local`
+**Detection**: Check `memory` value against allowed list
+**Fix**: Use one of: user, project, local
+**Source**: code.claude.com/docs/en/sub-agents
+
+<a id="cc-ag-009"></a>
+### CC-AG-009 [HIGH] Invalid Tool Name in Tools List
+**Requirement**: Tool names in `tools` MUST match known Claude Code tools
+**Detection**: Check each tool name against known tools list
+**Fix**: Use a known Claude Code tool name
+**Source**: code.claude.com/docs/en/sub-agents
+
+<a id="cc-ag-010"></a>
+### CC-AG-010 [HIGH] Invalid Tool Name in DisallowedTools
+**Requirement**: Tool names in `disallowedTools` MUST match known Claude Code tools
+**Detection**: Check each disallowed tool name against known tools list
+**Fix**: Use a known Claude Code tool name
+**Source**: code.claude.com/docs/en/sub-agents
+
+<a id="cc-ag-011"></a>
+### CC-AG-011 [HIGH] Invalid Hooks in Agent Frontmatter
+**Requirement**: `hooks` object MUST follow the same schema as settings.json hooks
+**Detection**: Validate hooks object structure (event names, hook types, required fields)
+**Fix**: Ensure hooks follow the settings.json hooks schema
+**Source**: code.claude.com/docs/en/sub-agents
+
+<a id="cc-ag-012"></a>
+### CC-AG-012 [HIGH] Bypass Permissions Warning
+**Requirement**: `permissionMode: bypassPermissions` SHOULD NOT be used (disables all safety checks)
+**Detection**: Check if permissionMode equals `bypassPermissions`
+**Fix**: Consider using `dontAsk` or `acceptEdits` for a safer permission mode
+**Source**: code.claude.com/docs/en/sub-agents
+
+<a id="cc-ag-013"></a>
+### CC-AG-013 [MEDIUM] Invalid Skill Name Format
+**Requirement**: Skill names in `skills` array SHOULD follow valid naming format (lowercase, hyphens)
+**Detection**: Check skill name matches kebab-case pattern
+**Fix**: Use kebab-case format (e.g., 'my-skill-name')
+**Source**: code.claude.com/docs/en/sub-agents
+
 ---
 
 ## CLAUDE CODE RULES (MEMORY)
@@ -1027,7 +1069,7 @@ Implement these 30 rules first:
 Add these 15 rules:
 - AS-010 through AS-015 (Skills best practices)
 - CC-MEM-006 through CC-MEM-010 (Memory quality)
-- CC-AG-001 through CC-AG-006 (Agents)
+- CC-AG-001 through CC-AG-013 (Agents)
 - CC-PL-001 through CC-PL-005 (Plugins)
 
 ### P2 (Week 5-6)
@@ -1121,7 +1163,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | Agent Skills | 16 | 14 | 2 | 0 | 5 |
 | Claude Skills | 15 | 12 | 3 | 0 | 7 |
 | Claude Hooks | 18 | 13 | 4 | 1 | 3 |
-| Claude Agents | 7 | 7 | 0 | 0 | 2 |
+| Claude Agents | 13 | 12 | 1 | 0 | 2 |
 | Claude Memory | 10 | 7 | 3 | 0 | 2 |
 | AGENTS.md | 6 | 1 | 5 | 0 | 0 |
 | Claude Plugins | 6 | 6 | 0 | 0 | 1 |
@@ -1133,7 +1175,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | Prompt Eng | 4 | 0 | 4 | 0 | 0 |
 | Cross-Platform | 6 | 4 | 2 | 0 | 0 |
 | Version Awareness | 1 | 0 | 0 | 1 | 0 |
-| **TOTAL** | **118** | **86** | **30** | **2** | **28** |
+| **TOTAL** | **124** | **91** | **31** | **2** | **28** |
 
 ---
 
@@ -1162,7 +1204,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 
 ---
 
-**Total Coverage**: 118 validation rules across 15 categories
+**Total Coverage**: 124 validation rules across 15 categories
 **Knowledge Base**: 11,036 lines, 320KB, 75+ sources
-**Certainty**: 86 HIGH, 30 MEDIUM, 2 LOW
-**Auto-Fixable**: 28 rules (24%)
+**Certainty**: 91 HIGH, 31 MEDIUM, 2 LOW
+**Auto-Fixable**: 28 rules (23%)

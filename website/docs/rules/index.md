@@ -61,6 +61,12 @@ This section contains all `118` validation rules generated from `knowledge-base/
 | [CC-AG-005](./generated/cc-ag-005.md) | Referenced Skill Not Found | HIGH | Claude Agents | No |
 | [CC-AG-006](./generated/cc-ag-006.md) | Tool/Disallowed Conflict | HIGH | Claude Agents | No |
 | [CC-AG-007](./generated/cc-ag-007.md) | Agent Parse Error | HIGH | Claude Agents | No |
+| [CC-AG-008](./generated/cc-ag-008.md) | Invalid Memory Scope | HIGH | Claude Agents | No |
+| [CC-AG-009](./generated/cc-ag-009.md) | Invalid Tool Name in Tools List | HIGH | Claude Agents | No |
+| [CC-AG-010](./generated/cc-ag-010.md) | Invalid Tool Name in DisallowedTools | HIGH | Claude Agents | No |
+| [CC-AG-011](./generated/cc-ag-011.md) | Invalid Hooks in Agent Frontmatter | HIGH | Claude Agents | No |
+| [CC-AG-012](./generated/cc-ag-012.md) | Bypass Permissions Warning | HIGH | Claude Agents | No |
+| [CC-AG-013](./generated/cc-ag-013.md) | Invalid Skill Name Format | MEDIUM | Claude Agents | No |
 | [CC-MEM-001](./generated/cc-mem-001.md) | Invalid Import Path | HIGH | Claude Memory | No |
 | [CC-MEM-002](./generated/cc-mem-002.md) | Circular Import | HIGH | Claude Memory | No |
 | [CC-MEM-003](./generated/cc-mem-003.md) | Import Depth Exceeds 5 | HIGH | Claude Memory | No |
