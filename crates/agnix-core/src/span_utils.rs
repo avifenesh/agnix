@@ -214,14 +214,6 @@ pub(crate) fn find_unique_json_field_line(
     found
 }
 
-/// Skip inline whitespace (space and tab only, not newlines).
-fn skip_ws_inline(bytes: &[u8], pos: usize) -> usize {
-    let mut i = pos;
-    while i < bytes.len() && matches!(bytes[i], b' ' | b'\t') {
-        i += 1;
-    }
-    i
-}
 
 /// Find a line matching `  "matcher": "value",\n` exactly once.
 /// Returns the full line span from leading whitespace through trailing newline.
