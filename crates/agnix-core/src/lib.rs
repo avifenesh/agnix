@@ -436,8 +436,7 @@ where
         .iter()
         .map(|p| {
             let normalized = p.replace('\\', "/");
-            glob::Pattern::new(&normalized)
-                .map_err(|e| error_builder(p.clone(), e.to_string()))
+            glob::Pattern::new(&normalized).map_err(|e| error_builder(p.clone(), e.to_string()))
         })
         .collect()
 }
