@@ -12,7 +12,7 @@ keywords: ["CC-HK-016", "validate hook type agent", "claude hooks", "validation"
 - **Severity**: `HIGH`
 - **Category**: `Claude Hooks`
 - **Normative Level**: `MUST`
-- **Auto-Fix**: `No`
+- **Auto-Fix**: `Yes (unsafe)`
 - **Verified On**: `2026-02-07`
 
 ## Applicability

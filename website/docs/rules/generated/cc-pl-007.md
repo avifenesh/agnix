@@ -39,10 +39,7 @@ The following examples are illustrative snippets for this rule category.
 
 ```json
 {
-  "name": "my-plugin",
-  "description": "A plugin",
-  "version": "1.0.0",
-  "commands": "/usr/local/bin/commands"
+  "name": "plugin"
 }
 ```
 
@@ -50,9 +47,9 @@ The following examples are illustrative snippets for this rule category.
 
 ```json
 {
-  "name": "my-plugin",
-  "description": "A plugin",
-  "version": "1.0.0",
-  "commands": "./commands/"
+  "name": "agnix-plugin",
+  "commands": [
+    {"name": "validate", "entrypoint": "./scripts/validate.sh"}
+  ]
 }
 ```

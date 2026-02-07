@@ -38,20 +38,14 @@ The following examples are illustrative snippets for this rule category.
 ### Invalid
 
 ```markdown
----
-paths:
-  - "[unclosed"
----
-# Rule content
+# Memory
+Always be helpful.
 ```
 
 ### Valid
 
 ```markdown
----
-paths:
-  - "src/**/*.ts"
-  - "lib/**/*.js"
----
-# Rule content
+# Project Memory
+- Use Rust workspace conventions
+- Keep AGENTS.md and CLAUDE.md identical
 ```

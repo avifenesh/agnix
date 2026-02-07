@@ -2,7 +2,7 @@
 id: cc-pl-010
 title: "CC-PL-010: Invalid Homepage URL - Claude Plugins"
 sidebar_label: "CC-PL-010"
-description: "agnix rule CC-PL-010 checks for invalid homepage URL in claude plugins files. Severity: MEDIUM. See examples and fix guidance."
+description: "agnix rule CC-PL-010 checks for invalid homepage url in claude plugins files. Severity: MEDIUM. See examples and fix guidance."
 keywords: ["CC-PL-010", "invalid homepage url", "claude plugins", "validation", "agnix", "linter"]
 ---
 
@@ -39,10 +39,7 @@ The following examples are illustrative snippets for this rule category.
 
 ```json
 {
-  "name": "my-plugin",
-  "description": "A plugin",
-  "version": "1.0.0",
-  "homepage": "not-a-url"
+  "name": "plugin"
 }
 ```
 
@@ -50,9 +47,9 @@ The following examples are illustrative snippets for this rule category.
 
 ```json
 {
-  "name": "my-plugin",
-  "description": "A plugin",
-  "version": "1.0.0",
-  "homepage": "https://example.com/plugin"
+  "name": "agnix-plugin",
+  "commands": [
+    {"name": "validate", "entrypoint": "./scripts/validate.sh"}
+  ]
 }
 ```

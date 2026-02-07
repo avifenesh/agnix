@@ -39,12 +39,7 @@ The following examples are illustrative snippets for this rule category.
 
 ```json
 {
-  "name": "my-plugin",
-  "description": "A plugin",
-  "version": "1.0.0",
-  "author": {
-    "name": ""
-  }
+  "name": "plugin"
 }
 ```
 
@@ -52,12 +47,9 @@ The following examples are illustrative snippets for this rule category.
 
 ```json
 {
-  "name": "my-plugin",
-  "description": "A plugin",
-  "version": "1.0.0",
-  "author": {
-    "name": "Test Author",
-    "email": "author@example.com"
-  }
+  "name": "agnix-plugin",
+  "commands": [
+    {"name": "validate", "entrypoint": "./scripts/validate.sh"}
+  ]
 }
 ```
