@@ -98,6 +98,11 @@ make_cli_test!(
     "cross_platform/hard-coded",
     ["XP-003"]
 );
+make_cli_test!(
+    test_cli_reports_gemini_md_fixtures,
+    "gemini_md-invalid",
+    ["GM-001", "GM-002", "GM-003"]
+);
 
 #[test]
 fn test_cli_reports_pe_fixtures() {

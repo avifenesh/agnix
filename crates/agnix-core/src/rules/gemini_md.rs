@@ -28,6 +28,8 @@ impl Validator for GeminiMdValidator {
             return diagnostics;
         }
 
+        let path_buf = path.to_path_buf();
+
         // GM-001: Valid Markdown Structure (ERROR)
         if config.is_rule_enabled("GM-001") {
             let validity_issues = check_markdown_validity(content);
@@ -38,7 +40,7 @@ impl Validator for GeminiMdValidator {
                 };
                 diagnostics.push(
                     level_fn(
-                        path.to_path_buf(),
+                        path_buf.clone(),
                         issue.line,
                         issue.column,
                         "GM-001",
@@ -57,7 +59,7 @@ impl Validator for GeminiMdValidator {
             if let Some(issue) = check_section_headers(content) {
                 diagnostics.push(
                     Diagnostic::warning(
-                        path.to_path_buf(),
+                        path_buf.clone(),
                         issue.line,
                         issue.column,
                         "GM-002",
@@ -73,7 +75,7 @@ impl Validator for GeminiMdValidator {
             if check_project_context(content).is_some() {
                 diagnostics.push(
                     Diagnostic::warning(
-                        path.to_path_buf(),
+                        path_buf,
                         1,
                         0,
                         "GM-003",
@@ -169,6 +171,19 @@ Check [this link](http://example.com) for more.
         let diagnostics = validate(content);
         let gm_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "GM-001").collect();
         assert!(gm_001.is_empty());
+    }
+
+    #[test]
+    fn test_gm_001_malformed_link() {
+        let content = r#"# Project
+
+Check [this link](http://example.com for more info.
+"#;
+        let diagnostics = validate(content);
+        let gm_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "GM-001").collect();
+        assert_eq!(gm_001.len(), 1);
+        assert_eq!(gm_001[0].level, DiagnosticLevel::Error);
+        assert!(gm_001[0].message.contains("Malformed markdown link"));
     }
 
     #[test]
