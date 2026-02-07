@@ -319,6 +319,73 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 
 ---
 
+## PER-CLIENT SKILL RULES
+
+<a id="cr-sk-001"></a>
+### CR-SK-001 [MEDIUM] Cursor Skill Uses Unsupported Field
+**Requirement**: Skills in `.cursor/skills/` SHOULD NOT use frontmatter fields unsupported by Cursor
+**Detection**: SKILL.md path contains `.cursor/skills/` AND frontmatter has unsupported fields
+**Fix**: [AUTO-FIX, safe] Remove unsupported field
+**Source**: docs.cursor.com/en/context/skills
+
+<a id="cl-sk-001"></a>
+### CL-SK-001 [MEDIUM] Cline Skill Uses Unsupported Field
+**Requirement**: Skills in `.cline/skills/` SHOULD NOT use frontmatter fields unsupported by Cline
+**Detection**: SKILL.md path contains `.cline/skills/` AND frontmatter has unsupported fields
+**Fix**: [AUTO-FIX, safe] Remove unsupported field
+**Source**: docs.cline.bot/features/custom-instructions
+
+<a id="cp-sk-001"></a>
+### CP-SK-001 [MEDIUM] Copilot Skill Uses Unsupported Field
+**Requirement**: Skills in `.github/skills/` SHOULD NOT use frontmatter fields unsupported by GitHub Copilot
+**Detection**: SKILL.md path contains `.github/skills/` AND frontmatter has unsupported fields
+**Fix**: [AUTO-FIX, safe] Remove unsupported field
+**Source**: docs.github.com/en/copilot/customizing-copilot
+
+<a id="cx-sk-001"></a>
+### CX-SK-001 [MEDIUM] Codex Skill Uses Unsupported Field
+**Requirement**: Skills in `.agents/skills/` SHOULD NOT use frontmatter fields unsupported by Codex CLI
+**Detection**: SKILL.md path contains `.agents/skills/` AND frontmatter has unsupported fields
+**Fix**: [AUTO-FIX, safe] Remove unsupported field
+**Source**: developers.openai.com/codex/guides/agents-md
+
+<a id="oc-sk-001"></a>
+### OC-SK-001 [MEDIUM] OpenCode Skill Uses Unsupported Field
+**Requirement**: Skills in `.opencode/skills/` SHOULD NOT use frontmatter fields unsupported by OpenCode
+**Detection**: SKILL.md path contains `.opencode/skills/` AND frontmatter has unsupported fields
+**Fix**: [AUTO-FIX, safe] Remove unsupported field
+**Source**: opencode.ai/docs/rules
+
+<a id="ws-sk-001"></a>
+### WS-SK-001 [MEDIUM] Windsurf Skill Uses Unsupported Field
+**Requirement**: Skills in `.windsurf/skills/` SHOULD NOT use frontmatter fields unsupported by Windsurf
+**Detection**: SKILL.md path contains `.windsurf/skills/` AND frontmatter has unsupported fields
+**Fix**: [AUTO-FIX, safe] Remove unsupported field
+**Source**: docs.windsurf.com/windsurf/memories
+
+<a id="kr-sk-001"></a>
+### KR-SK-001 [MEDIUM] Kiro Skill Uses Unsupported Field
+**Requirement**: Skills in `.kiro/skills/` SHOULD NOT use frontmatter fields unsupported by Kiro
+**Detection**: SKILL.md path contains `.kiro/skills/` AND frontmatter has unsupported fields
+**Fix**: [AUTO-FIX, safe] Remove unsupported field
+**Source**: kiro.dev/docs/context/steering
+
+<a id="amp-sk-001"></a>
+### AMP-SK-001 [MEDIUM] Amp Skill Uses Unsupported Field
+**Requirement**: Skills in `.agents/skills/` SHOULD NOT use frontmatter fields unsupported by Amp
+**Detection**: SKILL.md path contains `.agents/skills/` AND frontmatter has unsupported fields
+**Fix**: [AUTO-FIX, safe] Remove unsupported field
+**Source**: docs.amp.dev/setup/customization
+
+<a id="rc-sk-001"></a>
+### RC-SK-001 [MEDIUM] Roo Code Skill Uses Unsupported Field
+**Requirement**: Skills in `.roo/skills/` SHOULD NOT use frontmatter fields unsupported by Roo Code
+**Detection**: SKILL.md path contains `.roo/skills/` AND frontmatter has unsupported fields
+**Fix**: [AUTO-FIX, safe] Remove unsupported field
+**Source**: docs.roocode.com/features/custom-instructions
+
+---
+
 ## CLAUDE CODE RULES (HOOKS)
 
 <a id="cc-hk-001"></a>
@@ -1197,6 +1264,13 @@ agent: reviewer
 **Fix**: Document which file takes precedence (e.g., "CLAUDE.md takes precedence over AGENTS.md")
 **Source**: multi-platform clarity requirements
 
+<a id="xp-sk-001"></a>
+### XP-SK-001 [LOW] Skill Uses Client-Specific Features
+**Requirement**: Skills SHOULD avoid client-specific frontmatter fields for maximum portability
+**Detection**: Skill frontmatter uses extension fields (model, context, agent, hooks, etc.) that are not part of the universal Agent Skills spec
+**Fix**: No auto-fix -- review whether the field is needed or can be removed for portability
+**Source**: agentskills.io/specification
+
 ---
 
 ## VERSION AWARENESS RULES (VER)
@@ -1239,7 +1313,8 @@ Add these 15 rules:
 Complete coverage:
 - MCP-001 through MCP-006 (MCP protocol)
 - PE-001 through PE-004 (Prompt engineering)
-- XP-001 through XP-006 (Cross-platform)
+- XP-001 through XP-006, XP-SK-001 (Cross-platform)
+- CR-SK-001, CL-SK-001, CP-SK-001, CX-SK-001, OC-SK-001, WS-SK-001, KR-SK-001, AMP-SK-001, RC-SK-001 (Per-client skills)
 - Remaining MEDIUM/LOW certainty rules
 
 ---
@@ -1353,9 +1428,18 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | XML | 3 | 3 | 0 | 0 | 3 |
 | References | 2 | 2 | 0 | 0 | 0 |
 | Prompt Eng | 4 | 0 | 4 | 0 | 0 |
-| Cross-Platform | 6 | 4 | 2 | 0 | 0 |
+| Cross-Platform | 7 | 4 | 2 | 1 | 0 |
+| Cursor Skills | 1 | 0 | 1 | 0 | 1 |
+| Cline Skills | 1 | 0 | 1 | 0 | 1 |
+| Copilot Skills | 1 | 0 | 1 | 0 | 1 |
+| Codex Skills | 1 | 0 | 1 | 0 | 1 |
+| OpenCode Skills | 1 | 0 | 1 | 0 | 1 |
+| Windsurf Skills | 1 | 0 | 1 | 0 | 1 |
+| Kiro Skills | 1 | 0 | 1 | 0 | 1 |
+| Amp Skills | 1 | 0 | 1 | 0 | 1 |
+| Roo Code Skills | 1 | 0 | 1 | 0 | 1 |
 | Version Awareness | 1 | 0 | 0 | 1 | 0 |
-| **TOTAL** | **145** | **103** | **40** | **2** | **48** |
+| **TOTAL** | **155** | **103** | **49** | **3** | **57** |
 
 
 ---
@@ -1385,9 +1469,9 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 
 ---
 
-**Total Coverage**: 145 validation rules across 19 categories
+**Total Coverage**: 155 validation rules across 28 categories
 
 **Knowledge Base**: 11,036 lines, 320KB, 75+ sources
-**Certainty**: 103 HIGH, 40 MEDIUM, 2 LOW
-**Auto-Fixable**: 48 rules (33%)
+**Certainty**: 103 HIGH, 49 MEDIUM, 3 LOW
+**Auto-Fixable**: 57 rules (37%)
 
