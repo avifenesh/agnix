@@ -86,34 +86,34 @@ rules:
 
   # --- Per-Client Skills (per_client_skill.rs) ---
   cr_sk_001:
-    message: "el campo '%{field}' no es soportado por %{client} -- sera ignorado"
+    message: "El campo '%{field}' no es soportado por %{client} -- sera ignorado"
     suggestion: "Elimina '%{field}' o mueve este skill a un cliente que lo soporte"
   cl_sk_001:
-    message: "el campo '%{field}' no es soportado por %{client} -- sera ignorado"
+    message: "El campo '%{field}' no es soportado por %{client} -- sera ignorado"
     suggestion: "Elimina '%{field}' o mueve este skill a un cliente que lo soporte"
   cp_sk_001:
-    message: "el campo '%{field}' no es soportado por %{client} -- sera ignorado"
+    message: "El campo '%{field}' no es soportado por %{client} -- sera ignorado"
     suggestion: "Elimina '%{field}' o mueve este skill a un cliente que lo soporte"
   cx_sk_001:
-    message: "el campo '%{field}' no es soportado por %{client} -- sera ignorado"
+    message: "El campo '%{field}' no es soportado por %{client} -- sera ignorado"
     suggestion: "Elimina '%{field}' o mueve este skill a un cliente que lo soporte"
   oc_sk_001:
-    message: "el campo '%{field}' no es soportado por %{client} -- sera ignorado"
+    message: "El campo '%{field}' no es soportado por %{client} -- sera ignorado"
     suggestion: "Elimina '%{field}' o mueve este skill a un cliente que lo soporte"
   ws_sk_001:
-    message: "el campo '%{field}' no es soportado por %{client} -- sera ignorado"
+    message: "El campo '%{field}' no es soportado por %{client} -- sera ignorado"
     suggestion: "Elimina '%{field}' o mueve este skill a un cliente que lo soporte"
   kr_sk_001:
-    message: "el campo '%{field}' no es soportado por %{client} -- sera ignorado"
+    message: "El campo '%{field}' no es soportado por %{client} -- sera ignorado"
     suggestion: "Elimina '%{field}' o mueve este skill a un cliente que lo soporte"
   amp_sk_001:
-    message: "el campo '%{field}' no es soportado por %{client} -- sera ignorado"
+    message: "El campo '%{field}' no es soportado por %{client} -- sera ignorado"
     suggestion: "Elimina '%{field}' o mueve este skill a un cliente que lo soporte"
   rc_sk_001:
-    message: "el campo '%{field}' no es soportado por %{client} -- sera ignorado"
+    message: "El campo '%{field}' no es soportado por %{client} -- sera ignorado"
     suggestion: "Elimina '%{field}' o mueve este skill a un cliente que lo soporte"
   xp_sk_001:
-    message: "el skill usa el campo '%{field}' especifico del cliente que no es parte de la especificacion universal de Agent Skills"
+    message: "El skill usa el campo '%{field}' especifico del cliente que no es parte de la especificacion universal de Agent Skills"
     suggestion: "Considera eliminar '%{field}' para portabilidad entre plataformas"
 
   # --- Hooks (hooks/mod.rs) ---
