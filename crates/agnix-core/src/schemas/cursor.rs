@@ -297,7 +297,10 @@ alwaysApply: true
         let result = parse_mdc_frontmatter(content).unwrap();
         assert!(result.schema.is_some());
         let schema = result.schema.as_ref().unwrap();
-        assert_eq!(schema.always_apply.as_ref().and_then(|a| a.as_bool()), Some(true));
+        assert_eq!(
+            schema.always_apply.as_ref().and_then(|a| a.as_bool()),
+            Some(true)
+        );
     }
 
     #[test]

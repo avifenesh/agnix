@@ -819,8 +819,8 @@ Body"#;
     #[test]
     fn test_all_cur_rules_can_be_disabled() {
         let rules = [
-            "CUR-001", "CUR-002", "CUR-003", "CUR-004", "CUR-005", "CUR-006",
-            "CUR-007", "CUR-008", "CUR-009",
+            "CUR-001", "CUR-002", "CUR-003", "CUR-004", "CUR-005", "CUR-006", "CUR-007", "CUR-008",
+            "CUR-009",
         ];
 
         for rule in rules {
