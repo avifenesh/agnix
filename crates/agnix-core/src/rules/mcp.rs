@@ -10,7 +10,6 @@ use crate::{
         is_initialize_response, validate_json_schema_structure,
     },
 };
-use regex::Regex;
 use rust_i18n::t;
 use std::path::Path;
 

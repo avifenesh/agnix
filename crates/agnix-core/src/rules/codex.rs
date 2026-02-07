@@ -11,7 +11,6 @@ use crate::{
     rules::Validator,
     schemas::codex::{VALID_APPROVAL_MODES, VALID_FULL_AUTO_ERROR_MODES, parse_codex_toml},
 };
-use regex::Regex;
 use rust_i18n::t;
 use std::collections::HashMap;
 use std::path::Path;

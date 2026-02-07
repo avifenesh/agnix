@@ -20,7 +20,6 @@ pub mod skill;
 pub mod xml;
 
 use crate::{config::LintConfig, diagnostics::Diagnostic};
-use regex::Regex;
 use std::path::Path;
 
 /// Trait for file validators

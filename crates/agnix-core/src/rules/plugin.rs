@@ -8,7 +8,6 @@ use crate::{
     rules::Validator,
     schemas::plugin::PluginSchema,
 };
-use regex::Regex;
 use rust_i18n::t;
 use std::path::Path;
 

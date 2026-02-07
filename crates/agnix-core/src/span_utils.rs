@@ -17,27 +17,6 @@ fn skip_whitespace(content: &[u8], pos: usize) -> usize {
     i
 }
 
-/// Find `"key"` at `pos` in the byte slice, returning the span `(start, end)` of the
-/// quoted key including the quote characters. Matches only if `content[pos] == b'"'`.
-fn match_quoted_key(content: &[u8], pos: usize, key: &[u8]) -> Option<(usize, usize)> {
-    if pos >= content.len() || content[pos] != b'"' {
-        return None;
-    }
-    let after_open = pos + 1;
-    let end_of_key = after_open + key.len();
-    if end_of_key >= content.len() {
-        return None;
-    }
-    if &content[after_open..end_of_key] != key {
-        return None;
-    }
-    if content[end_of_key] != b'"' {
-        return None;
-    }
-    // span includes both quotes: "key"
-    Some((pos, end_of_key + 1))
-}
-
 /// Find all byte positions where `"key"` appears followed by optional whitespace and `:`.
 /// Returns a vec of (key_start, key_end, after_colon) tuples.
 fn find_all_json_key_colon_positions(
