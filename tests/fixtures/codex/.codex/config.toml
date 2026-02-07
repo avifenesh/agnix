@@ -1,0 +1,4 @@
+model = "o4-mini"
+approvalMode = "suggest"
+fullAutoErrorMode = "ask-user"
+notify = true

@@ -96,6 +96,8 @@ pub enum FileType {
     OpenCodeConfig,
     /// Gemini CLI instruction files (GEMINI.md, GEMINI.local.md)
     GeminiMd,
+    /// Codex CLI configuration (.codex/config.toml)
+    CodexConfig,
     /// Other .md files (for XML/import checks)
     GenericMarkdown,
     /// Skip validation
@@ -183,6 +185,10 @@ impl ValidatorRegistry {
             (FileType::GeminiMd, xml_validator),
             (FileType::GeminiMd, imports_validator),
             (FileType::GeminiMd, cross_platform_validator),
+            (FileType::CodexConfig, codex_validator),
+            // CodexValidator on ClaudeMd catches AGENTS.override.md files (CDX-003).
+            // The validator early-returns for all other ClaudeMd filenames.
+            (FileType::ClaudeMd, codex_validator),
             (FileType::GenericMarkdown, cross_platform_validator),
             (FileType::GenericMarkdown, xml_validator),
             (FileType::GenericMarkdown, imports_validator),
@@ -266,6 +272,10 @@ fn opencode_validator() -> Box<dyn Validator> {
 
 fn gemini_md_validator() -> Box<dyn Validator> {
     Box::new(rules::gemini_md::GeminiMdValidator)
+}
+
+fn codex_validator() -> Box<dyn Validator> {
+    Box::new(rules::codex::CodexValidator)
 }
 
 /// Returns true if the file is inside a documentation directory that
@@ -354,6 +364,10 @@ pub fn detect_file_type(path: &Path) -> FileType {
         "opencode.json" => FileType::OpenCodeConfig,
         // Gemini CLI instruction files (GEMINI.md, GEMINI.local.md)
         "GEMINI.md" | "GEMINI.local.md" => FileType::GeminiMd,
+        // Codex CLI configuration (.codex/config.toml)
+        // Path safety: symlink rejection and size limits are enforced upstream
+        // by file_utils::safe_read_file before content reaches any validator.
+        "config.toml" if parent == Some(".codex") => FileType::CodexConfig,
         name if name.ends_with(".md") => {
             // Agent directories take precedence over filename exclusions.
             // Files like agents/README.md should be validated as agent configs.
@@ -541,10 +555,16 @@ pub fn validate_project_with_registry(
     let max_files = config.max_files_to_validate;
 
     // Stream file walk directly into parallel validation (no intermediate Vec)
-    // Note: hidden(false) includes .github directory for Copilot instruction files
+    // Note: hidden(false) includes .github, .codex, .claude, .cursor directories
+    // Note: git_exclude(false) prevents .git/info/exclude from hiding config dirs
+    //       that users may locally exclude (e.g. .codex/) but still need linting.
+    //       Trade-off: this may surface files the user intentionally excluded locally,
+    //       but security is still enforced via symlink rejection (file_utils::safe_read)
+    //       and file size limits, so the exposure is limited to lint noise, not unsafe I/O.
     let mut diagnostics: Vec<Diagnostic> = WalkBuilder::new(&walk_root)
         .hidden(false)
         .git_ignore(true)
+        .git_exclude(false)
         .filter_entry({
             let exclude_patterns = Arc::clone(&exclude_patterns);
             let root_path = root_path.clone();
@@ -1110,6 +1130,27 @@ mod tests {
     }
 
     #[test]
+    fn test_detect_codex() {
+        assert_eq!(
+            detect_file_type(Path::new(".codex/config.toml")),
+            FileType::CodexConfig
+        );
+        assert_eq!(
+            detect_file_type(Path::new("project/.codex/config.toml")),
+            FileType::CodexConfig
+        );
+        // config.toml outside .codex should be Unknown
+        assert_eq!(
+            detect_file_type(Path::new("config.toml")),
+            FileType::Unknown
+        );
+        assert_eq!(
+            detect_file_type(Path::new("other/config.toml")),
+            FileType::Unknown
+        );
+    }
+
+    #[test]
     fn test_detect_unknown() {
         assert_eq!(detect_file_type(Path::new("main.rs")), FileType::Unknown);
         assert_eq!(
@@ -1153,7 +1194,7 @@ mod tests {
     fn test_validators_for_claude_md() {
         let registry = ValidatorRegistry::with_defaults();
         let validators = registry.validators_for(FileType::ClaudeMd);
-        assert_eq!(validators.len(), 6);
+        assert_eq!(validators.len(), 7);
     }
 
     #[test]
@@ -3090,6 +3131,71 @@ Use idiomatic Rust patterns.
         assert!(
             result.diagnostics.iter().any(|d| d.rule == "COP-001"),
             "validate_project should find .github/copilot-instructions.md and report COP-001. Found: {:?}",
+            result
+                .diagnostics
+                .iter()
+                .map(|d| &d.rule)
+                .collect::<Vec<_>>()
+        );
+    }
+
+    #[test]
+    fn test_validate_project_finds_codex_hidden_dir() {
+        // Test validate_project walks .codex directory (hidden dot-directory)
+        let temp = tempfile::TempDir::new().unwrap();
+        let codex_dir = temp.path().join(".codex");
+        std::fs::create_dir_all(&codex_dir).unwrap();
+
+        // Create config.toml with invalid approvalMode (should trigger CDX-001)
+        let file_path = codex_dir.join("config.toml");
+        std::fs::write(&file_path, "approvalMode = \"yolo\"").unwrap();
+
+        let config = LintConfig::default();
+        let result = validate_project(temp.path(), &config).unwrap();
+
+        assert!(
+            result.diagnostics.iter().any(|d| d.rule == "CDX-001"),
+            "validate_project should find .codex/config.toml and report CDX-001. Found: {:?}",
+            result
+                .diagnostics
+                .iter()
+                .map(|d| &d.rule)
+                .collect::<Vec<_>>()
+        );
+    }
+
+    #[test]
+    fn test_validate_project_finds_codex_invalid_fixtures() {
+        // Test validate_project on the actual codex-invalid fixture directory
+        let fixtures_dir = get_fixtures_dir();
+        let codex_invalid_dir = fixtures_dir.join("codex-invalid");
+
+        let config = LintConfig::default();
+        let result = validate_project(&codex_invalid_dir, &config).unwrap();
+
+        // Should find CDX-001 and CDX-002 from .codex/config.toml
+        assert!(
+            result.diagnostics.iter().any(|d| d.rule == "CDX-001"),
+            "Should report CDX-001 from .codex/config.toml. Rules found: {:?}",
+            result
+                .diagnostics
+                .iter()
+                .map(|d| &d.rule)
+                .collect::<Vec<_>>()
+        );
+        assert!(
+            result.diagnostics.iter().any(|d| d.rule == "CDX-002"),
+            "Should report CDX-002 from .codex/config.toml. Rules found: {:?}",
+            result
+                .diagnostics
+                .iter()
+                .map(|d| &d.rule)
+                .collect::<Vec<_>>()
+        );
+        // Should find CDX-003 from AGENTS.override.md
+        assert!(
+            result.diagnostics.iter().any(|d| d.rule == "CDX-003"),
+            "Should report CDX-003 from AGENTS.override.md. Rules found: {:?}",
             result
                 .diagnostics
                 .iter()

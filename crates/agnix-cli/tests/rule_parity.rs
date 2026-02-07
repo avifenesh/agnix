@@ -1,6 +1,6 @@
 //! Rule parity integration tests.
 //!
-//! Ensures all 142 rules from knowledge-base/rules.json are:
+//! Ensures all 145 rules from knowledge-base/rules.json are:
 
 //! 1. Registered in SARIF output (sarif.rs)
 //! 2. Implemented in agnix-core/src/rules/*.rs
@@ -166,7 +166,7 @@ fn extract_implemented_rule_ids() -> BTreeSet<String> {
     // Known rule ID prefixes to filter out false positives
     let valid_prefixes = [
         "AS-", "CC-SK-", "CC-HK-", "CC-AG-", "CC-MEM-", "CC-PL-", "AGM-", "MCP-", "COP-", "CUR-",
-        "CLN-", "OC-", "GM-", "XML-", "REF-", "PE-", "XP-", "VER-",
+        "CLN-", "CDX-", "OC-", "GM-", "XML-", "REF-", "PE-", "XP-", "VER-",
     ];
 
     fn extract_from_file(
@@ -301,6 +301,7 @@ fn infer_fixture_coverage(rules: &[RuleEntry]) -> HashMap<String, Vec<String>> {
         ("cross-platform", vec!["cross_platform"]),
         ("opencode", vec!["opencode", "opencode-invalid"]),
         ("gemini-cli", vec!["gemini_md", "gemini_md-invalid"]),
+        ("codex", vec!["codex", "codex-invalid"]),
     ]
     .into_iter()
     .collect();
@@ -451,8 +452,8 @@ fn test_rules_json_integrity() {
     // Check total count matches expected
     assert_eq!(
         rules_index.rules.len(),
-        142,
-        "Expected 142 rules in rules.json, found {}",
+        145,
+        "Expected 145 rules in rules.json, found {}",
         rules_index.rules.len()
     );
 
@@ -491,6 +492,7 @@ fn test_rules_json_integrity() {
         "cursor",
         "cline",
         "gemini-cli",
+        "codex",
         "xml",
         "references",
         "prompt-engineering",
@@ -547,12 +549,12 @@ fn test_rules_json_matches_validation_rules_md() {
 fn test_sarif_rule_count() {
     let sarif_rules = extract_sarif_rule_ids();
 
-    // SARIF should have exactly 142 rules to match rules.json
+    // SARIF should have exactly 145 rules to match rules.json
 
     assert_eq!(
         sarif_rules.len(),
-        142,
-        "SARIF should have 142 rules, found {}. Missing or extra rules detected.",
+        145,
+        "SARIF should have 145 rules, found {}. Missing or extra rules detected.",
         sarif_rules.len()
     );
 }

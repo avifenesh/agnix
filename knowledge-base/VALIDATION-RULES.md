@@ -1038,6 +1038,31 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 
 ---
 
+## CODEX CLI RULES
+
+<a id="cdx-001"></a>
+### CDX-001 [HIGH] Invalid Approval Mode
+**Requirement**: The `approvalMode` field in `.codex/config.toml` MUST be `"suggest"`, `"auto-edit"`, or `"full-auto"`
+**Detection**: Parse TOML, validate `approvalMode` value against allowed set
+**Fix**: Use a valid approval mode value
+**Source**: github.com/openai/codex
+
+<a id="cdx-002"></a>
+### CDX-002 [HIGH] Invalid Full Auto Error Mode
+**Requirement**: The `fullAutoErrorMode` field in `.codex/config.toml` MUST be `"ask-user"` or `"ignore-and-continue"`
+**Detection**: Parse TOML, validate `fullAutoErrorMode` value against allowed set
+**Fix**: Use a valid full auto error mode value
+**Source**: github.com/openai/codex
+
+<a id="cdx-003"></a>
+### CDX-003 [MEDIUM] AGENTS.override.md in Version Control
+**Requirement**: `AGENTS.override.md` SHOULD NOT be committed to version control (contains user-specific overrides)
+**Detection**: Check if file name is `AGENTS.override.md`
+**Fix**: Add `AGENTS.override.md` to `.gitignore`
+**Source**: github.com/openai/codex
+
+---
+
 ## UNIVERSAL RULES (XML)
 
 <a id="xml-001"></a>
@@ -1313,13 +1338,14 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | Cline | 3 | 2 | 1 | 0 | 1 |
 | OpenCode | 3 | 3 | 0 | 0 | 0 |
 | Gemini CLI | 3 | 1 | 2 | 0 | 0 |
+| Codex CLI | 3 | 2 | 1 | 0 | 0 |
 | MCP | 12 | 10 | 2 | 0 | 3 |
 | XML | 3 | 3 | 0 | 0 | 3 |
 | References | 2 | 2 | 0 | 0 | 0 |
 | Prompt Eng | 4 | 0 | 4 | 0 | 0 |
 | Cross-Platform | 6 | 4 | 2 | 0 | 0 |
 | Version Awareness | 1 | 0 | 0 | 1 | 0 |
-| **TOTAL** | **142** | **101** | **39** | **2** | **32** |
+| **TOTAL** | **145** | **103** | **40** | **2** | **32** |
 
 
 ---
@@ -1349,9 +1375,9 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 
 ---
 
-**Total Coverage**: 142 validation rules across 18 categories
+**Total Coverage**: 145 validation rules across 19 categories
 
 **Knowledge Base**: 11,036 lines, 320KB, 75+ sources
-**Certainty**: 101 HIGH, 39 MEDIUM, 2 LOW
-**Auto-Fixable**: 32 rules (23%)
+**Certainty**: 103 HIGH, 40 MEDIUM, 2 LOW
+**Auto-Fixable**: 32 rules (22%)
 

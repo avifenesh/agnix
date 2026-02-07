@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Codex CLI support** - 3 new validation rules (CDX-001, CDX-002, CDX-003) for `.codex/config.toml` configuration files
 - CC-HK-013: `async` field only valid on command hooks (error)
 - CC-HK-014: `once` field only meaningful in skill/agent frontmatter (warning)
 - CC-HK-015: `model` field only valid on prompt/agent hooks (warning)
@@ -374,7 +375,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Quick-fix code actions from Fix objects
   - Hover documentation for frontmatter fields
   - Document content caching for performance
-  - Supports all 142 agnix validation rules with severity mapping
+  - Supports all 145 agnix validation rules with severity mapping
 
   - Workspace boundary validation for security (prevents path traversal)
   - Config caching optimization for performance
@@ -389,7 +390,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Case-insensitive tool name matching
   - Takes precedence over legacy `target` field for flexibility
 - VS Code extension with full LSP integration (#22)
-  - Real-time diagnostics for all 142 validation rules
+  - Real-time diagnostics for all 145 validation rules
 
   - Status bar indicator showing agnix validation status
   - Syntax highlighting for SKILL.md YAML frontmatter

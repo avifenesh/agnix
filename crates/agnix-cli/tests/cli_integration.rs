@@ -194,8 +194,8 @@ fn test_format_sarif_has_all_rules() {
         rules.len()
     );
     assert!(
-        rules.len() <= 143,
-        "Expected at most 143 validation rules, found {} (unexpected rule explosion)",
+        rules.len() <= 150,
+        "Expected at most 150 validation rules, found {} (unexpected rule explosion)",
         rules.len()
     );
 

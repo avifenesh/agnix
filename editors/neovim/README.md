@@ -10,7 +10,7 @@ Provides real-time validation of AI agent configuration files (CLAUDE.md, AGENTS
 - Real-time diagnostics as you type
 - Quick-fix code actions for auto-fixable issues
 - Hover documentation for configuration fields
-- 139 validation rules across 17 categories
+- 145 validation rules across 19 categories
 - Commands for server management and rule browsing
 - Optional Telescope integration
 - `:checkhealth` support

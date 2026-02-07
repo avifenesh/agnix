@@ -1,6 +1,6 @@
 # agnix Technical Reference
 
-> Linter for agent configs. 142 rules across 18 categories.
+> Linter for agent configs. 145 rules across 19 categories.
 
 
 ## What agnix Validates
@@ -23,6 +23,7 @@
 | Cline | .clinerules, .clinerules/*.md | 3 |
 | OpenCode | opencode.json | 3 |
 | Gemini CLI | GEMINI.md, GEMINI.local.md | 3 |
+| Codex CLI | .codex/config.toml | 3 |
 | Version Awareness | .agnix.toml | 1 |
 
 ## Architecture
@@ -39,7 +40,7 @@ agnix/
 │   ├── agnix-lsp/      # LSP server
 │   └── agnix-mcp/      # MCP server
 ├── editors/            # Neovim, VS Code, JetBrains, Zed integrations
-├── knowledge-base/     # 142 rules documented
+├── knowledge-base/     # 145 rules documented
 
 ├── scripts/            # Build/dev automation scripts
 ├── website/            # Docusaurus documentation website
@@ -85,6 +86,7 @@ All rules in `knowledge-base/VALIDATION-RULES.md`
 - `COP-nnn`: GitHub Copilot Instructions
 - `CLN-nnn`: Cline Rules
 - `OC-nnn`: OpenCode configuration
+- `CDX-nnn`: Codex CLI configuration
 - `CC-PL-nnn`: Claude Code Plugins
 - `MCP-nnn`: MCP protocol
 - `XML-nnn`: XML validation
@@ -189,7 +191,7 @@ exclude = ["node_modules/**", ".git/**", "target/**"]
 
 agnix validates `.agnix.toml` files semantically before running validation:
 
-- **Rule ID validation**: `disabled_rules` must match known patterns (AS-, CC-SK-, CC-HK-, CC-AG-, CC-MEM-, CC-PL-, XML-, MCP-, REF-, XP-, AGM-, COP-, CUR-, CLN-, OC-, PE-, VER-, imports::)
+- **Rule ID validation**: `disabled_rules` must match known patterns (AS-, CC-SK-, CC-HK-, CC-AG-, CC-MEM-, CC-PL-, XML-, MCP-, REF-, XP-, AGM-, COP-, CUR-, CLN-, OC-, CDX-, PE-, VER-, imports::)
 - **Tool validation**: `tools` array must contain valid tool names (claude-code, cursor, codex, copilot, github-copilot, cline, opencode, generic)
 - **Deprecation warnings**: `mcp_protocol_version` is deprecated (use `spec_revisions.mcp_protocol`)
 
@@ -220,6 +222,7 @@ When `target` is set to a specific tool, only relevant rules run:
 | Cursor | `cursor` | CUR-* | Cursor project rule validation |
 | Cline | `cline` | CLN-* | Cline rules validation |
 | OpenCode | `opencode` | OC-* | OpenCode configuration validation |
+| Codex CLI | `codex` | CDX-* | Codex CLI configuration validation |
 
 Version awareness (`VER-*`) is always active and controlled through `tool_versions` / `spec_revisions` pins.
 
