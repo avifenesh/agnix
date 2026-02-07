@@ -45,18 +45,6 @@ fn line_byte_range(content: &str, line_number: usize) -> Option<(usize, usize)> 
     }
 }
 
-/// Find the byte range of a YAML value for a given key in parsed frontmatter.
-/// Returns the value range (including quotes if present).
-/// Find the byte range of a YAML value (without quotes) for a given key.
-/// Wrapper around the shared helper for backward compatibility.
-fn find_yaml_value_range(
-    content: &str,
-    parsed: &crate::schemas::copilot::ParsedFrontmatter,
-    key: &str,
-) -> Option<(usize, usize)> {
-    crate::rules::find_yaml_value_range(content, parsed, key, false)
-}
-
 impl Validator for CopilotValidator {
     fn validate(&self, path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic> {
         let mut diagnostics = Vec::new();
