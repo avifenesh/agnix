@@ -23,6 +23,14 @@ target = "ClaudeCode"  # Deprecated; prefer tools = ["claude-code"]
 tools = ["claude-code", "cursor", "github-copilot"]
 ```
 
+### Include Custom Files
+
+```toml
+[files]
+include_as_memory = ["docs/ai-rules/*.md"]
+exclude = ["vendor/**"]
+```
+
 ## Full Reference
 
 ```toml
@@ -64,6 +72,17 @@ disabled_rules = ["CC-MEM-006", "PE-003"]
 
 [spec_revisions]
 # mcp_protocol = "2025-06-18"
+
+# File inclusion/exclusion for non-standard agent files
+[files]
+# Validate as CLAUDE.md-like memory/instruction files
+# include_as_memory = ["docs/ai-rules/*.md", "custom/INSTRUCTIONS.md"]
+
+# Validate as generic markdown (XML, imports, cross-platform rules)
+# include_as_generic = ["internal/*.md"]
+
+# Exclude from validation entirely (even built-in file types)
+# exclude = ["vendor/**", "generated/**"]
 ```
 
 ## Schema Validation
@@ -72,6 +91,7 @@ agnix automatically validates `.agnix.toml` files for:
 
 - **Invalid rule IDs**: Warns if `disabled_rules` contains IDs that don't match known patterns (AS-, CC-SK-, CC-HK-, CC-AG-, CC-MEM-, CC-PL-, XML-, MCP-, REF-, XP-, AGM-, COP-, CUR-, PE-, VER-, imports::)
 - **Unknown tools**: Warns if `tools` array contains tool names that aren't recognized
+- **Invalid file patterns**: Warns if `[files]` glob patterns have invalid syntax
 - **Deprecated fields**: Warns when using `mcp_protocol_version` (use `spec_revisions.mcp_protocol` instead)
 
 These warnings appear before validation output and include suggestions for fixes.

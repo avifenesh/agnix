@@ -52,10 +52,24 @@ The validation process follows these steps:
 
 1. **Directory Walking** (sequential) - Uses `ignore` crate to traverse directories
 2. **File Collection** - Gathers all relevant file paths with exclusion filtering
-3. **Parallel Validation** - Processes files in parallel using rayon
-4. **Result Sorting** - Deterministic ordering by severity (errors first) then file path
+3. **File Type Resolution** - `resolve_file_type()` applies `[files]` config overrides, then falls through to `detect_file_type()`
+4. **Parallel Validation** - Processes files in parallel using rayon
+5. **Result Sorting** - Deterministic ordering by severity (errors first) then file path
 
 This architecture ensures fast validation on large projects while maintaining consistent, reproducible output.
+
+### File Type Resolution
+
+`resolve_file_type(path, config)` determines which validators apply to a file:
+
+1. Check `[files].exclude` patterns - if matched, return `Unknown` (skip)
+2. Check `[files].include_as_memory` patterns - if matched, return `ClaudeMd`
+3. Check `[files].include_as_generic` patterns - if matched, return `GenericMarkdown`
+4. Fall through to `detect_file_type(path)` (built-in path-based detection)
+
+Priority: **exclude > include_as_memory > include_as_generic > built-in detection**.
+
+Patterns use glob syntax, matched against paths relative to the project root. Backslashes are normalized to forward slashes for cross-platform compatibility.
 
 ## Security
 
