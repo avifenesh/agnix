@@ -283,21 +283,19 @@ impl Validator for CopilotValidator {
                         .with_suggestion(t!("rules.cop_005.suggestion"));
 
                         // Unsafe auto-fix: replace with closest valid agent value
-                        if let Some(closest) = super::find_closest_value(
-                            agent_value.as_str(),
-                            VALID_AGENTS,
-                        ) {
+                        if let Some(closest) =
+                            super::find_closest_value(agent_value.as_str(), VALID_AGENTS)
+                        {
                             if let Some((start, end)) =
                                 find_yaml_value_range(content, &parsed, "excludeAgent")
                             {
-                                let replacement =
-                                    if content[start..end].starts_with('"') {
-                                        format!("\"{}\"", closest)
-                                    } else if content[start..end].starts_with('\'') {
-                                        format!("'{}'", closest)
-                                    } else {
-                                        closest.to_string()
-                                    };
+                                let replacement = if content[start..end].starts_with('"') {
+                                    format!("\"{}\"", closest)
+                                } else if content[start..end].starts_with('\'') {
+                                    format!("'{}'", closest)
+                                } else {
+                                    closest.to_string()
+                                };
                                 diagnostic = diagnostic.with_fix(Fix::replace(
                                     start,
                                     end,

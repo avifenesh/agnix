@@ -164,12 +164,7 @@ fn validate_cc_hk_015_model_on_command(
 
     // Safe auto-fix: remove the model field line
     if let Some((start, end)) = find_unique_json_field_line_span(content, "model") {
-        diagnostic = diagnostic.with_fix(Fix::delete(
-            start,
-            end,
-            t!("rules.cc_hk_015.fix"),
-            true,
-        ));
+        diagnostic = diagnostic.with_fix(Fix::delete(start, end, t!("rules.cc_hk_015.fix"), true));
     }
 
     diagnostics.push(diagnostic);

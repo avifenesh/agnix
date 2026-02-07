@@ -449,8 +449,7 @@ impl Validator for AgentValidator {
                     if let Some(closest) =
                         super::find_closest_value(memory.as_str(), VALID_MEMORY_SCOPES)
                     {
-                        if let Some((start, end)) =
-                            frontmatter_value_byte_range(content, "memory")
+                        if let Some((start, end)) = frontmatter_value_byte_range(content, "memory")
                         {
                             diagnostic = diagnostic.with_fix(Fix::replace(
                                 start,
@@ -2305,7 +2304,8 @@ Agent instructions"#;
 
     #[test]
     fn test_cc_ag_008_autofix_case_insensitive() {
-        let content = "---\nname: my-agent\ndescription: A test agent\nmemory: User\n---\nAgent instructions";
+        let content =
+            "---\nname: my-agent\ndescription: A test agent\nmemory: User\n---\nAgent instructions";
         let diagnostics = validate(content);
         let cc_ag_008: Vec<_> = diagnostics
             .iter()

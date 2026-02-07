@@ -512,9 +512,7 @@ pub(super) fn validate_cc_hk_013_async_field(
                     .with_suggestion(t!("rules.cc_hk_013.suggestion"));
 
                     // Safe auto-fix: remove the async field line
-                    if let Some((start, end)) =
-                        find_unique_json_field_line_span(content, "async")
-                    {
+                    if let Some((start, end)) = find_unique_json_field_line_span(content, "async") {
                         diagnostic = diagnostic.with_fix(Fix::delete(
                             start,
                             end,

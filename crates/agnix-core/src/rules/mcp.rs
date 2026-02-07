@@ -617,10 +617,9 @@ fn validate_server(
                 .with_suggestion(t!("rules.mcp_011.suggestion"));
 
                 // Unsafe auto-fix: replace with closest valid server type
-                if let Some(closest) = super::find_closest_value(
-                    server_type.as_str(),
-                    VALID_MCP_SERVER_TYPES,
-                ) {
+                if let Some(closest) =
+                    super::find_closest_value(server_type.as_str(), VALID_MCP_SERVER_TYPES)
+                {
                     if let Some((start, end)) =
                         find_unique_json_string_value_span(content, "type", server_type)
                     {

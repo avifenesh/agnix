@@ -1151,10 +1151,16 @@ Body content.
         let diagnostics = validate_mdc(content);
         let cur_008: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CUR-008").collect();
         assert_eq!(cur_008.len(), 1);
-        assert!(cur_008[0].has_fixes(), "CUR-008 should have auto-fix for \"true\"");
+        assert!(
+            cur_008[0].has_fixes(),
+            "CUR-008 should have auto-fix for \"true\""
+        );
         let fix = &cur_008[0].fixes[0];
         assert!(fix.safe, "CUR-008 fix should be safe");
-        assert_eq!(fix.replacement, "true", "Fix should convert to unquoted boolean true");
+        assert_eq!(
+            fix.replacement, "true",
+            "Fix should convert to unquoted boolean true"
+        );
         // Verify the fix targets the quoted value
         let target = &content[fix.start_byte..fix.end_byte];
         assert_eq!(target, "\"true\"", "Fix should target the quoted string");
@@ -1166,9 +1172,15 @@ Body content.
         let diagnostics = validate_mdc(content);
         let cur_008: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CUR-008").collect();
         assert_eq!(cur_008.len(), 1);
-        assert!(cur_008[0].has_fixes(), "CUR-008 should have auto-fix for \"false\"");
+        assert!(
+            cur_008[0].has_fixes(),
+            "CUR-008 should have auto-fix for \"false\""
+        );
         let fix = &cur_008[0].fixes[0];
-        assert_eq!(fix.replacement, "false", "Fix should convert to unquoted boolean false");
+        assert_eq!(
+            fix.replacement, "false",
+            "Fix should convert to unquoted boolean false"
+        );
         let target = &content[fix.start_byte..fix.end_byte];
         assert_eq!(target, "\"false\"", "Fix should target the quoted string");
     }

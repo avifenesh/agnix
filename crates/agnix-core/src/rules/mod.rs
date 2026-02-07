@@ -91,10 +91,7 @@ mod tests {
 
     #[test]
     fn test_find_closest_value_empty_input() {
-        assert_eq!(
-            find_closest_value("", &["stdio", "http", "sse"]),
-            None
-        );
+        assert_eq!(find_closest_value("", &["stdio", "http", "sse"]), None);
     }
 
     #[test]

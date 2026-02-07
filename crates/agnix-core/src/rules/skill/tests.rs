@@ -2740,10 +2740,7 @@ Body"#;
         crate::diagnostics::DiagnosticLevel::Error
     );
     // Should have an unsafe auto-fix that deletes disable-model-invocation line
-    assert!(
-        cc_sk_011[0].has_fixes(),
-        "CC-SK-011 should have auto-fix"
-    );
+    assert!(cc_sk_011[0].has_fixes(), "CC-SK-011 should have auto-fix");
     let fix = &cc_sk_011[0].fixes[0];
     assert!(!fix.safe, "CC-SK-011 fix should be unsafe");
     assert!(
