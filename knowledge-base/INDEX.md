@@ -87,7 +87,7 @@ knowledge-base/
 | Agent Skills | 16 | 14 | 2 | 0 | 6 |
 | Claude Skills | 15 | 12 | 3 | 0 | 3 |
 | Claude Hooks | 12 | 11 | 1 | 0 | 2 |
-| Claude Agents | 13 | 12 | 1 | 0 | 1 |
+| Claude Agents | 13 | 12 | 1 | 0 | 2 |
 | Claude Memory | 10 | 7 | 3 | 0 | 2 |
 | AGENTS.md | 6 | 1 | 5 | 0 | 2 |
 | Claude Plugins | 6 | 6 | 0 | 0 | 1 |
@@ -99,7 +99,7 @@ knowledge-base/
 | Cross-Platform | 6 | 4 | 2 | 0 | 0 |
 | Cursor | 6 | 3 | 3 | 0 | 1 |
 | Version Awareness | 1 | 0 | 0 | 1 | 0 |
-| **TOTAL** | **118** | **89** | **28** | **1** | **23** |
+| **TOTAL** | **118** | **89** | **28** | **1** | **28** |
 
 ---
 
@@ -263,7 +263,7 @@ Standards Covered:     5 (Agent Skills, MCP, Claude Code, Multi-Platform, Prompt
 Sources Consulted:    75+ (specs, docs, research papers, repos)
 Research Agents:       5 (10+ sources each)
 Validation Rules:     118 rules
-Auto-Fixable Rules:   23 rules
+Auto-Fixable Rules:   28 rules
 Test Fixtures:        116 files
 Platforms Analyzed:   9 (Claude Code, Codex CLI, OpenCode, Copilot, Cursor, Cline, Roo-Cline, Continue.dev, Aider)
 ```
