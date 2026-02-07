@@ -309,12 +309,18 @@ fn site_data_json_matches_rules_json() {
         "siteData.json uniqueTools should not be empty"
     );
 
-    // Verify uniqueTools is sorted
+    // Verify uniqueTools is sorted and unique
     let mut sorted = site_data.unique_tools.clone();
     sorted.sort();
     assert_eq!(
         site_data.unique_tools, sorted,
         "siteData.json uniqueTools must be sorted alphabetically"
+    );
+    let deduped: std::collections::HashSet<&String> = site_data.unique_tools.iter().collect();
+    assert_eq!(
+        site_data.unique_tools.len(),
+        deduped.len(),
+        "siteData.json uniqueTools must not contain duplicates"
     );
 
     // Cross-check autofix count by parsing the full rules.json
@@ -358,8 +364,12 @@ fn index_js_imports_generated_data() {
         .unwrap_or_else(|e| panic!("Failed to read {}: {}", index_path.display(), e));
 
     assert!(
-        content.contains("siteData"),
-        "index.js must import siteData from the generated JSON"
+        content.contains("import siteData from"),
+        "index.js must have an import statement for siteData"
+    );
+    assert!(
+        content.contains("siteData.totalRules"),
+        "index.js must use siteData.totalRules for dynamic rule count"
     );
 
     assert!(
@@ -381,8 +391,8 @@ fn docusaurus_config_uses_generated_data() {
         .unwrap_or_else(|e| panic!("Failed to read {}: {}", config_path.display(), e));
 
     assert!(
-        config.contains("siteData"),
-        "docusaurus.config.js must import siteData from generated JSON"
+        config.contains("require('./src/data/siteData.json')"),
+        "docusaurus.config.js must require siteData.json from generated data"
     );
     assert!(
         config.contains("siteData.totalRules"),

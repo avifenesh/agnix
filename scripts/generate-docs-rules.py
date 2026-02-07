@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Dict
+from typing import Dict, Set
 
 ROOT = Path(__file__).resolve().parents[1]
 RULES_JSON = ROOT / "knowledge-base" / "rules.json"
@@ -244,7 +244,7 @@ def generate_site_data(data: dict) -> None:
 
     autofix_count = sum(1 for r in rules if r.get("fix", {}).get("autofix"))
 
-    unique_tools: set[str] = set()
+    unique_tools: Set[str] = set()
     for r in rules:
         evidence = r.get("evidence") or {}
         tool = (evidence.get("applies_to") or {}).get("tool")
