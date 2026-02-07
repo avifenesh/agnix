@@ -48,7 +48,7 @@ use rust_i18n::t;
 use std::sync::Mutex;
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 
-pub use config::{ConfigWarning, LintConfig, generate_schema};
+pub use config::{ConfigWarning, FilesConfig, LintConfig, generate_schema};
 pub use diagnostics::{Diagnostic, DiagnosticLevel, Fix, LintError, LintResult};
 pub use fixes::{FixResult, apply_fixes, apply_fixes_with_fs};
 pub use fs::{FileSystem, MockFileSystem, RealFileSystem};
@@ -424,6 +424,119 @@ pub fn detect_file_type(path: &Path) -> FileType {
     }
 }
 
+/// Pre-compiled file inclusion/exclusion patterns for efficient matching.
+///
+/// Used internally by `validate_project_with_registry` to avoid re-compiling
+/// glob patterns for every file during parallel validation.
+#[derive(Default)]
+pub(crate) struct CompiledFilesConfig {
+    include_as_memory: Vec<glob::Pattern>,
+    include_as_generic: Vec<glob::Pattern>,
+    exclude: Vec<glob::Pattern>,
+}
+
+impl CompiledFilesConfig {
+    fn is_empty(&self) -> bool {
+        self.include_as_memory.is_empty()
+            && self.include_as_generic.is_empty()
+            && self.exclude.is_empty()
+    }
+}
+
+fn compile_patterns_lenient(patterns: &[String]) -> Vec<glob::Pattern> {
+    patterns
+        .iter()
+        .filter_map(|p| {
+            let normalized = p.replace('\\', "/");
+            glob::Pattern::new(&normalized).ok()
+        })
+        .collect()
+}
+
+fn compile_files_config(files: &config::FilesConfig) -> CompiledFilesConfig {
+    CompiledFilesConfig {
+        include_as_memory: compile_patterns_lenient(&files.include_as_memory),
+        include_as_generic: compile_patterns_lenient(&files.include_as_generic),
+        exclude: compile_patterns_lenient(&files.exclude),
+    }
+}
+
+/// Match options for file inclusion/exclusion glob patterns.
+///
+/// `require_literal_separator` is `true` so that `*` only matches within a
+/// single path component. Users must use `**` for recursive matching (e.g.
+/// `dir/**/*.md` instead of `dir/*.md` to match nested files).
+const FILES_MATCH_OPTIONS: glob::MatchOptions = glob::MatchOptions {
+    case_sensitive: true,
+    require_literal_separator: true,
+    require_literal_leading_dot: false,
+};
+
+fn resolve_with_compiled(
+    path: &Path,
+    root_dir: Option<&Path>,
+    compiled: &CompiledFilesConfig,
+) -> FileType {
+    if compiled.is_empty() {
+        return detect_file_type(path);
+    }
+
+    let rel_path = if let Some(root) = root_dir {
+        normalize_rel_path(path, root)
+    } else {
+        // No root_dir: use filename only
+        path.file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or("")
+            .to_string()
+    };
+
+    // Priority: exclude > include_as_memory > include_as_generic > detect
+    for pattern in &compiled.exclude {
+        if pattern.matches_with(&rel_path, FILES_MATCH_OPTIONS) {
+            return FileType::Unknown;
+        }
+    }
+    for pattern in &compiled.include_as_memory {
+        if pattern.matches_with(&rel_path, FILES_MATCH_OPTIONS) {
+            return FileType::ClaudeMd;
+        }
+    }
+    for pattern in &compiled.include_as_generic {
+        if pattern.matches_with(&rel_path, FILES_MATCH_OPTIONS) {
+            return FileType::GenericMarkdown;
+        }
+    }
+
+    detect_file_type(path)
+}
+
+/// Resolve file type with config-based overrides.
+///
+/// Applies `[files]` config patterns on top of [`detect_file_type`]:
+/// - `files.exclude` patterns map to [`FileType::Unknown`] (skip validation)
+/// - `files.include_as_memory` patterns map to [`FileType::ClaudeMd`]
+/// - `files.include_as_generic` patterns map to [`FileType::GenericMarkdown`]
+/// - Otherwise falls through to [`detect_file_type`]
+///
+/// Priority: exclude > include_as_memory > include_as_generic > built-in detection.
+///
+/// When no `[files]` patterns are configured, this is equivalent to
+/// calling `detect_file_type(path)` directly.
+pub fn resolve_file_type(path: &Path, config: &LintConfig) -> FileType {
+    if config.files.include_as_memory.is_empty()
+        && config.files.include_as_generic.is_empty()
+        && config.files.exclude.is_empty()
+    {
+        return detect_file_type(path);
+    }
+
+    // Compile patterns on-demand for single-file validation.
+    // Invalid patterns are silently skipped (validated at config load time).
+    let compiled = compile_files_config(&config.files);
+    resolve_with_compiled(path, config.root_dir.as_deref(), &compiled)
+}
+
 /// Validate a single file
 pub fn validate_file(path: &Path, config: &LintConfig) -> LintResult<Vec<Diagnostic>> {
     let registry = ValidatorRegistry::with_defaults();
@@ -436,8 +549,21 @@ pub fn validate_file_with_registry(
     config: &LintConfig,
     registry: &ValidatorRegistry,
 ) -> LintResult<Vec<Diagnostic>> {
-    let file_type = detect_file_type(path);
+    let file_type = resolve_file_type(path, config);
+    validate_file_with_type(path, file_type, config, registry)
+}
 
+/// Validate a single file with a pre-resolved [`FileType`].
+///
+/// This avoids re-compiling `[files]` glob patterns when the file type has
+/// already been determined (e.g. in `validate_project_with_registry` where
+/// patterns are pre-compiled for the entire walk).
+fn validate_file_with_type(
+    path: &Path,
+    file_type: FileType,
+    config: &LintConfig,
+    registry: &ValidatorRegistry,
+) -> LintResult<Vec<Diagnostic>> {
     if file_type == FileType::Unknown {
         return Ok(vec![]);
     }
@@ -541,6 +667,12 @@ pub fn validate_project_with_registry(
     // Pre-compile exclude patterns once (avoids N+1 pattern compilation)
     let exclude_patterns = compile_exclude_patterns(&config.exclude)?;
     let exclude_patterns = Arc::new(exclude_patterns);
+
+    // Pre-compile files config patterns once for the parallel walk.
+    // Invalid patterns are treated as non-fatal to align with LintConfig::validate()
+    // Invalid patterns are silently skipped (validated at config load time).
+    let compiled_files = Arc::new(compile_files_config(&config.files));
+
     let root_path = root_dir.clone();
 
     let walk_root = std::fs::canonicalize(path).unwrap_or_else(|_| path.to_path_buf());
@@ -598,8 +730,8 @@ pub fn validate_project_with_registry(
                 return Vec::new();
             }
 
-            // Count recognized files (detect_file_type is string-only, no I/O)
-            let file_type = detect_file_type(&file_path);
+            // Count recognized files (resolve_with_compiled is string-only, no I/O)
+            let file_type = resolve_with_compiled(&file_path, Some(&root_path), &compiled_files);
             if file_type != FileType::Unknown {
                 let count = files_checked.fetch_add(1, Ordering::SeqCst);
                 // Security: Enforce file count limit to prevent DoS
@@ -624,8 +756,9 @@ pub fn validate_project_with_registry(
                     .push(file_path.clone());
             }
 
-            // Validate the file
-            match validate_file_with_registry(&file_path, &config, registry) {
+            // Validate the file using the pre-resolved file_type to avoid
+            // re-compiling [files] glob patterns for every file.
+            match validate_file_with_type(&file_path, file_type, &config, registry) {
                 Ok(file_diagnostics) => file_diagnostics,
                 Err(e) => {
                     vec![Diagnostic::error(
@@ -4149,6 +4282,391 @@ Use idiomatic Rust patterns.
             "Performance: Validated 10,000 files in {:?} ({:.0} files/sec)",
             duration,
             10_000.0 / duration.as_secs_f64()
+        );
+    }
+
+    // =========================================================================
+    // resolve_file_type tests
+    // =========================================================================
+
+    #[test]
+    fn test_resolve_file_type_no_config_falls_through() {
+        let config = LintConfig::default();
+        // No files config patterns -> same as detect_file_type
+        assert_eq!(
+            resolve_file_type(Path::new("CLAUDE.md"), &config),
+            FileType::ClaudeMd
+        );
+        assert_eq!(
+            resolve_file_type(Path::new("main.rs"), &config),
+            FileType::Unknown
+        );
+        assert_eq!(
+            resolve_file_type(Path::new("notes/setup.md"), &config),
+            FileType::GenericMarkdown
+        );
+    }
+
+    #[test]
+    fn test_resolve_file_type_include_as_memory() {
+        let mut config = LintConfig::default();
+        config.files.include_as_memory = vec!["docs/ai-rules/*.md".to_string()];
+        config.root_dir = Some(PathBuf::from("/project"));
+
+        // File matching the pattern -> ClaudeMd
+        assert_eq!(
+            resolve_file_type(Path::new("/project/docs/ai-rules/coding.md"), &config),
+            FileType::ClaudeMd
+        );
+
+        // File NOT matching -> falls through to detect_file_type
+        assert_eq!(
+            resolve_file_type(Path::new("/project/docs/other/coding.md"), &config),
+            FileType::Unknown // docs/ is a documentation directory
+        );
+    }
+
+    #[test]
+    fn test_resolve_file_type_include_as_generic() {
+        let mut config = LintConfig::default();
+        config.files.include_as_generic = vec!["internal/*.md".to_string()];
+        config.root_dir = Some(PathBuf::from("/project"));
+
+        assert_eq!(
+            resolve_file_type(Path::new("/project/internal/notes.md"), &config),
+            FileType::GenericMarkdown
+        );
+    }
+
+    #[test]
+    fn test_resolve_file_type_exclude() {
+        let mut config = LintConfig::default();
+        config.files.exclude = vec!["generated/**".to_string()];
+        config.root_dir = Some(PathBuf::from("/project"));
+
+        // CLAUDE.md in generated/ -> excluded (Unknown)
+        assert_eq!(
+            resolve_file_type(Path::new("/project/generated/CLAUDE.md"), &config),
+            FileType::Unknown
+        );
+
+        // CLAUDE.md outside generated/ -> still ClaudeMd
+        assert_eq!(
+            resolve_file_type(Path::new("/project/CLAUDE.md"), &config),
+            FileType::ClaudeMd
+        );
+    }
+
+    #[test]
+    fn test_resolve_file_type_priority_exclude_over_include() {
+        let mut config = LintConfig::default();
+        config.files.include_as_memory = vec!["docs/**/*.md".to_string()];
+        config.files.exclude = vec!["docs/drafts/**".to_string()];
+        config.root_dir = Some(PathBuf::from("/project"));
+
+        // In docs/ but also in drafts/ -> exclude wins
+        assert_eq!(
+            resolve_file_type(Path::new("/project/docs/drafts/wip.md"), &config),
+            FileType::Unknown
+        );
+
+        // In docs/ but not in drafts/ -> include_as_memory wins
+        assert_eq!(
+            resolve_file_type(Path::new("/project/docs/rules/coding.md"), &config),
+            FileType::ClaudeMd
+        );
+    }
+
+    #[test]
+    fn test_resolve_file_type_priority_memory_over_generic() {
+        let mut config = LintConfig::default();
+        config.files.include_as_memory = vec!["rules/*.md".to_string()];
+        config.files.include_as_generic = vec!["rules/*.md".to_string()]; // overlapping
+        config.root_dir = Some(PathBuf::from("/project"));
+
+        // When both match, memory takes priority
+        assert_eq!(
+            resolve_file_type(Path::new("/project/rules/coding.md"), &config),
+            FileType::ClaudeMd
+        );
+    }
+
+    #[test]
+    fn test_resolve_file_type_no_root_dir_uses_filename() {
+        let mut config = LintConfig::default();
+        config.files.include_as_memory = vec!["INSTRUCTIONS.md".to_string()];
+        // No root_dir set
+
+        assert_eq!(
+            resolve_file_type(Path::new("some/path/INSTRUCTIONS.md"), &config),
+            FileType::ClaudeMd
+        );
+    }
+
+    #[test]
+    fn test_resolve_file_type_non_matching_files_fall_through() {
+        let mut config = LintConfig::default();
+        config.files.include_as_memory = vec!["custom/*.md".to_string()];
+        config.root_dir = Some(PathBuf::from("/project"));
+
+        // Regular SKILL.md still detected normally
+        assert_eq!(
+            resolve_file_type(Path::new("/project/SKILL.md"), &config),
+            FileType::Skill
+        );
+
+        // Regular CLAUDE.md still detected normally
+        assert_eq!(
+            resolve_file_type(Path::new("/project/CLAUDE.md"), &config),
+            FileType::ClaudeMd
+        );
+    }
+
+    #[test]
+    fn test_resolve_file_type_exclude_overrides_builtin() {
+        let mut config = LintConfig::default();
+        config.files.exclude = vec!["vendor/CLAUDE.md".to_string()];
+        config.root_dir = Some(PathBuf::from("/project"));
+
+        // CLAUDE.md in vendor/ is excluded even though it would normally be ClaudeMd
+        assert_eq!(
+            resolve_file_type(Path::new("/project/vendor/CLAUDE.md"), &config),
+            FileType::Unknown
+        );
+    }
+
+    #[test]
+    fn test_resolve_file_type_backslash_normalization() {
+        let mut config = LintConfig::default();
+        config.files.include_as_memory = vec!["docs\\ai-rules\\*.md".to_string()];
+        config.root_dir = Some(PathBuf::from("/project"));
+
+        // Backslashes in patterns are normalized to forward slashes
+        assert_eq!(
+            resolve_file_type(Path::new("/project/docs/ai-rules/coding.md"), &config),
+            FileType::ClaudeMd
+        );
+    }
+
+    #[test]
+    fn test_resolve_file_type_invalid_pattern_falls_back() {
+        let mut config = LintConfig::default();
+        config.files.include_as_memory = vec!["[invalid".to_string()];
+
+        // Invalid pattern should fall back to detect_file_type
+        assert_eq!(
+            resolve_file_type(Path::new("CLAUDE.md"), &config),
+            FileType::ClaudeMd
+        );
+    }
+
+    // =========================================================================
+    // Integration tests with tempdir
+    // =========================================================================
+
+    #[test]
+    fn test_validate_project_with_files_config_include() {
+        let temp = tempfile::TempDir::new().unwrap();
+        let root = temp.path();
+
+        // Create a custom instruction file that would normally be GenericMarkdown.
+        // Content includes "Usually" which triggers PE-004 (ambiguous terms) via
+        // the PromptValidator. PromptValidator runs for ClaudeMd but NOT for
+        // GenericMarkdown, proving the include_as_memory override works correctly.
+        let custom_dir = root.join("custom-rules");
+        std::fs::create_dir_all(&custom_dir).unwrap();
+        let custom_file = custom_dir.join("coding-standards.md");
+        std::fs::write(
+            &custom_file,
+            "# Coding Standards\n\nUsually prefer TypeScript over JavaScript.\n",
+        )
+        .unwrap();
+
+        // Without config, this file would be GenericMarkdown (in non-doc dir)
+        assert_eq!(detect_file_type(&custom_file), FileType::GenericMarkdown);
+
+        // With include_as_memory config, it should be validated as ClaudeMd
+        let mut config = LintConfig::default();
+        config.files.include_as_memory = vec!["custom-rules/*.md".to_string()];
+
+        let result = validate_project(root, &config).unwrap();
+        // Should have checked the file (it's now ClaudeMd, not just GenericMarkdown)
+        assert!(result.files_checked > 0);
+
+        // Verify that ClaudeMd-specific validators ran by checking for PE-004
+        // (ambiguous instructions). The PromptValidator is registered for ClaudeMd
+        // but NOT for GenericMarkdown, so PE-004 firing confirms the file was
+        // routed through ClaudeMd validation.
+        let pe_diags: Vec<_> = result
+            .diagnostics
+            .iter()
+            .filter(|d| d.rule.starts_with("PE-"))
+            .collect();
+        assert!(
+            !pe_diags.is_empty(),
+            "Expected PE-* diagnostics (from PromptValidator, ClaudeMd-only) but found none. \
+             This means the file was not validated as ClaudeMd despite include_as_memory config. \
+             All diagnostics: {:?}",
+            result
+                .diagnostics
+                .iter()
+                .map(|d| (&d.rule, &d.message))
+                .collect::<Vec<_>>()
+        );
+    }
+
+    #[test]
+    fn test_validate_project_with_files_config_exclude() {
+        let temp = tempfile::TempDir::new().unwrap();
+        let root = temp.path();
+
+        // Create a CLAUDE.md that would normally be validated
+        std::fs::write(root.join("CLAUDE.md"), "# Project\n\nInstructions here.\n").unwrap();
+
+        // Create a CLAUDE.md in a vendor dir that should be excluded
+        let vendor_dir = root.join("vendor");
+        std::fs::create_dir_all(&vendor_dir).unwrap();
+        std::fs::write(
+            vendor_dir.join("CLAUDE.md"),
+            "# Vendor instructions\n\nDo not validate this.\n",
+        )
+        .unwrap();
+
+        // With exclude config
+        let mut config = LintConfig::default();
+        config.files.exclude = vec!["vendor/**".to_string()];
+
+        let result = validate_project(root, &config).unwrap();
+        // Only the root CLAUDE.md should be checked, not vendor/CLAUDE.md
+        assert_eq!(
+            result.files_checked, 1,
+            "Only root CLAUDE.md should be checked, got {}",
+            result.files_checked
+        );
+    }
+
+    #[test]
+    fn test_validate_project_with_invalid_files_pattern() {
+        let temp = tempfile::TempDir::new().unwrap();
+        let root = temp.path();
+
+        // Create a file so the project is not empty
+        std::fs::write(root.join("CLAUDE.md"), "# Project\n").unwrap();
+
+        let mut config = LintConfig::default();
+        config.files.include_as_memory = vec!["[invalid".to_string()];
+
+        // Invalid patterns degrade gracefully: validation proceeds with no
+        // file overrides applied (consistent with LintConfig::validate() which
+        // only produces warnings for invalid patterns).
+        let result = validate_project(root, &config);
+        assert!(
+            result.is_ok(),
+            "Expected graceful degradation for invalid file pattern, got error: {:?}",
+            result.unwrap_err()
+        );
+    }
+
+    #[test]
+    fn test_validate_file_respects_files_config_exclude() {
+        let temp = tempfile::TempDir::new().unwrap();
+        let root = temp.path();
+
+        // Create a CLAUDE.md that would normally produce diagnostics
+        let claude_file = root.join("CLAUDE.md");
+        std::fs::write(&claude_file, "# Project\n\nNever use var.\n").unwrap();
+
+        // With exclude config, the file should be skipped entirely
+        let mut config = LintConfig::default();
+        config.files.exclude = vec!["CLAUDE.md".to_string()];
+        config.root_dir = Some(root.to_path_buf());
+
+        let registry = ValidatorRegistry::with_defaults();
+        let diagnostics = validate_file_with_registry(&claude_file, &config, &registry).unwrap();
+        assert!(
+            diagnostics.is_empty(),
+            "Expected empty diagnostics for excluded file, got {} diagnostics",
+            diagnostics.len()
+        );
+    }
+
+    #[test]
+    fn test_resolve_file_type_glob_separator_behavior() {
+        // With require_literal_separator=true, `*` should NOT match path separators.
+        // `dir/*.md` should match `dir/file.md` but NOT `dir/sub/file.md`.
+        // `dir/**/*.md` should match `dir/sub/file.md`.
+        let mut config = LintConfig::default();
+        config.files.include_as_memory = vec!["dir/*.md".to_string()];
+        config.root_dir = Some(PathBuf::from("/project"));
+
+        // Single-level match: dir/*.md matches dir/file.md
+        assert_eq!(
+            resolve_file_type(Path::new("/project/dir/file.md"), &config),
+            FileType::ClaudeMd,
+            "dir/*.md should match dir/file.md"
+        );
+
+        // Multi-level: dir/*.md should NOT match dir/sub/file.md
+        assert_ne!(
+            resolve_file_type(Path::new("/project/dir/sub/file.md"), &config),
+            FileType::ClaudeMd,
+            "dir/*.md should NOT match dir/sub/file.md (require_literal_separator)"
+        );
+
+        // With ** pattern, multi-level should match
+        let mut config2 = LintConfig::default();
+        config2.files.include_as_memory = vec!["dir/**/*.md".to_string()];
+        config2.root_dir = Some(PathBuf::from("/project"));
+
+        assert_eq!(
+            resolve_file_type(Path::new("/project/dir/sub/file.md"), &config2),
+            FileType::ClaudeMd,
+            "dir/**/*.md should match dir/sub/file.md"
+        );
+    }
+
+    #[test]
+    fn test_resolve_file_type_case_sensitive() {
+        // Patterns are case-sensitive (FILES_MATCH_OPTIONS.case_sensitive = true).
+        // "DEVELOPER.md" should match "DEVELOPER.md" but NOT "developer.md".
+        let mut config = LintConfig::default();
+        config.files.include_as_memory = vec!["DEVELOPER.md".to_string()];
+        config.root_dir = Some(PathBuf::from("/project"));
+
+        assert_eq!(
+            resolve_file_type(Path::new("/project/DEVELOPER.md"), &config),
+            FileType::ClaudeMd,
+            "DEVELOPER.md pattern should match DEVELOPER.md"
+        );
+        assert_ne!(
+            resolve_file_type(Path::new("/project/developer.md"), &config),
+            FileType::ClaudeMd,
+            "DEVELOPER.md pattern should NOT match developer.md (case-sensitive)"
+        );
+    }
+
+    #[test]
+    fn test_resolve_file_type_double_star_recursive() {
+        // "instructions/**/*.md" should match files at arbitrary nesting depth.
+        let mut config = LintConfig::default();
+        config.files.include_as_memory = vec!["instructions/**/*.md".to_string()];
+        config.root_dir = Some(PathBuf::from("/project"));
+
+        assert_eq!(
+            resolve_file_type(Path::new("/project/instructions/sub/deep/file.md"), &config),
+            FileType::ClaudeMd,
+            "instructions/**/*.md should match instructions/sub/deep/file.md"
+        );
+        assert_eq!(
+            resolve_file_type(Path::new("/project/instructions/file.md"), &config),
+            FileType::ClaudeMd,
+            "instructions/**/*.md should match instructions/file.md"
+        );
+        // Should not match files outside the instructions directory
+        assert_ne!(
+            resolve_file_type(Path::new("/project/other/file.md"), &config),
+            FileType::ClaudeMd,
+            "instructions/**/*.md should NOT match other/file.md"
         );
     }
 }

@@ -449,6 +449,7 @@ core:
     file_too_big: "文件太大: %{path}（%{size} 字节，限制 %{limit} 字节）"
     file_not_regular: "不是常规文件: %{path}"
     invalid_exclude: "无效的排除模式: %{pattern}（%{message}）"
+    invalid_include: "无效的包含模式: %{pattern}（%{message}）"
   config:
     unknown_rule: "未知的规则 ID 模式 '%{rule}'。期望前缀: %{prefixes}"
     unknown_rule_suggestion: "检查规则 ID 拼写或删除无效的"
@@ -458,6 +459,14 @@ core:
     deprecated_target_suggestion: "改用 'tools' 数组"
     deprecated_mcp_version: "字段 'mcp_protocol_version' 已弃用"
     deprecated_mcp_version_suggestion: "改用 'spec_revisions.mcp_protocol'"
+    invalid_files_pattern: "无效的文件模式 '%{pattern}': %{message}"
+    invalid_files_pattern_suggestion: "修复 glob 模式语法。有效示例: 'docs/ai-rules/*.md', '**/*.rules.md'"
+    files_path_traversal: "模式 '%{pattern}' 包含路径遍历 ('../')。模式必须相对于项目根目录，不能包含父目录引用。"
+    files_path_traversal_suggestion: "从模式中删除 '../' 并使用相对于项目根目录的路径"
+    files_absolute_path: "模式 '%{pattern}' 使用了绝对路径。模式必须相对于项目根目录。"
+    files_absolute_path_suggestion: "删除开头的 '/' 或驱动器字母并使用相对路径"
+    files_pattern_count_limit: "字段 '%{field}' 有 %{count} 个模式，超过了建议的 %{limit} 个上限。"
+    files_pattern_count_limit_suggestion: "考虑合并模式或使用更广泛的 glob 表达式"
     load_warning: "解析配置 '%{path}' 失败: %{error}。使用默认值。"
 
 # ===========================================================================

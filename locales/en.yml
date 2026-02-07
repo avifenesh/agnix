@@ -530,6 +530,7 @@ core:
     file_too_big: "File too large: %{path} (%{size} bytes, limit %{limit} bytes)"
     file_not_regular: "Not a regular file: %{path}"
     invalid_exclude: "Invalid exclude pattern: %{pattern} (%{message})"
+    invalid_include: "Invalid include pattern: %{pattern} (%{message})"
   config:
     unknown_rule: "Unknown rule ID pattern '%{rule}'. Expected prefix: %{prefixes}"
     unknown_rule_suggestion: "Check the rule ID spelling or remove if invalid"
@@ -539,6 +540,14 @@ core:
     deprecated_target_suggestion: "Use the 'tools' array instead"
     deprecated_mcp_version: "Field 'mcp_protocol_version' is deprecated"
     deprecated_mcp_version_suggestion: "Use 'spec_revisions.mcp_protocol' instead"
+    invalid_files_pattern: "Invalid files pattern '%{pattern}': %{message}"
+    invalid_files_pattern_suggestion: "Fix the glob pattern syntax. Valid examples: 'docs/ai-rules/*.md', '**/*.rules.md'"
+    files_path_traversal: "Pattern '%{pattern}' contains path traversal ('../'). Patterns must be relative to project root without parent references."
+    files_path_traversal_suggestion: "Remove '../' from the pattern and use a path relative to the project root"
+    files_absolute_path: "Pattern '%{pattern}' uses an absolute path. Patterns must be relative to the project root."
+    files_absolute_path_suggestion: "Remove the leading '/' or drive letter and use a relative path"
+    files_pattern_count_limit: "Field '%{field}' has %{count} patterns, which exceeds the recommended limit of %{limit}."
+    files_pattern_count_limit_suggestion: "Consider consolidating patterns or using broader glob expressions"
     load_warning: "Failed to parse config '%{path}': %{error}. Using defaults."
 
 # ===========================================================================

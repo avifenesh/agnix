@@ -9,6 +9,10 @@ use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
+/// Maximum number of file patterns per list (include_as_memory, include_as_generic, exclude).
+/// Exceeding this limit produces a configuration warning.
+const MAX_FILE_PATTERNS: usize = 100;
+
 /// Tool version pinning for version-aware validation
 ///
 /// When tool versions are pinned, validators can apply version-specific
@@ -61,6 +65,47 @@ pub struct SpecRevisions {
     #[serde(default)]
     #[schemars(description = "AGENTS.md specification revision")]
     pub agents_md_spec: Option<String>,
+}
+
+/// File inclusion/exclusion configuration for non-standard agent files.
+///
+/// By default, agnix only validates files it recognizes (CLAUDE.md, SKILL.md, etc.).
+/// Use this section to include additional files in validation or exclude files
+/// that would otherwise be validated.
+///
+/// Patterns use glob syntax (e.g., `"docs/ai-rules/*.md"`).
+/// Paths are matched relative to the project root.
+///
+/// Priority: `exclude` > `include_as_memory` > `include_as_generic` > built-in detection.
+#[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
+pub struct FilesConfig {
+    /// Glob patterns for files to validate as memory/instruction files (ClaudeMd rules).
+    ///
+    /// Files matching these patterns will be treated as CLAUDE.md-like files,
+    /// receiving the full set of memory/instruction validation rules.
+    #[serde(default)]
+    #[schemars(
+        description = "Glob patterns for files to validate as memory/instruction files (ClaudeMd rules)"
+    )]
+    pub include_as_memory: Vec<String>,
+
+    /// Glob patterns for files to validate as generic markdown (XML, XP, REF rules).
+    ///
+    /// Files matching these patterns will receive generic markdown validation
+    /// (XML balance, import references, cross-platform checks).
+    #[serde(default)]
+    #[schemars(
+        description = "Glob patterns for files to validate as generic markdown (XML, XP, REF rules)"
+    )]
+    pub include_as_generic: Vec<String>,
+
+    /// Glob patterns for files to exclude from validation.
+    ///
+    /// Files matching these patterns will be skipped entirely, even if they
+    /// would otherwise be recognized by built-in detection.
+    #[serde(default)]
+    #[schemars(description = "Glob patterns for files to exclude from validation")]
+    pub exclude: Vec<String>,
 }
 
 // =============================================================================
@@ -302,6 +347,13 @@ pub struct LintConfig {
     #[schemars(description = "Pin specific specification revisions for revision-aware validation")]
     pub spec_revisions: SpecRevisions,
 
+    /// File inclusion/exclusion configuration for non-standard agent files
+    #[serde(default)]
+    #[schemars(
+        description = "File inclusion/exclusion configuration for non-standard agent files"
+    )]
+    pub files: FilesConfig,
+
     /// Output locale for translated messages (e.g., "en", "es", "zh-CN").
     /// When not set, the CLI locale detection is used.
     #[serde(default)]
@@ -376,6 +428,7 @@ impl Default for LintConfig {
             mcp_protocol_version: None,
             tool_versions: ToolVersions::default(),
             spec_revisions: SpecRevisions::default(),
+            files: FilesConfig::default(),
             locale: None,
             max_files_to_validate: Some(DEFAULT_MAX_FILES),
             root_dir: None,
@@ -834,6 +887,80 @@ impl LintConfig {
                 message: t!("core.config.deprecated_mcp_version").to_string(),
                 suggestion: Some(t!("core.config.deprecated_mcp_version_suggestion").to_string()),
             });
+        }
+
+        // Validate files config glob patterns
+        let pattern_lists = [
+            ("files.include_as_memory", &self.files.include_as_memory),
+            ("files.include_as_generic", &self.files.include_as_generic),
+            ("files.exclude", &self.files.exclude),
+        ];
+        for (field, patterns) in &pattern_lists {
+            // Warn if pattern count exceeds recommended limit
+            if patterns.len() > MAX_FILE_PATTERNS {
+                warnings.push(ConfigWarning {
+                    field: field.to_string(),
+                    message: t!(
+                        "core.config.files_pattern_count_limit",
+                        field = *field,
+                        count = patterns.len(),
+                        limit = MAX_FILE_PATTERNS
+                    )
+                    .to_string(),
+                    suggestion: Some(
+                        t!("core.config.files_pattern_count_limit_suggestion").to_string(),
+                    ),
+                });
+            }
+            for pattern in *patterns {
+                let normalized = pattern.replace('\\', "/");
+                if let Err(e) = glob::Pattern::new(&normalized) {
+                    warnings.push(ConfigWarning {
+                        field: field.to_string(),
+                        message: t!(
+                            "core.config.invalid_files_pattern",
+                            pattern = pattern.as_str(),
+                            message = e.to_string()
+                        )
+                        .to_string(),
+                        suggestion: Some(
+                            t!("core.config.invalid_files_pattern_suggestion").to_string(),
+                        ),
+                    });
+                }
+                // Reject path traversal patterns
+                if normalized.contains("../") {
+                    warnings.push(ConfigWarning {
+                        field: field.to_string(),
+                        message: t!(
+                            "core.config.files_path_traversal",
+                            pattern = pattern.as_str()
+                        )
+                        .to_string(),
+                        suggestion: Some(
+                            t!("core.config.files_path_traversal_suggestion").to_string(),
+                        ),
+                    });
+                }
+                // Reject absolute paths (Unix-style leading slash or Windows drive letter)
+                if normalized.starts_with('/')
+                    || (normalized.len() >= 3
+                        && normalized.as_bytes()[0].is_ascii_alphabetic()
+                        && normalized.as_bytes().get(1..3) == Some(b":/"))
+                {
+                    warnings.push(ConfigWarning {
+                        field: field.to_string(),
+                        message: t!(
+                            "core.config.files_absolute_path",
+                            pattern = pattern.as_str()
+                        )
+                        .to_string(),
+                        suggestion: Some(
+                            t!("core.config.files_absolute_path_suggestion").to_string(),
+                        ),
+                    });
+                }
+            }
         }
 
         warnings
@@ -3238,5 +3365,174 @@ disabled_rules = []
 
         // No warning because tools is set
         assert!(warnings.is_empty());
+    }
+
+    // =========================================================================
+    // FilesConfig tests
+    // =========================================================================
+
+    #[test]
+    fn test_files_config_default_is_empty() {
+        let files = FilesConfig::default();
+        assert!(files.include_as_memory.is_empty());
+        assert!(files.include_as_generic.is_empty());
+        assert!(files.exclude.is_empty());
+    }
+
+    #[test]
+    fn test_lint_config_default_has_empty_files() {
+        let config = LintConfig::default();
+        assert!(config.files.include_as_memory.is_empty());
+        assert!(config.files.include_as_generic.is_empty());
+        assert!(config.files.exclude.is_empty());
+    }
+
+    #[test]
+    fn test_files_config_toml_deserialization() {
+        let toml_str = r#"
+[files]
+include_as_memory = ["docs/ai-rules/*.md", "custom/INSTRUCTIONS.md"]
+include_as_generic = ["internal/*.md"]
+exclude = ["drafts/**"]
+"#;
+        let config: LintConfig = toml::from_str(toml_str).expect("should parse");
+        assert_eq!(config.files.include_as_memory.len(), 2);
+        assert_eq!(config.files.include_as_memory[0], "docs/ai-rules/*.md");
+        assert_eq!(config.files.include_as_memory[1], "custom/INSTRUCTIONS.md");
+        assert_eq!(config.files.include_as_generic.len(), 1);
+        assert_eq!(config.files.include_as_generic[0], "internal/*.md");
+        assert_eq!(config.files.exclude.len(), 1);
+        assert_eq!(config.files.exclude[0], "drafts/**");
+    }
+
+    #[test]
+    fn test_files_config_partial_toml() {
+        let toml_str = r#"
+[files]
+include_as_memory = ["custom.md"]
+"#;
+        let config: LintConfig = toml::from_str(toml_str).expect("should parse");
+        assert_eq!(config.files.include_as_memory.len(), 1);
+        assert!(config.files.include_as_generic.is_empty());
+        assert!(config.files.exclude.is_empty());
+    }
+
+    #[test]
+    fn test_files_config_empty_section() {
+        let toml_str = r#"
+[files]
+"#;
+        let config: LintConfig = toml::from_str(toml_str).expect("should parse");
+        assert!(config.files.include_as_memory.is_empty());
+        assert!(config.files.include_as_generic.is_empty());
+        assert!(config.files.exclude.is_empty());
+    }
+
+    #[test]
+    fn test_files_config_omitted_section() {
+        let toml_str = r#"
+severity = "Warning"
+"#;
+        let config: LintConfig = toml::from_str(toml_str).expect("should parse");
+        assert!(config.files.include_as_memory.is_empty());
+    }
+
+    #[test]
+    fn test_validate_files_invalid_glob() {
+        let mut config = LintConfig::default();
+        config.files.include_as_memory = vec!["[invalid".to_string()];
+
+        let warnings = config.validate();
+        assert!(
+            warnings
+                .iter()
+                .any(|w| w.field == "files.include_as_memory"),
+            "should warn about invalid glob pattern"
+        );
+    }
+
+    #[test]
+    fn test_validate_files_valid_globs_no_warnings() {
+        let mut config = LintConfig::default();
+        config.files.include_as_memory = vec!["docs/**/*.md".to_string()];
+        config.files.include_as_generic = vec!["internal/*.md".to_string()];
+        config.files.exclude = vec!["drafts/**".to_string()];
+
+        let warnings = config.validate();
+        assert!(
+            warnings.is_empty(),
+            "valid globs should not produce warnings: {:?}",
+            warnings
+        );
+    }
+
+    #[test]
+    fn test_validate_files_path_traversal_rejected() {
+        let mut config = LintConfig::default();
+        config.files.include_as_memory = vec!["../outside/secrets.md".to_string()];
+
+        let warnings = config.validate();
+        assert!(
+            warnings
+                .iter()
+                .any(|w| w.field == "files.include_as_memory" && w.message.contains("../")),
+            "should warn about path traversal pattern: {:?}",
+            warnings
+        );
+    }
+
+    #[test]
+    fn test_validate_files_absolute_path_rejected() {
+        let mut config = LintConfig::default();
+        config.files.include_as_generic = vec!["/etc/passwd".to_string()];
+
+        let warnings = config.validate();
+        assert!(
+            warnings
+                .iter()
+                .any(|w| w.field == "files.include_as_generic" && w.message.contains("absolute")),
+            "should warn about absolute path pattern: {:?}",
+            warnings
+        );
+
+        // Also test Windows drive letter
+        let mut config2 = LintConfig::default();
+        config2.files.exclude = vec!["C:\\Users\\secret".to_string()];
+
+        let warnings2 = config2.validate();
+        assert!(
+            warnings2
+                .iter()
+                .any(|w| w.field == "files.exclude" && w.message.contains("absolute")),
+            "should warn about Windows absolute path pattern: {:?}",
+            warnings2
+        );
+    }
+
+    #[test]
+    fn test_validate_files_pattern_count_limit() {
+        let mut config = LintConfig::default();
+        // Create 101 patterns to exceed MAX_FILE_PATTERNS (100)
+        config.files.include_as_memory = (0..101).map(|i| format!("pattern-{}.md", i)).collect();
+
+        let warnings = config.validate();
+        assert!(
+            warnings.iter().any(|w| w.field == "files.include_as_memory"
+                && w.message.contains("101")
+                && w.message.contains("100")),
+            "should warn about exceeding pattern count limit: {:?}",
+            warnings
+        );
+
+        // 100 patterns should not produce a count warning
+        let mut config2 = LintConfig::default();
+        config2.files.include_as_memory = (0..100).map(|i| format!("pattern-{}.md", i)).collect();
+
+        let warnings2 = config2.validate();
+        assert!(
+            !warnings2.iter().any(|w| w.message.contains("exceeds")),
+            "100 patterns should not produce a count warning: {:?}",
+            warnings2
+        );
     }
 }

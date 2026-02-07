@@ -257,6 +257,33 @@
           "default": null,
           "description": "AGENTS.md specification revision pin",
           "scope": "resource"
+        },
+        "agnix.files.includeAsMemory": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Glob patterns for files to validate as memory/instruction files (CLAUDE.md rules). Example: [\"docs/ai-rules/*.md\"]",
+          "scope": "resource"
+        },
+        "agnix.files.includeAsGeneric": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Glob patterns for files to validate as generic markdown (XML, import, cross-platform rules). Example: [\"internal/*.md\"]",
+          "scope": "resource"
+        },
+        "agnix.files.exclude": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Glob patterns for files to exclude from validation. Example: [\"drafts/**\"]",
+          "scope": "resource"
         }
       }
     },

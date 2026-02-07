@@ -51,6 +51,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Autofix count parity test (rules.json vs VALIDATION-RULES.md)
 - Context-aware completions documented in all editor READMEs
 - `--fix-safe` flag documented in README.md usage section
+- `[files]` configuration section for custom file inclusion/exclusion patterns
+  - `include_as_memory` glob patterns validate files as CLAUDE.md-like instruction files
+  - `include_as_generic` glob patterns validate files as generic markdown
+  - `exclude` glob patterns skip files from validation entirely
+  - Priority: exclude > include_as_memory > include_as_generic > built-in detection
 
 ### Changed
 - Auto-fix table in VALIDATION-RULES.md expanded from 7 to 25 rules with safety classification

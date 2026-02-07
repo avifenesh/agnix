@@ -271,7 +271,7 @@ impl Backend {
         let config = Arc::clone(&*self.config.read().await);
         let registry = Arc::clone(&self.registry);
         let result = tokio::task::spawn_blocking(move || {
-            let file_type = agnix_core::detect_file_type(&file_path);
+            let file_type = agnix_core::resolve_file_type(&file_path, &config);
             if file_type == agnix_core::FileType::Unknown {
                 return Ok(vec![]);
             }
@@ -372,7 +372,9 @@ impl LanguageServer for Backend {
                             if let Some(ref config_locale) = loaded_config.locale {
                                 crate::locale::init_from_config(config_locale);
                             }
-                            *self.config.write().await = Arc::new(loaded_config);
+                            let mut config_with_root = loaded_config;
+                            config_with_root.root_dir = Some(root_path.clone());
+                            *self.config.write().await = Arc::new(config_with_root);
                         }
                         Err(e) => {
                             // Log error but continue with default config
@@ -513,10 +515,11 @@ impl LanguageServer for Backend {
             None => return Ok(None),
         };
 
+        let config = self.config.read().await;
         let file_type = uri
             .to_file_path()
             .ok()
-            .map(|path| agnix_core::detect_file_type(&path))
+            .map(|path| agnix_core::resolve_file_type(&path, &config))
             .unwrap_or(agnix_core::FileType::Unknown);
         if matches!(file_type, agnix_core::FileType::Unknown) {
             return Ok(None);
@@ -539,7 +542,8 @@ impl LanguageServer for Backend {
             None => return Ok(None),
         };
 
-        let items = completion_items_for_document(&path, content.as_str(), position);
+        let config = self.config.read().await;
+        let items = completion_items_for_document(&path, content.as_str(), position, &config);
         if items.is_empty() {
             Ok(None)
         } else {
@@ -579,6 +583,10 @@ impl LanguageServer for Backend {
             let mut config_guard = self.config.write().await;
             let mut new_config = (**config_guard).clone();
             vscode_config.merge_into_lint_config(&mut new_config);
+            // Set root_dir from workspace_root for glob pattern matching
+            if let Some(ref root) = *self.workspace_root.read().await {
+                new_config.root_dir = Some(root.clone());
+            }
             *config_guard = Arc::new(new_config);
         }
 
