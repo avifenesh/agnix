@@ -813,7 +813,7 @@ impl LayerType {
         match self {
             LayerType::ClaudeMd => "CLAUDE.md",
             LayerType::AgentsMd => "AGENTS.md",
-            LayerType::GeminiMd => "GEMINI.md",
+            LayerType::GeminiMd => "GEMINI[.local].md",
             LayerType::CursorRules => "Cursor Rules",
             LayerType::CopilotInstructions => "Copilot Instructions",
             LayerType::ClineRules => "Cline Rules",
