@@ -32,7 +32,6 @@ fn find_all_json_key_colon_positions(
     while let Some(rel) = content[search_start..].find(&needle) {
         let pos = search_start + rel;
         let key_end = pos + needle_bytes.len();
-        // After the closing quote, skip whitespace and expect ':'
         let colon_pos = skip_whitespace(bytes, key_end);
         if colon_pos < bytes.len() && bytes[colon_pos] == b':' {
             results.push((pos, key_end, colon_pos + 1));
@@ -69,12 +68,10 @@ fn parse_scalar_at(bytes: &[u8], pos: usize) -> Option<(usize, usize)> {
     }
     match bytes[pos] {
         b'"' => {
-            // String value: find closing quote
             let (_, _, outer_end) = parse_string_value_at(bytes, pos)?;
             Some((pos, outer_end))
         }
         b't' => {
-            // true
             if bytes.len() >= pos + 4 && &bytes[pos..pos + 4] == b"true" {
                 Some((pos, pos + 4))
             } else {
@@ -82,7 +79,6 @@ fn parse_scalar_at(bytes: &[u8], pos: usize) -> Option<(usize, usize)> {
             }
         }
         b'f' => {
-            // false
             if bytes.len() >= pos + 5 && &bytes[pos..pos + 5] == b"false" {
                 Some((pos, pos + 5))
             } else {
@@ -90,7 +86,6 @@ fn parse_scalar_at(bytes: &[u8], pos: usize) -> Option<(usize, usize)> {
             }
         }
         b'n' => {
-            // null
             if bytes.len() >= pos + 4 && &bytes[pos..pos + 4] == b"null" {
                 Some((pos, pos + 4))
             } else {
@@ -98,7 +93,6 @@ fn parse_scalar_at(bytes: &[u8], pos: usize) -> Option<(usize, usize)> {
             }
         }
         b'-' | b'0'..=b'9' => {
-            // Number: -?digits(.digits)?
             let mut i = pos;
             if bytes[i] == b'-' {
                 i += 1;
@@ -116,7 +110,6 @@ fn parse_scalar_at(bytes: &[u8], pos: usize) -> Option<(usize, usize)> {
                     i += 1;
                 }
                 if i == frac_start {
-                    // No digits after `.` -- not a valid number per the regex
                     return None;
                 }
             }
@@ -154,7 +147,7 @@ pub(crate) fn find_unique_json_key_value(
         let val_end = val_start + sv_bytes.len();
         if val_end <= bytes.len() && &bytes[val_start..val_end] == sv_bytes {
             if found.is_some() {
-                return None; // not unique
+                return None;
             }
             found = Some((val_start, val_end));
         }
@@ -177,8 +170,6 @@ pub(crate) fn find_unique_json_field_line(
 
     let mut found: Option<(usize, usize)> = None;
     for (key_start, _, after_colon) in &positions {
-        // Walk backwards from key_start to find the start of the line.
-        // Only allow spaces and tabs between line start and the key.
         let mut line_start = *key_start;
         while line_start > 0 {
             let prev = bytes[line_start - 1];
@@ -188,25 +179,21 @@ pub(crate) fn find_unique_json_field_line(
                 break;
             }
         }
-        // line_start must be at position 0 or right after a '\n'
         if line_start > 0 && bytes[line_start - 1] != b'\n' {
             continue;
         }
 
-        // After the colon, skip whitespace and parse a scalar value
         let val_start = skip_whitespace(bytes, *after_colon);
         let (_, val_end) = match parse_scalar_at(bytes, val_start) {
             Some(span) => span,
             None => continue,
         };
 
-        // After value: optional whitespace, optional comma, optional \r\n or \n
         let mut end = val_end;
         end = skip_ws_inline(bytes, end);
         if end < bytes.len() && bytes[end] == b',' {
             end += 1;
         }
-        // optional \r\n
         if end < bytes.len() && bytes[end] == b'\r' {
             end += 1;
         }
@@ -215,7 +202,7 @@ pub(crate) fn find_unique_json_field_line(
         }
 
         if found.is_some() {
-            return None; // not unique
+            return None;
         }
         found = Some((line_start, end));
     }
@@ -246,7 +233,6 @@ pub(crate) fn find_unique_json_matcher_line(
 
     let mut found: Option<(usize, usize)> = None;
     for (key_start, _, after_colon) in &positions {
-        // Walk backwards: only spaces/tabs allowed before the key on this line
         let mut line_start = *key_start;
         while line_start > 0 {
             let prev = bytes[line_start - 1];
@@ -260,7 +246,6 @@ pub(crate) fn find_unique_json_matcher_line(
             continue;
         }
 
-        // After colon: whitespace then "matcher_value"
         let val_start = skip_whitespace(bytes, *after_colon);
         let (inner_start, inner_end, outer_end) =
             match parse_string_value_at(bytes, val_start) {
@@ -268,12 +253,10 @@ pub(crate) fn find_unique_json_matcher_line(
                 None => continue,
             };
 
-        // Check inner value matches
         if &bytes[inner_start..inner_end] != matcher_value.as_bytes() {
             continue;
         }
 
-        // After value: optional whitespace, optional comma, optional line ending
         let mut end = outer_end;
         end = skip_ws_inline(bytes, end);
         if end < bytes.len() && bytes[end] == b',' {
@@ -287,7 +270,7 @@ pub(crate) fn find_unique_json_matcher_line(
         }
 
         if found.is_some() {
-            return None; // not unique
+            return None;
         }
         found = Some((line_start, end));
     }
@@ -319,7 +302,7 @@ pub(crate) fn find_unique_json_string_inner(
         }
 
         if found.is_some() {
-            return None; // not unique
+            return None;
         }
         found = Some((inner_start, inner_end));
     }
@@ -364,7 +347,7 @@ pub(crate) fn find_unique_toml_string_value(
                 {
                     if &bytes[inner_start..inner_end] == value_bytes {
                         if found.is_some() {
-                            return None; // not unique
+                            return None;
                         }
                         found = Some((inner_start, inner_end));
                     }
@@ -401,7 +384,7 @@ pub(crate) fn find_unique_json_string_value_range(
         };
 
         if found.is_some() {
-            return None; // not unique
+            return None;
         }
         let captured = content[inner_start..inner_end].to_string();
         found = Some((inner_start, inner_end, captured));
@@ -431,7 +414,7 @@ pub(crate) fn find_unique_json_scalar_span(
         };
 
         if found.is_some() {
-            return None; // not unique
+            return None;
         }
         found = Some((scalar_start, scalar_end));
     }
