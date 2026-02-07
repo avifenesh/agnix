@@ -20,7 +20,6 @@ pub mod skill;
 pub mod xml;
 
 use crate::{config::LintConfig, diagnostics::Diagnostic};
-use regex::Regex;
 use std::path::Path;
 
 /// Trait for file validators
@@ -129,19 +128,7 @@ pub(crate) fn find_unique_json_string_value_span(
     key: &str,
     current_value: &str,
 ) -> Option<(usize, usize)> {
-    let pattern = format!(
-        r#""{}"\s*:\s*"({})""#,
-        regex::escape(key),
-        regex::escape(current_value)
-    );
-    let re = Regex::new(&pattern).ok()?;
-    let mut iter = re.captures_iter(content);
-    let first = iter.next()?;
-    if iter.next().is_some() {
-        return None; // Not unique
-    }
-    let m = first.get(1)?;
-    Some((m.start(), m.end()))
+    crate::span_utils::find_unique_json_string_inner(content, key, current_value)
 }
 
 /// Find the closest valid value for an invalid input.

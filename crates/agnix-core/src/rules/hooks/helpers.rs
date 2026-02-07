@@ -430,14 +430,7 @@ pub(super) fn find_closest_event(invalid_event: &str) -> ClosestEventMatch {
 /// Find the byte position of an event key in JSON content
 /// Returns (start, end) byte positions of the event key (including quotes)
 pub(super) fn find_event_key_position(content: &str, event: &str) -> Option<(usize, usize)> {
-    // Look for the event key in the "hooks" object
-    // Pattern: capture the quoted event name, followed by : (with optional whitespace)
-    let pattern = format!(r#"("{}")\s*:"#, regex::escape(event));
-    let re = Regex::new(&pattern).ok()?;
-    re.captures(content).and_then(|caps| {
-        caps.get(1)
-            .map(|key_match| (key_match.start(), key_match.end()))
-    })
+    crate::span_utils::find_event_key_span(content, event)
 }
 
 /// Find a unique JSON key/value span for a specific key and serialized value.
@@ -447,19 +440,7 @@ fn find_unique_json_key_value_span(
     key: &str,
     serialized_value: &str,
 ) -> Option<(usize, usize)> {
-    let pattern = format!(
-        r#"("{}"\s*:\s*)({})"#,
-        regex::escape(key),
-        regex::escape(serialized_value)
-    );
-    let re = Regex::new(&pattern).ok()?;
-    let mut captures = re.captures_iter(content);
-    let first = captures.next()?;
-    if captures.next().is_some() {
-        return None;
-    }
-    let value_match = first.get(2)?;
-    Some((value_match.start(), value_match.end()))
+    crate::span_utils::find_unique_json_key_value(content, key, serialized_value)
 }
 
 /// Iterate over all raw hook entries in the JSON value, calling `f` for each one.
@@ -620,19 +601,7 @@ pub(super) fn find_unique_json_field_line_span(
     content: &str,
     field_name: &str,
 ) -> Option<(usize, usize)> {
-    // Match only the field and its value (string, bool, null, number), not rest of line.
-    // This prevents deleting sibling properties on the same line.
-    let pattern = format!(
-        r#"(?m)^[ \t]*"{}"\s*:\s*(?:"[^"]*"|true|false|null|\d+(?:\.\d+)?)\s*,?\r?\n?"#,
-        regex::escape(field_name)
-    );
-    let re = Regex::new(&pattern).ok()?;
-    let mut matches = re.find_iter(content);
-    let first = matches.next()?;
-    if matches.next().is_some() {
-        return None;
-    }
-    Some((first.start(), first.end()))
+    crate::span_utils::find_unique_json_field_line(content, field_name)
 }
 
 /// Find a unique matcher line span that can be safely deleted.
@@ -641,17 +610,7 @@ pub(super) fn find_unique_matcher_line_span(
     content: &str,
     matcher_value: &str,
 ) -> Option<(usize, usize)> {
-    let pattern = format!(
-        r#"(?m)^[ \t]*"matcher"\s*:\s*"{}"\s*,?\r?\n?"#,
-        regex::escape(matcher_value)
-    );
-    let re = Regex::new(&pattern).ok()?;
-    let mut matches = re.find_iter(content);
-    let first = matches.next()?;
-    if matches.next().is_some() {
-        return None;
-    }
-    Some((first.start(), first.end()))
+    crate::span_utils::find_unique_json_matcher_line(content, matcher_value)
 }
 
 #[cfg(test)]

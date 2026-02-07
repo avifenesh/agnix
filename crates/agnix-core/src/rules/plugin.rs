@@ -8,7 +8,6 @@ use crate::{
     rules::Validator,
     schemas::plugin::PluginSchema,
 };
-use regex::Regex;
 use rust_i18n::t;
 use std::path::Path;
 
@@ -263,19 +262,7 @@ fn is_valid_semver(version: &str) -> bool {
 /// Find a unique string value span for a JSON key.
 /// Returns (value_start, value_end, value_content_without_quotes).
 fn find_unique_json_string_value_range(content: &str, key: &str) -> Option<(usize, usize, String)> {
-    let pattern = format!(r#""{}"\s*:\s*"([^"]*)""#, regex::escape(key));
-    let re = Regex::new(&pattern).ok()?;
-    let mut captures = re.captures_iter(content);
-    let first = captures.next()?;
-    if captures.next().is_some() {
-        return None;
-    }
-    let value_match = first.get(1)?;
-    Some((
-        value_match.start(),
-        value_match.end(),
-        value_match.as_str().to_string(),
-    ))
+    crate::span_utils::find_unique_json_string_value_range(content, key)
 }
 
 /// Check if a path string is invalid for a component path.
