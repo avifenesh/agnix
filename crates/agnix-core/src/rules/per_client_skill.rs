@@ -90,9 +90,9 @@ fn detect_client(path: &Path) -> SkillClient {
             return match *component {
                 ".claude" => SkillClient::ClaudeCode,
                 ".cursor" => SkillClient::Cursor,
-                ".cline" | ".clinerules" => SkillClient::Cline,
+                ".cline" => SkillClient::Cline,
                 ".github" => SkillClient::Copilot,
-                ".agents" => SkillClient::Codex,
+                ".agents" => SkillClient::Codex, // NOTE: Amp also uses .agents; AMP-SK-001 unreachable without config context
                 ".opencode" => SkillClient::OpenCode,
                 ".windsurf" => SkillClient::Windsurf,
                 ".kiro" => SkillClient::Kiro,
@@ -395,9 +395,10 @@ mod tests {
 
     #[test]
     fn test_detect_client_cline_alt() {
+        // .clinerules is for Cline rules files, not skills; skills should be under .cline/
         assert_eq!(
             detect_client(Path::new(".clinerules/skills/my-skill/SKILL.md")),
-            SkillClient::Cline
+            SkillClient::Unknown
         );
     }
 
