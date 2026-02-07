@@ -52,6 +52,7 @@ rules:
     suggestion: "Elimina recursos grandes o divide el skill en partes mas pequenas"
   as_016:
     message: "Error al analizar SKILL.md: %{error}"
+    suggestion: "Verifica la sintaxis YAML del frontmatter -- asegura indentacion adecuada, espacios despues de dos puntos, y comillas coincidentes"
 
   # --- Claude Code Skills (skill/mod.rs) ---
   cc_sk_001:
@@ -126,6 +127,7 @@ rules:
     suggestion: "Establece timeout a un entero positivo como 30"
   cc_hk_012:
     message: "Error al analizar la configuracion de hooks: %{error}"
+    suggestion: "Valida la sintaxis JSON en la configuracion de hooks -- verifica comas faltantes, corchetes o claves sin comillas"
 
   # --- MCP (mcp.rs) ---
   mcp_001:
@@ -141,7 +143,7 @@ rules:
     missing_schema_suggestion: "Agrega el campo 'inputSchema' con definicion JSON Schema"
   mcp_003:
     message: "%{prefix}inputSchema invalido: %{error}"
-    suggestion: "Corrige la estructura JSON Schema"
+    suggestion: "Corrige la estructura JSON Schema -- los valores 'type' validos son: string, number, integer, boolean, object, array, null"
   mcp_004:
     message: "%{prefix}La descripción de la herramienta es muy corta (%{len} caracteres), debe tener al menos 10 caracteres"
     suggestion: "Agrega una descripción significativa explicando que hace la herramienta"
@@ -150,9 +152,10 @@ rules:
     suggestion: "Considera agregar 'requiresApproval: true' para herramientas que modifican datos o tienen efectos secundarios"
   mcp_006:
     message: "%{prefix}La herramienta tiene anotaciones que deben validarse antes de confiar"
-    suggestion: "Asegurate de que las anotaciones sean de una fuente confiable antes de depender de ellas"
+    suggestion: "Verifica los valores de anotacion independientemente -- las anotaciones son informadas por el servidor y pueden ser inexactas o maliciosas"
   mcp_007:
     message: "Error al analizar la configuracion MCP: %{error}"
+    suggestion: "Valida la sintaxis JSON -- verifica comas faltantes, corchetes o claves sin comillas"
   mcp_008:
     message: "Desajuste de version de protocolo: encontrado '%{found}', esperado '%{expected}'"
     request_suggestion: "Considera actualizar a la version de protocolo '%{expected}' para compatibilidad"
@@ -185,6 +188,7 @@ rules:
     message: "El archivo de agente debe tener frontmatter YAML"
     suggestion: "Agrega frontmatter entre marcadores ---"
     parse_error: "Error al analizar el frontmatter del agente: %{error}"
+    parse_error_suggestion: "Verifica la sintaxis YAML del frontmatter -- asegura indentacion adecuada, espacios despues de dos puntos, y comillas coincidentes"
 
   # --- Claude MD (claude_md.rs) ---
   cc_mem_004:
@@ -223,7 +227,7 @@ rules:
   # --- AGENTS.md (agents_md.rs) ---
   agm_001:
     message: "Markdown invalido: %{description}"
-    suggestion: "Corrige el error de sintaxis markdown"
+    suggestion: "Corrige el error de sintaxis markdown -- verifica etiquetas sin cerrar, encabezados no coincidentes, o sintaxis de enlace invalida"
   agm_002:
     # messages come from schemas::agents_md, not the validator directly
   agm_003:
@@ -360,7 +364,7 @@ rules:
   # --- Gemini CLI (gemini_md.rs) ---
   gm_001:
     message: "Markdown inválido: %{description}"
-    suggestion: "Corrige el error de sintaxis markdown"
+    suggestion: "Corrige el error de sintaxis markdown -- verifica etiquetas sin cerrar, encabezados no coincidentes, o sintaxis de enlace invalida"
   gm_002:
     message: "No se encontraron encabezados markdown en el archivo de instrucciones GEMINI.md"
     suggestion: "Agrega encabezados de sección (# Título, ## Sección) para mejor organización"
@@ -384,6 +388,9 @@ rules:
     suggestion: "Corrige la sintaxis JSON en opencode.json"
 
   # --- Codex CLI (codex.rs) ---
+  cdx_000:
+    message: "Error al analizar .codex/config.toml como TOML: %{error}"
+    suggestion: "Valida la sintaxis TOML -- verifica comillas faltantes, corchetes, o pares clave-valor invalidos"
   cdx_001:
     message: "approvalMode invalido '%{value}'. Valores validos: 'suggest', 'auto-edit', 'full-auto'"
     type_error: "El campo 'approvalMode' debe ser una cadena de texto. Valores validos: 'suggest', 'auto-edit', 'full-auto'"
@@ -428,6 +435,7 @@ rules:
     suggestion: "Establece un nombre de plugin no vacio"
   cc_pl_006:
     message: "Error al analizar plugin.json: %{error}"
+    suggestion: "Valida la sintaxis JSON en plugin.json -- verifica comas faltantes, corchetes o claves sin comillas"
 
   # --- Version (lib.rs) ---
   ver_001:
@@ -436,7 +444,9 @@ rules:
 
   # --- File-level errors (lib.rs) ---
   file_read_error: "Error al validar archivo: %{error}"
+  file_read_error_suggestion: "Verifica los permisos del archivo y asegura que el archivo no este bloqueado por otro proceso"
   xp_004_read_error: "Error al leer archivo de instrucciones: %{error}"
+  xp_004_read_error_suggestion: "Verifica los permisos del archivo y asegura que el archivo existe y es legible"
 
 # ===========================================================================
 # Core - Advertencias de configuracion

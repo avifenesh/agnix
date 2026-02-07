@@ -8,7 +8,6 @@ use crate::{
     rules::Validator,
     schemas::plugin::PluginSchema,
 };
-use regex::Regex;
 use rust_i18n::t;
 use std::path::Path;
 
@@ -68,13 +67,16 @@ impl Validator for PluginValidator {
             Ok(v) => v,
             Err(e) => {
                 if config.is_rule_enabled("CC-PL-006") {
-                    diagnostics.push(Diagnostic::error(
-                        path.to_path_buf(),
-                        1,
-                        0,
-                        "CC-PL-006",
-                        t!("rules.cc_pl_006.message", error = e.to_string()),
-                    ));
+                    diagnostics.push(
+                        Diagnostic::error(
+                            path.to_path_buf(),
+                            1,
+                            0,
+                            "CC-PL-006",
+                            t!("rules.cc_pl_006.message", error = e.to_string()),
+                        )
+                        .with_suggestion(t!("rules.cc_pl_006.suggestion")),
+                    );
                 }
                 return diagnostics;
             }
@@ -263,19 +265,7 @@ fn is_valid_semver(version: &str) -> bool {
 /// Find a unique string value span for a JSON key.
 /// Returns (value_start, value_end, value_content_without_quotes).
 fn find_unique_json_string_value_range(content: &str, key: &str) -> Option<(usize, usize, String)> {
-    let pattern = format!(r#""{}"\s*:\s*"([^"]*)""#, regex::escape(key));
-    let re = Regex::new(&pattern).ok()?;
-    let mut captures = re.captures_iter(content);
-    let first = captures.next()?;
-    if captures.next().is_some() {
-        return None;
-    }
-    let value_match = first.get(1)?;
-    Some((
-        value_match.start(),
-        value_match.end(),
-        value_match.as_str().to_string(),
-    ))
+    crate::span_utils::find_unique_json_string_value_range(content, key)
 }
 
 /// Check if a path string is invalid for a component path.
@@ -1517,6 +1507,40 @@ mod tests {
         assert!(
             diagnostics.iter().any(|d| d.rule == "CC-PL-010"),
             "Non-string homepage should trigger CC-PL-010"
+        );
+    }
+
+    // ===== CC-PL-006 suggestion test =====
+
+    #[test]
+    fn test_cc_pl_006_has_suggestion() {
+        let temp = TempDir::new().unwrap();
+        let plugin_path = temp.path().join(".claude-plugin").join("plugin.json");
+        write_plugin(&plugin_path, r#"{ invalid json }"#);
+
+        let validator = PluginValidator;
+        let diagnostics = validator.validate(
+            &plugin_path,
+            &fs::read_to_string(&plugin_path).unwrap(),
+            &LintConfig::default(),
+        );
+
+        let cc_pl_006: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-PL-006")
+            .collect();
+        assert_eq!(cc_pl_006.len(), 1);
+        assert!(
+            cc_pl_006[0].suggestion.is_some(),
+            "CC-PL-006 should have a suggestion"
+        );
+        assert!(
+            cc_pl_006[0]
+                .suggestion
+                .as_ref()
+                .unwrap()
+                .contains("Validate JSON syntax"),
+            "CC-PL-006 suggestion should mention JSON syntax"
         );
     }
 }

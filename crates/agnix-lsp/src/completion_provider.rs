@@ -88,6 +88,107 @@ mod tests {
     }
 
     #[test]
+    fn test_agent_completion_includes_model_field() {
+        let content = "---\nmod\n---\n";
+        let config = agnix_core::LintConfig::default();
+        let items = completion_items_for_document(
+            // Agent files are in .claude/agents/*.md
+            Path::new(".claude/agents/test.md"),
+            content,
+            Position {
+                line: 1,
+                character: 1,
+            },
+            &config,
+        );
+        assert!(
+            items.iter().any(|item| item.label == "model"),
+            "Agent completions should include 'model', got: {:?}",
+            items.iter().map(|i| &i.label).collect::<Vec<_>>()
+        );
+    }
+
+    #[test]
+    fn test_hooks_completion_includes_type_field() {
+        let content = "{\n  \"typ\n}";
+        let config = agnix_core::LintConfig::default();
+        let items = completion_items_for_document(
+            Path::new(".claude/settings.json"),
+            content,
+            Position {
+                line: 1,
+                character: 4,
+            },
+            &config,
+        );
+        assert!(
+            items.iter().any(|item| item.label == "type"),
+            "Hooks completions should include 'type', got: {:?}",
+            items.iter().map(|i| &i.label).collect::<Vec<_>>()
+        );
+    }
+
+    #[test]
+    fn test_mcp_completion_includes_jsonrpc_field() {
+        let content = "{\n  \"json\n}";
+        let config = agnix_core::LintConfig::default();
+        let items = completion_items_for_document(
+            Path::new("tools.mcp.json"),
+            content,
+            Position {
+                line: 1,
+                character: 4,
+            },
+            &config,
+        );
+        assert!(
+            items.iter().any(|item| item.label == "jsonrpc"),
+            "MCP completions should include 'jsonrpc', got: {:?}",
+            items.iter().map(|i| &i.label).collect::<Vec<_>>()
+        );
+    }
+
+    #[test]
+    fn test_copilot_scoped_completion_includes_applyto() {
+        let content = "---\napp\n---\n";
+        let config = agnix_core::LintConfig::default();
+        let items = completion_items_for_document(
+            Path::new(".github/instructions/ts.instructions.md"),
+            content,
+            Position {
+                line: 1,
+                character: 1,
+            },
+            &config,
+        );
+        assert!(
+            items.iter().any(|item| item.label == "applyTo"),
+            "Copilot scoped completions should include 'applyTo', got: {:?}",
+            items.iter().map(|i| &i.label).collect::<Vec<_>>()
+        );
+    }
+
+    #[test]
+    fn test_cursor_rule_completion_includes_description() {
+        let content = "---\ndesc\n---\n";
+        let config = agnix_core::LintConfig::default();
+        let items = completion_items_for_document(
+            Path::new(".cursor/rules/test.mdc"),
+            content,
+            Position {
+                line: 1,
+                character: 2,
+            },
+            &config,
+        );
+        assert!(
+            items.iter().any(|item| item.label == "description"),
+            "Cursor rule completions should include 'description', got: {:?}",
+            items.iter().map(|i| &i.label).collect::<Vec<_>>()
+        );
+    }
+
+    #[test]
     fn test_unknown_file_type_has_no_completions() {
         let config = agnix_core::LintConfig::default();
         let items = completion_items_for_document(

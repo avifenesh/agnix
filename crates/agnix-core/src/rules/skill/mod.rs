@@ -233,13 +233,16 @@ impl<'a> ValidationContext<'a> {
                 }
                 Err(e) => {
                     if self.config.is_rule_enabled("AS-016") {
-                        self.diagnostics.push(Diagnostic::error(
-                            self.path.to_path_buf(),
-                            frontmatter_line,
-                            frontmatter_col,
-                            "AS-016",
-                            t!("rules.as_016.message", error = e.to_string()),
-                        ));
+                        self.diagnostics.push(
+                            Diagnostic::error(
+                                self.path.to_path_buf(),
+                                frontmatter_line,
+                                frontmatter_col,
+                                "AS-016",
+                                t!("rules.as_016.message", error = e.to_string()),
+                            )
+                            .with_suggestion(t!("rules.as_016.suggestion")),
+                        );
                     }
                 }
             }

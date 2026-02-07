@@ -379,6 +379,150 @@ mod tests {
         assert!(markdown.contains("CC-SK-001"));
     }
 
+    // ---- Value-context tests for non-skill families ----
+
+    #[test]
+    fn test_completion_agent_key_context() {
+        // Agent files use YAML frontmatter like skills
+        let content = "---\nmod\n---\n";
+        let byte = content.find("mod").unwrap();
+        let candidates = completion_candidates(FileType::Agent, content, byte);
+        assert!(
+            candidates.iter().any(|c| c.label == "model"),
+            "Agent key completions should include 'model', got: {:?}",
+            candidates.iter().map(|c| &c.label).collect::<Vec<_>>()
+        );
+    }
+
+    #[test]
+    fn test_completion_agent_value_context() {
+        let content = "---\nmodel: \n---\n";
+        let byte = content.find("model: ").unwrap() + "model: ".len();
+        let candidates = completion_candidates(FileType::Agent, content, byte);
+        assert!(
+            candidates.iter().any(|c| c.label == "sonnet"),
+            "Agent model values should include 'sonnet', got: {:?}",
+            candidates.iter().map(|c| &c.label).collect::<Vec<_>>()
+        );
+        assert!(
+            candidates.iter().any(|c| c.label == "opus"),
+            "Agent model values should include 'opus'"
+        );
+    }
+
+    #[test]
+    fn test_completion_hooks_key_context() {
+        // Hooks files are JSON
+        let content = "{\n  \"mat\n}";
+        let byte = content.find("\"mat").unwrap() + 1; // after the opening quote
+        let candidates = completion_candidates(FileType::Hooks, content, byte);
+        assert!(
+            candidates.iter().any(|c| c.label == "matcher"),
+            "Hooks key completions should include 'matcher', got: {:?}",
+            candidates.iter().map(|c| &c.label).collect::<Vec<_>>()
+        );
+    }
+
+    #[test]
+    fn test_completion_hooks_value_context() {
+        let content = "{\n  \"type\": \n}";
+        let byte = content.find("\"type\": ").unwrap() + "\"type\": ".len();
+        let candidates = completion_candidates(FileType::Hooks, content, byte);
+        assert!(
+            candidates.iter().any(|c| c.label == "command"),
+            "Hooks type values should include 'command', got: {:?}",
+            candidates.iter().map(|c| &c.label).collect::<Vec<_>>()
+        );
+    }
+
+    #[test]
+    fn test_completion_mcp_key_context() {
+        let content = "{\n  \"json\n}";
+        let byte = content.find("\"json").unwrap() + 1;
+        let candidates = completion_candidates(FileType::Mcp, content, byte);
+        assert!(
+            candidates.iter().any(|c| c.label == "jsonrpc"),
+            "MCP key completions should include 'jsonrpc', got: {:?}",
+            candidates.iter().map(|c| &c.label).collect::<Vec<_>>()
+        );
+    }
+
+    #[test]
+    fn test_completion_copilot_scoped_key_context() {
+        // CopilotScoped uses YAML frontmatter
+        let content = "---\napp\n---\n";
+        let byte = content.find("app").unwrap();
+        let candidates = completion_candidates(FileType::CopilotScoped, content, byte);
+        assert!(
+            candidates.iter().any(|c| c.label == "applyTo"),
+            "Copilot scoped key completions should include 'applyTo', got: {:?}",
+            candidates.iter().map(|c| &c.label).collect::<Vec<_>>()
+        );
+    }
+
+    #[test]
+    fn test_completion_cursor_rule_key_context() {
+        // CursorRule uses YAML frontmatter with .mdc files
+        let content = "---\ndesc\n---\n";
+        let byte = content.find("desc").unwrap();
+        let candidates = completion_candidates(FileType::CursorRule, content, byte);
+        assert!(
+            candidates.iter().any(|c| c.label == "description"),
+            "Cursor rule key completions should include 'description', got: {:?}",
+            candidates.iter().map(|c| &c.label).collect::<Vec<_>>()
+        );
+    }
+
+    #[test]
+    fn test_hover_doc_for_agent_model() {
+        let hover = hover_doc(FileType::Agent, "model");
+        assert!(hover.is_some(), "Agent should have hover for 'model'");
+        let markdown = hover.unwrap().markdown;
+        assert!(markdown.contains("model"));
+        assert!(markdown.contains("CC-AG-003"));
+    }
+
+    #[test]
+    fn test_hover_doc_for_hooks_type() {
+        let hover = hover_doc(FileType::Hooks, "type");
+        assert!(hover.is_some(), "Hooks should have hover for 'type'");
+        let markdown = hover.unwrap().markdown;
+        assert!(markdown.contains("type"));
+        assert!(markdown.contains("CC-HK-005"));
+    }
+
+    #[test]
+    fn test_hover_doc_for_mcp_jsonrpc() {
+        let hover = hover_doc(FileType::Mcp, "jsonrpc");
+        assert!(hover.is_some(), "MCP should have hover for 'jsonrpc'");
+        let markdown = hover.unwrap().markdown;
+        assert!(markdown.contains("jsonrpc"));
+        assert!(markdown.contains("MCP-001"));
+    }
+
+    #[test]
+    fn test_hover_doc_for_copilot_applyto() {
+        let hover = hover_doc(FileType::CopilotScoped, "applyTo");
+        assert!(
+            hover.is_some(),
+            "CopilotScoped should have hover for 'applyTo'"
+        );
+        let markdown = hover.unwrap().markdown;
+        assert!(markdown.contains("applyTo"));
+    }
+
+    #[test]
+    fn test_hover_doc_for_cursor_description() {
+        let hover = hover_doc(FileType::CursorRule, "description");
+        assert!(
+            hover.is_some(),
+            "CursorRule should have hover for 'description'"
+        );
+        let markdown = hover.unwrap().markdown;
+        assert!(markdown.contains("description"));
+        assert!(markdown.contains("CUR-003"));
+    }
+
     #[test]
     fn test_invalid_partial_content_falls_back_without_panic() {
         let content = "---\nmodel\n";
