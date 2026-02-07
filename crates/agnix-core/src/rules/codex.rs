@@ -15,6 +15,7 @@ use crate::{
     },
 };
 use rust_i18n::t;
+use std::collections::HashMap;
 use std::path::Path;
 
 pub struct CodexValidator;
@@ -47,6 +48,13 @@ impl Validator for CodexValidator {
         }
 
         // For CodexConfig files, check CDX-001 and CDX-002
+        // Skip TOML parsing entirely when both rules are disabled (performance)
+        let cdx_001_enabled = config.is_rule_enabled("CDX-001");
+        let cdx_002_enabled = config.is_rule_enabled("CDX-002");
+        if !cdx_001_enabled && !cdx_002_enabled {
+            return diagnostics;
+        }
+
         let parsed = parse_codex_toml(content);
 
         // If TOML is broken, we cannot validate further
@@ -59,10 +67,13 @@ impl Validator for CodexValidator {
             None => return diagnostics,
         };
 
+        // Build key-to-line mappings in a single pass for O(1) lookups
+        let key_lines = build_key_line_map(content);
+
         // CDX-001: Invalid approvalMode (ERROR)
-        if config.is_rule_enabled("CDX-001") {
+        if cdx_001_enabled {
             if parsed.approval_mode_wrong_type {
-                let line = find_key_line(content, "approvalMode").unwrap_or(1);
+                let line = key_lines.get("approvalMode").copied().unwrap_or(1);
                 diagnostics.push(
                     Diagnostic::error(
                         path.to_path_buf(),
@@ -75,7 +86,7 @@ impl Validator for CodexValidator {
                 );
             } else if let Some(ref approval_value) = schema.approval_mode {
                 if !VALID_APPROVAL_MODES.contains(&approval_value.as_str()) {
-                    let line = find_key_line(content, "approvalMode").unwrap_or(1);
+                    let line = key_lines.get("approvalMode").copied().unwrap_or(1);
                     diagnostics.push(
                         Diagnostic::error(
                             path.to_path_buf(),
@@ -91,9 +102,9 @@ impl Validator for CodexValidator {
         }
 
         // CDX-002: Invalid fullAutoErrorMode (ERROR)
-        if config.is_rule_enabled("CDX-002") {
+        if cdx_002_enabled {
             if parsed.full_auto_error_mode_wrong_type {
-                let line = find_key_line(content, "fullAutoErrorMode").unwrap_or(1);
+                let line = key_lines.get("fullAutoErrorMode").copied().unwrap_or(1);
                 diagnostics.push(
                     Diagnostic::error(
                         path.to_path_buf(),
@@ -106,7 +117,7 @@ impl Validator for CodexValidator {
                 );
             } else if let Some(ref error_mode_value) = schema.full_auto_error_mode {
                 if !VALID_FULL_AUTO_ERROR_MODES.contains(&error_mode_value.as_str()) {
-                    let line = find_key_line(content, "fullAutoErrorMode").unwrap_or(1);
+                    let line = key_lines.get("fullAutoErrorMode").copied().unwrap_or(1);
                     diagnostics.push(
                         Diagnostic::error(
                             path.to_path_buf(),
@@ -125,15 +136,43 @@ impl Validator for CodexValidator {
     }
 }
 
+/// Build a map of TOML key names to their 1-indexed line numbers in a single pass.
+///
+/// Scans each line for a bare key followed by `=` (the TOML key-value separator).
+/// Uses `strip_prefix` for UTF-8 safety (avoids panics on multi-byte characters)
+/// and checks that the character after the key is whitespace or `=` to prevent
+/// partial matches (e.g., `approvalMode` must not match `approvalModeExtra`).
+///
+/// Returns only the first occurrence of each key, which matches TOML semantics.
+fn build_key_line_map(content: &str) -> HashMap<&str, usize> {
+    let mut map = HashMap::new();
+    for (i, line) in content.lines().enumerate() {
+        let trimmed = line.trim_start();
+        // Extract the key portion: everything up to `=` or whitespace before `=`
+        if let Some(eq_pos) = trimmed.find('=') {
+            let key = trimmed[..eq_pos].trim_end();
+            // Only record the first occurrence (TOML spec: duplicate keys are errors)
+            if !key.is_empty() && !map.contains_key(key) {
+                map.insert(key, i + 1);
+            }
+        }
+    }
+    map
+}
+
 /// Find the 1-indexed line number of a TOML key in the content.
 ///
-/// Looks for `key` followed by `=` to avoid matching the key name
-/// when it appears as a string value rather than a table key.
+/// Uses `strip_prefix` for UTF-8 safety and verifies the next non-whitespace
+/// character is `=` to prevent partial key matches (e.g., `approvalMode`
+/// does not match `approvalModeExtra`).
+///
+/// Production code uses `build_key_line_map` for single-pass efficiency;
+/// this function is retained for targeted lookups in tests.
+#[cfg(test)]
 fn find_key_line(content: &str, key: &str) -> Option<usize> {
     for (i, line) in content.lines().enumerate() {
         let trimmed = line.trim_start();
-        if trimmed.starts_with(key) {
-            let after = &trimmed[key.len()..];
+        if let Some(after) = trimmed.strip_prefix(key) {
             if after.trim_start().starts_with('=') {
                 return Some(i + 1);
             }
@@ -250,6 +289,17 @@ mod tests {
     }
 
     #[test]
+    fn test_cdx_001_type_mismatch_array() {
+        let diagnostics = validate_config("approvalMode = [\"suggest\"]");
+        let cdx_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CDX-001").collect();
+        assert_eq!(cdx_001.len(), 1);
+        assert!(
+            cdx_001[0].message.contains("string"),
+            "Expected type error message for array value"
+        );
+    }
+
+    #[test]
     fn test_cdx_001_line_number() {
         let content = "model = \"o4-mini\"\napprovalMode = \"invalid\"";
         let diagnostics = validate_config(content);
@@ -317,6 +367,17 @@ mod tests {
         let cdx_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CDX-002").collect();
         assert_eq!(cdx_002.len(), 1);
         assert!(cdx_002[0].message.contains("string"));
+    }
+
+    #[test]
+    fn test_cdx_002_case_sensitive() {
+        let diagnostics = validate_config("fullAutoErrorMode = \"Ask-User\"");
+        let cdx_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CDX-002").collect();
+        assert_eq!(
+            cdx_002.len(),
+            1,
+            "fullAutoErrorMode should be case-sensitive"
+        );
     }
 
     #[test]
@@ -447,6 +508,31 @@ notify = true
         assert!(diagnostics.iter().any(|d| d.rule == "CDX-002"));
     }
 
+    #[test]
+    fn test_both_fields_wrong_type() {
+        let content = "approvalMode = true\nfullAutoErrorMode = 123";
+        let diagnostics = validate_config(content);
+        let cdx_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CDX-001").collect();
+        let cdx_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CDX-002").collect();
+        assert_eq!(cdx_001.len(), 1, "CDX-001 should fire for wrong-type approvalMode");
+        assert_eq!(cdx_002.len(), 1, "CDX-002 should fire for wrong-type fullAutoErrorMode");
+        assert!(cdx_001[0].message.contains("string"));
+        assert!(cdx_002[0].message.contains("string"));
+    }
+
+    // ===== Fixture Integration =====
+
+    #[test]
+    fn test_valid_codex_fixture_no_diagnostics() {
+        let fixture = include_str!("../../../../tests/fixtures/codex/.codex/config.toml");
+        let diagnostics = validate_config(fixture);
+        assert!(
+            diagnostics.is_empty(),
+            "Valid codex fixture should produce 0 diagnostics, got: {:?}",
+            diagnostics
+        );
+    }
+
     // ===== find_key_line =====
 
     #[test]
@@ -463,5 +549,33 @@ notify = true
         // "approvalMode" appears as part of a string value, not as a key
         let content = "comment = \"the approvalMode field\"\napprovalMode = \"suggest\"";
         assert_eq!(find_key_line(content, "approvalMode"), Some(2));
+    }
+
+    #[test]
+    fn test_find_key_line_no_partial_match() {
+        // "approvalMode" must not match "approvalModeExtra"
+        let content = "approvalModeExtra = \"value\"\napprovalMode = \"suggest\"";
+        assert_eq!(find_key_line(content, "approvalMode"), Some(2));
+    }
+
+    // ===== build_key_line_map =====
+
+    #[test]
+    fn test_build_key_line_map() {
+        let content =
+            "model = \"o4-mini\"\napprovalMode = \"suggest\"\nfullAutoErrorMode = \"ask-user\"";
+        let map = build_key_line_map(content);
+        assert_eq!(map.get("model"), Some(&1));
+        assert_eq!(map.get("approvalMode"), Some(&2));
+        assert_eq!(map.get("fullAutoErrorMode"), Some(&3));
+        assert_eq!(map.get("nonexistent"), None);
+    }
+
+    #[test]
+    fn test_build_key_line_map_no_partial_match() {
+        let content = "approvalModeExtra = \"value\"\napprovalMode = \"suggest\"";
+        let map = build_key_line_map(content);
+        assert_eq!(map.get("approvalModeExtra"), Some(&1));
+        assert_eq!(map.get("approvalMode"), Some(&2));
     }
 }
