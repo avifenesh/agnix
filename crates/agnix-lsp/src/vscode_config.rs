@@ -180,7 +180,7 @@ pub struct VsCodeSpecs {
 ///
 /// Maps to FilesConfig in agnix-core.
 #[derive(Debug, Default, Clone, Deserialize, Serialize)]
-#[serde(default, rename_all = "camelCase")]
+#[serde(default)]
 pub struct VsCodeFiles {
     /// Glob patterns for files to validate as memory/instruction files
     #[serde(default)]
@@ -764,8 +764,8 @@ fn test_spec_pin_clearing_with_null() {
 fn test_vscode_files_deserialization() {
     let json = r#"{
         "files": {
-            "includeAsMemory": ["docs/ai-rules/*.md"],
-            "includeAsGeneric": ["internal/*.md"],
+            "include_as_memory": ["docs/ai-rules/*.md"],
+            "include_as_generic": ["internal/*.md"],
             "exclude": ["drafts/**"]
         }
     }"#;
@@ -787,7 +787,7 @@ fn test_vscode_files_deserialization() {
 fn test_vscode_files_partial_deserialization() {
     let json = r#"{
         "files": {
-            "includeAsMemory": ["custom.md"]
+            "include_as_memory": ["custom.md"]
         }
     }"#;
 
