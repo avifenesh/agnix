@@ -1,6 +1,6 @@
 //! Rule parity integration tests.
 //!
-//! Ensures all 102 rules from knowledge-base/rules.json are:
+//! Ensures all 108 rules from knowledge-base/rules.json are:
 //! 1. Registered in SARIF output (sarif.rs)
 //! 2. Implemented in agnix-core/src/rules/*.rs
 //! 3. Covered by test fixtures in tests/fixtures/
@@ -447,8 +447,8 @@ fn test_rules_json_integrity() {
     // Check total count matches expected
     assert_eq!(
         rules_index.rules.len(),
-        102,
-        "Expected 102 rules in rules.json, found {}",
+        108,
+        "Expected 108 rules in rules.json, found {}",
         rules_index.rules.len()
     );
 
@@ -540,11 +540,11 @@ fn test_rules_json_matches_validation_rules_md() {
 fn test_sarif_rule_count() {
     let sarif_rules = extract_sarif_rule_ids();
 
-    // SARIF should have exactly 102 rules to match rules.json
+    // SARIF should have exactly 108 rules to match rules.json
     assert_eq!(
         sarif_rules.len(),
-        102,
-        "SARIF should have 102 rules, found {}. Missing or extra rules detected.",
+        108,
+        "SARIF should have 108 rules, found {}. Missing or extra rules detected.",
         sarif_rules.len()
     );
 }

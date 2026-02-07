@@ -275,6 +275,48 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 **Fix**: Remove or move to scripts/
 **Source**: platform.claude.com/docs
 
+<a id="cc-sk-010"></a>
+### CC-SK-010 [HIGH] Invalid Hooks in Skill Frontmatter
+**Requirement**: `hooks` field in skill frontmatter MUST follow the same schema as settings.json hooks (valid events, handler types, required fields)
+**Detection**: Parse hooks YAML value and validate against HooksSchema rules
+**Fix**: No auto-fix
+**Source**: code.claude.com/docs/en/skills
+
+<a id="cc-sk-011"></a>
+### CC-SK-011 [HIGH] Unreachable Skill
+**Requirement**: Skill MUST NOT set both `user-invocable: false` and `disable-model-invocation: true`
+**Detection**: `user_invocable == false && disable_model_invocation == true`
+**Fix**: No auto-fix (intent unclear)
+**Source**: code.claude.com/docs/en/skills
+
+<a id="cc-sk-012"></a>
+### CC-SK-012 [MEDIUM] Argument Hint Without $ARGUMENTS
+**Requirement**: If `argument-hint` is set, body SHOULD reference `$ARGUMENTS`
+**Detection**: `argument_hint.is_some() && !body.contains("$ARGUMENTS")`
+**Fix**: No auto-fix
+**Source**: code.claude.com/docs/en/skills
+
+<a id="cc-sk-013"></a>
+### CC-SK-013 [MEDIUM] Fork Context Without Actionable Instructions
+**Requirement**: Skills with `context: fork` SHOULD contain imperative instructions for the forked agent
+**Detection**: Check body for imperative verbs when context is fork
+**Fix**: No auto-fix
+**Source**: code.claude.com/docs/en/skills
+
+<a id="cc-sk-014"></a>
+### CC-SK-014 [HIGH] Invalid disable-model-invocation Type
+**Requirement**: `disable-model-invocation` MUST be a boolean, not a string
+**Detection**: Raw YAML parsing detects quoted "true"/"false" strings
+**Fix**: [AUTO-FIX, safe] Convert string to boolean
+**Source**: code.claude.com/docs/en/skills
+
+<a id="cc-sk-015"></a>
+### CC-SK-015 [HIGH] Invalid user-invocable Type
+**Requirement**: `user-invocable` MUST be a boolean, not a string
+**Detection**: Raw YAML parsing detects quoted "true"/"false" strings
+**Fix**: [AUTO-FIX, safe] Convert string to boolean
+**Source**: code.claude.com/docs/en/skills
+
 ---
 
 ## CLAUDE CODE RULES (HOOKS)
@@ -1005,7 +1047,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | Category | Total Rules | HIGH | MEDIUM | LOW | Auto-Fixable |
 |----------|-------------|------|--------|-----|--------------|
 | Agent Skills | 16 | 14 | 2 | 0 | 5 |
-| Claude Skills | 9 | 8 | 1 | 0 | 5 |
+| Claude Skills | 15 | 12 | 3 | 0 | 7 |
 | Claude Hooks | 12 | 11 | 1 | 0 | 3 |
 | Claude Agents | 7 | 7 | 0 | 0 | 2 |
 | Claude Memory | 10 | 7 | 3 | 0 | 2 |
@@ -1019,7 +1061,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | Prompt Eng | 4 | 0 | 4 | 0 | 0 |
 | Cross-Platform | 6 | 4 | 2 | 0 | 0 |
 | Version Awareness | 1 | 0 | 0 | 1 | 0 |
-| **TOTAL** | **102** | **77** | **24** | **1** | **25** |
+| **TOTAL** | **108** | **81** | **26** | **1** | **27** |
 
 ---
 
@@ -1048,7 +1090,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 
 ---
 
-**Total Coverage**: 102 validation rules across 15 categories
+**Total Coverage**: 108 validation rules across 15 categories
 **Knowledge Base**: 11,036 lines, 320KB, 75+ sources
-**Certainty**: 76 HIGH, 23 MEDIUM, 1 LOW
-**Auto-Fixable**: 25 rules (25%)
+**Certainty**: 81 HIGH, 26 MEDIUM, 1 LOW
+**Auto-Fixable**: 27 rules (25%)

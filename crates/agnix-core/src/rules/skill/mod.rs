@@ -6,6 +6,7 @@ use crate::{
     parsers::frontmatter::{FrontmatterParts, split_frontmatter},
     regex_util::static_regex,
     rules::Validator,
+    schemas::hooks::HooksSchema,
     schemas::skill::SkillSchema,
 };
 use regex::Regex;
@@ -51,6 +52,7 @@ static_regex!(fn reference_path_regex, "(?i)\\b(?:references?|refs)[/\\\\][^\\s)
 static_regex!(fn windows_path_regex, r"(?i)\b(?:[a-z]:)?[a-z0-9._-]+(?:\\[a-z0-9._-]+)+\b");
 static_regex!(fn windows_path_token_regex, r"[^\s]+\\[^\s]+");
 static_regex!(fn plain_bash_regex, r"\bBash\b");
+static_regex!(fn imperative_verb_regex, r"(?i)\b(run|execute|create|build|deploy|install|configure|update|delete|remove|add|write|read|check|test|validate|ensure|make|use|call|invoke|start|stop|send|fetch|generate|implement|fix|analyze|review|search|find|move|copy|replace|push|pull|commit|clean|format|lint|parse|process|handle|prepare|download|upload|export|import|open|save|load|connect|verify|apply|enable|disable)\b");
 
 /// Valid model values for CC-SK-001
 const VALID_MODELS: &[&str] = &["sonnet", "opus", "haiku", "inherit"];
@@ -806,6 +808,289 @@ impl<'a> ValidationContext<'a> {
         }
     }
 
+    /// CC-SK-010: Validate hooks field in skill frontmatter
+    fn validate_cc_hooks(&mut self) {
+        if !self.config.is_rule_enabled("CC-SK-010") {
+            return;
+        }
+
+        // Check if hooks key exists in raw frontmatter
+        let frontmatter = &self.parts.frontmatter;
+        let has_hooks = frontmatter.lines().any(|line| {
+            let trimmed = line.trim_start();
+            trimmed.starts_with("hooks:") || trimmed == "hooks:"
+        });
+
+        if !has_hooks {
+            return;
+        }
+
+        let (hooks_line, hooks_col) = self.frontmatter_key_line_col("hooks");
+
+        // Try to parse the full frontmatter as a generic YAML Value to extract hooks
+        let yaml_value: serde_yaml::Value = match serde_yaml::from_str(frontmatter) {
+            Ok(v) => v,
+            Err(_) => return, // Parse errors handled by AS-016
+        };
+
+        let hooks_value = match yaml_value.get("hooks") {
+            Some(v) => v,
+            None => return,
+        };
+
+        // hooks must be a mapping (object)
+        let hooks_map = match hooks_value.as_mapping() {
+            Some(m) => m,
+            None => {
+                self.diagnostics.push(
+                    Diagnostic::error(
+                        self.path.to_path_buf(),
+                        hooks_line,
+                        hooks_col,
+                        "CC-SK-010",
+                        t!(
+                            "rules.cc_sk_010.message",
+                            error = "hooks must be a mapping of event names to hook arrays"
+                        ),
+                    )
+                    .with_suggestion(t!("rules.cc_sk_010.suggestion")),
+                );
+                return;
+            }
+        };
+
+        // Validate each event key
+        for (key, value) in hooks_map {
+            let event = match key.as_str() {
+                Some(s) => s,
+                None => {
+                    self.diagnostics.push(
+                        Diagnostic::error(
+                            self.path.to_path_buf(),
+                            hooks_line,
+                            hooks_col,
+                            "CC-SK-010",
+                            t!(
+                                "rules.cc_sk_010.message",
+                                error = "hook event key must be a string"
+                            ),
+                        )
+                        .with_suggestion(t!("rules.cc_sk_010.suggestion")),
+                    );
+                    continue;
+                }
+            };
+
+            // Validate event name
+            if !HooksSchema::VALID_EVENTS.contains(&event) {
+                self.diagnostics.push(
+                    Diagnostic::error(
+                        self.path.to_path_buf(),
+                        hooks_line,
+                        hooks_col,
+                        "CC-SK-010",
+                        t!(
+                            "rules.cc_sk_010.message",
+                            error = format!(
+                                "invalid hook event '{}', valid events: {}",
+                                event,
+                                HooksSchema::VALID_EVENTS.join(", ")
+                            )
+                        ),
+                    )
+                    .with_suggestion(t!("rules.cc_sk_010.suggestion")),
+                );
+            }
+
+            // Validate value is a sequence
+            if !value.is_sequence() {
+                self.diagnostics.push(
+                    Diagnostic::error(
+                        self.path.to_path_buf(),
+                        hooks_line,
+                        hooks_col,
+                        "CC-SK-010",
+                        t!(
+                            "rules.cc_sk_010.message",
+                            error = format!("hooks for event '{}' must be an array", event)
+                        ),
+                    )
+                    .with_suggestion(t!("rules.cc_sk_010.suggestion")),
+                );
+            }
+        }
+    }
+
+    /// CC-SK-011: Validate unreachable skill (both user-invocable=false and disable-model-invocation=true)
+    fn validate_cc_unreachable(&mut self, frontmatter: &SkillFrontmatter) {
+        if !self.config.is_rule_enabled("CC-SK-011") {
+            return;
+        }
+
+        let user_invocable = frontmatter.user_invocable.unwrap_or(true);
+        let disable_model = frontmatter.disable_model_invocation.unwrap_or(false);
+
+        if !user_invocable && disable_model {
+            let (line, col) = self.frontmatter_key_line_col("user-invocable");
+            self.diagnostics.push(
+                Diagnostic::error(
+                    self.path.to_path_buf(),
+                    line,
+                    col,
+                    "CC-SK-011",
+                    t!("rules.cc_sk_011.message"),
+                )
+                .with_suggestion(t!("rules.cc_sk_011.suggestion")),
+            );
+        }
+    }
+
+    /// CC-SK-012: Validate argument-hint has matching $ARGUMENTS in body
+    fn validate_cc_argument_hint(&mut self, frontmatter: &SkillFrontmatter) {
+        if !self.config.is_rule_enabled("CC-SK-012") {
+            return;
+        }
+
+        if frontmatter.argument_hint.is_some() {
+            let body = if self.parts.body_start <= self.content.len() {
+                &self.content[self.parts.body_start..]
+            } else {
+                ""
+            };
+
+            if !body.contains("$ARGUMENTS") {
+                let (line, col) = self.frontmatter_key_line_col("argument-hint");
+                self.diagnostics.push(
+                    Diagnostic::warning(
+                        self.path.to_path_buf(),
+                        line,
+                        col,
+                        "CC-SK-012",
+                        t!("rules.cc_sk_012.message"),
+                    )
+                    .with_suggestion(t!("rules.cc_sk_012.suggestion")),
+                );
+            }
+        }
+    }
+
+    /// CC-SK-013: Validate context: fork has actionable instructions
+    fn validate_cc_fork_instructions(&mut self, frontmatter: &SkillFrontmatter) {
+        if !self.config.is_rule_enabled("CC-SK-013") {
+            return;
+        }
+
+        if frontmatter.context.as_deref() != Some("fork") {
+            return;
+        }
+
+        let body = if self.parts.body_start <= self.content.len() {
+            &self.content[self.parts.body_start..]
+        } else {
+            ""
+        };
+
+        // Check if the body is empty or lacks imperative verbs
+        if body.trim().is_empty() || !imperative_verb_regex().is_match(body) {
+            let (line, col) = self.frontmatter_key_line_col("context");
+            self.diagnostics.push(
+                Diagnostic::warning(
+                    self.path.to_path_buf(),
+                    line,
+                    col,
+                    "CC-SK-013",
+                    t!("rules.cc_sk_013.message"),
+                )
+                .with_suggestion(t!("rules.cc_sk_013.suggestion")),
+            );
+        }
+    }
+
+    /// CC-SK-014, CC-SK-015: Validate boolean field types from raw YAML
+    /// Detects quoted string values like "true" or "false" that should be unquoted booleans
+    fn validate_cc_boolean_types(&mut self) {
+        self.validate_boolean_field("disable-model-invocation", "CC-SK-014", "cc_sk_014");
+        self.validate_boolean_field("user-invocable", "CC-SK-015", "cc_sk_015");
+    }
+
+    /// Helper to check a single boolean field for string type
+    fn validate_boolean_field(&mut self, field_name: &str, rule_id: &str, i18n_key: &str) {
+        if !self.config.is_rule_enabled(rule_id) {
+            return;
+        }
+
+        // Search raw frontmatter for the field with a quoted value
+        let frontmatter = &self.parts.frontmatter;
+        for line in frontmatter.lines() {
+            let trimmed = line.trim_start();
+            if let Some(rest) = trimmed.strip_prefix(field_name) {
+                if let Some(after_colon) = rest.trim_start().strip_prefix(':') {
+                    // Strip inline YAML comments before checking the value
+                    let value_str = after_colon.split('#').next().unwrap_or("").trim();
+                    // Check for quoted boolean strings
+                    let is_quoted_bool = value_str == "\"true\""
+                        || value_str == "\"false\""
+                        || value_str == "'true'"
+                        || value_str == "'false'";
+
+                    if is_quoted_bool {
+                        let inner_value = value_str.trim_matches('"').trim_matches('\'');
+                        let fixed_bool = inner_value == "true";
+
+                        let (line_num, col) = self.frontmatter_key_line_col(field_name);
+
+                        let msg_key = format!("rules.{}.message", i18n_key);
+                        let sug_key = format!("rules.{}.suggestion", i18n_key);
+
+                        let mut diagnostic = Diagnostic::error(
+                            self.path.to_path_buf(),
+                            line_num,
+                            col,
+                            rule_id,
+                            t!(&msg_key, value = inner_value),
+                        )
+                        .with_suggestion(t!(&sug_key));
+
+                        // Add auto-fix: replace quoted string with boolean
+                        if let Some((start, end)) = self.frontmatter_value_byte_range(field_name) {
+                            // The value range from frontmatter_value_byte_range returns
+                            // the inner content for quoted values, but we need to replace
+                            // including quotes. Expand to include surrounding quotes.
+                            let content_bytes = self.content.as_bytes();
+                            let quote_start = if start > 0
+                                && (content_bytes[start - 1] == b'"'
+                                    || content_bytes[start - 1] == b'\'')
+                            {
+                                start - 1
+                            } else {
+                                start
+                            };
+                            let quote_end = if end < self.content.len()
+                                && (content_bytes[end] == b'"' || content_bytes[end] == b'\'')
+                            {
+                                end + 1
+                            } else {
+                                end
+                            };
+
+                            let fix_key = format!("rules.{}.fix", i18n_key);
+                            let fix = Fix::replace(
+                                quote_start,
+                                quote_end,
+                                fixed_bool.to_string(),
+                                t!(&fix_key, value = inner_value, fixed = fixed_bool),
+                                true, // safe fix
+                            );
+                            diagnostic = diagnostic.with_fix(fix);
+                        }
+
+                        self.diagnostics.push(diagnostic);
+                    }
+                }
+            }
+        }
+    }
+
     /// AS-012, AS-013, AS-014: Validate body content
     fn validate_body_rules(&mut self) {
         let body_raw = if self.parts.body_start <= self.content.len() {
@@ -924,6 +1209,12 @@ impl Validator for SkillValidator {
 
         let mut ctx = ValidationContext::new(path, content, config);
 
+        // Phase 0: Raw YAML type checks (CC-SK-014, CC-SK-015)
+        // Run before serde parsing since string booleans cause parse failures
+        if ctx.parts.has_frontmatter && ctx.parts.has_closing {
+            ctx.validate_cc_boolean_types();
+        }
+
         // Phase 1: Structure validation (AS-001, AS-016)
         ctx.validate_frontmatter_structure();
 
@@ -948,7 +1239,19 @@ impl Validator for SkillValidator {
         // Phase 5: Compatibility validation (AS-011)
         ctx.validate_compatibility(&frontmatter);
 
-        // Phase 6-9: Claude Code rules (CC-SK-*)
+        // Phase 6: CC-SK-010 (hooks in frontmatter)
+        ctx.validate_cc_hooks();
+
+        // Phase 7: CC-SK-011 (unreachable skill)
+        ctx.validate_cc_unreachable(&frontmatter);
+
+        // Phase 8: CC-SK-012 (argument-hint without $ARGUMENTS)
+        ctx.validate_cc_argument_hint(&frontmatter);
+
+        // Phase 9: CC-SK-013 (fork without actionable instructions)
+        ctx.validate_cc_fork_instructions(&frontmatter);
+
+        // Phase 10-13: Claude Code rules (CC-SK-001-009)
         // These require both name and description to be non-empty
         if let (Some(name), Some(description)) = (
             frontmatter.name.as_deref(),
@@ -986,10 +1289,10 @@ impl Validator for SkillValidator {
             }
         }
 
-        // Phase 10: Body validation (AS-012, AS-013, AS-014)
+        // Phase 14: Body validation (AS-012, AS-013, AS-014)
         ctx.validate_body_rules();
 
-        // Phase 11: Directory validation (AS-015)
+        // Phase 15: Directory validation (AS-015)
         ctx.validate_directory();
 
         ctx.diagnostics
