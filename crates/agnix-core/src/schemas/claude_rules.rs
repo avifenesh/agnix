@@ -123,7 +123,7 @@ fn parse_paths_schema(raw: &str) -> (Option<ClaudeRuleSchema>, Option<String>) {
 
     let mut paths = Vec::new();
 
-    if let Some(paths_value) = mapping.get(&serde_yaml::Value::String("paths".to_string())) {
+    if let Some(paths_value) = mapping.get(serde_yaml::Value::String("paths".to_string())) {
         match paths_value {
             serde_yaml::Value::Sequence(seq) => {
                 for item in seq {
