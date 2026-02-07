@@ -6,8 +6,8 @@ use crate::{
     rules::Validator,
     schemas::mcp::{
         McpConfigSchema, McpServerConfig, McpToolSchema, VALID_MCP_SERVER_TYPES,
-        extract_request_protocol_version, extract_response_protocol_version,
-        is_initialize_message, is_initialize_response, validate_json_schema_structure,
+        extract_request_protocol_version, extract_response_protocol_version, is_initialize_message,
+        is_initialize_response, validate_json_schema_structure,
     },
 };
 use regex::Regex;
@@ -597,10 +597,7 @@ fn validate_server(
     let (line, col) = find_json_field_location(content, name);
 
     // Determine effective type (default is "stdio" when type is absent)
-    let effective_type = server
-        .server_type
-        .as_deref()
-        .unwrap_or("stdio");
+    let effective_type = server.server_type.as_deref().unwrap_or("stdio");
 
     // MCP-011: Invalid server type (check first, skip other type-based rules if invalid)
     if config.is_rule_enabled("MCP-011") {
@@ -1515,8 +1512,8 @@ mod tests {
     #[test]
     fn test_all_mcp_rules_can_be_disabled() {
         let rules = [
-            "MCP-001", "MCP-002", "MCP-003", "MCP-004", "MCP-005", "MCP-006", "MCP-007",
-            "MCP-008", "MCP-009", "MCP-010", "MCP-011", "MCP-012",
+            "MCP-001", "MCP-002", "MCP-003", "MCP-004", "MCP-005", "MCP-006", "MCP-007", "MCP-008",
+            "MCP-009", "MCP-010", "MCP-011", "MCP-012",
         ];
 
         for rule in rules {
@@ -1527,16 +1524,10 @@ mod tests {
             let content = match rule {
                 "MCP-001" => r#"{"jsonrpc": "1.0"}"#,
                 "MCP-007" => r#"{ invalid }"#,
-                "MCP-009" => {
-                    r#"{"mcpServers": {"s": {"type": "stdio", "args": ["a"]}}}"#
-                }
+                "MCP-009" => r#"{"mcpServers": {"s": {"type": "stdio", "args": ["a"]}}}"#,
                 "MCP-010" => r#"{"mcpServers": {"s": {"type": "http"}}}"#,
-                "MCP-011" => {
-                    r#"{"mcpServers": {"s": {"type": "invalid"}}}"#
-                }
-                "MCP-012" => {
-                    r#"{"mcpServers": {"s": {"type": "sse", "url": "http://x"}}}"#
-                }
+                "MCP-011" => r#"{"mcpServers": {"s": {"type": "invalid"}}}"#,
+                "MCP-012" => r#"{"mcpServers": {"s": {"type": "sse", "url": "http://x"}}}"#,
                 _ => r#"{"tools": [{"name": "t"}]}"#,
             };
 
@@ -1902,6 +1893,10 @@ mod tests {
             }
         }"#;
         let diagnostics = validate(content);
-        assert!(diagnostics.is_empty(), "Valid server config should have no errors, got: {:?}", diagnostics);
+        assert!(
+            diagnostics.is_empty(),
+            "Valid server config should have no errors, got: {:?}",
+            diagnostics
+        );
     }
 }

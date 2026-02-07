@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- MCP-009: Validate `command` is present for stdio MCP servers (HIGH)
+- MCP-010: Validate `url` is present for http/sse MCP servers (HIGH)
+- MCP-011: Validate MCP server `type` is one of stdio, http, sse (HIGH)
+- MCP-012: Warn when SSE transport is used (deprecated in favor of Streamable HTTP) with auto-fix (MEDIUM)
 - COP-005: Validate `excludeAgent` field contains valid agent identifiers
 - COP-006: Warn when global Copilot instruction file exceeds ~4000 characters
 - Fix metadata (`autofix`, `fix_safety`) for all 100 rules in rules.json
@@ -339,7 +343,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Quick-fix code actions from Fix objects
   - Hover documentation for frontmatter fields
   - Document content caching for performance
-  - Supports all 102 agnix validation rules with severity mapping
+  - Supports all 106 agnix validation rules with severity mapping
   - Workspace boundary validation for security (prevents path traversal)
   - Config caching optimization for performance
   - Editor support for VS Code, Neovim, Helix, and other LSP-compatible editors
@@ -353,7 +357,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Case-insensitive tool name matching
   - Takes precedence over legacy `target` field for flexibility
 - VS Code extension with full LSP integration (#22)
-  - Real-time diagnostics for all 102 validation rules
+  - Real-time diagnostics for all 106 validation rules
   - Status bar indicator showing agnix validation status
   - Syntax highlighting for SKILL.md YAML frontmatter
   - Commands: 'Restart Language Server' and 'Show Output Channel'

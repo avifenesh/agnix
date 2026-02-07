@@ -1,6 +1,6 @@
 //! Rule parity integration tests.
 //!
-//! Ensures all 102 rules from knowledge-base/rules.json are:
+//! Ensures all 106 rules from knowledge-base/rules.json are:
 //! 1. Registered in SARIF output (sarif.rs)
 //! 2. Implemented in agnix-core/src/rules/*.rs
 //! 3. Covered by test fixtures in tests/fixtures/
