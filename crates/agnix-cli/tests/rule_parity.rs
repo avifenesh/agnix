@@ -1,6 +1,6 @@
 //! Rule parity integration tests.
 //!
-//! Ensures all 145 rules from knowledge-base/rules.json are:
+//! Ensures all 155 rules from knowledge-base/rules.json are:
 
 //! 1. Registered in SARIF output (sarif.rs)
 //! 2. Implemented in agnix-core/src/rules/*.rs
@@ -166,7 +166,8 @@ fn extract_implemented_rule_ids() -> BTreeSet<String> {
     // Known rule ID prefixes to filter out false positives
     let valid_prefixes = [
         "AS-", "CC-SK-", "CC-HK-", "CC-AG-", "CC-MEM-", "CC-PL-", "AGM-", "MCP-", "COP-", "CUR-",
-        "CLN-", "CDX-", "OC-", "GM-", "XML-", "REF-", "PE-", "XP-", "VER-",
+        "CLN-", "CDX-", "OC-", "GM-", "XML-", "REF-", "PE-", "XP-", "VER-", "CR-SK-", "CL-SK-",
+        "CP-SK-", "CX-SK-", "OC-SK-", "WS-SK-", "KR-SK-", "AMP-SK-", "RC-SK-",
     ];
 
     fn extract_from_file(
@@ -298,8 +299,20 @@ fn infer_fixture_coverage(rules: &[RuleEntry]) -> HashMap<String, Vec<String>> {
             "prompt-engineering",
             vec!["prompt", "invalid/pe", "valid/pe"],
         ),
-        ("cross-platform", vec!["cross_platform"]),
+        (
+            "cross-platform",
+            vec!["cross_platform", "per_client_skills"],
+        ),
         ("opencode", vec!["opencode", "opencode-invalid"]),
+        ("cursor-skills", vec!["per_client_skills"]),
+        ("cline-skills", vec!["per_client_skills"]),
+        ("copilot-skills", vec!["per_client_skills"]),
+        ("codex-skills", vec!["per_client_skills"]),
+        ("opencode-skills", vec!["per_client_skills"]),
+        ("windsurf-skills", vec!["per_client_skills"]),
+        ("kiro-skills", vec!["per_client_skills"]),
+        ("amp-skills", vec!["per_client_skills"]),
+        ("roo-code-skills", vec!["per_client_skills"]),
         ("gemini-cli", vec!["gemini_md", "gemini_md-invalid"]),
         ("codex", vec!["codex", "codex-invalid"]),
     ]
@@ -452,8 +465,8 @@ fn test_rules_json_integrity() {
     // Check total count matches expected
     assert_eq!(
         rules_index.rules.len(),
-        145,
-        "Expected 145 rules in rules.json, found {}",
+        155,
+        "Expected 155 rules in rules.json, found {}",
         rules_index.rules.len()
     );
 
@@ -499,6 +512,15 @@ fn test_rules_json_integrity() {
         "cross-platform",
         "opencode",
         "version-awareness",
+        "cursor-skills",
+        "cline-skills",
+        "copilot-skills",
+        "codex-skills",
+        "opencode-skills",
+        "windsurf-skills",
+        "kiro-skills",
+        "amp-skills",
+        "roo-code-skills",
     ];
     for rule in &rules_index.rules {
         assert!(
@@ -549,12 +571,12 @@ fn test_rules_json_matches_validation_rules_md() {
 fn test_sarif_rule_count() {
     let sarif_rules = extract_sarif_rule_ids();
 
-    // SARIF should have exactly 145 rules to match rules.json
+    // SARIF should have exactly 155 rules to match rules.json
 
     assert_eq!(
         sarif_rules.len(),
-        145,
-        "SARIF should have 145 rules, found {}. Missing or extra rules detected.",
+        155,
+        "SARIF should have 155 rules, found {}. Missing or extra rules detected.",
         sarif_rules.len()
     );
 }

@@ -308,8 +308,15 @@ mod tests {
         assert_eq!(parsed.installation_id, config.installation_id);
     }
 
+    // Mutex to serialize tests that modify environment variables.
+    // Rust tests run in parallel by default, and env vars are process-wide,
+    // so concurrent modifications cause flaky failures.
+    static ENV_MUTEX: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
     #[test]
     fn test_do_not_track_disables_telemetry() {
+        let _guard = ENV_MUTEX.lock().unwrap();
+
         // Save current env state
         let original = std::env::var("DO_NOT_TRACK").ok();
 
@@ -334,6 +341,8 @@ mod tests {
 
     #[test]
     fn test_agnix_telemetry_env_overrides() {
+        let _guard = ENV_MUTEX.lock().unwrap();
+
         // Save current env state
         let original = std::env::var("AGNIX_TELEMETRY").ok();
         let original_dnt = std::env::var("DO_NOT_TRACK").ok();

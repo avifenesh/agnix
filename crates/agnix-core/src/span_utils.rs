@@ -917,7 +917,7 @@ mod tests {
     #[test]
     fn multibyte_in_scalar_span() {
         let content = "{\"name\": \"\u{65e5}\u{672c}\u{8a9e}\"}";
-        let result = find_unique_json_scalar_span(&content, "name");
+        let result = find_unique_json_scalar_span(content, "name");
         assert!(result.is_some());
         let (s, e) = result.unwrap();
         assert!(content.is_char_boundary(s));
@@ -929,7 +929,7 @@ mod tests {
     #[test]
     fn unicode_in_string_value_range() {
         let content = "{\"path\": \"C:\\\\r\u{00e9}sum\u{00e9}\\\\file.txt\"}";
-        let result = find_unique_json_string_value_range(&content, "path");
+        let result = find_unique_json_string_value_range(content, "path");
         assert!(result.is_some());
         let (s, e, captured) = result.unwrap();
         assert!(content.is_char_boundary(s));

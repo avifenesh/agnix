@@ -193,8 +193,15 @@ pub fn check_markdown_structure(content: &str) -> Vec<MarkdownStructureIssue> {
     let mut results = Vec::new();
     let pattern = markdown_header_pattern();
 
-    // Check if file has any headers at all (single pass)
-    let has_headers = content.lines().any(|line| pattern.is_match(line));
+    // Check if file has any headers at all (skip fenced code blocks)
+    let mut fence_check = false;
+    let has_headers = content.lines().any(|line| {
+        if line.trim_start().starts_with("```") {
+            fence_check = !fence_check;
+            return false;
+        }
+        !fence_check && pattern.is_match(line)
+    });
 
     if !has_headers && !content.trim().is_empty() {
         results.push(MarkdownStructureIssue {
@@ -208,7 +215,17 @@ pub fn check_markdown_structure(content: &str) -> Vec<MarkdownStructureIssue> {
 
     // Check for proper header hierarchy (no skipping levels)
     let mut last_level = 0;
+    let mut in_code_block = false;
     for (line_num, line) in content.lines().enumerate() {
+        let trimmed = line.trim_start();
+        if trimmed.starts_with("```") {
+            in_code_block = !in_code_block;
+            continue;
+        }
+        if in_code_block {
+            continue;
+        }
+
         if pattern.is_match(line) {
             let current_level = line.chars().take_while(|&c| c == '#').count();
 
@@ -1371,6 +1388,50 @@ Details.
         let results = check_markdown_structure(content);
         assert_eq!(results.len(), 1);
         assert!(results[0].issue.contains("skipped"));
+    }
+
+    #[test]
+    fn test_headers_inside_code_block_ignored() {
+        // Headers inside fenced code blocks should not trigger level-skip warnings
+        let content = r#"# Title
+
+## Commands
+
+```bash
+# Testing
+make java-test     # Run Java integration tests
+
+# Linting
+make java-lint     # Run Java spotlessApply
+
+### Raw Equivalents Per Stack
+```
+
+## Next Section
+"#;
+        let results = check_markdown_structure(content);
+        assert!(
+            results.is_empty(),
+            "Headers inside code blocks should be ignored, got: {:?}",
+            results
+        );
+    }
+
+    #[test]
+    fn test_only_headers_in_code_block_means_no_headers() {
+        // If the only "headers" are inside code blocks, file has no real headers
+        let content = r#"Some content without headers.
+
+```markdown
+# This is inside a code block
+## Also inside
+```
+
+More content.
+"#;
+        let results = check_markdown_structure(content);
+        assert_eq!(results.len(), 1);
+        assert!(results[0].issue.contains("No markdown headers found"));
     }
 
     #[test]

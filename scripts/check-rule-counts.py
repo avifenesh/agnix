@@ -211,6 +211,15 @@ def main() -> int:
         "Gemini CLI": ["gemini-cli"],
         "Codex CLI": ["codex"],
         "Version Awareness": ["version-awareness"],
+        "Cursor Skills": ["cursor-skills"],
+        "Cline Skills": ["cline-skills"],
+        "Copilot Skills": ["copilot-skills"],
+        "Codex Skills": ["codex-skills"],
+        "OpenCode Skills": ["opencode-skills"],
+        "Windsurf Skills": ["windsurf-skills"],
+        "Kiro Skills": ["kiro-skills"],
+        "Amp Skills": ["amp-skills"],
+        "Roo Code Skills": ["roo-code-skills"],
     }
     spec_sum = 0
     for label, categories in spec_map.items():

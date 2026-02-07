@@ -14,6 +14,7 @@ pub mod hooks;
 pub mod imports;
 pub mod mcp;
 pub mod opencode;
+pub mod per_client_skill;
 pub mod plugin;
 pub mod prompt;
 pub mod skill;

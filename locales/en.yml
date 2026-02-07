@@ -106,6 +106,38 @@ rules:
     suggestion: "Use true/false without quotes"
     fix: "Convert string '%{value}' to boolean %{fixed}"
 
+  # --- Per-Client Skills (per_client_skill.rs) ---
+  cr_sk_001:
+    message: "field '%{field}' is not supported by %{client} -- it will be ignored"
+    suggestion: "Remove '%{field}' or move this skill to a client that supports it"
+  cl_sk_001:
+    message: "field '%{field}' is not supported by %{client} -- it will be ignored"
+    suggestion: "Remove '%{field}' or move this skill to a client that supports it"
+  cp_sk_001:
+    message: "field '%{field}' is not supported by %{client} -- it will be ignored"
+    suggestion: "Remove '%{field}' or move this skill to a client that supports it"
+  cx_sk_001:
+    message: "field '%{field}' is not supported by %{client} -- it will be ignored"
+    suggestion: "Remove '%{field}' or move this skill to a client that supports it"
+  oc_sk_001:
+    message: "field '%{field}' is not supported by %{client} -- it will be ignored"
+    suggestion: "Remove '%{field}' or move this skill to a client that supports it"
+  ws_sk_001:
+    message: "field '%{field}' is not supported by %{client} -- it will be ignored"
+    suggestion: "Remove '%{field}' or move this skill to a client that supports it"
+  kr_sk_001:
+    message: "field '%{field}' is not supported by %{client} -- it will be ignored"
+    suggestion: "Remove '%{field}' or move this skill to a client that supports it"
+  amp_sk_001:
+    message: "field '%{field}' is not supported by %{client} -- it will be ignored"
+    suggestion: "Remove '%{field}' or move this skill to a client that supports it"
+  rc_sk_001:
+    message: "field '%{field}' is not supported by %{client} -- it will be ignored"
+    suggestion: "Remove '%{field}' or move this skill to a client that supports it"
+  xp_sk_001:
+    message: "skill uses client-specific field '%{field}' which is not part of the universal Agent Skills spec"
+    suggestion: "Consider removing '%{field}' for cross-platform portability"
+
   # --- Hooks (hooks/mod.rs) ---
   cc_hk_001:
     message: "Invalid hook event '%{event}', valid events: %{valid}"
