@@ -12,7 +12,7 @@ keywords: ["CC-AG-008", "invalid memory scope", "claude agents", "validation", "
 - **Severity**: `HIGH`
 - **Category**: `Claude Agents`
 - **Normative Level**: `MUST`
-- **Auto-Fix**: `No`
+- **Auto-Fix**: `Yes (unsafe)`
 - **Verified On**: `2026-02-07`
 
 ## Applicability

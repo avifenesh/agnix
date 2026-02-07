@@ -5,14 +5,15 @@ import Link from '@docusaurus/Link';
 import Layout from '@theme/Layout';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import styles from './index.module.css';
+import siteData from '../data/siteData.json';
 
 const installCommand = 'npx agnix .';
 
 const features = [
   {
-    title: '145 Validation Rules',
+    title: `${siteData.totalRules} Validation Rules`,
     description:
-      'Catch broken skills, invalid hooks, misconfigured MCP servers, and 140+ other issues across 19 rule categories.',
+      `Comprehensive validation across ${siteData.categoryCount} rule categories. Catch broken skills, invalid hooks, misconfigured MCP servers, and much more.`,
     icon: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
@@ -58,7 +59,7 @@ const tools = [
 ];
 
 const stats = [
-  {value: '145', label: 'rules'},
+  {value: String(siteData.totalRules), label: 'rules'},
   {value: '2300+', label: 'tests'},
   {value: '10+', label: 'tools'},
   {value: '5', label: 'editors'},
@@ -158,8 +159,7 @@ function HeroBanner() {
             {siteConfig.tagline}
           </Heading>
           <p className={styles.heroSubtitle}>
-            145 validation rules for Claude Code, Cursor, Copilot, Cline, MCP,
-            and many more. CLI, LSP, and IDE plugins.
+            {`${siteData.totalRules} validation rules for Claude Code, Cursor, Copilot, Cline, MCP, and many more. CLI, LSP, and IDE plugins.`}
           </p>
           <div className={clsx(styles.installBlock, styles.heroInstall)}>
             <span className={styles.prompt}>$</span>
@@ -329,7 +329,7 @@ export default function Home() {
   return (
     <Layout
       title="Agent Config Linter"
-      description="Lint agent configurations before they break your workflow. 145 validation rules for Claude Code, Cursor, Copilot, Cline, MCP, and more."
+      description={`Lint agent configurations before they break your workflow. ${siteData.totalRules} validation rules for Claude Code, Cursor, Copilot, Cline, MCP, and more.`}
     >
       <HeroBanner />
       <main>

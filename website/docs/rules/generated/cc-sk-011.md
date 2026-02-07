@@ -12,7 +12,7 @@ keywords: ["CC-SK-011", "unreachable skill", "claude skills", "validation", "agn
 - **Severity**: `HIGH`
 - **Category**: `Claude Skills`
 - **Normative Level**: `MUST`
-- **Auto-Fix**: `No`
+- **Auto-Fix**: `Yes (unsafe)`
 - **Verified On**: `2026-02-07`
 
 ## Applicability

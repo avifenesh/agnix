@@ -12,7 +12,7 @@ keywords: ["CC-SK-005", "invalid agent type", "claude skills", "validation", "ag
 - **Severity**: `HIGH`
 - **Category**: `Claude Skills`
 - **Normative Level**: `MUST`
-- **Auto-Fix**: `No`
+- **Auto-Fix**: `Yes (unsafe)`
 - **Verified On**: `2026-02-04`
 
 ## Applicability

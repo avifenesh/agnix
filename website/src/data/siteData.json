@@ -1,0 +1,15 @@
+{
+  "totalRules": 145,
+  "categoryCount": 19,
+  "autofixCount": 48,
+  "uniqueTools": [
+    "claude-code",
+    "cline",
+    "codex",
+    "cursor",
+    "gemini-cli",
+    "github-copilot",
+    "opencode",
+    "windsurf"
+  ]
+}

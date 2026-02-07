@@ -107,17 +107,20 @@ A `post-release.yml` workflow triggered on release publication should:
 
 ## Documentation & Website
 
-Before release:
-1. Ensure `website/versions.json` includes the new version
-2. Copy the latest versioned docs: `cp -r website/versioned_docs/version-X.Y.Z website/versioned_docs/version-NEW`
-3. Copy sidebars: `cp website/versioned_sidebars/version-X.Y.Z-sidebars.json website/versioned_sidebars/version-NEW-sidebars.json`
-4. Regenerate rule docs: `python3 scripts/generate-docs-rules.py`
-5. Verify docs build: `cd website && npm run build`
+Documentation and website updates are **automated** by the `version-docs`
+job in `.github/workflows/release.yml`. On every non-prerelease tag push
+the job will:
 
-After release:
-- The docs-site workflow deploys automatically on merge to main
-- Verify at https://agentskills.io that new version docs are live
-- Check that rule reference pages match the current rules.json
+1. Regenerate `website/src/data/siteData.json` and rule docs from `rules.json`
+2. Cut a Docusaurus versioned docs snapshot for the release
+3. Commit and push the changes to `main`
+
+The docs-site workflow then deploys automatically on push to main.
+
+After release, verify at https://agentskills.io that:
+- New version docs are live in the version dropdown
+- Rule reference pages match the current rules.json
+- Landing page stats reflect the latest rule count
 
 ## Versioning Policy
 

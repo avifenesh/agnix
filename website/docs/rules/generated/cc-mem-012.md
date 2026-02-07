@@ -1,6 +1,6 @@
 ---
 id: cc-mem-012
-title: "CC-MEM-012: Rules File Unknown Frontmatter Key - Claude Memory"
+title: "CC-MEM-012: Rules File Unknown Frontmatter Key"
 sidebar_label: "CC-MEM-012"
 description: "agnix rule CC-MEM-012 checks for rules file unknown frontmatter key in claude memory files. Severity: MEDIUM. See examples and fix guidance."
 keywords: ["CC-MEM-012", "rules file unknown frontmatter key", "claude memory", "validation", "agnix", "linter"]
@@ -38,21 +38,14 @@ The following examples are illustrative snippets for this rule category.
 ### Invalid
 
 ```markdown
----
-paths:
-  - "src/**/*.ts"
-description: "This key is not recognized"
-alwaysApply: true
----
-# Rule content
+# Memory
+Always be helpful.
 ```
 
 ### Valid
 
 ```markdown
----
-paths:
-  - "src/**/*.ts"
----
-# Rule content
+# Project Memory
+- Use Rust workspace conventions
+- Keep AGENTS.md and CLAUDE.md identical
 ```
