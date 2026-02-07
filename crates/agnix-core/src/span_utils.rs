@@ -6,6 +6,10 @@
 //!
 //! All functions operate on `&str` or `&[u8]` and return byte-offset spans
 //! compatible with `Fix::replacement`.
+//!
+//! Note: String value parsing uses `[^"]*` semantics (no escape handling),
+//! matching the behavior of the regex patterns these functions replace.
+//! This is correct for agent configuration files which don't use escaped quotes.
 
 /// Advance past ASCII whitespace (space, tab, newline, carriage return).
 /// Returns the first position that is not whitespace, or `content.len()`.
@@ -23,8 +27,12 @@ fn find_all_json_key_colon_positions(
     content: &str,
     key: &str,
 ) -> Vec<(usize, usize, usize)> {
+    debug_assert!(!key.contains('"'), "key must not contain quote characters");
     let bytes = content.as_bytes();
-    let needle = format!("\"{}\"", key);
+    let mut needle = String::with_capacity(key.len() + 2);
+    needle.push('"');
+    needle.push_str(key);
+    needle.push('"');
     let needle_bytes = needle.as_bytes();
     let mut results = Vec::new();
 
@@ -386,6 +394,10 @@ pub(crate) fn find_unique_json_string_value_range(
         if found.is_some() {
             return None;
         }
+        debug_assert!(
+            content.is_char_boundary(inner_start) && content.is_char_boundary(inner_end),
+            "span_utils: computed span is not on a UTF-8 char boundary"
+        );
         let captured = content[inner_start..inner_end].to_string();
         found = Some((inner_start, inner_end, captured));
     }
@@ -878,5 +890,82 @@ mod tests {
     fn matcher_line_inline_does_not_match() {
         let content = r#"{"x": 1, "matcher": "Bash", "y": 2}"#;
         assert!(find_unique_json_matcher_line(content, "Bash").is_none());
+    }
+
+    // ===== UTF-8 / Unicode tests =====
+
+    #[test]
+    fn unicode_key_and_value() {
+        // cl\u{00e9} = "cle" with e-acute (multi-byte UTF-8)
+        let content = "{\"cl\u{00e9}\": \"valeur\"}";
+        let result = find_unique_json_string_inner(content, "cl\u{00e9}", "valeur");
+        assert!(result.is_some());
+        let (s, e) = result.unwrap();
+        assert_eq!(&content[s..e], "valeur");
+        assert!(content.is_char_boundary(s));
+        assert!(content.is_char_boundary(e));
+    }
+
+    #[test]
+    fn emoji_key_and_value() {
+        // Build content with actual emoji characters (4-byte UTF-8)
+        let content = format!("{{\"{}\":\"{}\"}}", "\u{1f525}", "\u{1f680}");
+        let result = find_unique_json_string_inner(&content, "\u{1f525}", "\u{1f680}");
+        assert!(result.is_some());
+        let (s, e) = result.unwrap();
+        assert_eq!(&content[s..e], "\u{1f680}");
+        assert!(content.is_char_boundary(s));
+        assert!(content.is_char_boundary(e));
+    }
+
+    #[test]
+    fn multibyte_in_scalar_span() {
+        let content = "{\"name\": \"\u{65e5}\u{672c}\u{8a9e}\"}";
+        let result = find_unique_json_scalar_span(&content, "name");
+        assert!(result.is_some());
+        let (s, e) = result.unwrap();
+        assert!(content.is_char_boundary(s));
+        assert!(content.is_char_boundary(e));
+        // Scalar span includes the quotes for string values
+        assert_eq!(&content[s..e], "\"\u{65e5}\u{672c}\u{8a9e}\"");
+    }
+
+    #[test]
+    fn unicode_in_string_value_range() {
+        let content = "{\"path\": \"C:\\\\r\u{00e9}sum\u{00e9}\\\\file.txt\"}";
+        let result = find_unique_json_string_value_range(&content, "path");
+        assert!(result.is_some());
+        let (s, e, captured) = result.unwrap();
+        assert!(content.is_char_boundary(s));
+        assert!(content.is_char_boundary(e));
+        assert_eq!(&content[s..e], &captured);
+    }
+
+    // ===== Additional CRLF tests =====
+
+    #[test]
+    fn event_key_span_crlf() {
+        let content =
+            "{\r\n  \"beforeCommand\": {\r\n    \"command\": \"echo\"\r\n  }\r\n}";
+        let result = find_event_key_span(content, "beforeCommand");
+        assert!(result.is_some());
+        let (s, e) = result.unwrap();
+        assert_eq!(&content[s..e], "\"beforeCommand\"");
+    }
+
+    #[test]
+    fn json_key_value_crlf() {
+        let content = "{\r\n  \"timeout\": 30\r\n}";
+        let result = find_unique_json_key_value(content, "timeout", "30");
+        assert!(result.is_some());
+    }
+
+    #[test]
+    fn string_inner_crlf() {
+        let content = "{\r\n  \"type\": \"command\"\r\n}";
+        let result = find_unique_json_string_inner(content, "type", "command");
+        assert!(result.is_some());
+        let (s, e) = result.unwrap();
+        assert_eq!(&content[s..e], "command");
     }
 }

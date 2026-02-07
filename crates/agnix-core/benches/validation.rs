@@ -486,8 +486,8 @@ fn bench_hooks_autofix_spans(c: &mut Criterion) {
     let registry = ValidatorRegistry::with_defaults();
 
     // Content with issues that trigger auto-fix span finding:
-    // - Invalid event name (find_event_key_position)
-    // - async on non-command hook (find_unique_json_field_line_span)
+    // - Invalid event name (find_event_key_span)
+    // - async on non-command hook (find_unique_json_field_line)
     // - matcher line spans
     let hooks_content = r#"{
     "hooks": {
