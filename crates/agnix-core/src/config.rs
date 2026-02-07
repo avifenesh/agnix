@@ -9,6 +9,10 @@ use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
+/// Maximum number of file patterns per list (include_as_memory, include_as_generic, exclude).
+/// Exceeding this limit produces a configuration warning.
+const MAX_FILE_PATTERNS: usize = 100;
+
 /// Tool version pinning for version-aware validation
 ///
 /// When tool versions are pinned, validators can apply version-specific
@@ -884,6 +888,22 @@ impl LintConfig {
             ("files.exclude", &self.files.exclude),
         ];
         for (field, patterns) in &pattern_lists {
+            // Warn if pattern count exceeds recommended limit
+            if patterns.len() > MAX_FILE_PATTERNS {
+                warnings.push(ConfigWarning {
+                    field: field.to_string(),
+                    message: t!(
+                        "core.config.files_pattern_count_limit",
+                        field = *field,
+                        count = patterns.len(),
+                        limit = MAX_FILE_PATTERNS
+                    )
+                    .to_string(),
+                    suggestion: Some(
+                        t!("core.config.files_pattern_count_limit_suggestion").to_string(),
+                    ),
+                });
+            }
             for pattern in *patterns {
                 let normalized = pattern.replace('\\', "/");
                 if let Err(e) = glob::Pattern::new(&normalized) {
@@ -897,6 +917,38 @@ impl LintConfig {
                         .to_string(),
                         suggestion: Some(
                             t!("core.config.invalid_files_pattern_suggestion").to_string(),
+                        ),
+                    });
+                }
+                // Reject path traversal patterns
+                if normalized.contains("../") {
+                    warnings.push(ConfigWarning {
+                        field: field.to_string(),
+                        message: t!(
+                            "core.config.files_path_traversal",
+                            pattern = pattern.as_str()
+                        )
+                        .to_string(),
+                        suggestion: Some(
+                            t!("core.config.files_path_traversal_suggestion").to_string(),
+                        ),
+                    });
+                }
+                // Reject absolute paths (Unix-style leading slash or Windows drive letter)
+                if normalized.starts_with('/')
+                    || (normalized.len() >= 2
+                        && normalized.as_bytes()[0].is_ascii_alphabetic()
+                        && normalized.as_bytes()[1] == b':')
+                {
+                    warnings.push(ConfigWarning {
+                        field: field.to_string(),
+                        message: t!(
+                            "core.config.files_absolute_path",
+                            pattern = pattern.as_str()
+                        )
+                        .to_string(),
+                        suggestion: Some(
+                            t!("core.config.files_absolute_path_suggestion").to_string(),
                         ),
                     });
                 }
@@ -3406,6 +3458,88 @@ severity = "Warning"
             warnings.is_empty(),
             "valid globs should not produce warnings: {:?}",
             warnings
+        );
+    }
+
+    #[test]
+    fn test_validate_files_path_traversal_rejected() {
+        let mut config = LintConfig::default();
+        config.files.include_as_memory = vec!["../outside/secrets.md".to_string()];
+
+        let warnings = config.validate();
+        assert!(
+            warnings
+                .iter()
+                .any(|w| w.field == "files.include_as_memory"
+                    && w.message.contains("../")
+                ),
+            "should warn about path traversal pattern: {:?}",
+            warnings
+        );
+    }
+
+    #[test]
+    fn test_validate_files_absolute_path_rejected() {
+        let mut config = LintConfig::default();
+        config.files.include_as_generic = vec!["/etc/passwd".to_string()];
+
+        let warnings = config.validate();
+        assert!(
+            warnings
+                .iter()
+                .any(|w| w.field == "files.include_as_generic"
+                    && w.message.contains("absolute")),
+            "should warn about absolute path pattern: {:?}",
+            warnings
+        );
+
+        // Also test Windows drive letter
+        let mut config2 = LintConfig::default();
+        config2.files.exclude = vec!["C:\\Users\\secret".to_string()];
+
+        let warnings2 = config2.validate();
+        assert!(
+            warnings2
+                .iter()
+                .any(|w| w.field == "files.exclude"
+                    && w.message.contains("absolute")),
+            "should warn about Windows absolute path pattern: {:?}",
+            warnings2
+        );
+    }
+
+    #[test]
+    fn test_validate_files_pattern_count_limit() {
+        let mut config = LintConfig::default();
+        // Create 101 patterns to exceed MAX_FILE_PATTERNS (100)
+        config.files.include_as_memory = (0..101)
+            .map(|i| format!("pattern-{}.md", i))
+            .collect();
+
+        let warnings = config.validate();
+        assert!(
+            warnings
+                .iter()
+                .any(|w| w.field == "files.include_as_memory"
+                    && w.message.contains("101")
+                    && w.message.contains("100")),
+            "should warn about exceeding pattern count limit: {:?}",
+            warnings
+        );
+
+        // 100 patterns should not produce a count warning
+        let mut config2 = LintConfig::default();
+        config2.files.include_as_memory = (0..100)
+            .map(|i| format!("pattern-{}.md", i))
+            .collect();
+
+        let warnings2 = config2.validate();
+        assert!(
+            !warnings2
+                .iter()
+                .any(|w| w.message.contains("exceeds")),
+            "100 patterns should not produce a count warning: {:?}",
+            warnings2
         );
     }
 }

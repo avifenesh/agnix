@@ -821,6 +821,8 @@ fn test_vscode_files_not_set_preserves_existing() {
     );
 }
 
+// VS Code config replaces arrays entirely (not appends). If user has
+// ["a.md"] in .agnix.toml and ["b.md"] in VS Code, VS Code wins.
 #[test]
 fn test_vscode_files_merge_overrides() {
     let mut lint_config = LintConfig::default();

@@ -533,7 +533,11 @@ pub fn resolve_file_type(path: &Path, config: &LintConfig) -> FileType {
     // Compile patterns on-demand for single-file validation
     match compile_files_config(&config.files) {
         Ok(compiled) => resolve_with_compiled(path, config.root_dir.as_deref(), &compiled),
-        Err(_) => detect_file_type(path), // Fall back on invalid patterns
+        // Silent fallback is intentional: patterns are already validated at config
+        // load time (LintConfig::validate), so a compilation failure here would only
+        // occur with corrupt in-memory state. Falling back to built-in detection is
+        // the safest recovery.
+        Err(_) => detect_file_type(path),
     }
 }
 
@@ -4519,6 +4523,51 @@ Use idiomatic Rust patterns.
             resolve_file_type(Path::new("/project/dir/sub/file.md"), &config2),
             FileType::ClaudeMd,
             "dir/**/*.md should match dir/sub/file.md"
+        );
+    }
+
+    #[test]
+    fn test_resolve_file_type_case_sensitive() {
+        // Patterns are case-sensitive (FILES_MATCH_OPTIONS.case_sensitive = true).
+        // "DEVELOPER.md" should match "DEVELOPER.md" but NOT "developer.md".
+        let mut config = LintConfig::default();
+        config.files.include_as_memory = vec!["DEVELOPER.md".to_string()];
+        config.root_dir = Some(PathBuf::from("/project"));
+
+        assert_eq!(
+            resolve_file_type(Path::new("/project/DEVELOPER.md"), &config),
+            FileType::ClaudeMd,
+            "DEVELOPER.md pattern should match DEVELOPER.md"
+        );
+        assert_ne!(
+            resolve_file_type(Path::new("/project/developer.md"), &config),
+            FileType::ClaudeMd,
+            "DEVELOPER.md pattern should NOT match developer.md (case-sensitive)"
+        );
+    }
+
+    #[test]
+    fn test_resolve_file_type_double_star_recursive() {
+        // "instructions/**/*.md" should match files at arbitrary nesting depth.
+        let mut config = LintConfig::default();
+        config.files.include_as_memory = vec!["instructions/**/*.md".to_string()];
+        config.root_dir = Some(PathBuf::from("/project"));
+
+        assert_eq!(
+            resolve_file_type(Path::new("/project/instructions/sub/deep/file.md"), &config),
+            FileType::ClaudeMd,
+            "instructions/**/*.md should match instructions/sub/deep/file.md"
+        );
+        assert_eq!(
+            resolve_file_type(Path::new("/project/instructions/file.md"), &config),
+            FileType::ClaudeMd,
+            "instructions/**/*.md should match instructions/file.md"
+        );
+        // Should not match files outside the instructions directory
+        assert_ne!(
+            resolve_file_type(Path::new("/project/other/file.md"), &config),
+            FileType::ClaudeMd,
+            "instructions/**/*.md should NOT match other/file.md"
         );
     }
 }

@@ -519,7 +519,6 @@ impl LanguageServer for Backend {
             .ok()
             .map(|path| agnix_core::resolve_file_type(&path, &config))
             .unwrap_or(agnix_core::FileType::Unknown);
-        drop(config);
         if matches!(file_type, agnix_core::FileType::Unknown) {
             return Ok(None);
         }
@@ -543,7 +542,6 @@ impl LanguageServer for Backend {
 
         let config = self.config.read().await;
         let items = completion_items_for_document(&path, content.as_str(), position, &config);
-        drop(config);
         if items.is_empty() {
             Ok(None)
         } else {

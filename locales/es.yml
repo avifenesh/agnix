@@ -448,6 +448,12 @@ core:
     deprecated_mcp_version_suggestion: "Usa 'spec_revisions.mcp_protocol' en su lugar"
     invalid_files_pattern: "Patron de archivos invalido '%{pattern}': %{message}"
     invalid_files_pattern_suggestion: "Corrige la sintaxis del patron glob. Ejemplos validos: 'docs/ai-rules/*.md', '**/*.rules.md'"
+    files_path_traversal: "El patron '%{pattern}' contiene recorrido de ruta ('../'). Los patrones deben ser relativos a la raiz del proyecto sin referencias al directorio padre."
+    files_path_traversal_suggestion: "Elimina '../' del patron y usa una ruta relativa a la raiz del proyecto"
+    files_absolute_path: "El patron '%{pattern}' usa una ruta absoluta. Los patrones deben ser relativos a la raiz del proyecto."
+    files_absolute_path_suggestion: "Elimina la '/' inicial o la letra de unidad y usa una ruta relativa"
+    files_pattern_count_limit: "El campo '%{field}' tiene %{count} patrones, lo que excede el limite recomendado de %{limit}."
+    files_pattern_count_limit_suggestion: "Considera consolidar patrones o usar expresiones glob mas amplias"
     load_warning: "Error al analizar configuracion '%{path}': %{error}. Usando valores predeterminados."
 
 # ===========================================================================
