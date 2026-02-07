@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Per-client skill validation** - 10 new rules detect when SKILL.md files in client-specific directories use unsupported frontmatter fields: CR-SK-001 (Cursor), CL-SK-001 (Cline), CP-SK-001 (Copilot), CX-SK-001 (Codex), OC-SK-001 (OpenCode), WS-SK-001 (Windsurf), KR-SK-001 (Kiro), AMP-SK-001 (Amp), RC-SK-001 (Roo Code), XP-SK-001 (cross-platform portability)
+
 ## [0.10.0] - 2026-02-07
 
 ### Performance
