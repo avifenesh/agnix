@@ -84,6 +84,38 @@ rules:
     message: "动态注入过多（%{count} 个）。限制为 %{max} 个以获得更好性能"
     suggestion: "考虑将复杂逻辑移至 scripts/ 目录或减少注入"
 
+  # --- Per-Client Skills (per_client_skill.rs) ---
+  cr_sk_001:
+    message: "字段 '%{field}' 不受 %{client} 支持 -- 将被忽略"
+    suggestion: "移除 '%{field}' 或将此技能移至支持它的客户端"
+  cl_sk_001:
+    message: "字段 '%{field}' 不受 %{client} 支持 -- 将被忽略"
+    suggestion: "移除 '%{field}' 或将此技能移至支持它的客户端"
+  cp_sk_001:
+    message: "字段 '%{field}' 不受 %{client} 支持 -- 将被忽略"
+    suggestion: "移除 '%{field}' 或将此技能移至支持它的客户端"
+  cx_sk_001:
+    message: "字段 '%{field}' 不受 %{client} 支持 -- 将被忽略"
+    suggestion: "移除 '%{field}' 或将此技能移至支持它的客户端"
+  oc_sk_001:
+    message: "字段 '%{field}' 不受 %{client} 支持 -- 将被忽略"
+    suggestion: "移除 '%{field}' 或将此技能移至支持它的客户端"
+  ws_sk_001:
+    message: "字段 '%{field}' 不受 %{client} 支持 -- 将被忽略"
+    suggestion: "移除 '%{field}' 或将此技能移至支持它的客户端"
+  kr_sk_001:
+    message: "字段 '%{field}' 不受 %{client} 支持 -- 将被忽略"
+    suggestion: "移除 '%{field}' 或将此技能移至支持它的客户端"
+  amp_sk_001:
+    message: "字段 '%{field}' 不受 %{client} 支持 -- 将被忽略"
+    suggestion: "移除 '%{field}' 或将此技能移至支持它的客户端"
+  rc_sk_001:
+    message: "字段 '%{field}' 不受 %{client} 支持 -- 将被忽略"
+    suggestion: "移除 '%{field}' 或将此技能移至支持它的客户端"
+  xp_sk_001:
+    message: "技能使用了客户端特定字段 '%{field}'，该字段不属于通用 Agent Skills 规范"
+    suggestion: "考虑移除 '%{field}' 以提高跨平台可移植性"
+
   # --- Hooks (hooks/mod.rs) ---
   cc_hk_001:
     message: "无效的 hook 事件 '%{event}'，有效事件: %{valid}"
