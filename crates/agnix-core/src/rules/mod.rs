@@ -77,27 +77,23 @@ pub(crate) fn find_yaml_value_range<T: FrontmatterRanges>(
                 let after_colon_trimmed = after_colon.trim();
 
                 // Handle quoted values (# inside quotes is literal, not a comment)
-                let value_str = if after_colon_trimmed.starts_with('"') {
-                    // Find closing quote
-                    if let Some(end_quote_idx) = after_colon_trimmed[1..].find('"') {
+                let value_str = if let Some(inner) = after_colon_trimmed.strip_prefix('"') {
+                    if let Some(end_quote_idx) = inner.find('"') {
                         let quoted = &after_colon_trimmed[..end_quote_idx + 2];
                         if include_quotes {
                             quoted
                         } else {
-                            // Strip quotes
                             &quoted[1..quoted.len() - 1]
                         }
                     } else {
                         after_colon_trimmed
                     }
-                } else if after_colon_trimmed.starts_with('\'') {
-                    // Find closing quote
-                    if let Some(end_quote_idx) = after_colon_trimmed[1..].find('\'') {
+                } else if let Some(inner) = after_colon_trimmed.strip_prefix('\'') {
+                    if let Some(end_quote_idx) = inner.find('\'') {
                         let quoted = &after_colon_trimmed[..end_quote_idx + 2];
                         if include_quotes {
                             quoted
                         } else {
-                            // Strip quotes
                             &quoted[1..quoted.len() - 1]
                         }
                     } else {
