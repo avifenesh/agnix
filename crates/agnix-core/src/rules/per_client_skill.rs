@@ -42,9 +42,6 @@ const UNIVERSAL_FIELDS: &[&str] = &[
     "allowed-tools",
 ];
 
-/// Known Claude Code extension fields for reference in `is_field_supported`.
-/// Any top-level field not in UNIVERSAL_FIELDS is checked against client support.
-
 /// Check whether a client supports a given frontmatter field.
 ///
 /// Claude Code supports all extension fields. Cursor additionally supports
