@@ -84,34 +84,13 @@ fn yaml_block_byte_range(content: &str, start_line: usize) -> Option<(usize, usi
 
 /// Find the byte range of a quoted YAML value for a given key in frontmatter.
 /// Returns the range including quotes (e.g., `"true"` or `'false'`).
+/// Wrapper around the shared helper.
 fn find_yaml_quoted_value_range(
     content: &str,
     parsed: &ParsedMdcFrontmatter,
     key: &str,
 ) -> Option<(usize, usize)> {
-    for (idx, line) in parsed.raw.lines().enumerate() {
-        let trimmed = line.trim_start();
-        if let Some(rest) = trimmed.strip_prefix(key) {
-            if let Some(after_colon) = rest.trim_start().strip_prefix(':') {
-                let value_str = after_colon.split('#').next().unwrap_or("").trim();
-                // Check for quoted value
-                if (value_str.starts_with('"') && value_str.ends_with('"'))
-                    || (value_str.starts_with('\'') && value_str.ends_with('\''))
-                {
-                    // Find the absolute byte offset of this value in the full content
-                    let line_num = parsed.start_line + 1 + idx;
-                    let (line_start, _) = line_byte_range(content, line_num)?;
-                    let line_content = &content[line_start..];
-                    // Find the quoted value within this line
-                    let val_offset = line_content.find(value_str)?;
-                    let abs_start = line_start + val_offset;
-                    let abs_end = abs_start + value_str.len();
-                    return Some((abs_start, abs_end));
-                }
-            }
-        }
-    }
-    None
+    crate::rules::find_yaml_value_range(content, parsed, key, true)
 }
 
 impl Validator for CursorValidator {

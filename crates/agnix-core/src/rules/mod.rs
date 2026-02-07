@@ -27,6 +27,104 @@ pub trait Validator {
     fn validate(&self, path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic>;
 }
 
+/// Trait for frontmatter types that support value range finding.
+/// Both ParsedFrontmatter (copilot) and ParsedMdcFrontmatter (cursor) implement this.
+pub(crate) trait FrontmatterRanges {
+    fn raw_content(&self) -> &str;
+    fn start_line(&self) -> usize;
+}
+
+/// Find the byte range of a line in content (1-indexed line numbers).
+/// Returns (start_byte, end_byte) including the newline character.
+pub(crate) fn line_byte_range(content: &str, line_number: usize) -> Option<(usize, usize)> {
+    if line_number == 0 {
+        return None;
+    }
+
+    let mut current_line = 1usize;
+    let mut line_start = 0usize;
+
+    for (idx, ch) in content.char_indices() {
+        if current_line == line_number && ch == '\n' {
+            return Some((line_start, idx + 1));
+        }
+        if ch == '\n' {
+            current_line += 1;
+            line_start = idx + 1;
+        }
+    }
+
+    if current_line == line_number {
+        Some((line_start, content.len()))
+    } else {
+        None
+    }
+}
+
+/// Find the byte range of a YAML value for a given key in frontmatter.
+/// Returns the range including quotes if the value is quoted.
+/// Handles `#` comments correctly (ignores them inside quotes).
+pub(crate) fn find_yaml_value_range<T: FrontmatterRanges>(
+    full_content: &str,
+    parsed: &T,
+    key: &str,
+    include_quotes: bool,
+) -> Option<(usize, usize)> {
+
+    for (idx, line) in parsed.raw_content().lines().enumerate() {
+        let trimmed = line.trim_start();
+        if let Some(rest) = trimmed.strip_prefix(key) {
+            if let Some(after_colon) = rest.trim_start().strip_prefix(':') {
+                let after_colon_trimmed = after_colon.trim();
+
+                // Handle quoted values (# inside quotes is literal, not a comment)
+                let value_str = if after_colon_trimmed.starts_with('"') {
+                    // Find closing quote
+                    if let Some(end_quote_idx) = after_colon_trimmed[1..].find('"') {
+                        let quoted = &after_colon_trimmed[..end_quote_idx + 2];
+                        if include_quotes {
+                            quoted
+                        } else {
+                            // Strip quotes
+                            &quoted[1..quoted.len() - 1]
+                        }
+                    } else {
+                        after_colon_trimmed
+                    }
+                } else if after_colon_trimmed.starts_with('\'') {
+                    // Find closing quote
+                    if let Some(end_quote_idx) = after_colon_trimmed[1..].find('\'') {
+                        let quoted = &after_colon_trimmed[..end_quote_idx + 2];
+                        if include_quotes {
+                            quoted
+                        } else {
+                            // Strip quotes
+                            &quoted[1..quoted.len() - 1]
+                        }
+                    } else {
+                        after_colon_trimmed
+                    }
+                } else {
+                    // Unquoted value: strip comments
+                    after_colon_trimmed.split('#').next().unwrap_or("").trim()
+                };
+
+                if value_str.is_empty() {
+                    continue;
+                }
+                let line_num = parsed.start_line() + 1 + idx;
+                let (line_start, _) = line_byte_range(full_content, line_num)?;
+                let line_content = &full_content[line_start..];
+                let val_offset = line_content.find(value_str)?;
+                let abs_start = line_start + val_offset;
+                let abs_end = abs_start + value_str.len();
+                return Some((abs_start, abs_end));
+            }
+        }
+    }
+    None
+}
+
 /// Find the closest valid value for an invalid input.
 /// Returns an exact case-insensitive match first, then a substring match,
 /// or None if no plausible match is found.

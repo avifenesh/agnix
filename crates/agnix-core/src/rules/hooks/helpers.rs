@@ -599,8 +599,10 @@ pub(super) fn find_unique_json_field_line_span(
     content: &str,
     field_name: &str,
 ) -> Option<(usize, usize)> {
+    // Match only the field and its value (string, bool, null, number), not rest of line.
+    // This prevents deleting sibling properties on the same line.
     let pattern = format!(
-        r#"(?m)^[ \t]*"{}"\s*:.*,?\r?\n?"#,
+        r#"(?m)^[ \t]*"{}"\s*:\s*(?:"[^"]*"|true|false|null|\d+(?:\.\d+)?)\s*,?\r?\n?"#,
         regex::escape(field_name)
     );
     let re = Regex::new(&pattern).ok()?;

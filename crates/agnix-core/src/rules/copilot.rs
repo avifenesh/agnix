@@ -47,30 +47,14 @@ fn line_byte_range(content: &str, line_number: usize) -> Option<(usize, usize)> 
 
 /// Find the byte range of a YAML value for a given key in parsed frontmatter.
 /// Returns the value range (including quotes if present).
+/// Find the byte range of a YAML value (without quotes) for a given key.
+/// Wrapper around the shared helper for backward compatibility.
 fn find_yaml_value_range(
     content: &str,
     parsed: &crate::schemas::copilot::ParsedFrontmatter,
     key: &str,
 ) -> Option<(usize, usize)> {
-    for (idx, line) in parsed.raw.lines().enumerate() {
-        let trimmed = line.trim_start();
-        if let Some(rest) = trimmed.strip_prefix(key) {
-            if let Some(after_colon) = rest.trim_start().strip_prefix(':') {
-                let value_str = after_colon.split('#').next().unwrap_or("").trim();
-                if value_str.is_empty() {
-                    continue;
-                }
-                let line_num = parsed.start_line + 1 + idx;
-                let (line_start, _) = line_byte_range(content, line_num)?;
-                let line_content = &content[line_start..];
-                let val_offset = line_content.find(value_str)?;
-                let abs_start = line_start + val_offset;
-                let abs_end = abs_start + value_str.len();
-                return Some((abs_start, abs_end));
-            }
-        }
-    }
-    None
+    crate::rules::find_yaml_value_range(content, parsed, key, false)
 }
 
 impl Validator for CopilotValidator {
