@@ -270,3 +270,105 @@ fn docs_site_has_search_and_versioning_configuration() {
         workflow_path.display()
     );
 }
+
+// ---------------------------------------------------------------------------
+// Site data parity tests
+// ---------------------------------------------------------------------------
+
+#[derive(Debug, Deserialize)]
+struct SiteData {
+    #[serde(rename = "totalRules")]
+    total_rules: usize,
+    #[serde(rename = "categoryCount")]
+    category_count: usize,
+    #[serde(rename = "autofixCount")]
+    autofix_count: usize,
+    #[serde(rename = "uniqueTools")]
+    unique_tools: Vec<String>,
+}
+
+#[test]
+fn site_data_json_matches_rules_json() {
+    let root = workspace_root();
+    let index = load_rules_json();
+
+    let site_data_path = root.join("website/src/data/siteData.json");
+    let site_data_content = fs::read_to_string(&site_data_path)
+        .unwrap_or_else(|e| panic!("Failed to read {}: {}", site_data_path.display(), e));
+    let site_data: SiteData = serde_json::from_str(&site_data_content)
+        .unwrap_or_else(|e| panic!("Failed to parse {}: {}", site_data_path.display(), e));
+
+    assert_eq!(
+        site_data.total_rules, index.total_rules,
+        "siteData.json totalRules ({}) does not match rules.json total_rules ({})",
+        site_data.total_rules, index.total_rules
+    );
+
+    assert!(
+        !site_data.unique_tools.is_empty(),
+        "siteData.json uniqueTools should not be empty"
+    );
+
+    // Verify uniqueTools is sorted
+    let mut sorted = site_data.unique_tools.clone();
+    sorted.sort();
+    assert_eq!(
+        site_data.unique_tools, sorted,
+        "siteData.json uniqueTools must be sorted alphabetically"
+    );
+
+    // Cross-check autofix count by parsing the full rules.json
+    let rules_path = root.join("knowledge-base/rules.json");
+    let rules_content = fs::read_to_string(&rules_path)
+        .unwrap_or_else(|e| panic!("Failed to read {}: {}", rules_path.display(), e));
+    let rules_value: serde_json::Value = serde_json::from_str(&rules_content)
+        .unwrap_or_else(|e| panic!("Failed to parse {}: {}", rules_path.display(), e));
+
+    let rules_array = rules_value["rules"]
+        .as_array()
+        .expect("rules.json must have a 'rules' array");
+    let expected_autofix = rules_array
+        .iter()
+        .filter(|r| r["fix"]["autofix"].as_bool() == Some(true))
+        .count();
+    assert_eq!(
+        site_data.autofix_count, expected_autofix,
+        "siteData.json autofixCount ({}) does not match rules.json computed count ({})",
+        site_data.autofix_count, expected_autofix
+    );
+
+    // Cross-check category count
+    let categories = rules_value["categories"]
+        .as_object()
+        .expect("rules.json must have a 'categories' object");
+    assert_eq!(
+        site_data.category_count,
+        categories.len(),
+        "siteData.json categoryCount ({}) does not match rules.json categories ({})",
+        site_data.category_count,
+        categories.len()
+    );
+}
+
+#[test]
+fn index_js_imports_generated_data() {
+    let root = workspace_root();
+    let index_path = root.join("website/src/pages/index.js");
+    let content = fs::read_to_string(&index_path)
+        .unwrap_or_else(|e| panic!("Failed to read {}: {}", index_path.display(), e));
+
+    assert!(
+        content.contains("siteData"),
+        "index.js must import siteData from the generated JSON"
+    );
+
+    assert!(
+        !content.contains("'145 Validation Rules'"),
+        "index.js still contains hardcoded '145 Validation Rules' - should use siteData.totalRules"
+    );
+
+    assert!(
+        !content.contains("value: '145'"),
+        "index.js still contains hardcoded stats value: '145' - should use siteData.totalRules"
+    );
+}
