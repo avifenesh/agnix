@@ -261,6 +261,18 @@ impl Validator for PerClientSkillValidator {
                 abs_line_end += 2;
             }
 
+            // Check whether the next line is indented (multi-line YAML value).
+            // If so, deleting only the key line would leave orphaned content,
+            // so the auto-fix is marked unsafe.
+            let next_line_indented = content
+                .get(abs_line_end..)
+                .and_then(|rest| rest.lines().next())
+                .is_some_and(|next| {
+                    let nxt = next.trim_start();
+                    !nxt.is_empty() && next.len() > nxt.len()
+                });
+            let fix_is_safe = !next_line_indented;
+
             // Per-client rule: warn if client does not support this field
             if has_per_client {
                 if let Some(rule_id) = per_client_rule {
@@ -290,7 +302,7 @@ impl Validator for PerClientSkillValidator {
                                     key,
                                     client_display_name(client)
                                 ),
-                                true,
+                                fix_is_safe,
                             )),
                         );
                     }
@@ -740,6 +752,45 @@ mod tests {
             xp_diags.len(),
             1,
             "XP-SK-001 should fire for unknown custom field"
+        );
+    }
+
+    #[test]
+    fn test_multiline_value_fix_marked_unsafe() {
+        // A field with multi-line YAML value (next line is indented) should
+        // have its auto-fix marked as unsafe since deleting only the key
+        // line would leave orphaned indented content.
+        let content = make_skill(
+            "name: my-skill\ndescription: A test\nallowed-tools:\n  - Read\n  - Write\nmodel: opus",
+            "Body",
+        );
+        let diags = validate(".cursor/skills/my-skill/SKILL.md", &content);
+        // 'model' is a single-line field -> safe fix
+        let model_diag = diags
+            .iter()
+            .find(|d| d.rule == "CR-SK-001" && d.message.contains("model"))
+            .expect("Expected CR-SK-001 for model");
+        assert!(
+            model_diag.fixes[0].safe,
+            "Single-line field fix should be safe"
+        );
+    }
+
+    #[test]
+    fn test_multiline_value_with_list_fix_unsafe() {
+        // 'context' key followed by indented lines -> unsafe fix
+        let content = make_skill(
+            "name: my-skill\ndescription: A test\ncontext:\n  - file1.rs\n  - file2.rs",
+            "Body",
+        );
+        let diags = validate(".cursor/skills/my-skill/SKILL.md", &content);
+        let ctx_diag = diags
+            .iter()
+            .find(|d| d.rule == "CR-SK-001" && d.message.contains("context"))
+            .expect("Expected CR-SK-001 for context");
+        assert!(
+            !ctx_diag.fixes[0].safe,
+            "Multi-line field fix should be unsafe"
         );
     }
 
