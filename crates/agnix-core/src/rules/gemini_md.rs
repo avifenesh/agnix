@@ -72,10 +72,16 @@ impl Validator for GeminiMdValidator {
 
         // GM-003: Missing Project Context (WARNING)
         if config.is_rule_enabled("GM-003") {
-            if check_project_context(content).is_some() {
+            if let Some(issue) = check_project_context(content) {
                 diagnostics.push(
-                    Diagnostic::warning(path_buf, 1, 0, "GM-003", t!("rules.gm_003.message"))
-                        .with_suggestion(t!("rules.gm_003.suggestion")),
+                    Diagnostic::warning(
+                        path_buf,
+                        issue.line,
+                        issue.column,
+                        "GM-003",
+                        t!("rules.gm_003.message"),
+                    )
+                    .with_suggestion(t!("rules.gm_003.suggestion")),
                 );
             }
         }

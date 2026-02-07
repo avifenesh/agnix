@@ -359,14 +359,14 @@ rules:
 
   # --- Gemini CLI (gemini_md.rs) ---
   gm_001:
-    message: "Markdown invalido: %{description}"
+    message: "Markdown inválido: %{description}"
     suggestion: "Corrige el error de sintaxis markdown"
   gm_002:
     message: "No se encontraron encabezados markdown en el archivo de instrucciones GEMINI.md"
-    suggestion: "Agrega encabezados de seccion (# Titulo, ## Seccion) para mejor organizacion"
+    suggestion: "Agrega encabezados de sección (# Título, ## Sección) para mejor organización"
   gm_003:
-    message: "Falta seccion de contexto del proyecto en el archivo de instrucciones GEMINI.md"
-    suggestion: "Agrega una seccion '# Project' o '## Overview' describiendo el proposito del proyecto y la tecnologia"
+    message: "Falta sección de contexto del proyecto en el archivo de instrucciones GEMINI.md"
+    suggestion: "Agrega una sección '# Project' o '## Overview' describiendo el propósito del proyecto y la tecnología"
 
   # --- OpenCode (opencode.rs) ---
   oc_001:
