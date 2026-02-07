@@ -126,16 +126,29 @@ fn parse_paths_schema(raw: &str) -> (Option<ClaudeRuleSchema>, Option<String>) {
     if let Some(paths_value) = mapping.get(serde_yaml::Value::String("paths".to_string())) {
         match paths_value {
             serde_yaml::Value::Sequence(seq) => {
-                for item in seq {
+                for (idx, item) in seq.iter().enumerate() {
                     if let Some(s) = item.as_str() {
                         paths.push(s.to_string());
+                    } else {
+                        return (
+                            None,
+                            Some(format!("invalid type for paths[{}]: expected string", idx)),
+                        );
                     }
                 }
             }
             serde_yaml::Value::String(s) => {
                 paths.push(s.to_string());
             }
-            _ => {}
+            _ => {
+                return (
+                    None,
+                    Some(
+                        "invalid type for paths: expected string or sequence of strings"
+                            .to_string(),
+                    ),
+                );
+            }
         }
     }
 
@@ -150,6 +163,11 @@ fn find_unknown_keys(yaml: &str, start_line: usize) -> Vec<UnknownKey> {
     for (i, line) in yaml.lines().enumerate() {
         // Heuristic: top-level keys in YAML frontmatter are not indented.
         if line.starts_with(' ') || line.starts_with('\t') {
+            continue;
+        }
+
+        // Skip YAML comment lines
+        if line.trim_start().starts_with('#') {
             continue;
         }
 
@@ -283,6 +301,36 @@ paths:
         let content = "---\npaths: [\"*.ts\"]\n---\nContent";
         let result = parse_frontmatter(content).unwrap();
         assert!(result.unknown_keys.is_empty());
+    }
+
+    #[test]
+    fn test_comments_not_flagged_as_unknown_keys() {
+        let content = "---\npaths:\n  - \"*.ts\"\n# note: temporary\n---\nContent";
+        let result = parse_frontmatter(content).unwrap();
+        assert!(
+            result.unknown_keys.is_empty(),
+            "YAML comments should not be flagged as unknown keys"
+        );
+    }
+
+    #[test]
+    fn test_invalid_paths_type_number() {
+        let content = "---\npaths: 123\n---\nContent";
+        let result = parse_frontmatter(content).unwrap();
+        assert!(
+            result.parse_error.is_some(),
+            "paths: 123 should produce a parse error"
+        );
+    }
+
+    #[test]
+    fn test_invalid_paths_sequence_non_string() {
+        let content = "---\npaths:\n  - 42\n---\nContent";
+        let result = parse_frontmatter(content).unwrap();
+        assert!(
+            result.parse_error.is_some(),
+            "paths with non-string items should produce a parse error"
+        );
     }
 
     // ===== Glob Pattern Validation =====

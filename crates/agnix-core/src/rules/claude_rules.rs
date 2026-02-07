@@ -65,8 +65,18 @@ impl Validator for ClaudeRulesValidator {
             None => return diagnostics,
         };
 
-        // If there's a parse error, we can't validate further
-        if parsed.parse_error.is_some() {
+        // If there's a parse error, emit a diagnostic and return early
+        if let Some(ref parse_error) = parsed.parse_error {
+            diagnostics.push(
+                Diagnostic::error(
+                    path.to_path_buf(),
+                    parsed.start_line,
+                    0,
+                    "CC-MEM-011",
+                    format!("Invalid frontmatter: {}", parse_error),
+                )
+                .with_suggestion("Close frontmatter with a line containing only `---`."),
+            );
             return diagnostics;
         }
 
@@ -115,13 +125,15 @@ impl Validator for ClaudeRulesValidator {
                     key = unknown.key.as_str()
                 ));
 
-                // Safe auto-fix: remove unknown top-level frontmatter key line.
+                // Auto-fix: remove unknown top-level frontmatter key line.
+                // Marked unsafe because the key's value may span multiple lines
+                // (e.g. block scalars, nested maps) and we only delete the key line.
                 if let Some((start, end)) = line_byte_range(content, unknown.line) {
                     diagnostic = diagnostic.with_fix(Fix::delete(
                         start,
                         end,
                         format!("Remove unknown frontmatter key '{}'", unknown.key),
-                        true,
+                        false,
                     ));
                 }
 
@@ -134,10 +146,18 @@ impl Validator for ClaudeRulesValidator {
 }
 
 /// Find the line number of a pattern in the raw frontmatter
+///
+/// Matches YAML list items precisely by stripping the leading `- ` prefix
+/// and surrounding quotes, avoiding false matches when one pattern is a
+/// substring of another.
 fn find_pattern_line(raw: &str, pattern: &str, start_line: usize) -> Option<usize> {
     for (i, line) in raw.lines().enumerate() {
-        if line.contains(pattern) {
-            return Some(start_line + 1 + i);
+        if let Some(value_part) = line.trim().strip_prefix('-') {
+            let value = value_part.trim();
+            let value_unquoted = value.trim_matches(|c| c == '\'' || c == '"');
+            if value_unquoted == pattern {
+                return Some(start_line + 1 + i);
+            }
         }
     }
     None
@@ -252,6 +272,18 @@ paths:
         assert!(mem_011.is_empty());
     }
 
+    #[test]
+    fn test_cc_mem_011_unclosed_frontmatter() {
+        let content = "---\npaths:\n  - \"src/**/*.ts\"";
+        let diagnostics = validate_rule(content);
+        let mem_011: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-MEM-011")
+            .collect();
+        assert_eq!(mem_011.len(), 1);
+        assert!(mem_011[0].message.contains("missing closing ---"));
+    }
+
     // ===== CC-MEM-012: Unknown Frontmatter Keys =====
 
     #[test]
@@ -291,7 +323,7 @@ description: "some rule"
             .collect();
         assert_eq!(mem_012.len(), 1);
         assert!(mem_012[0].has_fixes());
-        assert!(mem_012[0].fixes[0].safe);
+        assert!(!mem_012[0].fixes[0].safe); // Unsafe: single-line delete may miss multi-line values
         assert!(mem_012[0].fixes[0].is_deletion());
     }
 

@@ -95,7 +95,7 @@ fn family_id_for_file_type(file_type: FileType) -> Option<&'static str> {
         FileType::Copilot | FileType::CopilotScoped => Some("copilot"),
         FileType::CursorRule | FileType::CursorRulesLegacy => Some("cursor"),
         FileType::ClaudeMd => Some("claude-agents"),
-        FileType::ClaudeRule => Some("claude-rules"),
+        FileType::ClaudeRule => None, // No authoring catalog entry yet
         _ => None,
     }
 }

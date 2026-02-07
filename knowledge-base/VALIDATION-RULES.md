@@ -634,7 +634,7 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 ### CC-MEM-012 [MEDIUM] Rules File Unknown Frontmatter Key
 **Requirement**: `.claude/rules/*.md` frontmatter SHOULD only contain known keys (`paths`)
 **Detection**: Parse YAML frontmatter, flag keys not in known set
-**Fix**: Auto-fix (safe) - remove unknown key line
+**Fix**: Auto-fix (unsafe) - remove unknown key line (may miss multi-line values)
 **Source**: code.claude.com/docs/en/memory
 
 ---
