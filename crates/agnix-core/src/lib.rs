@@ -414,6 +414,7 @@ pub fn detect_file_type(path: &Path) -> FileType {
 ///
 /// Used internally by `validate_project_with_registry` to avoid re-compiling
 /// glob patterns for every file during parallel validation.
+#[derive(Default)]
 pub(crate) struct CompiledFilesConfig {
     include_as_memory: Vec<glob::Pattern>,
     include_as_generic: Vec<glob::Pattern>,
@@ -425,16 +426,6 @@ impl CompiledFilesConfig {
         self.include_as_memory.is_empty()
             && self.include_as_generic.is_empty()
             && self.exclude.is_empty()
-    }
-}
-
-impl Default for CompiledFilesConfig {
-    fn default() -> Self {
-        Self {
-            include_as_memory: Vec::new(),
-            include_as_generic: Vec::new(),
-            exclude: Vec::new(),
-        }
     }
 }
 
@@ -679,10 +670,7 @@ pub fn validate_project_with_registry(
     // Pre-compile files config patterns once for the parallel walk.
     // Invalid patterns are treated as non-fatal to align with LintConfig::validate()
     // and configuration docs (they surface as warnings, not abort validation).
-    let compiled_files = Arc::new(match compile_files_config(&config.files) {
-        Ok(compiled) => compiled,
-        Err(_) => CompiledFilesConfig::default(),
-    });
+    let compiled_files = Arc::new(compile_files_config(&config.files).unwrap_or_default());
 
     let root_path = root_dir.clone();
 
