@@ -1,6 +1,7 @@
 //! Agent file validation (CC-AG-001 to CC-AG-013)
 //!
-//! Validates Claude Code subagent definitions in `.claude/agents/*.md`
+//! Validates Claude Code subagent definitions in `.claude/agents/*.md`.
+//! Includes structural validation of hooks, tool names, memory, and permissions.
 
 use crate::{
     config::LintConfig,
