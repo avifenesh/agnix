@@ -2303,6 +2303,40 @@ Agent instructions"#;
         assert_eq!(cc_ag_008.len(), 0);
     }
 
+    #[test]
+    fn test_cc_ag_008_autofix_case_insensitive() {
+        let content = "---\nname: my-agent\ndescription: A test agent\nmemory: User\n---\nAgent instructions";
+        let diagnostics = validate(content);
+        let cc_ag_008: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-AG-008")
+            .collect();
+        assert_eq!(cc_ag_008.len(), 1);
+        assert!(
+            cc_ag_008[0].has_fixes(),
+            "CC-AG-008 should have auto-fix for case mismatch"
+        );
+        let fix = &cc_ag_008[0].fixes[0];
+        assert!(!fix.safe, "CC-AG-008 fix should be unsafe");
+        assert_eq!(fix.replacement, "user", "Fix should suggest 'user'");
+    }
+
+    #[test]
+    fn test_cc_ag_008_no_autofix_nonsense() {
+        let content = "---\nname: my-agent\ndescription: A test agent\nmemory: global\n---\nAgent instructions";
+        let diagnostics = validate(content);
+        let cc_ag_008: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-AG-008")
+            .collect();
+        assert_eq!(cc_ag_008.len(), 1);
+        // "global" has no close match to user/project/local - no fix
+        assert!(
+            !cc_ag_008[0].has_fixes(),
+            "CC-AG-008 should not auto-fix nonsense values"
+        );
+    }
+
     // ===== CC-AG-009 Tests: Invalid Tool Name in Tools List =====
 
     #[test]

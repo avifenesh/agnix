@@ -1389,5 +1389,5 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 
 **Knowledge Base**: 11,036 lines, 320KB, 75+ sources
 **Certainty**: 103 HIGH, 40 MEDIUM, 2 LOW
-**Auto-Fixable**: 32 rules (22%)
+**Auto-Fixable**: 40 rules (28%)
 

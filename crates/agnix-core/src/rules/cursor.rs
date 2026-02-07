@@ -280,39 +280,39 @@ impl Validator for CursorValidator {
             // CUR-008: Invalid alwaysApply type (ERROR)
             // Must be a boolean, not a quoted string like "true" or "false"
             if config.is_rule_enabled("CUR-008") {
-                if let Some(ref always_apply) = schema.always_apply {
-                    if let crate::schemas::cursor::AlwaysApplyField::String(s) = always_apply {
-                        let always_apply_line = find_field_line(&parsed, "alwaysApply:");
+                if let Some(crate::schemas::cursor::AlwaysApplyField::String(s)) =
+                    schema.always_apply.as_ref()
+                {
+                    let always_apply_line = find_field_line(&parsed, "alwaysApply:");
 
-                        let mut diagnostic = Diagnostic::error(
-                            path.to_path_buf(),
-                            always_apply_line,
-                            0,
-                            "CUR-008",
-                            t!("rules.cur_008.message"),
-                        )
-                        .with_suggestion(t!("rules.cur_008.suggestion"));
+                    let mut diagnostic = Diagnostic::error(
+                        path.to_path_buf(),
+                        always_apply_line,
+                        0,
+                        "CUR-008",
+                        t!("rules.cur_008.message"),
+                    )
+                    .with_suggestion(t!("rules.cur_008.suggestion"));
 
-                        // Safe auto-fix: convert quoted string to boolean
-                        let lower = s.to_lowercase();
-                        if lower == "true" || lower == "false" {
-                            let bool_str = if lower == "true" { "true" } else { "false" };
-                            // Find the quoted value in the raw frontmatter
-                            if let Some((start, end)) =
-                                find_yaml_quoted_value_range(content, &parsed, "alwaysApply")
-                            {
-                                diagnostic = diagnostic.with_fix(Fix::replace(
-                                    start,
-                                    end,
-                                    bool_str,
-                                    t!("rules.cur_008.fix", value = s.as_str(), fixed = bool_str),
-                                    true,
-                                ));
-                            }
+                    // Safe auto-fix: convert quoted string to boolean
+                    let lower = s.to_lowercase();
+                    if lower == "true" || lower == "false" {
+                        let bool_str = if lower == "true" { "true" } else { "false" };
+                        // Find the quoted value in the raw frontmatter
+                        if let Some((start, end)) =
+                            find_yaml_quoted_value_range(content, &parsed, "alwaysApply")
+                        {
+                            diagnostic = diagnostic.with_fix(Fix::replace(
+                                start,
+                                end,
+                                bool_str,
+                                t!("rules.cur_008.fix", value = s.as_str(), fixed = bool_str),
+                                true,
+                            ));
                         }
-
-                        diagnostics.push(diagnostic);
                     }
+
+                    diagnostics.push(diagnostic);
                 }
             }
 
@@ -1138,6 +1138,39 @@ Body content.
         let diagnostics = validate_mdc(content);
         let cur_008: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CUR-008").collect();
         assert_eq!(cur_008.len(), 1);
+        // Arbitrary string "yes" should NOT get a fix (not "true" or "false")
+        assert!(
+            !cur_008[0].has_fixes(),
+            "CUR-008 should not auto-fix arbitrary strings"
+        );
+    }
+
+    #[test]
+    fn test_cur_008_autofix_string_true() {
+        let content = "---\ndescription: Test\nalwaysApply: \"true\"\n---\n# Rules\nBody.\n";
+        let diagnostics = validate_mdc(content);
+        let cur_008: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CUR-008").collect();
+        assert_eq!(cur_008.len(), 1);
+        assert!(cur_008[0].has_fixes(), "CUR-008 should have auto-fix for \"true\"");
+        let fix = &cur_008[0].fixes[0];
+        assert!(fix.safe, "CUR-008 fix should be safe");
+        assert_eq!(fix.replacement, "true", "Fix should convert to unquoted boolean true");
+        // Verify the fix targets the quoted value
+        let target = &content[fix.start_byte..fix.end_byte];
+        assert_eq!(target, "\"true\"", "Fix should target the quoted string");
+    }
+
+    #[test]
+    fn test_cur_008_autofix_string_false() {
+        let content = "---\ndescription: Test\nalwaysApply: \"false\"\n---\n# Rules\nBody.\n";
+        let diagnostics = validate_mdc(content);
+        let cur_008: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CUR-008").collect();
+        assert_eq!(cur_008.len(), 1);
+        assert!(cur_008[0].has_fixes(), "CUR-008 should have auto-fix for \"false\"");
+        let fix = &cur_008[0].fixes[0];
+        assert_eq!(fix.replacement, "false", "Fix should convert to unquoted boolean false");
+        let target = &content[fix.start_byte..fix.end_byte];
+        assert_eq!(target, "\"false\"", "Fix should target the quoted string");
     }
 
     // ===== CUR-009: Missing description for agent-requested rule =====

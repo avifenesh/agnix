@@ -32,6 +32,10 @@ pub trait Validator {
 /// or None if no plausible match is found.
 pub(crate) fn find_closest_value<'a>(invalid: &str, valid_values: &[&'a str]) -> Option<&'a str> {
     let lower = invalid.to_lowercase();
+    // Skip empty strings - no meaningful match possible
+    if lower.is_empty() {
+        return None;
+    }
     // Case-insensitive exact match
     for &v in valid_values {
         if v.to_lowercase() == lower {
@@ -39,12 +43,10 @@ pub(crate) fn find_closest_value<'a>(invalid: &str, valid_values: &[&'a str]) ->
         }
     }
     // Substring match (invalid contains valid or valid contains invalid)
-    for &v in valid_values {
-        if v.to_lowercase().contains(&lower) || lower.contains(&v.to_lowercase()) {
-            return Some(v);
-        }
-    }
-    None
+    valid_values
+        .iter()
+        .find(|&&v| v.to_lowercase().contains(&lower) || lower.contains(&v.to_lowercase()))
+        .copied()
 }
 
 #[cfg(test)]
@@ -83,6 +85,14 @@ mod tests {
         );
         assert_eq!(
             find_closest_value("xyz", &["code-review", "coding-agent"]),
+            None
+        );
+    }
+
+    #[test]
+    fn test_find_closest_value_empty_input() {
+        assert_eq!(
+            find_closest_value("", &["stdio", "http", "sse"]),
             None
         );
     }

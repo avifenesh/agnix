@@ -849,6 +849,18 @@ excludeAgent: "invalid-agent"
         let diagnostics = validate_scoped(content);
         let cop_005: Vec<_> = diagnostics.iter().filter(|d| d.rule == "COP-005").collect();
         assert_eq!(cop_005.len(), 1, "Mixed-case value should trigger COP-005");
+        // Case-insensitive match should produce an auto-fix
+        assert!(
+            cop_005[0].has_fixes(),
+            "COP-005 should have auto-fix for case mismatch"
+        );
+        let fix = &cop_005[0].fixes[0];
+        assert!(!fix.safe, "COP-005 fix should be unsafe");
+        assert!(
+            fix.replacement.contains("code-review"),
+            "Fix should suggest 'code-review', got: {}",
+            fix.replacement
+        );
     }
 
     #[test]
@@ -860,6 +872,25 @@ excludeAgent: "invalid-agent"
             cop_005.len(),
             1,
             "Empty excludeAgent should trigger COP-005"
+        );
+        // Empty string should NOT get a fix (no close match)
+        assert!(
+            !cop_005[0].has_fixes(),
+            "COP-005 should not auto-fix empty string"
+        );
+    }
+
+    #[test]
+    fn test_cop_005_autofix_nonsense() {
+        let content =
+            "---\napplyTo: \"**/*.ts\"\nexcludeAgent: \"nonsense\"\n---\n# Instructions\n";
+        let diagnostics = validate_scoped(content);
+        let cop_005: Vec<_> = diagnostics.iter().filter(|d| d.rule == "COP-005").collect();
+        assert_eq!(cop_005.len(), 1);
+        // "nonsense" has no close match - should NOT get a fix
+        assert!(
+            !cop_005[0].has_fixes(),
+            "COP-005 should not auto-fix nonsense values"
         );
     }
 

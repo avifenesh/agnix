@@ -3181,3 +3181,216 @@ fn test_agent_hook_timeout_policy() {
     // Agent hooks should get timeout warnings like prompt hooks
     assert_eq!(cc_hk_010.len(), 1);
 }
+
+// ===== CC-HK-013 Auto-Fix =====
+
+#[test]
+fn test_cc_hk_013_has_autofix_when_unique() {
+    let content = r#"{
+        "hooks": {
+            "Stop": [
+                {
+                    "hooks": [
+                        {
+                            "type": "prompt",
+                            "async": true,
+                            "prompt": "hello"
+                        }
+                    ]
+                }
+            ]
+        }
+    }"#;
+    let diagnostics = validate(content);
+    let cc_hk_013: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-013")
+        .collect();
+    assert_eq!(cc_hk_013.len(), 1);
+    assert!(
+        cc_hk_013[0].has_fixes(),
+        "CC-HK-013 should have auto-fix when async is unique"
+    );
+    assert!(cc_hk_013[0].fixes[0].safe, "CC-HK-013 fix should be safe");
+    assert!(
+        cc_hk_013[0].fixes[0].replacement.is_empty(),
+        "CC-HK-013 fix should be a deletion"
+    );
+}
+
+#[test]
+fn test_cc_hk_013_no_autofix_when_duplicate() {
+    // Two hooks with async - no fix due to uniqueness guard
+    let content = r#"{
+        "hooks": {
+            "Stop": [
+                {
+                    "hooks": [
+                        {
+                            "type": "prompt",
+                            "async": true,
+                            "prompt": "hello"
+                        },
+                        {
+                            "type": "prompt",
+                            "async": false,
+                            "prompt": "world"
+                        }
+                    ]
+                }
+            ]
+        }
+    }"#;
+    let diagnostics = validate(content);
+    let cc_hk_013: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-013")
+        .collect();
+    assert_eq!(cc_hk_013.len(), 2);
+    // At least one should lack a fix due to duplicate "async" fields
+    let no_fix = cc_hk_013.iter().any(|d| !d.has_fixes());
+    assert!(
+        no_fix,
+        "CC-HK-013 should not have auto-fix when async appears multiple times"
+    );
+}
+
+// ===== CC-HK-015 Auto-Fix =====
+
+#[test]
+fn test_cc_hk_015_has_autofix_when_unique() {
+    let content = r#"{
+        "hooks": {
+            "PreToolUse": [
+                {
+                    "matcher": "Bash",
+                    "hooks": [
+                        {
+                            "type": "command",
+                            "command": "echo hi",
+                            "model": "sonnet"
+                        }
+                    ]
+                }
+            ]
+        }
+    }"#;
+    let diagnostics = validate(content);
+    let cc_hk_015: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-015")
+        .collect();
+    assert_eq!(cc_hk_015.len(), 1);
+    assert!(
+        cc_hk_015[0].has_fixes(),
+        "CC-HK-015 should have auto-fix when model is unique"
+    );
+    assert!(cc_hk_015[0].fixes[0].safe, "CC-HK-015 fix should be safe");
+    assert!(
+        cc_hk_015[0].fixes[0].replacement.is_empty(),
+        "CC-HK-015 fix should be a deletion"
+    );
+}
+
+#[test]
+fn test_cc_hk_015_no_autofix_when_duplicate() {
+    let content = r#"{
+        "hooks": {
+            "PreToolUse": [
+                {
+                    "matcher": "Bash",
+                    "hooks": [
+                        {
+                            "type": "command",
+                            "command": "echo hi",
+                            "model": "sonnet"
+                        },
+                        {
+                            "type": "command",
+                            "command": "echo bye",
+                            "model": "opus"
+                        }
+                    ]
+                }
+            ]
+        }
+    }"#;
+    let diagnostics = validate(content);
+    let cc_hk_015: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-015")
+        .collect();
+    assert_eq!(cc_hk_015.len(), 2);
+    let no_fix = cc_hk_015.iter().any(|d| !d.has_fixes());
+    assert!(
+        no_fix,
+        "CC-HK-015 should not have auto-fix when model appears multiple times"
+    );
+}
+
+// ===== CC-HK-018 Auto-Fix =====
+
+#[test]
+fn test_cc_hk_018_has_autofix_when_unique() {
+    let content = r#"{
+        "hooks": {
+            "UserPromptSubmit": [
+                {
+                    "matcher": "test-tool",
+                    "hooks": [
+                        { "type": "command", "command": "echo hi" }
+                    ]
+                }
+            ]
+        }
+    }"#;
+    let diagnostics = validate(content);
+    let cc_hk_018: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-018")
+        .collect();
+    assert_eq!(cc_hk_018.len(), 1);
+    assert!(
+        cc_hk_018[0].has_fixes(),
+        "CC-HK-018 should have auto-fix when matcher is unique"
+    );
+    assert!(cc_hk_018[0].fixes[0].safe, "CC-HK-018 fix should be safe");
+    assert!(
+        cc_hk_018[0].fixes[0].replacement.is_empty(),
+        "CC-HK-018 fix should be a deletion"
+    );
+}
+
+#[test]
+fn test_cc_hk_018_no_autofix_when_duplicate_matcher() {
+    // Two matchers with same value - no fix
+    let content = r#"{
+        "hooks": {
+            "UserPromptSubmit": [
+                {
+                    "matcher": "test-tool",
+                    "hooks": [
+                        { "type": "command", "command": "echo hi" }
+                    ]
+                },
+                {
+                    "matcher": "test-tool",
+                    "hooks": [
+                        { "type": "command", "command": "echo bye" }
+                    ]
+                }
+            ]
+        }
+    }"#;
+    let diagnostics = validate(content);
+    let cc_hk_018: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-018")
+        .collect();
+    assert_eq!(cc_hk_018.len(), 2);
+    // Both should lack fixes because matcher "test-tool" appears twice
+    assert!(
+        cc_hk_018.iter().all(|d| !d.has_fixes()),
+        "CC-HK-018 should not have auto-fix when matcher is duplicated"
+    );
+}

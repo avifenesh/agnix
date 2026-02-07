@@ -1889,6 +1889,47 @@ mod tests {
         assert!(!diagnostics.iter().any(|d| d.rule == "MCP-011"));
     }
 
+    #[test]
+    fn test_mcp_011_autofix_case_insensitive() {
+        let content = r#"{
+            "mcpServers": {
+                "bad-server": {
+                    "type": "Stdio",
+                    "command": "node"
+                }
+            }
+        }"#;
+        let diagnostics = validate(content);
+        let mcp_011: Vec<_> = diagnostics.iter().filter(|d| d.rule == "MCP-011").collect();
+        assert_eq!(mcp_011.len(), 1);
+        assert!(
+            mcp_011[0].has_fixes(),
+            "MCP-011 should have auto-fix for case mismatch"
+        );
+        let fix = &mcp_011[0].fixes[0];
+        assert!(!fix.safe, "MCP-011 fix should be unsafe");
+        assert_eq!(fix.replacement, "stdio", "Fix should suggest 'stdio'");
+    }
+
+    #[test]
+    fn test_mcp_011_no_autofix_nonsense() {
+        let content = r#"{
+            "mcpServers": {
+                "bad-server": {
+                    "type": "grpc"
+                }
+            }
+        }"#;
+        let diagnostics = validate(content);
+        let mcp_011: Vec<_> = diagnostics.iter().filter(|d| d.rule == "MCP-011").collect();
+        assert_eq!(mcp_011.len(), 1);
+        // "grpc" has no close match to stdio/http/sse - no fix
+        assert!(
+            !mcp_011[0].has_fixes(),
+            "MCP-011 should not auto-fix nonsense values"
+        );
+    }
+
     // ===== MCP-012 Tests =====
 
     #[test]

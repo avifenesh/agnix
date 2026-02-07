@@ -709,4 +709,51 @@ mod tests {
         let paths = extract_script_paths("download https://example.com/script.sh");
         assert!(paths.is_empty(), "Should filter URLs");
     }
+
+    // ===== find_unique_json_field_line_span tests =====
+
+    #[test]
+    fn test_find_unique_json_field_line_span_unique() {
+        let content = r#"{
+  "type": "prompt",
+  "async": true,
+  "prompt": "hello"
+}"#;
+        let result = find_unique_json_field_line_span(content, "async");
+        assert!(result.is_some(), "Should find unique async field");
+        let (start, end) = result.unwrap();
+        let matched = &content[start..end];
+        assert!(
+            matched.contains("\"async\""),
+            "Match should contain async field, got: {:?}",
+            matched
+        );
+    }
+
+    #[test]
+    fn test_find_unique_json_field_line_span_duplicate() {
+        // Two hooks both have "async" - should return None
+        let content = r#"{
+  "hooks": {
+    "Stop": [
+      { "hooks": [{ "type": "prompt", "async": true }] },
+      { "hooks": [{ "type": "prompt", "async": false }] }
+    ]
+  }
+}"#;
+        // The field appears twice, even though it's on two different lines
+        // Our regex matches lines with "async": ... and there are two
+        let result = find_unique_json_field_line_span(content, "async");
+        assert!(
+            result.is_none(),
+            "Should return None when async appears twice"
+        );
+    }
+
+    #[test]
+    fn test_find_unique_json_field_line_span_missing() {
+        let content = r#"{ "type": "command", "command": "echo hi" }"#;
+        let result = find_unique_json_field_line_span(content, "async");
+        assert!(result.is_none(), "Should return None when field is missing");
+    }
 }
