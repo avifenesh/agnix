@@ -372,3 +372,20 @@ fn index_js_imports_generated_data() {
         "index.js still contains hardcoded stats value: '145' - should use siteData.totalRules"
     );
 }
+
+#[test]
+fn docusaurus_config_uses_generated_data() {
+    let root = workspace_root();
+    let config_path = root.join("website/docusaurus.config.js");
+    let config = fs::read_to_string(&config_path)
+        .unwrap_or_else(|e| panic!("Failed to read {}: {}", config_path.display(), e));
+
+    assert!(
+        config.contains("siteData"),
+        "docusaurus.config.js must import siteData from generated JSON"
+    );
+    assert!(
+        config.contains("siteData.totalRules"),
+        "docusaurus.config.js should use siteData.totalRules in JSON-LD description"
+    );
+}

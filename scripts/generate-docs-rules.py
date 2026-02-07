@@ -246,7 +246,8 @@ def generate_site_data(data: dict) -> None:
 
     unique_tools: set[str] = set()
     for r in rules:
-        tool = r.get("evidence", {}).get("applies_to", {}).get("tool")
+        evidence = r.get("evidence") or {}
+        tool = (evidence.get("applies_to") or {}).get("tool")
         if tool:
             unique_tools.add(tool)
 
