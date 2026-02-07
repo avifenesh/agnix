@@ -793,6 +793,8 @@ pub enum LayerType {
     ClaudeMd,
     /// Root-level AGENTS.md
     AgentsMd,
+    /// GEMINI.md or GEMINI.local.md
+    GeminiMd,
     /// Cursor rules (.cursor/rules/*.mdc)
     CursorRules,
     /// Copilot instructions (.github/copilot-instructions.md)
@@ -811,6 +813,7 @@ impl LayerType {
         match self {
             LayerType::ClaudeMd => "CLAUDE.md",
             LayerType::AgentsMd => "AGENTS.md",
+            LayerType::GeminiMd => "GEMINI[.local].md",
             LayerType::CursorRules => "Cursor Rules",
             LayerType::CopilotInstructions => "Copilot Instructions",
             LayerType::ClineRules => "Cline Rules",
@@ -847,6 +850,8 @@ pub fn categorize_layer(path: &Path, content: &str) -> InstructionLayer {
         LayerType::ClaudeMd
     } else if file_name == "agents.md" {
         LayerType::AgentsMd
+    } else if file_name == "gemini.md" || file_name == "gemini.local.md" {
+        LayerType::GeminiMd
     } else if path_str.contains(".cursor") && path_str.contains("rules") {
         LayerType::CursorRules
     } else if path_str.contains(".github") && path_str.contains("copilot") {
@@ -2211,5 +2216,19 @@ Use pnpm install for dependencies.
             !layer.has_precedence_doc,
             "Oversized content should not detect precedence for ReDoS protection"
         );
+    }
+    #[test]
+    fn test_categorize_gemini_md_variants() {
+        use std::path::PathBuf;
+        let files = ["project/GEMINI.md", "project/GEMINI.local.md"];
+        for file in files {
+            let layer = categorize_layer(&PathBuf::from(file), "# Project");
+            assert_eq!(
+                layer.layer_type,
+                LayerType::GeminiMd,
+                "Failed for file: {}",
+                file
+            );
+        }
     }
 }
