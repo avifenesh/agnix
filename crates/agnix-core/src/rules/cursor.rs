@@ -17,7 +17,8 @@ use crate::{
     diagnostics::{Diagnostic, Fix},
     rules::Validator,
     schemas::cursor::{
-        is_body_empty, is_content_empty, parse_mdc_frontmatter, validate_glob_pattern,
+        ParsedMdcFrontmatter, is_body_empty, is_content_empty, parse_mdc_frontmatter,
+        validate_glob_pattern,
     },
 };
 use rust_i18n::t;
@@ -48,6 +49,41 @@ fn line_byte_range(content: &str, line_number: usize) -> Option<(usize, usize)> 
     } else {
         None
     }
+}
+
+/// Find the 1-indexed line number of a YAML field in parsed frontmatter.
+fn find_field_line(parsed: &ParsedMdcFrontmatter, field_prefix: &str) -> usize {
+    parsed
+        .raw
+        .lines()
+        .enumerate()
+        .find(|(_, line)| line.trim_start().starts_with(field_prefix))
+        .map(|(idx, _)| parsed.start_line + 1 + idx)
+        .unwrap_or(parsed.start_line)
+}
+
+/// Get the byte range of a YAML block (key line + indented continuation lines).
+/// This is used for auto-fix deletion of multi-line fields like list-style `globs:`.
+fn yaml_block_byte_range(content: &str, start_line: usize) -> Option<(usize, usize)> {
+    let (block_start, mut block_end) = line_byte_range(content, start_line)?;
+
+    // Extend to include subsequent indented lines (list items under the key)
+    let mut current_line = start_line + 1;
+    loop {
+        if let Some((next_start, next_end)) = line_byte_range(content, current_line) {
+            let line_text = &content[next_start..next_end.min(content.len())];
+            // Stop if the line is not indented (new top-level key or closing ---)
+            if !line_text.starts_with(' ') && !line_text.starts_with('\t') {
+                break;
+            }
+            block_end = next_end;
+            current_line += 1;
+        } else {
+            break;
+        }
+    }
+
+    Some((block_start, block_end))
 }
 
 impl Validator for CursorValidator {
@@ -160,15 +196,7 @@ impl Validator for CursorValidator {
         if config.is_rule_enabled("CUR-004") {
             if let Some(ref schema) = parsed.schema {
                 if let Some(ref globs) = schema.globs {
-                    // Find the line number of the globs field for accurate diagnostics
-                    // Note: parsed.raw doesn't include the opening --- line, so we need +1
-                    let globs_line = parsed
-                        .raw
-                        .lines()
-                        .enumerate()
-                        .find(|(_, line)| line.trim_start().starts_with("globs:"))
-                        .map(|(idx, _)| parsed.start_line + 1 + idx)
-                        .unwrap_or(parsed.start_line);
+                    let globs_line = find_field_line(&parsed, "globs:");
 
                     for pattern in globs.patterns() {
                         let validation = validate_glob_pattern(pattern);
@@ -226,13 +254,7 @@ impl Validator for CursorValidator {
             if config.is_rule_enabled("CUR-008") {
                 if let Some(ref always_apply) = schema.always_apply {
                     if always_apply.is_string() {
-                        let always_apply_line = parsed
-                            .raw
-                            .lines()
-                            .enumerate()
-                            .find(|(_, line)| line.trim_start().starts_with("alwaysApply:"))
-                            .map(|(idx, _)| parsed.start_line + 1 + idx)
-                            .unwrap_or(parsed.start_line);
+                        let always_apply_line = find_field_line(&parsed, "alwaysApply:");
 
                         diagnostics.push(
                             Diagnostic::error(
@@ -258,13 +280,7 @@ impl Validator for CursorValidator {
                     .unwrap_or(false);
 
                 if is_always_apply && schema.globs.is_some() {
-                    let globs_line = parsed
-                        .raw
-                        .lines()
-                        .enumerate()
-                        .find(|(_, line)| line.trim_start().starts_with("globs:"))
-                        .map(|(idx, _)| parsed.start_line + 1 + idx)
-                        .unwrap_or(parsed.start_line);
+                    let globs_line = find_field_line(&parsed, "globs:");
 
                     let mut diagnostic = Diagnostic::warning(
                         path.to_path_buf(),
@@ -275,8 +291,8 @@ impl Validator for CursorValidator {
                     )
                     .with_suggestion(t!("rules.cur_007.suggestion"));
 
-                    // Safe auto-fix: remove the globs line
-                    if let Some((start, end)) = line_byte_range(content, globs_line) {
+                    // Safe auto-fix: remove the entire globs block (key + indented children)
+                    if let Some((start, end)) = yaml_block_byte_range(content, globs_line) {
                         diagnostic = diagnostic.with_fix(Fix::delete(
                             start,
                             end,
@@ -295,11 +311,12 @@ impl Validator for CursorValidator {
             if config.is_rule_enabled("CUR-009") {
                 let has_always_apply = schema.always_apply.is_some();
                 let has_globs = schema.globs.is_some();
-                let has_description = schema
+                let has_description = !schema
                     .description
-                    .as_ref()
-                    .map(|d| !d.trim().is_empty())
-                    .unwrap_or(false);
+                    .as_deref()
+                    .unwrap_or("")
+                    .trim()
+                    .is_empty();
 
                 if !has_always_apply && !has_globs && !has_description {
                     diagnostics.push(
@@ -953,6 +970,32 @@ Body.
         assert_eq!(
             cur_007[0].line, 4,
             "CUR-007 should point to the globs field line"
+        );
+    }
+
+    #[test]
+    fn test_cur_007_autofix_deletes_array_globs_block() {
+        // When globs is in array form, the auto-fix must delete the entire block
+        // (key line + indented list items), not just the key line
+        let content = "---\nalwaysApply: true\nglobs:\n  - \"**/*.ts\"\n  - \"**/*.tsx\"\n---\n# Rules\nBody.\n";
+        let diagnostics = validate_mdc(content);
+        let cur_007: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CUR-007").collect();
+        assert_eq!(cur_007.len(), 1);
+        assert!(cur_007[0].has_fixes());
+
+        // Apply the fix and verify the result is valid YAML
+        let fix = &cur_007[0].fixes[0];
+        let fixed = format!("{}{}", &content[..fix.start_byte], &content[fix.end_byte..]);
+        // The fixed content should not contain any globs-related lines
+        assert!(
+            !fixed.contains("globs"),
+            "Fix should remove entire globs block, got: {:?}",
+            fixed
+        );
+        assert!(
+            !fixed.contains("**/*.ts"),
+            "Fix should remove globs list items, got: {:?}",
+            fixed
         );
     }
 
