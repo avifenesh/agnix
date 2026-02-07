@@ -234,8 +234,8 @@ mod tests {
     fn test_rules_array_populated() {
         let sarif = diagnostics_to_sarif(&[], Path::new("."));
         let rules = &sarif.runs[0].tool.driver.rules;
-        // Should have 112 rules based on VALIDATION-RULES.md
-        assert_eq!(rules.len(), 112, "Expected 112 rules in SARIF driver");
+        // Should have 118 rules based on VALIDATION-RULES.md
+        assert_eq!(rules.len(), 118, "Expected 118 rules in SARIF driver");
 
         // Verify some specific rules exist
         let rule_ids: Vec<&str> = rules.iter().map(|r| r.id.as_str()).collect();

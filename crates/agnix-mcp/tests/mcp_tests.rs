@@ -208,8 +208,8 @@ mod rules_tests {
 
     #[test]
     fn test_rules_count() {
-        // Should have 112 rules (108 + 4 MCP server config rules)
-        assert_eq!(agnix_rules::rule_count(), 112);
+        // Should have 118 rules
+        assert_eq!(agnix_rules::rule_count(), 118);
     }
 
     #[test]
