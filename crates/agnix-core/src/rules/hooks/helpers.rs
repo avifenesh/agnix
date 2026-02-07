@@ -541,6 +541,8 @@ pub(super) fn validate_cc_hk_014_once_field(
 }
 
 /// CC-HK-016: Validate hook type "agent" - check for unknown types (raw JSON check)
+/// CC-HK-016: Unknown hook type (raw JSON check).
+/// Also catches non-string type values (e.g., numbers, booleans).
 pub(super) fn validate_cc_hk_016_unknown_type(
     raw_value: &serde_json::Value,
     path: &Path,
