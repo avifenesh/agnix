@@ -793,7 +793,7 @@ pub enum LayerType {
     ClaudeMd,
     /// Root-level AGENTS.md
     AgentsMd,
-    /// Root-level GEMINI.md
+    /// GEMINI.md or GEMINI.local.md
     GeminiMd,
     /// Cursor rules (.cursor/rules/*.mdc)
     CursorRules,
