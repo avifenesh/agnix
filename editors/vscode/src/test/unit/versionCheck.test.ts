@@ -1,11 +1,16 @@
 import * as assert from 'assert';
+import * as path from 'path';
 import {
   readVersionMarker,
   writeVersionMarker,
+  readVerifiedMarker,
+  writeVerifiedMarker,
+  clearVerifiedMarker,
   isDownloadedBinary,
   buildReleaseUrl,
   parseLspVersionOutput,
   VERSION_MARKER_FILE,
+  VERIFIED_MARKER_FILE,
   type VersionCheckDeps,
 } from '../../version-check';
 
@@ -36,7 +41,7 @@ describe('readVersionMarker', () => {
 
   it('returns version string when marker exists', () => {
     const deps = createMockDeps({
-      [`/storage/${VERSION_MARKER_FILE}`]: '0.9.1',
+      [path.join('/storage', VERSION_MARKER_FILE)]: '0.9.1',
     });
     const result = readVersionMarker('/storage', deps);
     assert.strictEqual(result, '0.9.1');
@@ -44,7 +49,7 @@ describe('readVersionMarker', () => {
 
   it('trims whitespace from marker content', () => {
     const deps = createMockDeps({
-      [`/storage/${VERSION_MARKER_FILE}`]: '  0.9.1\n',
+      [path.join('/storage', VERSION_MARKER_FILE)]: '  0.9.1\n',
     });
     const result = readVersionMarker('/storage', deps);
     assert.strictEqual(result, '0.9.1');
@@ -56,7 +61,7 @@ describe('writeVersionMarker', () => {
     const deps = createMockDeps();
     writeVersionMarker('/storage', '0.9.1', deps);
     assert.strictEqual(
-      deps.written[`/storage/${VERSION_MARKER_FILE}`],
+      deps.written[path.join('/storage', VERSION_MARKER_FILE)],
       '0.9.1'
     );
   });
@@ -154,5 +159,105 @@ describe('parseLspVersionOutput', () => {
       parseLspVersionOutput('Content-Length: 123\r\n'),
       null
     );
+  });
+});
+
+describe('readVerifiedMarker', () => {
+  it('returns false when marker file does not exist', () => {
+    const deps = createMockDeps();
+    assert.strictEqual(readVerifiedMarker('/storage', deps), false);
+  });
+
+  it('returns true when marker contains ok', () => {
+    const deps = createMockDeps({
+      [path.join('/storage', VERIFIED_MARKER_FILE)]: 'ok',
+    });
+    assert.strictEqual(readVerifiedMarker('/storage', deps), true);
+  });
+
+  it('returns true when marker has trailing whitespace', () => {
+    const deps = createMockDeps({
+      [path.join('/storage', VERIFIED_MARKER_FILE)]: '  ok\n',
+    });
+    assert.strictEqual(readVerifiedMarker('/storage', deps), true);
+  });
+
+  it('returns false when marker has wrong content', () => {
+    const deps = createMockDeps({
+      [path.join('/storage', VERIFIED_MARKER_FILE)]: 'bad',
+    });
+    assert.strictEqual(readVerifiedMarker('/storage', deps), false);
+  });
+
+  it('returns false when marker is empty', () => {
+    const deps = createMockDeps({
+      [path.join('/storage', VERIFIED_MARKER_FILE)]: '',
+    });
+    assert.strictEqual(readVerifiedMarker('/storage', deps), false);
+  });
+});
+
+describe('writeVerifiedMarker', () => {
+  it('writes ok to the correct path', () => {
+    const deps = createMockDeps();
+    writeVerifiedMarker('/storage', deps);
+    assert.strictEqual(
+      deps.written[path.join('/storage', VERIFIED_MARKER_FILE)],
+      'ok'
+    );
+  });
+});
+
+describe('clearVerifiedMarker', () => {
+  it('writes empty string to clear the marker', () => {
+    const deps = createMockDeps({
+      [path.join('/storage', VERIFIED_MARKER_FILE)]: 'ok',
+    });
+    clearVerifiedMarker('/storage', deps);
+    assert.strictEqual(
+      deps.written[path.join('/storage', VERIFIED_MARKER_FILE)],
+      ''
+    );
+  });
+});
+
+describe('verified marker roundtrip', () => {
+  it('write then read returns true', () => {
+    const files: Record<string, string> = {};
+    const deps: VersionCheckDeps = {
+      readFileSync: (filePath: string) => {
+        if (filePath in files) {
+          return files[filePath];
+        }
+        throw new Error('ENOENT');
+      },
+      writeFileSync: (filePath: string, data: string) => {
+        files[filePath] = data;
+      },
+    };
+
+    assert.strictEqual(readVerifiedMarker('/s', deps), false);
+    writeVerifiedMarker('/s', deps);
+    assert.strictEqual(readVerifiedMarker('/s', deps), true);
+  });
+
+  it('clear after write returns false', () => {
+    const files: Record<string, string> = {};
+    const deps: VersionCheckDeps = {
+      readFileSync: (filePath: string) => {
+        if (filePath in files) {
+          return files[filePath];
+        }
+        throw new Error('ENOENT');
+      },
+      writeFileSync: (filePath: string, data: string) => {
+        files[filePath] = data;
+      },
+    };
+
+    writeVerifiedMarker('/s', deps);
+    assert.strictEqual(readVerifiedMarker('/s', deps), true);
+    clearVerifiedMarker('/s', deps);
+    assert.strictEqual(readVerifiedMarker('/s', deps), false);
   });
 });

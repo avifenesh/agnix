@@ -14,6 +14,9 @@ import { ClientLifecycleController } from './clientLifecycle';
 import {
   readVersionMarker,
   writeVersionMarker,
+  readVerifiedMarker,
+  writeVerifiedMarker,
+  clearVerifiedMarker,
   isDownloadedBinary,
   buildReleaseUrl,
   parseLspVersionOutput,
@@ -355,6 +358,15 @@ async function downloadAndInstallLsp(version?: string): Promise<string | null> {
             `powershell -Command "Expand-Archive -Path '${downloadPath}' -DestinationPath '${storageUri.fsPath}' -Force"`,
             { timeout: 60000 }
           );
+          // Remove Mark of the Web so WDAC/AppLocker won't block the binary
+          try {
+            await execAsync(
+              `powershell -Command "Unblock-File -Path '${binaryPath}'"`,
+              { timeout: 10000 }
+            );
+          } catch {
+            outputChannel.appendLine('Unblock-File failed (may not be needed on this system)');
+          }
         } else {
           // tar extraction for .tar.gz
           await execAsync(
@@ -383,6 +395,7 @@ async function downloadAndInstallLsp(version?: string): Promise<string | null> {
     // Verify binary exists
     if (fs.existsSync(binaryPath)) {
       writeVersionMarker(storageUri.fsPath, targetVersion);
+      clearVerifiedMarker(storageUri.fsPath);
       outputChannel.appendLine(`agnix-lsp ${targetVersion} installed at: ${binaryPath}`);
       vscode.window.showInformationMessage(`agnix-lsp ${targetVersion} installed successfully`);
       return binaryPath;
@@ -433,10 +446,42 @@ async function ensureBinaryVersionMatch(
     const installedVersion = readVersionMarker(storagePath);
 
     if (installedVersion === extensionVersion) {
+      // Check if binary was already verified as executable
+      if (readVerifiedMarker(storagePath)) {
+        outputChannel.appendLine(
+          `agnix-lsp ${installedVersion} matches extension version`
+        );
+        return lspPath;
+      }
+
+      // First run or after re-download: verify the binary can actually execute
+      // (catches WDAC/AppLocker blocks on Windows)
+      const probed = await probeBinaryVersion(lspPath);
+      if (probed === extensionVersion) {
+        writeVerifiedMarker(storagePath);
+        outputChannel.appendLine(
+          `agnix-lsp ${installedVersion} matches extension version`
+        );
+        return lspPath;
+      }
+
+      // Binary exists but can't execute -- likely WDAC block. Re-download with Unblock-File.
       outputChannel.appendLine(
-        `agnix-lsp ${installedVersion} matches extension version`
+        `agnix-lsp binary cannot execute (possible Windows security policy). Re-downloading...`
       );
-      return lspPath;
+      const freshPath = await downloadAndInstallLsp(extensionVersion);
+      if (freshPath) {
+        // Verify the re-downloaded binary works
+        const freshProbed = await probeBinaryVersion(freshPath);
+        if (freshProbed === extensionVersion) {
+          writeVerifiedMarker(storagePath);
+          return freshPath;
+        }
+        outputChannel.appendLine(
+          'agnix-lsp still cannot execute after re-download. Set agnix.lspPath to a manually installed binary.'
+        );
+      }
+      return null;
     }
 
     outputChannel.appendLine(
@@ -747,7 +792,29 @@ async function startClientInternal(): Promise<LanguageClient | undefined> {
     const message = error instanceof Error ? error.message : String(error);
     outputChannel.appendLine(`Failed to start agnix-lsp: ${message}`);
     updateStatusBar('error', 'agnix (error)');
-    vscode.window.showErrorMessage(`Failed to start agnix-lsp: ${message}`);
+
+    if (process.platform === 'win32' && (message.includes('UNKNOWN') || message.includes('EPERM'))) {
+      const choice = await vscode.window.showErrorMessage(
+        'agnix-lsp blocked by Windows security policy. Install via cargo or set agnix.lspPath.',
+        'Install via cargo',
+        'Open Settings'
+      );
+      if (choice === 'Install via cargo') {
+        outputChannel.appendLine('');
+        outputChannel.appendLine('To install agnix-lsp manually:');
+        outputChannel.appendLine('  cargo install agnix-lsp');
+        outputChannel.appendLine('');
+        outputChannel.appendLine('Then set agnix.lspPath in VS Code settings to the installed binary path.');
+        outputChannel.show();
+      } else if (choice === 'Open Settings') {
+        vscode.commands.executeCommand(
+          'workbench.action.openSettings',
+          'agnix.lspPath'
+        );
+      }
+    } else {
+      vscode.window.showErrorMessage(`Failed to start agnix-lsp: ${message}`);
+    }
     return undefined;
   }
 }

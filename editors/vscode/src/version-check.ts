@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 export const VERSION_MARKER_FILE = '.agnix-lsp-version';
+export const VERIFIED_MARKER_FILE = '.agnix-lsp-verified';
 
 export interface VersionCheckDeps {
   readFileSync: (filePath: string, encoding: BufferEncoding) => string;
@@ -32,6 +33,38 @@ export function writeVersionMarker(
 ): void {
   const markerPath = path.join(storagePath, VERSION_MARKER_FILE);
   deps.writeFileSync(markerPath, version, 'utf-8');
+}
+
+export function readVerifiedMarker(
+  storagePath: string,
+  deps: VersionCheckDeps = defaultDeps
+): boolean {
+  const markerPath = path.join(storagePath, VERIFIED_MARKER_FILE);
+  try {
+    return deps.readFileSync(markerPath, 'utf-8').trim() === 'ok';
+  } catch {
+    return false;
+  }
+}
+
+export function writeVerifiedMarker(
+  storagePath: string,
+  deps: VersionCheckDeps = defaultDeps
+): void {
+  const markerPath = path.join(storagePath, VERIFIED_MARKER_FILE);
+  deps.writeFileSync(markerPath, 'ok', 'utf-8');
+}
+
+export function clearVerifiedMarker(
+  storagePath: string,
+  deps: VersionCheckDeps = defaultDeps
+): void {
+  const markerPath = path.join(storagePath, VERIFIED_MARKER_FILE);
+  try {
+    deps.writeFileSync(markerPath, '', 'utf-8');
+  } catch {
+    // Ignore if file doesn't exist
+  }
 }
 
 export function isDownloadedBinary(
