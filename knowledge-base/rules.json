@@ -1,7 +1,7 @@
 {
   "description": "Machine-readable source of truth for all validation rules. When adding a new rule, add it here AND in VALIDATION-RULES.md. CI parity tests enforce sync.",
   "version": "1.1.0",
-  "total_rules": 118,
+  "total_rules": 124,
   "last_updated": "2026-02-07",
   "schema": {
     "evidence": {
@@ -1110,6 +1110,156 @@
           "tool": "claude-code"
         },
         "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      }
+    },
+    {
+      "id": "CC-HK-013",
+      "name": "Async on Non-Command Hook",
+      "severity": "HIGH",
+      "category": "claude-hooks",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://code.claude.com/docs/en/hooks"
+        ],
+        "verified_on": "2026-02-07",
+        "applies_to": {
+          "tool": "claude-code"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      }
+    },
+    {
+      "id": "CC-HK-014",
+      "name": "Once Outside Skill/Agent Frontmatter",
+      "severity": "MEDIUM",
+      "category": "claude-hooks",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://code.claude.com/docs/en/hooks"
+        ],
+        "verified_on": "2026-02-07",
+        "applies_to": {
+          "tool": "claude-code"
+        },
+        "normative_level": "SHOULD",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      }
+    },
+    {
+      "id": "CC-HK-015",
+      "name": "Model on Command Hook",
+      "severity": "MEDIUM",
+      "category": "claude-hooks",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://code.claude.com/docs/en/hooks"
+        ],
+        "verified_on": "2026-02-07",
+        "applies_to": {
+          "tool": "claude-code"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      }
+    },
+    {
+      "id": "CC-HK-016",
+      "name": "Validate Hook Type Agent",
+      "severity": "HIGH",
+      "category": "claude-hooks",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://code.claude.com/docs/en/hooks"
+        ],
+        "verified_on": "2026-02-07",
+        "applies_to": {
+          "tool": "claude-code"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      }
+    },
+    {
+      "id": "CC-HK-017",
+      "name": "Prompt/Agent Hook Missing $ARGUMENTS",
+      "severity": "MEDIUM",
+      "category": "claude-hooks",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://code.claude.com/docs/en/hooks"
+        ],
+        "verified_on": "2026-02-07",
+        "applies_to": {
+          "tool": "claude-code"
+        },
+        "normative_level": "SHOULD",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      }
+    },
+    {
+      "id": "CC-HK-018",
+      "name": "Matcher on UserPromptSubmit/Stop",
+      "severity": "LOW",
+      "category": "claude-hooks",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://code.claude.com/docs/en/hooks"
+        ],
+        "verified_on": "2026-02-07",
+        "applies_to": {
+          "tool": "claude-code"
+        },
+        "normative_level": "BEST_PRACTICE",
         "tests": {
           "unit": true,
           "fixtures": true,

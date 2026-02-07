@@ -1,0 +1,18 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          { "type": "prompt", "prompt": "Summarize session", "async": true }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          { "type": "agent", "prompt": "Review the work $ARGUMENTS", "async": true }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          { "type": "prompt", "prompt": "Summarize what happened in this session" },
+          { "type": "prompt", "prompt": "Review the changes: $ARGUMENTS" }
+        ]
+      }
+    ]
+  }
+}

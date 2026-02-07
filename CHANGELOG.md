@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- CC-HK-013: `async` field only valid on command hooks (error)
+- CC-HK-014: `once` field only meaningful in skill/agent frontmatter (warning)
+- CC-HK-015: `model` field only valid on prompt/agent hooks (warning)
+- CC-HK-016: Unknown hook type validation, recognizes `agent` type (error)
+- CC-HK-017: Prompt/agent hooks missing `$ARGUMENTS` reference (warning)
+- CC-HK-018: Matcher on `UserPromptSubmit`/`Stop` events silently ignored (info)
 - CC-AG-008: Validate `memory` scope is `user`, `project`, or `local`
 - CC-AG-009: Validate tool names in agent `tools` list
 - CC-AG-010: Validate tool names in agent `disallowedTools` list
@@ -355,7 +361,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Quick-fix code actions from Fix objects
   - Hover documentation for frontmatter fields
   - Document content caching for performance
-  - Supports all 118 agnix validation rules with severity mapping
+  - Supports all 124 agnix validation rules with severity mapping
   - Workspace boundary validation for security (prevents path traversal)
   - Config caching optimization for performance
   - Editor support for VS Code, Neovim, Helix, and other LSP-compatible editors
@@ -369,7 +375,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Case-insensitive tool name matching
   - Takes precedence over legacy `target` field for flexibility
 - VS Code extension with full LSP integration (#22)
-  - Real-time diagnostics for all 118 validation rules
+  - Real-time diagnostics for all 124 validation rules
   - Status bar indicator showing agnix validation status
   - Syntax highlighting for SKILL.md YAML frontmatter
   - Commands: 'Restart Language Server' and 'Show Output Channel'

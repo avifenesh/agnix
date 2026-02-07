@@ -1,0 +1,12 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          { "type": "command", "command": "echo test", "model": "claude-sonnet-4-5-20250929" }
+        ]
+      }
+    ]
+  }
+}

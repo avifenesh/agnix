@@ -1022,6 +1022,7 @@ fn test_fixture_missing_matcher() {
 
 #[test]
 fn test_cc_hk_004_matcher_on_stop() {
+    // Stop events with matchers are handled by CC-HK-018 (info), not CC-HK-004 (error)
     let content = r#"{
             "hooks": {
                 "Stop": [
@@ -1040,10 +1041,14 @@ fn test_cc_hk_004_matcher_on_stop() {
         .iter()
         .filter(|d| d.rule == "CC-HK-004")
         .collect();
+    let cc_hk_018: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-018")
+        .collect();
 
-    assert_eq!(cc_hk_004.len(), 1);
-    assert_eq!(cc_hk_004[0].level, DiagnosticLevel::Error);
-    assert!(cc_hk_004[0].message.contains("must not have a matcher"));
+    assert_eq!(cc_hk_004.len(), 0, "Stop should not trigger CC-HK-004");
+    assert_eq!(cc_hk_018.len(), 1, "Stop should trigger CC-HK-018");
+    assert_eq!(cc_hk_018[0].level, DiagnosticLevel::Info);
 }
 
 #[test]
@@ -1097,7 +1102,7 @@ fn test_cc_hk_004_no_matcher_on_stop_ok() {
 fn test_cc_hk_004_has_safe_fix_when_unique_matcher_line() {
     let content = r#"{
             "hooks": {
-                "Stop": [
+                "SessionStart": [
                     {
                         "matcher": "Bash",
                         "hooks": [
@@ -1130,8 +1135,16 @@ fn test_fixture_matcher_on_wrong_event() {
         .iter()
         .filter(|d| d.rule == "CC-HK-004")
         .collect();
-    // Stop, SubagentStop, UserPromptSubmit, SessionStart all have matchers incorrectly
-    assert_eq!(cc_hk_004.len(), 4);
+    // SubagentStop and SessionStart trigger CC-HK-004
+    // Stop and UserPromptSubmit are handled by CC-HK-018 instead
+    assert_eq!(cc_hk_004.len(), 2);
+
+    let cc_hk_018: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-018")
+        .collect();
+    // Stop and UserPromptSubmit trigger CC-HK-018
+    assert_eq!(cc_hk_018.len(), 2);
 }
 
 // ===== CC-HK-005 Tests: Missing Type Field =====
@@ -1425,7 +1438,7 @@ fn test_cc_hk_010_prompt_hook_no_timeout() {
 
     assert_eq!(cc_hk_010.len(), 1);
     assert_eq!(cc_hk_010[0].level, DiagnosticLevel::Warning);
-    assert!(cc_hk_010[0].message.contains("Prompt hook"));
+    assert!(cc_hk_010[0].message.contains("Prompt/agent hook"));
 }
 
 #[test]
@@ -2349,7 +2362,8 @@ fn test_cc_hk_003_all_tool_events_require_matcher() {
 
 #[test]
 fn test_cc_hk_004_non_tool_events_reject_matcher() {
-    let non_tool_events = ["Stop", "SubagentStop", "SessionStart"];
+    // Stop and UserPromptSubmit are handled by CC-HK-018 instead
+    let non_tool_events = ["SubagentStop", "SessionStart"];
 
     for event in non_tool_events {
         let content = format!(
@@ -2448,4 +2462,722 @@ fn test_cc_hk_002_prompt_disallowed_events() {
             event
         );
     }
+}
+
+// ===== CC-HK-013 Tests: Async on Non-Command Hook =====
+
+#[test]
+fn test_cc_hk_013_async_on_prompt_hook() {
+    let content = r#"{
+            "hooks": {
+                "Stop": [
+                    {
+                        "hooks": [
+                            { "type": "prompt", "prompt": "Summarize $ARGUMENTS", "async": true }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+    let diagnostics = validate(content);
+    let cc_hk_013: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-013")
+        .collect();
+
+    assert_eq!(cc_hk_013.len(), 1);
+    assert_eq!(cc_hk_013[0].level, DiagnosticLevel::Error);
+    assert!(cc_hk_013[0].message.contains("async"));
+    assert!(cc_hk_013[0].message.contains("prompt"));
+}
+
+#[test]
+fn test_cc_hk_013_async_on_agent_hook() {
+    let content = r#"{
+            "hooks": {
+                "Stop": [
+                    {
+                        "hooks": [
+                            { "type": "agent", "prompt": "Review $ARGUMENTS", "async": true }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+    let diagnostics = validate(content);
+    let cc_hk_013: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-013")
+        .collect();
+
+    assert_eq!(cc_hk_013.len(), 1);
+    assert!(cc_hk_013[0].message.contains("agent"));
+}
+
+#[test]
+fn test_cc_hk_013_async_on_command_hook_ok() {
+    let content = r#"{
+            "hooks": {
+                "PreToolUse": [
+                    {
+                        "matcher": "Bash",
+                        "hooks": [
+                            { "type": "command", "command": "echo test", "async": true }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+    let diagnostics = validate(content);
+    let cc_hk_013: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-013")
+        .collect();
+
+    assert_eq!(cc_hk_013.len(), 0);
+}
+
+#[test]
+fn test_fixture_async_on_non_command() {
+    let content = include_str!(
+        "../../../../../tests/fixtures/invalid/hooks/async-on-non-command/settings.json"
+    );
+    let diagnostics = validate(content);
+    let cc_hk_013: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-013")
+        .collect();
+    // prompt and agent hooks both have async
+    assert_eq!(cc_hk_013.len(), 2);
+}
+
+// ===== CC-HK-014 Tests: Once Outside Skill/Agent Frontmatter =====
+
+#[test]
+fn test_cc_hk_014_once_in_settings() {
+    let content = r#"{
+            "hooks": {
+                "Stop": [
+                    {
+                        "hooks": [
+                            { "type": "command", "command": "echo done", "once": true }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+    let diagnostics = validate(content);
+    let cc_hk_014: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-014")
+        .collect();
+
+    assert_eq!(cc_hk_014.len(), 1);
+    assert_eq!(cc_hk_014[0].level, DiagnosticLevel::Warning);
+    assert!(cc_hk_014[0].message.contains("once"));
+}
+
+#[test]
+fn test_cc_hk_014_no_once_ok() {
+    let content = r#"{
+            "hooks": {
+                "Stop": [
+                    {
+                        "hooks": [
+                            { "type": "command", "command": "echo done" }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+    let diagnostics = validate(content);
+    let cc_hk_014: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-014")
+        .collect();
+
+    assert_eq!(cc_hk_014.len(), 0);
+}
+
+#[test]
+fn test_fixture_once_in_settings() {
+    let content =
+        include_str!("../../../../../tests/fixtures/invalid/hooks/once-in-settings/settings.json");
+    let diagnostics = validate(content);
+    let cc_hk_014: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-014")
+        .collect();
+    // Two hooks with once field
+    assert_eq!(cc_hk_014.len(), 2);
+}
+
+// ===== CC-HK-015 Tests: Model on Command Hook =====
+
+#[test]
+fn test_cc_hk_015_model_on_command() {
+    let content = r#"{
+            "hooks": {
+                "PreToolUse": [
+                    {
+                        "matcher": "Bash",
+                        "hooks": [
+                            { "type": "command", "command": "echo test", "model": "claude-sonnet-4-5-20250929" }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+    let diagnostics = validate(content);
+    let cc_hk_015: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-015")
+        .collect();
+
+    assert_eq!(cc_hk_015.len(), 1);
+    assert_eq!(cc_hk_015[0].level, DiagnosticLevel::Warning);
+    assert!(cc_hk_015[0].message.contains("model"));
+}
+
+#[test]
+fn test_cc_hk_015_model_on_prompt_ok() {
+    let content = r#"{
+            "hooks": {
+                "Stop": [
+                    {
+                        "hooks": [
+                            { "type": "prompt", "prompt": "Summarize $ARGUMENTS", "model": "claude-sonnet-4-5-20250929" }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+    let diagnostics = validate(content);
+    let cc_hk_015: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-015")
+        .collect();
+
+    assert_eq!(cc_hk_015.len(), 0);
+}
+
+#[test]
+fn test_cc_hk_015_model_on_agent_ok() {
+    let content = r#"{
+            "hooks": {
+                "Stop": [
+                    {
+                        "hooks": [
+                            { "type": "agent", "prompt": "Review $ARGUMENTS", "model": "claude-sonnet-4-5-20250929" }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+    let diagnostics = validate(content);
+    let cc_hk_015: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-015")
+        .collect();
+
+    assert_eq!(cc_hk_015.len(), 0);
+}
+
+#[test]
+fn test_cc_hk_015_no_model_on_command_ok() {
+    let content = r#"{
+            "hooks": {
+                "PreToolUse": [
+                    {
+                        "matcher": "Bash",
+                        "hooks": [
+                            { "type": "command", "command": "echo test" }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+    let diagnostics = validate(content);
+    let cc_hk_015: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-015")
+        .collect();
+
+    assert_eq!(cc_hk_015.len(), 0);
+}
+
+#[test]
+fn test_fixture_model_on_command() {
+    let content =
+        include_str!("../../../../../tests/fixtures/invalid/hooks/model-on-command/settings.json");
+    let diagnostics = validate(content);
+    let cc_hk_015: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-015")
+        .collect();
+    assert_eq!(cc_hk_015.len(), 1);
+}
+
+// ===== CC-HK-016 Tests: Validate Hook Type Agent =====
+
+#[test]
+fn test_cc_hk_016_agent_type_valid() {
+    let content = r#"{
+            "hooks": {
+                "Stop": [
+                    {
+                        "hooks": [
+                            { "type": "agent", "prompt": "Review $ARGUMENTS" }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+    let diagnostics = validate(content);
+    let cc_hk_016: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-016")
+        .collect();
+
+    assert_eq!(cc_hk_016.len(), 0);
+}
+
+#[test]
+fn test_cc_hk_016_unknown_type() {
+    let content = r#"{
+            "hooks": {
+                "Stop": [
+                    {
+                        "hooks": [
+                            { "type": "webhook", "url": "https://example.com" }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+    let diagnostics = validate(content);
+    let cc_hk_016: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-016")
+        .collect();
+
+    assert_eq!(cc_hk_016.len(), 1);
+    assert_eq!(cc_hk_016[0].level, DiagnosticLevel::Error);
+    assert!(cc_hk_016[0].message.contains("webhook"));
+}
+
+#[test]
+fn test_cc_hk_016_command_and_prompt_still_valid() {
+    let content = r#"{
+            "hooks": {
+                "Stop": [
+                    {
+                        "hooks": [
+                            { "type": "command", "command": "echo done" },
+                            { "type": "prompt", "prompt": "Summarize $ARGUMENTS" }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+    let diagnostics = validate(content);
+    let cc_hk_016: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-016")
+        .collect();
+
+    assert_eq!(cc_hk_016.len(), 0);
+}
+
+#[test]
+fn test_fixture_unknown_hook_type() {
+    let content =
+        include_str!("../../../../../tests/fixtures/invalid/hooks/unknown-hook-type/settings.json");
+    let diagnostics = validate(content);
+    let cc_hk_016: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-016")
+        .collect();
+    assert_eq!(cc_hk_016.len(), 1);
+}
+
+#[test]
+fn test_cc_hk_016_non_string_type() {
+    let content = r#"{
+            "hooks": {
+                "Stop": [
+                    {
+                        "hooks": [
+                            { "type": 123, "command": "echo bad" }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+    let diagnostics = validate(content);
+    let cc_hk_016: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-016")
+        .collect();
+
+    assert_eq!(
+        cc_hk_016.len(),
+        1,
+        "Non-string type value should trigger CC-HK-016"
+    );
+}
+
+// ===== CC-HK-017 Tests: Prompt Hook Missing $ARGUMENTS =====
+
+#[test]
+fn test_cc_hk_017_prompt_missing_arguments() {
+    let content = r#"{
+            "hooks": {
+                "Stop": [
+                    {
+                        "hooks": [
+                            { "type": "prompt", "prompt": "Summarize what happened in this session" }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+    let diagnostics = validate(content);
+    let cc_hk_017: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-017")
+        .collect();
+
+    assert_eq!(cc_hk_017.len(), 1);
+    assert_eq!(cc_hk_017[0].level, DiagnosticLevel::Warning);
+    assert!(cc_hk_017[0].message.contains("$ARGUMENTS"));
+}
+
+#[test]
+fn test_cc_hk_017_prompt_with_arguments_ok() {
+    let content = r#"{
+            "hooks": {
+                "Stop": [
+                    {
+                        "hooks": [
+                            { "type": "prompt", "prompt": "Summarize: $ARGUMENTS" }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+    let diagnostics = validate(content);
+    let cc_hk_017: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-017")
+        .collect();
+
+    assert_eq!(cc_hk_017.len(), 0);
+}
+
+#[test]
+fn test_cc_hk_017_agent_missing_arguments() {
+    let content = r#"{
+            "hooks": {
+                "Stop": [
+                    {
+                        "hooks": [
+                            { "type": "agent", "prompt": "Review the session" }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+    let diagnostics = validate(content);
+    let cc_hk_017: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-017")
+        .collect();
+
+    assert_eq!(cc_hk_017.len(), 1);
+}
+
+#[test]
+fn test_cc_hk_017_agent_with_arguments_ok() {
+    let content = r#"{
+            "hooks": {
+                "Stop": [
+                    {
+                        "hooks": [
+                            { "type": "agent", "prompt": "Review: $ARGUMENTS" }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+    let diagnostics = validate(content);
+    let cc_hk_017: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-017")
+        .collect();
+
+    assert_eq!(cc_hk_017.len(), 0);
+}
+
+#[test]
+fn test_cc_hk_017_no_prompt_field_no_trigger() {
+    // Missing prompt field should not trigger CC-HK-017 (that's CC-HK-007's job)
+    let content = r#"{
+            "hooks": {
+                "Stop": [
+                    {
+                        "hooks": [
+                            { "type": "prompt" }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+    let diagnostics = validate(content);
+    let cc_hk_017: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-017")
+        .collect();
+
+    assert_eq!(cc_hk_017.len(), 0);
+}
+
+#[test]
+fn test_fixture_prompt_missing_arguments() {
+    let content = include_str!(
+        "../../../../../tests/fixtures/invalid/hooks/prompt-missing-arguments/settings.json"
+    );
+    let diagnostics = validate(content);
+    let cc_hk_017: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-017")
+        .collect();
+    // First prompt lacks $ARGUMENTS, second has it
+    assert_eq!(cc_hk_017.len(), 1);
+}
+
+// ===== CC-HK-018 Tests: Matcher on UserPromptSubmit/Stop =====
+
+#[test]
+fn test_cc_hk_018_matcher_on_user_prompt_submit() {
+    let content = r#"{
+            "hooks": {
+                "UserPromptSubmit": [
+                    {
+                        "matcher": "Bash",
+                        "hooks": [
+                            { "type": "command", "command": "echo submitted" }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+    let diagnostics = validate(content);
+    let cc_hk_018: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-018")
+        .collect();
+
+    assert_eq!(cc_hk_018.len(), 1);
+    assert_eq!(cc_hk_018[0].level, DiagnosticLevel::Info);
+    assert!(cc_hk_018[0].message.contains("silently ignored"));
+    assert!(cc_hk_018[0].message.contains("UserPromptSubmit"));
+}
+
+#[test]
+fn test_cc_hk_018_matcher_on_stop() {
+    let content = r#"{
+            "hooks": {
+                "Stop": [
+                    {
+                        "matcher": "Bash",
+                        "hooks": [
+                            { "type": "command", "command": "echo done" }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+    let diagnostics = validate(content);
+    let cc_hk_018: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-018")
+        .collect();
+
+    assert_eq!(cc_hk_018.len(), 1);
+    assert!(cc_hk_018[0].message.contains("Stop"));
+}
+
+#[test]
+fn test_cc_hk_018_matcher_on_pretooluse_ok() {
+    // PreToolUse is a tool event - matcher is expected
+    let content = r#"{
+            "hooks": {
+                "PreToolUse": [
+                    {
+                        "matcher": "Bash",
+                        "hooks": [
+                            { "type": "command", "command": "echo test" }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+    let diagnostics = validate(content);
+    let cc_hk_018: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-018")
+        .collect();
+
+    assert_eq!(cc_hk_018.len(), 0);
+}
+
+#[test]
+fn test_cc_hk_018_no_matcher_ok() {
+    let content = r#"{
+            "hooks": {
+                "UserPromptSubmit": [
+                    {
+                        "hooks": [
+                            { "type": "command", "command": "echo submitted" }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+    let diagnostics = validate(content);
+    let cc_hk_018: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-018")
+        .collect();
+
+    assert_eq!(cc_hk_018.len(), 0);
+}
+
+#[test]
+fn test_fixture_matcher_on_ignored_event() {
+    let content = include_str!(
+        "../../../../../tests/fixtures/invalid/hooks/matcher-on-ignored-event/settings.json"
+    );
+    let diagnostics = validate(content);
+    let cc_hk_018: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-018")
+        .collect();
+    // UserPromptSubmit and Stop both have matchers
+    assert_eq!(cc_hk_018.len(), 2);
+}
+
+// ===== CC-HK-016: Agent Hook Integration Tests =====
+
+#[test]
+fn test_agent_hook_on_stop_valid() {
+    let content = r#"{
+            "hooks": {
+                "Stop": [
+                    {
+                        "hooks": [
+                            { "type": "agent", "prompt": "Review session $ARGUMENTS", "timeout": 30 }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+    let diagnostics = validate(content);
+    // Should not trigger CC-HK-016 (valid type)
+    assert!(!diagnostics.iter().any(|d| d.rule == "CC-HK-016"));
+    // Should not trigger CC-HK-002 (agent allowed on Stop)
+    assert!(!diagnostics.iter().any(|d| d.rule == "CC-HK-002"));
+}
+
+#[test]
+fn test_agent_hook_on_pretooluse_wrong_event() {
+    let content = r#"{
+            "hooks": {
+                "PreToolUse": [
+                    {
+                        "matcher": "Bash",
+                        "hooks": [
+                            { "type": "agent", "prompt": "Review $ARGUMENTS", "timeout": 30 }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+    let diagnostics = validate(content);
+    // Should trigger CC-HK-002 (agent not allowed on PreToolUse)
+    let cc_hk_002: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-002")
+        .collect();
+    assert_eq!(cc_hk_002.len(), 1);
+}
+
+#[test]
+fn test_agent_hook_missing_prompt() {
+    let content = r#"{
+            "hooks": {
+                "Stop": [
+                    {
+                        "hooks": [
+                            { "type": "agent" }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+    let diagnostics = validate(content);
+    let cc_hk_007: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-007")
+        .collect();
+    assert_eq!(cc_hk_007.len(), 1);
+}
+
+#[test]
+fn test_agent_hook_timeout_policy() {
+    let content = r#"{
+            "hooks": {
+                "Stop": [
+                    {
+                        "hooks": [
+                            { "type": "agent", "prompt": "Review $ARGUMENTS" }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+    let diagnostics = validate(content);
+    let cc_hk_010: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-010")
+        .collect();
+    // Agent hooks should get timeout warnings like prompt hooks
+    assert_eq!(cc_hk_010.len(), 1);
 }

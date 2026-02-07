@@ -35,6 +35,8 @@ pub enum Hook {
         command: Option<String>,
         #[serde(skip_serializing_if = "Option::is_none")]
         timeout: Option<u64>,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        model: Option<String>,
     },
     #[serde(rename = "prompt")]
     Prompt {
@@ -42,6 +44,17 @@ pub enum Hook {
         prompt: Option<String>,
         #[serde(skip_serializing_if = "Option::is_none")]
         timeout: Option<u64>,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        model: Option<String>,
+    },
+    #[serde(rename = "agent")]
+    Agent {
+        #[serde(skip_serializing_if = "Option::is_none")]
+        prompt: Option<String>,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        timeout: Option<u64>,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        model: Option<String>,
     },
 }
 
@@ -61,13 +74,13 @@ impl Hook {
     pub fn command(&self) -> Option<&str> {
         match self {
             Hook::Command { command, .. } => command.as_deref(),
-            Hook::Prompt { .. } => None,
+            Hook::Prompt { .. } | Hook::Agent { .. } => None,
         }
     }
 
     pub fn prompt(&self) -> Option<&str> {
         match self {
-            Hook::Prompt { prompt, .. } => prompt.as_deref(),
+            Hook::Prompt { prompt, .. } | Hook::Agent { prompt, .. } => prompt.as_deref(),
             Hook::Command { .. } => None,
         }
     }
@@ -78,6 +91,18 @@ impl Hook {
 
     pub fn is_prompt(&self) -> bool {
         matches!(self, Hook::Prompt { .. })
+    }
+
+    pub fn is_agent(&self) -> bool {
+        matches!(self, Hook::Agent { .. })
+    }
+
+    pub fn type_name(&self) -> &'static str {
+        match self {
+            Hook::Command { .. } => "command",
+            Hook::Prompt { .. } => "prompt",
+            Hook::Agent { .. } => "agent",
+        }
     }
 }
 

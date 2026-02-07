@@ -17,7 +17,14 @@
     "Stop": [
       {
         "hooks": [
-          { "type": "prompt", "prompt": "Summarize the work done in this session", "timeout": 30 }
+          { "type": "prompt", "prompt": "Summarize the work done in this session $ARGUMENTS", "timeout": 30 }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          { "type": "agent", "prompt": "Review the subagent output $ARGUMENTS", "timeout": 30 }
         ]
       }
     ],

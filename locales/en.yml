@@ -108,7 +108,7 @@ rules:
     message: "Invalid hook event '%{event}', valid events: %{valid}"
     fix: "Replace '%{old}' with '%{new}'"
   cc_hk_002:
-    message: "Prompt hook at %{location} is only allowed for Stop and SubagentStop events, not '%{event}'"
+    message: "Prompt/agent hook at %{location} is only allowed for Stop and SubagentStop events, not '%{event}'"
     suggestion: "Use 'type': 'command' instead, or move this hook to Stop/SubagentStop"
   cc_hk_003:
     message: "Tool event '%{event}' at %{location} requires a matcher field"
@@ -118,12 +118,12 @@ rules:
     suggestion: "Remove the 'matcher' field"
   cc_hk_005:
     message: "Hook at %{location} is missing required 'type' field"
-    suggestion: "Add 'type': 'command' or 'type': 'prompt'"
+    suggestion: "Add 'type': 'command', 'type': 'prompt', or 'type': 'agent'"
   cc_hk_006:
     message: "Command hook at %{location} is missing required 'command' field"
     suggestion: "Add a 'command' field with the command to execute"
   cc_hk_007:
-    message: "Prompt hook at %{location} is missing required 'prompt' field"
+    message: "Prompt/agent hook at %{location} is missing required 'prompt' field"
     suggestion: "Add a 'prompt' field with the prompt text"
   cc_hk_008:
     message: "Script file not found at '%{script}' (resolved to '%{resolved}')"
@@ -136,9 +136,9 @@ rules:
     command_no_timeout_suggestion: "Add a \"timeout\" field (e.g., 600 for command hooks)"
     command_exceeds: "Command hook at %{location} has timeout %{timeout}s exceeding %{default}s default"
     command_exceeds_suggestion: "Consider timeout <= %{default}s (10-minute default limit)"
-    prompt_no_timeout: "Prompt hook at %{location} has no timeout specified"
-    prompt_no_timeout_suggestion: "Add a \"timeout\" field (e.g., 30 for prompt hooks)"
-    prompt_exceeds: "Prompt hook at %{location} has timeout %{timeout}s exceeding %{default}s default"
+    prompt_no_timeout: "Prompt/agent hook at %{location} has no timeout specified"
+    prompt_no_timeout_suggestion: "Add a \"timeout\" field (e.g., 30 for prompt/agent hooks)"
+    prompt_exceeds: "Prompt/agent hook at %{location} has timeout %{timeout}s exceeding %{default}s default"
     prompt_exceeds_suggestion: "Consider timeout <= %{default}s (30-second default limit)"
     assumption: "Assumes Claude Code default timeout behavior. Pin claude_code version in .agnix.toml [tool_versions] for version-specific validation."
   cc_hk_011:
@@ -146,6 +146,24 @@ rules:
     suggestion: "Set timeout to a positive integer like 30"
   cc_hk_012:
     message: "Failed to parse hooks configuration: %{error}"
+  cc_hk_013:
+    message: "async field is only valid on command hooks, not %{hook_type} hooks at %{location}"
+    suggestion: "Remove the async field or change the hook type to command"
+  cc_hk_014:
+    message: "once field at %{location} is only meaningful in skill/agent frontmatter hooks"
+    suggestion: "Remove the once field from settings.json hooks"
+  cc_hk_015:
+    message: "model field is only valid on prompt/agent hooks, not command hooks at %{location}"
+    suggestion: "Remove the model field or change the hook type to prompt/agent"
+  cc_hk_016:
+    message: "Unknown hook type '%{hook_type}' at %{location}"
+    suggestion: "Valid hook types are: command, prompt, agent"
+  cc_hk_017:
+    message: "Prompt/agent hook at %{location} does not reference $ARGUMENTS"
+    suggestion: "Include $ARGUMENTS in the prompt to receive event context"
+  cc_hk_018:
+    message: "Matcher at %{location} is silently ignored for '%{event}' events"
+    suggestion: "Remove the matcher field as it has no effect on %{event} events"
 
   # --- MCP (mcp.rs) ---
   mcp_001:

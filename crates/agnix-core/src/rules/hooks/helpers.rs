@@ -285,6 +285,7 @@ pub(super) fn validate_cc_hk_003_matcher_required(
 }
 
 /// CC-HK-004: Matcher on non-tool event
+/// Note: Stop and UserPromptSubmit are handled by CC-HK-018 instead (info-level).
 pub(super) fn validate_cc_hk_004_matcher_forbidden(
     event: &str,
     matcher: &Option<String>,
@@ -293,7 +294,10 @@ pub(super) fn validate_cc_hk_004_matcher_forbidden(
     content: &str,
     diagnostics: &mut Vec<Diagnostic>,
 ) {
-    if !HooksSchema::is_tool_event(event) && matcher.is_some() {
+    // Skip events handled by CC-HK-018 (matcher silently ignored rather than forbidden)
+    const CC_HK_018_EVENTS: &[&str] = &["UserPromptSubmit", "Stop"];
+    if !HooksSchema::is_tool_event(event) && matcher.is_some() && !CC_HK_018_EVENTS.contains(&event)
+    {
         let hook_location = format!("hooks.{}[{}]", event, matcher_idx);
         let mut diagnostic = Diagnostic::error(
             path.to_path_buf(),
@@ -455,6 +459,126 @@ fn find_unique_json_key_value_span(
     }
     let value_match = first.get(2)?;
     Some((value_match.start(), value_match.end()))
+}
+
+/// Iterate over all raw hook entries in the JSON value, calling `f` for each one.
+fn for_each_raw_hook<F>(raw_value: &serde_json::Value, mut f: F)
+where
+    F: FnMut(&str, usize, usize, &serde_json::Value),
+{
+    if let Some(hooks_obj) = raw_value.get("hooks").and_then(|h| h.as_object()) {
+        for (event, matchers) in hooks_obj {
+            if let Some(matchers_arr) = matchers.as_array() {
+                for (matcher_idx, matcher) in matchers_arr.iter().enumerate() {
+                    if let Some(hooks_arr) = matcher.get("hooks").and_then(|h| h.as_array()) {
+                        for (hook_idx, hook) in hooks_arr.iter().enumerate() {
+                            f(event, matcher_idx, hook_idx, hook);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// CC-HK-013: Async on non-command hook (raw JSON check).
+/// Only flags known non-command types (prompt/agent); unknown types are handled by CC-HK-016.
+pub(super) fn validate_cc_hk_013_async_field(
+    raw_value: &serde_json::Value,
+    path: &Path,
+    diagnostics: &mut Vec<Diagnostic>,
+) {
+    let known_non_command = ["prompt", "agent"];
+    for_each_raw_hook(raw_value, |event, matcher_idx, hook_idx, hook| {
+        if hook.get("async").is_some() {
+            if let Some(hook_type) = hook.get("type").and_then(|t| t.as_str()) {
+                // Only flag async on known non-command types.
+                // Unknown/invalid types are handled by CC-HK-016.
+                if known_non_command.contains(&hook_type) {
+                    let hook_location =
+                        format!("hooks.{}[{}].hooks[{}]", event, matcher_idx, hook_idx);
+                    diagnostics.push(
+                        Diagnostic::error(
+                            path.to_path_buf(),
+                            1,
+                            0,
+                            "CC-HK-013",
+                            t!(
+                                "rules.cc_hk_013.message",
+                                hook_type = hook_type,
+                                location = hook_location.as_str()
+                            ),
+                        )
+                        .with_suggestion(t!("rules.cc_hk_013.suggestion")),
+                    );
+                }
+            }
+        }
+    });
+}
+
+/// CC-HK-014: Once outside skill/agent frontmatter (raw JSON check)
+pub(super) fn validate_cc_hk_014_once_field(
+    raw_value: &serde_json::Value,
+    path: &Path,
+    diagnostics: &mut Vec<Diagnostic>,
+) {
+    for_each_raw_hook(raw_value, |event, matcher_idx, hook_idx, hook| {
+        if hook.get("once").is_some() {
+            let hook_location = format!("hooks.{}[{}].hooks[{}]", event, matcher_idx, hook_idx);
+            diagnostics.push(
+                Diagnostic::warning(
+                    path.to_path_buf(),
+                    1,
+                    0,
+                    "CC-HK-014",
+                    t!("rules.cc_hk_014.message", location = hook_location.as_str()),
+                )
+                .with_suggestion(t!("rules.cc_hk_014.suggestion")),
+            );
+        }
+    });
+}
+
+/// CC-HK-016: Validate hook type "agent" - check for unknown types (raw JSON check)
+/// CC-HK-016: Unknown hook type (raw JSON check).
+/// Also catches non-string type values (e.g., numbers, booleans).
+pub(super) fn validate_cc_hk_016_unknown_type(
+    raw_value: &serde_json::Value,
+    path: &Path,
+    diagnostics: &mut Vec<Diagnostic>,
+) {
+    let valid_types = ["command", "prompt", "agent"];
+    for_each_raw_hook(raw_value, |event, matcher_idx, hook_idx, hook| {
+        if let Some(type_value) = hook.get("type") {
+            let hook_type_str;
+            let is_invalid = if let Some(s) = type_value.as_str() {
+                hook_type_str = s.to_string();
+                !valid_types.contains(&s)
+            } else {
+                // Non-string type value (number, bool, null, etc.) is always invalid
+                hook_type_str = type_value.to_string();
+                true
+            };
+            if is_invalid {
+                let hook_location = format!("hooks.{}[{}].hooks[{}]", event, matcher_idx, hook_idx);
+                diagnostics.push(
+                    Diagnostic::error(
+                        path.to_path_buf(),
+                        1,
+                        0,
+                        "CC-HK-016",
+                        t!(
+                            "rules.cc_hk_016.message",
+                            hook_type = hook_type_str.as_str(),
+                            location = hook_location.as_str()
+                        ),
+                    )
+                    .with_suggestion(t!("rules.cc_hk_016.suggestion")),
+                );
+            }
+        }
+    });
 }
 
 /// Find a unique matcher line span that can be safely deleted.
