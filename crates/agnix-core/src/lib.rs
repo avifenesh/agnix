@@ -96,6 +96,8 @@ pub enum FileType {
     OpenCodeConfig,
     /// Gemini CLI instruction files (GEMINI.md, GEMINI.local.md)
     GeminiMd,
+    /// Codex CLI configuration (.codex/config.toml)
+    CodexConfig,
     /// Other .md files (for XML/import checks)
     GenericMarkdown,
     /// Skip validation
@@ -183,6 +185,8 @@ impl ValidatorRegistry {
             (FileType::GeminiMd, xml_validator),
             (FileType::GeminiMd, imports_validator),
             (FileType::GeminiMd, cross_platform_validator),
+            (FileType::CodexConfig, codex_validator),
+            (FileType::ClaudeMd, codex_validator),
             (FileType::GenericMarkdown, cross_platform_validator),
             (FileType::GenericMarkdown, xml_validator),
             (FileType::GenericMarkdown, imports_validator),
@@ -266,6 +270,10 @@ fn opencode_validator() -> Box<dyn Validator> {
 
 fn gemini_md_validator() -> Box<dyn Validator> {
     Box::new(rules::gemini_md::GeminiMdValidator)
+}
+
+fn codex_validator() -> Box<dyn Validator> {
+    Box::new(rules::codex::CodexValidator)
 }
 
 /// Returns true if the file is inside a documentation directory that
@@ -354,6 +362,8 @@ pub fn detect_file_type(path: &Path) -> FileType {
         "opencode.json" => FileType::OpenCodeConfig,
         // Gemini CLI instruction files (GEMINI.md, GEMINI.local.md)
         "GEMINI.md" | "GEMINI.local.md" => FileType::GeminiMd,
+        // Codex CLI configuration (.codex/config.toml)
+        "config.toml" if parent == Some(".codex") => FileType::CodexConfig,
         name if name.ends_with(".md") => {
             // Agent directories take precedence over filename exclusions.
             // Files like agents/README.md should be validated as agent configs.
@@ -1153,7 +1163,7 @@ mod tests {
     fn test_validators_for_claude_md() {
         let registry = ValidatorRegistry::with_defaults();
         let validators = registry.validators_for(FileType::ClaudeMd);
-        assert_eq!(validators.len(), 6);
+        assert_eq!(validators.len(), 7);
     }
 
     #[test]

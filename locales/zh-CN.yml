@@ -383,6 +383,19 @@ rules:
     message: "opencode.json 解析错误: %{error}"
     suggestion: "修复 opencode.json 中的 JSON 语法"
 
+  # --- Codex CLI (codex.rs) ---
+  cdx_001:
+    message: "无效的 approvalMode '%{value}'。有效值: 'suggest', 'auto-edit', 'full-auto'"
+    type_error: "字段 'approvalMode' 必须是字符串。有效值: 'suggest', 'auto-edit', 'full-auto'"
+    suggestion: "使用 'suggest'、'auto-edit' 或 'full-auto' 作为 approvalMode 字段的值"
+  cdx_002:
+    message: "无效的 fullAutoErrorMode '%{value}'。有效值: 'ask-user', 'ignore-and-continue'"
+    type_error: "字段 'fullAutoErrorMode' 必须是字符串。有效值: 'ask-user', 'ignore-and-continue'"
+    suggestion: "使用 'ask-user' 或 'ignore-and-continue' 作为 fullAutoErrorMode 字段的值"
+  cdx_003:
+    message: "AGENTS.override.md 不应纳入版本控制"
+    suggestion: "将 AGENTS.override.md 添加到 .gitignore（它包含用户特定的覆盖配置）"
+
   # --- Prompt engineering (prompt.rs) ---
   pe_001:
     message: "关键词 '%{keyword}' 在文档的 %{percent} 百分比处（40-60 百分比是'中间遗忘'区域）"

@@ -166,7 +166,7 @@ fn extract_implemented_rule_ids() -> BTreeSet<String> {
     // Known rule ID prefixes to filter out false positives
     let valid_prefixes = [
         "AS-", "CC-SK-", "CC-HK-", "CC-AG-", "CC-MEM-", "CC-PL-", "AGM-", "MCP-", "COP-", "CUR-",
-        "CLN-", "OC-", "GM-", "XML-", "REF-", "PE-", "XP-", "VER-",
+        "CLN-", "CDX-", "OC-", "GM-", "XML-", "REF-", "PE-", "XP-", "VER-",
     ];
 
     fn extract_from_file(
@@ -301,6 +301,7 @@ fn infer_fixture_coverage(rules: &[RuleEntry]) -> HashMap<String, Vec<String>> {
         ("cross-platform", vec!["cross_platform"]),
         ("opencode", vec!["opencode", "opencode-invalid"]),
         ("gemini-cli", vec!["gemini_md", "gemini_md-invalid"]),
+        ("codex", vec!["codex", "codex-invalid"]),
     ]
     .into_iter()
     .collect();
@@ -491,6 +492,7 @@ fn test_rules_json_integrity() {
         "cursor",
         "cline",
         "gemini-cli",
+        "codex",
         "xml",
         "references",
         "prompt-engineering",
