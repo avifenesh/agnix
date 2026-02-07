@@ -429,31 +429,22 @@ impl CompiledFilesConfig {
     }
 }
 
-fn compile_patterns<F>(patterns: &[String], error_builder: F) -> LintResult<Vec<glob::Pattern>>
-where
-    F: Fn(String, String) -> LintError,
-{
+fn compile_patterns_lenient(patterns: &[String]) -> Vec<glob::Pattern> {
     patterns
         .iter()
-        .map(|p| {
+        .filter_map(|p| {
             let normalized = p.replace('\\', "/");
-            glob::Pattern::new(&normalized).map_err(|e| error_builder(p.clone(), e.to_string()))
+            glob::Pattern::new(&normalized).ok()
         })
         .collect()
 }
 
-fn compile_files_config(files: &config::FilesConfig) -> LintResult<CompiledFilesConfig> {
-    Ok(CompiledFilesConfig {
-        include_as_memory: compile_patterns(&files.include_as_memory, |pattern, message| {
-            LintError::InvalidIncludePattern { pattern, message }
-        })?,
-        include_as_generic: compile_patterns(&files.include_as_generic, |pattern, message| {
-            LintError::InvalidIncludePattern { pattern, message }
-        })?,
-        exclude: compile_patterns(&files.exclude, |pattern, message| {
-            LintError::InvalidExcludePattern { pattern, message }
-        })?,
-    })
+fn compile_files_config(files: &config::FilesConfig) -> CompiledFilesConfig {
+    CompiledFilesConfig {
+        include_as_memory: compile_patterns_lenient(&files.include_as_memory),
+        include_as_generic: compile_patterns_lenient(&files.include_as_generic),
+        exclude: compile_patterns_lenient(&files.exclude),
+    }
 }
 
 /// Match options for file inclusion/exclusion glob patterns.
@@ -526,14 +517,10 @@ pub fn resolve_file_type(path: &Path, config: &LintConfig) -> FileType {
         return detect_file_type(path);
     }
 
-    // Compile patterns on-demand for single-file validation
-    match compile_files_config(&config.files) {
-        Ok(compiled) => resolve_with_compiled(path, config.root_dir.as_deref(), &compiled),
-        // Invalid patterns produce warnings during config validation but don't
-        // prevent them from reaching here. Fall back to built-in detection when
-        // compilation fails, which is safe since the patterns would have no effect.
-        Err(_) => detect_file_type(path),
-    }
+    // Compile patterns on-demand for single-file validation.
+    // Invalid patterns are silently skipped (validated at config load time).
+    let compiled = compile_files_config(&config.files);
+    resolve_with_compiled(path, config.root_dir.as_deref(), &compiled)
 }
 
 /// Validate a single file
@@ -669,8 +656,8 @@ pub fn validate_project_with_registry(
 
     // Pre-compile files config patterns once for the parallel walk.
     // Invalid patterns are treated as non-fatal to align with LintConfig::validate()
-    // and configuration docs (they surface as warnings, not abort validation).
-    let compiled_files = Arc::new(compile_files_config(&config.files).unwrap_or_default());
+    // Invalid patterns are silently skipped (validated at config load time).
+    let compiled_files = Arc::new(compile_files_config(&config.files));
 
     let root_path = root_dir.clone();
 

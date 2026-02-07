@@ -938,7 +938,7 @@ impl LintConfig {
                 if normalized.starts_with('/')
                     || (normalized.len() >= 3
                         && normalized.as_bytes()[0].is_ascii_alphabetic()
-                        && &normalized[1..3] == ":/")
+                        && normalized.as_bytes().get(1..3) == Some(b":/"))
                 {
                     warnings.push(ConfigWarning {
                         field: field.to_string(),

@@ -238,9 +238,6 @@ pub enum LintError {
     #[error("Invalid exclude pattern: {pattern} ({message})")]
     InvalidExcludePattern { pattern: String, message: String },
 
-    #[error("Invalid include pattern: {pattern} ({message})")]
-    InvalidIncludePattern { pattern: String, message: String },
-
     #[error("Too many files to validate: {count} files found, limit is {limit}")]
     TooManyFiles { count: usize, limit: usize },
 
