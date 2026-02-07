@@ -395,6 +395,15 @@ rules:
     message: "Legacy .cursorrules file detected - consider migrating to .cursor/rules/*.mdc format"
     suggestion: "Create .cursor/rules/ directory and add .mdc files with frontmatter for better organization"
     legacy_empty: "Cursor rules file is empty"
+  cur_007:
+    message: "alwaysApply is true but globs field is also set - globs are redundant"
+    suggestion: "Remove the globs field since alwaysApply: true makes the rule apply to every chat session regardless of file patterns"
+  cur_008:
+    message: "alwaysApply must be a boolean (true/false), not a quoted string"
+    suggestion: "Use alwaysApply: true or alwaysApply: false without quotes. YAML parses quoted values as strings."
+  cur_009:
+    message: "Agent-requested rule has no description - the agent cannot determine when to apply it"
+    suggestion: "Add a description field explaining when this rule should apply, or set alwaysApply or globs to control activation"
 
   # --- Cline (cline.rs) ---
   cln_001:

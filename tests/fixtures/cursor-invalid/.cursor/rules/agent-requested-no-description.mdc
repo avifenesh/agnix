@@ -1,0 +1,7 @@
+---
+
+---
+# CUR-009: Missing description for agent-requested rule
+
+This rule has no alwaysApply, no globs, and no description.
+The agent has no way to know when to apply it.

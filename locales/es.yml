@@ -326,6 +326,15 @@ rules:
     message: "Archivo .cursorrules heredado detectado - considera migrar al formato .cursor/rules/*.mdc"
     suggestion: "Crea el directorio .cursor/rules/ y agrega archivos .mdc con frontmatter para mejor organizacion"
     legacy_empty: "El archivo de reglas de Cursor esta vacio"
+  cur_007:
+    message: "alwaysApply es true pero el campo globs tambien esta definido - globs es redundante"
+    suggestion: "Elimina el campo globs ya que alwaysApply: true hace que la regla se aplique a cada sesion de chat sin importar los patrones de archivo"
+  cur_008:
+    message: "alwaysApply debe ser un booleano (true/false), no una cadena entre comillas"
+    suggestion: "Usa alwaysApply: true o alwaysApply: false sin comillas. YAML interpreta valores entre comillas como cadenas."
+  cur_009:
+    message: "La regla solicitada por agente no tiene descripcion - el agente no puede determinar cuando aplicarla"
+    suggestion: "Agrega un campo description explicando cuando esta regla debe aplicarse, o establece alwaysApply o globs para controlar la activacion"
 
   # --- Cline (cline.rs) ---
   cln_001:

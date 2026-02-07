@@ -1,0 +1,7 @@
+---
+description: Rule with string alwaysApply
+alwaysApply: "true"
+---
+# CUR-008: Invalid alwaysApply type
+
+The alwaysApply field is a quoted string instead of a boolean.
