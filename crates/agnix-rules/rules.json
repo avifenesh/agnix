@@ -1,7 +1,7 @@
 {
   "description": "Machine-readable source of truth for all validation rules. When adding a new rule, add it here AND in VALIDATION-RULES.md. CI parity tests enforce sync.",
   "version": "1.1.0",
-  "total_rules": 124,
+  "total_rules": 127,
   "last_updated": "2026-02-07",
   "schema": {
     "evidence": {
@@ -2733,6 +2733,82 @@
           "https://docs.cursor.com/en/context"
         ],
         "verified_on": "2026-02-04",
+        "applies_to": {
+          "tool": "cursor"
+        },
+        "normative_level": "SHOULD",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      }
+    },
+    {
+      "id": "CUR-007",
+      "name": "alwaysApply with Redundant globs",
+      "severity": "MEDIUM",
+      "category": "cursor",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://docs.cursor.com/en/context"
+        ],
+        "verified_on": "2026-02-07",
+        "applies_to": {
+          "tool": "cursor"
+        },
+        "normative_level": "SHOULD",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": true,
+        "fix_safety": "safe"
+      }
+    },
+    {
+      "id": "CUR-008",
+      "name": "Invalid alwaysApply Type",
+      "severity": "HIGH",
+      "category": "cursor",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://docs.cursor.com/en/context"
+        ],
+        "verified_on": "2026-02-07",
+        "applies_to": {
+          "tool": "cursor"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      }
+    },
+    {
+      "id": "CUR-009",
+      "name": "Missing Description for Agent-Requested Rule",
+      "severity": "MEDIUM",
+      "category": "cursor",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://docs.cursor.com/en/context"
+        ],
+        "verified_on": "2026-02-07",
         "applies_to": {
           "tool": "cursor"
         },

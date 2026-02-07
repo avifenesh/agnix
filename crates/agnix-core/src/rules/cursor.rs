@@ -1,4 +1,4 @@
-//! Cursor project rules validation rules (CUR-001 to CUR-006)
+//! Cursor project rules validation rules (CUR-001 to CUR-009)
 //!
 //! Validates:
 //! - CUR-001: Empty .mdc rule file (HIGH) - files must have content
@@ -7,6 +7,9 @@
 //! - CUR-004: Invalid glob pattern (HIGH) - globs field must contain valid patterns
 //! - CUR-005: Unknown frontmatter keys (MEDIUM) - warn about unrecognized keys
 //! - CUR-006: Legacy .cursorrules detected (MEDIUM) - migration warning
+//! - CUR-007: alwaysApply with redundant globs (MEDIUM) - globs ignored when alwaysApply is true
+//! - CUR-008: Invalid alwaysApply type (HIGH) - must be boolean, not string
+//! - CUR-009: Missing description for agent-requested rule (MEDIUM) - agent needs description
 
 use crate::{
     FileType,
@@ -213,6 +216,103 @@ impl Validator for CursorValidator {
                 }
 
                 diagnostics.push(diagnostic);
+            }
+        }
+
+        // CUR-007, CUR-008, CUR-009 require a successfully parsed schema
+        if let Some(ref schema) = parsed.schema {
+            // CUR-008: Invalid alwaysApply type (ERROR)
+            // Must be a boolean, not a quoted string like "true" or "false"
+            if config.is_rule_enabled("CUR-008") {
+                if let Some(ref always_apply) = schema.always_apply {
+                    if always_apply.is_string() {
+                        let always_apply_line = parsed
+                            .raw
+                            .lines()
+                            .enumerate()
+                            .find(|(_, line)| line.trim_start().starts_with("alwaysApply:"))
+                            .map(|(idx, _)| parsed.start_line + 1 + idx)
+                            .unwrap_or(parsed.start_line);
+
+                        diagnostics.push(
+                            Diagnostic::error(
+                                path.to_path_buf(),
+                                always_apply_line,
+                                0,
+                                "CUR-008",
+                                t!("rules.cur_008.message"),
+                            )
+                            .with_suggestion(t!("rules.cur_008.suggestion")),
+                        );
+                    }
+                }
+            }
+
+            // CUR-007: alwaysApply with redundant globs (WARNING)
+            // When alwaysApply: true, globs are ignored
+            if config.is_rule_enabled("CUR-007") {
+                let is_always_apply = schema
+                    .always_apply
+                    .as_ref()
+                    .and_then(|a| a.as_bool())
+                    .unwrap_or(false);
+
+                if is_always_apply && schema.globs.is_some() {
+                    let globs_line = parsed
+                        .raw
+                        .lines()
+                        .enumerate()
+                        .find(|(_, line)| line.trim_start().starts_with("globs:"))
+                        .map(|(idx, _)| parsed.start_line + 1 + idx)
+                        .unwrap_or(parsed.start_line);
+
+                    let mut diagnostic = Diagnostic::warning(
+                        path.to_path_buf(),
+                        globs_line,
+                        0,
+                        "CUR-007",
+                        t!("rules.cur_007.message"),
+                    )
+                    .with_suggestion(t!("rules.cur_007.suggestion"));
+
+                    // Safe auto-fix: remove the globs line
+                    if let Some((start, end)) = line_byte_range(content, globs_line) {
+                        diagnostic = diagnostic.with_fix(Fix::delete(
+                            start,
+                            end,
+                            "Remove redundant globs field".to_string(),
+                            true,
+                        ));
+                    }
+
+                    diagnostics.push(diagnostic);
+                }
+            }
+
+            // CUR-009: Missing description for agent-requested rule (WARNING)
+            // If no alwaysApply and no globs, the rule is "agent-requested" and
+            // the agent uses the description to decide when to apply it.
+            if config.is_rule_enabled("CUR-009") {
+                let has_always_apply = schema.always_apply.is_some();
+                let has_globs = schema.globs.is_some();
+                let has_description = schema
+                    .description
+                    .as_ref()
+                    .map(|d| !d.trim().is_empty())
+                    .unwrap_or(false);
+
+                if !has_always_apply && !has_globs && !has_description {
+                    diagnostics.push(
+                        Diagnostic::warning(
+                            path.to_path_buf(),
+                            parsed.start_line,
+                            0,
+                            "CUR-009",
+                            t!("rules.cur_009.message"),
+                        )
+                        .with_suggestion(t!("rules.cur_009.suggestion")),
+                    );
+                }
             }
         }
 
@@ -720,6 +820,7 @@ Body"#;
     fn test_all_cur_rules_can_be_disabled() {
         let rules = [
             "CUR-001", "CUR-002", "CUR-003", "CUR-004", "CUR-005", "CUR-006",
+            "CUR-007", "CUR-008", "CUR-009",
         ];
 
         for rule in rules {
@@ -730,6 +831,15 @@ Body"#;
             let (content, path) = match rule {
                 "CUR-001" => ("", ".cursor/rules/test.mdc"),
                 "CUR-006" => ("content", ".cursorrules"),
+                "CUR-007" => (
+                    "---\nalwaysApply: true\nglobs: \"**/*.ts\"\n---\nBody",
+                    ".cursor/rules/test.mdc",
+                ),
+                "CUR-008" => (
+                    "---\nalwaysApply: \"true\"\n---\nBody",
+                    ".cursor/rules/test.mdc",
+                ),
+                "CUR-009" => ("---\n\n---\nBody", ".cursor/rules/test.mdc"),
                 _ => ("---\nunknown: value\n---\n", ".cursor/rules/test.mdc"),
             };
 
@@ -742,5 +852,301 @@ Body"#;
                 rule
             );
         }
+    }
+
+    // ===== CUR-007: alwaysApply with redundant globs =====
+
+    #[test]
+    fn test_cur_007_always_apply_with_globs() {
+        let content = r#"---
+description: TypeScript rules
+alwaysApply: true
+globs: "**/*.ts"
+---
+# Rules
+Use strict mode.
+"#;
+        let diagnostics = validate_mdc(content);
+        let cur_007: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CUR-007").collect();
+        assert_eq!(cur_007.len(), 1);
+        assert_eq!(cur_007[0].level, DiagnosticLevel::Warning);
+        assert!(cur_007[0].message.contains("redundant"));
+    }
+
+    #[test]
+    fn test_cur_007_always_apply_with_globs_array() {
+        let content = r#"---
+alwaysApply: true
+globs:
+  - "**/*.ts"
+  - "**/*.tsx"
+---
+# Rules
+Body content.
+"#;
+        let diagnostics = validate_mdc(content);
+        let cur_007: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CUR-007").collect();
+        assert_eq!(cur_007.len(), 1);
+    }
+
+    #[test]
+    fn test_cur_007_always_apply_false_with_globs() {
+        // alwaysApply: false with globs should NOT trigger CUR-007
+        let content = r#"---
+description: TypeScript rules
+alwaysApply: false
+globs: "**/*.ts"
+---
+# Rules
+Use strict mode.
+"#;
+        let diagnostics = validate_mdc(content);
+        let cur_007: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CUR-007").collect();
+        assert!(cur_007.is_empty());
+    }
+
+    #[test]
+    fn test_cur_007_always_apply_without_globs() {
+        // alwaysApply: true without globs should NOT trigger CUR-007
+        let content = r#"---
+description: Global rules
+alwaysApply: true
+---
+# Rules
+Always apply these.
+"#;
+        let diagnostics = validate_mdc(content);
+        let cur_007: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CUR-007").collect();
+        assert!(cur_007.is_empty());
+    }
+
+    #[test]
+    fn test_cur_007_has_autofix() {
+        let content = r#"---
+alwaysApply: true
+globs: "**/*.ts"
+---
+# Rules
+Body content.
+"#;
+        let diagnostics = validate_mdc(content);
+        let cur_007: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CUR-007").collect();
+        assert_eq!(cur_007.len(), 1);
+        assert!(cur_007[0].has_fixes(), "CUR-007 should include an auto-fix");
+        assert!(cur_007[0].fixes[0].safe, "CUR-007 fix should be safe");
+    }
+
+    #[test]
+    fn test_cur_007_line_number_accuracy() {
+        let content = r#"---
+description: Test
+alwaysApply: true
+globs: "**/*.ts"
+---
+# Rules
+Body.
+"#;
+        let diagnostics = validate_mdc(content);
+        let cur_007: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CUR-007").collect();
+        assert_eq!(cur_007.len(), 1);
+        // globs is on line 4 (line 1 is ---, line 2 is description, line 3 is alwaysApply, line 4 is globs)
+        assert_eq!(
+            cur_007[0].line, 4,
+            "CUR-007 should point to the globs field line"
+        );
+    }
+
+    // ===== CUR-008: Invalid alwaysApply type =====
+
+    #[test]
+    fn test_cur_008_string_true() {
+        let content = r#"---
+description: Test
+alwaysApply: "true"
+---
+# Rules
+Body content.
+"#;
+        let diagnostics = validate_mdc(content);
+        let cur_008: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CUR-008").collect();
+        assert_eq!(cur_008.len(), 1);
+        assert_eq!(cur_008[0].level, DiagnosticLevel::Error);
+        assert!(cur_008[0].message.contains("boolean"));
+    }
+
+    #[test]
+    fn test_cur_008_string_false() {
+        let content = r#"---
+description: Test
+alwaysApply: "false"
+---
+# Rules
+Body content.
+"#;
+        let diagnostics = validate_mdc(content);
+        let cur_008: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CUR-008").collect();
+        assert_eq!(cur_008.len(), 1);
+    }
+
+    #[test]
+    fn test_cur_008_boolean_true() {
+        // Proper boolean should NOT trigger CUR-008
+        let content = r#"---
+description: Test
+alwaysApply: true
+---
+# Rules
+Body content.
+"#;
+        let diagnostics = validate_mdc(content);
+        let cur_008: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CUR-008").collect();
+        assert!(cur_008.is_empty());
+    }
+
+    #[test]
+    fn test_cur_008_boolean_false() {
+        // Proper boolean should NOT trigger CUR-008
+        let content = r#"---
+description: Test
+alwaysApply: false
+---
+# Rules
+Body content.
+"#;
+        let diagnostics = validate_mdc(content);
+        let cur_008: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CUR-008").collect();
+        assert!(cur_008.is_empty());
+    }
+
+    #[test]
+    fn test_cur_008_line_number_accuracy() {
+        let content = r#"---
+description: Test
+alwaysApply: "true"
+---
+# Rules
+Body.
+"#;
+        let diagnostics = validate_mdc(content);
+        let cur_008: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CUR-008").collect();
+        assert_eq!(cur_008.len(), 1);
+        assert_eq!(
+            cur_008[0].line, 3,
+            "CUR-008 should point to the alwaysApply field line"
+        );
+    }
+
+    #[test]
+    fn test_cur_008_arbitrary_string() {
+        // alwaysApply with arbitrary string should also trigger
+        let content = r#"---
+description: Test
+alwaysApply: "yes"
+---
+# Rules
+Body content.
+"#;
+        let diagnostics = validate_mdc(content);
+        let cur_008: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CUR-008").collect();
+        assert_eq!(cur_008.len(), 1);
+    }
+
+    // ===== CUR-009: Missing description for agent-requested rule =====
+
+    #[test]
+    fn test_cur_009_no_description_no_globs_no_always_apply() {
+        let content = r#"---
+
+---
+# Rules
+Some content here.
+"#;
+        let diagnostics = validate_mdc(content);
+        let cur_009: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CUR-009").collect();
+        assert_eq!(cur_009.len(), 1);
+        assert_eq!(cur_009[0].level, DiagnosticLevel::Warning);
+        assert!(cur_009[0].message.contains("description"));
+    }
+
+    #[test]
+    fn test_cur_009_empty_description() {
+        let content = r#"---
+description: ""
+---
+# Rules
+Some content here.
+"#;
+        let diagnostics = validate_mdc(content);
+        let cur_009: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CUR-009").collect();
+        assert_eq!(cur_009.len(), 1);
+    }
+
+    #[test]
+    fn test_cur_009_whitespace_only_description() {
+        let content = r#"---
+description: "   "
+---
+# Rules
+Some content here.
+"#;
+        let diagnostics = validate_mdc(content);
+        let cur_009: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CUR-009").collect();
+        assert_eq!(cur_009.len(), 1);
+    }
+
+    #[test]
+    fn test_cur_009_with_description() {
+        // Has description but no globs or alwaysApply - should NOT trigger
+        let content = r#"---
+description: TypeScript coding standards
+---
+# Rules
+Some content here.
+"#;
+        let diagnostics = validate_mdc(content);
+        let cur_009: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CUR-009").collect();
+        assert!(cur_009.is_empty());
+    }
+
+    #[test]
+    fn test_cur_009_with_globs() {
+        // Has globs but no description - should NOT trigger (not agent-requested)
+        let content = r#"---
+globs: "**/*.ts"
+---
+# Rules
+Some content here.
+"#;
+        let diagnostics = validate_mdc(content);
+        let cur_009: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CUR-009").collect();
+        assert!(cur_009.is_empty());
+    }
+
+    #[test]
+    fn test_cur_009_with_always_apply() {
+        // Has alwaysApply but no description - should NOT trigger (not agent-requested)
+        let content = r#"---
+alwaysApply: true
+---
+# Rules
+Some content here.
+"#;
+        let diagnostics = validate_mdc(content);
+        let cur_009: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CUR-009").collect();
+        assert!(cur_009.is_empty());
+    }
+
+    #[test]
+    fn test_cur_009_with_always_apply_false() {
+        // alwaysApply: false counts as "has alwaysApply" - should NOT trigger
+        let content = r#"---
+alwaysApply: false
+---
+# Rules
+Some content here.
+"#;
+        let diagnostics = validate_mdc(content);
+        let cur_009: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CUR-009").collect();
+        assert!(cur_009.is_empty());
     }
 }
