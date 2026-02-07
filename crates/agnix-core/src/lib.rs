@@ -1120,10 +1120,7 @@ mod tests {
 
     #[test]
     fn test_detect_gemini_md() {
-        assert_eq!(
-            detect_file_type(Path::new("GEMINI.md")),
-            FileType::GeminiMd
-        );
+        assert_eq!(detect_file_type(Path::new("GEMINI.md")), FileType::GeminiMd);
         assert_eq!(
             detect_file_type(Path::new("GEMINI.local.md")),
             FileType::GeminiMd

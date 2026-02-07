@@ -123,6 +123,7 @@ def main() -> int:
         "cursor": "Cursor",
         "cline": "Cline",
         "opencode": "OpenCode",
+        "gemini-cli": "Gemini CLI",
         "version-awareness": "Version Awareness",
     }
 
@@ -206,6 +207,7 @@ def main() -> int:
         "Cursor Project Rules": ["cursor"],
         "Cline": ["cline"],
         "OpenCode": ["opencode"],
+        "Gemini CLI": ["gemini-cli"],
         "Version Awareness": ["version-awareness"],
     }
     spec_sum = 0

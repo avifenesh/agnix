@@ -1312,13 +1312,14 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | Cursor | 9 | 4 | 5 | 0 | 2 |
 | Cline | 3 | 2 | 1 | 0 | 1 |
 | OpenCode | 3 | 3 | 0 | 0 | 0 |
+| Gemini CLI | 3 | 1 | 2 | 0 | 0 |
 | MCP | 12 | 10 | 2 | 0 | 3 |
 | XML | 3 | 3 | 0 | 0 | 3 |
 | References | 2 | 2 | 0 | 0 | 0 |
 | Prompt Eng | 4 | 0 | 4 | 0 | 0 |
 | Cross-Platform | 6 | 4 | 2 | 0 | 0 |
 | Version Awareness | 1 | 0 | 0 | 1 | 0 |
-| **TOTAL** | **142** | **100** | **37** | **2** | **32** |
+| **TOTAL** | **142** | **101** | **39** | **2** | **32** |
 
 
 ---

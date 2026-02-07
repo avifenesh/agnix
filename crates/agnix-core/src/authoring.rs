@@ -96,7 +96,7 @@ fn family_id_for_file_type(file_type: FileType) -> Option<&'static str> {
         FileType::CursorRule | FileType::CursorRulesLegacy => Some("cursor"),
         FileType::ClaudeMd => Some("claude-agents"),
         FileType::ClaudeRule => None, // No authoring catalog entry yet
-        FileType::GeminiMd => None,  // No authoring catalog entry yet
+        FileType::GeminiMd => None,   // No authoring catalog entry yet
         _ => None,
     }
 }

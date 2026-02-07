@@ -74,14 +74,8 @@ impl Validator for GeminiMdValidator {
         if config.is_rule_enabled("GM-003") {
             if check_project_context(content).is_some() {
                 diagnostics.push(
-                    Diagnostic::warning(
-                        path_buf,
-                        1,
-                        0,
-                        "GM-003",
-                        t!("rules.gm_003.message"),
-                    )
-                    .with_suggestion(t!("rules.gm_003.suggestion")),
+                    Diagnostic::warning(path_buf, 1, 0, "GM-003", t!("rules.gm_003.message"))
+                        .with_suggestion(t!("rules.gm_003.suggestion")),
                 );
             }
         }
@@ -134,8 +128,11 @@ Some content"#;
         let content = r#"```unclosed
 Some content"#;
         let validator = GeminiMdValidator;
-        let diagnostics =
-            validator.validate(Path::new("GEMINI.local.md"), content, &LintConfig::default());
+        let diagnostics = validator.validate(
+            Path::new("GEMINI.local.md"),
+            content,
+            &LintConfig::default(),
+        );
         let gm_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "GM-001").collect();
         assert_eq!(
             gm_001.len(),
