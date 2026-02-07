@@ -281,6 +281,14 @@ rules:
     message: "CLAUDE.md has %{overlap} percent overlap with README.md (threshold: %{threshold} percent)"
     suggestion: "CLAUDE.md should complement README, not duplicate it. Remove duplicated sections."
 
+  # --- Claude Rules (.claude/rules/*.md) ---
+  cc_mem_011:
+    message: "Invalid glob pattern '%{pattern}' in paths field (item %{index}): %{error}"
+    suggestion: "Fix the glob pattern syntax. Valid examples: 'src/**/*.ts', '*.rs', 'tests/**/*.test.js'"
+  cc_mem_012:
+    message: "Unknown frontmatter key '%{key}' in .claude/rules file"
+    suggestion: "Only 'paths' is a recognized key in .claude/rules/*.md frontmatter. Remove '%{key}' or check for typos."
+
   # --- AGENTS.md (agents_md.rs) ---
   agm_001:
     message: "Invalid markdown: %{description}"
