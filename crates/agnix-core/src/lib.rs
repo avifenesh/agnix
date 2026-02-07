@@ -94,6 +94,8 @@ pub enum FileType {
     ClineRulesFolder,
     /// OpenCode configuration (opencode.json)
     OpenCodeConfig,
+    /// Gemini CLI instruction files (GEMINI.md, GEMINI.local.md)
+    GeminiMd,
     /// Other .md files (for XML/import checks)
     GenericMarkdown,
     /// Skip validation
@@ -176,6 +178,11 @@ impl ValidatorRegistry {
             (FileType::ClineRules, cline_validator),
             (FileType::ClineRulesFolder, cline_validator),
             (FileType::OpenCodeConfig, opencode_validator),
+            (FileType::GeminiMd, gemini_md_validator),
+            (FileType::GeminiMd, prompt_validator),
+            (FileType::GeminiMd, xml_validator),
+            (FileType::GeminiMd, imports_validator),
+            (FileType::GeminiMd, cross_platform_validator),
             (FileType::GenericMarkdown, cross_platform_validator),
             (FileType::GenericMarkdown, xml_validator),
             (FileType::GenericMarkdown, imports_validator),
@@ -255,6 +262,10 @@ fn cline_validator() -> Box<dyn Validator> {
 
 fn opencode_validator() -> Box<dyn Validator> {
     Box::new(rules::opencode::OpenCodeValidator)
+}
+
+fn gemini_md_validator() -> Box<dyn Validator> {
+    Box::new(rules::gemini_md::GeminiMdValidator)
 }
 
 /// Returns true if the file is inside a documentation directory that
@@ -341,6 +352,8 @@ pub fn detect_file_type(path: &Path) -> FileType {
         }
         // OpenCode configuration (opencode.json)
         "opencode.json" => FileType::OpenCodeConfig,
+        // Gemini CLI instruction files (GEMINI.md, GEMINI.local.md)
+        "GEMINI.md" | "GEMINI.local.md" => FileType::GeminiMd,
         name if name.ends_with(".md") => {
             // Agent directories take precedence over filename exclusions.
             // Files like agents/README.md should be validated as agent configs.
@@ -1103,6 +1116,30 @@ mod tests {
             detect_file_type(Path::new("package.json")),
             FileType::Unknown
         );
+    }
+
+    #[test]
+    fn test_detect_gemini_md() {
+        assert_eq!(detect_file_type(Path::new("GEMINI.md")), FileType::GeminiMd);
+        assert_eq!(
+            detect_file_type(Path::new("GEMINI.local.md")),
+            FileType::GeminiMd
+        );
+        assert_eq!(
+            detect_file_type(Path::new("project/GEMINI.md")),
+            FileType::GeminiMd
+        );
+        assert_eq!(
+            detect_file_type(Path::new("subdir/GEMINI.local.md")),
+            FileType::GeminiMd
+        );
+    }
+
+    #[test]
+    fn test_validators_for_gemini_md() {
+        let registry = ValidatorRegistry::with_defaults();
+        let validators = registry.validators_for(FileType::GeminiMd);
+        assert_eq!(validators.len(), 5);
     }
 
     #[test]

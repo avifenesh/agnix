@@ -71,6 +71,8 @@ fn is_relevant_file(path: &Path) -> bool {
             | "AGENTS.md"
             | "AGENTS.local.md"
             | "AGENTS.override.md"
+            | "GEMINI.md"
+            | "GEMINI.local.md"
             | "settings.json"
             | "settings.local.json"
             | "plugin.json"

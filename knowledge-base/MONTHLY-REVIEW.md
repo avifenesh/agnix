@@ -115,7 +115,7 @@ After completing the review:
 
 #### Current State
 
-- **Rules**: 139 validation rules across 17 categories
+- **Rules**: 142 validation rules across 18 categories
 - **Sources monitored**: 12 sources in `.github/spec-baselines.json`
 - **Tests**: 1500+ passing tests
 

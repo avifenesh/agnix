@@ -226,6 +226,7 @@ impl<'a> DefaultRuleFilter<'a> {
             s if s.starts_with("CUR-") => self.rules.cursor,
             s if s.starts_with("CLN-") => self.rules.cline,
             s if s.starts_with("OC-") => self.rules.opencode,
+            s if s.starts_with("GM-") => self.rules.gemini_md,
             s if s.starts_with("PE-") => self.rules.prompt_engineering,
             // Unknown rules are enabled by default
             _ => true,
@@ -276,10 +277,10 @@ pub struct LintConfig {
     /// Tools to validate for (e.g., ["claude-code", "cursor"])
     /// When specified, agnix automatically enables rules for these tools
     /// and disables rules for tools not in the list.
-    /// Valid values: "claude-code", "cursor", "codex", "copilot", "generic"
+    /// Valid values: "claude-code", "cursor", "codex", "copilot", "github-copilot", "cline", "opencode", "gemini-cli", "generic"
     #[serde(default)]
     #[schemars(
-        description = "Tools to validate for. Valid values: \"claude-code\", \"cursor\", \"codex\", \"copilot\", \"generic\""
+        description = "Tools to validate for. Valid values: \"claude-code\", \"cursor\", \"codex\", \"copilot\", \"github-copilot\", \"cline\", \"opencode\", \"gemini-cli\", \"generic\""
     )]
     pub tools: Vec<String>,
 
@@ -474,6 +475,11 @@ pub struct RuleConfig {
     #[schemars(description = "Enable OpenCode validation rules (OC-*)")]
     pub opencode: bool,
 
+    /// Enable Gemini CLI validation (GM-*)
+    #[serde(default = "default_true")]
+    #[schemars(description = "Enable Gemini CLI validation rules (GM-*)")]
+    pub gemini_md: bool,
+
     /// Enable prompt engineering validation (PE-*)
     #[serde(default = "default_true")]
     #[schemars(description = "Enable prompt engineering validation rules (PE-*)")]
@@ -524,6 +530,7 @@ impl Default for RuleConfig {
             cursor: true,
             cline: true,
             opencode: true,
+            gemini_md: true,
             prompt_engineering: true,
             generic_instructions: true,
             frontmatter_validation: true,
@@ -749,6 +756,7 @@ impl LintConfig {
             "CUR-",
             "CLN-",
             "OC-",
+            "GM-",
             "PE-",
             "VER-",
             "imports::",
@@ -780,6 +788,7 @@ impl LintConfig {
             "github-copilot",
             "cline",
             "opencode",
+            "gemini-cli",
             "generic",
         ];
         for tool in &self.tools {

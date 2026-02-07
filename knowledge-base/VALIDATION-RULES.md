@@ -1013,6 +1013,31 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 
 ---
 
+## GEMINI CLI RULES
+
+<a id="gm-001"></a>
+### GM-001 [HIGH] Invalid Markdown Structure in GEMINI.md
+**Requirement**: GEMINI.md MUST have valid markdown (no unclosed code blocks or malformed links)
+**Detection**: Parse markdown, check for unclosed ``` blocks and malformed [text]( links
+**Fix**: No auto-fix (manual correction required)
+**Source**: geminicli.com/docs/cli/gemini-md/
+
+<a id="gm-002"></a>
+### GM-002 [MEDIUM] Missing Section Headers in GEMINI.md
+**Requirement**: GEMINI.md SHOULD have markdown section headers for organization
+**Detection**: Scan for `^#+\s+.+` patterns, report if none found
+**Fix**: No auto-fix (headers must be authored by user)
+**Source**: geminicli.com/docs/cli/gemini-md/
+
+<a id="gm-003"></a>
+### GM-003 [MEDIUM] Missing Project Context in GEMINI.md
+**Requirement**: GEMINI.md SHOULD include a project context section describing purpose and tech stack
+**Detection**: Check for headers matching project/overview/about/description patterns or content referencing "this project"
+**Fix**: No auto-fix (project context must be authored by user)
+**Source**: geminicli.com/docs/cli/gemini-md/
+
+---
+
 ## UNIVERSAL RULES (XML)
 
 <a id="xml-001"></a>
@@ -1287,13 +1312,14 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | Cursor | 9 | 4 | 5 | 0 | 2 |
 | Cline | 3 | 2 | 1 | 0 | 1 |
 | OpenCode | 3 | 3 | 0 | 0 | 0 |
+| Gemini CLI | 3 | 1 | 2 | 0 | 0 |
 | MCP | 12 | 10 | 2 | 0 | 3 |
 | XML | 3 | 3 | 0 | 0 | 3 |
 | References | 2 | 2 | 0 | 0 | 0 |
 | Prompt Eng | 4 | 0 | 4 | 0 | 0 |
 | Cross-Platform | 6 | 4 | 2 | 0 | 0 |
 | Version Awareness | 1 | 0 | 0 | 1 | 0 |
-| **TOTAL** | **139** | **100** | **37** | **2** | **32** |
+| **TOTAL** | **142** | **101** | **39** | **2** | **32** |
 
 
 ---
@@ -1323,9 +1349,9 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 
 ---
 
-**Total Coverage**: 139 validation rules across 17 categories
+**Total Coverage**: 142 validation rules across 18 categories
 
 **Knowledge Base**: 11,036 lines, 320KB, 75+ sources
-**Certainty**: 100 HIGH, 37 MEDIUM, 2 LOW
-**Auto-Fixable**: 32 rules (24%)
+**Certainty**: 101 HIGH, 39 MEDIUM, 2 LOW
+**Auto-Fixable**: 32 rules (23%)
 

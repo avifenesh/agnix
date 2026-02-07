@@ -42,6 +42,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - OC-001: Validate `share` field in `opencode.json` is `"manual"`, `"auto"`, or `"disabled"` (HIGH)
 - OC-002: Validate instruction paths in `opencode.json` exist or are valid globs (HIGH)
 - OC-003: Validate `opencode.json` is parseable JSON/JSONC with line/column error reporting (HIGH)
+- GM-001: Validate GEMINI.md has valid markdown structure (HIGH)
+- GM-002: Warn when GEMINI.md has no section headers (MEDIUM)
+- GM-003: Warn when GEMINI.md has no project context section (MEDIUM)
 - Fix metadata (`autofix`, `fix_safety`) for all 100 rules in rules.json
 - Fix metadata schema validation parity test
 - Autofix count parity test (rules.json vs VALIDATION-RULES.md)
@@ -371,7 +374,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Quick-fix code actions from Fix objects
   - Hover documentation for frontmatter fields
   - Document content caching for performance
-  - Supports all 139 agnix validation rules with severity mapping
+  - Supports all 142 agnix validation rules with severity mapping
 
   - Workspace boundary validation for security (prevents path traversal)
   - Config caching optimization for performance
@@ -386,7 +389,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Case-insensitive tool name matching
   - Takes precedence over legacy `target` field for flexibility
 - VS Code extension with full LSP integration (#22)
-  - Real-time diagnostics for all 139 validation rules
+  - Real-time diagnostics for all 142 validation rules
 
   - Status bar indicator showing agnix validation status
   - Syntax highlighting for SKILL.md YAML frontmatter

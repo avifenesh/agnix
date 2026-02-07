@@ -8,6 +8,7 @@ pub mod cline;
 pub mod copilot;
 pub mod cross_platform;
 pub mod cursor;
+pub mod gemini_md;
 pub mod hooks;
 pub mod imports;
 pub mod mcp;
