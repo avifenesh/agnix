@@ -54,11 +54,15 @@ impl Validator for ClineValidator {
             if is_folder {
                 // For folder .md files, check body after frontmatter if present
                 if let Some(parsed) = parse_frontmatter(content) {
-                    if is_body_empty(&parsed.body) {
+                    // Only check body emptiness when frontmatter parsed successfully;
+                    // parse errors (e.g. missing closing ---) produce empty body by default
+                    if parsed.parse_error.is_none() && is_body_empty(&parsed.body) {
+                        let total_lines = content.lines().count().max(1);
+                        let report_line = (parsed.end_line + 1).min(total_lines);
                         diagnostics.push(
                             Diagnostic::error(
                                 path.to_path_buf(),
-                                parsed.end_line + 1,
+                                report_line,
                                 0,
                                 "CLN-001",
                                 t!("rules.cln_001.message_no_content"),
