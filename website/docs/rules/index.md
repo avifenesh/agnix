@@ -140,13 +140,13 @@ This section contains all `145` validation rules generated from `knowledge-base/
 | [XP-004](./generated/xp-004.md) | Conflicting Build/Test Commands | MEDIUM | Cross-Platform | No |
 | [XP-005](./generated/xp-005.md) | Conflicting Tool Constraints | HIGH | Cross-Platform | No |
 | [XP-006](./generated/xp-006.md) | Multiple Layers Without Documented Precedence | MEDIUM | Cross-Platform | No |
-| [OC-001](./generated/oc-001.md) | Invalid Share Mode | HIGH | opencode | Yes (unsafe) |
-| [OC-002](./generated/oc-002.md) | Invalid Instruction Path | HIGH | opencode | No |
-| [OC-003](./generated/oc-003.md) | opencode.json Parse Error | HIGH | opencode | No |
-| [GM-001](./generated/gm-001.md) | Invalid Markdown Structure in GEMINI.md | HIGH | gemini-cli | No |
-| [GM-002](./generated/gm-002.md) | Missing Section Headers in GEMINI.md | MEDIUM | gemini-cli | No |
-| [GM-003](./generated/gm-003.md) | Missing Project Context in GEMINI.md | MEDIUM | gemini-cli | No |
-| [CDX-001](./generated/cdx-001.md) | Invalid Approval Mode | HIGH | codex | Yes (unsafe) |
-| [CDX-002](./generated/cdx-002.md) | Invalid Full Auto Error Mode | HIGH | codex | Yes (unsafe) |
-| [CDX-003](./generated/cdx-003.md) | AGENTS.override.md in Version Control | MEDIUM | codex | No |
+| [OC-001](./generated/oc-001.md) | Invalid Share Mode | HIGH | OpenCode | Yes (unsafe) |
+| [OC-002](./generated/oc-002.md) | Invalid Instruction Path | HIGH | OpenCode | No |
+| [OC-003](./generated/oc-003.md) | opencode.json Parse Error | HIGH | OpenCode | No |
+| [GM-001](./generated/gm-001.md) | Invalid Markdown Structure in GEMINI.md | HIGH | Gemini CLI | No |
+| [GM-002](./generated/gm-002.md) | Missing Section Headers in GEMINI.md | MEDIUM | Gemini CLI | No |
+| [GM-003](./generated/gm-003.md) | Missing Project Context in GEMINI.md | MEDIUM | Gemini CLI | No |
+| [CDX-001](./generated/cdx-001.md) | Invalid Approval Mode | HIGH | Codex CLI | Yes (unsafe) |
+| [CDX-002](./generated/cdx-002.md) | Invalid Full Auto Error Mode | HIGH | Codex CLI | Yes (unsafe) |
+| [CDX-003](./generated/cdx-003.md) | AGENTS.override.md in Version Control | MEDIUM | Codex CLI | No |
 | [VER-001](./generated/ver-001.md) | No Tool/Spec Versions Pinned | LOW | Version Awareness | No |

@@ -30,6 +30,9 @@ CATEGORY_LABELS: Dict[str, str] = {
     "cross-platform": "Cross-Platform",
     "cursor": "Cursor",
     "cline": "Cline",
+    "codex": "Codex CLI",
+    "gemini-cli": "Gemini CLI",
+    "opencode": "OpenCode",
     "version-awareness": "Version Awareness",
 }
 
