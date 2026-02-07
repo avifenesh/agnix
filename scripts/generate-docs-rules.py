@@ -11,6 +11,8 @@ ROOT = Path(__file__).resolve().parents[1]
 RULES_JSON = ROOT / "knowledge-base" / "rules.json"
 OUTPUT_DIR = ROOT / "website" / "docs" / "rules" / "generated"
 INDEX_PATH = ROOT / "website" / "docs" / "rules" / "index.md"
+SITE_DATA_DIR = ROOT / "website" / "src" / "data"
+SITE_DATA_PATH = SITE_DATA_DIR / "siteData.json"
 
 CATEGORY_LABELS: Dict[str, str] = {
     "agent-skills": "Agent Skills",
@@ -235,6 +237,33 @@ The following examples are illustrative snippets for this rule category.
 
 
 
+def generate_site_data(data: dict) -> None:
+    """Generate website/src/data/siteData.json from rules.json."""
+    rules = data.get("rules", [])
+    categories = data.get("categories", {})
+
+    autofix_count = sum(1 for r in rules if r.get("fix", {}).get("autofix"))
+
+    unique_tools: set[str] = set()
+    for r in rules:
+        tool = r.get("evidence", {}).get("applies_to", {}).get("tool")
+        if tool:
+            unique_tools.add(tool)
+
+    site_data = {
+        "totalRules": data.get("total_rules", len(rules)),
+        "categoryCount": len(categories),
+        "autofixCount": autofix_count,
+        "uniqueTools": sorted(unique_tools),
+    }
+
+    SITE_DATA_DIR.mkdir(parents=True, exist_ok=True)
+    SITE_DATA_PATH.write_text(
+        json.dumps(site_data, indent=2) + "\n", encoding="utf-8"
+    )
+    print(f"Generated site data at {SITE_DATA_PATH}")
+
+
 def main() -> int:
     with RULES_JSON.open("r", encoding="utf-8") as f:
         data = json.load(f)
@@ -275,6 +304,7 @@ def main() -> int:
         target_index_path.parent.mkdir(parents=True, exist_ok=True)
         target_index_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
+    generate_site_data(data)
     write_docs(OUTPUT_DIR, INDEX_PATH)
 
     print(f"Generated {len(rules)} rule documentation pages in {OUTPUT_DIR}")
