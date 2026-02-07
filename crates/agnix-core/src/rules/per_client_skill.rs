@@ -291,11 +291,7 @@ impl Validator for PerClientSkillValidator {
                                 line_num,
                                 col,
                                 rule_id,
-                                t!(
-                                    &msg_key,
-                                    field = key,
-                                    client = client_display_name(client)
-                                ),
+                                t!(&msg_key, field = key, client = client_display_name(client)),
                             )
                             .with_suggestion(t!(
                                 &sug_key,
@@ -455,10 +451,7 @@ mod tests {
 
     #[test]
     fn test_detect_client_unknown_root() {
-        assert_eq!(
-            detect_client(Path::new("SKILL.md")),
-            SkillClient::Unknown
-        );
+        assert_eq!(detect_client(Path::new("SKILL.md")), SkillClient::Unknown);
     }
 
     #[test]
@@ -516,15 +509,16 @@ mod tests {
                     || d.rule == "XP-SK-001"
             })
             .collect();
-        assert!(per_client.is_empty(), "Claude Code should have no per-client or XP-SK-001 warnings, got {:?}", per_client);
+        assert!(
+            per_client.is_empty(),
+            "Claude Code should have no per-client or XP-SK-001 warnings, got {:?}",
+            per_client
+        );
     }
 
     #[test]
     fn test_cursor_unsupported_model() {
-        let content = make_skill(
-            "name: my-skill\ndescription: A test\nmodel: opus",
-            "Body",
-        );
+        let content = make_skill("name: my-skill\ndescription: A test\nmodel: opus", "Body");
         let diags = validate(".cursor/skills/my-skill/SKILL.md", &content);
         let cr_diags: Vec<_> = diags.iter().filter(|d| d.rule == "CR-SK-001").collect();
         assert_eq!(
@@ -553,10 +547,7 @@ mod tests {
 
     #[test]
     fn test_cline_unsupported_context() {
-        let content = make_skill(
-            "name: my-skill\ndescription: A test\ncontext: fork",
-            "Body",
-        );
+        let content = make_skill("name: my-skill\ndescription: A test\ncontext: fork", "Body");
         let diags = validate(".cline/skills/my-skill/SKILL.md", &content);
         let cl_diags: Vec<_> = diags.iter().filter(|d| d.rule == "CL-SK-001").collect();
         assert_eq!(cl_diags.len(), 1);
@@ -613,10 +604,7 @@ mod tests {
 
     #[test]
     fn test_kiro_unsupported_model() {
-        let content = make_skill(
-            "name: my-skill\ndescription: A test\nmodel: haiku",
-            "Body",
-        );
+        let content = make_skill("name: my-skill\ndescription: A test\nmodel: haiku", "Body");
         let diags = validate(".kiro/skills/my-skill/SKILL.md", &content);
         let kr_diags: Vec<_> = diags.iter().filter(|d| d.rule == "KR-SK-001").collect();
         assert_eq!(kr_diags.len(), 1);
@@ -652,10 +640,7 @@ mod tests {
 
     #[test]
     fn test_xp_sk_001_fires_for_non_claude() {
-        let content = make_skill(
-            "name: my-skill\ndescription: A test\nmodel: opus",
-            "Body",
-        );
+        let content = make_skill("name: my-skill\ndescription: A test\nmodel: opus", "Body");
         let diags = validate(".cursor/skills/my-skill/SKILL.md", &content);
         let xp_diags: Vec<_> = diags.iter().filter(|d| d.rule == "XP-SK-001").collect();
         assert_eq!(
@@ -667,24 +652,24 @@ mod tests {
 
     #[test]
     fn test_xp_sk_001_does_not_fire_for_claude() {
-        let content = make_skill(
-            "name: my-skill\ndescription: A test\nmodel: opus",
-            "Body",
-        );
+        let content = make_skill("name: my-skill\ndescription: A test\nmodel: opus", "Body");
         let diags = validate(".claude/skills/my-skill/SKILL.md", &content);
         let xp_diags: Vec<_> = diags.iter().filter(|d| d.rule == "XP-SK-001").collect();
-        assert!(xp_diags.is_empty(), "XP-SK-001 should not fire for Claude Code");
+        assert!(
+            xp_diags.is_empty(),
+            "XP-SK-001 should not fire for Claude Code"
+        );
     }
 
     #[test]
     fn test_xp_sk_001_does_not_fire_for_unknown() {
-        let content = make_skill(
-            "name: my-skill\ndescription: A test\nmodel: opus",
-            "Body",
-        );
+        let content = make_skill("name: my-skill\ndescription: A test\nmodel: opus", "Body");
         let diags = validate("SKILL.md", &content);
         let xp_diags: Vec<_> = diags.iter().filter(|d| d.rule == "XP-SK-001").collect();
-        assert!(xp_diags.is_empty(), "XP-SK-001 should not fire for unknown client");
+        assert!(
+            xp_diags.is_empty(),
+            "XP-SK-001 should not fire for unknown client"
+        );
     }
 
     #[test]
@@ -696,10 +681,7 @@ mod tests {
 
     #[test]
     fn test_fix_attached_for_unsupported_field() {
-        let content = make_skill(
-            "name: my-skill\ndescription: A test\nmodel: opus",
-            "Body",
-        );
+        let content = make_skill("name: my-skill\ndescription: A test\nmodel: opus", "Body");
         let diags = validate(".cursor/skills/my-skill/SKILL.md", &content);
         let cr_diag = diags.iter().find(|d| d.rule == "CR-SK-001").unwrap();
         assert!(
@@ -713,10 +695,7 @@ mod tests {
 
     #[test]
     fn test_disabled_rule_not_fired() {
-        let content = make_skill(
-            "name: my-skill\ndescription: A test\nmodel: opus",
-            "Body",
-        );
+        let content = make_skill("name: my-skill\ndescription: A test\nmodel: opus", "Body");
         let mut config = LintConfig::default();
         config.rules.disabled_rules = vec!["CR-SK-001".to_string()];
         let validator = PerClientSkillValidator;

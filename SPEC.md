@@ -14,7 +14,7 @@
 | Agents | agents/*.md | 13 |
 | Plugins | plugin.json | 10 |
 | Prompt Engineering | CLAUDE.md, AGENTS.md | 4 |
-| Cross-Platform | AGENTS.md | 6 |
+| Cross-Platform | AGENTS.md | 7 |
 | MCP | tool definitions | 12 |
 | XML | all .md files | 3 |
 | References | @imports | 2 |
@@ -25,6 +25,15 @@
 | Gemini CLI | GEMINI.md, GEMINI.local.md | 3 |
 | Codex CLI | .codex/config.toml | 3 |
 | Version Awareness | .agnix.toml | 1 |
+| Cursor Skills | .cursor/skills/*/SKILL.md | 1 |
+| Cline Skills | .cline/skills/*/SKILL.md | 1 |
+| Copilot Skills | .github/copilot/skills/*/SKILL.md | 1 |
+| Codex Skills | .codex/skills/*/SKILL.md | 1 |
+| OpenCode Skills | .opencode/skills/*/SKILL.md | 1 |
+| Windsurf Skills | .windsurf/skills/*/SKILL.md | 1 |
+| Kiro Skills | .kiro/skills/*/SKILL.md | 1 |
+| Amp Skills | .amp/skills/*/SKILL.md | 1 |
+| Roo Code Skills | .roo-code/skills/*/SKILL.md | 1 |
 
 ## Architecture
 
