@@ -1175,6 +1175,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | MCP-012 | Change sse to http | unsafe |
 | COP-004 | Remove unknown frontmatter key | safe |
 | CUR-005 | Remove unknown frontmatter key | safe |
+| CLN-003 | Remove unknown frontmatter key | unsafe |
 | XML-001 | Add missing closing tag | unsafe |
 | XML-002 | Fix mismatched closing tag | unsafe |
 | XML-003 | Remove orphaned closing tag | unsafe |

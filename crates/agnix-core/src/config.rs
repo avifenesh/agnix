@@ -740,6 +740,7 @@ impl LintConfig {
             "AGM-",
             "COP-",
             "CUR-",
+            "CLN-",
             "PE-",
             "VER-",
             "imports::",
@@ -769,6 +770,7 @@ impl LintConfig {
             "codex",
             "copilot",
             "github-copilot",
+            "cline",
             "generic",
         ];
         for tool in &self.tools {

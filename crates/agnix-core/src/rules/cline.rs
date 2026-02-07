@@ -54,7 +54,7 @@ impl Validator for ClineValidator {
             if is_folder {
                 // For folder .md files, check body after frontmatter if present
                 if let Some(parsed) = parse_frontmatter(content) {
-                    if parsed.parse_error.is_none() && is_body_empty(&parsed.body) {
+                    if is_body_empty(&parsed.body) {
                         diagnostics.push(
                             Diagnostic::error(
                                 path.to_path_buf(),
@@ -123,7 +123,7 @@ impl Validator for ClineValidator {
                         diagnostics.push(
                             Diagnostic::error(
                                 path.to_path_buf(),
-                                parsed.start_line + 1,
+                                parsed.paths_line.unwrap_or(parsed.start_line + 1),
                                 0,
                                 "CLN-002",
                                 t!(
@@ -151,13 +151,14 @@ impl Validator for ClineValidator {
                 )
                 .with_suggestion(t!("rules.cln_003.suggestion", key = unknown.key.as_str()));
 
-                // Safe auto-fix: remove unknown top-level frontmatter key line.
+                // Auto-fix: remove unknown top-level frontmatter key line.
+                // Marked unsafe because multi-line YAML values would leave orphaned lines.
                 if let Some((start, end)) = line_byte_range(content, unknown.line) {
                     diagnostic = diagnostic.with_fix(Fix::delete(
                         start,
                         end,
                         format!("Remove unknown frontmatter key '{}'", unknown.key),
-                        true,
+                        false,
                     ));
                 }
 
@@ -360,9 +361,10 @@ anotherBadKey: 123
         assert!(cln_003.iter().any(|d| d.message.contains("anotherBadKey")));
         assert!(
             cln_003.iter().all(|d| d.has_fixes()),
-            "All unknown key diagnostics should include safe deletion fixes"
+            "All unknown key diagnostics should include deletion fixes"
         );
-        assert!(cln_003.iter().all(|d| d.fixes[0].safe));
+        // Fix is marked unsafe because multi-line YAML values would leave orphaned lines
+        assert!(cln_003.iter().all(|d| !d.fixes[0].safe));
     }
 
     #[test]

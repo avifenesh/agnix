@@ -36,6 +36,8 @@ pub struct ParsedClineFrontmatter {
     pub body: String,
     /// Unknown keys found in frontmatter
     pub unknown_keys: Vec<UnknownKey>,
+    /// Line number where the `paths` key appears (1-indexed)
+    pub paths_line: Option<usize>,
     /// Parse error if YAML is invalid
     pub parse_error: Option<String>,
 }
@@ -60,12 +62,13 @@ pub struct GlobValidation {
 ///
 /// Returns parsed frontmatter if present, or None if no frontmatter exists.
 pub fn parse_frontmatter(content: &str) -> Option<ParsedClineFrontmatter> {
-    if !content.starts_with("---") {
+    let lines: Vec<&str> = content.lines().collect();
+    if lines.is_empty() {
         return None;
     }
 
-    let lines: Vec<&str> = content.lines().collect();
-    if lines.is_empty() {
+    // Only treat as frontmatter if the first line is exactly '---' (after trim)
+    if lines[0].trim() != "---" {
         return None;
     }
 
@@ -91,6 +94,7 @@ pub fn parse_frontmatter(content: &str) -> Option<ParsedClineFrontmatter> {
             end_line: lines.len(),
             body: String::new(),
             unknown_keys: Vec::new(),
+            paths_line: None,
             parse_error: Some("missing closing ---".to_string()),
         });
     }
@@ -114,6 +118,12 @@ pub fn parse_frontmatter(content: &str) -> Option<ParsedClineFrontmatter> {
     // Find unknown keys
     let unknown_keys = find_unknown_keys(&raw, 2); // Start at line 2 (after first ---)
 
+    // Find the line number of the `paths:` key (1-indexed)
+    let paths_line = frontmatter_lines
+        .iter()
+        .position(|line| line.trim_start().starts_with("paths:"))
+        .map(|i| i + 2); // +2 because line 1 is `---`, and i is 0-indexed
+
     Some(ParsedClineFrontmatter {
         schema,
         raw,
@@ -121,6 +131,7 @@ pub fn parse_frontmatter(content: &str) -> Option<ParsedClineFrontmatter> {
         end_line: end_idx + 1,
         body,
         unknown_keys,
+        paths_line,
         parse_error,
     })
 }
