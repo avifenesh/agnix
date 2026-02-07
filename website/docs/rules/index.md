@@ -1,7 +1,7 @@
 # Rules Reference
 
-This section contains all `145` validation rules generated from `knowledge-base/rules.json`.
-`48` rules have automatic fixes.
+This section contains all `155` validation rules generated from `knowledge-base/rules.json`.
+`57` rules have automatic fixes.
 
 | Rule | Name | Severity | Category | Auto-Fix |
 |------|------|----------|----------|----------|
@@ -150,3 +150,13 @@ This section contains all `145` validation rules generated from `knowledge-base/
 | [CDX-002](./generated/cdx-002.md) | Invalid Full Auto Error Mode | HIGH | Codex CLI | Yes (unsafe) |
 | [CDX-003](./generated/cdx-003.md) | AGENTS.override.md in Version Control | MEDIUM | Codex CLI | No |
 | [VER-001](./generated/ver-001.md) | No Tool/Spec Versions Pinned | LOW | Version Awareness | No |
+| [CR-SK-001](./generated/cr-sk-001.md) | Cursor Skill Uses Unsupported Field | MEDIUM | cursor-skills | Yes (safe) |
+| [CL-SK-001](./generated/cl-sk-001.md) | Cline Skill Uses Unsupported Field | MEDIUM | cline-skills | Yes (safe) |
+| [CP-SK-001](./generated/cp-sk-001.md) | Copilot Skill Uses Unsupported Field | MEDIUM | copilot-skills | Yes (safe) |
+| [CX-SK-001](./generated/cx-sk-001.md) | Codex Skill Uses Unsupported Field | MEDIUM | codex-skills | Yes (safe) |
+| [OC-SK-001](./generated/oc-sk-001.md) | OpenCode Skill Uses Unsupported Field | MEDIUM | opencode-skills | Yes (safe) |
+| [WS-SK-001](./generated/ws-sk-001.md) | Windsurf Skill Uses Unsupported Field | MEDIUM | windsurf-skills | Yes (safe) |
+| [KR-SK-001](./generated/kr-sk-001.md) | Kiro Skill Uses Unsupported Field | MEDIUM | kiro-skills | Yes (safe) |
+| [AMP-SK-001](./generated/amp-sk-001.md) | Amp Skill Uses Unsupported Field | MEDIUM | amp-skills | Yes (safe) |
+| [RC-SK-001](./generated/rc-sk-001.md) | Roo Code Skill Uses Unsupported Field | MEDIUM | roo-code-skills | Yes (safe) |
+| [XP-SK-001](./generated/xp-sk-001.md) | Skill Uses Client-Specific Features | LOW | Cross-Platform | No |
