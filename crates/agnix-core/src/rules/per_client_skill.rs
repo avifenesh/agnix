@@ -42,17 +42,8 @@ const UNIVERSAL_FIELDS: &[&str] = &[
     "allowed-tools",
 ];
 
-/// Extension frontmatter fields that are client-specific.
-/// Only certain clients understand these.
-const EXTENSION_FIELDS: &[&str] = &[
-    "disable-model-invocation",
-    "user-invocable",
-    "model",
-    "context",
-    "agent",
-    "hooks",
-    "argument-hint",
-];
+/// Known Claude Code extension fields for reference in `is_field_supported`.
+/// Any top-level field not in UNIVERSAL_FIELDS is checked against client support.
 
 /// Check whether a client supports a given frontmatter field.
 ///
@@ -248,73 +239,77 @@ impl Validator for PerClientSkillValidator {
                 }
             };
 
-            // Only check extension fields (universal fields are fine everywhere)
-            if EXTENSION_FIELDS.contains(&key) {
-                let abs_key_start = parts.frontmatter_start + fm_offset;
-                let (line_num, col) = line_col_at(abs_key_start, &line_starts);
+            // Universal fields are safe everywhere - skip them
+            if UNIVERSAL_FIELDS.contains(&key) {
+                fm_offset = advance_past_line(fm_offset, line.len(), fm_bytes);
+                continue;
+            }
 
-                // Compute byte range for the full line including trailing newline
-                let abs_line_start = parts.frontmatter_start + fm_offset;
-                let mut abs_line_end = abs_line_start + line.len();
-                if abs_line_end < content.len() && content.as_bytes()[abs_line_end] == b'\n' {
-                    abs_line_end += 1;
-                } else if abs_line_end + 1 < content.len()
-                    && content.as_bytes()[abs_line_end] == b'\r'
-                    && content.as_bytes()[abs_line_end + 1] == b'\n'
-                {
-                    abs_line_end += 2;
-                }
+            // Non-universal top-level key: check against client support
+            let abs_key_start = parts.frontmatter_start + fm_offset;
+            let (line_num, col) = line_col_at(abs_key_start, &line_starts);
 
-                // Per-client rule: warn if client does not support this field
-                if has_per_client {
-                    if let Some(rule_id) = per_client_rule {
-                        if !is_field_supported(client, key) {
-                            let i18n_key = i18n_key_for_client(client).unwrap_or("cr_sk_001");
-                            let msg_key = format!("rules.{}.message", i18n_key);
-                            let sug_key = format!("rules.{}.suggestion", i18n_key);
+            // Compute byte range for the full line including trailing newline
+            let abs_line_start = parts.frontmatter_start + fm_offset;
+            let mut abs_line_end = abs_line_start + line.len();
+            if abs_line_end < content.len() && content.as_bytes()[abs_line_end] == b'\n' {
+                abs_line_end += 1;
+            } else if abs_line_end + 1 < content.len()
+                && content.as_bytes()[abs_line_end] == b'\r'
+                && content.as_bytes()[abs_line_end + 1] == b'\n'
+            {
+                abs_line_end += 2;
+            }
 
-                            diagnostics.push(
-                                Diagnostic::warning(
-                                    path.to_path_buf(),
-                                    line_num,
-                                    col,
-                                    rule_id,
-                                    t!(&msg_key, field = key, client = client_display_name(client)),
-                                )
-                                .with_suggestion(t!(
-                                    &sug_key,
-                                    field = key,
-                                    client = client_display_name(client)
-                                ))
-                                .with_fix(Fix::delete(
-                                    abs_line_start,
-                                    abs_line_end,
-                                    format!(
-                                        "Remove unsupported field '{}' for {}",
-                                        key,
-                                        client_display_name(client)
-                                    ),
-                                    true,
-                                )),
-                            );
-                        }
+            // Per-client rule: warn if client does not support this field
+            if has_per_client {
+                if let Some(rule_id) = per_client_rule {
+                    if !is_field_supported(client, key) {
+                        let i18n_key = i18n_key_for_client(client).unwrap_or("cr_sk_001");
+                        let msg_key = format!("rules.{}.message", i18n_key);
+                        let sug_key = format!("rules.{}.suggestion", i18n_key);
+
+                        diagnostics.push(
+                            Diagnostic::warning(
+                                path.to_path_buf(),
+                                line_num,
+                                col,
+                                rule_id,
+                                t!(&msg_key, field = key, client = client_display_name(client)),
+                            )
+                            .with_suggestion(t!(
+                                &sug_key,
+                                field = key,
+                                client = client_display_name(client)
+                            ))
+                            .with_fix(Fix::delete(
+                                abs_line_start,
+                                abs_line_end,
+                                format!(
+                                    "Remove unsupported field '{}' for {}",
+                                    key,
+                                    client_display_name(client)
+                                ),
+                                true,
+                            )),
+                        );
                     }
                 }
+            }
 
-                // XP-SK-001: cross-platform portability warning for any skill
-                // with non-universal fields, except Claude Code (which supports all)
-                if has_xp && client != SkillClient::ClaudeCode {
-                    diagnostics.push(
-                        Diagnostic::info(
-                            path.to_path_buf(),
-                            line_num,
-                            col,
-                            "XP-SK-001",
-                            t!("rules.xp_sk_001.message", field = key),
-                        )
-                        .with_suggestion(t!("rules.xp_sk_001.suggestion", field = key)),
-                    );
-                }
+            // XP-SK-001: cross-platform portability warning for any skill
+            // with non-universal fields, except Claude Code (which supports all)
+            if has_xp && client != SkillClient::ClaudeCode {
+                diagnostics.push(
+                    Diagnostic::info(
+                        path.to_path_buf(),
+                        line_num,
+                        col,
+                        "XP-SK-001",
+                        t!("rules.xp_sk_001.message", field = key),
+                    )
+                    .with_suggestion(t!("rules.xp_sk_001.suggestion", field = key)),
+                );
             }
 
             fm_offset = advance_past_line(fm_offset, line.len(), fm_bytes);
@@ -712,5 +707,54 @@ mod tests {
         // The frontmatter is "\nname: my-skill\ndescription: A test\nmodel: opus"
         // "model: opus" is on line 4 of the full content
         assert_eq!(cr_diag.line, 4, "model should be on line 4");
+    }
+
+    #[test]
+    fn test_unknown_custom_field_flagged() {
+        // A completely unknown field (not in UNIVERSAL_FIELDS or EXTENSION_FIELDS)
+        // should be flagged for non-Claude clients
+        let content = make_skill(
+            "name: my-skill\ndescription: A test\nmy-custom-field: value",
+            "Body",
+        );
+        let diags = validate(".cursor/skills/my-skill/SKILL.md", &content);
+        let cr_diags: Vec<_> = diags.iter().filter(|d| d.rule == "CR-SK-001").collect();
+        assert_eq!(
+            cr_diags.len(),
+            1,
+            "Unknown custom field should trigger CR-SK-001"
+        );
+        assert!(cr_diags[0].message.contains("my-custom-field"));
+    }
+
+    #[test]
+    fn test_unknown_custom_field_xp_fires() {
+        // XP-SK-001 should fire for any non-universal field, including unknown ones
+        let content = make_skill(
+            "name: my-skill\ndescription: A test\nmy-custom-field: value",
+            "Body",
+        );
+        let diags = validate("SKILL.md", &content);
+        let xp_diags: Vec<_> = diags.iter().filter(|d| d.rule == "XP-SK-001").collect();
+        assert_eq!(
+            xp_diags.len(),
+            1,
+            "XP-SK-001 should fire for unknown custom field"
+        );
+    }
+
+    #[test]
+    fn test_unknown_custom_field_not_flagged_for_claude() {
+        // Claude Code accepts all fields, including unknown ones
+        let content = make_skill(
+            "name: my-skill\ndescription: A test\nmy-custom-field: value",
+            "Body",
+        );
+        let diags = validate(".claude/skills/my-skill/SKILL.md", &content);
+        assert!(
+            diags.is_empty(),
+            "Claude Code should not flag any fields, got {:?}",
+            diags
+        );
     }
 }

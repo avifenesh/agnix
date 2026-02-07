@@ -27,13 +27,13 @@
 | Version Awareness | .agnix.toml | 1 |
 | Cursor Skills | .cursor/skills/*/SKILL.md | 1 |
 | Cline Skills | .cline/skills/*/SKILL.md | 1 |
-| Copilot Skills | .github/copilot/skills/*/SKILL.md | 1 |
-| Codex Skills | .codex/skills/*/SKILL.md | 1 |
+| Copilot Skills | .github/skills/*/SKILL.md | 1 |
+| Codex Skills | .agents/skills/*/SKILL.md | 1 |
 | OpenCode Skills | .opencode/skills/*/SKILL.md | 1 |
 | Windsurf Skills | .windsurf/skills/*/SKILL.md | 1 |
 | Kiro Skills | .kiro/skills/*/SKILL.md | 1 |
-| Amp Skills | .amp/skills/*/SKILL.md | 1 |
-| Roo Code Skills | .roo-code/skills/*/SKILL.md | 1 |
+| Amp Skills | .agents/skills/*/SKILL.md | 1 |
+| Roo Code Skills | .roo/skills/*/SKILL.md | 1 |
 
 ## Architecture
 
