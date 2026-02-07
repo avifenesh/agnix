@@ -1,6 +1,6 @@
 # Rules Reference
 
-This section contains all `142` validation rules generated from `knowledge-base/rules.json`.
+This section contains all `145` validation rules generated from `knowledge-base/rules.json`.
 `32` rules have automatic fixes.
 
 
