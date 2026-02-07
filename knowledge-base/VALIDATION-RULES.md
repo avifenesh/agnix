@@ -926,6 +926,27 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 **Fix**: Create `.cursor/rules/` directory and migrate rules to .mdc files
 **Source**: docs.cursor.com/en/context
 
+<a id="cur-007"></a>
+### CUR-007 [MEDIUM] alwaysApply with Redundant globs
+**Requirement**: When `alwaysApply: true`, the `globs` field SHOULD NOT be set (it is redundant)
+**Detection**: Frontmatter has both `alwaysApply: true` and a `globs` field
+**Fix**: [AUTO-FIX] Remove the `globs` field (safe)
+**Source**: docs.cursor.com/en/context
+
+<a id="cur-008"></a>
+### CUR-008 [HIGH] Invalid alwaysApply Type
+**Requirement**: `alwaysApply` MUST be a boolean (`true`/`false`), not a quoted string
+**Detection**: `alwaysApply` value is a string (e.g., `"true"` or `"false"`) instead of a boolean
+**Fix**: Remove quotes around the value
+**Source**: docs.cursor.com/en/context
+
+<a id="cur-009"></a>
+### CUR-009 [MEDIUM] Missing Description for Agent-Requested Rule
+**Requirement**: Rules with no `alwaysApply` and no `globs` (agent-requested rules) SHOULD have a `description`
+**Detection**: Frontmatter has no `alwaysApply`, no `globs`, and no `description` (or empty description)
+**Fix**: Add a `description` field explaining when the rule should apply
+**Source**: docs.cursor.com/en/context
+
 ---
 
 ## UNIVERSAL RULES (XML)
@@ -1179,6 +1200,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | MCP-012 | Change sse to http | unsafe |
 | COP-004 | Remove unknown frontmatter key | safe |
 | CUR-005 | Remove unknown frontmatter key | safe |
+| CUR-007 | Remove redundant globs field | safe |
 | XML-001 | Add missing closing tag | unsafe |
 | XML-002 | Fix mismatched closing tag | unsafe |
 | XML-003 | Remove orphaned closing tag | unsafe |
@@ -1197,14 +1219,14 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | AGENTS.md | 6 | 1 | 5 | 0 | 0 |
 | Claude Plugins | 10 | 8 | 2 | 0 | 2 |
 | GitHub Copilot | 6 | 4 | 2 | 0 | 1 |
-| Cursor | 6 | 3 | 3 | 0 | 1 |
+| Cursor | 9 | 4 | 5 | 0 | 2 |
 | MCP | 12 | 10 | 2 | 0 | 3 |
 | XML | 3 | 3 | 0 | 0 | 3 |
 | References | 2 | 2 | 0 | 0 | 0 |
 | Prompt Eng | 4 | 0 | 4 | 0 | 0 |
 | Cross-Platform | 6 | 4 | 2 | 0 | 0 |
 | Version Awareness | 1 | 0 | 0 | 1 | 0 |
-| **TOTAL** | **128** | **93** | **33** | **2** | **29** |
+| **TOTAL** | **131** | **94** | **35** | **2** | **30** |
 
 ---
 
@@ -1233,7 +1255,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 
 ---
 
-**Total Coverage**: 128 validation rules across 15 categories
+**Total Coverage**: 131 validation rules across 15 categories
 **Knowledge Base**: 11,036 lines, 320KB, 75+ sources
-**Certainty**: 93 HIGH, 33 MEDIUM, 2 LOW
-**Auto-Fixable**: 29 rules (23%)
+**Certainty**: 94 HIGH, 35 MEDIUM, 2 LOW
+**Auto-Fixable**: 30 rules (23%)

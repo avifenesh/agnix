@@ -1,7 +1,7 @@
 # Rules Reference
 
-This section contains all `128` validation rules generated from `knowledge-base/rules.json`.
-`29` rules have automatic fixes.
+This section contains all `131` validation rules generated from `knowledge-base/rules.json`.
+`30` rules have automatic fixes.
 
 | Rule | Name | Severity | Category | Auto-Fix |
 |------|------|----------|----------|----------|
@@ -117,6 +117,9 @@ This section contains all `128` validation rules generated from `knowledge-base/
 | [CUR-004](./generated/cur-004.md) | Invalid Glob Pattern in globs Field | HIGH | Cursor | No |
 | [CUR-005](./generated/cur-005.md) | Unknown Frontmatter Keys | MEDIUM | Cursor | Yes (safe) |
 | [CUR-006](./generated/cur-006.md) | Legacy .cursorrules File Detected | MEDIUM | Cursor | No |
+| [CUR-007](./generated/cur-007.md) | alwaysApply with Redundant globs | MEDIUM | Cursor | Yes (safe) |
+| [CUR-008](./generated/cur-008.md) | Invalid alwaysApply Type | HIGH | Cursor | No |
+| [CUR-009](./generated/cur-009.md) | Missing Description for Agent-Requested Rule | MEDIUM | Cursor | No |
 | [XML-001](./generated/xml-001.md) | Unclosed XML Tag | HIGH | XML | Yes (unsafe) |
 | [XML-002](./generated/xml-002.md) | Mismatched Closing Tag | HIGH | XML | Yes (unsafe) |
 | [XML-003](./generated/xml-003.md) | Unmatched Closing Tag | HIGH | XML | Yes (unsafe) |
