@@ -2582,3 +2582,749 @@ Body"#;
     assert!(fix.replacement.contains("context: fork") || fix.replacement == "fork");
     assert!(!fix.safe);
 }
+
+// ===== CC-SK-010: Invalid Hooks in Skill Frontmatter =====
+
+#[test]
+fn test_cc_sk_010_invalid_hook_event() {
+    let content = r#"---
+name: hooks-skill
+description: Use when testing hooks
+hooks:
+  InvalidEvent:
+    - type: command
+      command: echo hello
+---
+Body"#;
+
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("SKILL.md"), content, &LintConfig::default());
+
+    let cc_sk_010: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-SK-010")
+        .collect();
+
+    assert_eq!(cc_sk_010.len(), 1);
+    assert_eq!(
+        cc_sk_010[0].level,
+        crate::diagnostics::DiagnosticLevel::Error
+    );
+    assert!(cc_sk_010[0].message.contains("InvalidEvent"));
+}
+
+#[test]
+fn test_cc_sk_010_valid_hook_event() {
+    let content = r#"---
+name: hooks-skill
+description: Use when testing hooks
+hooks:
+  PreToolUse:
+    - type: command
+      command: echo pre
+---
+Body"#;
+
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("SKILL.md"), content, &LintConfig::default());
+
+    let cc_sk_010: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-SK-010")
+        .collect();
+
+    assert_eq!(cc_sk_010.len(), 0);
+}
+
+#[test]
+fn test_cc_sk_010_no_hooks_field_ok() {
+    let content = r#"---
+name: simple-skill
+description: Use when testing
+---
+Body"#;
+
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("SKILL.md"), content, &LintConfig::default());
+
+    let cc_sk_010: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-SK-010")
+        .collect();
+
+    assert_eq!(cc_sk_010.len(), 0);
+}
+
+#[test]
+fn test_cc_sk_010_hooks_not_mapping() {
+    let content = r#"---
+name: hooks-skill
+description: Use when testing hooks
+hooks: not-a-mapping
+---
+Body"#;
+
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("SKILL.md"), content, &LintConfig::default());
+
+    let cc_sk_010: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-SK-010")
+        .collect();
+
+    assert_eq!(cc_sk_010.len(), 1);
+    assert!(cc_sk_010[0].message.contains("must be a mapping"));
+}
+
+#[test]
+fn test_cc_sk_010_fixture_invalid() {
+    let content =
+        include_str!("../../../../../tests/fixtures/invalid/skills/invalid-hooks/SKILL.md");
+
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("SKILL.md"), content, &LintConfig::default());
+
+    let cc_sk_010: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-SK-010")
+        .collect();
+
+    assert!(
+        !cc_sk_010.is_empty(),
+        "Invalid hooks fixture should trigger CC-SK-010"
+    );
+}
+
+#[test]
+fn test_cc_sk_010_fixture_valid() {
+    let content =
+        include_str!("../../../../../tests/fixtures/valid/skills/with-hooks/SKILL.md");
+
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("SKILL.md"), content, &LintConfig::default());
+
+    let cc_sk_010: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-SK-010")
+        .collect();
+
+    assert_eq!(
+        cc_sk_010.len(),
+        0,
+        "Valid hooks fixture should not trigger CC-SK-010"
+    );
+}
+
+// ===== CC-SK-011: Unreachable Skill =====
+
+#[test]
+fn test_cc_sk_011_unreachable() {
+    let content = r#"---
+name: unreachable
+description: Use when testing unreachable
+user-invocable: false
+disable-model-invocation: true
+---
+Body"#;
+
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+    let cc_sk_011: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-SK-011")
+        .collect();
+
+    assert_eq!(cc_sk_011.len(), 1);
+    assert_eq!(
+        cc_sk_011[0].level,
+        crate::diagnostics::DiagnosticLevel::Error
+    );
+}
+
+#[test]
+fn test_cc_sk_011_user_invocable_true_ok() {
+    let content = r#"---
+name: invocable
+description: Use when testing
+user-invocable: true
+disable-model-invocation: true
+---
+Body"#;
+
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+    let cc_sk_011: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-SK-011")
+        .collect();
+
+    assert_eq!(cc_sk_011.len(), 0);
+}
+
+#[test]
+fn test_cc_sk_011_model_invocation_false_ok() {
+    let content = r#"---
+name: invocable
+description: Use when testing
+user-invocable: false
+disable-model-invocation: false
+---
+Body"#;
+
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+    let cc_sk_011: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-SK-011")
+        .collect();
+
+    assert_eq!(cc_sk_011.len(), 0);
+}
+
+#[test]
+fn test_cc_sk_011_defaults_ok() {
+    // Default: user-invocable=true, disable-model-invocation=false
+    let content = r#"---
+name: default-skill
+description: Use when testing
+---
+Body"#;
+
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+    let cc_sk_011: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-SK-011")
+        .collect();
+
+    assert_eq!(cc_sk_011.len(), 0);
+}
+
+#[test]
+fn test_cc_sk_011_fixture() {
+    let content =
+        include_str!("../../../../../tests/fixtures/invalid/skills/unreachable-skill/SKILL.md");
+
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("SKILL.md"), content, &LintConfig::default());
+
+    let cc_sk_011: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-SK-011")
+        .collect();
+
+    assert_eq!(
+        cc_sk_011.len(),
+        1,
+        "Unreachable skill fixture should trigger CC-SK-011"
+    );
+}
+
+// ===== CC-SK-012: Argument Hint Without $ARGUMENTS =====
+
+#[test]
+fn test_cc_sk_012_hint_without_arguments() {
+    let content = r#"---
+name: hint-skill
+description: Use when testing hints
+argument-hint: <file-path>
+---
+Process the given file."#;
+
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+    let cc_sk_012: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-SK-012")
+        .collect();
+
+    assert_eq!(cc_sk_012.len(), 1);
+    assert_eq!(
+        cc_sk_012[0].level,
+        crate::diagnostics::DiagnosticLevel::Warning
+    );
+}
+
+#[test]
+fn test_cc_sk_012_hint_with_arguments_ok() {
+    let content = r#"---
+name: hint-skill
+description: Use when testing hints
+argument-hint: <file-path>
+---
+Process the file specified in $ARGUMENTS."#;
+
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+    let cc_sk_012: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-SK-012")
+        .collect();
+
+    assert_eq!(cc_sk_012.len(), 0);
+}
+
+#[test]
+fn test_cc_sk_012_no_hint_ok() {
+    let content = r#"---
+name: no-hint
+description: Use when testing
+---
+Body without $ARGUMENTS."#;
+
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+    let cc_sk_012: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-SK-012")
+        .collect();
+
+    assert_eq!(cc_sk_012.len(), 0);
+}
+
+#[test]
+fn test_cc_sk_012_fixture_invalid() {
+    let content =
+        include_str!("../../../../../tests/fixtures/invalid/skills/argument-hint-no-args/SKILL.md");
+
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("SKILL.md"), content, &LintConfig::default());
+
+    let cc_sk_012: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-SK-012")
+        .collect();
+
+    assert_eq!(
+        cc_sk_012.len(),
+        1,
+        "Argument hint without $ARGUMENTS fixture should trigger CC-SK-012"
+    );
+}
+
+#[test]
+fn test_cc_sk_012_fixture_valid() {
+    let content =
+        include_str!("../../../../../tests/fixtures/valid/skills/with-argument-hint/SKILL.md");
+
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("SKILL.md"), content, &LintConfig::default());
+
+    let cc_sk_012: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-SK-012")
+        .collect();
+
+    assert_eq!(
+        cc_sk_012.len(),
+        0,
+        "Valid argument hint fixture should not trigger CC-SK-012"
+    );
+}
+
+// ===== CC-SK-013: Fork Context Without Actionable Instructions =====
+
+#[test]
+fn test_cc_sk_013_fork_without_instructions() {
+    let content = r#"---
+name: ref-skill
+description: Use when looking up docs
+context: fork
+agent: general-purpose
+---
+This is a reference document about the API.
+It describes the system architecture.
+The data models are documented here."#;
+
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+    let cc_sk_013: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-SK-013")
+        .collect();
+
+    assert_eq!(cc_sk_013.len(), 1);
+    assert_eq!(
+        cc_sk_013[0].level,
+        crate::diagnostics::DiagnosticLevel::Warning
+    );
+}
+
+#[test]
+fn test_cc_sk_013_fork_with_instructions_ok() {
+    let content = r#"---
+name: build-skill
+description: Use when building the project
+context: fork
+agent: general-purpose
+---
+Run the build command and check for errors.
+Create a report of the results."#;
+
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+    let cc_sk_013: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-SK-013")
+        .collect();
+
+    assert_eq!(cc_sk_013.len(), 0);
+}
+
+#[test]
+fn test_cc_sk_013_no_fork_ok() {
+    let content = r#"---
+name: ref-skill
+description: Use when looking up docs
+---
+This is just reference content without imperative verbs."#;
+
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+    let cc_sk_013: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-SK-013")
+        .collect();
+
+    assert_eq!(cc_sk_013.len(), 0);
+}
+
+#[test]
+fn test_cc_sk_013_fixture_invalid() {
+    let content =
+        include_str!("../../../../../tests/fixtures/invalid/skills/fork-no-instructions/SKILL.md");
+
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("SKILL.md"), content, &LintConfig::default());
+
+    let cc_sk_013: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-SK-013")
+        .collect();
+
+    assert_eq!(
+        cc_sk_013.len(),
+        1,
+        "Fork without instructions fixture should trigger CC-SK-013"
+    );
+}
+
+#[test]
+fn test_cc_sk_013_fixture_valid() {
+    let content =
+        include_str!("../../../../../tests/fixtures/valid/skills/fork-with-instructions/SKILL.md");
+
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("SKILL.md"), content, &LintConfig::default());
+
+    let cc_sk_013: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-SK-013")
+        .collect();
+
+    assert_eq!(
+        cc_sk_013.len(),
+        0,
+        "Fork with instructions fixture should not trigger CC-SK-013"
+    );
+}
+
+// ===== CC-SK-014: Invalid disable-model-invocation Type =====
+
+#[test]
+fn test_cc_sk_014_string_true() {
+    let content = r#"---
+name: test-skill
+description: Use when testing
+disable-model-invocation: "true"
+---
+Body"#;
+
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+    let cc_sk_014: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-SK-014")
+        .collect();
+
+    assert_eq!(cc_sk_014.len(), 1);
+    assert_eq!(
+        cc_sk_014[0].level,
+        crate::diagnostics::DiagnosticLevel::Error
+    );
+    assert!(cc_sk_014[0].message.contains("true"));
+}
+
+#[test]
+fn test_cc_sk_014_string_false() {
+    let content = r#"---
+name: test-skill
+description: Use when testing
+disable-model-invocation: "false"
+---
+Body"#;
+
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+    let cc_sk_014: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-SK-014")
+        .collect();
+
+    assert_eq!(cc_sk_014.len(), 1);
+}
+
+#[test]
+fn test_cc_sk_014_boolean_true_ok() {
+    let content = r#"---
+name: test-skill
+description: Use when testing
+disable-model-invocation: true
+---
+Body"#;
+
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+    let cc_sk_014: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-SK-014")
+        .collect();
+
+    assert_eq!(cc_sk_014.len(), 0);
+}
+
+#[test]
+fn test_cc_sk_014_has_safe_fix() {
+    let content = r#"---
+name: test-skill
+description: Use when testing
+disable-model-invocation: "true"
+---
+Body"#;
+
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+    let cc_sk_014: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-SK-014")
+        .collect();
+
+    assert_eq!(cc_sk_014.len(), 1);
+    assert!(cc_sk_014[0].has_fixes());
+    let fix = &cc_sk_014[0].fixes[0];
+    assert_eq!(fix.replacement, "true");
+    assert!(fix.safe);
+}
+
+#[test]
+fn test_cc_sk_014_fix_applies_correctly() {
+    let content = r#"---
+name: test-skill
+description: Use when testing
+disable-model-invocation: "true"
+---
+Body"#;
+
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+    let cc_sk_014: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-SK-014")
+        .collect();
+
+    assert_eq!(cc_sk_014.len(), 1);
+    assert!(cc_sk_014[0].has_fixes());
+
+    let fix = &cc_sk_014[0].fixes[0];
+    let mut fixed = content.to_string();
+    fixed.replace_range(fix.start_byte..fix.end_byte, &fix.replacement);
+    assert!(fixed.contains("disable-model-invocation: true"));
+    assert!(!fixed.contains("\"true\""));
+}
+
+#[test]
+fn test_cc_sk_014_single_quoted() {
+    let content = "---\nname: test-skill\ndescription: Use when testing\ndisable-model-invocation: 'true'\n---\nBody";
+
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+    let cc_sk_014: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-SK-014")
+        .collect();
+
+    assert_eq!(cc_sk_014.len(), 1);
+}
+
+// ===== CC-SK-015: Invalid user-invocable Type =====
+
+#[test]
+fn test_cc_sk_015_string_true() {
+    let content = r#"---
+name: test-skill
+description: Use when testing
+user-invocable: "true"
+---
+Body"#;
+
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+    let cc_sk_015: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-SK-015")
+        .collect();
+
+    assert_eq!(cc_sk_015.len(), 1);
+    assert_eq!(
+        cc_sk_015[0].level,
+        crate::diagnostics::DiagnosticLevel::Error
+    );
+}
+
+#[test]
+fn test_cc_sk_015_string_false() {
+    let content = r#"---
+name: test-skill
+description: Use when testing
+user-invocable: "false"
+---
+Body"#;
+
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+    let cc_sk_015: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-SK-015")
+        .collect();
+
+    assert_eq!(cc_sk_015.len(), 1);
+}
+
+#[test]
+fn test_cc_sk_015_boolean_false_ok() {
+    let content = r#"---
+name: test-skill
+description: Use when testing
+user-invocable: false
+---
+Body"#;
+
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+    let cc_sk_015: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-SK-015")
+        .collect();
+
+    assert_eq!(cc_sk_015.len(), 0);
+}
+
+#[test]
+fn test_cc_sk_015_has_safe_fix() {
+    let content = r#"---
+name: test-skill
+description: Use when testing
+user-invocable: "false"
+---
+Body"#;
+
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+    let cc_sk_015: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-SK-015")
+        .collect();
+
+    assert_eq!(cc_sk_015.len(), 1);
+    assert!(cc_sk_015[0].has_fixes());
+    let fix = &cc_sk_015[0].fixes[0];
+    assert_eq!(fix.replacement, "false");
+    assert!(fix.safe);
+}
+
+#[test]
+fn test_cc_sk_015_fix_applies_correctly() {
+    let content = r#"---
+name: test-skill
+description: Use when testing
+user-invocable: "false"
+---
+Body"#;
+
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+    let cc_sk_015: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-SK-015")
+        .collect();
+
+    assert_eq!(cc_sk_015.len(), 1);
+    assert!(cc_sk_015[0].has_fixes());
+
+    let fix = &cc_sk_015[0].fixes[0];
+    let mut fixed = content.to_string();
+    fixed.replace_range(fix.start_byte..fix.end_byte, &fix.replacement);
+    assert!(fixed.contains("user-invocable: false"));
+    assert!(!fixed.contains("\"false\""));
+}
+
+#[test]
+fn test_cc_sk_014_fixture() {
+    let content =
+        include_str!("../../../../../tests/fixtures/invalid/skills/string-boolean-disable/SKILL.md");
+
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("SKILL.md"), content, &LintConfig::default());
+
+    let cc_sk_014: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-SK-014")
+        .collect();
+
+    assert_eq!(
+        cc_sk_014.len(),
+        1,
+        "String boolean disable fixture should trigger CC-SK-014"
+    );
+}
+
+#[test]
+fn test_cc_sk_015_fixture() {
+    let content =
+        include_str!("../../../../../tests/fixtures/invalid/skills/string-boolean-invocable/SKILL.md");
+
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("SKILL.md"), content, &LintConfig::default());
+
+    let cc_sk_015: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-SK-015")
+        .collect();
+
+    assert_eq!(
+        cc_sk_015.len(),
+        1,
+        "String boolean invocable fixture should trigger CC-SK-015"
+    );
+}
