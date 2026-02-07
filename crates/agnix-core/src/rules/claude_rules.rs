@@ -110,7 +110,10 @@ impl Validator for ClaudeRulesValidator {
                     "CC-MEM-012",
                     t!("rules.cc_mem_012.message", key = unknown.key.as_str()),
                 )
-                .with_suggestion(t!("rules.cc_mem_012.suggestion", key = unknown.key.as_str()));
+                .with_suggestion(t!(
+                    "rules.cc_mem_012.suggestion",
+                    key = unknown.key.as_str()
+                ));
 
                 // Safe auto-fix: remove unknown top-level frontmatter key line.
                 if let Some((start, end)) = line_byte_range(content, unknown.line) {
@@ -157,11 +160,7 @@ mod tests {
 
     fn validate_rule_with_config(content: &str, config: &LintConfig) -> Vec<Diagnostic> {
         let validator = ClaudeRulesValidator;
-        validator.validate(
-            Path::new(".claude/rules/my-rule.md"),
-            content,
-            config,
-        )
+        validator.validate(Path::new(".claude/rules/my-rule.md"), content, config)
     }
 
     // ===== CC-MEM-011: Invalid Paths Glob =====
@@ -227,11 +226,7 @@ paths:
                 .iter()
                 .filter(|d| d.rule == "CC-MEM-011")
                 .collect();
-            assert!(
-                mem_011.is_empty(),
-                "Pattern '{}' should be valid",
-                pattern
-            );
+            assert!(mem_011.is_empty(), "Pattern '{}' should be valid", pattern);
         }
     }
 
