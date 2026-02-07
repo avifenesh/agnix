@@ -936,9 +936,9 @@ impl LintConfig {
                 }
                 // Reject absolute paths (Unix-style leading slash or Windows drive letter)
                 if normalized.starts_with('/')
-                    || (normalized.len() >= 2
+                    || (normalized.len() >= 3
                         && normalized.as_bytes()[0].is_ascii_alphabetic()
-                        && normalized.as_bytes()[1] == b':')
+                        && &normalized[1..3] == ":/")
                 {
                     warnings.push(ConfigWarning {
                         field: field.to_string(),
@@ -3390,10 +3390,7 @@ exclude = ["drafts/**"]
         let config: LintConfig = toml::from_str(toml_str).expect("should parse");
         assert_eq!(config.files.include_as_memory.len(), 2);
         assert_eq!(config.files.include_as_memory[0], "docs/ai-rules/*.md");
-        assert_eq!(
-            config.files.include_as_memory[1],
-            "custom/INSTRUCTIONS.md"
-        );
+        assert_eq!(config.files.include_as_memory[1], "custom/INSTRUCTIONS.md");
         assert_eq!(config.files.include_as_generic.len(), 1);
         assert_eq!(config.files.include_as_generic[0], "internal/*.md");
         assert_eq!(config.files.exclude.len(), 1);
@@ -3470,9 +3467,7 @@ severity = "Warning"
         assert!(
             warnings
                 .iter()
-                .any(|w| w.field == "files.include_as_memory"
-                    && w.message.contains("../")
-                ),
+                .any(|w| w.field == "files.include_as_memory" && w.message.contains("../")),
             "should warn about path traversal pattern: {:?}",
             warnings
         );
@@ -3487,8 +3482,7 @@ severity = "Warning"
         assert!(
             warnings
                 .iter()
-                .any(|w| w.field == "files.include_as_generic"
-                    && w.message.contains("absolute")),
+                .any(|w| w.field == "files.include_as_generic" && w.message.contains("absolute")),
             "should warn about absolute path pattern: {:?}",
             warnings
         );
@@ -3501,8 +3495,7 @@ severity = "Warning"
         assert!(
             warnings2
                 .iter()
-                .any(|w| w.field == "files.exclude"
-                    && w.message.contains("absolute")),
+                .any(|w| w.field == "files.exclude" && w.message.contains("absolute")),
             "should warn about Windows absolute path pattern: {:?}",
             warnings2
         );
@@ -3512,32 +3505,24 @@ severity = "Warning"
     fn test_validate_files_pattern_count_limit() {
         let mut config = LintConfig::default();
         // Create 101 patterns to exceed MAX_FILE_PATTERNS (100)
-        config.files.include_as_memory = (0..101)
-            .map(|i| format!("pattern-{}.md", i))
-            .collect();
+        config.files.include_as_memory = (0..101).map(|i| format!("pattern-{}.md", i)).collect();
 
         let warnings = config.validate();
         assert!(
-            warnings
-                .iter()
-                .any(|w| w.field == "files.include_as_memory"
-                    && w.message.contains("101")
-                    && w.message.contains("100")),
+            warnings.iter().any(|w| w.field == "files.include_as_memory"
+                && w.message.contains("101")
+                && w.message.contains("100")),
             "should warn about exceeding pattern count limit: {:?}",
             warnings
         );
 
         // 100 patterns should not produce a count warning
         let mut config2 = LintConfig::default();
-        config2.files.include_as_memory = (0..100)
-            .map(|i| format!("pattern-{}.md", i))
-            .collect();
+        config2.files.include_as_memory = (0..100).map(|i| format!("pattern-{}.md", i)).collect();
 
         let warnings2 = config2.validate();
         assert!(
-            !warnings2
-                .iter()
-                .any(|w| w.message.contains("exceeds")),
+            !warnings2.iter().any(|w| w.message.contains("exceeds")),
             "100 patterns should not produce a count warning: {:?}",
             warnings2
         );

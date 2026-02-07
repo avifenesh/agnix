@@ -793,10 +793,7 @@ fn test_vscode_files_partial_deserialization() {
 
     let config: VsCodeConfig = serde_json::from_str(json).expect("should parse");
     let files = config.files.expect("files should be present");
-    assert_eq!(
-        files.include_as_memory,
-        Some(vec!["custom.md".to_string()])
-    );
+    assert_eq!(files.include_as_memory, Some(vec!["custom.md".to_string()]));
     assert!(files.include_as_generic.is_none());
     assert!(files.exclude.is_none());
 }
@@ -851,8 +848,5 @@ fn test_vscode_files_merge_overrides() {
         vec!["old-generic.md".to_string()]
     );
     // exclude added
-    assert_eq!(
-        lint_config.files.exclude,
-        vec!["drafts/**".to_string()]
-    );
+    assert_eq!(lint_config.files.exclude, vec!["drafts/**".to_string()]);
 }

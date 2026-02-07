@@ -428,35 +428,31 @@ impl CompiledFilesConfig {
     }
 }
 
+fn compile_patterns<F>(patterns: &[String], error_builder: F) -> LintResult<Vec<glob::Pattern>>
+where
+    F: Fn(String, String) -> LintError,
+{
+    patterns
+        .iter()
+        .map(|p| {
+            let normalized = p.replace('\\', "/");
+            glob::Pattern::new(&normalized)
+                .map_err(|e| error_builder(p.clone(), e.to_string()))
+        })
+        .collect()
+}
+
 fn compile_files_config(files: &config::FilesConfig) -> LintResult<CompiledFilesConfig> {
-    let compile_include = |patterns: &[String]| -> LintResult<Vec<glob::Pattern>> {
-        patterns
-            .iter()
-            .map(|p| {
-                let normalized = p.replace('\\', "/");
-                glob::Pattern::new(&normalized).map_err(|e| LintError::InvalidIncludePattern {
-                    pattern: p.clone(),
-                    message: e.to_string(),
-                })
-            })
-            .collect()
-    };
-    let compile_exclude = |patterns: &[String]| -> LintResult<Vec<glob::Pattern>> {
-        patterns
-            .iter()
-            .map(|p| {
-                let normalized = p.replace('\\', "/");
-                glob::Pattern::new(&normalized).map_err(|e| LintError::InvalidExcludePattern {
-                    pattern: p.clone(),
-                    message: e.to_string(),
-                })
-            })
-            .collect()
-    };
     Ok(CompiledFilesConfig {
-        include_as_memory: compile_include(&files.include_as_memory)?,
-        include_as_generic: compile_include(&files.include_as_generic)?,
-        exclude: compile_exclude(&files.exclude)?,
+        include_as_memory: compile_patterns(&files.include_as_memory, |pattern, message| {
+            LintError::InvalidIncludePattern { pattern, message }
+        })?,
+        include_as_generic: compile_patterns(&files.include_as_generic, |pattern, message| {
+            LintError::InvalidIncludePattern { pattern, message }
+        })?,
+        exclude: compile_patterns(&files.exclude, |pattern, message| {
+            LintError::InvalidExcludePattern { pattern, message }
+        })?,
     })
 }
 
@@ -4379,10 +4375,7 @@ Use idiomatic Rust patterns.
         .unwrap();
 
         // Without config, this file would be GenericMarkdown (in non-doc dir)
-        assert_eq!(
-            detect_file_type(&custom_file),
-            FileType::GenericMarkdown
-        );
+        assert_eq!(detect_file_type(&custom_file), FileType::GenericMarkdown);
 
         // With include_as_memory config, it should be validated as ClaudeMd
         let mut config = LintConfig::default();
@@ -4406,7 +4399,11 @@ Use idiomatic Rust patterns.
             "Expected PE-* diagnostics (from PromptValidator, ClaudeMd-only) but found none. \
              This means the file was not validated as ClaudeMd despite include_as_memory config. \
              All diagnostics: {:?}",
-            result.diagnostics.iter().map(|d| (&d.rule, &d.message)).collect::<Vec<_>>()
+            result
+                .diagnostics
+                .iter()
+                .map(|d| (&d.rule, &d.message))
+                .collect::<Vec<_>>()
         );
     }
 
@@ -4416,11 +4413,7 @@ Use idiomatic Rust patterns.
         let root = temp.path();
 
         // Create a CLAUDE.md that would normally be validated
-        std::fs::write(
-            root.join("CLAUDE.md"),
-            "# Project\n\nInstructions here.\n",
-        )
-        .unwrap();
+        std::fs::write(root.join("CLAUDE.md"), "# Project\n\nInstructions here.\n").unwrap();
 
         // Create a CLAUDE.md in a vendor dir that should be excluded
         let vendor_dir = root.join("vendor");
