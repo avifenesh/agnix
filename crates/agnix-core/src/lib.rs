@@ -4858,4 +4858,54 @@ mod i18n_tests {
 
         rust_i18n::set_locale("en");
     }
+
+    /// Verify that new suggestion locale keys from #323 resolve to real text.
+    #[test]
+    fn test_new_suggestion_keys_resolve() {
+        let _lock = LOCALE_MUTEX.lock().unwrap();
+        rust_i18n::set_locale("en");
+
+        // Parse error suggestions added in #323
+        macro_rules! assert_key_resolves {
+            ($key:expr) => {
+                let value = t!($key);
+                assert!(
+                    !value.starts_with("rules."),
+                    "Locale key '{}' should resolve to text, not raw key path: {}",
+                    $key,
+                    value
+                );
+            };
+        }
+        assert_key_resolves!("rules.as_016.suggestion");
+        assert_key_resolves!("rules.cc_hk_012.suggestion");
+        assert_key_resolves!("rules.mcp_007.suggestion");
+        assert_key_resolves!("rules.cc_pl_006.suggestion");
+        assert_key_resolves!("rules.cc_ag_007.parse_error_suggestion");
+        assert_key_resolves!("rules.cdx_000.suggestion");
+        assert_key_resolves!("rules.file_read_error_suggestion");
+        assert_key_resolves!("rules.xp_004_read_error_suggestion");
+
+        // CDX-000 message (migrated from format!() to t!())
+        let cdx_msg = t!("rules.cdx_000.message", error = "test error");
+        assert!(
+            cdx_msg.contains("test error"),
+            "CDX-000 message should interpolate error param, got: {}",
+            cdx_msg
+        );
+
+        // file::read and XP-004 read error messages
+        let file_msg = t!("rules.file_read_error", error = "permission denied");
+        assert!(
+            file_msg.contains("permission denied"),
+            "file_read_error should interpolate error param, got: {}",
+            file_msg
+        );
+        let xp_msg = t!("rules.xp_004_read_error", error = "not found");
+        assert!(
+            xp_msg.contains("not found"),
+            "xp_004_read_error should interpolate error param, got: {}",
+            xp_msg
+        );
+    }
 }

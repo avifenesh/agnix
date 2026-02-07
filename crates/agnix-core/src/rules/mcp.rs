@@ -2079,8 +2079,14 @@ mod tests {
         );
         let suggestion = mcp_003[0].suggestion.as_ref().unwrap();
         assert!(
-            suggestion.contains("string") && suggestion.contains("object") && suggestion.contains("array"),
-            "MCP-003 suggestion should list valid JSON Schema types, got: {}",
+            suggestion.contains("string")
+                && suggestion.contains("number")
+                && suggestion.contains("integer")
+                && suggestion.contains("boolean")
+                && suggestion.contains("object")
+                && suggestion.contains("array")
+                && suggestion.contains("null"),
+            "MCP-003 suggestion should list all valid JSON Schema types, got: {}",
             suggestion
         );
     }
@@ -2110,6 +2116,11 @@ mod tests {
         assert!(
             suggestion.contains("self-reported"),
             "MCP-006 suggestion should warn about self-reported annotations, got: {}",
+            suggestion
+        );
+        assert!(
+            suggestion.contains("malicious"),
+            "MCP-006 suggestion should warn about potential malicious annotations, got: {}",
             suggestion
         );
     }
