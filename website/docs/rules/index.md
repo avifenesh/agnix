@@ -1,7 +1,7 @@
 # Rules Reference
 
-This section contains all `127` validation rules generated from `knowledge-base/rules.json`.
-`29` rules have automatic fixes.
+This section contains all `129` validation rules generated from `knowledge-base/rules.json`.
+`30` rules have automatic fixes.
 
 | Rule | Name | Severity | Category | Auto-Fix |
 |------|------|----------|----------|----------|
@@ -77,6 +77,8 @@ This section contains all `127` validation rules generated from `knowledge-base/
 | [CC-MEM-008](./generated/cc-mem-008.md) | Critical Content in Middle | HIGH | Claude Memory | No |
 | [CC-MEM-009](./generated/cc-mem-009.md) | Token Count Exceeded | MEDIUM | Claude Memory | No |
 | [CC-MEM-010](./generated/cc-mem-010.md) | README Duplication | MEDIUM | Claude Memory | No |
+| [CC-MEM-011](./generated/cc-mem-011.md) | Invalid Paths Glob in Rules | HIGH | Claude Memory | No |
+| [CC-MEM-012](./generated/cc-mem-012.md) | Rules File Unknown Frontmatter Key | MEDIUM | Claude Memory | Yes (unsafe) |
 | [AGM-001](./generated/agm-001.md) | Valid Markdown Structure | HIGH | AGENTS.md | No |
 | [AGM-002](./generated/agm-002.md) | Missing Section Headers | MEDIUM | AGENTS.md | No |
 | [AGM-003](./generated/agm-003.md) | Character Limit (Windsurf) | MEDIUM | AGENTS.md | No |

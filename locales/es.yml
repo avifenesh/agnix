@@ -212,6 +212,14 @@ rules:
     message: "CLAUDE.md tiene %{overlap} por ciento de superposicion con README.md (umbral: %{threshold} por ciento)"
     suggestion: "CLAUDE.md debe complementar README, no duplicarlo. Elimina secciones duplicadas."
 
+  # --- Claude Rules (.claude/rules/*.md) ---
+  cc_mem_011:
+    message: "Patron glob invalido '%{pattern}' en campo paths (elemento %{index}): %{error}"
+    suggestion: "Corrige la sintaxis del patron glob. Ejemplos validos: 'src/**/*.ts', '*.rs', 'tests/**/*.test.js'"
+  cc_mem_012:
+    message: "Clave desconocida '%{key}' en frontmatter de archivo .claude/rules"
+    suggestion: "Solo 'paths' es una clave reconocida en frontmatter de .claude/rules/*.md. Elimina '%{key}' o verifica errores de escritura."
+
   # --- AGENTS.md (agents_md.rs) ---
   agm_001:
     message: "Markdown invalido: %{description}"
