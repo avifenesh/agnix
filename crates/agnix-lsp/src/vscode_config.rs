@@ -14,7 +14,9 @@
 //!   existing config (from .agnix.toml), giving VS Code settings priority
 
 use agnix_core::LintConfig;
-use agnix_core::config::{RuleConfig, SeverityLevel, SpecRevisions, TargetTool, ToolVersions};
+use agnix_core::config::{
+    FilesConfig, RuleConfig, SeverityLevel, SpecRevisions, TargetTool, ToolVersions,
+};
 use serde::{Deserialize, Serialize};
 
 /// VS Code configuration received from workspace/didChangeConfiguration.
@@ -55,6 +57,10 @@ pub struct VsCodeConfig {
     /// - Some(Some(v)) = field in JSON with value (set locale to v)
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub locale: Option<Option<String>>,
+
+    /// File inclusion/exclusion configuration
+    #[serde(default)]
+    pub files: Option<VsCodeFiles>,
 }
 
 /// Rule category toggles from VS Code settings.
@@ -170,6 +176,25 @@ pub struct VsCodeSpecs {
     pub agents_md_spec: Option<Option<String>>,
 }
 
+/// File inclusion/exclusion settings from VS Code.
+///
+/// Maps to FilesConfig in agnix-core.
+#[derive(Debug, Default, Clone, Deserialize, Serialize)]
+#[serde(default, rename_all = "camelCase")]
+pub struct VsCodeFiles {
+    /// Glob patterns for files to validate as memory/instruction files
+    #[serde(default)]
+    pub include_as_memory: Option<Vec<String>>,
+
+    /// Glob patterns for files to validate as generic markdown
+    #[serde(default)]
+    pub include_as_generic: Option<Vec<String>>,
+
+    /// Glob patterns for files to exclude from validation
+    #[serde(default)]
+    pub exclude: Option<Vec<String>>,
+}
+
 impl VsCodeConfig {
     /// Merge VS Code settings into a LintConfig.
     ///
@@ -215,6 +240,11 @@ impl VsCodeConfig {
             specs.merge_into_spec_revisions(&mut config.spec_revisions);
         }
 
+        // Merge files config
+        if let Some(ref files) = self.files {
+            files.merge_into_files_config(&mut config.files);
+        }
+
         // Merge locale
         // None = not in JSON (preserve existing)
         // Some(None) = JSON null (clear locale, revert to auto-detection)
@@ -230,6 +260,21 @@ impl VsCodeConfig {
                     crate::locale::init_from_env();
                 }
             }
+        }
+    }
+}
+
+impl VsCodeFiles {
+    /// Merge VS Code files settings into FilesConfig.
+    fn merge_into_files_config(&self, config: &mut FilesConfig) {
+        if let Some(ref v) = self.include_as_memory {
+            config.include_as_memory = v.clone();
+        }
+        if let Some(ref v) = self.include_as_generic {
+            config.include_as_generic = v.clone();
+        }
+        if let Some(ref v) = self.exclude {
+            config.exclude = v.clone();
         }
     }
 }

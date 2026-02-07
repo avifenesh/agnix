@@ -74,6 +74,11 @@ interface LspConfig {
     agent_skills_spec?: string | null;
     agents_md_spec?: string | null;
   };
+  files?: {
+    include_as_memory?: string[];
+    include_as_generic?: string[];
+    exclude?: string[];
+  };
 }
 
 /**
@@ -192,6 +197,24 @@ export function buildLspConfig(): LspConfig {
   addSpec('specs.agentsMd', 'agents_md_spec');
 
   if (hasSpecs) result.specs = specsObj;
+
+  // Files config
+  const filesObj: any = {};
+  let hasFiles = false;
+
+  const addFileList = (key: string, field: string) => {
+    const value = getUserValue<string[]>(key);
+    if (value !== undefined) {
+      filesObj[field] = value;
+      hasFiles = true;
+    }
+  };
+
+  addFileList('files.includeAsMemory', 'include_as_memory');
+  addFileList('files.includeAsGeneric', 'include_as_generic');
+  addFileList('files.exclude', 'exclude');
+
+  if (hasFiles) result.files = filesObj;
 
   return result;
 }
