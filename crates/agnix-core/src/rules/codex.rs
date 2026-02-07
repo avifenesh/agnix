@@ -27,7 +27,7 @@ fn find_toml_string_value_span(
     current_value: &str,
 ) -> Option<(usize, usize)> {
     let pattern = format!(
-        r#"(?m){}\s*=\s*"({})"#,
+        r#"(?:^|\n)\s*{}\s*=\s*"({})"#,
         regex::escape(key),
         regex::escape(current_value)
     );
