@@ -271,7 +271,7 @@ impl Backend {
         let config = Arc::clone(&*self.config.read().await);
         let registry = Arc::clone(&self.registry);
         let result = tokio::task::spawn_blocking(move || {
-            let file_type = agnix_core::detect_file_type(&file_path);
+            let file_type = agnix_core::resolve_file_type(&file_path, &config);
             if file_type == agnix_core::FileType::Unknown {
                 return Ok(vec![]);
             }
@@ -513,11 +513,13 @@ impl LanguageServer for Backend {
             None => return Ok(None),
         };
 
+        let config = self.config.read().await;
         let file_type = uri
             .to_file_path()
             .ok()
-            .map(|path| agnix_core::detect_file_type(&path))
+            .map(|path| agnix_core::resolve_file_type(&path, &config))
             .unwrap_or(agnix_core::FileType::Unknown);
+        drop(config);
         if matches!(file_type, agnix_core::FileType::Unknown) {
             return Ok(None);
         }
@@ -539,7 +541,9 @@ impl LanguageServer for Backend {
             None => return Ok(None),
         };
 
-        let items = completion_items_for_document(&path, content.as_str(), position);
+        let config = self.config.read().await;
+        let items = completion_items_for_document(&path, content.as_str(), position, &config);
+        drop(config);
         if items.is_empty() {
             Ok(None)
         } else {

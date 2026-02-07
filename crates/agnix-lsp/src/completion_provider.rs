@@ -23,8 +23,9 @@ pub fn completion_items_for_document(
     path: &Path,
     content: &str,
     position: Position,
+    config: &agnix_core::LintConfig,
 ) -> Vec<CompletionItem> {
-    let file_type = agnix_core::detect_file_type(path);
+    let file_type = agnix_core::resolve_file_type(path, config);
     if matches!(file_type, agnix_core::FileType::Unknown) {
         return Vec::new();
     }
@@ -73,6 +74,7 @@ mod tests {
     #[test]
     fn test_skill_completion_includes_name_field() {
         let content = "---\nna\n---\n";
+        let config = agnix_core::LintConfig::default();
         let items = completion_items_for_document(
             Path::new("SKILL.md"),
             content,
@@ -80,12 +82,14 @@ mod tests {
                 line: 1,
                 character: 1,
             },
+            &config,
         );
         assert!(items.iter().any(|item| item.label == "name"));
     }
 
     #[test]
     fn test_unknown_file_type_has_no_completions() {
+        let config = agnix_core::LintConfig::default();
         let items = completion_items_for_document(
             Path::new("README.md"),
             "# readme",
@@ -93,6 +97,7 @@ mod tests {
                 line: 0,
                 character: 0,
             },
+            &config,
         );
         assert!(items.is_empty());
     }
