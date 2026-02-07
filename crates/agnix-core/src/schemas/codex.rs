@@ -110,15 +110,13 @@ pub fn parse_codex_toml(content: &str) -> ParsedCodexConfig {
     let table = value.as_table();
 
     let approval_mode_value = table.and_then(|t| t.get("approvalMode"));
-    let approval_mode_wrong_type =
-        approval_mode_value.is_some_and(|v| !v.is_str());
+    let approval_mode_wrong_type = approval_mode_value.is_some_and(|v| !v.is_str());
     let approval_mode = approval_mode_value
         .and_then(|v| v.as_str())
         .map(|s| s.to_string());
 
     let full_auto_error_mode_value = table.and_then(|t| t.get("fullAutoErrorMode"));
-    let full_auto_error_mode_wrong_type =
-        full_auto_error_mode_value.is_some_and(|v| !v.is_str());
+    let full_auto_error_mode_wrong_type = full_auto_error_mode_value.is_some_and(|v| !v.is_str());
     let full_auto_error_mode = full_auto_error_mode_value
         .and_then(|v| v.as_str())
         .map(|s| s.to_string());
@@ -179,10 +177,7 @@ notify = true
             let content = format!("approvalMode = \"{}\"", mode);
             let result = parse_codex_toml(&content);
             assert!(result.schema.is_some());
-            assert_eq!(
-                result.schema.unwrap().approval_mode,
-                Some(mode.to_string())
-            );
+            assert_eq!(result.schema.unwrap().approval_mode, Some(mode.to_string()));
         }
     }
 

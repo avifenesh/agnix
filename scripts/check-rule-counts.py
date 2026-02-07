@@ -123,6 +123,7 @@ def main() -> int:
         "cursor": "Cursor",
         "cline": "Cline",
         "opencode": "OpenCode",
+        "codex": "Codex CLI",
         "version-awareness": "Version Awareness",
     }
 
@@ -206,6 +207,7 @@ def main() -> int:
         "Cursor Project Rules": ["cursor"],
         "Cline": ["cline"],
         "OpenCode": ["opencode"],
+        "Codex CLI": ["codex"],
         "Version Awareness": ["version-awareness"],
     }
     spec_sum = 0

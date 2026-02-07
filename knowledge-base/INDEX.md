@@ -9,7 +9,7 @@
 
 | What You Need | Start Here |
 |---------------|------------|
-| **Implement validator** | [VALIDATION-RULES.md](./VALIDATION-RULES.md) - 139 rules with detection logic |
+| **Implement validator** | [VALIDATION-RULES.md](./VALIDATION-RULES.md) - 142 rules with detection logic |
 
 | **Understand a standard** | [standards/](#standards) - HARD-RULES files |
 | **Learn best practices** | [standards/](#standards) - OPINIONS files |
@@ -28,7 +28,7 @@
 knowledge-base/
 ├── INDEX.md                        # This file
 ├── README.md                       # Detailed navigation guide
-├── VALIDATION-RULES.md             # ⭐ Master validation reference (139 rules)
+├── VALIDATION-RULES.md             # ⭐ Master validation reference (142 rules)
 
 ├── PATTERNS-CATALOG.md             # 70 production-tested patterns
 ├── RESEARCH-TRACKING.md            # Tool inventory and monitoring process
@@ -145,7 +145,7 @@ knowledge-base/
 ### For Implementation
 
 **Start here**: [VALIDATION-RULES.md](./VALIDATION-RULES.md)
-- 139 rules with rule IDs (AS-001, CC-HK-001, etc.)
+- 142 rules with rule IDs (AS-001, CC-HK-001, etc.)
 
 - Detection pseudocode
 - Auto-fix implementations

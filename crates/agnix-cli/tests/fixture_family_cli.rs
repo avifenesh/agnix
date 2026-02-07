@@ -57,7 +57,11 @@ fn assert_has_rule(json: &serde_json::Value, rule: &str) {
 fn count_rule(json: &serde_json::Value, rule: &str) -> usize {
     json["diagnostics"]
         .as_array()
-        .map(|arr| arr.iter().filter(|d| d["rule"].as_str() == Some(rule)).count())
+        .map(|arr| {
+            arr.iter()
+                .filter(|d| d["rule"].as_str() == Some(rule))
+                .count()
+        })
         .unwrap_or(0)
 }
 
@@ -119,9 +123,21 @@ fn test_cli_codex_invalid_fixture_counts() {
     // The codex-invalid fixture has exactly one of each CDX rule:
     // CDX-001 from approvalMode = "yolo", CDX-002 from fullAutoErrorMode = "crash",
     // CDX-003 from AGENTS.override.md
-    assert_eq!(count_rule(&json, "CDX-001"), 1, "Expected exactly 1 CDX-001");
-    assert_eq!(count_rule(&json, "CDX-002"), 1, "Expected exactly 1 CDX-002");
-    assert_eq!(count_rule(&json, "CDX-003"), 1, "Expected exactly 1 CDX-003");
+    assert_eq!(
+        count_rule(&json, "CDX-001"),
+        1,
+        "Expected exactly 1 CDX-001"
+    );
+    assert_eq!(
+        count_rule(&json, "CDX-002"),
+        1,
+        "Expected exactly 1 CDX-002"
+    );
+    assert_eq!(
+        count_rule(&json, "CDX-003"),
+        1,
+        "Expected exactly 1 CDX-003"
+    );
 }
 
 #[test]
