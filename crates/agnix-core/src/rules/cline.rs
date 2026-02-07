@@ -464,14 +464,8 @@ Always use strict mode and explicit types.
 
             let (content, path): (&str, &str) = match rule {
                 "CLN-001" => ("", ".clinerules"),
-                "CLN-002" => (
-                    "---\npaths: \"[invalid\"\n---\nBody",
-                    ".clinerules/test.md",
-                ),
-                "CLN-003" => (
-                    "---\nunknown: value\n---\nBody",
-                    ".clinerules/test.md",
-                ),
+                "CLN-002" => ("---\npaths: \"[invalid\"\n---\nBody", ".clinerules/test.md"),
+                "CLN-003" => ("---\nunknown: value\n---\nBody", ".clinerules/test.md"),
                 _ => unreachable!("Unknown rule: {rule}"),
             };
 

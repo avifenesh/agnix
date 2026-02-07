@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- CLN-001: Validate `.clinerules` files are not empty (HIGH)
+- CLN-002: Validate glob patterns in `.clinerules/*.md` `paths` frontmatter field (HIGH)
+- CLN-003: Warn on unknown frontmatter keys in `.clinerules/*.md` files with auto-fix (MEDIUM)
 - CC-HK-013: `async` field only valid on command hooks (error)
 - CC-HK-014: `once` field only meaningful in skill/agent frontmatter (warning)
 - CC-HK-015: `model` field only valid on prompt/agent hooks (warning)
@@ -361,7 +364,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Quick-fix code actions from Fix objects
   - Hover documentation for frontmatter fields
   - Document content caching for performance
-  - Supports all 124 agnix validation rules with severity mapping
+  - Supports all 127 agnix validation rules with severity mapping
   - Workspace boundary validation for security (prevents path traversal)
   - Config caching optimization for performance
   - Editor support for VS Code, Neovim, Helix, and other LSP-compatible editors
@@ -375,7 +378,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Case-insensitive tool name matching
   - Takes precedence over legacy `target` field for flexibility
 - VS Code extension with full LSP integration (#22)
-  - Real-time diagnostics for all 124 validation rules
+  - Real-time diagnostics for all 127 validation rules
   - Status bar indicator showing agnix validation status
   - Syntax highlighting for SKILL.md YAML frontmatter
   - Commands: 'Restart Language Server' and 'Show Output Channel'
