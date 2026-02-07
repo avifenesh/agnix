@@ -104,6 +104,12 @@ make_cli_test!(
     ["GM-001", "GM-002", "GM-003"]
 );
 
+make_cli_test!(
+    test_cli_reports_codex_invalid_fixtures,
+    "codex-invalid",
+    ["CDX-001", "CDX-002", "CDX-003"]
+);
+
 #[test]
 fn test_cli_reports_pe_fixtures() {
     let source = workspace_root().join("tests/fixtures/prompt/pe-001-critical-in-middle.md");
