@@ -624,8 +624,15 @@ fn validate_server(
     }
 
     // MCP-009: Missing command for stdio server
+    // Treat null and empty string/array as missing (not a usable command)
     if config.is_rule_enabled("MCP-009") && effective_type == "stdio" {
-        if server.command.is_none() {
+        let has_command = server.command.as_ref().is_some_and(|v| match v {
+            serde_json::Value::String(s) => !s.trim().is_empty(),
+            serde_json::Value::Array(a) => !a.is_empty(),
+            serde_json::Value::Null => false,
+            _ => true,
+        });
+        if !has_command {
             diagnostics.push(
                 Diagnostic::error(
                     path.to_path_buf(),
@@ -640,8 +647,10 @@ fn validate_server(
     }
 
     // MCP-010: Missing url for http/sse server
-    if config.is_rule_enabled("MCP-010") && (effective_type == "http" || effective_type == "sse") {
-        if server.url.is_none() {
+    // Treat empty/whitespace-only URL as missing
+    if config.is_rule_enabled("MCP-010") && ["http", "sse"].contains(&effective_type) {
+        let has_url = server.url.as_deref().is_some_and(|u| !u.trim().is_empty());
+        if !has_url {
             diagnostics.push(
                 Diagnostic::error(
                     path.to_path_buf(),
@@ -1622,6 +1631,57 @@ mod tests {
         assert!(!diagnostics.iter().any(|d| d.rule == "MCP-009"));
     }
 
+    #[test]
+    fn test_mcp_009_null_command_triggers_error() {
+        let content = r#"{
+            "mcpServers": {
+                "null-cmd": {
+                    "type": "stdio",
+                    "command": null
+                }
+            }
+        }"#;
+        let diagnostics = validate(content);
+        assert!(
+            diagnostics.iter().any(|d| d.rule == "MCP-009"),
+            "null command should trigger MCP-009"
+        );
+    }
+
+    #[test]
+    fn test_mcp_009_empty_string_command_triggers_error() {
+        let content = r#"{
+            "mcpServers": {
+                "empty-cmd": {
+                    "type": "stdio",
+                    "command": ""
+                }
+            }
+        }"#;
+        let diagnostics = validate(content);
+        assert!(
+            diagnostics.iter().any(|d| d.rule == "MCP-009"),
+            "empty string command should trigger MCP-009"
+        );
+    }
+
+    #[test]
+    fn test_mcp_009_empty_array_command_triggers_error() {
+        let content = r#"{
+            "mcpServers": {
+                "empty-arr": {
+                    "type": "stdio",
+                    "command": []
+                }
+            }
+        }"#;
+        let diagnostics = validate(content);
+        assert!(
+            diagnostics.iter().any(|d| d.rule == "MCP-009"),
+            "empty array command should trigger MCP-009"
+        );
+    }
+
     // ===== MCP-010 Tests =====
 
     #[test]
@@ -1696,6 +1756,40 @@ mod tests {
         }"#;
         let diagnostics = validate(content);
         assert!(!diagnostics.iter().any(|d| d.rule == "MCP-010"));
+    }
+
+    #[test]
+    fn test_mcp_010_empty_url_triggers_error() {
+        let content = r#"{
+            "mcpServers": {
+                "empty-url": {
+                    "type": "http",
+                    "url": ""
+                }
+            }
+        }"#;
+        let diagnostics = validate(content);
+        assert!(
+            diagnostics.iter().any(|d| d.rule == "MCP-010"),
+            "empty URL should trigger MCP-010"
+        );
+    }
+
+    #[test]
+    fn test_mcp_010_whitespace_url_triggers_error() {
+        let content = r#"{
+            "mcpServers": {
+                "ws-url": {
+                    "type": "http",
+                    "url": "   "
+                }
+            }
+        }"#;
+        let diagnostics = validate(content);
+        assert!(
+            diagnostics.iter().any(|d| d.rule == "MCP-010"),
+            "whitespace-only URL should trigger MCP-010"
+        );
     }
 
     // ===== MCP-011 Tests =====
