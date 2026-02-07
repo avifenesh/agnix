@@ -307,6 +307,135 @@ mod did_change_tests {
     }
 }
 
+mod code_action_fix_tests {
+    use agnix_core::Fix;
+    use tower_lsp::lsp_types::*;
+
+    /// Verify that LSP code actions are returned for a diagnostic with serialized fix data.
+    ///
+    /// This exercises the full code-action pipeline: the client sends back a diagnostic
+    /// whose `.data` contains serialized `Fix` structs, and the server converts them
+    /// into proper CodeAction responses with workspace edits.
+    #[tokio::test]
+    async fn test_code_action_returns_fix_for_diagnostic_with_data() {
+        use agnix_lsp::Backend;
+        use tower_lsp::{LanguageServer, LspService};
+
+        let (service, _socket) = LspService::new(Backend::new);
+
+        let temp_dir = tempfile::tempdir().unwrap();
+        let skill_path = temp_dir.path().join("SKILL.md");
+
+        // Content with an invalid name (AS-004 will fire with a fix)
+        let content = "---\nname: Bad_Name\ndescription: Use when testing\n---\nBody";
+        std::fs::write(&skill_path, content).unwrap();
+
+        let uri = Url::from_file_path(&skill_path).unwrap();
+
+        // Open the document so it's cached
+        service
+            .inner()
+            .did_open(DidOpenTextDocumentParams {
+                text_document: TextDocumentItem {
+                    uri: uri.clone(),
+                    language_id: "markdown".to_string(),
+                    version: 1,
+                    text: content.to_string(),
+                },
+            })
+            .await;
+
+        // Construct a diagnostic with serialized fix data, as the server would publish.
+        // Calculate byte offsets dynamically from the content string to avoid
+        // brittle hardcoded values that break if the content changes.
+        let bad_name = "Bad_Name";
+        let start_byte = content
+            .find(bad_name)
+            .expect("content should contain 'Bad_Name'");
+        let end_byte = start_byte + bad_name.len();
+        let fix = Fix {
+            start_byte,
+            end_byte,
+            replacement: "bad-name".to_string(),
+            description: "Convert to kebab-case".to_string(),
+            safe: true,
+        };
+        let fix_data = serde_json::to_value(vec![&fix]).unwrap();
+
+        let lsp_diagnostic = Diagnostic {
+            range: Range {
+                start: Position {
+                    line: 1,
+                    character: 0,
+                },
+                end: Position {
+                    line: 1,
+                    character: 0,
+                },
+            },
+            severity: Some(DiagnosticSeverity::ERROR),
+            code: Some(NumberOrString::String("AS-004".to_string())),
+            source: Some("agnix".to_string()),
+            message: "Name must be kebab-case".to_string(),
+            data: Some(fix_data),
+            ..Default::default()
+        };
+
+        // Request code actions with this diagnostic
+        let result = service
+            .inner()
+            .code_action(CodeActionParams {
+                text_document: TextDocumentIdentifier { uri },
+                range: Range {
+                    start: Position {
+                        line: 1,
+                        character: 0,
+                    },
+                    end: Position {
+                        line: 1,
+                        character: 20,
+                    },
+                },
+                context: CodeActionContext {
+                    diagnostics: vec![lsp_diagnostic],
+                    only: None,
+                    trigger_kind: None,
+                },
+                work_done_progress_params: WorkDoneProgressParams::default(),
+                partial_result_params: PartialResultParams::default(),
+            })
+            .await;
+
+        assert!(result.is_ok());
+        let actions = result.unwrap();
+        assert!(
+            actions.is_some(),
+            "Should return code actions for diagnostic with fix data"
+        );
+
+        let actions = actions.unwrap();
+        assert_eq!(
+            actions.len(),
+            1,
+            "Expected exactly one code action for the single fix"
+        );
+
+        // Verify the code action has the right structure
+        match &actions[0] {
+            CodeActionOrCommand::CodeAction(action) => {
+                assert_eq!(action.title, "Convert to kebab-case");
+                assert_eq!(action.kind, Some(CodeActionKind::QUICKFIX));
+                assert_eq!(action.is_preferred, Some(true));
+                assert!(
+                    action.edit.is_some(),
+                    "Code action should have a workspace edit"
+                );
+            }
+            _ => panic!("Expected CodeAction, got Command"),
+        }
+    }
+}
+
 mod hover_tests {
     use tower_lsp::lsp_types::{Hover, HoverContents, MarkupContent, MarkupKind, Position};
 
@@ -973,6 +1102,66 @@ unknownfield: value
                     text_document: TextDocumentIdentifier { uri },
                 })
                 .await;
+        }
+    }
+
+    #[tokio::test]
+    async fn test_completion_for_agent_file_type() {
+        let (service, _socket) = LspService::new(Backend::new);
+
+        let temp_dir = tempfile::tempdir().unwrap();
+        let agent_dir = temp_dir.path().join(".claude").join("agents");
+        std::fs::create_dir_all(&agent_dir).unwrap();
+        let agent_path = agent_dir.join("test-agent.md");
+        let content = "---\nmod\n---\n";
+        std::fs::write(&agent_path, content).unwrap();
+
+        let uri = Url::from_file_path(&agent_path).unwrap();
+
+        service
+            .inner()
+            .did_open(DidOpenTextDocumentParams {
+                text_document: TextDocumentItem {
+                    uri: uri.clone(),
+                    language_id: "markdown".to_string(),
+                    version: 1,
+                    text: content.to_string(),
+                },
+            })
+            .await;
+
+        let result = service
+            .inner()
+            .completion(CompletionParams {
+                text_document_position: TextDocumentPositionParams {
+                    text_document: TextDocumentIdentifier { uri },
+                    position: Position {
+                        line: 1,
+                        character: 2,
+                    },
+                },
+                work_done_progress_params: WorkDoneProgressParams::default(),
+                partial_result_params: PartialResultParams::default(),
+                context: None,
+            })
+            .await;
+
+        assert!(result.is_ok());
+        let response = result.unwrap();
+        assert!(
+            response.is_some(),
+            "Should return completions for agent file"
+        );
+
+        match response.unwrap() {
+            CompletionResponse::Array(items) => {
+                assert!(
+                    items.iter().any(|item| item.label == "model"),
+                    "Agent completions should include 'model', got: {:?}",
+                    items.iter().map(|i| &i.label).collect::<Vec<_>>()
+                );
+            }
+            _ => panic!("Expected CompletionResponse::Array"),
         }
     }
 

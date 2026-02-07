@@ -59,7 +59,7 @@ const tools = [
 
 const stats = [
   {value: '145', label: 'rules'},
-  {value: '2200+', label: 'tests'},
+  {value: '2300+', label: 'tests'},
   {value: '10+', label: 'tools'},
   {value: '5', label: 'editors'},
 ];
