@@ -212,6 +212,14 @@ rules:
     message: "CLAUDE.md 与 README.md 有 %{overlap} 百分比的重叠（阈值: %{threshold} 百分比）"
     suggestion: "CLAUDE.md 应补充 README，而不是复制它。删除重复的部分。"
 
+  # --- Claude Rules (.claude/rules/*.md) ---
+  cc_mem_011:
+    message: "paths 字段中的 glob 模式 '%{pattern}' 无效（第 %{index} 项）：%{error}"
+    suggestion: "修复 glob 模式语法。有效示例：'src/**/*.ts'、'*.rs'、'tests/**/*.test.js'"
+  cc_mem_012:
+    message: ".claude/rules 文件中的未知前置元数据键 '%{key}'"
+    suggestion: ".claude/rules/*.md 前置元数据中只有 'paths' 是已知键。删除 '%{key}' 或检查拼写错误。"
+
   # --- AGENTS.md (agents_md.rs) ---
   agm_001:
     message: "无效的 markdown: %{description}"

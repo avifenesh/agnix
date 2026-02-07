@@ -1,6 +1,6 @@
 # agnix Technical Reference
 
-> Linter for agent configs. 130 rules across 16 categories.
+> Linter for agent configs. 132 rules across 16 categories.
 
 ## What agnix Validates
 
@@ -8,7 +8,7 @@
 |------|-------|-------|
 | Skills | SKILL.md | 31 |
 | Hooks | settings.json | 18 |
-| Memory (Claude Code) | CLAUDE.md, CLAUDE.local.md | 10 |
+| Memory (Claude Code) | CLAUDE.md, CLAUDE.local.md, .claude/rules/*.md | 12 |
 | Instructions (Cross-Tool) | AGENTS.md, AGENTS.local.md, AGENTS.override.md | 6 |
 | Agents | agents/*.md | 13 |
 | Plugins | plugin.json | 6 |
@@ -36,7 +36,7 @@ agnix/
 │   ├── agnix-lsp/      # LSP server
 │   └── agnix-mcp/      # MCP server
 ├── editors/            # Neovim, VS Code, JetBrains, Zed integrations
-├── knowledge-base/     # 130 rules documented
+├── knowledge-base/     # 132 rules documented
 ├── scripts/            # Build/dev automation scripts
 ├── website/            # Docusaurus documentation website
 └── tests/fixtures/     # Test cases
@@ -84,6 +84,8 @@ All rules in `knowledge-base/VALIDATION-RULES.md`
 - `XML-nnn`: XML validation
 - `REF-nnn`: @import/reference validation
 - `PE-nnn`: Prompt engineering
+- `CUR-nnn`: Cursor project rules
+- `CLN-nnn`: Cline rules
 - `XP-nnn`: Cross-platform compatibility
 - `VER-nnn`: Version awareness
 
