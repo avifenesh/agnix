@@ -532,7 +532,7 @@ pub fn validate_file_with_registry(
     config: &LintConfig,
     registry: &ValidatorRegistry,
 ) -> LintResult<Vec<Diagnostic>> {
-    let file_type = detect_file_type(path);
+    let file_type = resolve_file_type(path, config);
 
     if file_type == FileType::Unknown {
         return Ok(vec![]);
@@ -637,6 +637,10 @@ pub fn validate_project_with_registry(
     // Pre-compile exclude patterns once (avoids N+1 pattern compilation)
     let exclude_patterns = compile_exclude_patterns(&config.exclude)?;
     let exclude_patterns = Arc::new(exclude_patterns);
+
+    // Pre-compile files config patterns once for the parallel walk
+    let compiled_files = Arc::new(compile_files_config(&config.files)?);
+
     let root_path = root_dir.clone();
 
     let walk_root = std::fs::canonicalize(path).unwrap_or_else(|_| path.to_path_buf());
@@ -688,8 +692,8 @@ pub fn validate_project_with_registry(
                 return Vec::new();
             }
 
-            // Count recognized files (detect_file_type is string-only, no I/O)
-            let file_type = detect_file_type(&file_path);
+            // Count recognized files (resolve_with_compiled is string-only, no I/O)
+            let file_type = resolve_with_compiled(&file_path, Some(&root_path), &compiled_files);
             if file_type != FileType::Unknown {
                 let count = files_checked.fetch_add(1, Ordering::SeqCst);
                 // Security: Enforce file count limit to prevent DoS
