@@ -13,34 +13,10 @@ use crate::{
         VALID_SHARE_MODES, is_glob_pattern, parse_opencode_json, validate_glob_pattern,
     },
 };
-use regex::Regex;
 use rust_i18n::t;
 use std::path::Path;
 
-use crate::rules::find_closest_value;
-
-/// Find the byte span of a JSON string value for a unique key.
-/// Returns byte positions of the inner string (without quotes).
-/// Returns None if the key is not found or appears more than once (uniqueness guard).
-fn find_unique_json_string_value_span(
-    content: &str,
-    key: &str,
-    current_value: &str,
-) -> Option<(usize, usize)> {
-    let pattern = format!(
-        r#""{}"\s*:\s*"({})""#,
-        regex::escape(key),
-        regex::escape(current_value)
-    );
-    let re = Regex::new(&pattern).ok()?;
-    let mut matches: Vec<_> = re.captures_iter(content).collect();
-    if matches.len() != 1 {
-        return None;
-    }
-    let cap = matches.remove(0);
-    let m = cap.get(1)?;
-    Some((m.start(), m.end()))
-}
+use crate::rules::{find_closest_value, find_unique_json_string_value_span};
 
 pub struct OpenCodeValidator;
 
@@ -334,6 +310,20 @@ mod tests {
         let fix = &oc_001[0].fixes[0];
         assert!(!fix.safe, "OC-001 fix should be unsafe");
         assert_eq!(fix.replacement, "manual", "Fix should suggest 'manual'");
+    }
+
+    #[test]
+    fn test_oc_001_no_autofix_when_duplicate() {
+        // JSON with two "share" keys (duplicate keys are technically valid JSON
+        // but our regex uniqueness guard should catch this and suppress autofix).
+        let content = r#"{"share": "Manual", "nested": {"share": "Manual"}}"#;
+        let diagnostics = validate(content);
+        let oc_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "OC-001").collect();
+        assert_eq!(oc_001.len(), 1);
+        assert!(
+            !oc_001[0].has_fixes(),
+            "OC-001 should not have auto-fix when share value appears multiple times"
+        );
     }
 
     #[test]

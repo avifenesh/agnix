@@ -3485,6 +3485,37 @@ fn test_cc_hk_016_autofix_targets_correct_bytes() {
 }
 
 #[test]
+fn test_cc_hk_016_no_autofix_when_duplicate_type() {
+    // Two hooks both have the same invalid type value "Command" (case mismatch).
+    // The uniqueness guard should prevent autofix since "type": "Command"
+    // appears more than once.
+    let content = r#"{
+        "hooks": {
+            "Stop": [
+                {
+                    "hooks": [
+                        { "type": "Command", "command": "echo first" },
+                        { "type": "Command", "command": "echo second" }
+                    ]
+                }
+            ]
+        }
+    }"#;
+    let diagnostics = validate(content);
+    let cc_hk_016: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-016")
+        .collect();
+    assert_eq!(cc_hk_016.len(), 2, "Should flag both invalid types");
+    for diag in &cc_hk_016 {
+        assert!(
+            !diag.has_fixes(),
+            "CC-HK-016 should not have auto-fix when type value appears multiple times"
+        );
+    }
+}
+
+#[test]
 fn test_cc_hk_016_no_autofix_for_non_string() {
     // Non-string type value should not produce autofix
     let content = r#"{

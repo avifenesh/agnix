@@ -32,12 +32,12 @@ fn find_toml_string_value_span(
         regex::escape(current_value)
     );
     let re = Regex::new(&pattern).ok()?;
-    let mut matches: Vec<_> = re.captures_iter(content).collect();
-    if matches.len() != 1 {
-        return None;
+    let mut iter = re.captures_iter(content);
+    let first = iter.next()?;
+    if iter.next().is_some() {
+        return None; // Not unique
     }
-    let cap = matches.remove(0);
-    let m = cap.get(1)?;
+    let m = first.get(1)?;
     Some((m.start(), m.end()))
 }
 
@@ -368,6 +368,21 @@ mod tests {
         let fix = &cdx_001[0].fixes[0];
         assert!(!fix.safe, "CDX-001 fix should be unsafe");
         assert_eq!(fix.replacement, "suggest", "Fix should suggest 'suggest'");
+    }
+
+    #[test]
+    fn test_cdx_001_no_autofix_when_duplicate() {
+        // The regex pattern `approvalMode\s*=\s*"Suggest"` appears twice in this
+        // valid TOML because a [section] table also uses the same key name.
+        // The uniqueness guard should prevent autofix when there are multiple matches.
+        let content = "approvalMode = \"Suggest\"\n\n[overrides]\napprovalMode = \"Suggest\"";
+        let diagnostics = validate_config(content);
+        let cdx_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CDX-001").collect();
+        assert_eq!(cdx_001.len(), 1);
+        assert!(
+            !cdx_001[0].has_fixes(),
+            "CDX-001 should not have auto-fix when value pattern appears multiple times"
+        );
     }
 
     #[test]

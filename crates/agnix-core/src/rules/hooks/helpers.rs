@@ -552,28 +552,7 @@ pub(super) fn validate_cc_hk_014_once_field(
     });
 }
 
-/// Find the byte span of a JSON string value for the "type" key.
-/// Returns byte positions of the inner string (without quotes).
-/// Returns None if not found or not unique (uniqueness guard).
-fn find_unique_json_string_value_span(
-    content: &str,
-    key: &str,
-    current_value: &str,
-) -> Option<(usize, usize)> {
-    let pattern = format!(
-        r#""{}"\s*:\s*"({})""#,
-        regex::escape(key),
-        regex::escape(current_value)
-    );
-    let re = Regex::new(&pattern).ok()?;
-    let mut matches: Vec<_> = re.captures_iter(content).collect();
-    if matches.len() != 1 {
-        return None;
-    }
-    let cap = matches.remove(0);
-    let m = cap.get(1)?;
-    Some((m.start(), m.end()))
-}
+use crate::rules::find_unique_json_string_value_span;
 
 /// CC-HK-016: Validate hook type "agent" - check for unknown types (raw JSON check)
 /// CC-HK-016: Unknown hook type (raw JSON check).

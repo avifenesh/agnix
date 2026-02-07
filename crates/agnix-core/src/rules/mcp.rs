@@ -45,27 +45,7 @@ fn find_unique_json_scalar_value_span(content: &str, key: &str) -> Option<(usize
     Some((value.start(), value.end()))
 }
 
-/// Find a unique string value span for a key with a known current value.
-/// Returns the value-only span (without quotes).
-fn find_unique_json_string_value_span(
-    content: &str,
-    key: &str,
-    current_value: &str,
-) -> Option<(usize, usize)> {
-    let pattern = format!(
-        r#"("{}"\s*:\s*)"({})""#,
-        regex::escape(key),
-        regex::escape(current_value)
-    );
-    let re = Regex::new(&pattern).ok()?;
-    let mut captures = re.captures_iter(content);
-    let first = captures.next()?;
-    if captures.next().is_some() {
-        return None;
-    }
-    let value = first.get(2)?;
-    Some((value.start(), value.end()))
-}
+use super::find_unique_json_string_value_span;
 
 /// Find the line number of a tool in a tools array (0-indexed)
 fn find_tool_location(content: &str, tool_index: usize) -> (usize, usize) {
