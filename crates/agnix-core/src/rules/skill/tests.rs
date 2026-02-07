@@ -2697,8 +2697,7 @@ fn test_cc_sk_010_fixture_invalid() {
 
 #[test]
 fn test_cc_sk_010_fixture_valid() {
-    let content =
-        include_str!("../../../../../tests/fixtures/valid/skills/with-hooks/SKILL.md");
+    let content = include_str!("../../../../../tests/fixtures/valid/skills/with-hooks/SKILL.md");
 
     let validator = SkillValidator;
     let diagnostics = validator.validate(Path::new("SKILL.md"), content, &LintConfig::default());
@@ -3291,8 +3290,9 @@ Body"#;
 
 #[test]
 fn test_cc_sk_014_fixture() {
-    let content =
-        include_str!("../../../../../tests/fixtures/invalid/skills/string-boolean-disable/SKILL.md");
+    let content = include_str!(
+        "../../../../../tests/fixtures/invalid/skills/string-boolean-disable/SKILL.md"
+    );
 
     let validator = SkillValidator;
     let diagnostics = validator.validate(Path::new("SKILL.md"), content, &LintConfig::default());
@@ -3311,8 +3311,9 @@ fn test_cc_sk_014_fixture() {
 
 #[test]
 fn test_cc_sk_015_fixture() {
-    let content =
-        include_str!("../../../../../tests/fixtures/invalid/skills/string-boolean-invocable/SKILL.md");
+    let content = include_str!(
+        "../../../../../tests/fixtures/invalid/skills/string-boolean-invocable/SKILL.md"
+    );
 
     let validator = SkillValidator;
     let diagnostics = validator.validate(Path::new("SKILL.md"), content, &LintConfig::default());

@@ -1009,25 +1009,12 @@ impl<'a> ValidationContext<'a> {
     /// CC-SK-014, CC-SK-015: Validate boolean field types from raw YAML
     /// Detects quoted string values like "true" or "false" that should be unquoted booleans
     fn validate_cc_boolean_types(&mut self) {
-        self.validate_boolean_field(
-            "disable-model-invocation",
-            "CC-SK-014",
-            "cc_sk_014",
-        );
-        self.validate_boolean_field(
-            "user-invocable",
-            "CC-SK-015",
-            "cc_sk_015",
-        );
+        self.validate_boolean_field("disable-model-invocation", "CC-SK-014", "cc_sk_014");
+        self.validate_boolean_field("user-invocable", "CC-SK-015", "cc_sk_015");
     }
 
     /// Helper to check a single boolean field for string type
-    fn validate_boolean_field(
-        &mut self,
-        field_name: &str,
-        rule_id: &str,
-        i18n_key: &str,
-    ) {
+    fn validate_boolean_field(&mut self, field_name: &str, rule_id: &str, i18n_key: &str) {
         if !self.config.is_rule_enabled(rule_id) {
             return;
         }
@@ -1046,9 +1033,7 @@ impl<'a> ValidationContext<'a> {
                         || value_str == "'false'";
 
                     if is_quoted_bool {
-                        let inner_value = value_str
-                            .trim_matches('"')
-                            .trim_matches('\'');
+                        let inner_value = value_str.trim_matches('"').trim_matches('\'');
                         let fixed_bool = inner_value == "true";
 
                         let (line_num, col) = self.frontmatter_key_line_col(field_name);
@@ -1066,9 +1051,7 @@ impl<'a> ValidationContext<'a> {
                         .with_suggestion(t!(&sug_key));
 
                         // Add auto-fix: replace quoted string with boolean
-                        if let Some((start, end)) =
-                            self.frontmatter_value_byte_range(field_name)
-                        {
+                        if let Some((start, end)) = self.frontmatter_value_byte_range(field_name) {
                             // The value range from frontmatter_value_byte_range returns
                             // the inner content for quoted values, but we need to replace
                             // including quotes. Expand to include surrounding quotes.
@@ -1082,8 +1065,7 @@ impl<'a> ValidationContext<'a> {
                                 start
                             };
                             let quote_end = if end < self.content.len()
-                                && (content_bytes[end] == b'"'
-                                    || content_bytes[end] == b'\'')
+                                && (content_bytes[end] == b'"' || content_bytes[end] == b'\'')
                             {
                                 end + 1
                             } else {
@@ -1095,11 +1077,7 @@ impl<'a> ValidationContext<'a> {
                                 quote_start,
                                 quote_end,
                                 fixed_bool.to_string(),
-                                t!(
-                                    &fix_key,
-                                    value = inner_value,
-                                    fixed = fixed_bool
-                                ),
+                                t!(&fix_key, value = inner_value, fixed = fixed_bool),
                                 true, // safe fix
                             );
                             diagnostic = diagnostic.with_fix(fix);

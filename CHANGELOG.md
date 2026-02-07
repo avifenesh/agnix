@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- CC-SK-010: Validate hooks in skill frontmatter follow settings.json schema
+- CC-SK-011: Detect unreachable skills (user-invocable=false + disable-model-invocation=true)
+- CC-SK-012: Warn when argument-hint is set but body never references $ARGUMENTS
+- CC-SK-013: Warn when context=fork is used with reference-only content (no imperative verbs)
+- CC-SK-014: Validate disable-model-invocation is boolean, not string "true"
+- CC-SK-015: Validate user-invocable is boolean, not string "true"/"false"
 - COP-005: Validate `excludeAgent` field contains valid agent identifiers
 - COP-006: Warn when global Copilot instruction file exceeds ~4000 characters
 - Fix metadata (`autofix`, `fix_safety`) for all 100 rules in rules.json
@@ -339,7 +345,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Quick-fix code actions from Fix objects
   - Hover documentation for frontmatter fields
   - Document content caching for performance
-  - Supports all 102 agnix validation rules with severity mapping
+  - Supports all 108 agnix validation rules with severity mapping
   - Workspace boundary validation for security (prevents path traversal)
   - Config caching optimization for performance
   - Editor support for VS Code, Neovim, Helix, and other LSP-compatible editors
@@ -353,7 +359,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Case-insensitive tool name matching
   - Takes precedence over legacy `target` field for flexibility
 - VS Code extension with full LSP integration (#22)
-  - Real-time diagnostics for all 102 validation rules
+  - Real-time diagnostics for all 108 validation rules
   - Status bar indicator showing agnix validation status
   - Syntax highlighting for SKILL.md YAML frontmatter
   - Commands: 'Restart Language Server' and 'Show Output Channel'
