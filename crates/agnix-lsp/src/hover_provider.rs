@@ -145,6 +145,111 @@ mod tests {
         assert!(hover.is_some());
     }
 
+    // ---- Hover tests for non-skill file types ----
+
+    #[test]
+    fn test_hover_agent_model_field() {
+        let hover = get_hover_info(FileType::Agent, "model");
+        assert!(hover.is_some(), "Agent should have hover for 'model'");
+
+        let hover = hover.unwrap();
+        match hover.contents {
+            HoverContents::Markup(markup) => {
+                assert_eq!(markup.kind, MarkupKind::Markdown);
+                assert!(markup.value.contains("model"));
+            }
+            _ => panic!("Expected Markup content for Agent hover"),
+        }
+    }
+
+    #[test]
+    fn test_hover_hooks_type_field() {
+        let hover = get_hover_info(FileType::Hooks, "type");
+        assert!(hover.is_some(), "Hooks should have hover for 'type'");
+
+        let hover = hover.unwrap();
+        match hover.contents {
+            HoverContents::Markup(markup) => {
+                assert!(markup.value.contains("type"));
+            }
+            _ => panic!("Expected Markup content for Hooks hover"),
+        }
+    }
+
+    #[test]
+    fn test_hover_mcp_jsonrpc_field() {
+        let hover = get_hover_info(FileType::Mcp, "jsonrpc");
+        assert!(hover.is_some(), "MCP should have hover for 'jsonrpc'");
+
+        let hover = hover.unwrap();
+        match hover.contents {
+            HoverContents::Markup(markup) => {
+                assert!(markup.value.contains("jsonrpc"));
+            }
+            _ => panic!("Expected Markup content for MCP hover"),
+        }
+    }
+
+    #[test]
+    fn test_hover_copilot_applyto_field() {
+        // Copilot maps to the "copilot" family, which includes CopilotScoped
+        let hover = get_hover_info(FileType::CopilotScoped, "applyTo");
+        assert!(
+            hover.is_some(),
+            "CopilotScoped should have hover for 'applyTo'"
+        );
+
+        let hover = hover.unwrap();
+        match hover.contents {
+            HoverContents::Markup(markup) => {
+                assert!(markup.value.contains("applyTo"));
+            }
+            _ => panic!("Expected Markup content for Copilot hover"),
+        }
+    }
+
+    #[test]
+    fn test_hover_cursor_description_field() {
+        let hover = get_hover_info(FileType::CursorRule, "description");
+        assert!(
+            hover.is_some(),
+            "CursorRule should have hover for 'description'"
+        );
+
+        let hover = hover.unwrap();
+        match hover.contents {
+            HoverContents::Markup(markup) => {
+                assert!(markup.value.contains("description"));
+            }
+            _ => panic!("Expected Markup content for CursorRule hover"),
+        }
+    }
+
+    #[test]
+    fn test_hover_at_position_agent_file() {
+        let content = "---\nmodel: sonnet\n---";
+        let pos = Position {
+            line: 1,
+            character: 2,
+        };
+        let hover = hover_at_position(FileType::Agent, content, pos);
+        assert!(hover.is_some(), "Should get hover for Agent 'model' field");
+    }
+
+    #[test]
+    fn test_hover_at_position_hooks_json() {
+        let content = r#"{"type": "command"}"#;
+        let pos = Position {
+            line: 0,
+            character: 2,
+        };
+        let hover = hover_at_position(FileType::Hooks, content, pos);
+        assert!(
+            hover.is_some(),
+            "Should get hover for Hooks 'type' field"
+        );
+    }
+
     #[test]
     fn test_hover_at_position_not_found() {
         let content = "---\nunknown_xyz: test\n---";

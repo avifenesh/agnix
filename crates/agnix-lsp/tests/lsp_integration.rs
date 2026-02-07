@@ -1095,6 +1095,66 @@ unknownfield: value
     }
 
     #[tokio::test]
+    async fn test_completion_for_agent_file_type() {
+        let (service, _socket) = LspService::new(Backend::new);
+
+        let temp_dir = tempfile::tempdir().unwrap();
+        let agent_dir = temp_dir.path().join(".claude").join("agents");
+        std::fs::create_dir_all(&agent_dir).unwrap();
+        let agent_path = agent_dir.join("test-agent.md");
+        let content = "---\nmod\n---\n";
+        std::fs::write(&agent_path, content).unwrap();
+
+        let uri = Url::from_file_path(&agent_path).unwrap();
+
+        service
+            .inner()
+            .did_open(DidOpenTextDocumentParams {
+                text_document: TextDocumentItem {
+                    uri: uri.clone(),
+                    language_id: "markdown".to_string(),
+                    version: 1,
+                    text: content.to_string(),
+                },
+            })
+            .await;
+
+        let result = service
+            .inner()
+            .completion(CompletionParams {
+                text_document_position: TextDocumentPositionParams {
+                    text_document: TextDocumentIdentifier { uri },
+                    position: Position {
+                        line: 1,
+                        character: 2,
+                    },
+                },
+                work_done_progress_params: WorkDoneProgressParams::default(),
+                partial_result_params: PartialResultParams::default(),
+                context: None,
+            })
+            .await;
+
+        assert!(result.is_ok());
+        let response = result.unwrap();
+        assert!(
+            response.is_some(),
+            "Should return completions for agent file"
+        );
+
+        match response.unwrap() {
+            CompletionResponse::Array(items) => {
+                assert!(
+                    items.iter().any(|item| item.label == "model"),
+                    "Agent completions should include 'model', got: {:?}",
+                    items.iter().map(|i| &i.label).collect::<Vec<_>>()
+                );
+            }
+            _ => panic!("Expected CompletionResponse::Array"),
+        }
+    }
+
+    #[tokio::test]
     async fn test_code_action_with_fix_available() {
         let (service, _socket) = LspService::new(Backend::new);
 
