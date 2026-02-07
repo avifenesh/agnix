@@ -540,7 +540,10 @@ pub fn validate_project_with_registry(
     // Stream file walk directly into parallel validation (no intermediate Vec)
     // Note: hidden(false) includes .github, .codex, .claude, .cursor directories
     // Note: git_exclude(false) prevents .git/info/exclude from hiding config dirs
-    //       that users may locally exclude (e.g. .codex/) but still need linting
+    //       that users may locally exclude (e.g. .codex/) but still need linting.
+    //       Trade-off: this may surface files the user intentionally excluded locally,
+    //       but security is still enforced via symlink rejection (file_utils::safe_read)
+    //       and file size limits, so the exposure is limited to lint noise, not unsafe I/O.
     let mut diagnostics: Vec<Diagnostic> = WalkBuilder::new(&walk_root)
         .hidden(false)
         .git_ignore(true)
