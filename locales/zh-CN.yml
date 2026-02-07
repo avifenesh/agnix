@@ -326,6 +326,15 @@ rules:
     message: "检测到旧版 .cursorrules 文件 - 考虑迁移到 .cursor/rules/*.mdc 格式"
     suggestion: "创建 .cursor/rules/ 目录并添加带有 frontmatter 的 .mdc 文件以获得更好的组织"
     legacy_empty: "Cursor 规则文件为空"
+  cur_007:
+    message: "alwaysApply 为 true 但 globs 字段也已设置 - globs 是多余的"
+    suggestion: "移除 globs 字段，因为 alwaysApply: true 会使规则在每次聊天会话中应用，而不受文件模式限制"
+  cur_008:
+    message: "alwaysApply 必须是布尔值（true/false），而不是带引号的字符串"
+    suggestion: "使用 alwaysApply: true 或 alwaysApply: false，不要加引号。YAML 将引号值解析为字符串。"
+  cur_009:
+    message: "代理请求的规则没有描述 - 代理无法确定何时应用它"
+    suggestion: "添加 description 字段说明此规则何时应用，或设置 alwaysApply 或 globs 来控制激活"
 
   # --- Prompt engineering (prompt.rs) ---
   pe_001:

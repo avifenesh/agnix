@@ -25,9 +25,34 @@ pub struct CursorRuleSchema {
     /// Glob patterns specifying which files this rule applies to
     #[serde(default)]
     pub globs: Option<GlobsField>,
-    /// Whether to always apply this rule regardless of file patterns
+    /// Whether to always apply this rule regardless of file patterns.
+    /// Accepts both bool and string to detect CUR-008 (string instead of bool).
     #[serde(default)]
-    pub always_apply: Option<bool>,
+    pub always_apply: Option<AlwaysApplyField>,
+}
+
+/// The alwaysApply field can be a boolean or a mistakenly quoted string.
+/// YAML parses unquoted `true`/`false` as bools, but `"true"`/`"false"` as strings.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum AlwaysApplyField {
+    Bool(bool),
+    String(String),
+}
+
+impl AlwaysApplyField {
+    /// Returns the boolean value if this is a proper bool.
+    pub fn as_bool(&self) -> Option<bool> {
+        match self {
+            AlwaysApplyField::Bool(b) => Some(*b),
+            AlwaysApplyField::String(_) => None,
+        }
+    }
+
+    /// Returns true if this is a string instead of a boolean.
+    pub fn is_string(&self) -> bool {
+        matches!(self, AlwaysApplyField::String(_))
+    }
 }
 
 /// Globs field can be a single string or an array of strings
@@ -272,7 +297,10 @@ alwaysApply: true
         let result = parse_mdc_frontmatter(content).unwrap();
         assert!(result.schema.is_some());
         let schema = result.schema.as_ref().unwrap();
-        assert_eq!(schema.always_apply, Some(true));
+        assert_eq!(
+            schema.always_apply.as_ref().and_then(|a| a.as_bool()),
+            Some(true)
+        );
     }
 
     #[test]
