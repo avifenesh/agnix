@@ -1,7 +1,7 @@
 # Rules Reference
 
-This section contains all `114` validation rules generated from `knowledge-base/rules.json`.
-`27` rules have automatic fixes.
+This section contains all `118` validation rules generated from `knowledge-base/rules.json`.
+`28` rules have automatic fixes.
 
 | Rule | Name | Severity | Category | Auto-Fix |
 |------|------|----------|----------|----------|
@@ -91,6 +91,10 @@ This section contains all `114` validation rules generated from `knowledge-base/
 | [MCP-006](./generated/mcp-006.md) | Untrusted Annotations | HIGH | MCP | No |
 | [MCP-007](./generated/mcp-007.md) | MCP Parse Error | HIGH | MCP | No |
 | [MCP-008](./generated/mcp-008.md) | Protocol Version Mismatch | MEDIUM | MCP | Yes (unsafe) |
+| [MCP-009](./generated/mcp-009.md) | Missing command for stdio server | HIGH | MCP | No |
+| [MCP-010](./generated/mcp-010.md) | Missing url for http/sse server | HIGH | MCP | No |
+| [MCP-011](./generated/mcp-011.md) | Invalid MCP server type | HIGH | MCP | No |
+| [MCP-012](./generated/mcp-012.md) | Deprecated SSE transport | MEDIUM | MCP | Yes (unsafe) |
 | [COP-001](./generated/cop-001.md) | Empty Copilot Instruction File | HIGH | GitHub Copilot | No |
 | [COP-002](./generated/cop-002.md) | Invalid Frontmatter in Scoped Instructions | HIGH | GitHub Copilot | No |
 | [COP-003](./generated/cop-003.md) | Invalid Glob Pattern in applyTo | HIGH | GitHub Copilot | No |

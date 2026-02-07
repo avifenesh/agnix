@@ -50,10 +50,17 @@ pub struct McpJsonRpcMessage {
     pub error: Option<serde_json::Value>,
 }
 
+/// Valid MCP server transport types
+pub const VALID_MCP_SERVER_TYPES: &[&str] = &["stdio", "http", "sse"];
+
 /// MCP server configuration (as used in .mcp.json or settings.json)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct McpServerConfig {
-    /// Command to run the server
+    /// Transport type: stdio (default), http, or sse
+    #[serde(rename = "type")]
+    pub server_type: Option<String>,
+
+    /// Command to run the server (required for stdio)
     pub command: Option<serde_json::Value>, // Can be string or array
 
     /// Command arguments
@@ -63,6 +70,9 @@ pub struct McpServerConfig {
     /// Environment variables
     #[serde(default)]
     pub env: Option<HashMap<String, String>>,
+
+    /// Server endpoint URL (required for http/sse)
+    pub url: Option<String>,
 }
 
 /// MCP configuration file schema (standalone .mcp.json)

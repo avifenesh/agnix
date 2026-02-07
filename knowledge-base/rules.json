@@ -1,7 +1,7 @@
 {
   "description": "Machine-readable source of truth for all validation rules. When adding a new rule, add it here AND in VALIDATION-RULES.md. CI parity tests enforce sync.",
   "version": "1.1.0",
-  "total_rules": 114,
+  "total_rules": 118,
   "last_updated": "2026-02-07",
   "schema": {
     "evidence": {
@@ -28,6 +28,153 @@
     }
   },
   "rules": [
+    {
+      "id": "AGM-001",
+      "name": "Valid Markdown Structure",
+      "severity": "HIGH",
+      "category": "agents-md",
+      "evidence": {
+        "source_type": "community",
+        "source_urls": [
+          "https://developers.openai.com/codex/guides/agents-md",
+          "https://docs.cursor.com/en/context",
+          "https://docs.cline.bot/features/custom-instructions"
+        ],
+        "verified_on": "2026-02-04",
+        "applies_to": {},
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      }
+    },
+    {
+      "id": "AGM-002",
+      "name": "Missing Section Headers",
+      "severity": "MEDIUM",
+      "category": "agents-md",
+      "evidence": {
+        "source_type": "community",
+        "source_urls": [
+          "https://docs.cursor.com/en/context",
+          "https://docs.cline.bot/features/custom-instructions"
+        ],
+        "verified_on": "2026-02-04",
+        "applies_to": {},
+        "normative_level": "SHOULD",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      }
+    },
+    {
+      "id": "AGM-003",
+      "name": "Character Limit (Windsurf)",
+      "severity": "MEDIUM",
+      "category": "agents-md",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://docs.windsurf.com/windsurf/cascade/memories"
+        ],
+        "verified_on": "2026-02-04",
+        "applies_to": {
+          "tool": "windsurf"
+        },
+        "normative_level": "SHOULD",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      }
+    },
+    {
+      "id": "AGM-004",
+      "name": "Missing Project Context",
+      "severity": "MEDIUM",
+      "category": "agents-md",
+      "evidence": {
+        "source_type": "community",
+        "source_urls": [
+          "https://developers.openai.com/codex/guides/agents-md",
+          "https://docs.cursor.com/en/context"
+        ],
+        "verified_on": "2026-02-04",
+        "applies_to": {},
+        "normative_level": "BEST_PRACTICE",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      }
+    },
+    {
+      "id": "AGM-005",
+      "name": "Platform-Specific Features Without Guard",
+      "severity": "MEDIUM",
+      "category": "agents-md",
+      "evidence": {
+        "source_type": "community",
+        "source_urls": [
+          "https://developers.openai.com/codex/guides/agents-md",
+          "https://docs.cursor.com/en/context"
+        ],
+        "verified_on": "2026-02-04",
+        "applies_to": {},
+        "normative_level": "SHOULD",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      }
+    },
+    {
+      "id": "AGM-006",
+      "name": "Nested AGENTS.md Hierarchy",
+      "severity": "MEDIUM",
+      "category": "agents-md",
+      "evidence": {
+        "source_type": "community",
+        "source_urls": [
+          "https://developers.openai.com/codex/guides/agents-md",
+          "https://docs.cline.bot/features/custom-instructions",
+          "https://github.com/github/docs/changelog/2025-06-17-github-copilot-coding-agent-now-supports-agents-md-custom-instructions"
+        ],
+        "verified_on": "2026-02-04",
+        "applies_to": {},
+        "normative_level": "BEST_PRACTICE",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      }
+    },
     {
       "id": "AS-001",
       "name": "Missing Frontmatter",
@@ -436,114 +583,10 @@
       }
     },
     {
-      "id": "CC-SK-001",
-      "name": "Invalid Model Value",
+      "id": "CC-AG-001",
+      "name": "Missing Name Field",
       "severity": "HIGH",
-      "category": "claude-skills",
-      "evidence": {
-        "source_type": "vendor_docs",
-        "source_urls": [
-          "https://code.claude.com/docs/en/skills"
-        ],
-        "verified_on": "2026-02-04",
-        "applies_to": {
-          "tool": "claude-code"
-        },
-        "normative_level": "MUST",
-        "tests": {
-          "unit": true,
-          "fixtures": true,
-          "e2e": false
-        }
-      },
-      "fix": {
-        "autofix": true,
-        "fix_safety": "unsafe"
-      }
-    },
-    {
-      "id": "CC-SK-002",
-      "name": "Invalid Context Value",
-      "severity": "HIGH",
-      "category": "claude-skills",
-      "evidence": {
-        "source_type": "vendor_docs",
-        "source_urls": [
-          "https://code.claude.com/docs/en/skills"
-        ],
-        "verified_on": "2026-02-04",
-        "applies_to": {
-          "tool": "claude-code"
-        },
-        "normative_level": "MUST",
-        "tests": {
-          "unit": true,
-          "fixtures": true,
-          "e2e": false
-        }
-      },
-      "fix": {
-        "autofix": true,
-        "fix_safety": "unsafe"
-      }
-    },
-    {
-      "id": "CC-SK-003",
-      "name": "Context Without Agent",
-      "severity": "HIGH",
-      "category": "claude-skills",
-      "evidence": {
-        "source_type": "vendor_docs",
-        "source_urls": [
-          "https://code.claude.com/docs/en/skills"
-        ],
-        "verified_on": "2026-02-04",
-        "applies_to": {
-          "tool": "claude-code"
-        },
-        "normative_level": "MUST",
-        "tests": {
-          "unit": true,
-          "fixtures": true,
-          "e2e": false
-        }
-      },
-      "fix": {
-        "autofix": true,
-        "fix_safety": "unsafe"
-      }
-    },
-    {
-      "id": "CC-SK-004",
-      "name": "Agent Without Context",
-      "severity": "HIGH",
-      "category": "claude-skills",
-      "evidence": {
-        "source_type": "vendor_docs",
-        "source_urls": [
-          "https://code.claude.com/docs/en/skills"
-        ],
-        "verified_on": "2026-02-04",
-        "applies_to": {
-          "tool": "claude-code"
-        },
-        "normative_level": "MUST",
-        "tests": {
-          "unit": true,
-          "fixtures": true,
-          "e2e": false
-        }
-      },
-      "fix": {
-        "autofix": true,
-        "fix_safety": "unsafe"
-      }
-    },
-    {
-      "id": "CC-SK-005",
-      "name": "Invalid Agent Type",
-      "severity": "HIGH",
-      "category": "claude-skills",
+      "category": "claude-agents",
       "evidence": {
         "source_type": "vendor_docs",
         "source_urls": [
@@ -565,14 +608,14 @@
       }
     },
     {
-      "id": "CC-SK-006",
-      "name": "Dangerous Auto-Invocation",
+      "id": "CC-AG-002",
+      "name": "Missing Description Field",
       "severity": "HIGH",
-      "category": "claude-skills",
+      "category": "claude-agents",
       "evidence": {
         "source_type": "vendor_docs",
         "source_urls": [
-          "https://code.claude.com/docs/en/skills"
+          "https://code.claude.com/docs/en/sub-agents"
         ],
         "verified_on": "2026-02-04",
         "applies_to": {
@@ -590,20 +633,20 @@
       }
     },
     {
-      "id": "CC-SK-007",
-      "name": "Unrestricted Bash",
+      "id": "CC-AG-003",
+      "name": "Invalid Model Value",
       "severity": "HIGH",
-      "category": "claude-skills",
+      "category": "claude-agents",
       "evidence": {
-        "source_type": "community",
+        "source_type": "vendor_docs",
         "source_urls": [
-          "https://github.com/anthropics/awesome-slash"
+          "https://code.claude.com/docs/en/sub-agents"
         ],
         "verified_on": "2026-02-04",
         "applies_to": {
           "tool": "claude-code"
         },
-        "normative_level": "SHOULD",
+        "normative_level": "MUST",
         "tests": {
           "unit": true,
           "fixtures": true,
@@ -616,14 +659,40 @@
       }
     },
     {
-      "id": "CC-SK-008",
-      "name": "Unknown Tool Name",
+      "id": "CC-AG-004",
+      "name": "Invalid Permission Mode",
       "severity": "HIGH",
-      "category": "claude-skills",
+      "category": "claude-agents",
       "evidence": {
         "source_type": "vendor_docs",
         "source_urls": [
-          "https://code.claude.com/docs/en/settings"
+          "https://code.claude.com/docs/en/sub-agents"
+        ],
+        "verified_on": "2026-02-04",
+        "applies_to": {
+          "tool": "claude-code"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": true,
+        "fix_safety": "unsafe"
+      }
+    },
+    {
+      "id": "CC-AG-005",
+      "name": "Referenced Skill Not Found",
+      "severity": "HIGH",
+      "category": "claude-agents",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://code.claude.com/docs/en/sub-agents"
         ],
         "verified_on": "2026-02-04",
         "applies_to": {
@@ -641,44 +710,19 @@
       }
     },
     {
-      "id": "CC-SK-009",
-      "name": "Too Many Injections",
-      "severity": "MEDIUM",
-      "category": "claude-skills",
+      "id": "CC-AG-006",
+      "name": "Tool/Disallowed Conflict",
+      "severity": "HIGH",
+      "category": "claude-agents",
       "evidence": {
         "source_type": "vendor_docs",
         "source_urls": [
-          "https://platform.claude.com/docs"
+          "https://code.claude.com/docs/en/sub-agents"
         ],
         "verified_on": "2026-02-04",
         "applies_to": {
           "tool": "claude-code"
         },
-        "normative_level": "SHOULD",
-        "tests": {
-          "unit": true,
-          "fixtures": true,
-          "e2e": false
-        }
-      },
-      "fix": {
-        "autofix": false
-      }
-    },
-    {
-      "id": "CC-SK-010",
-      "name": "Invalid Hooks in Skill Frontmatter",
-      "severity": "HIGH",
-      "category": "claude-skills",
-      "evidence": {
-        "source_type": "vendor_docs",
-        "source_urls": [
-          "https://code.claude.com/docs/en/skills"
-        ],
-        "verified_on": "2026-02-07",
-        "applies_to": {
-          "tool": "claude-code"
-        },
         "normative_level": "MUST",
         "tests": {
           "unit": true,
@@ -691,16 +735,16 @@
       }
     },
     {
-      "id": "CC-SK-011",
-      "name": "Unreachable Skill",
+      "id": "CC-AG-007",
+      "name": "Agent Parse Error",
       "severity": "HIGH",
-      "category": "claude-skills",
+      "category": "claude-agents",
       "evidence": {
         "source_type": "vendor_docs",
         "source_urls": [
-          "https://code.claude.com/docs/en/skills"
+          "https://code.claude.com/docs/en/sub-agents"
         ],
-        "verified_on": "2026-02-07",
+        "verified_on": "2026-02-04",
         "applies_to": {
           "tool": "claude-code"
         },
@@ -713,108 +757,6 @@
       },
       "fix": {
         "autofix": false
-      }
-    },
-    {
-      "id": "CC-SK-012",
-      "name": "Argument Hint Without $ARGUMENTS",
-      "severity": "MEDIUM",
-      "category": "claude-skills",
-      "evidence": {
-        "source_type": "vendor_docs",
-        "source_urls": [
-          "https://code.claude.com/docs/en/skills"
-        ],
-        "verified_on": "2026-02-07",
-        "applies_to": {
-          "tool": "claude-code"
-        },
-        "normative_level": "SHOULD",
-        "tests": {
-          "unit": true,
-          "fixtures": true,
-          "e2e": false
-        }
-      },
-      "fix": {
-        "autofix": false
-      }
-    },
-    {
-      "id": "CC-SK-013",
-      "name": "Fork Context Without Actionable Instructions",
-      "severity": "MEDIUM",
-      "category": "claude-skills",
-      "evidence": {
-        "source_type": "vendor_docs",
-        "source_urls": [
-          "https://code.claude.com/docs/en/skills"
-        ],
-        "verified_on": "2026-02-07",
-        "applies_to": {
-          "tool": "claude-code"
-        },
-        "normative_level": "SHOULD",
-        "tests": {
-          "unit": true,
-          "fixtures": true,
-          "e2e": false
-        }
-      },
-      "fix": {
-        "autofix": false
-      }
-    },
-    {
-      "id": "CC-SK-014",
-      "name": "Invalid disable-model-invocation Type",
-      "severity": "HIGH",
-      "category": "claude-skills",
-      "evidence": {
-        "source_type": "vendor_docs",
-        "source_urls": [
-          "https://code.claude.com/docs/en/skills"
-        ],
-        "verified_on": "2026-02-07",
-        "applies_to": {
-          "tool": "claude-code"
-        },
-        "normative_level": "MUST",
-        "tests": {
-          "unit": true,
-          "fixtures": true,
-          "e2e": false
-        }
-      },
-      "fix": {
-        "autofix": true,
-        "fix_safety": "safe"
-      }
-    },
-    {
-      "id": "CC-SK-015",
-      "name": "Invalid user-invocable Type",
-      "severity": "HIGH",
-      "category": "claude-skills",
-      "evidence": {
-        "source_type": "vendor_docs",
-        "source_urls": [
-          "https://code.claude.com/docs/en/skills"
-        ],
-        "verified_on": "2026-02-07",
-        "applies_to": {
-          "tool": "claude-code"
-        },
-        "normative_level": "MUST",
-        "tests": {
-          "unit": true,
-          "fixtures": true,
-          "e2e": false
-        }
-      },
-      "fix": {
-        "autofix": true,
-        "fix_safety": "safe"
       }
     },
     {
@@ -1271,183 +1213,6 @@
       }
     },
     {
-      "id": "CC-AG-001",
-      "name": "Missing Name Field",
-      "severity": "HIGH",
-      "category": "claude-agents",
-      "evidence": {
-        "source_type": "vendor_docs",
-        "source_urls": [
-          "https://code.claude.com/docs/en/sub-agents"
-        ],
-        "verified_on": "2026-02-04",
-        "applies_to": {
-          "tool": "claude-code"
-        },
-        "normative_level": "MUST",
-        "tests": {
-          "unit": true,
-          "fixtures": true,
-          "e2e": false
-        }
-      },
-      "fix": {
-        "autofix": false
-      }
-    },
-    {
-      "id": "CC-AG-002",
-      "name": "Missing Description Field",
-      "severity": "HIGH",
-      "category": "claude-agents",
-      "evidence": {
-        "source_type": "vendor_docs",
-        "source_urls": [
-          "https://code.claude.com/docs/en/sub-agents"
-        ],
-        "verified_on": "2026-02-04",
-        "applies_to": {
-          "tool": "claude-code"
-        },
-        "normative_level": "MUST",
-        "tests": {
-          "unit": true,
-          "fixtures": true,
-          "e2e": false
-        }
-      },
-      "fix": {
-        "autofix": false
-      }
-    },
-    {
-      "id": "CC-AG-003",
-      "name": "Invalid Model Value",
-      "severity": "HIGH",
-      "category": "claude-agents",
-      "evidence": {
-        "source_type": "vendor_docs",
-        "source_urls": [
-          "https://code.claude.com/docs/en/sub-agents"
-        ],
-        "verified_on": "2026-02-04",
-        "applies_to": {
-          "tool": "claude-code"
-        },
-        "normative_level": "MUST",
-        "tests": {
-          "unit": true,
-          "fixtures": true,
-          "e2e": false
-        }
-      },
-      "fix": {
-        "autofix": true,
-        "fix_safety": "unsafe"
-      }
-    },
-    {
-      "id": "CC-AG-004",
-      "name": "Invalid Permission Mode",
-      "severity": "HIGH",
-      "category": "claude-agents",
-      "evidence": {
-        "source_type": "vendor_docs",
-        "source_urls": [
-          "https://code.claude.com/docs/en/sub-agents"
-        ],
-        "verified_on": "2026-02-04",
-        "applies_to": {
-          "tool": "claude-code"
-        },
-        "normative_level": "MUST",
-        "tests": {
-          "unit": true,
-          "fixtures": true,
-          "e2e": false
-        }
-      },
-      "fix": {
-        "autofix": true,
-        "fix_safety": "unsafe"
-      }
-    },
-    {
-      "id": "CC-AG-005",
-      "name": "Referenced Skill Not Found",
-      "severity": "HIGH",
-      "category": "claude-agents",
-      "evidence": {
-        "source_type": "vendor_docs",
-        "source_urls": [
-          "https://code.claude.com/docs/en/sub-agents"
-        ],
-        "verified_on": "2026-02-04",
-        "applies_to": {
-          "tool": "claude-code"
-        },
-        "normative_level": "MUST",
-        "tests": {
-          "unit": true,
-          "fixtures": true,
-          "e2e": false
-        }
-      },
-      "fix": {
-        "autofix": false
-      }
-    },
-    {
-      "id": "CC-AG-006",
-      "name": "Tool/Disallowed Conflict",
-      "severity": "HIGH",
-      "category": "claude-agents",
-      "evidence": {
-        "source_type": "vendor_docs",
-        "source_urls": [
-          "https://code.claude.com/docs/en/sub-agents"
-        ],
-        "verified_on": "2026-02-04",
-        "applies_to": {
-          "tool": "claude-code"
-        },
-        "normative_level": "MUST",
-        "tests": {
-          "unit": true,
-          "fixtures": true,
-          "e2e": false
-        }
-      },
-      "fix": {
-        "autofix": false
-      }
-    },
-    {
-      "id": "CC-AG-007",
-      "name": "Agent Parse Error",
-      "severity": "HIGH",
-      "category": "claude-agents",
-      "evidence": {
-        "source_type": "vendor_docs",
-        "source_urls": [
-          "https://code.claude.com/docs/en/sub-agents"
-        ],
-        "verified_on": "2026-02-04",
-        "applies_to": {
-          "tool": "claude-code"
-        },
-        "normative_level": "MUST",
-        "tests": {
-          "unit": true,
-          "fixtures": true,
-          "e2e": false
-        }
-      },
-      "fix": {
-        "autofix": false
-      }
-    },
-    {
       "id": "CC-MEM-001",
       "name": "Invalid Import Path",
       "severity": "HIGH",
@@ -1695,153 +1460,6 @@
       }
     },
     {
-      "id": "AGM-001",
-      "name": "Valid Markdown Structure",
-      "severity": "HIGH",
-      "category": "agents-md",
-      "evidence": {
-        "source_type": "community",
-        "source_urls": [
-          "https://developers.openai.com/codex/guides/agents-md",
-          "https://docs.cursor.com/en/context",
-          "https://docs.cline.bot/features/custom-instructions"
-        ],
-        "verified_on": "2026-02-04",
-        "applies_to": {},
-        "normative_level": "MUST",
-        "tests": {
-          "unit": true,
-          "fixtures": true,
-          "e2e": false
-        }
-      },
-      "fix": {
-        "autofix": false
-      }
-    },
-    {
-      "id": "AGM-002",
-      "name": "Missing Section Headers",
-      "severity": "MEDIUM",
-      "category": "agents-md",
-      "evidence": {
-        "source_type": "community",
-        "source_urls": [
-          "https://docs.cursor.com/en/context",
-          "https://docs.cline.bot/features/custom-instructions"
-        ],
-        "verified_on": "2026-02-04",
-        "applies_to": {},
-        "normative_level": "SHOULD",
-        "tests": {
-          "unit": true,
-          "fixtures": true,
-          "e2e": false
-        }
-      },
-      "fix": {
-        "autofix": false
-      }
-    },
-    {
-      "id": "AGM-003",
-      "name": "Character Limit (Windsurf)",
-      "severity": "MEDIUM",
-      "category": "agents-md",
-      "evidence": {
-        "source_type": "vendor_docs",
-        "source_urls": [
-          "https://docs.windsurf.com/windsurf/cascade/memories"
-        ],
-        "verified_on": "2026-02-04",
-        "applies_to": {
-          "tool": "windsurf"
-        },
-        "normative_level": "SHOULD",
-        "tests": {
-          "unit": true,
-          "fixtures": true,
-          "e2e": false
-        }
-      },
-      "fix": {
-        "autofix": false
-      }
-    },
-    {
-      "id": "AGM-004",
-      "name": "Missing Project Context",
-      "severity": "MEDIUM",
-      "category": "agents-md",
-      "evidence": {
-        "source_type": "community",
-        "source_urls": [
-          "https://developers.openai.com/codex/guides/agents-md",
-          "https://docs.cursor.com/en/context"
-        ],
-        "verified_on": "2026-02-04",
-        "applies_to": {},
-        "normative_level": "BEST_PRACTICE",
-        "tests": {
-          "unit": true,
-          "fixtures": true,
-          "e2e": false
-        }
-      },
-      "fix": {
-        "autofix": false
-      }
-    },
-    {
-      "id": "AGM-005",
-      "name": "Platform-Specific Features Without Guard",
-      "severity": "MEDIUM",
-      "category": "agents-md",
-      "evidence": {
-        "source_type": "community",
-        "source_urls": [
-          "https://developers.openai.com/codex/guides/agents-md",
-          "https://docs.cursor.com/en/context"
-        ],
-        "verified_on": "2026-02-04",
-        "applies_to": {},
-        "normative_level": "SHOULD",
-        "tests": {
-          "unit": true,
-          "fixtures": true,
-          "e2e": false
-        }
-      },
-      "fix": {
-        "autofix": false
-      }
-    },
-    {
-      "id": "AGM-006",
-      "name": "Nested AGENTS.md Hierarchy",
-      "severity": "MEDIUM",
-      "category": "agents-md",
-      "evidence": {
-        "source_type": "community",
-        "source_urls": [
-          "https://developers.openai.com/codex/guides/agents-md",
-          "https://docs.cline.bot/features/custom-instructions",
-          "https://github.com/github/docs/changelog/2025-06-17-github-copilot-coding-agent-now-supports-agents-md-custom-instructions"
-        ],
-        "verified_on": "2026-02-04",
-        "applies_to": {},
-        "normative_level": "BEST_PRACTICE",
-        "tests": {
-          "unit": true,
-          "fixtures": true,
-          "e2e": false
-        }
-      },
-      "fix": {
-        "autofix": false
-      }
-    },
-    {
       "id": "CC-PL-001",
       "name": "Plugin Manifest Not in .claude-plugin/",
       "severity": "HIGH",
@@ -1993,18 +1611,348 @@
       }
     },
     {
-      "id": "MCP-001",
-      "name": "Invalid JSON-RPC Version",
+      "id": "CC-SK-001",
+      "name": "Invalid Model Value",
       "severity": "HIGH",
-      "category": "mcp",
+      "category": "claude-skills",
       "evidence": {
-        "source_type": "spec",
+        "source_type": "vendor_docs",
         "source_urls": [
-          "https://modelcontextprotocol.io/specification"
+          "https://code.claude.com/docs/en/skills"
         ],
         "verified_on": "2026-02-04",
         "applies_to": {
-          "spec_revision": "2025-06-18"
+          "tool": "claude-code"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": true,
+        "fix_safety": "unsafe"
+      }
+    },
+    {
+      "id": "CC-SK-002",
+      "name": "Invalid Context Value",
+      "severity": "HIGH",
+      "category": "claude-skills",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://code.claude.com/docs/en/skills"
+        ],
+        "verified_on": "2026-02-04",
+        "applies_to": {
+          "tool": "claude-code"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": true,
+        "fix_safety": "unsafe"
+      }
+    },
+    {
+      "id": "CC-SK-003",
+      "name": "Context Without Agent",
+      "severity": "HIGH",
+      "category": "claude-skills",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://code.claude.com/docs/en/skills"
+        ],
+        "verified_on": "2026-02-04",
+        "applies_to": {
+          "tool": "claude-code"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": true,
+        "fix_safety": "unsafe"
+      }
+    },
+    {
+      "id": "CC-SK-004",
+      "name": "Agent Without Context",
+      "severity": "HIGH",
+      "category": "claude-skills",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://code.claude.com/docs/en/skills"
+        ],
+        "verified_on": "2026-02-04",
+        "applies_to": {
+          "tool": "claude-code"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": true,
+        "fix_safety": "unsafe"
+      }
+    },
+    {
+      "id": "CC-SK-005",
+      "name": "Invalid Agent Type",
+      "severity": "HIGH",
+      "category": "claude-skills",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://code.claude.com/docs/en/sub-agents"
+        ],
+        "verified_on": "2026-02-04",
+        "applies_to": {
+          "tool": "claude-code"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      }
+    },
+    {
+      "id": "CC-SK-006",
+      "name": "Dangerous Auto-Invocation",
+      "severity": "HIGH",
+      "category": "claude-skills",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://code.claude.com/docs/en/skills"
+        ],
+        "verified_on": "2026-02-04",
+        "applies_to": {
+          "tool": "claude-code"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      }
+    },
+    {
+      "id": "CC-SK-007",
+      "name": "Unrestricted Bash",
+      "severity": "HIGH",
+      "category": "claude-skills",
+      "evidence": {
+        "source_type": "community",
+        "source_urls": [
+          "https://github.com/anthropics/awesome-slash"
+        ],
+        "verified_on": "2026-02-04",
+        "applies_to": {
+          "tool": "claude-code"
+        },
+        "normative_level": "SHOULD",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": true,
+        "fix_safety": "unsafe"
+      }
+    },
+    {
+      "id": "CC-SK-008",
+      "name": "Unknown Tool Name",
+      "severity": "HIGH",
+      "category": "claude-skills",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://code.claude.com/docs/en/settings"
+        ],
+        "verified_on": "2026-02-04",
+        "applies_to": {
+          "tool": "claude-code"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      }
+    },
+    {
+      "id": "CC-SK-009",
+      "name": "Too Many Injections",
+      "severity": "MEDIUM",
+      "category": "claude-skills",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://platform.claude.com/docs"
+        ],
+        "verified_on": "2026-02-04",
+        "applies_to": {
+          "tool": "claude-code"
+        },
+        "normative_level": "SHOULD",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      }
+    },
+    {
+      "id": "CC-SK-010",
+      "name": "Invalid Hooks in Skill Frontmatter",
+      "severity": "HIGH",
+      "category": "claude-skills",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://code.claude.com/docs/en/skills"
+        ],
+        "verified_on": "2026-02-07",
+        "applies_to": {
+          "tool": "claude-code"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      }
+    },
+    {
+      "id": "CC-SK-011",
+      "name": "Unreachable Skill",
+      "severity": "HIGH",
+      "category": "claude-skills",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://code.claude.com/docs/en/skills"
+        ],
+        "verified_on": "2026-02-07",
+        "applies_to": {
+          "tool": "claude-code"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      }
+    },
+    {
+      "id": "CC-SK-012",
+      "name": "Argument Hint Without $ARGUMENTS",
+      "severity": "MEDIUM",
+      "category": "claude-skills",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://code.claude.com/docs/en/skills"
+        ],
+        "verified_on": "2026-02-07",
+        "applies_to": {
+          "tool": "claude-code"
+        },
+        "normative_level": "SHOULD",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      }
+    },
+    {
+      "id": "CC-SK-013",
+      "name": "Fork Context Without Actionable Instructions",
+      "severity": "MEDIUM",
+      "category": "claude-skills",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://code.claude.com/docs/en/skills"
+        ],
+        "verified_on": "2026-02-07",
+        "applies_to": {
+          "tool": "claude-code"
+        },
+        "normative_level": "SHOULD",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      }
+    },
+    {
+      "id": "CC-SK-014",
+      "name": "Invalid disable-model-invocation Type",
+      "severity": "HIGH",
+      "category": "claude-skills",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://code.claude.com/docs/en/skills"
+        ],
+        "verified_on": "2026-02-07",
+        "applies_to": {
+          "tool": "claude-code"
         },
         "normative_level": "MUST",
         "tests": {
@@ -2019,170 +1967,20 @@
       }
     },
     {
-      "id": "MCP-002",
-      "name": "Missing Required Tool Field",
+      "id": "CC-SK-015",
+      "name": "Invalid user-invocable Type",
       "severity": "HIGH",
-      "category": "mcp",
+      "category": "claude-skills",
       "evidence": {
-        "source_type": "spec",
+        "source_type": "vendor_docs",
         "source_urls": [
-          "https://modelcontextprotocol.io/docs/concepts/tools"
+          "https://code.claude.com/docs/en/skills"
         ],
-        "verified_on": "2026-02-04",
+        "verified_on": "2026-02-07",
         "applies_to": {
-          "spec_revision": "2025-06-18"
+          "tool": "claude-code"
         },
         "normative_level": "MUST",
-        "tests": {
-          "unit": true,
-          "fixtures": true,
-          "e2e": false
-        }
-      },
-      "fix": {
-        "autofix": false
-      }
-    },
-    {
-      "id": "MCP-003",
-      "name": "Invalid JSON Schema",
-      "severity": "HIGH",
-      "category": "mcp",
-      "evidence": {
-        "source_type": "spec",
-        "source_urls": [
-          "https://modelcontextprotocol.io/specification"
-        ],
-        "verified_on": "2026-02-04",
-        "applies_to": {
-          "spec_revision": "2025-06-18"
-        },
-        "normative_level": "MUST",
-        "tests": {
-          "unit": true,
-          "fixtures": true,
-          "e2e": false
-        }
-      },
-      "fix": {
-        "autofix": false
-      }
-    },
-    {
-      "id": "MCP-004",
-      "name": "Missing Tool Description",
-      "severity": "HIGH",
-      "category": "mcp",
-      "evidence": {
-        "source_type": "spec",
-        "source_urls": [
-          "https://modelcontextprotocol.io/docs/concepts/tools"
-        ],
-        "verified_on": "2026-02-04",
-        "applies_to": {
-          "spec_revision": "2025-06-18"
-        },
-        "normative_level": "SHOULD",
-        "tests": {
-          "unit": true,
-          "fixtures": true,
-          "e2e": false
-        }
-      },
-      "fix": {
-        "autofix": false
-      }
-    },
-    {
-      "id": "MCP-005",
-      "name": "Tool Without User Consent",
-      "severity": "HIGH",
-      "category": "mcp",
-      "evidence": {
-        "source_type": "spec",
-        "source_urls": [
-          "https://modelcontextprotocol.io/specification"
-        ],
-        "verified_on": "2026-02-04",
-        "applies_to": {
-          "spec_revision": "2025-06-18"
-        },
-        "normative_level": "MUST",
-        "tests": {
-          "unit": true,
-          "fixtures": true,
-          "e2e": false
-        }
-      },
-      "fix": {
-        "autofix": false
-      }
-    },
-    {
-      "id": "MCP-006",
-      "name": "Untrusted Annotations",
-      "severity": "HIGH",
-      "category": "mcp",
-      "evidence": {
-        "source_type": "spec",
-        "source_urls": [
-          "https://modelcontextprotocol.io/docs/concepts/tools"
-        ],
-        "verified_on": "2026-02-04",
-        "applies_to": {
-          "spec_revision": "2025-06-18"
-        },
-        "normative_level": "MUST",
-        "tests": {
-          "unit": true,
-          "fixtures": true,
-          "e2e": false
-        }
-      },
-      "fix": {
-        "autofix": false
-      }
-    },
-    {
-      "id": "MCP-007",
-      "name": "MCP Parse Error",
-      "severity": "HIGH",
-      "category": "mcp",
-      "evidence": {
-        "source_type": "spec",
-        "source_urls": [
-          "https://modelcontextprotocol.io/specification"
-        ],
-        "verified_on": "2026-02-04",
-        "applies_to": {
-          "spec_revision": "2025-06-18"
-        },
-        "normative_level": "MUST",
-        "tests": {
-          "unit": true,
-          "fixtures": true,
-          "e2e": false
-        }
-      },
-      "fix": {
-        "autofix": false
-      }
-    },
-    {
-      "id": "MCP-008",
-      "name": "Protocol Version Mismatch",
-      "severity": "MEDIUM",
-      "category": "mcp",
-      "evidence": {
-        "source_type": "spec",
-        "source_urls": [
-          "https://modelcontextprotocol.io/specification"
-        ],
-        "verified_on": "2026-02-04",
-        "applies_to": {
-          "spec_revision": "2025-06-18"
-        },
-        "normative_level": "SHOULD",
         "tests": {
           "unit": true,
           "fixtures": true,
@@ -2191,7 +1989,7 @@
       },
       "fix": {
         "autofix": true,
-        "fix_safety": "unsafe"
+        "fix_safety": "safe"
       }
     },
     {
@@ -2497,90 +2295,44 @@
       }
     },
     {
-      "id": "XML-001",
-      "name": "Unclosed XML Tag",
+      "id": "MCP-001",
+      "name": "Invalid JSON-RPC Version",
       "severity": "HIGH",
-      "category": "xml",
+      "category": "mcp",
       "evidence": {
-        "source_type": "vendor_docs",
+        "source_type": "spec",
         "source_urls": [
-          "https://platform.claude.com/docs"
-        ],
-        "verified_on": "2026-02-04",
-        "applies_to": {},
-        "normative_level": "MUST",
-        "tests": {
-          "unit": true,
-          "fixtures": true,
-          "e2e": false
-        }
-      },
-      "fix": {
-        "autofix": true,
-        "fix_safety": "unsafe"
-      }
-    },
-    {
-      "id": "XML-002",
-      "name": "Mismatched Closing Tag",
-      "severity": "HIGH",
-      "category": "xml",
-      "evidence": {
-        "source_type": "vendor_docs",
-        "source_urls": [
-          "https://www.w3.org/TR/xml/"
-        ],
-        "verified_on": "2026-02-04",
-        "applies_to": {},
-        "normative_level": "MUST",
-        "tests": {
-          "unit": true,
-          "fixtures": true,
-          "e2e": false
-        }
-      },
-      "fix": {
-        "autofix": true,
-        "fix_safety": "unsafe"
-      }
-    },
-    {
-      "id": "XML-003",
-      "name": "Unmatched Closing Tag",
-      "severity": "HIGH",
-      "category": "xml",
-      "evidence": {
-        "source_type": "vendor_docs",
-        "source_urls": [
-          "https://www.w3.org/TR/xml/"
-        ],
-        "verified_on": "2026-02-04",
-        "applies_to": {},
-        "normative_level": "MUST",
-        "tests": {
-          "unit": true,
-          "fixtures": true,
-          "e2e": false
-        }
-      },
-      "fix": {
-        "autofix": true,
-        "fix_safety": "unsafe"
-      }
-    },
-    {
-      "id": "REF-001",
-      "name": "Import File Not Found",
-      "severity": "HIGH",
-      "category": "references",
-      "evidence": {
-        "source_type": "vendor_docs",
-        "source_urls": [
-          "https://code.claude.com/docs/en/memory"
+          "https://modelcontextprotocol.io/specification"
         ],
         "verified_on": "2026-02-04",
         "applies_to": {
-          "tool": "claude-code"
+          "spec_revision": "2025-06-18"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": true,
+        "fix_safety": "safe"
+      }
+    },
+    {
+      "id": "MCP-002",
+      "name": "Missing Required Tool Field",
+      "severity": "HIGH",
+      "category": "mcp",
+      "evidence": {
+        "source_type": "spec",
+        "source_urls": [
+          "https://modelcontextprotocol.io/docs/concepts/tools"
+        ],
+        "verified_on": "2026-02-04",
+        "applies_to": {
+          "spec_revision": "2025-06-18"
         },
         "normative_level": "MUST",
         "tests": {
@@ -2594,17 +2346,44 @@
       }
     },
     {
-      "id": "REF-002",
-      "name": "Broken Markdown Link",
+      "id": "MCP-003",
+      "name": "Invalid JSON Schema",
       "severity": "HIGH",
-      "category": "references",
+      "category": "mcp",
       "evidence": {
-        "source_type": "community",
+        "source_type": "spec",
         "source_urls": [
-          "https://spec.commonmark.org/"
+          "https://modelcontextprotocol.io/specification"
         ],
         "verified_on": "2026-02-04",
-        "applies_to": {},
+        "applies_to": {
+          "spec_revision": "2025-06-18"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      }
+    },
+    {
+      "id": "MCP-004",
+      "name": "Missing Tool Description",
+      "severity": "HIGH",
+      "category": "mcp",
+      "evidence": {
+        "source_type": "spec",
+        "source_urls": [
+          "https://modelcontextprotocol.io/docs/concepts/tools"
+        ],
+        "verified_on": "2026-02-04",
+        "applies_to": {
+          "spec_revision": "2025-06-18"
+        },
         "normative_level": "SHOULD",
         "tests": {
           "unit": true,
@@ -2614,6 +2393,208 @@
       },
       "fix": {
         "autofix": false
+      }
+    },
+    {
+      "id": "MCP-005",
+      "name": "Tool Without User Consent",
+      "severity": "HIGH",
+      "category": "mcp",
+      "evidence": {
+        "source_type": "spec",
+        "source_urls": [
+          "https://modelcontextprotocol.io/specification"
+        ],
+        "verified_on": "2026-02-04",
+        "applies_to": {
+          "spec_revision": "2025-06-18"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      }
+    },
+    {
+      "id": "MCP-006",
+      "name": "Untrusted Annotations",
+      "severity": "HIGH",
+      "category": "mcp",
+      "evidence": {
+        "source_type": "spec",
+        "source_urls": [
+          "https://modelcontextprotocol.io/docs/concepts/tools"
+        ],
+        "verified_on": "2026-02-04",
+        "applies_to": {
+          "spec_revision": "2025-06-18"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      }
+    },
+    {
+      "id": "MCP-007",
+      "name": "MCP Parse Error",
+      "severity": "HIGH",
+      "category": "mcp",
+      "evidence": {
+        "source_type": "spec",
+        "source_urls": [
+          "https://modelcontextprotocol.io/specification"
+        ],
+        "verified_on": "2026-02-04",
+        "applies_to": {
+          "spec_revision": "2025-06-18"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      }
+    },
+    {
+      "id": "MCP-008",
+      "name": "Protocol Version Mismatch",
+      "severity": "MEDIUM",
+      "category": "mcp",
+      "evidence": {
+        "source_type": "spec",
+        "source_urls": [
+          "https://modelcontextprotocol.io/specification"
+        ],
+        "verified_on": "2026-02-04",
+        "applies_to": {
+          "spec_revision": "2025-06-18"
+        },
+        "normative_level": "SHOULD",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": true,
+        "fix_safety": "unsafe"
+      }
+    },
+    {
+      "id": "MCP-009",
+      "name": "Missing command for stdio server",
+      "severity": "HIGH",
+      "category": "mcp",
+      "evidence": {
+        "source_type": "spec",
+        "source_urls": [
+          "https://modelcontextprotocol.io/specification"
+        ],
+        "verified_on": "2026-02-07",
+        "applies_to": {
+          "spec_revision": "2025-03-26"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      }
+    },
+    {
+      "id": "MCP-010",
+      "name": "Missing url for http/sse server",
+      "severity": "HIGH",
+      "category": "mcp",
+      "evidence": {
+        "source_type": "spec",
+        "source_urls": [
+          "https://modelcontextprotocol.io/specification"
+        ],
+        "verified_on": "2026-02-07",
+        "applies_to": {
+          "spec_revision": "2025-03-26"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      }
+    },
+    {
+      "id": "MCP-011",
+      "name": "Invalid MCP server type",
+      "severity": "HIGH",
+      "category": "mcp",
+      "evidence": {
+        "source_type": "spec",
+        "source_urls": [
+          "https://modelcontextprotocol.io/specification"
+        ],
+        "verified_on": "2026-02-07",
+        "applies_to": {
+          "spec_revision": "2025-03-26"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      }
+    },
+    {
+      "id": "MCP-012",
+      "name": "Deprecated SSE transport",
+      "severity": "MEDIUM",
+      "category": "mcp",
+      "evidence": {
+        "source_type": "spec",
+        "source_urls": [
+          "https://modelcontextprotocol.io/specification"
+        ],
+        "verified_on": "2026-02-07",
+        "applies_to": {
+          "spec_revision": "2025-03-26"
+        },
+        "normative_level": "SHOULD",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": true,
+        "fix_safety": "unsafe"
       }
     },
     {
@@ -2707,6 +2688,149 @@
       },
       "fix": {
         "autofix": false
+      }
+    },
+    {
+      "id": "REF-001",
+      "name": "Import File Not Found",
+      "severity": "HIGH",
+      "category": "references",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://code.claude.com/docs/en/memory"
+        ],
+        "verified_on": "2026-02-04",
+        "applies_to": {
+          "tool": "claude-code"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      }
+    },
+    {
+      "id": "REF-002",
+      "name": "Broken Markdown Link",
+      "severity": "HIGH",
+      "category": "references",
+      "evidence": {
+        "source_type": "community",
+        "source_urls": [
+          "https://spec.commonmark.org/"
+        ],
+        "verified_on": "2026-02-04",
+        "applies_to": {},
+        "normative_level": "SHOULD",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      }
+    },
+    {
+      "id": "VER-001",
+      "name": "No Tool/Spec Versions Pinned",
+      "severity": "LOW",
+      "category": "version-awareness",
+      "evidence": {
+        "source_type": "community",
+        "source_urls": [
+          "https://github.com/avifenesh/agnix/issues/104"
+        ],
+        "verified_on": "2026-02-04",
+        "applies_to": {},
+        "normative_level": "BEST_PRACTICE",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      }
+    },
+    {
+      "id": "XML-001",
+      "name": "Unclosed XML Tag",
+      "severity": "HIGH",
+      "category": "xml",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://platform.claude.com/docs"
+        ],
+        "verified_on": "2026-02-04",
+        "applies_to": {},
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": true,
+        "fix_safety": "unsafe"
+      }
+    },
+    {
+      "id": "XML-002",
+      "name": "Mismatched Closing Tag",
+      "severity": "HIGH",
+      "category": "xml",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://www.w3.org/TR/xml/"
+        ],
+        "verified_on": "2026-02-04",
+        "applies_to": {},
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": true,
+        "fix_safety": "unsafe"
+      }
+    },
+    {
+      "id": "XML-003",
+      "name": "Unmatched Closing Tag",
+      "severity": "HIGH",
+      "category": "xml",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://www.w3.org/TR/xml/"
+        ],
+        "verified_on": "2026-02-04",
+        "applies_to": {},
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": true,
+        "fix_safety": "unsafe"
       }
     },
     {
@@ -2846,29 +2970,6 @@
         "verified_on": "2026-02-04",
         "applies_to": {},
         "normative_level": "SHOULD",
-        "tests": {
-          "unit": true,
-          "fixtures": true,
-          "e2e": false
-        }
-      },
-      "fix": {
-        "autofix": false
-      }
-    },
-    {
-      "id": "VER-001",
-      "name": "No Tool/Spec Versions Pinned",
-      "severity": "LOW",
-      "category": "version-awareness",
-      "evidence": {
-        "source_type": "community",
-        "source_urls": [
-          "https://github.com/avifenesh/agnix/issues/104"
-        ],
-        "verified_on": "2026-02-04",
-        "applies_to": {},
-        "normative_level": "BEST_PRACTICE",
         "tests": {
           "unit": true,
           "fixtures": true,
@@ -3488,10 +3589,48 @@
             "key": "mcpServers",
             "docs": "MCP server map configuration.",
             "rules": [
-              "MCP-007"
+              "MCP-007",
+              "MCP-009",
+              "MCP-010",
+              "MCP-011",
+              "MCP-012"
             ],
             "values": [],
             "snippet": "\"mcpServers\": {}"
+          },
+          {
+            "key": "type",
+            "docs": "MCP server transport type.",
+            "rules": [
+              "MCP-009",
+              "MCP-010",
+              "MCP-011",
+              "MCP-012"
+            ],
+            "values": [
+              "stdio",
+              "http",
+              "sse"
+            ],
+            "snippet": "\"type\": \"stdio\""
+          },
+          {
+            "key": "command",
+            "docs": "Command to launch a stdio MCP server.",
+            "rules": [
+              "MCP-009"
+            ],
+            "values": [],
+            "snippet": "\"command\": \"node\""
+          },
+          {
+            "key": "url",
+            "docs": "Endpoint URL for http/sse MCP server.",
+            "rules": [
+              "MCP-010"
+            ],
+            "values": [],
+            "snippet": "\"url\": \"http://localhost:3000/mcp\""
           },
           {
             "key": "tools",
@@ -3580,6 +3719,24 @@
               "MCP-002",
               "MCP-003",
               "MCP-005"
+            ]
+          },
+          {
+            "label": "MCP stdio server",
+            "body": "{\n  \"mcpServers\": {\n    \"server-name\": {\n      \"type\": \"stdio\",\n      \"command\": \"node\",\n      \"args\": [\"server.js\"]\n    }\n  }\n}",
+            "docs": "Stdio server configuration scaffold.",
+            "rules": [
+              "MCP-009",
+              "MCP-011"
+            ]
+          },
+          {
+            "label": "MCP http server",
+            "body": "{\n  \"mcpServers\": {\n    \"server-name\": {\n      \"type\": \"http\",\n      \"url\": \"http://localhost:3000/mcp\"\n    }\n  }\n}",
+            "docs": "HTTP server configuration scaffold.",
+            "rules": [
+              "MCP-010",
+              "MCP-011"
             ]
           }
         ]

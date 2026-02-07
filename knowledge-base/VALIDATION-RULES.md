@@ -735,6 +735,35 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 **Source**: modelcontextprotocol.io/specification (Protocol Versioning)
 **Version-Aware**: When MCP protocol version is not pinned in `.agnix.toml [spec_revisions]`, an assumption note is added indicating default protocol version is being used. Pin the version with `mcp_protocol = "2025-06-18"` for explicit control.
 
+<a id="mcp-009"></a>
+### MCP-009 [HIGH] Missing command for stdio server
+**Requirement**: Stdio MCP servers MUST have a `command` field
+**Detection**: Server entry has `type: "stdio"` (or no type, since stdio is default) but no `command` field
+**Fix**: Add a `command` field specifying the executable to run
+**Source**: modelcontextprotocol.io/specification
+
+<a id="mcp-010"></a>
+### MCP-010 [HIGH] Missing url for http/sse server
+**Requirement**: HTTP and SSE MCP servers MUST have a `url` field
+**Detection**: Server entry has `type: "http"` or `type: "sse"` but no `url` field
+**Fix**: Add a `url` field specifying the server endpoint
+**Source**: modelcontextprotocol.io/specification
+
+<a id="mcp-011"></a>
+### MCP-011 [HIGH] Invalid MCP server type
+**Requirement**: MCP server `type` MUST be `stdio`, `http`, or `sse`
+**Detection**: Server entry has a `type` field with an unrecognized value
+**Fix**: Change type to one of: `stdio`, `http`, `sse`
+**Source**: modelcontextprotocol.io/specification
+
+<a id="mcp-012"></a>
+### MCP-012 [MEDIUM] Deprecated SSE transport
+**Requirement**: SSE transport SHOULD be replaced with Streamable HTTP
+**Detection**: Server entry has `type: "sse"`
+**Fix**: Change `type` from `"sse"` to `"http"` (unsafe: server may not support Streamable HTTP)
+**Note**: This is a warning because SSE still works but is deprecated in favor of Streamable HTTP
+**Source**: modelcontextprotocol.io/specification
+
 ---
 
 ## GITHUB COPILOT RULES
@@ -1076,6 +1105,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | CC-PL-005 | Normalize plugin name | unsafe |
 | MCP-001 | Set jsonrpc to "2.0" | safe |
 | MCP-008 | Update protocolVersion | unsafe |
+| MCP-012 | Change sse to http | unsafe |
 | COP-004 | Remove unknown frontmatter key | safe |
 | CUR-005 | Remove unknown frontmatter key | safe |
 | XML-001 | Add missing closing tag | unsafe |
@@ -1097,13 +1127,13 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | Claude Plugins | 6 | 6 | 0 | 0 | 1 |
 | GitHub Copilot | 6 | 4 | 2 | 0 | 1 |
 | Cursor | 6 | 3 | 3 | 0 | 1 |
-| MCP | 8 | 7 | 1 | 0 | 2 |
+| MCP | 12 | 10 | 2 | 0 | 3 |
 | XML | 3 | 3 | 0 | 0 | 3 |
 | References | 2 | 2 | 0 | 0 | 0 |
 | Prompt Eng | 4 | 0 | 4 | 0 | 0 |
 | Cross-Platform | 6 | 4 | 2 | 0 | 0 |
 | Version Awareness | 1 | 0 | 0 | 1 | 0 |
-| **TOTAL** | **114** | **83** | **29** | **2** | **27** |
+| **TOTAL** | **118** | **86** | **30** | **2** | **28** |
 
 ---
 
@@ -1132,7 +1162,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 
 ---
 
-**Total Coverage**: 114 validation rules across 15 categories
+**Total Coverage**: 118 validation rules across 15 categories
 **Knowledge Base**: 11,036 lines, 320KB, 75+ sources
-**Certainty**: 83 HIGH, 29 MEDIUM, 2 LOW
-**Auto-Fixable**: 27 rules (25%)
+**Certainty**: 86 HIGH, 30 MEDIUM, 2 LOW
+**Auto-Fixable**: 28 rules (24%)
