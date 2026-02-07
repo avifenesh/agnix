@@ -1,7 +1,7 @@
 # Rules Reference
 
-This section contains all `108` validation rules generated from `knowledge-base/rules.json`.
-`25` rules have automatic fixes.
+This section contains all `114` validation rules generated from `knowledge-base/rules.json`.
+`27` rules have automatic fixes.
 
 | Rule | Name | Severity | Category | Auto-Fix |
 |------|------|----------|----------|----------|
@@ -30,6 +30,12 @@ This section contains all `108` validation rules generated from `knowledge-base/
 | [CC-SK-007](./generated/cc-sk-007.md) | Unrestricted Bash | HIGH | Claude Skills | Yes (unsafe) |
 | [CC-SK-008](./generated/cc-sk-008.md) | Unknown Tool Name | HIGH | Claude Skills | No |
 | [CC-SK-009](./generated/cc-sk-009.md) | Too Many Injections | MEDIUM | Claude Skills | No |
+| [CC-SK-010](./generated/cc-sk-010.md) | Invalid Hooks in Skill Frontmatter | HIGH | Claude Skills | No |
+| [CC-SK-011](./generated/cc-sk-011.md) | Unreachable Skill | HIGH | Claude Skills | No |
+| [CC-SK-012](./generated/cc-sk-012.md) | Argument Hint Without $ARGUMENTS | MEDIUM | Claude Skills | No |
+| [CC-SK-013](./generated/cc-sk-013.md) | Fork Context Without Actionable Instructions | MEDIUM | Claude Skills | No |
+| [CC-SK-014](./generated/cc-sk-014.md) | Invalid disable-model-invocation Type | HIGH | Claude Skills | Yes (safe) |
+| [CC-SK-015](./generated/cc-sk-015.md) | Invalid user-invocable Type | HIGH | Claude Skills | Yes (safe) |
 | [CC-HK-001](./generated/cc-hk-001.md) | Invalid Hook Event | HIGH | Claude Hooks | Yes (safe/unsafe) |
 | [CC-HK-002](./generated/cc-hk-002.md) | Prompt Hook on Wrong Event | HIGH | Claude Hooks | No |
 | [CC-HK-003](./generated/cc-hk-003.md) | Missing Matcher for Tool Events | HIGH | Claude Hooks | No |

@@ -1,7 +1,7 @@
 {
   "description": "Machine-readable source of truth for all validation rules. When adding a new rule, add it here AND in VALIDATION-RULES.md. CI parity tests enforce sync.",
   "version": "1.1.0",
-  "total_rules": 108,
+  "total_rules": 114,
   "last_updated": "2026-02-07",
   "schema": {
     "evidence": {
@@ -663,6 +663,158 @@
       },
       "fix": {
         "autofix": false
+      }
+    },
+    {
+      "id": "CC-SK-010",
+      "name": "Invalid Hooks in Skill Frontmatter",
+      "severity": "HIGH",
+      "category": "claude-skills",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://code.claude.com/docs/en/skills"
+        ],
+        "verified_on": "2026-02-07",
+        "applies_to": {
+          "tool": "claude-code"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      }
+    },
+    {
+      "id": "CC-SK-011",
+      "name": "Unreachable Skill",
+      "severity": "HIGH",
+      "category": "claude-skills",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://code.claude.com/docs/en/skills"
+        ],
+        "verified_on": "2026-02-07",
+        "applies_to": {
+          "tool": "claude-code"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      }
+    },
+    {
+      "id": "CC-SK-012",
+      "name": "Argument Hint Without $ARGUMENTS",
+      "severity": "MEDIUM",
+      "category": "claude-skills",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://code.claude.com/docs/en/skills"
+        ],
+        "verified_on": "2026-02-07",
+        "applies_to": {
+          "tool": "claude-code"
+        },
+        "normative_level": "SHOULD",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      }
+    },
+    {
+      "id": "CC-SK-013",
+      "name": "Fork Context Without Actionable Instructions",
+      "severity": "MEDIUM",
+      "category": "claude-skills",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://code.claude.com/docs/en/skills"
+        ],
+        "verified_on": "2026-02-07",
+        "applies_to": {
+          "tool": "claude-code"
+        },
+        "normative_level": "SHOULD",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      }
+    },
+    {
+      "id": "CC-SK-014",
+      "name": "Invalid disable-model-invocation Type",
+      "severity": "HIGH",
+      "category": "claude-skills",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://code.claude.com/docs/en/skills"
+        ],
+        "verified_on": "2026-02-07",
+        "applies_to": {
+          "tool": "claude-code"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": true,
+        "fix_safety": "safe"
+      }
+    },
+    {
+      "id": "CC-SK-015",
+      "name": "Invalid user-invocable Type",
+      "severity": "HIGH",
+      "category": "claude-skills",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://code.claude.com/docs/en/skills"
+        ],
+        "verified_on": "2026-02-07",
+        "applies_to": {
+          "tool": "claude-code"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": true,
+        "fix_safety": "safe"
       }
     },
     {

@@ -82,6 +82,26 @@ rules:
   cc_sk_009:
     message: "Too many dynamic injections (%{count}). Limit to %{max} for better performance"
     suggestion: "Consider moving complex logic to a scripts/ directory or reducing injections"
+  cc_sk_010:
+    message: "Invalid hooks configuration in skill frontmatter: %{error}"
+    suggestion: "Ensure hooks follow the same schema as settings.json hooks"
+  cc_sk_011:
+    message: "Skill is unreachable: user-invocable is false and disable-model-invocation is true"
+    suggestion: "Set user-invocable to true or disable-model-invocation to false"
+  cc_sk_012:
+    message: "argument-hint is set but body does not reference $ARGUMENTS"
+    suggestion: "Add $ARGUMENTS to the skill body or remove the argument-hint field"
+  cc_sk_013:
+    message: "context: fork with reference-only content lacks actionable instructions"
+    suggestion: "Add imperative instructions for the forked agent to follow"
+  cc_sk_014:
+    message: "disable-model-invocation must be a boolean, got string '%{value}'"
+    suggestion: "Use true/false without quotes"
+    fix: "Convert string '%{value}' to boolean %{fixed}"
+  cc_sk_015:
+    message: "user-invocable must be a boolean, got string '%{value}'"
+    suggestion: "Use true/false without quotes"
+    fix: "Convert string '%{value}' to boolean %{fixed}"
 
   # --- Hooks (hooks/mod.rs) ---
   cc_hk_001:
