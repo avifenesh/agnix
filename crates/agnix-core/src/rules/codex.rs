@@ -636,3 +636,4 @@ notify = true
         assert_eq!(map.get("approvalMode"), Some(&2));
     }
 }
+
