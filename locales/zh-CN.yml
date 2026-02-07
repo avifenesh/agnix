@@ -357,6 +357,17 @@ rules:
     message: "Cline 规则文件中未知的 frontmatter 键 '%{key}'"
     suggestion: "删除未知键 '%{key}'。只有 'paths' 是已识别的 frontmatter 键。"
 
+  # --- Gemini CLI (gemini_md.rs) ---
+  gm_001:
+    message: "无效的 markdown: %{description}"
+    suggestion: "修复 markdown 语法错误"
+  gm_002:
+    message: "GEMINI.md 指令文件中未找到 markdown 标题"
+    suggestion: "添加章节标题（# 标题, ## 章节）以更好地组织内容"
+  gm_003:
+    message: "GEMINI.md 指令文件中缺少项目上下文章节"
+    suggestion: "添加 '# Project' 或 '## Overview' 章节描述项目目的和技术栈"
+
   # --- OpenCode (opencode.rs) ---
   oc_001:
     message: "无效的共享模式 '%{value}'。有效值: 'manual', 'auto', 'disabled'"

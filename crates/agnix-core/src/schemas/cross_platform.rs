@@ -935,6 +935,8 @@ pub fn is_instruction_file(path: &Path) -> bool {
 
     file_name == "claude.md"
         || file_name == "agents.md"
+        || file_name == "gemini.md"
+        || file_name == "gemini.local.md"
         || file_name == ".clinerules"
         || (path_str.contains(".cursor")
             && (path_str.ends_with(".mdc") || path_str.contains("rules")))

@@ -426,6 +426,17 @@ rules:
     message: "Unknown frontmatter key '%{key}' in Cline rules file"
     suggestion: "Remove unknown key '%{key}'. Only 'paths' is a recognized frontmatter key."
 
+  # --- Gemini CLI (gemini_md.rs) ---
+  gm_001:
+    message: "Invalid markdown: %{description}"
+    suggestion: "Fix the markdown syntax error"
+  gm_002:
+    message: "No markdown headers found in GEMINI.md instruction file"
+    suggestion: "Add section headers (# Title, ## Section) for better organization"
+  gm_003:
+    message: "Missing project context section in GEMINI.md instruction file"
+    suggestion: "Add a '# Project' or '## Overview' section describing the project purpose and tech stack"
+
   # --- OpenCode (opencode.rs) ---
   oc_001:
     message: "Invalid share mode '%{value}'. Valid values: 'manual', 'auto', 'disabled'"

@@ -128,6 +128,8 @@ impl Validator for ImportsValidator {
                 | "AGENTS.local.md"
                 | "AGENTS.override.md"
                 | "SKILL.md"
+                | "GEMINI.md"
+                | "GEMINI.local.md"
         ) || filename.ends_with(".instructions.md")
             || filename == "copilot-instructions.md";
         if is_agent_config {

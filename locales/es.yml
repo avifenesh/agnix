@@ -357,6 +357,17 @@ rules:
     message: "Clave de frontmatter desconocida '%{key}' en archivo de reglas de Cline"
     suggestion: "Elimina la clave desconocida '%{key}'. Solo 'paths' es una clave de frontmatter reconocida."
 
+  # --- Gemini CLI (gemini_md.rs) ---
+  gm_001:
+    message: "Markdown invalido: %{description}"
+    suggestion: "Corrige el error de sintaxis markdown"
+  gm_002:
+    message: "No se encontraron encabezados markdown en el archivo de instrucciones GEMINI.md"
+    suggestion: "Agrega encabezados de seccion (# Titulo, ## Seccion) para mejor organizacion"
+  gm_003:
+    message: "Falta seccion de contexto del proyecto en el archivo de instrucciones GEMINI.md"
+    suggestion: "Agrega una seccion '# Project' o '## Overview' describiendo el proposito del proyecto y la tecnologia"
+
   # --- OpenCode (opencode.rs) ---
   oc_001:
     message: "Modo de compartir invalido '%{value}'. Valores validos: 'manual', 'auto', 'disabled'"
