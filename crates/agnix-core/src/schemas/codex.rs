@@ -15,14 +15,21 @@ pub const VALID_APPROVAL_MODES: &[&str] = &["suggest", "auto-edit", "full-auto"]
 pub const VALID_FULL_AUTO_ERROR_MODES: &[&str] = &["ask-user", "ignore-and-continue"];
 
 /// Partial schema for .codex/config.toml (only fields we validate)
+///
+/// Note: The actual TOML keys use camelCase (`approvalMode`, `fullAutoErrorMode`).
+/// We use manual `toml::Value` parsing in `parse_codex_toml` rather than serde
+/// deserialization so that type mismatches (e.g. `approvalMode = true`) are
+/// reported as CDX-001/CDX-002 diagnostics instead of generic parse errors.
+/// The `#[serde(rename)]` attributes are kept for documentation and in case
+/// the struct is ever deserialized directly.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct CodexConfigSchema {
-    /// Approval mode for Codex CLI
-    #[serde(default)]
+    /// Approval mode for Codex CLI (TOML key: `approvalMode`)
+    #[serde(default, rename = "approvalMode")]
     pub approval_mode: Option<String>,
 
-    /// Error handling mode for full-auto mode
-    #[serde(default)]
+    /// Error handling mode for full-auto mode (TOML key: `fullAutoErrorMode`)
+    #[serde(default, rename = "fullAutoErrorMode")]
     pub full_auto_error_mode: Option<String>,
 }
 
@@ -53,6 +60,12 @@ pub struct ParseError {
 /// then extracts the typed schema. This ensures that type mismatches (e.g.,
 /// `approvalMode = true`) are reported as CDX-001/CDX-002 issues rather than
 /// generic parse errors.
+///
+/// # Input size
+///
+/// Callers are expected to enforce file size limits before calling this function.
+/// In production, `file_utils::safe_read_file` enforces a 1 MiB limit upstream,
+/// so content passed here is already bounded.
 pub fn parse_codex_toml(content: &str) -> ParsedCodexConfig {
     // First pass: validate TOML syntax
     let value: toml::Value = match content.parse::<toml::Value>() {
@@ -227,5 +240,21 @@ provider = "openai"
         assert!(result.parse_error.is_some());
         let err = result.parse_error.unwrap();
         assert!(err.line > 0);
+    }
+
+    #[test]
+    fn test_parse_error_fallback_line() {
+        // When span() returns None the code falls back to (line=1, column=0).
+        // In practice the toml crate always provides spans for parse errors,
+        // so we verify the fallback indirectly: any parse error must have
+        // line >= 1 (the minimum from the fallback path).
+        let content = "= value_without_key";
+        let result = parse_codex_toml(content);
+        assert!(result.parse_error.is_some());
+        let err = result.parse_error.unwrap();
+        assert!(
+            err.line >= 1,
+            "Parse error line should be at least 1 (fallback or span-derived)"
+        );
     }
 }
