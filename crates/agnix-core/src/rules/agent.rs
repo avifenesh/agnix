@@ -2870,18 +2870,14 @@ Agent instructions"#;
 
     #[test]
     fn test_cc_ag_012_has_autofix() {
-        let content =
-            "---\nname: my-agent\ndescription: A test agent\npermissionMode: bypassPermissions\n---\nAgent instructions";
+        let content = "---\nname: my-agent\ndescription: A test agent\npermissionMode: bypassPermissions\n---\nAgent instructions";
         let diagnostics = validate(content);
         let cc_ag_012: Vec<_> = diagnostics
             .iter()
             .filter(|d| d.rule == "CC-AG-012")
             .collect();
         assert_eq!(cc_ag_012.len(), 1);
-        assert!(
-            cc_ag_012[0].has_fixes(),
-            "CC-AG-012 should have auto-fix"
-        );
+        assert!(cc_ag_012[0].has_fixes(), "CC-AG-012 should have auto-fix");
         let fix = &cc_ag_012[0].fixes[0];
         assert!(!fix.safe, "CC-AG-012 fix should be unsafe");
         assert_eq!(

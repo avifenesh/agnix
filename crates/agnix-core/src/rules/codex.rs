@@ -516,10 +516,7 @@ mod tests {
         );
         let fix = &cdx_002[0].fixes[0];
         assert!(!fix.safe, "CDX-002 fix should be unsafe");
-        assert_eq!(
-            fix.replacement, "ask-user",
-            "Fix should suggest 'ask-user'"
-        );
+        assert_eq!(fix.replacement, "ask-user", "Fix should suggest 'ask-user'");
     }
 
     #[test]

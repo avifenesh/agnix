@@ -75,9 +75,7 @@ impl Validator for OpenCodeValidator {
                     .with_suggestion(t!("rules.oc_001.suggestion"));
 
                     // Unsafe auto-fix: replace with closest valid share mode.
-                    if let Some(suggested) =
-                        find_closest_value(share_value, VALID_SHARE_MODES)
-                    {
+                    if let Some(suggested) = find_closest_value(share_value, VALID_SHARE_MODES) {
                         if let Some((start, end)) =
                             find_unique_json_string_value_span(content, "share", share_value)
                         {

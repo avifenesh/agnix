@@ -3481,7 +3481,10 @@ fn test_cc_hk_016_autofix_targets_correct_bytes() {
     assert_eq!(fix.replacement, "prompt");
     // The bytes targeted should correspond to "Prompt" in the content
     let targeted = &content[fix.start_byte..fix.end_byte];
-    assert_eq!(targeted, "Prompt", "Fix should target the exact value bytes");
+    assert_eq!(
+        targeted, "Prompt",
+        "Fix should target the exact value bytes"
+    );
 }
 
 #[test]
