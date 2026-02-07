@@ -2710,9 +2710,10 @@ fn test_autofix_rules_json_reports_fixes_available() {
         "Expected at least one [fixable] diagnostic, got: {}",
         stdout
     );
+    // Verify the summary line reports a non-zero fixable count
     assert!(
-        stdout.contains("fixable"),
-        "Expected fixable summary, got: {}",
+        stdout.contains("automatically fixable"),
+        "Expected fixable count in summary line, got: {}",
         stdout
     );
 }
@@ -2742,10 +2743,16 @@ fn test_fix_ccsk_invalid_skill_name() {
     }
 
     let mut cmd = agnix();
-    cmd.arg(temp_dir.path().to_str().unwrap())
+    let output = cmd
+        .arg(temp_dir.path().to_str().unwrap())
         .arg("--fix")
         .output()
         .unwrap();
+
+    assert!(
+        output.status.success(),
+        "--fix should exit successfully after applying skill name fix"
+    );
 
     let fixed = fs::read_to_string(&skill_path).unwrap();
     assert!(
@@ -2783,10 +2790,16 @@ fn test_fix_cchk_invalid_event_name() {
     .unwrap();
 
     let mut cmd = agnix();
-    cmd.arg(temp_dir.path().to_str().unwrap())
+    let output = cmd
+        .arg(temp_dir.path().to_str().unwrap())
         .arg("--fix")
         .output()
         .unwrap();
+
+    assert!(
+        output.status.success(),
+        "--fix should exit successfully after applying hook event name fix"
+    );
 
     let fixed = fs::read_to_string(&settings_path).unwrap();
     assert!(
@@ -2813,16 +2826,27 @@ fn test_fix_ccag_invalid_model() {
     .unwrap();
 
     let mut cmd = agnix();
-    cmd.arg(temp_dir.path().to_str().unwrap())
+    let output = cmd
+        .arg(temp_dir.path().to_str().unwrap())
         .arg("--fix")
         .output()
         .unwrap();
 
+    assert!(
+        output.status.success(),
+        "--fix should exit successfully after applying agent model fix"
+    );
+
     let fixed = fs::read_to_string(&agent_path).unwrap();
-    // The fix should replace gpt-4 with a valid model
+    // CC-AG-003 replaces invalid model 'gpt-4' with 'sonnet' (the default valid model)
     assert!(
         !fixed.contains("model: gpt-4"),
         "CC-AG-003 fix should replace invalid model 'gpt-4', got: {}",
+        fixed
+    );
+    assert!(
+        fixed.contains("model: sonnet"),
+        "CC-AG-003 fix should replace invalid model with 'sonnet', got: {}",
         fixed
     );
 }
@@ -2841,10 +2865,16 @@ fn test_fix_mcp_invalid_jsonrpc_version() {
     .unwrap();
 
     let mut cmd = agnix();
-    cmd.arg(temp_dir.path().to_str().unwrap())
+    let output = cmd
+        .arg(temp_dir.path().to_str().unwrap())
         .arg("--fix")
         .output()
         .unwrap();
+
+    assert!(
+        output.status.success(),
+        "--fix should exit successfully after applying jsonrpc version fix"
+    );
 
     let fixed = fs::read_to_string(&mcp_path).unwrap();
     assert!(
@@ -2859,7 +2889,7 @@ fn test_fix_mcp_invalid_jsonrpc_version() {
 fn test_fix_copilot_scoped_missing_applyto() {
     use std::fs;
 
-    // Create a copilot scoped instructions file.  COP-003 checks for missing
+    // Create a copilot scoped instructions file.  COP-002 checks for missing
     // applyTo frontmatter in .instructions.md and provides a fix.
     let temp_dir = tempfile::tempdir().unwrap();
     let instructions_dir = temp_dir.path().join(".github").join("instructions");
@@ -2887,15 +2917,17 @@ fn test_fix_copilot_scoped_missing_applyto() {
         let original = fs::read_to_string(&instr_path).unwrap();
 
         let mut cmd2 = agnix();
+        // Note: --fix may still exit non-zero if unfixable diagnostics remain
+        // after applying available fixes.  We only assert the file was modified.
         cmd2.arg(temp_dir.path().to_str().unwrap())
             .arg("--fix")
             .output()
             .unwrap();
 
         let fixed = fs::read_to_string(&instr_path).unwrap();
-        // Verify some change was applied
-        assert!(
-            fixed != original || stdout.contains("0 issues are automatically fixable"),
+        // If --dry-run reported [fixable] diagnostics, --fix should modify the file
+        assert_ne!(
+            fixed, original,
             "Fixable copilot diagnostics should result in file changes after --fix"
         );
     }

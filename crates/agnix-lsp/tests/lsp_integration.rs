@@ -345,10 +345,15 @@ mod code_action_fix_tests {
             })
             .await;
 
-        // Construct a diagnostic with serialized fix data, as the server would publish
+        // Construct a diagnostic with serialized fix data, as the server would publish.
+        // Calculate byte offsets dynamically from the content string to avoid
+        // brittle hardcoded values that break if the content changes.
+        let bad_name = "Bad_Name";
+        let start_byte = content.find(bad_name).expect("content should contain 'Bad_Name'");
+        let end_byte = start_byte + bad_name.len();
         let fix = Fix {
-            start_byte: 10,
-            end_byte: 18,
+            start_byte,
+            end_byte,
             replacement: "bad-name".to_string(),
             description: "Convert to kebab-case".to_string(),
             safe: true,
@@ -407,9 +412,10 @@ mod code_action_fix_tests {
         );
 
         let actions = actions.unwrap();
-        assert!(
-            !actions.is_empty(),
-            "Should have at least one code action"
+        assert_eq!(
+            actions.len(),
+            1,
+            "Expected exactly one code action for the single fix"
         );
 
         // Verify the code action has the right structure
