@@ -47,9 +47,9 @@ const tools = [
   {name: 'Claude Code', config: 'CLAUDE.md, Skills, Hooks, Agents'},
   {name: 'Cursor', config: '.cursorrules, .cursor/rules/'},
   {name: 'GitHub Copilot', config: 'copilot-instructions.md'},
-  {name: 'Codex CLI', config: 'AGENTS.md, AGENTS.local.md'},
+  {name: 'Codex CLI', config: '.codex/config.toml, AGENTS.md'},
   {name: 'MCP', config: '*.mcp.json, JSON-RPC schemas'},
-  {name: 'Cline', config: '.clinerules, .cline/'},
+  {name: 'Cline', config: '.clinerules, .clinerules/*.md'},
   {name: 'OpenCode', config: 'opencode.json'},
   {name: 'Gemini CLI', config: 'GEMINI.md'},
   {name: 'Roo Code', config: '.roo/rules/'},
@@ -66,11 +66,21 @@ const stats = [
 
 function CopyButton({text}) {
   const [copied, setCopied] = useState(false);
+  const timeoutRef = useRef(null);
 
-  function handleCopy() {
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  useEffect(() => {
+    return () => clearTimeout(timeoutRef.current);
+  }, []);
+
+  async function handleCopy() {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Clipboard access denied or unavailable
+    }
   }
 
   return (
@@ -96,14 +106,17 @@ function CopyButton({text}) {
 
 function RevealSection({children, className, ...props}) {
   const ref = useRef(null);
-  const [revealed, setRevealed] = useState(false);
+  // Start revealed so content is visible without JS (SSR/no-JS fallback).
+  // The effect below hides it and sets up the observer on the client.
+  const [revealed, setRevealed] = useState(true);
 
   useEffect(() => {
     const el = ref.current;
     if (!el || typeof IntersectionObserver === 'undefined') {
-      setRevealed(true);
       return;
     }
+    // Hide on mount, then reveal via observer
+    setRevealed(false);
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {

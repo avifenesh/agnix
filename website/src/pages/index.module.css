@@ -358,6 +358,7 @@ html[data-theme='dark'] .terminalWindow {
   font-size: 0.75rem;
   color: #64748b;
   font-family: var(--ifm-font-family-monospace);
+  /* Offset matches dots width (3*11px + 2*7px) to visually center title */
   margin-right: 44px;
 }
 
