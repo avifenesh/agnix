@@ -82,6 +82,8 @@ pub enum FileType {
     Copilot,
     /// GitHub Copilot scoped instructions (.github/instructions/*.instructions.md)
     CopilotScoped,
+    /// Claude Code rules (.claude/rules/*.md)
+    ClaudeRule,
     /// Cursor project rules (.cursor/rules/*.mdc)
     CursorRule,
     /// Legacy Cursor rules file (.cursorrules)
@@ -158,6 +160,7 @@ impl ValidatorRegistry {
             (FileType::Copilot, xml_validator),
             (FileType::CopilotScoped, copilot_validator),
             (FileType::CopilotScoped, xml_validator),
+            (FileType::ClaudeRule, claude_rules_validator),
             (FileType::CursorRule, cursor_validator),
             (FileType::CursorRule, prompt_validator),
             (FileType::CursorRule, claude_md_validator),
@@ -229,6 +232,10 @@ fn copilot_validator() -> Box<dyn Validator> {
     Box::new(rules::copilot::CopilotValidator)
 }
 
+fn claude_rules_validator() -> Box<dyn Validator> {
+    Box::new(rules::claude_rules::ClaudeRulesValidator)
+}
+
 fn cursor_validator() -> Box<dyn Validator> {
     Box::new(rules::cursor::CursorValidator)
 }
@@ -292,6 +299,13 @@ pub fn detect_file_type(path: &Path) -> FileType {
             && grandparent == Some(".github") =>
         {
             FileType::CopilotScoped
+        }
+        // Claude Code rules (.claude/rules/*.md)
+        name if name.ends_with(".md")
+            && parent == Some("rules")
+            && grandparent == Some(".claude") =>
+        {
+            FileType::ClaudeRule
         }
         // Cursor project rules (.cursor/rules/*.mdc)
         name if name.ends_with(".mdc")

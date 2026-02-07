@@ -623,6 +623,20 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 **Fix**: Remove duplicated sections
 **Source**: awesome-slash/enhance-claude-memory
 
+<a id="cc-mem-011"></a>
+### CC-MEM-011 [HIGH] Invalid Paths Glob in Rules
+**Requirement**: Glob patterns in `.claude/rules/*.md` frontmatter `paths` field MUST be valid
+**Detection**: Parse YAML frontmatter, validate each glob pattern in `paths` array
+**Fix**: Manual - fix glob syntax
+**Source**: code.claude.com/docs/en/memory
+
+<a id="cc-mem-012"></a>
+### CC-MEM-012 [MEDIUM] Rules File Unknown Frontmatter Key
+**Requirement**: `.claude/rules/*.md` frontmatter SHOULD only contain known keys (`paths`)
+**Detection**: Parse YAML frontmatter, flag keys not in known set
+**Fix**: Auto-fix (safe) - remove unknown key line
+**Source**: code.claude.com/docs/en/memory
+
 ---
 
 ## AGENTS.MD RULES (CROSS-PLATFORM)
@@ -1186,7 +1200,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | Claude Skills | 15 | 12 | 3 | 0 | 7 |
 | Claude Hooks | 18 | 13 | 4 | 1 | 3 |
 | Claude Agents | 13 | 12 | 1 | 0 | 2 |
-| Claude Memory | 10 | 7 | 3 | 0 | 2 |
+| Claude Memory | 12 | 8 | 4 | 0 | 3 |
 | AGENTS.md | 6 | 1 | 5 | 0 | 0 |
 | Claude Plugins | 6 | 6 | 0 | 0 | 1 |
 | GitHub Copilot | 6 | 4 | 2 | 0 | 1 |
@@ -1197,7 +1211,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | Prompt Eng | 4 | 0 | 4 | 0 | 0 |
 | Cross-Platform | 6 | 4 | 2 | 0 | 0 |
 | Version Awareness | 1 | 0 | 0 | 1 | 0 |
-| **TOTAL** | **127** | **92** | **33** | **2** | **29** |
+| **TOTAL** | **129** | **93** | **34** | **2** | **30** |
 
 ---
 
@@ -1226,7 +1240,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 
 ---
 
-**Total Coverage**: 127 validation rules across 15 categories
+**Total Coverage**: 129 validation rules across 15 categories
 **Knowledge Base**: 11,036 lines, 320KB, 75+ sources
-**Certainty**: 92 HIGH, 33 MEDIUM, 2 LOW
-**Auto-Fixable**: 29 rules (23%)
+**Certainty**: 93 HIGH, 34 MEDIUM, 2 LOW
+**Auto-Fixable**: 30 rules (23%)
