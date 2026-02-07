@@ -24,7 +24,7 @@
     "SubagentStop": [
       {
         "hooks": [
-          { "type": "agent", "prompt": "Review the subagent output $ARGUMENTS", "timeout": 30 }
+          { "type": "prompt", "prompt": "Review the subagent output $ARGUMENTS", "timeout": 30 }
         ]
       }
     ],
