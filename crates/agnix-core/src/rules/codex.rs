@@ -26,19 +26,7 @@ fn find_toml_string_value_span(
     key: &str,
     current_value: &str,
 ) -> Option<(usize, usize)> {
-    let pattern = format!(
-        r#"(?:^|\n)\s*{}\s*=\s*"({})"#,
-        regex::escape(key),
-        regex::escape(current_value)
-    );
-    let re = Regex::new(&pattern).ok()?;
-    let mut iter = re.captures_iter(content);
-    let first = iter.next()?;
-    if iter.next().is_some() {
-        return None; // Not unique
-    }
-    let m = first.get(1)?;
-    Some((m.start(), m.end()))
+    crate::span_utils::find_unique_toml_string_value(content, key, current_value)
 }
 
 pub struct CodexValidator;
