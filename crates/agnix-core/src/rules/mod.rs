@@ -4,6 +4,7 @@ pub mod agent;
 pub mod agents_md;
 pub mod claude_md;
 pub mod claude_rules;
+pub mod cline;
 pub mod copilot;
 pub mod cross_platform;
 pub mod cursor;

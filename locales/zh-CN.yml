@@ -344,6 +344,19 @@ rules:
     message: "代理请求的规则没有描述 - 代理无法确定何时应用它"
     suggestion: "添加 description 字段说明此规则何时应用，或设置 alwaysApply 或 globs 来控制激活"
 
+  # --- Cline (cline.rs) ---
+  cln_001:
+    message_empty: "Cline 规则文件为空"
+    message_no_content: "Cline 规则文件在 frontmatter 之后没有内容"
+    suggestion_empty: "向文件添加规则内容"
+    suggestion_no_content: "在 frontmatter 之后添加规则内容"
+  cln_002:
+    message: "无效的 glob 模式 '%{pattern}': %{error}"
+    suggestion: "使用有效的 glob 语法，如 '**/*.ts' 或 'src/**/*.js'"
+  cln_003:
+    message: "Cline 规则文件中未知的 frontmatter 键 '%{key}'"
+    suggestion: "删除未知键 '%{key}'。只有 'paths' 是已识别的 frontmatter 键。"
+
   # --- Prompt engineering (prompt.rs) ---
   pe_001:
     message: "关键词 '%{keyword}' 在文档的 %{percent} 百分比处（40-60 百分比是'中间遗忘'区域）"

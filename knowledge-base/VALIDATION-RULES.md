@@ -963,6 +963,31 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 
 ---
 
+## CLINE RULES
+
+<a id="cln-001"></a>
+### CLN-001 [HIGH] Empty Cline Rules File
+**Requirement**: `.clinerules` file or files in `.clinerules/` folder MUST have non-empty content after frontmatter
+**Detection**: Parse file, strip optional YAML frontmatter, check remaining body is non-whitespace
+**Fix**: No auto-fix (content must be authored by user)
+**Source**: docs.cline.bot/improving-your-workflow/cline-rules
+
+<a id="cln-002"></a>
+### CLN-002 [HIGH] Invalid Paths Glob in Cline Rules
+**Requirement**: `paths` field in `.clinerules/*.md` frontmatter MUST contain valid glob patterns
+**Detection**: Parse YAML frontmatter, extract `paths` field, validate each glob pattern
+**Fix**: No auto-fix (glob patterns must be manually corrected)
+**Source**: docs.cline.bot/improving-your-workflow/cline-rules
+
+<a id="cln-003"></a>
+### CLN-003 [MEDIUM] Unknown Frontmatter Key in Cline Rules
+**Requirement**: Frontmatter in `.clinerules/*.md` files SHOULD only use documented keys (`paths`)
+**Detection**: Parse YAML frontmatter, check all keys against allowlist
+**Fix**: [AUTO-FIX unsafe] Remove unknown frontmatter keys
+**Source**: docs.cline.bot/improving-your-workflow/cline-rules
+
+---
+
 ## UNIVERSAL RULES (XML)
 
 <a id="xml-001"></a>
@@ -1215,6 +1240,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | COP-004 | Remove unknown frontmatter key | safe |
 | CUR-005 | Remove unknown frontmatter key | safe |
 | CUR-007 | Remove redundant globs field | safe |
+| CLN-003 | Remove unknown frontmatter key | unsafe |
 | XML-001 | Add missing closing tag | unsafe |
 | XML-002 | Fix mismatched closing tag | unsafe |
 | XML-003 | Remove orphaned closing tag | unsafe |
@@ -1234,13 +1260,14 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | Claude Plugins | 10 | 8 | 2 | 0 | 2 |
 | GitHub Copilot | 6 | 4 | 2 | 0 | 1 |
 | Cursor | 9 | 4 | 5 | 0 | 2 |
+| Cline | 3 | 2 | 1 | 0 | 1 |
 | MCP | 12 | 10 | 2 | 0 | 3 |
 | XML | 3 | 3 | 0 | 0 | 3 |
 | References | 2 | 2 | 0 | 0 | 0 |
 | Prompt Eng | 4 | 0 | 4 | 0 | 0 |
 | Cross-Platform | 6 | 4 | 2 | 0 | 0 |
 | Version Awareness | 1 | 0 | 0 | 1 | 0 |
-| **TOTAL** | **133** | **95** | **36** | **2** | **31** |
+| **TOTAL** | **136** | **97** | **37** | **2** | **32** |
 
 
 ---
@@ -1270,9 +1297,9 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 
 ---
 
-**Total Coverage**: 133 validation rules across 15 categories
+**Total Coverage**: 136 validation rules across 16 categories
 
 **Knowledge Base**: 11,036 lines, 320KB, 75+ sources
-**Certainty**: 95 HIGH, 36 MEDIUM, 2 LOW
-**Auto-Fixable**: 31 rules (23%)
+**Certainty**: 97 HIGH, 37 MEDIUM, 2 LOW
+**Auto-Fixable**: 32 rules (24%)
 

@@ -121,6 +121,7 @@ def main() -> int:
         "prompt-engineering": "Prompt Eng",
         "cross-platform": "Cross-Platform",
         "cursor": "Cursor",
+        "cline": "Cline",
         "version-awareness": "Version Awareness",
     }
 
@@ -202,6 +203,7 @@ def main() -> int:
         "References": ["references"],
         "GitHub Copilot": ["copilot"],
         "Cursor Project Rules": ["cursor"],
+        "Cline": ["cline"],
         "Version Awareness": ["version-awareness"],
     }
     spec_sum = 0

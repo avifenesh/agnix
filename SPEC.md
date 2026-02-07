@@ -1,6 +1,6 @@
 # agnix Technical Reference
 
-> Linter for agent configs. 133 rules across 15 categories.
+> Linter for agent configs. 136 rules across 16 categories.
 
 
 ## What agnix Validates
@@ -20,6 +20,7 @@
 | References | @imports | 2 |
 | GitHub Copilot | .github/copilot-instructions.md, .github/instructions/*.instructions.md | 6 |
 | Cursor Project Rules | .cursor/rules/*.mdc, .cursorrules | 9 |
+| Cline | .clinerules, .clinerules/*.md | 3 |
 | Version Awareness | .agnix.toml | 1 |
 
 ## Architecture
@@ -36,7 +37,7 @@ agnix/
 │   ├── agnix-lsp/      # LSP server
 │   └── agnix-mcp/      # MCP server
 ├── editors/            # Neovim, VS Code, JetBrains, Zed integrations
-├── knowledge-base/     # 133 rules documented
+├── knowledge-base/     # 136 rules documented
 
 ├── scripts/            # Build/dev automation scripts
 ├── website/            # Docusaurus documentation website
@@ -80,6 +81,7 @@ All rules in `knowledge-base/VALIDATION-RULES.md`
 - `AGM-nnn`: AGENTS.md (cross-tool instructions)
 - `CC-AG-nnn`: Claude Code Agents
 - `COP-nnn`: GitHub Copilot Instructions
+- `CLN-nnn`: Cline Rules
 - `CC-PL-nnn`: Claude Code Plugins
 - `MCP-nnn`: MCP protocol
 - `XML-nnn`: XML validation
@@ -157,6 +159,7 @@ hooks = true        # CC-HK-* rules
 agents = true       # CC-AG-* rules
 copilot = true      # COP-* rules
 cursor = true       # CUR-* rules
+cline = true        # CLN-* rules
 memory = true       # CC-MEM-* rules
 plugins = true      # CC-PL-* rules
 mcp = true          # MCP-* rules
@@ -182,8 +185,8 @@ exclude = ["node_modules/**", ".git/**", "target/**"]
 
 agnix validates `.agnix.toml` files semantically before running validation:
 
-- **Rule ID validation**: `disabled_rules` must match known patterns (AS-, CC-SK-, CC-HK-, CC-AG-, CC-MEM-, CC-PL-, XML-, MCP-, REF-, XP-, AGM-, COP-, CUR-, PE-, VER-, imports::)
-- **Tool validation**: `tools` array must contain valid tool names (claude-code, cursor, codex, copilot, github-copilot, generic)
+- **Rule ID validation**: `disabled_rules` must match known patterns (AS-, CC-SK-, CC-HK-, CC-AG-, CC-MEM-, CC-PL-, XML-, MCP-, REF-, XP-, AGM-, COP-, CUR-, CLN-, PE-, VER-, imports::)
+- **Tool validation**: `tools` array must contain valid tool names (claude-code, cursor, codex, copilot, github-copilot, cline, generic)
 - **Deprecation warnings**: `mcp_protocol_version` is deprecated (use `spec_revisions.mcp_protocol`)
 
 Warnings are displayed before validation output with suggestions for fixes.
@@ -211,6 +214,7 @@ When `target` is set to a specific tool, only relevant rules run:
 | Cross-Platform | `cross_platform` | XP-* | Cross-platform consistency checks |
 | AGENTS.md | `agents_md` | AGM-* | AGENTS.md-specific validation |
 | Cursor | `cursor` | CUR-* | Cursor project rule validation |
+| Cline | `cline` | CLN-* | Cline rules validation |
 
 Version awareness (`VER-*`) is always active and controlled through `tool_versions` / `spec_revisions` pins.
 

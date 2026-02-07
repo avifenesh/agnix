@@ -1,7 +1,7 @@
 {
   "description": "Machine-readable source of truth for all validation rules. When adding a new rule, add it here AND in VALIDATION-RULES.md. CI parity tests enforce sync.",
   "version": "1.1.0",
-  "total_rules": 133,
+  "total_rules": 136,
 
   "last_updated": "2026-02-07",
   "schema": {
@@ -2977,6 +2977,82 @@
       }
     },
     {
+      "id": "CLN-001",
+      "name": "Empty Cline Rules File",
+      "severity": "HIGH",
+      "category": "cline",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://docs.cline.bot/improving-your-workflow/cline-rules"
+        ],
+        "verified_on": "2026-02-07",
+        "applies_to": {
+          "tool": "cline"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      }
+    },
+    {
+      "id": "CLN-002",
+      "name": "Invalid Paths Glob in Cline Rules",
+      "severity": "HIGH",
+      "category": "cline",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://docs.cline.bot/improving-your-workflow/cline-rules"
+        ],
+        "verified_on": "2026-02-07",
+        "applies_to": {
+          "tool": "cline"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      }
+    },
+    {
+      "id": "CLN-003",
+      "name": "Unknown Frontmatter Key in Cline Rules",
+      "severity": "MEDIUM",
+      "category": "cline",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://docs.cline.bot/improving-your-workflow/cline-rules"
+        ],
+        "verified_on": "2026-02-07",
+        "applies_to": {
+          "tool": "cline"
+        },
+        "normative_level": "SHOULD",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": true,
+        "fix_safety": "unsafe"
+      }
+    },
+    {
       "id": "XML-001",
       "name": "Unclosed XML Tag",
       "severity": "HIGH",
@@ -3410,6 +3486,11 @@
       "prefix": "CUR",
       "count": 6,
       "description": "Cursor project rules"
+    },
+    "cline": {
+      "prefix": "CLN",
+      "count": 3,
+      "description": "Cline rules validation"
     },
     "xml": {
       "prefix": "XML",

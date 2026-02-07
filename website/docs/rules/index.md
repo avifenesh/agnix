@@ -1,7 +1,7 @@
 # Rules Reference
 
-This section contains all `133` validation rules generated from `knowledge-base/rules.json`.
-`31` rules have automatic fixes.
+This section contains all `136` validation rules generated from `knowledge-base/rules.json`.
+`32` rules have automatic fixes.
 
 
 | Rule | Name | Severity | Category | Auto-Fix |
@@ -123,6 +123,9 @@ This section contains all `133` validation rules generated from `knowledge-base/
 | [CUR-007](./generated/cur-007.md) | alwaysApply with Redundant globs | MEDIUM | Cursor | Yes (safe) |
 | [CUR-008](./generated/cur-008.md) | Invalid alwaysApply Type | HIGH | Cursor | No |
 | [CUR-009](./generated/cur-009.md) | Missing Description for Agent-Requested Rule | MEDIUM | Cursor | No |
+| [CLN-001](./generated/cln-001.md) | Empty Cline Rules File | HIGH | Cline | No |
+| [CLN-002](./generated/cln-002.md) | Invalid Paths Glob in Cline Rules | HIGH | Cline | No |
+| [CLN-003](./generated/cln-003.md) | Unknown Frontmatter Key in Cline Rules | MEDIUM | Cline | Yes (unsafe) |
 | [XML-001](./generated/xml-001.md) | Unclosed XML Tag | HIGH | XML | Yes (unsafe) |
 | [XML-002](./generated/xml-002.md) | Mismatched Closing Tag | HIGH | XML | Yes (unsafe) |
 | [XML-003](./generated/xml-003.md) | Unmatched Closing Tag | HIGH | XML | Yes (unsafe) |

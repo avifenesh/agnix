@@ -224,6 +224,7 @@ impl<'a> DefaultRuleFilter<'a> {
             s if s.starts_with("AGM-") => self.rules.agents_md,
             s if s.starts_with("COP-") => self.rules.copilot,
             s if s.starts_with("CUR-") => self.rules.cursor,
+            s if s.starts_with("CLN-") => self.rules.cline,
             s if s.starts_with("PE-") => self.rules.prompt_engineering,
             // Unknown rules are enabled by default
             _ => true,
@@ -462,6 +463,11 @@ pub struct RuleConfig {
     #[schemars(description = "Enable Cursor project rules validation (CUR-*)")]
     pub cursor: bool,
 
+    /// Enable Cline rules validation (CLN-*)
+    #[serde(default = "default_true")]
+    #[schemars(description = "Enable Cline rules validation (CLN-*)")]
+    pub cline: bool,
+
     /// Enable prompt engineering validation (PE-*)
     #[serde(default = "default_true")]
     #[schemars(description = "Enable prompt engineering validation rules (PE-*)")]
@@ -510,6 +516,7 @@ impl Default for RuleConfig {
             agents_md: true,
             copilot: true,
             cursor: true,
+            cline: true,
             prompt_engineering: true,
             generic_instructions: true,
             frontmatter_validation: true,
@@ -733,6 +740,7 @@ impl LintConfig {
             "AGM-",
             "COP-",
             "CUR-",
+            "CLN-",
             "PE-",
             "VER-",
             "imports::",
@@ -762,6 +770,7 @@ impl LintConfig {
             "codex",
             "copilot",
             "github-copilot",
+            "cline",
             "generic",
         ];
         for tool in &self.tools {

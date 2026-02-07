@@ -344,6 +344,19 @@ rules:
     message: "La regla solicitada por agente no tiene descripcion - el agente no puede determinar cuando aplicarla"
     suggestion: "Agrega un campo description explicando cuando esta regla debe aplicarse, o establece alwaysApply o globs para controlar la activacion"
 
+  # --- Cline (cline.rs) ---
+  cln_001:
+    message_empty: "El archivo de reglas de Cline esta vacio"
+    message_no_content: "El archivo de reglas de Cline no tiene contenido despues del frontmatter"
+    suggestion_empty: "Agrega contenido de reglas al archivo"
+    suggestion_no_content: "Agrega contenido de reglas despues del frontmatter"
+  cln_002:
+    message: "Patron glob invalido '%{pattern}': %{error}"
+    suggestion: "Usa sintaxis glob valida como '**/*.ts' o 'src/**/*.js'"
+  cln_003:
+    message: "Clave de frontmatter desconocida '%{key}' en archivo de reglas de Cline"
+    suggestion: "Elimina la clave desconocida '%{key}'. Solo 'paths' es una clave de frontmatter reconocida."
+
   # --- Prompt engineering (prompt.rs) ---
   pe_001:
     message: "Palabra clave critica '%{keyword}' al %{percent} por ciento del documento (40-60 por ciento es la zona 'perdido en el medio')"
