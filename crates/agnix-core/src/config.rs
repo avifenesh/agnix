@@ -257,7 +257,20 @@ impl<'a> DefaultRuleFilter<'a> {
     /// Check if a rule's category is enabled
     fn is_category_enabled(&self, rule_id: &str) -> bool {
         match rule_id {
-            s if s.starts_with("AS-") || s.starts_with("CC-SK-") => self.rules.skills,
+            s if s.starts_with("AS-")
+                || s.starts_with("CC-SK-")
+                || s.starts_with("CR-SK-")
+                || s.starts_with("CL-SK-")
+                || s.starts_with("CP-SK-")
+                || s.starts_with("CX-SK-")
+                || s.starts_with("OC-SK-")
+                || s.starts_with("WS-SK-")
+                || s.starts_with("KR-SK-")
+                || s.starts_with("AMP-SK-")
+                || s.starts_with("RC-SK-") =>
+            {
+                self.rules.skills
+            }
             s if s.starts_with("CC-HK-") => self.rules.hooks,
             s if s.starts_with("CC-AG-") => self.rules.agents,
             s if s.starts_with("CC-MEM-") => self.rules.memory,

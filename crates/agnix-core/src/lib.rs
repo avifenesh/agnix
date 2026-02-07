@@ -154,6 +154,7 @@ impl ValidatorRegistry {
     fn register_defaults(&mut self) {
         const DEFAULTS: &[(FileType, ValidatorFactory)] = &[
             (FileType::Skill, skill_validator),
+            (FileType::Skill, per_client_skill_validator),
             (FileType::Skill, xml_validator),
             (FileType::Skill, imports_validator),
             (FileType::ClaudeMd, claude_md_validator),
@@ -209,6 +210,10 @@ impl Default for ValidatorRegistry {
 
 fn skill_validator() -> Box<dyn Validator> {
     Box::new(rules::skill::SkillValidator)
+}
+
+fn per_client_skill_validator() -> Box<dyn Validator> {
+    Box::new(rules::per_client_skill::PerClientSkillValidator)
 }
 
 fn claude_md_validator() -> Box<dyn Validator> {
@@ -1327,7 +1332,7 @@ mod tests {
     fn test_validators_for_skill() {
         let registry = ValidatorRegistry::with_defaults();
         let validators = registry.validators_for(FileType::Skill);
-        assert_eq!(validators.len(), 3);
+        assert_eq!(validators.len(), 4);
     }
 
     #[test]
