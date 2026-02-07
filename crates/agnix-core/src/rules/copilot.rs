@@ -273,9 +273,10 @@ impl Validator for CopilotValidator {
                             if let Some((start, end)) =
                                 find_yaml_value_range(content, &parsed, "excludeAgent")
                             {
-                                let replacement = if content[start..end].starts_with('"') {
+                                let slice = content.get(start..end).unwrap_or("");
+                                let replacement = if slice.starts_with('"') {
                                     format!("\"{}\"", closest)
-                                } else if content[start..end].starts_with('\'') {
+                                } else if slice.starts_with('\'') {
                                     format!("'{}'", closest)
                                 } else {
                                     closest.to_string()
