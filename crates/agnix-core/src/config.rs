@@ -63,6 +63,47 @@ pub struct SpecRevisions {
     pub agents_md_spec: Option<String>,
 }
 
+/// File inclusion/exclusion configuration for non-standard agent files.
+///
+/// By default, agnix only validates files it recognizes (CLAUDE.md, SKILL.md, etc.).
+/// Use this section to include additional files in validation or exclude files
+/// that would otherwise be validated.
+///
+/// Patterns use glob syntax (e.g., `"docs/ai-rules/*.md"`).
+/// Paths are matched relative to the project root.
+///
+/// Priority: `exclude` > `include_as_memory` > `include_as_generic` > built-in detection.
+#[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
+pub struct FilesConfig {
+    /// Glob patterns for files to validate as memory/instruction files (ClaudeMd rules).
+    ///
+    /// Files matching these patterns will be treated as CLAUDE.md-like files,
+    /// receiving the full set of memory/instruction validation rules.
+    #[serde(default)]
+    #[schemars(
+        description = "Glob patterns for files to validate as memory/instruction files (ClaudeMd rules)"
+    )]
+    pub include_as_memory: Vec<String>,
+
+    /// Glob patterns for files to validate as generic markdown (XML, XP, REF rules).
+    ///
+    /// Files matching these patterns will receive generic markdown validation
+    /// (XML balance, import references, cross-platform checks).
+    #[serde(default)]
+    #[schemars(
+        description = "Glob patterns for files to validate as generic markdown (XML, XP, REF rules)"
+    )]
+    pub include_as_generic: Vec<String>,
+
+    /// Glob patterns for files to exclude from validation.
+    ///
+    /// Files matching these patterns will be skipped entirely, even if they
+    /// would otherwise be recognized by built-in detection.
+    #[serde(default)]
+    #[schemars(description = "Glob patterns for files to exclude from validation")]
+    pub exclude: Vec<String>,
+}
+
 // =============================================================================
 // Internal Composition Types (Facade Pattern)
 // =============================================================================
@@ -301,6 +342,13 @@ pub struct LintConfig {
     #[schemars(description = "Pin specific specification revisions for revision-aware validation")]
     pub spec_revisions: SpecRevisions,
 
+    /// File inclusion/exclusion configuration for non-standard agent files
+    #[serde(default)]
+    #[schemars(
+        description = "File inclusion/exclusion configuration for non-standard agent files"
+    )]
+    pub files: FilesConfig,
+
     /// Output locale for translated messages (e.g., "en", "es", "zh-CN").
     /// When not set, the CLI locale detection is used.
     #[serde(default)]
@@ -375,6 +423,7 @@ impl Default for LintConfig {
             mcp_protocol_version: None,
             tool_versions: ToolVersions::default(),
             spec_revisions: SpecRevisions::default(),
+            files: FilesConfig::default(),
             locale: None,
             max_files_to_validate: Some(DEFAULT_MAX_FILES),
             root_dir: None,
@@ -826,6 +875,32 @@ impl LintConfig {
                 message: t!("core.config.deprecated_mcp_version").to_string(),
                 suggestion: Some(t!("core.config.deprecated_mcp_version_suggestion").to_string()),
             });
+        }
+
+        // Validate files config glob patterns
+        let pattern_lists = [
+            ("files.include_as_memory", &self.files.include_as_memory),
+            ("files.include_as_generic", &self.files.include_as_generic),
+            ("files.exclude", &self.files.exclude),
+        ];
+        for (field, patterns) in &pattern_lists {
+            for pattern in *patterns {
+                let normalized = pattern.replace('\\', "/");
+                if let Err(e) = glob::Pattern::new(&normalized) {
+                    warnings.push(ConfigWarning {
+                        field: field.to_string(),
+                        message: t!(
+                            "core.config.invalid_files_pattern",
+                            pattern = pattern.as_str(),
+                            message = e.to_string()
+                        )
+                        .to_string(),
+                        suggestion: Some(
+                            t!("core.config.invalid_files_pattern_suggestion").to_string(),
+                        ),
+                    });
+                }
+            }
         }
 
         warnings
