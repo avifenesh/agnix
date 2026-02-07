@@ -144,9 +144,9 @@ impl Validator for CodexValidator {
 /// Build a map of TOML key names to their 1-indexed line numbers in a single pass.
 ///
 /// Scans each line for a bare key followed by `=` (the TOML key-value separator).
-/// Uses `strip_prefix` for UTF-8 safety (avoids panics on multi-byte characters)
-/// and checks that the character after the key is whitespace or `=` to prevent
-/// partial matches (e.g., `approvalMode` must not match `approvalModeExtra`).
+/// Extracts keys by finding '=' positions; indexing is safe because find() returns
+/// char-boundary positions in valid UTF-8. Prevents partial matches by extracting
+/// only up to `=` (e.g., `approvalMode` will not match `approvalModeExtra`).
 ///
 /// Returns only the first occurrence of each key, which matches TOML semantics.
 fn build_key_line_map(content: &str) -> HashMap<&str, usize> {

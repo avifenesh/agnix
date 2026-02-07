@@ -1117,6 +1117,27 @@ mod tests {
     }
 
     #[test]
+    fn test_detect_codex() {
+        assert_eq!(
+            detect_file_type(Path::new(".codex/config.toml")),
+            FileType::CodexConfig
+        );
+        assert_eq!(
+            detect_file_type(Path::new("project/.codex/config.toml")),
+            FileType::CodexConfig
+        );
+        // config.toml outside .codex should be Unknown
+        assert_eq!(
+            detect_file_type(Path::new("config.toml")),
+            FileType::Unknown
+        );
+        assert_eq!(
+            detect_file_type(Path::new("other/config.toml")),
+            FileType::Unknown
+        );
+    }
+
+    #[test]
     fn test_detect_unknown() {
         assert_eq!(detect_file_type(Path::new("main.rs")), FileType::Unknown);
         assert_eq!(
