@@ -88,16 +88,16 @@ impl Validator for CodexValidator {
 
         // If TOML is broken, emit a diagnostic so users can fix invalid syntax
         if let Some(parse_error) = &parsed.parse_error {
-            diagnostics.push(Diagnostic::error(
-                path.to_path_buf(),
-                parse_error.line,
-                parse_error.column,
-                "CDX-000",
-                format!(
-                    "Failed to parse .codex/config.toml as TOML: {}",
-                    parse_error.message
-                ),
-            ));
+            diagnostics.push(
+                Diagnostic::error(
+                    path.to_path_buf(),
+                    parse_error.line,
+                    parse_error.column,
+                    "CDX-000",
+                    t!("rules.cdx_000.message", error = parse_error.message),
+                )
+                .with_suggestion(t!("rules.cdx_000.suggestion")),
+            );
             return diagnostics;
         }
 

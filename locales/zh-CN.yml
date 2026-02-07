@@ -52,6 +52,7 @@ rules:
     suggestion: "删除大型资源或将 skill 拆分为更小的部分"
   as_016:
     message: "解析 SKILL.md 失败: %{error}"
+    suggestion: "Check YAML frontmatter syntax -- ensure proper indentation, colon spacing, and matching quotes"
 
   # --- Claude Code Skills (skill/mod.rs) ---
   cc_sk_001:
@@ -126,6 +127,7 @@ rules:
     suggestion: "将超时设置为正整数，如 30"
   cc_hk_012:
     message: "解析 hooks 配置失败: %{error}"
+    suggestion: "Validate JSON syntax in hooks configuration -- check for missing commas, brackets, or unquoted keys"
 
   # --- MCP (mcp.rs) ---
   mcp_001:
@@ -141,7 +143,7 @@ rules:
     missing_schema_suggestion: "添加包含 JSON Schema 定义的 'inputSchema' 字段"
   mcp_003:
     message: "%{prefix}无效的 inputSchema: %{error}"
-    suggestion: "修复 JSON Schema 结构"
+    suggestion: "Fix JSON Schema structure -- valid 'type' values are: string, number, integer, boolean, object, array, null"
   mcp_004:
     message: "%{prefix}工具描述太短（%{len} 个字符），应至少10个字符"
     suggestion: "添加有意义的描述，说明工具的功能"
@@ -150,9 +152,10 @@ rules:
     suggestion: "考虑为修改数据或有副作用的工具添加 'requiresApproval: true'"
   mcp_006:
     message: "%{prefix}工具有应在信任之前验证的注解"
-    suggestion: "在依赖注解之前确保它们来自可信来源"
+    suggestion: "Verify annotation values independently -- annotations are self-reported by the server and may be inaccurate or malicious"
   mcp_007:
     message: "解析 MCP 配置失败: %{error}"
+    suggestion: "Validate JSON syntax -- check for missing commas, brackets, or unquoted keys"
   mcp_008:
     message: "协议版本不匹配：发现 '%{found}'，期望 '%{expected}'"
     request_suggestion: "考虑更新到协议版本 '%{expected}' 以获得兼容性"
@@ -185,6 +188,7 @@ rules:
     message: "代理文件必须有 YAML frontmatter"
     suggestion: "在 --- 标记之间添加 frontmatter"
     parse_error: "解析代理 frontmatter 失败: %{error}"
+    parse_error_suggestion: "Check YAML frontmatter syntax -- ensure proper indentation, colon spacing, and matching quotes"
 
   # --- Claude MD (claude_md.rs) ---
   cc_mem_004:
@@ -223,7 +227,7 @@ rules:
   # --- AGENTS.md (agents_md.rs) ---
   agm_001:
     message: "无效的 markdown: %{description}"
-    suggestion: "修复 markdown 语法错误"
+    suggestion: "Fix the markdown syntax error -- check for unclosed tags, mismatched headers, or invalid link syntax"
   agm_002:
     # messages come from schemas::agents_md, not the validator directly
   agm_003:
@@ -360,7 +364,7 @@ rules:
   # --- Gemini CLI (gemini_md.rs) ---
   gm_001:
     message: "无效的 markdown: %{description}"
-    suggestion: "修复 markdown 语法错误"
+    suggestion: "Fix the markdown syntax error -- check for unclosed tags, mismatched headers, or invalid link syntax"
   gm_002:
     message: "GEMINI.md 指令文件中未找到 markdown 标题"
     suggestion: "添加章节标题（# 标题, ## 章节）以更好地组织内容"
@@ -384,6 +388,9 @@ rules:
     suggestion: "修复 opencode.json 中的 JSON 语法"
 
   # --- Codex CLI (codex.rs) ---
+  cdx_000:
+    message: "Failed to parse .codex/config.toml as TOML: %{error}"
+    suggestion: "Validate TOML syntax -- check for missing quotes, brackets, or invalid key-value pairs"
   cdx_001:
     message: "无效的 approvalMode '%{value}'。有效值: 'suggest', 'auto-edit', 'full-auto'"
     type_error: "字段 'approvalMode' 必须是字符串。有效值: 'suggest', 'auto-edit', 'full-auto'"
@@ -428,6 +435,7 @@ rules:
     suggestion: "设置非空的插件名称"
   cc_pl_006:
     message: "解析 plugin.json 失败: %{error}"
+    suggestion: "Validate JSON syntax in plugin.json -- check for missing commas, brackets, or unquoted keys"
 
   # --- Version (lib.rs) ---
   ver_001:
@@ -436,7 +444,9 @@ rules:
 
   # --- File-level errors (lib.rs) ---
   file_read_error: "验证文件失败: %{error}"
+  file_read_error_suggestion: "Check file permissions and ensure the file is not locked by another process"
   xp_004_read_error: "读取指令文件失败: %{error}"
+  xp_004_read_error_suggestion: "Check file permissions and ensure the file exists and is readable"
 
 # ===========================================================================
 # Core - Config warnings

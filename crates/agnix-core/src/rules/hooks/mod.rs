@@ -374,13 +374,16 @@ impl Validator for HooksValidator {
             Ok(v) => v,
             Err(e) => {
                 if config.is_rule_enabled("CC-HK-012") {
-                    diagnostics.push(Diagnostic::error(
-                        path.to_path_buf(),
-                        1,
-                        0,
-                        "CC-HK-012",
-                        t!("rules.cc_hk_012.message", error = e.to_string()),
-                    ));
+                    diagnostics.push(
+                        Diagnostic::error(
+                            path.to_path_buf(),
+                            1,
+                            0,
+                            "CC-HK-012",
+                            t!("rules.cc_hk_012.message", error = e.to_string()),
+                        )
+                        .with_suggestion(t!("rules.cc_hk_012.suggestion")),
+                    );
                 }
                 return diagnostics;
             }
@@ -422,13 +425,16 @@ impl Validator for HooksValidator {
             Ok(s) => s,
             Err(e) => {
                 if config.is_rule_enabled("CC-HK-012") {
-                    diagnostics.push(Diagnostic::error(
-                        path.to_path_buf(),
-                        1,
-                        0,
-                        "CC-HK-012",
-                        t!("rules.cc_hk_012.message", error = e.to_string()),
-                    ));
+                    diagnostics.push(
+                        Diagnostic::error(
+                            path.to_path_buf(),
+                            1,
+                            0,
+                            "CC-HK-012",
+                            t!("rules.cc_hk_012.message", error = e.to_string()),
+                        )
+                        .with_suggestion(t!("rules.cc_hk_012.suggestion")),
+                    );
                 }
                 return diagnostics;
             }

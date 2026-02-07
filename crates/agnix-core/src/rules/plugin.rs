@@ -68,13 +68,16 @@ impl Validator for PluginValidator {
             Ok(v) => v,
             Err(e) => {
                 if config.is_rule_enabled("CC-PL-006") {
-                    diagnostics.push(Diagnostic::error(
-                        path.to_path_buf(),
-                        1,
-                        0,
-                        "CC-PL-006",
-                        t!("rules.cc_pl_006.message", error = e.to_string()),
-                    ));
+                    diagnostics.push(
+                        Diagnostic::error(
+                            path.to_path_buf(),
+                            1,
+                            0,
+                            "CC-PL-006",
+                            t!("rules.cc_pl_006.message", error = e.to_string()),
+                        )
+                        .with_suggestion(t!("rules.cc_pl_006.suggestion")),
+                    );
                 }
                 return diagnostics;
             }

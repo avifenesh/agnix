@@ -106,13 +106,16 @@ impl Validator for McpValidator {
             Ok(v) => v,
             Err(e) => {
                 if config.is_rule_enabled("MCP-007") {
-                    diagnostics.push(Diagnostic::error(
-                        path.to_path_buf(),
-                        1,
-                        0,
-                        "MCP-007",
-                        t!("rules.mcp_007.message", error = e.to_string()),
-                    ));
+                    diagnostics.push(
+                        Diagnostic::error(
+                            path.to_path_buf(),
+                            1,
+                            0,
+                            "MCP-007",
+                            t!("rules.mcp_007.message", error = e.to_string()),
+                        )
+                        .with_suggestion(t!("rules.mcp_007.suggestion")),
+                    );
                 }
                 return diagnostics;
             }

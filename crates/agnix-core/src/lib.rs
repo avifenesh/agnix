@@ -761,13 +761,16 @@ pub fn validate_project_with_registry(
             match validate_file_with_type(&file_path, file_type, &config, registry) {
                 Ok(file_diagnostics) => file_diagnostics,
                 Err(e) => {
-                    vec![Diagnostic::error(
-                        file_path.clone(),
-                        0,
-                        0,
-                        "file::read",
-                        format!("Failed to validate file: {}", e),
-                    )]
+                    vec![
+                        Diagnostic::error(
+                            file_path.clone(),
+                            0,
+                            0,
+                            "file::read",
+                            t!("rules.file_read_error", error = e.to_string()),
+                        )
+                        .with_suggestion(t!("rules.file_read_error_suggestion")),
+                    ]
                 }
             }
         })
@@ -851,13 +854,16 @@ pub fn validate_project_with_registry(
                         file_contents.push((file_path.clone(), content));
                     }
                     Err(e) => {
-                        diagnostics.push(Diagnostic::error(
-                            file_path.clone(),
-                            0,
-                            0,
-                            "XP-004",
-                            format!("Failed to read instruction file: {}", e),
-                        ));
+                        diagnostics.push(
+                            Diagnostic::error(
+                                file_path.clone(),
+                                0,
+                                0,
+                                "XP-004",
+                                t!("rules.xp_004_read_error", error = e.to_string()),
+                            )
+                            .with_suggestion(t!("rules.xp_004_read_error_suggestion")),
+                        );
                     }
                 }
             }

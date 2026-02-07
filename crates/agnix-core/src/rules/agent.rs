@@ -259,13 +259,16 @@ impl Validator for AgentValidator {
                         .unwrap_or((1, 0));
                     let raw_error = e.to_string();
                     let friendly_error = humanize_yaml_error(&raw_error);
-                    diagnostics.push(Diagnostic::error(
-                        path.to_path_buf(),
-                        line,
-                        column,
-                        "CC-AG-007",
-                        t!("rules.cc_ag_007.parse_error", error = friendly_error),
-                    ));
+                    diagnostics.push(
+                        Diagnostic::error(
+                            path.to_path_buf(),
+                            line,
+                            column,
+                            "CC-AG-007",
+                            t!("rules.cc_ag_007.parse_error", error = friendly_error),
+                        )
+                        .with_suggestion(t!("rules.cc_ag_007.parse_error_suggestion")),
+                    );
                 }
                 return diagnostics;
             }
