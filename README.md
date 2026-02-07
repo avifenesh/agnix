@@ -14,7 +14,7 @@
 
 The linter for your AI coding stack -- skills, hooks, memory, plugins, MCP, and agent configs. CLI, LSP server, and IDE plugins for Claude Code, Cursor, GitHub Copilot, Codex CLI, and more.
 
-**139 validation rules** | **Auto-fix** | **[VS Code](https://marketplace.visualstudio.com/items?itemName=avifenesh.agnix) + [JetBrains](https://plugins.jetbrains.com/plugin/30087-agnix) + Neovim + Zed** | **GitHub Action**
+**142 validation rules** | **Auto-fix** | **[VS Code](https://marketplace.visualstudio.com/items?itemName=avifenesh.agnix) + [JetBrains](https://plugins.jetbrains.com/plugin/30087-agnix) + Neovim + Zed** | **GitHub Action**
 
 <p align="center">
   <a href="https://avifenesh.github.io/agnix/"><img src="https://img.shields.io/badge/Website-Documentation-0A7E8C?style=for-the-badge" alt="Website"></a>
@@ -66,6 +66,7 @@ The AI coding landscape is chaos. Every tool wants your config in a different fo
 | GitHub Copilot | `.github/copilot-instructions.md` | Markdown |
 | Codex CLI / AGENTS.md | `AGENTS.md`, `AGENTS.local.md` | Markdown |
 | MCP | `*.mcp.json` | JSON Schema |
+| Gemini CLI | `GEMINI.md`, `GEMINI.local.md` | Markdown |
 
 **The problems are real:**
 
@@ -74,7 +75,7 @@ The AI coding landscape is chaos. Every tool wants your config in a different fo
 - **Unbundled stack, fragmented configs** - Developers mix Cursor + Claude Code + Copilot. A config that works in one tool [silently fails in another](https://arnav.tech/beyond-copilot-cursor-and-claude-code-the-unbundled-coding-ai-tools-stack).
 - **Inconsistent patterns become chaos amplifiers** - When your config follows wrong patterns, [AI assistants amplify the mistakes](https://www.augmentcode.com/guides/enterprise-coding-standards-12-rules-for-ai-ready-teams), not just ignore them.
 
-agnix validates configs against 139 rules derived from official specs, research papers, and real-world testing. Catch issues before they reach your IDE.
+agnix validates configs against 142 rules derived from official specs, research papers, and real-world testing. Catch issues before they reach your IDE.
 
 ## Install
 
@@ -237,6 +238,7 @@ See [Configuration Reference](docs/CONFIGURATION.md) for all options including `
 | [Cursor](https://cursor.com) | CUR-* | .cursor/rules/*.mdc, .cursorrules |
 | [MCP](https://modelcontextprotocol.io) | MCP-* | *.mcp.json |
 | [AGENTS.md](https://agentsmd.org) | AGM-*, XP-* | AGENTS.md, AGENTS.local.md, AGENTS.override.md |
+| [Gemini CLI](https://github.com/google-gemini/gemini-cli) | GM-* | GEMINI.md, GEMINI.local.md |
 
 ## Contributing
 
@@ -244,7 +246,7 @@ Contributions are welcome and appreciated. See [CONTRIBUTING.md](CONTRIBUTING.md
 
 ### Found Something Off?
 
-agnix validates against 139 rules, but the agent config ecosystem moves fast.
+agnix validates against 142 rules, but the agent config ecosystem moves fast.
 If a rule is wrong, missing, or too noisy -- we want to know.
 
 [Report a bug](https://github.com/avifenesh/agnix/issues/new) |

@@ -1318,7 +1318,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | Prompt Eng | 4 | 0 | 4 | 0 | 0 |
 | Cross-Platform | 6 | 4 | 2 | 0 | 0 |
 | Version Awareness | 1 | 0 | 0 | 1 | 0 |
-| **TOTAL** | **139** | **100** | **37** | **2** | **32** |
+| **TOTAL** | **142** | **100** | **37** | **2** | **32** |
 
 
 ---

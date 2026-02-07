@@ -42,6 +42,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - OC-001: Validate `share` field in `opencode.json` is `"manual"`, `"auto"`, or `"disabled"` (HIGH)
 - OC-002: Validate instruction paths in `opencode.json` exist or are valid globs (HIGH)
 - OC-003: Validate `opencode.json` is parseable JSON/JSONC with line/column error reporting (HIGH)
+- GM-001: Validate GEMINI.md has valid markdown structure (HIGH)
+- GM-002: Warn when GEMINI.md has no section headers (MEDIUM)
+- GM-003: Warn when GEMINI.md has no project context section (MEDIUM)
 - Fix metadata (`autofix`, `fix_safety`) for all 100 rules in rules.json
 - Fix metadata schema validation parity test
 - Autofix count parity test (rules.json vs VALIDATION-RULES.md)

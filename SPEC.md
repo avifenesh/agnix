@@ -1,6 +1,6 @@
 # agnix Technical Reference
 
-> Linter for agent configs. 139 rules across 17 categories.
+> Linter for agent configs. 142 rules across 18 categories.
 
 
 ## What agnix Validates
@@ -22,6 +22,7 @@
 | Cursor Project Rules | .cursor/rules/*.mdc, .cursorrules | 9 |
 | Cline | .clinerules, .clinerules/*.md | 3 |
 | OpenCode | opencode.json | 3 |
+| Gemini CLI | GEMINI.md, GEMINI.local.md | 3 |
 | Version Awareness | .agnix.toml | 1 |
 
 ## Architecture
@@ -38,7 +39,7 @@ agnix/
 │   ├── agnix-lsp/      # LSP server
 │   └── agnix-mcp/      # MCP server
 ├── editors/            # Neovim, VS Code, JetBrains, Zed integrations
-├── knowledge-base/     # 139 rules documented
+├── knowledge-base/     # 142 rules documented
 
 ├── scripts/            # Build/dev automation scripts
 ├── website/            # Docusaurus documentation website
