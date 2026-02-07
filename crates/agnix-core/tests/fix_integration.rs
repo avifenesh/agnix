@@ -9,8 +9,8 @@
 //! - Safe-only filtering
 
 use agnix_core::{
-    apply_fixes_with_fs, Diagnostic, FileSystem, FileType, Fix, LintConfig, MockFileSystem,
-    ValidatorRegistry,
+    Diagnostic, FileSystem, FileType, Fix, LintConfig, MockFileSystem, ValidatorRegistry,
+    apply_fixes_with_fs,
 };
 use std::path::Path;
 use std::sync::Arc;
@@ -19,8 +19,9 @@ use std::sync::Arc;
 // Shared Helper
 // ============================================================================
 
-/// Validate content, apply all fixes for `target_rule`, re-validate, and assert the
-/// target rule no longer fires.
+/// Validate content, apply fixes for `target_rule`, re-validate, and assert the
+/// target rule no longer fires. This is a rule-specific fix test, not a full
+/// resolution test (other rules may still fire after fixing).
 fn assert_fix_resolves(file_type: FileType, path: &Path, content: &str, target_rule: &str) {
     let config = LintConfig::default();
     let registry = ValidatorRegistry::with_defaults();
@@ -120,7 +121,8 @@ fn test_e2e_cc_mem_005_fix_removes_generic_instruction() {
 
 #[test]
 fn test_e2e_xml_003_fix_removes_orphan_tag() {
-    let content = "---\nname: test-skill\ndescription: A test skill\n---\nSome text\n</example>\nMore text";
+    let content =
+        "---\nname: test-skill\ndescription: A test skill\n---\nSome text\n</example>\nMore text";
     assert_fix_resolves(FileType::Skill, Path::new("SKILL.md"), content, "XML-003");
 }
 
@@ -292,9 +294,18 @@ fn test_safe_fix_deterministic_as_005() {
         let fix = &as_005[0].fixes[0];
 
         if let Some(ref prev) = reference_fix {
-            assert_eq!(prev.start_byte, fix.start_byte, "start_byte must be deterministic");
-            assert_eq!(prev.end_byte, fix.end_byte, "end_byte must be deterministic");
-            assert_eq!(prev.replacement, fix.replacement, "replacement must be deterministic");
+            assert_eq!(
+                prev.start_byte, fix.start_byte,
+                "start_byte must be deterministic"
+            );
+            assert_eq!(
+                prev.end_byte, fix.end_byte,
+                "end_byte must be deterministic"
+            );
+            assert_eq!(
+                prev.replacement, fix.replacement,
+                "replacement must be deterministic"
+            );
             assert_eq!(prev.safe, fix.safe, "safe flag must be deterministic");
         } else {
             reference_fix = Some(fix.clone());
@@ -324,9 +335,18 @@ fn test_safe_fix_deterministic_as_006() {
         let fix = &as_006[0].fixes[0];
 
         if let Some(ref prev) = reference_fix {
-            assert_eq!(prev.start_byte, fix.start_byte, "start_byte must be deterministic");
-            assert_eq!(prev.end_byte, fix.end_byte, "end_byte must be deterministic");
-            assert_eq!(prev.replacement, fix.replacement, "replacement must be deterministic");
+            assert_eq!(
+                prev.start_byte, fix.start_byte,
+                "start_byte must be deterministic"
+            );
+            assert_eq!(
+                prev.end_byte, fix.end_byte,
+                "end_byte must be deterministic"
+            );
+            assert_eq!(
+                prev.replacement, fix.replacement,
+                "replacement must be deterministic"
+            );
             assert_eq!(prev.safe, fix.safe, "safe flag must be deterministic");
         } else {
             reference_fix = Some(fix.clone());
@@ -393,7 +413,10 @@ fn test_cc_mem_005_fix_is_safe() {
         .iter()
         .filter(|d| d.rule == "CC-MEM-005" && d.has_fixes())
         .collect();
-    assert!(!mem_005.is_empty(), "Expected CC-MEM-005 diagnostic with fix");
+    assert!(
+        !mem_005.is_empty(),
+        "Expected CC-MEM-005 diagnostic with fix"
+    );
     assert!(mem_005[0].fixes[0].safe, "CC-MEM-005 fix should be safe");
 }
 
@@ -424,7 +447,9 @@ fn test_safe_only_filter_skips_unsafe() {
         .collect();
 
     let has_safe = all_fix_diags.iter().any(|d| d.fixes.iter().any(|f| f.safe));
-    let has_unsafe = all_fix_diags.iter().any(|d| d.fixes.iter().any(|f| !f.safe));
+    let has_unsafe = all_fix_diags
+        .iter()
+        .any(|d| d.fixes.iter().any(|f| !f.safe));
     assert!(has_safe, "Expected at least one safe fix");
     assert!(has_unsafe, "Expected at least one unsafe fix");
 
@@ -435,7 +460,10 @@ fn test_safe_only_filter_skips_unsafe() {
     let results = apply_fixes_with_fs(&all_fix_diags, false, true, Some(fs_clone)).unwrap();
 
     // Verify that fixes were applied
-    assert!(!results.is_empty(), "Expected some safe fixes to be applied");
+    assert!(
+        !results.is_empty(),
+        "Expected some safe fixes to be applied"
+    );
 
     // Verify the fixed content still has unclosed XML (unsafe fix was skipped)
     let fixed_content = mock_fs.read_to_string(path).unwrap();
@@ -521,14 +549,15 @@ fn test_ordering_multiple_diagnostics_same_file() {
     let content = "aaaaa_____bbbbb_____ccccc_____";
     let path = Path::new("/test.md");
 
-    let diags = vec![
-        Diagnostic::error(path.to_path_buf(), 1, 1, "TEST-001", "Fix at 20")
-            .with_fix(Fix::replace(20, 25, "CCCCC", "Fix third", true)),
-        Diagnostic::error(path.to_path_buf(), 1, 1, "TEST-002", "Fix at 10")
-            .with_fix(Fix::replace(10, 15, "BBBBB", "Fix second", true)),
-        Diagnostic::error(path.to_path_buf(), 1, 1, "TEST-003", "Fix at 0")
-            .with_fix(Fix::replace(0, 5, "AAAAA", "Fix first", true)),
-    ];
+    let diags =
+        vec![
+            Diagnostic::error(path.to_path_buf(), 1, 1, "TEST-001", "Fix at 20")
+                .with_fix(Fix::replace(20, 25, "CCCCC", "Fix third", true)),
+            Diagnostic::error(path.to_path_buf(), 1, 1, "TEST-002", "Fix at 10")
+                .with_fix(Fix::replace(10, 15, "BBBBB", "Fix second", true)),
+            Diagnostic::error(path.to_path_buf(), 1, 1, "TEST-003", "Fix at 0")
+                .with_fix(Fix::replace(0, 5, "AAAAA", "Fix first", true)),
+        ];
 
     let mock_fs = Arc::new(MockFileSystem::new());
     mock_fs.add_file("/test.md", content);
@@ -546,14 +575,15 @@ fn test_ordering_overlapping_fixes_skipped() {
     let content = "0123456789abcdef0123456789";
     let path = Path::new("/test.md");
 
-    let diags = vec![
-        Diagnostic::error(path.to_path_buf(), 1, 1, "TEST-001", "Fix at 10")
-            .with_fix(Fix::replace(10, 14, "XX", "Fix at 10-14", true)),
-        Diagnostic::error(path.to_path_buf(), 1, 1, "TEST-002", "Fix at 6")
-            .with_fix(Fix::replace(6, 12, "YY", "Fix at 6-12 (overlaps)", true)),
-        Diagnostic::error(path.to_path_buf(), 1, 1, "TEST-003", "Fix at 0")
-            .with_fix(Fix::replace(0, 4, "ZZ", "Fix at 0-4", true)),
-    ];
+    let diags =
+        vec![
+            Diagnostic::error(path.to_path_buf(), 1, 1, "TEST-001", "Fix at 10")
+                .with_fix(Fix::replace(10, 14, "XX", "Fix at 10-14", true)),
+            Diagnostic::error(path.to_path_buf(), 1, 1, "TEST-002", "Fix at 6")
+                .with_fix(Fix::replace(6, 12, "YY", "Fix at 6-12 (overlaps)", true)),
+            Diagnostic::error(path.to_path_buf(), 1, 1, "TEST-003", "Fix at 0")
+                .with_fix(Fix::replace(0, 4, "ZZ", "Fix at 0-4", true)),
+        ];
 
     let mock_fs = Arc::new(MockFileSystem::new());
     mock_fs.add_file("/test.md", content);
@@ -565,7 +595,10 @@ fn test_ordering_overlapping_fixes_skipped() {
     // Fix at 10-14 applied, fix at 6-12 skipped (overlaps), fix at 0-4 applied
     assert!(fixed.contains("XX"), "Fix at 10-14 should be applied");
     assert!(fixed.contains("ZZ"), "Fix at 0-4 should be applied");
-    assert!(!fixed.contains("YY"), "Overlapping fix at 6-12 should be skipped");
+    assert!(
+        !fixed.contains("YY"),
+        "Overlapping fix at 6-12 should be skipped"
+    );
     // Only 2 of 3 fixes should be applied
     assert_eq!(results[0].applied.len(), 2);
 }
@@ -575,17 +608,18 @@ fn test_ordering_safe_only_integration() {
     let content = "aaaaa_____bbbbb_____ccccc_____";
     let path = Path::new("/test.md");
 
-    let diags = vec![
-        // Position 20: safe
-        Diagnostic::error(path.to_path_buf(), 1, 1, "TEST-001", "Fix at 20")
-            .with_fix(Fix::replace(20, 25, "CCCCC", "Fix third (safe)", true)),
-        // Position 10: unsafe
-        Diagnostic::error(path.to_path_buf(), 1, 1, "TEST-002", "Fix at 10")
-            .with_fix(Fix::replace(10, 15, "BBBBB", "Fix second (unsafe)", false)),
-        // Position 0: safe
-        Diagnostic::error(path.to_path_buf(), 1, 1, "TEST-003", "Fix at 0")
-            .with_fix(Fix::replace(0, 5, "AAAAA", "Fix first (safe)", true)),
-    ];
+    let diags =
+        vec![
+            // Position 20: safe
+            Diagnostic::error(path.to_path_buf(), 1, 1, "TEST-001", "Fix at 20")
+                .with_fix(Fix::replace(20, 25, "CCCCC", "Fix third (safe)", true)),
+            // Position 10: unsafe
+            Diagnostic::error(path.to_path_buf(), 1, 1, "TEST-002", "Fix at 10")
+                .with_fix(Fix::replace(10, 15, "BBBBB", "Fix second (unsafe)", false)),
+            // Position 0: safe
+            Diagnostic::error(path.to_path_buf(), 1, 1, "TEST-003", "Fix at 0")
+                .with_fix(Fix::replace(0, 5, "AAAAA", "Fix first (safe)", true)),
+        ];
 
     let mock_fs = Arc::new(MockFileSystem::new());
     mock_fs.add_file("/test.md", content);

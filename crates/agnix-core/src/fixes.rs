@@ -588,10 +588,17 @@ mod tests {
         // Fix at 10-14 applied, fix at 6-12 skipped (end_byte 12 > last_start 10),
         // fix at 0-4 applied (end_byte 4 < last_start 10, but after the overlap skip,
         // last_start is still 10 from the first fix)
-        assert_eq!(applied.len(), 2, "Only two non-overlapping fixes should apply");
+        assert_eq!(
+            applied.len(),
+            2,
+            "Only two non-overlapping fixes should apply"
+        );
         assert!(result.contains("XX"), "Fix at 10-14 should be applied");
         assert!(result.contains("ZZ"), "Fix at 0-4 should be applied");
-        assert!(!result.contains("YY"), "Overlapping fix at 6-12 should be skipped");
+        assert!(
+            !result.contains("YY"),
+            "Overlapping fix at 6-12 should be skipped"
+        );
     }
 
     #[test]
@@ -614,23 +621,29 @@ mod tests {
     #[test]
     fn test_fix_same_position_insertions() {
         let content = "hello";
-        // Two insertions at position 5 (end of string)
-        // Both have start==end==5, sorted descending they are equal
-        // First gets applied (last_start = 5), second has end_byte 5 <= last_start 5
-        // Wait: end_byte > last_start check: 5 > 5 is false, so second also applies
+        // Two insertions at the same position. Their application order depends on their
+        // order in the slice, as the sort by `start_byte` is stable.
         let fixes = vec![
             Fix::insert(5, "!", "Add exclamation", true),
             Fix::insert(5, "?", "Add question", true),
         ];
-        let fix_refs: Vec<&Fix> = fixes.iter().collect();
+        let mut fix_refs: Vec<&Fix> = fixes.iter().collect();
+        // `apply_fixes_to_content` expects fixes to be sorted descending by start_byte.
+        fix_refs.sort_by(|a, b| b.start_byte.cmp(&a.start_byte));
 
         let (result, applied) = apply_fixes_to_content(content, &fix_refs);
 
-        assert_eq!(applied.len(), 2, "Same-position insertions should both apply");
-        // Both insertions at position 5: first "!" is inserted, then "?" is inserted
-        // at the same position in the original content (but string has shifted)
-        assert!(result.contains("!"), "First insertion should be present");
-        assert!(result.contains("?"), "Second insertion should be present");
+        assert_eq!(
+            applied.len(),
+            2,
+            "Same-position insertions should both apply"
+        );
+
+        // The fixes are applied in the order they appear in the sorted slice.
+        // Since the sort is stable for equal `start_byte`, "!" is applied first, then "?".
+        // 1. "hello" -> "hello!"
+        // 2. "hello!" -> "hello?!" (at index 5 of the modified string)
+        assert_eq!(result, "hello?!");
     }
 
     #[test]
@@ -710,8 +723,7 @@ mod tests {
         let (result, applied) = apply_fixes_to_content(content, &[&fix]);
 
         assert_eq!(
-            result,
-            "caf\u{00e9}",
+            result, "caf\u{00e9}",
             "Content should be unchanged when fix targets mid-codepoint"
         );
         assert!(
