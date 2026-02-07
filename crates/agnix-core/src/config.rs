@@ -3306,4 +3306,106 @@ disabled_rules = []
         // No warning because tools is set
         assert!(warnings.is_empty());
     }
+
+    // =========================================================================
+    // FilesConfig tests
+    // =========================================================================
+
+    #[test]
+    fn test_files_config_default_is_empty() {
+        let files = FilesConfig::default();
+        assert!(files.include_as_memory.is_empty());
+        assert!(files.include_as_generic.is_empty());
+        assert!(files.exclude.is_empty());
+    }
+
+    #[test]
+    fn test_lint_config_default_has_empty_files() {
+        let config = LintConfig::default();
+        assert!(config.files.include_as_memory.is_empty());
+        assert!(config.files.include_as_generic.is_empty());
+        assert!(config.files.exclude.is_empty());
+    }
+
+    #[test]
+    fn test_files_config_toml_deserialization() {
+        let toml_str = r#"
+[files]
+include_as_memory = ["docs/ai-rules/*.md", "custom/INSTRUCTIONS.md"]
+include_as_generic = ["internal/*.md"]
+exclude = ["drafts/**"]
+"#;
+        let config: LintConfig = toml::from_str(toml_str).expect("should parse");
+        assert_eq!(config.files.include_as_memory.len(), 2);
+        assert_eq!(config.files.include_as_memory[0], "docs/ai-rules/*.md");
+        assert_eq!(
+            config.files.include_as_memory[1],
+            "custom/INSTRUCTIONS.md"
+        );
+        assert_eq!(config.files.include_as_generic.len(), 1);
+        assert_eq!(config.files.include_as_generic[0], "internal/*.md");
+        assert_eq!(config.files.exclude.len(), 1);
+        assert_eq!(config.files.exclude[0], "drafts/**");
+    }
+
+    #[test]
+    fn test_files_config_partial_toml() {
+        let toml_str = r#"
+[files]
+include_as_memory = ["custom.md"]
+"#;
+        let config: LintConfig = toml::from_str(toml_str).expect("should parse");
+        assert_eq!(config.files.include_as_memory.len(), 1);
+        assert!(config.files.include_as_generic.is_empty());
+        assert!(config.files.exclude.is_empty());
+    }
+
+    #[test]
+    fn test_files_config_empty_section() {
+        let toml_str = r#"
+[files]
+"#;
+        let config: LintConfig = toml::from_str(toml_str).expect("should parse");
+        assert!(config.files.include_as_memory.is_empty());
+        assert!(config.files.include_as_generic.is_empty());
+        assert!(config.files.exclude.is_empty());
+    }
+
+    #[test]
+    fn test_files_config_omitted_section() {
+        let toml_str = r#"
+severity = "Warning"
+"#;
+        let config: LintConfig = toml::from_str(toml_str).expect("should parse");
+        assert!(config.files.include_as_memory.is_empty());
+    }
+
+    #[test]
+    fn test_validate_files_invalid_glob() {
+        let mut config = LintConfig::default();
+        config.files.include_as_memory = vec!["[invalid".to_string()];
+
+        let warnings = config.validate();
+        assert!(
+            warnings
+                .iter()
+                .any(|w| w.field == "files.include_as_memory"),
+            "should warn about invalid glob pattern"
+        );
+    }
+
+    #[test]
+    fn test_validate_files_valid_globs_no_warnings() {
+        let mut config = LintConfig::default();
+        config.files.include_as_memory = vec!["docs/**/*.md".to_string()];
+        config.files.include_as_generic = vec!["internal/*.md".to_string()];
+        config.files.exclude = vec!["drafts/**".to_string()];
+
+        let warnings = config.validate();
+        assert!(
+            warnings.is_empty(),
+            "valid globs should not produce warnings: {:?}",
+            warnings
+        );
+    }
 }

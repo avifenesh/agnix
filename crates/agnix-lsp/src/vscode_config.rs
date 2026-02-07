@@ -759,3 +759,98 @@ fn test_spec_pin_clearing_with_null() {
         Some("v1".to_string())
     );
 }
+
+#[test]
+fn test_vscode_files_deserialization() {
+    let json = r#"{
+        "files": {
+            "includeAsMemory": ["docs/ai-rules/*.md"],
+            "includeAsGeneric": ["internal/*.md"],
+            "exclude": ["drafts/**"]
+        }
+    }"#;
+
+    let config: VsCodeConfig = serde_json::from_str(json).expect("should parse");
+    let files = config.files.expect("files should be present");
+    assert_eq!(
+        files.include_as_memory,
+        Some(vec!["docs/ai-rules/*.md".to_string()])
+    );
+    assert_eq!(
+        files.include_as_generic,
+        Some(vec!["internal/*.md".to_string()])
+    );
+    assert_eq!(files.exclude, Some(vec!["drafts/**".to_string()]));
+}
+
+#[test]
+fn test_vscode_files_partial_deserialization() {
+    let json = r#"{
+        "files": {
+            "includeAsMemory": ["custom.md"]
+        }
+    }"#;
+
+    let config: VsCodeConfig = serde_json::from_str(json).expect("should parse");
+    let files = config.files.expect("files should be present");
+    assert_eq!(
+        files.include_as_memory,
+        Some(vec!["custom.md".to_string()])
+    );
+    assert!(files.include_as_generic.is_none());
+    assert!(files.exclude.is_none());
+}
+
+#[test]
+fn test_vscode_files_not_set_preserves_existing() {
+    let mut lint_config = LintConfig::default();
+    lint_config.files.include_as_memory = vec!["existing.md".to_string()];
+
+    // VS Code config without files section
+    let vscode_config = VsCodeConfig {
+        severity: Some("Error".to_string()),
+        ..Default::default()
+    };
+
+    vscode_config.merge_into_lint_config(&mut lint_config);
+
+    // Files config should be preserved
+    assert_eq!(
+        lint_config.files.include_as_memory,
+        vec!["existing.md".to_string()]
+    );
+}
+
+#[test]
+fn test_vscode_files_merge_overrides() {
+    let mut lint_config = LintConfig::default();
+    lint_config.files.include_as_memory = vec!["old.md".to_string()];
+    lint_config.files.include_as_generic = vec!["old-generic.md".to_string()];
+
+    let vscode_config = VsCodeConfig {
+        files: Some(VsCodeFiles {
+            include_as_memory: Some(vec!["new.md".to_string()]),
+            include_as_generic: None, // Not specified - preserve existing
+            exclude: Some(vec!["drafts/**".to_string()]),
+        }),
+        ..Default::default()
+    };
+
+    vscode_config.merge_into_lint_config(&mut lint_config);
+
+    // include_as_memory overridden
+    assert_eq!(
+        lint_config.files.include_as_memory,
+        vec!["new.md".to_string()]
+    );
+    // include_as_generic preserved (not in VS Code config)
+    assert_eq!(
+        lint_config.files.include_as_generic,
+        vec!["old-generic.md".to_string()]
+    );
+    // exclude added
+    assert_eq!(
+        lint_config.files.exclude,
+        vec!["drafts/**".to_string()]
+    );
+}
