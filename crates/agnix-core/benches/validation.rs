@@ -475,6 +475,59 @@ fn bench_single_file_target(c: &mut Criterion) {
     group.finish();
 }
 
+/// Benchmark auto-fix span finding through hook validation.
+///
+/// This exercises the span_utils byte-scanning functions that replaced
+/// dynamic Regex::new() calls. The content is crafted to trigger multiple
+/// auto-fix code paths (event key lookup, field line spans, matcher spans).
+fn bench_hooks_autofix_spans(c: &mut Criterion) {
+    let temp = TempDir::new().unwrap();
+    let config = LintConfig::default();
+    let registry = ValidatorRegistry::with_defaults();
+
+    // Content with issues that trigger auto-fix span finding:
+    // - Invalid event name (find_event_key_position)
+    // - async on non-command hook (find_unique_json_field_line_span)
+    // - matcher line spans
+    let hooks_content = r#"{
+    "hooks": {
+        "InvalidEvent": [
+            {
+                "matcher": "Bash",
+                "hooks": [
+                    {
+                        "type": "prompt",
+                        "async": true,
+                        "prompt": "Review this code"
+                    }
+                ]
+            }
+        ],
+        "PreToolExecution": [
+            {
+                "matcher": "Write",
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "echo 'pre-write check'"
+                    }
+                ]
+            }
+        ]
+    }
+}"#;
+
+    let hooks_path = temp.path().join("settings.json");
+    std::fs::write(&hooks_path, hooks_content).unwrap();
+
+    let mut group = c.benchmark_group("hooks_autofix_spans");
+    group.throughput(Throughput::Bytes(hooks_content.len() as u64));
+    group.bench_function("hooks_with_fixable_issues", |b| {
+        b.iter(|| validate_file_with_registry(black_box(&hooks_path), &config, &registry))
+    });
+    group.finish();
+}
+
 criterion_group!(
     benches,
     bench_detect_file_type,
@@ -488,5 +541,6 @@ criterion_group!(
     bench_scale_1000_files,
     bench_memory_usage,
     bench_single_file_target,
+    bench_hooks_autofix_spans,
 );
 criterion_main!(benches);
