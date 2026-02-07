@@ -1,7 +1,7 @@
 {
   "description": "Machine-readable source of truth for all validation rules. When adding a new rule, add it here AND in VALIDATION-RULES.md. CI parity tests enforce sync.",
   "version": "1.1.0",
-  "total_rules": 102,
+  "total_rules": 106,
   "last_updated": "2026-02-07",
   "schema": {
     "evidence": {
@@ -1893,6 +1893,107 @@
       }
     },
     {
+      "id": "MCP-009",
+      "name": "Missing command for stdio server",
+      "severity": "HIGH",
+      "category": "mcp",
+      "evidence": {
+        "source_type": "spec",
+        "source_urls": [
+          "https://modelcontextprotocol.io/specification"
+        ],
+        "verified_on": "2026-02-07",
+        "applies_to": {
+          "spec_revision": "2025-03-26"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      }
+    },
+    {
+      "id": "MCP-010",
+      "name": "Missing url for http/sse server",
+      "severity": "HIGH",
+      "category": "mcp",
+      "evidence": {
+        "source_type": "spec",
+        "source_urls": [
+          "https://modelcontextprotocol.io/specification"
+        ],
+        "verified_on": "2026-02-07",
+        "applies_to": {
+          "spec_revision": "2025-03-26"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      }
+    },
+    {
+      "id": "MCP-011",
+      "name": "Invalid MCP server type",
+      "severity": "HIGH",
+      "category": "mcp",
+      "evidence": {
+        "source_type": "spec",
+        "source_urls": [
+          "https://modelcontextprotocol.io/specification"
+        ],
+        "verified_on": "2026-02-07",
+        "applies_to": {
+          "spec_revision": "2025-03-26"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      }
+    },
+    {
+      "id": "MCP-012",
+      "name": "Deprecated SSE transport",
+      "severity": "MEDIUM",
+      "category": "mcp",
+      "evidence": {
+        "source_type": "spec",
+        "source_urls": [
+          "https://modelcontextprotocol.io/specification"
+        ],
+        "verified_on": "2026-02-07",
+        "applies_to": {
+          "spec_revision": "2025-03-26"
+        },
+        "normative_level": "SHOULD",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": true,
+        "fix_safety": "unsafe"
+      }
+    },
+    {
       "id": "COP-001",
       "name": "Empty Copilot Instruction File",
       "severity": "HIGH",
@@ -3186,10 +3287,48 @@
             "key": "mcpServers",
             "docs": "MCP server map configuration.",
             "rules": [
-              "MCP-007"
+              "MCP-007",
+              "MCP-009",
+              "MCP-010",
+              "MCP-011",
+              "MCP-012"
             ],
             "values": [],
             "snippet": "\"mcpServers\": {}"
+          },
+          {
+            "key": "type",
+            "docs": "MCP server transport type.",
+            "rules": [
+              "MCP-009",
+              "MCP-010",
+              "MCP-011",
+              "MCP-012"
+            ],
+            "values": [
+              "stdio",
+              "http",
+              "sse"
+            ],
+            "snippet": "\"type\": \"stdio\""
+          },
+          {
+            "key": "command",
+            "docs": "Command to launch a stdio MCP server.",
+            "rules": [
+              "MCP-009"
+            ],
+            "values": [],
+            "snippet": "\"command\": \"node\""
+          },
+          {
+            "key": "url",
+            "docs": "Endpoint URL for http/sse MCP server.",
+            "rules": [
+              "MCP-010"
+            ],
+            "values": [],
+            "snippet": "\"url\": \"http://localhost:3000/mcp\""
           },
           {
             "key": "tools",
@@ -3278,6 +3417,24 @@
               "MCP-002",
               "MCP-003",
               "MCP-005"
+            ]
+          },
+          {
+            "label": "MCP stdio server",
+            "body": "{\n  \"mcpServers\": {\n    \"server-name\": {\n      \"type\": \"stdio\",\n      \"command\": \"node\",\n      \"args\": [\"server.js\"]\n    }\n  }\n}",
+            "docs": "Stdio server configuration scaffold.",
+            "rules": [
+              "MCP-009",
+              "MCP-011"
+            ]
+          },
+          {
+            "label": "MCP http server",
+            "body": "{\n  \"mcpServers\": {\n    \"server-name\": {\n      \"type\": \"http\",\n      \"url\": \"http://localhost:3000/mcp\"\n    }\n  }\n}",
+            "docs": "HTTP server configuration scaffold.",
+            "rules": [
+              "MCP-010",
+              "MCP-011"
             ]
           }
         ]

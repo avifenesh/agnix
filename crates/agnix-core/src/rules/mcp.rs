@@ -1,13 +1,13 @@
-//! MCP (Model Context Protocol) validation (MCP-001 to MCP-006)
+//! MCP (Model Context Protocol) validation (MCP-001 to MCP-012)
 
 use crate::{
     config::LintConfig,
     diagnostics::{Diagnostic, Fix},
     rules::Validator,
     schemas::mcp::{
-        McpConfigSchema, McpToolSchema, extract_request_protocol_version,
-        extract_response_protocol_version, is_initialize_message, is_initialize_response,
-        validate_json_schema_structure,
+        McpConfigSchema, McpServerConfig, McpToolSchema, VALID_MCP_SERVER_TYPES,
+        extract_request_protocol_version, extract_response_protocol_version,
+        is_initialize_message, is_initialize_response, validate_json_schema_structure,
     },
 };
 use regex::Regex;
@@ -168,6 +168,13 @@ impl Validator for McpValidator {
         // Validate each successfully parsed tool
         for (idx, tool) in tools.iter().enumerate() {
             validate_tool(tool, path, content, config, &mut diagnostics, idx);
+        }
+
+        // Validate MCP server configurations (MCP-009 to MCP-012)
+        if let Some(servers) = &mcp_config.mcp_servers {
+            for (name, server) in servers {
+                validate_server(name, server, path, content, config, &mut diagnostics);
+            }
         }
 
         diagnostics
@@ -575,6 +582,109 @@ fn validate_tool(
             )
             .with_suggestion(t!("rules.mcp_006.suggestion")),
         );
+    }
+}
+
+/// Validate a single MCP server configuration entry (MCP-009 to MCP-012)
+fn validate_server(
+    name: &str,
+    server: &McpServerConfig,
+    path: &Path,
+    content: &str,
+    config: &LintConfig,
+    diagnostics: &mut Vec<Diagnostic>,
+) {
+    let (line, col) = find_json_field_location(content, name);
+
+    // Determine effective type (default is "stdio" when type is absent)
+    let effective_type = server
+        .server_type
+        .as_deref()
+        .unwrap_or("stdio");
+
+    // MCP-011: Invalid server type (check first, skip other type-based rules if invalid)
+    if config.is_rule_enabled("MCP-011") {
+        if let Some(ref server_type) = server.server_type {
+            if !VALID_MCP_SERVER_TYPES.contains(&server_type.as_str()) {
+                diagnostics.push(
+                    Diagnostic::error(
+                        path.to_path_buf(),
+                        line,
+                        col,
+                        "MCP-011",
+                        t!(
+                            "rules.mcp_011.message",
+                            server = name,
+                            server_type = server_type.as_str()
+                        ),
+                    )
+                    .with_suggestion(t!("rules.mcp_011.suggestion")),
+                );
+                // Skip further type-based validation since type is invalid
+                return;
+            }
+        }
+    }
+
+    // MCP-009: Missing command for stdio server
+    if config.is_rule_enabled("MCP-009") && effective_type == "stdio" {
+        if server.command.is_none() {
+            diagnostics.push(
+                Diagnostic::error(
+                    path.to_path_buf(),
+                    line,
+                    col,
+                    "MCP-009",
+                    t!("rules.mcp_009.message", server = name),
+                )
+                .with_suggestion(t!("rules.mcp_009.suggestion")),
+            );
+        }
+    }
+
+    // MCP-010: Missing url for http/sse server
+    if config.is_rule_enabled("MCP-010") && (effective_type == "http" || effective_type == "sse") {
+        if server.url.is_none() {
+            diagnostics.push(
+                Diagnostic::error(
+                    path.to_path_buf(),
+                    line,
+                    col,
+                    "MCP-010",
+                    t!(
+                        "rules.mcp_010.message",
+                        server = name,
+                        server_type = effective_type
+                    ),
+                )
+                .with_suggestion(t!("rules.mcp_010.suggestion")),
+            );
+        }
+    }
+
+    // MCP-012: Deprecated SSE transport
+    if config.is_rule_enabled("MCP-012") && effective_type == "sse" {
+        let mut diag = Diagnostic::warning(
+            path.to_path_buf(),
+            line,
+            col,
+            "MCP-012",
+            t!("rules.mcp_012.message", server = name),
+        )
+        .with_suggestion(t!("rules.mcp_012.suggestion"));
+
+        // Unsafe auto-fix: change "sse" to "http"
+        if let Some((start, end)) = find_unique_json_string_value_span(content, "type", "sse") {
+            diag = diag.with_fix(Fix::replace(
+                start,
+                end,
+                "http",
+                t!("rules.mcp_012.fix"),
+                false,
+            ));
+        }
+
+        diagnostics.push(diag);
     }
 }
 
@@ -1405,7 +1515,8 @@ mod tests {
     #[test]
     fn test_all_mcp_rules_can_be_disabled() {
         let rules = [
-            "MCP-001", "MCP-002", "MCP-003", "MCP-004", "MCP-005", "MCP-006", "MCP-007", "MCP-008",
+            "MCP-001", "MCP-002", "MCP-003", "MCP-004", "MCP-005", "MCP-006", "MCP-007",
+            "MCP-008", "MCP-009", "MCP-010", "MCP-011", "MCP-012",
         ];
 
         for rule in rules {
@@ -1416,6 +1527,16 @@ mod tests {
             let content = match rule {
                 "MCP-001" => r#"{"jsonrpc": "1.0"}"#,
                 "MCP-007" => r#"{ invalid }"#,
+                "MCP-009" => {
+                    r#"{"mcpServers": {"s": {"type": "stdio", "args": ["a"]}}}"#
+                }
+                "MCP-010" => r#"{"mcpServers": {"s": {"type": "http"}}}"#,
+                "MCP-011" => {
+                    r#"{"mcpServers": {"s": {"type": "invalid"}}}"#
+                }
+                "MCP-012" => {
+                    r#"{"mcpServers": {"s": {"type": "sse", "url": "http://x"}}}"#
+                }
                 _ => r#"{"tools": [{"name": "t"}]}"#,
             };
 
@@ -1428,5 +1549,359 @@ mod tests {
                 rule
             );
         }
+    }
+
+    // ===== MCP-009 Tests =====
+
+    #[test]
+    fn test_mcp_009_valid_stdio_with_command() {
+        let content = r#"{
+            "mcpServers": {
+                "my-server": {
+                    "type": "stdio",
+                    "command": "node",
+                    "args": ["server.js"]
+                }
+            }
+        }"#;
+        let diagnostics = validate(content);
+        assert!(!diagnostics.iter().any(|d| d.rule == "MCP-009"));
+    }
+
+    #[test]
+    fn test_mcp_009_stdio_missing_command() {
+        let content = r#"{
+            "mcpServers": {
+                "broken-server": {
+                    "type": "stdio",
+                    "args": ["server.js"]
+                }
+            }
+        }"#;
+        let diagnostics = validate(content);
+        let mcp_009: Vec<_> = diagnostics.iter().filter(|d| d.rule == "MCP-009").collect();
+        assert_eq!(mcp_009.len(), 1);
+        assert!(mcp_009[0].message.contains("broken-server"));
+        assert!(mcp_009[0].message.contains("command"));
+    }
+
+    #[test]
+    fn test_mcp_009_no_type_missing_command() {
+        // When type is absent, default is stdio, so command is required
+        let content = r#"{
+            "mcpServers": {
+                "no-type-server": {
+                    "args": ["server.js"]
+                }
+            }
+        }"#;
+        let diagnostics = validate(content);
+        let mcp_009: Vec<_> = diagnostics.iter().filter(|d| d.rule == "MCP-009").collect();
+        assert_eq!(mcp_009.len(), 1);
+        assert!(mcp_009[0].message.contains("no-type-server"));
+    }
+
+    #[test]
+    fn test_mcp_009_no_type_with_command() {
+        // When type is absent but command is present, no error
+        let content = r#"{
+            "mcpServers": {
+                "default-server": {
+                    "command": "python",
+                    "args": ["-m", "server"]
+                }
+            }
+        }"#;
+        let diagnostics = validate(content);
+        assert!(!diagnostics.iter().any(|d| d.rule == "MCP-009"));
+    }
+
+    #[test]
+    fn test_mcp_009_http_server_no_command_ok() {
+        // HTTP server doesn't need command
+        let content = r#"{
+            "mcpServers": {
+                "http-server": {
+                    "type": "http",
+                    "url": "http://localhost:3000/mcp"
+                }
+            }
+        }"#;
+        let diagnostics = validate(content);
+        assert!(!diagnostics.iter().any(|d| d.rule == "MCP-009"));
+    }
+
+    // ===== MCP-010 Tests =====
+
+    #[test]
+    fn test_mcp_010_valid_http_with_url() {
+        let content = r#"{
+            "mcpServers": {
+                "remote-server": {
+                    "type": "http",
+                    "url": "http://localhost:3000/mcp"
+                }
+            }
+        }"#;
+        let diagnostics = validate(content);
+        assert!(!diagnostics.iter().any(|d| d.rule == "MCP-010"));
+    }
+
+    #[test]
+    fn test_mcp_010_http_missing_url() {
+        let content = r#"{
+            "mcpServers": {
+                "http-server": {
+                    "type": "http"
+                }
+            }
+        }"#;
+        let diagnostics = validate(content);
+        let mcp_010: Vec<_> = diagnostics.iter().filter(|d| d.rule == "MCP-010").collect();
+        assert_eq!(mcp_010.len(), 1);
+        assert!(mcp_010[0].message.contains("http-server"));
+        assert!(mcp_010[0].message.contains("url"));
+    }
+
+    #[test]
+    fn test_mcp_010_sse_missing_url() {
+        let content = r#"{
+            "mcpServers": {
+                "sse-server": {
+                    "type": "sse"
+                }
+            }
+        }"#;
+        let diagnostics = validate(content);
+        let mcp_010: Vec<_> = diagnostics.iter().filter(|d| d.rule == "MCP-010").collect();
+        assert_eq!(mcp_010.len(), 1);
+        assert!(mcp_010[0].message.contains("sse-server"));
+    }
+
+    #[test]
+    fn test_mcp_010_valid_sse_with_url() {
+        let content = r#"{
+            "mcpServers": {
+                "sse-server": {
+                    "type": "sse",
+                    "url": "http://localhost:3000/sse"
+                }
+            }
+        }"#;
+        let diagnostics = validate(content);
+        assert!(!diagnostics.iter().any(|d| d.rule == "MCP-010"));
+    }
+
+    #[test]
+    fn test_mcp_010_stdio_no_url_ok() {
+        // Stdio server doesn't need url
+        let content = r#"{
+            "mcpServers": {
+                "stdio-server": {
+                    "type": "stdio",
+                    "command": "node"
+                }
+            }
+        }"#;
+        let diagnostics = validate(content);
+        assert!(!diagnostics.iter().any(|d| d.rule == "MCP-010"));
+    }
+
+    // ===== MCP-011 Tests =====
+
+    #[test]
+    fn test_mcp_011_valid_types() {
+        for server_type in &["stdio", "http", "sse"] {
+            let content = format!(
+                r#"{{
+                    "mcpServers": {{
+                        "server": {{
+                            "type": "{}",
+                            "command": "node",
+                            "url": "http://localhost"
+                        }}
+                    }}
+                }}"#,
+                server_type
+            );
+            let diagnostics = validate(&content);
+            assert!(
+                !diagnostics.iter().any(|d| d.rule == "MCP-011"),
+                "Type '{}' should be valid",
+                server_type
+            );
+        }
+    }
+
+    #[test]
+    fn test_mcp_011_invalid_type() {
+        let content = r#"{
+            "mcpServers": {
+                "bad-server": {
+                    "type": "websocket",
+                    "url": "ws://localhost:8080"
+                }
+            }
+        }"#;
+        let diagnostics = validate(content);
+        let mcp_011: Vec<_> = diagnostics.iter().filter(|d| d.rule == "MCP-011").collect();
+        assert_eq!(mcp_011.len(), 1);
+        assert!(mcp_011[0].message.contains("bad-server"));
+        assert!(mcp_011[0].message.contains("websocket"));
+    }
+
+    #[test]
+    fn test_mcp_011_invalid_type_skips_other_rules() {
+        // When type is invalid, MCP-009/MCP-010 should not trigger
+        let content = r#"{
+            "mcpServers": {
+                "bad-server": {
+                    "type": "grpc"
+                }
+            }
+        }"#;
+        let diagnostics = validate(content);
+        assert!(diagnostics.iter().any(|d| d.rule == "MCP-011"));
+        assert!(
+            !diagnostics.iter().any(|d| d.rule == "MCP-009"),
+            "MCP-009 should not trigger for invalid type"
+        );
+        assert!(
+            !diagnostics.iter().any(|d| d.rule == "MCP-010"),
+            "MCP-010 should not trigger for invalid type"
+        );
+    }
+
+    #[test]
+    fn test_mcp_011_no_type_field_ok() {
+        // Missing type is not invalid (it defaults to stdio)
+        let content = r#"{
+            "mcpServers": {
+                "server": {
+                    "command": "node"
+                }
+            }
+        }"#;
+        let diagnostics = validate(content);
+        assert!(!diagnostics.iter().any(|d| d.rule == "MCP-011"));
+    }
+
+    // ===== MCP-012 Tests =====
+
+    #[test]
+    fn test_mcp_012_sse_deprecated_warning() {
+        let content = r#"{
+            "mcpServers": {
+                "sse-server": {
+                    "type": "sse",
+                    "url": "http://localhost:3000/sse"
+                }
+            }
+        }"#;
+        let diagnostics = validate(content);
+        let mcp_012: Vec<_> = diagnostics.iter().filter(|d| d.rule == "MCP-012").collect();
+        assert_eq!(mcp_012.len(), 1);
+        assert!(mcp_012[0].message.contains("sse-server"));
+        assert!(mcp_012[0].message.contains("deprecated"));
+        assert_eq!(
+            mcp_012[0].level,
+            crate::diagnostics::DiagnosticLevel::Warning
+        );
+    }
+
+    #[test]
+    fn test_mcp_012_sse_has_autofix() {
+        let content = r#"{
+            "mcpServers": {
+                "sse-server": {
+                    "type": "sse",
+                    "url": "http://localhost:3000/sse"
+                }
+            }
+        }"#;
+        let diagnostics = validate(content);
+        let mcp_012 = diagnostics.iter().find(|d| d.rule == "MCP-012");
+        assert!(mcp_012.is_some());
+        let diag = mcp_012.unwrap();
+        assert!(diag.has_fixes());
+        assert_eq!(diag.fixes[0].replacement, "http");
+        assert!(!diag.fixes[0].safe);
+    }
+
+    #[test]
+    fn test_mcp_012_http_no_warning() {
+        let content = r#"{
+            "mcpServers": {
+                "http-server": {
+                    "type": "http",
+                    "url": "http://localhost:3000/mcp"
+                }
+            }
+        }"#;
+        let diagnostics = validate(content);
+        assert!(!diagnostics.iter().any(|d| d.rule == "MCP-012"));
+    }
+
+    #[test]
+    fn test_mcp_012_stdio_no_warning() {
+        let content = r#"{
+            "mcpServers": {
+                "server": {
+                    "type": "stdio",
+                    "command": "node"
+                }
+            }
+        }"#;
+        let diagnostics = validate(content);
+        assert!(!diagnostics.iter().any(|d| d.rule == "MCP-012"));
+    }
+
+    // ===== Multiple servers test =====
+
+    #[test]
+    fn test_multiple_servers_validation() {
+        let content = r#"{
+            "mcpServers": {
+                "good-stdio": {
+                    "type": "stdio",
+                    "command": "node"
+                },
+                "bad-stdio": {
+                    "type": "stdio"
+                },
+                "good-http": {
+                    "type": "http",
+                    "url": "http://localhost"
+                },
+                "bad-http": {
+                    "type": "http"
+                }
+            }
+        }"#;
+        let diagnostics = validate(content);
+        let mcp_009: Vec<_> = diagnostics.iter().filter(|d| d.rule == "MCP-009").collect();
+        let mcp_010: Vec<_> = diagnostics.iter().filter(|d| d.rule == "MCP-010").collect();
+        assert_eq!(mcp_009.len(), 1);
+        assert!(mcp_009[0].message.contains("bad-stdio"));
+        assert_eq!(mcp_010.len(), 1);
+        assert!(mcp_010[0].message.contains("bad-http"));
+    }
+
+    // ===== Existing server config test should still pass =====
+
+    #[test]
+    fn test_mcp_server_config_valid_no_new_errors() {
+        // The existing test_mcp_server_config_format test content should still
+        // pass with no errors (server has command, no type = defaults to stdio)
+        let content = r#"{
+            "mcpServers": {
+                "my-server": {
+                    "command": "node",
+                    "args": ["server.js"]
+                }
+            }
+        }"#;
+        let diagnostics = validate(content);
+        assert!(diagnostics.is_empty(), "Valid server config should have no errors, got: {:?}", diagnostics);
     }
 }
