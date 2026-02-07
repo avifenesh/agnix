@@ -13,10 +13,10 @@
 
   --ifm-code-font-size: 95%;
   --ifm-heading-font-weight: 600;
-  --ifm-font-family-base: system-ui, -apple-system, 'Segoe UI', Roboto,
-    sans-serif;
-  --ifm-font-family-monospace: ui-monospace, 'SFMono-Regular', 'SF Mono',
-    Menlo, Consolas, monospace;
+  --ifm-font-family-base: 'Outfit', system-ui, -apple-system, 'Segoe UI',
+    Roboto, sans-serif;
+  --ifm-font-family-monospace: 'JetBrains Mono', ui-monospace,
+    'SFMono-Regular', 'SF Mono', Menlo, Consolas, monospace;
   --ifm-global-radius: 6px;
 
   --ag-surface: #ffffff;

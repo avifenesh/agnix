@@ -19,6 +19,13 @@ const config = {
     locales: ['en'],
   },
 
+  stylesheets: [
+    {
+      href: 'https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap',
+      type: 'text/css',
+    },
+  ],
+
   headTags: [
     {
       tagName: 'script',
@@ -28,7 +35,7 @@ const config = {
         '@type': 'SoftwareApplication',
         name: 'agnix',
         description:
-          'Linter for AI agent configurations. Validates Skills, Hooks, MCP, Memory, and Plugins for Claude Code, Copilot, Cursor, and more.',
+          'Linter for AI agent configurations. 145 validation rules for Skills, Hooks, MCP, Memory, and Plugins across Claude Code, Copilot, Cursor, Cline, and more.',
         applicationCategory: 'DeveloperApplication',
         operatingSystem: 'Windows, macOS, Linux',
         url: 'https://avifenesh.github.io/agnix/',
@@ -98,7 +105,7 @@ const config = {
       {
         name: 'keywords',
         content:
-          'agent config linter, AGENTS.md validator, Claude Code linter, MCP validation, CLAUDE.md linter, agnix, cursor rules linter',
+          'agent config linter, AGENTS.md validator, Claude Code linter, MCP validation, CLAUDE.md linter, agnix, cursor rules linter, cline linter, opencode validator, gemini cli linter',
       },
       { name: 'twitter:card', content: 'summary_large_image' },
       { property: 'og:type', content: 'website' },
