@@ -13,7 +13,7 @@ exclude = [
 ]
 
 [workspace.package]
-version = "0.10.0"
+version = "0.10.1"
 edition = "2024"
 license = "MIT OR Apache-2.0"
 authors = ["Avi Fenesh <avifenesh@gmail.com>"]
@@ -24,8 +24,8 @@ categories = ["development-tools", "command-line-utilities"]
 
 [workspace.dependencies]
 # Internal crates - path for local dev, version for crates.io
-agnix-rules = { path = "crates/agnix-rules", version = "0.10.0" }
-agnix-core = { path = "crates/agnix-core", version = "0.10.0" }
+agnix-rules = { path = "crates/agnix-rules", version = "0.10.1" }
+agnix-core = { path = "crates/agnix-core", version = "0.10.1" }
 
 # Core dependencies
 serde = { version = "1", features = ["derive"] }
