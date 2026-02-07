@@ -70,7 +70,6 @@ pub(crate) fn find_yaml_value_range<T: FrontmatterRanges>(
     key: &str,
     include_quotes: bool,
 ) -> Option<(usize, usize)> {
-
     for (idx, line) in parsed.raw_content().lines().enumerate() {
         let trimmed = line.trim_start();
         if let Some(rest) = trimmed.strip_prefix(key) {
