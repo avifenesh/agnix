@@ -279,11 +279,7 @@ impl Validator for PerClientSkillValidator {
                                     line_num,
                                     col,
                                     rule_id,
-                                    t!(
-                                        &msg_key,
-                                        field = key,
-                                        client = client_display_name(client)
-                                    ),
+                                    t!(&msg_key, field = key, client = client_display_name(client)),
                                 )
                                 .with_suggestion(t!(
                                     &sug_key,
