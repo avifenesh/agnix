@@ -1522,4 +1522,38 @@ mod tests {
             "Non-string homepage should trigger CC-PL-010"
         );
     }
+
+    // ===== CC-PL-006 suggestion test =====
+
+    #[test]
+    fn test_cc_pl_006_has_suggestion() {
+        let temp = TempDir::new().unwrap();
+        let plugin_path = temp.path().join(".claude-plugin").join("plugin.json");
+        write_plugin(&plugin_path, r#"{ invalid json }"#);
+
+        let validator = PluginValidator;
+        let diagnostics = validator.validate(
+            &plugin_path,
+            &fs::read_to_string(&plugin_path).unwrap(),
+            &LintConfig::default(),
+        );
+
+        let cc_pl_006: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-PL-006")
+            .collect();
+        assert_eq!(cc_pl_006.len(), 1);
+        assert!(
+            cc_pl_006[0].suggestion.is_some(),
+            "CC-PL-006 should have a suggestion"
+        );
+        assert!(
+            cc_pl_006[0]
+                .suggestion
+                .as_ref()
+                .unwrap()
+                .contains("Validate JSON syntax"),
+            "CC-PL-006 suggestion should mention JSON syntax"
+        );
+    }
 }

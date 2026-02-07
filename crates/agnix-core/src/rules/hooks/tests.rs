@@ -3543,3 +3543,46 @@ fn test_cc_hk_016_no_autofix_for_non_string() {
         "CC-HK-016 should not have auto-fix for non-string type values"
     );
 }
+
+// ===== CC-HK-012 suggestion tests =====
+
+#[test]
+fn test_cc_hk_012_has_suggestion_on_invalid_json() {
+    let content = r#"{ "hooks": { invalid syntax } }"#;
+    let diagnostics = validate(content);
+
+    let parse_errors: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-012")
+        .collect();
+    assert_eq!(parse_errors.len(), 1);
+    assert!(
+        parse_errors[0].suggestion.is_some(),
+        "CC-HK-012 should have a suggestion"
+    );
+    assert!(
+        parse_errors[0]
+            .suggestion
+            .as_ref()
+            .unwrap()
+            .contains("Validate JSON syntax"),
+        "CC-HK-012 suggestion should mention JSON syntax"
+    );
+}
+
+#[test]
+fn test_cc_hk_012_has_suggestion_on_schema_mismatch() {
+    // Valid JSON but wrong structure triggers the second CC-HK-012 call site
+    let content = r#"{"hooks": null}"#;
+    let diagnostics = validate(content);
+
+    let parse_errors: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-012")
+        .collect();
+    assert_eq!(parse_errors.len(), 1);
+    assert!(
+        parse_errors[0].suggestion.is_some(),
+        "CC-HK-012 schema mismatch should also have a suggestion"
+    );
+}

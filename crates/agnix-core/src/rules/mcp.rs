@@ -2034,4 +2034,83 @@ mod tests {
             diagnostics
         );
     }
+
+    // ===== MCP-007 suggestion test =====
+
+    #[test]
+    fn test_mcp_007_has_suggestion() {
+        let content = r#"{ invalid json }"#;
+        let diagnostics = validate(content);
+
+        let mcp_007: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "MCP-007")
+            .collect();
+        assert_eq!(mcp_007.len(), 1);
+        assert!(
+            mcp_007[0].suggestion.is_some(),
+            "MCP-007 should have a suggestion"
+        );
+        assert!(
+            mcp_007[0]
+                .suggestion
+                .as_ref()
+                .unwrap()
+                .contains("Validate JSON syntax"),
+            "MCP-007 suggestion should mention JSON syntax"
+        );
+    }
+
+    // ===== MCP-003 improved suggestion test =====
+
+    #[test]
+    fn test_mcp_003_suggestion_lists_valid_types() {
+        let content = r#"{"name": "test-tool", "description": "A test tool that does things", "inputSchema": {"type": "invalid"}}"#;
+        let diagnostics = validate(content);
+
+        let mcp_003: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "MCP-003")
+            .collect();
+        assert_eq!(mcp_003.len(), 1);
+        assert!(
+            mcp_003[0].suggestion.is_some(),
+            "MCP-003 should have a suggestion"
+        );
+        let suggestion = mcp_003[0].suggestion.as_ref().unwrap();
+        assert!(
+            suggestion.contains("string") && suggestion.contains("object") && suggestion.contains("array"),
+            "MCP-003 suggestion should list valid JSON Schema types, got: {}",
+            suggestion
+        );
+    }
+
+    // ===== MCP-006 improved suggestion test =====
+
+    #[test]
+    fn test_mcp_006_suggestion_warns_about_self_reported() {
+        let content = r#"{
+            "name": "test-tool",
+            "description": "A test tool that does useful things",
+            "inputSchema": {"type": "object"},
+            "annotations": {"title": "My Tool", "readOnlyHint": true}
+        }"#;
+        let diagnostics = validate(content);
+
+        let mcp_006: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "MCP-006")
+            .collect();
+        assert_eq!(mcp_006.len(), 1);
+        assert!(
+            mcp_006[0].suggestion.is_some(),
+            "MCP-006 should have a suggestion"
+        );
+        let suggestion = mcp_006[0].suggestion.as_ref().unwrap();
+        assert!(
+            suggestion.contains("self-reported"),
+            "MCP-006 suggestion should warn about self-reported annotations, got: {}",
+            suggestion
+        );
+    }
 }

@@ -659,4 +659,29 @@ context: fork"#;
             );
         }
     }
+
+    // ===== AGM-001 improved suggestion test =====
+
+    #[test]
+    fn test_agm_001_suggestion_mentions_unclosed_tags() {
+        let content = r#"```unclosed
+Some content"#;
+        let diagnostics = validate(content);
+
+        let agm_001: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "AGM-001")
+            .collect();
+        assert!(!agm_001.is_empty(), "AGM-001 should fire for unclosed code block");
+        assert!(
+            agm_001[0].suggestion.is_some(),
+            "AGM-001 should have a suggestion"
+        );
+        let suggestion = agm_001[0].suggestion.as_ref().unwrap();
+        assert!(
+            suggestion.contains("unclosed tags"),
+            "AGM-001 suggestion should mention 'unclosed tags', got: {}",
+            suggestion
+        );
+    }
 }
