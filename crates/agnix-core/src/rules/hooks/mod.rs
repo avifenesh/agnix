@@ -380,7 +380,16 @@ impl Validator for HooksValidator {
             validate_cc_hk_011_invalid_timeout_values(&raw_value, path, content, &mut diagnostics);
         }
 
-        // CC-HK-013: Async on non-command hook
+        // CC-HK-016: Validate hook type (check for unknown types first)
+        // Run before field-specific rules so unknown types short-circuit early
+        if config.is_rule_enabled("CC-HK-016") {
+            validate_cc_hk_016_unknown_type(&raw_value, path, &mut diagnostics);
+            if diagnostics.iter().any(|d| d.rule == "CC-HK-016") {
+                return diagnostics;
+            }
+        }
+
+        // CC-HK-013: Async on non-command hook (only known types)
         if config.is_rule_enabled("CC-HK-013") {
             validate_cc_hk_013_async_field(&raw_value, path, &mut diagnostics);
         }
@@ -388,14 +397,6 @@ impl Validator for HooksValidator {
         // CC-HK-014: Once outside skill/agent frontmatter
         if config.is_rule_enabled("CC-HK-014") {
             validate_cc_hk_014_once_field(&raw_value, path, &mut diagnostics);
-        }
-
-        // CC-HK-016: Validate hook type (check for unknown types)
-        if config.is_rule_enabled("CC-HK-016") {
-            validate_cc_hk_016_unknown_type(&raw_value, path, &mut diagnostics);
-            if diagnostics.iter().any(|d| d.rule == "CC-HK-016") {
-                return diagnostics;
-            }
         }
 
         let settings: SettingsSchema = match serde_json::from_value(raw_value) {

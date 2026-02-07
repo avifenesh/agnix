@@ -487,28 +487,30 @@ pub(super) fn validate_cc_hk_013_async_field(
     path: &Path,
     diagnostics: &mut Vec<Diagnostic>,
 ) {
+    let known_non_command = ["prompt", "agent"];
     for_each_raw_hook(raw_value, |event, matcher_idx, hook_idx, hook| {
         if hook.get("async").is_some() {
-            let hook_type = hook
-                .get("type")
-                .and_then(|t| t.as_str())
-                .unwrap_or("unknown");
-            if hook_type != "command" {
-                let hook_location = format!("hooks.{}[{}].hooks[{}]", event, matcher_idx, hook_idx);
-                diagnostics.push(
-                    Diagnostic::error(
-                        path.to_path_buf(),
-                        1,
-                        0,
-                        "CC-HK-013",
-                        t!(
-                            "rules.cc_hk_013.message",
-                            hook_type = hook_type,
-                            location = hook_location.as_str()
-                        ),
-                    )
-                    .with_suggestion(t!("rules.cc_hk_013.suggestion")),
-                );
+            if let Some(hook_type) = hook.get("type").and_then(|t| t.as_str()) {
+                // Only flag async on known non-command types.
+                // Unknown/invalid types are handled by CC-HK-016.
+                if known_non_command.contains(&hook_type) {
+                    let hook_location =
+                        format!("hooks.{}[{}].hooks[{}]", event, matcher_idx, hook_idx);
+                    diagnostics.push(
+                        Diagnostic::error(
+                            path.to_path_buf(),
+                            1,
+                            0,
+                            "CC-HK-013",
+                            t!(
+                                "rules.cc_hk_013.message",
+                                hook_type = hook_type,
+                                location = hook_location.as_str()
+                            ),
+                        )
+                        .with_suggestion(t!("rules.cc_hk_013.suggestion")),
+                    );
+                }
             }
         }
     });
