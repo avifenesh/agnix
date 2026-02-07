@@ -31,18 +31,7 @@ fn find_json_field_location(content: &str, field_name: &str) -> (usize, usize) {
 /// Find a unique value span for a JSON scalar key (string/number/bool/null).
 /// Returns the full value span (including quotes for strings).
 fn find_unique_json_scalar_value_span(content: &str, key: &str) -> Option<(usize, usize)> {
-    let pattern = format!(
-        r#"("{}"\s*:\s*)((?:"[^"]*")|(?:-?\d+(?:\.\d+)?)|(?:true|false|null))"#,
-        regex::escape(key)
-    );
-    let re = Regex::new(&pattern).ok()?;
-    let mut captures = re.captures_iter(content);
-    let first = captures.next()?;
-    if captures.next().is_some() {
-        return None;
-    }
-    let value = first.get(2)?;
-    Some((value.start(), value.end()))
+    crate::span_utils::find_unique_json_scalar_span(content, key)
 }
 
 use super::find_unique_json_string_value_span;
