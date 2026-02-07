@@ -1,6 +1,7 @@
 # agnix Technical Reference
 
-> Linter for agent configs. 132 rules across 16 categories.
+> Linter for agent configs. 136 rules across 16 categories.
+
 
 ## What agnix Validates
 
@@ -11,7 +12,7 @@
 | Memory (Claude Code) | CLAUDE.md, CLAUDE.local.md, .claude/rules/*.md | 12 |
 | Instructions (Cross-Tool) | AGENTS.md, AGENTS.local.md, AGENTS.override.md | 6 |
 | Agents | agents/*.md | 13 |
-| Plugins | plugin.json | 6 |
+| Plugins | plugin.json | 10 |
 | Prompt Engineering | CLAUDE.md, AGENTS.md | 4 |
 | Cross-Platform | AGENTS.md | 6 |
 | MCP | tool definitions | 12 |
@@ -36,7 +37,8 @@ agnix/
 │   ├── agnix-lsp/      # LSP server
 │   └── agnix-mcp/      # MCP server
 ├── editors/            # Neovim, VS Code, JetBrains, Zed integrations
-├── knowledge-base/     # 132 rules documented
+├── knowledge-base/     # 136 rules documented
+
 ├── scripts/            # Build/dev automation scripts
 ├── website/            # Docusaurus documentation website
 └── tests/fixtures/     # Test cases
@@ -79,13 +81,12 @@ All rules in `knowledge-base/VALIDATION-RULES.md`
 - `AGM-nnn`: AGENTS.md (cross-tool instructions)
 - `CC-AG-nnn`: Claude Code Agents
 - `COP-nnn`: GitHub Copilot Instructions
+- `CLN-nnn`: Cline Rules
 - `CC-PL-nnn`: Claude Code Plugins
 - `MCP-nnn`: MCP protocol
 - `XML-nnn`: XML validation
 - `REF-nnn`: @import/reference validation
 - `PE-nnn`: Prompt engineering
-- `CUR-nnn`: Cursor project rules
-- `CLN-nnn`: Cline rules
 - `XP-nnn`: Cross-platform compatibility
 - `VER-nnn`: Version awareness
 
@@ -185,7 +186,7 @@ exclude = ["node_modules/**", ".git/**", "target/**"]
 agnix validates `.agnix.toml` files semantically before running validation:
 
 - **Rule ID validation**: `disabled_rules` must match known patterns (AS-, CC-SK-, CC-HK-, CC-AG-, CC-MEM-, CC-PL-, XML-, MCP-, REF-, XP-, AGM-, COP-, CUR-, CLN-, PE-, VER-, imports::)
-- **Tool validation**: `tools` array must contain valid tool names (claude-code, cline, cursor, codex, copilot, github-copilot, generic)
+- **Tool validation**: `tools` array must contain valid tool names (claude-code, cursor, codex, copilot, github-copilot, cline, generic)
 - **Deprecation warnings**: `mcp_protocol_version` is deprecated (use `spec_revisions.mcp_protocol`)
 
 Warnings are displayed before validation output with suggestions for fixes.

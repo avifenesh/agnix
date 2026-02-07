@@ -30,6 +30,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CC-SK-013: Warn when context=fork is used with reference-only content (no imperative verbs)
 - CC-SK-014: Validate disable-model-invocation is boolean, not string "true"
 - CC-SK-015: Validate user-invocable is boolean, not string "true"/"false"
+- CC-PL-007: Validate component paths are relative (no absolute paths or `..` traversal) with safe auto-fix (HIGH)
+- CC-PL-008: Detect component paths pointing inside `.claude-plugin/` directory (HIGH)
+- CC-PL-009: Validate `author.name` is non-empty when author object present (MEDIUM)
+- CC-PL-010: Validate `homepage` is a valid http/https URL when present (MEDIUM)
 - COP-005: Validate `excludeAgent` field contains valid agent identifiers
 - COP-006: Warn when global Copilot instruction file exceeds ~4000 characters
 - CUR-007: Warn when `alwaysApply: true` is set alongside `globs` (redundant) with safe auto-fix
@@ -364,7 +368,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Quick-fix code actions from Fix objects
   - Hover documentation for frontmatter fields
   - Document content caching for performance
-  - Supports all 132 agnix validation rules with severity mapping
+  - Supports all 136 agnix validation rules with severity mapping
+
   - Workspace boundary validation for security (prevents path traversal)
   - Config caching optimization for performance
   - Editor support for VS Code, Neovim, Helix, and other LSP-compatible editors
@@ -378,7 +383,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Case-insensitive tool name matching
   - Takes precedence over legacy `target` field for flexibility
 - VS Code extension with full LSP integration (#22)
-  - Real-time diagnostics for all 132 validation rules
+  - Real-time diagnostics for all 136 validation rules
+
   - Status bar indicator showing agnix validation status
   - Syntax highlighting for SKILL.md YAML frontmatter
   - Commands: 'Restart Language Server' and 'Show Output Channel'

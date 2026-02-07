@@ -458,6 +458,18 @@ rules:
     suggestion: "Set a non-empty plugin name"
   cc_pl_006:
     message: "Failed to parse plugin.json: %{error}"
+  cc_pl_007:
+    message: "Invalid component path in '%{field}': '%{path}' must be relative (no absolute paths or '..' traversal)"
+    suggestion: "Use a relative path starting with './' (e.g., './skills/')"
+  cc_pl_008:
+    message: "Component path in '%{field}' points inside .claude-plugin/: '%{path}'"
+    suggestion: "Move the component to the plugin root directory and update the path"
+  cc_pl_009:
+    message: "Invalid author object: 'author.name' must be a non-empty string"
+    suggestion: "Set 'author.name' to a non-empty string"
+  cc_pl_010:
+    message: "Invalid homepage URL: '%{url}' must use http:// or https:// scheme"
+    suggestion: "Use a valid URL with http:// or https:// scheme"
 
   # --- Version (lib.rs) ---
   ver_001:

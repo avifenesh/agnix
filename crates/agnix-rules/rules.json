@@ -1,7 +1,8 @@
 {
   "description": "Machine-readable source of truth for all validation rules. When adding a new rule, add it here AND in VALIDATION-RULES.md. CI parity tests enforce sync.",
   "version": "1.1.0",
-  "total_rules": 132,
+  "total_rules": 136,
+
   "last_updated": "2026-02-07",
   "schema": {
     "evidence": {
@@ -2194,6 +2195,107 @@
       }
     },
     {
+      "id": "CC-PL-007",
+      "name": "Invalid Component Path",
+      "severity": "HIGH",
+      "category": "claude-plugins",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://code.claude.com/docs/en/plugins-reference"
+        ],
+        "verified_on": "2026-02-07",
+        "applies_to": {
+          "tool": "claude-code"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": true,
+        "fix_safety": "safe"
+      }
+    },
+    {
+      "id": "CC-PL-008",
+      "name": "Component Inside .claude-plugin",
+      "severity": "HIGH",
+      "category": "claude-plugins",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://code.claude.com/docs/en/plugins-reference"
+        ],
+        "verified_on": "2026-02-07",
+        "applies_to": {
+          "tool": "claude-code"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      }
+    },
+    {
+      "id": "CC-PL-009",
+      "name": "Invalid Author Object",
+      "severity": "MEDIUM",
+      "category": "claude-plugins",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://code.claude.com/docs/en/plugins-reference"
+        ],
+        "verified_on": "2026-02-07",
+        "applies_to": {
+          "tool": "claude-code"
+        },
+        "normative_level": "SHOULD",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      }
+    },
+    {
+      "id": "CC-PL-010",
+      "name": "Invalid Homepage URL",
+      "severity": "MEDIUM",
+      "category": "claude-plugins",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://code.claude.com/docs/en/plugins-reference"
+        ],
+        "verified_on": "2026-02-07",
+        "applies_to": {
+          "tool": "claude-code"
+        },
+        "normative_level": "SHOULD",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      }
+    },
+    {
       "id": "MCP-001",
       "name": "Invalid JSON-RPC Version",
       "severity": "HIGH",
@@ -2882,7 +2984,7 @@
       "evidence": {
         "source_type": "vendor_docs",
         "source_urls": [
-          "https://docs.cline.bot/features/cline-rules"
+          "https://docs.cline.bot/improving-your-workflow/cline-rules"
         ],
         "verified_on": "2026-02-07",
         "applies_to": {
@@ -2907,7 +3009,7 @@
       "evidence": {
         "source_type": "vendor_docs",
         "source_urls": [
-          "https://docs.cline.bot/features/cline-rules"
+          "https://docs.cline.bot/improving-your-workflow/cline-rules"
         ],
         "verified_on": "2026-02-07",
         "applies_to": {
@@ -2932,7 +3034,7 @@
       "evidence": {
         "source_type": "vendor_docs",
         "source_urls": [
-          "https://docs.cline.bot/features/cline-rules"
+          "https://docs.cline.bot/improving-your-workflow/cline-rules"
         ],
         "verified_on": "2026-02-07",
         "applies_to": {
@@ -3385,6 +3487,11 @@
       "count": 6,
       "description": "Cursor project rules"
     },
+    "cline": {
+      "prefix": "CLN",
+      "count": 3,
+      "description": "Cline rules validation"
+    },
     "xml": {
       "prefix": "XML",
       "count": 3,
@@ -3828,7 +3935,7 @@
             "key": "author",
             "docs": "Author metadata object.",
             "rules": [
-              "CC-PL-006"
+              "CC-PL-009"
             ],
             "values": [],
             "snippet": "\"author\": { \"name\": \"Your Name\" }"
@@ -3837,7 +3944,7 @@
             "key": "homepage",
             "docs": "Project homepage URL.",
             "rules": [
-              "CC-PL-006"
+              "CC-PL-010"
             ],
             "values": [],
             "snippet": "\"homepage\": \"https://example.com\""
