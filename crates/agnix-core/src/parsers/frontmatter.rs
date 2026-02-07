@@ -235,6 +235,10 @@ Body content here"#;
         let parts = split_frontmatter(content);
         assert!(parts.has_frontmatter);
         assert!(parts.has_closing);
+        assert!(
+            parts.frontmatter.contains("test\\\"skill"),
+            "Frontmatter should preserve escaped quotes"
+        );
     }
 
     #[test]

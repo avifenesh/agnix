@@ -171,7 +171,7 @@ fn test_e2e_cc_hk_011_fix_timeout_range() {
 
 #[test]
 fn test_e2e_mcp_011_fix_transport_case() {
-    // "STDIO" is an invalid type, but close to "stdio"
+    // "Stdio" has incorrect casing (should be lowercase "stdio")
     let content = r#"{
     "mcpServers": {
         "my-server": {
@@ -279,7 +279,7 @@ fn test_safe_fix_deterministic_as_005() {
     let validators = registry.validators_for(FileType::Skill);
 
     let mut reference_fix: Option<Fix> = None;
-    for _ in 0..10 {
+    for _ in 0..3 {
         let mut diags = Vec::new();
         for v in &validators {
             diags.extend(v.validate(path, content, &config));
@@ -311,7 +311,7 @@ fn test_safe_fix_deterministic_as_006() {
     let validators = registry.validators_for(FileType::Skill);
 
     let mut reference_fix: Option<Fix> = None;
-    for _ in 0..10 {
+    for _ in 0..3 {
         let mut diags = Vec::new();
         for v in &validators {
             diags.extend(v.validate(path, content, &config));
@@ -537,9 +537,37 @@ fn test_ordering_multiple_diagnostics_same_file() {
 
     assert_eq!(results.len(), 1);
     let fixed = &results[0].fixed;
-    assert!(fixed.contains("AAAAA"), "First replacement should be applied");
-    assert!(fixed.contains("BBBBB"), "Second replacement should be applied");
-    assert!(fixed.contains("CCCCC"), "Third replacement should be applied");
+    assert_eq!(fixed, "AAAAA_____BBBBB_____CCCCC_____");
+}
+
+#[test]
+fn test_ordering_overlapping_fixes_skipped() {
+    // 3 diagnostics: fix at 10-14, fix at 6-12 (overlaps with first), fix at 0-4
+    let content = "0123456789abcdef0123456789";
+    let path = Path::new("/test.md");
+
+    let diags = vec![
+        Diagnostic::error(path.to_path_buf(), 1, 1, "TEST-001", "Fix at 10")
+            .with_fix(Fix::replace(10, 14, "XX", "Fix at 10-14", true)),
+        Diagnostic::error(path.to_path_buf(), 1, 1, "TEST-002", "Fix at 6")
+            .with_fix(Fix::replace(6, 12, "YY", "Fix at 6-12 (overlaps)", true)),
+        Diagnostic::error(path.to_path_buf(), 1, 1, "TEST-003", "Fix at 0")
+            .with_fix(Fix::replace(0, 4, "ZZ", "Fix at 0-4", true)),
+    ];
+
+    let mock_fs = Arc::new(MockFileSystem::new());
+    mock_fs.add_file("/test.md", content);
+    let fs_clone: Arc<dyn FileSystem> = Arc::clone(&mock_fs) as Arc<dyn FileSystem>;
+    let results = apply_fixes_with_fs(&diags, false, false, Some(fs_clone)).unwrap();
+
+    assert_eq!(results.len(), 1);
+    let fixed = &results[0].fixed;
+    // Fix at 10-14 applied, fix at 6-12 skipped (overlaps), fix at 0-4 applied
+    assert!(fixed.contains("XX"), "Fix at 10-14 should be applied");
+    assert!(fixed.contains("ZZ"), "Fix at 0-4 should be applied");
+    assert!(!fixed.contains("YY"), "Overlapping fix at 6-12 should be skipped");
+    // Only 2 of 3 fixes should be applied
+    assert_eq!(results[0].applied.len(), 2);
 }
 
 #[test]

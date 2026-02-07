@@ -678,7 +678,7 @@ mod tests {
     fn test_fix_unicode_content_boundaries() {
         // \u{00e9} is precomposed e-acute: 2 bytes (0xc3, 0xa9)
         let content = "caf\u{00e9} is great";
-        // 'c'=0, 'a'=1, 'f'=2, 'e\u{0301}'=3-4 (2 bytes)
+        // 'c'=0, 'a'=1, 'f'=2, '\u{00e9}'=3-4 (2 bytes), ' '=5
         // Fix byte 3 to 5 (the e-acute), replace with "e"
         let fix = Fix::replace(3, 5, "e", "Normalize accent", true);
 
