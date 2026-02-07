@@ -428,6 +428,16 @@ impl CompiledFilesConfig {
     }
 }
 
+impl Default for CompiledFilesConfig {
+    fn default() -> Self {
+        Self {
+            include_as_memory: Vec::new(),
+            include_as_generic: Vec::new(),
+            exclude: Vec::new(),
+        }
+    }
+}
+
 fn compile_patterns<F>(patterns: &[String], error_builder: F) -> LintResult<Vec<glob::Pattern>>
 where
     F: Fn(String, String) -> LintError,
@@ -528,10 +538,9 @@ pub fn resolve_file_type(path: &Path, config: &LintConfig) -> FileType {
     // Compile patterns on-demand for single-file validation
     match compile_files_config(&config.files) {
         Ok(compiled) => resolve_with_compiled(path, config.root_dir.as_deref(), &compiled),
-        // Silent fallback is intentional: patterns are already validated at config
-        // load time (LintConfig::validate), so a compilation failure here would only
-        // occur with corrupt in-memory state. Falling back to built-in detection is
-        // the safest recovery.
+        // Invalid patterns produce warnings during config validation but don't
+        // prevent them from reaching here. Fall back to built-in detection when
+        // compilation fails, which is safe since the patterns would have no effect.
         Err(_) => detect_file_type(path),
     }
 }
@@ -549,7 +558,20 @@ pub fn validate_file_with_registry(
     registry: &ValidatorRegistry,
 ) -> LintResult<Vec<Diagnostic>> {
     let file_type = resolve_file_type(path, config);
+    validate_file_with_type(path, file_type, config, registry)
+}
 
+/// Validate a single file with a pre-resolved [`FileType`].
+///
+/// This avoids re-compiling `[files]` glob patterns when the file type has
+/// already been determined (e.g. in `validate_project_with_registry` where
+/// patterns are pre-compiled for the entire walk).
+fn validate_file_with_type(
+    path: &Path,
+    file_type: FileType,
+    config: &LintConfig,
+    registry: &ValidatorRegistry,
+) -> LintResult<Vec<Diagnostic>> {
     if file_type == FileType::Unknown {
         return Ok(vec![]);
     }
@@ -654,8 +676,13 @@ pub fn validate_project_with_registry(
     let exclude_patterns = compile_exclude_patterns(&config.exclude)?;
     let exclude_patterns = Arc::new(exclude_patterns);
 
-    // Pre-compile files config patterns once for the parallel walk
-    let compiled_files = Arc::new(compile_files_config(&config.files)?);
+    // Pre-compile files config patterns once for the parallel walk.
+    // Invalid patterns are treated as non-fatal to align with LintConfig::validate()
+    // and configuration docs (they surface as warnings, not abort validation).
+    let compiled_files = Arc::new(match compile_files_config(&config.files) {
+        Ok(compiled) => compiled,
+        Err(_) => CompiledFilesConfig::default(),
+    });
 
     let root_path = root_dir.clone();
 
@@ -734,8 +761,9 @@ pub fn validate_project_with_registry(
                     .push(file_path.clone());
             }
 
-            // Validate the file
-            match validate_file_with_registry(&file_path, &config, registry) {
+            // Validate the file using the pre-resolved file_type to avoid
+            // re-compiling [files] glob patterns for every file.
+            match validate_file_with_type(&file_path, file_type, &config, registry) {
                 Ok(file_diagnostics) => file_diagnostics,
                 Err(e) => {
                     vec![Diagnostic::error(
@@ -4447,17 +4475,15 @@ Use idiomatic Rust patterns.
         let mut config = LintConfig::default();
         config.files.include_as_memory = vec!["[invalid".to_string()];
 
+        // Invalid patterns degrade gracefully: validation proceeds with no
+        // file overrides applied (consistent with LintConfig::validate() which
+        // only produces warnings for invalid patterns).
         let result = validate_project(root, &config);
         assert!(
-            result.is_err(),
-            "Expected InvalidIncludePattern error for malformed glob"
+            result.is_ok(),
+            "Expected graceful degradation for invalid file pattern, got error: {:?}",
+            result.unwrap_err()
         );
-        match result.unwrap_err() {
-            LintError::InvalidIncludePattern { pattern, .. } => {
-                assert_eq!(pattern, "[invalid");
-            }
-            other => panic!("Expected InvalidIncludePattern, got: {:?}", other),
-        }
     }
 
     #[test]
