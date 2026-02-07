@@ -270,9 +270,12 @@ impl Validator for CopilotValidator {
                         if let Some(closest) =
                             super::find_closest_value(agent_value.as_str(), VALID_AGENTS)
                         {
-                            if let Some((start, end)) =
-                                find_yaml_value_range(content, &parsed, "excludeAgent")
-                            {
+                            if let Some((start, end)) = crate::rules::find_yaml_value_range(
+                                content,
+                                &parsed,
+                                "excludeAgent",
+                                true,
+                            ) {
                                 let slice = content.get(start..end).unwrap_or("");
                                 let replacement = if slice.starts_with('"') {
                                     format!("\"{}\"", closest)
