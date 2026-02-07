@@ -410,6 +410,116 @@ pub fn detect_file_type(path: &Path) -> FileType {
     }
 }
 
+/// Pre-compiled file inclusion/exclusion patterns for efficient matching.
+///
+/// Used internally by `validate_project_with_registry` to avoid re-compiling
+/// glob patterns for every file during parallel validation.
+pub(crate) struct CompiledFilesConfig {
+    include_as_memory: Vec<glob::Pattern>,
+    include_as_generic: Vec<glob::Pattern>,
+    exclude: Vec<glob::Pattern>,
+}
+
+impl CompiledFilesConfig {
+    fn is_empty(&self) -> bool {
+        self.include_as_memory.is_empty()
+            && self.include_as_generic.is_empty()
+            && self.exclude.is_empty()
+    }
+}
+
+fn compile_files_config(files: &config::FilesConfig) -> LintResult<CompiledFilesConfig> {
+    let compile = |patterns: &[String]| -> LintResult<Vec<glob::Pattern>> {
+        patterns
+            .iter()
+            .map(|p| {
+                let normalized = p.replace('\\', "/");
+                glob::Pattern::new(&normalized).map_err(|e| LintError::InvalidIncludePattern {
+                    pattern: p.clone(),
+                    message: e.to_string(),
+                })
+            })
+            .collect()
+    };
+    Ok(CompiledFilesConfig {
+        include_as_memory: compile(&files.include_as_memory)?,
+        include_as_generic: compile(&files.include_as_generic)?,
+        exclude: compile(&files.exclude)?,
+    })
+}
+
+fn resolve_with_compiled(
+    path: &Path,
+    root_dir: Option<&Path>,
+    compiled: &CompiledFilesConfig,
+) -> FileType {
+    if compiled.is_empty() {
+        return detect_file_type(path);
+    }
+
+    let rel_path = if let Some(root) = root_dir {
+        normalize_rel_path(path, root)
+    } else {
+        // No root_dir: use filename only
+        path.file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or("")
+            .to_string()
+    };
+
+    let match_opts = glob::MatchOptions {
+        case_sensitive: true,
+        require_literal_separator: false,
+        require_literal_leading_dot: false,
+    };
+
+    // Priority: exclude > include_as_memory > include_as_generic > detect
+    for pattern in &compiled.exclude {
+        if pattern.matches_with(&rel_path, match_opts) {
+            return FileType::Unknown;
+        }
+    }
+    for pattern in &compiled.include_as_memory {
+        if pattern.matches_with(&rel_path, match_opts) {
+            return FileType::ClaudeMd;
+        }
+    }
+    for pattern in &compiled.include_as_generic {
+        if pattern.matches_with(&rel_path, match_opts) {
+            return FileType::GenericMarkdown;
+        }
+    }
+
+    detect_file_type(path)
+}
+
+/// Resolve file type with config-based overrides.
+///
+/// Applies `[files]` config patterns on top of [`detect_file_type`]:
+/// - `files.exclude` patterns map to [`FileType::Unknown`] (skip validation)
+/// - `files.include_as_memory` patterns map to [`FileType::ClaudeMd`]
+/// - `files.include_as_generic` patterns map to [`FileType::GenericMarkdown`]
+/// - Otherwise falls through to [`detect_file_type`]
+///
+/// Priority: exclude > include_as_memory > include_as_generic > built-in detection.
+///
+/// When no `[files]` patterns are configured, this is equivalent to
+/// calling `detect_file_type(path)` directly.
+pub fn resolve_file_type(path: &Path, config: &LintConfig) -> FileType {
+    if config.files.include_as_memory.is_empty()
+        && config.files.include_as_generic.is_empty()
+        && config.files.exclude.is_empty()
+    {
+        return detect_file_type(path);
+    }
+
+    // Compile patterns on-demand for single-file validation
+    match compile_files_config(&config.files) {
+        Ok(compiled) => resolve_with_compiled(path, config.root_dir.as_deref(), &compiled),
+        Err(_) => detect_file_type(path), // Fall back on invalid patterns
+    }
+}
+
 /// Validate a single file
 pub fn validate_file(path: &Path, config: &LintConfig) -> LintResult<Vec<Diagnostic>> {
     let registry = ValidatorRegistry::with_defaults();
