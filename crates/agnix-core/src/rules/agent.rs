@@ -14,6 +14,7 @@ use crate::{
 use rust_i18n::t;
 use std::collections::HashSet;
 use std::path::Path;
+use std::sync::OnceLock;
 
 /// Convert raw serde YAML errors into user-friendly messages.
 fn humanize_yaml_error(raw: &str) -> String {
@@ -449,9 +450,13 @@ impl Validator for AgentValidator {
         }
 
         // CC-AG-009: Invalid tool name in tools list
+        // CC-AG-010: Invalid tool name in disallowedTools list
+        // Compute known tools list once via OnceLock (shared across both rules)
+        static KNOWN_TOOLS_LIST: OnceLock<String> = OnceLock::new();
+        let known_tools_str = KNOWN_TOOLS_LIST.get_or_init(|| KNOWN_AGENT_TOOLS.join(", "));
+
         if config.is_rule_enabled("CC-AG-009") {
             if let Some(tools) = &schema.tools {
-                let known_tools_str = KNOWN_AGENT_TOOLS.join(", ");
                 for tool in tools {
                     let base_name = tool.split('(').next().unwrap_or(tool);
                     if !KNOWN_AGENT_TOOLS.contains(&base_name) {
@@ -464,7 +469,7 @@ impl Validator for AgentValidator {
                                 t!(
                                     "rules.cc_ag_009.message",
                                     tool = tool.as_str(),
-                                    known = &known_tools_str
+                                    known = known_tools_str
                                 ),
                             )
                             .with_suggestion(t!("rules.cc_ag_009.suggestion")),
@@ -474,10 +479,8 @@ impl Validator for AgentValidator {
             }
         }
 
-        // CC-AG-010: Invalid tool name in disallowedTools list
         if config.is_rule_enabled("CC-AG-010") {
             if let Some(disallowed) = &schema.disallowed_tools {
-                let known_tools_str = KNOWN_AGENT_TOOLS.join(", ");
                 for tool in disallowed {
                     let base_name = tool.split('(').next().unwrap_or(tool);
                     if !KNOWN_AGENT_TOOLS.contains(&base_name) {
@@ -490,7 +493,7 @@ impl Validator for AgentValidator {
                                 t!(
                                     "rules.cc_ag_010.message",
                                     tool = tool.as_str(),
-                                    known = &known_tools_str
+                                    known = known_tools_str
                                 ),
                             )
                             .with_suggestion(t!("rules.cc_ag_010.suggestion")),
@@ -503,9 +506,15 @@ impl Validator for AgentValidator {
         // CC-AG-011: Hooks in agent frontmatter validation
         if config.is_rule_enabled("CC-AG-011") {
             if let Some(hooks_value) = &schema.hooks {
+                // Compute valid events list once
+                static VALID_EVENTS_LIST: OnceLock<String> = OnceLock::new();
+                let valid_events_str =
+                    VALID_EVENTS_LIST.get_or_init(|| HooksSchema::VALID_EVENTS.join(", "));
+
                 // The hooks field should be an object mapping event names to arrays
                 if let Some(hooks_obj) = hooks_value.as_object() {
-                    for event_name in hooks_obj.keys() {
+                    for (event_name, event_value) in hooks_obj {
+                        // Validate event name
                         if !HooksSchema::VALID_EVENTS.contains(&event_name.as_str()) {
                             diagnostics.push(
                                 Diagnostic::error(
@@ -517,8 +526,156 @@ impl Validator for AgentValidator {
                                         "rules.cc_ag_011.message",
                                         error = format!(
                                             "unknown event '{}', valid events: {}",
-                                            event_name,
-                                            HooksSchema::VALID_EVENTS.join(", ")
+                                            event_name, valid_events_str
+                                        )
+                                    ),
+                                )
+                                .with_suggestion(t!("rules.cc_ag_011.suggestion")),
+                            );
+                            continue;
+                        }
+
+                        // Validate event value is an array of hook matchers
+                        if let Some(matchers) = event_value.as_array() {
+                            for (i, matcher) in matchers.iter().enumerate() {
+                                if let Some(matcher_obj) = matcher.as_object() {
+                                    // Each matcher must have a 'hooks' array
+                                    match matcher_obj.get("hooks") {
+                                        Some(hooks_arr) => {
+                                            if let Some(hooks) = hooks_arr.as_array() {
+                                                for (j, hook) in hooks.iter().enumerate() {
+                                                    if let Some(hook_obj) = hook.as_object() {
+                                                        // Each hook must have a valid 'type'
+                                                        match hook_obj
+                                                            .get("type")
+                                                            .and_then(|t| t.as_str())
+                                                        {
+                                                            Some("command") | Some("prompt") => {}
+                                                            Some(invalid_type) => {
+                                                                diagnostics.push(
+                                                                    Diagnostic::error(
+                                                                        path.to_path_buf(),
+                                                                        1,
+                                                                        0,
+                                                                        "CC-AG-011",
+                                                                        t!(
+                                                                            "rules.cc_ag_011.message",
+                                                                            error = format!(
+                                                                                "hook type '{}' in {}.matchers[{}].hooks[{}] is invalid, must be 'command' or 'prompt'",
+                                                                                invalid_type, event_name, i, j
+                                                                            )
+                                                                        ),
+                                                                    )
+                                                                    .with_suggestion(t!("rules.cc_ag_011.suggestion")),
+                                                                );
+                                                            }
+                                                            None => {
+                                                                diagnostics.push(
+                                                                    Diagnostic::error(
+                                                                        path.to_path_buf(),
+                                                                        1,
+                                                                        0,
+                                                                        "CC-AG-011",
+                                                                        t!(
+                                                                            "rules.cc_ag_011.message",
+                                                                            error = format!(
+                                                                                "hook in {}.matchers[{}].hooks[{}] is missing required 'type' field",
+                                                                                event_name, i, j
+                                                                            )
+                                                                        ),
+                                                                    )
+                                                                    .with_suggestion(t!("rules.cc_ag_011.suggestion")),
+                                                                );
+                                                            }
+                                                        }
+                                                    } else {
+                                                        diagnostics.push(
+                                                            Diagnostic::error(
+                                                                path.to_path_buf(),
+                                                                1,
+                                                                0,
+                                                                "CC-AG-011",
+                                                                t!(
+                                                                    "rules.cc_ag_011.message",
+                                                                    error = format!(
+                                                                        "hook in {}.matchers[{}].hooks[{}] must be an object",
+                                                                        event_name, i, j
+                                                                    )
+                                                                ),
+                                                            )
+                                                            .with_suggestion(t!("rules.cc_ag_011.suggestion")),
+                                                        );
+                                                    }
+                                                }
+                                            } else {
+                                                diagnostics.push(
+                                                    Diagnostic::error(
+                                                        path.to_path_buf(),
+                                                        1,
+                                                        0,
+                                                        "CC-AG-011",
+                                                        t!(
+                                                            "rules.cc_ag_011.message",
+                                                            error = format!(
+                                                                "'hooks' field in {}.matchers[{}] must be an array",
+                                                                event_name, i
+                                                            )
+                                                        ),
+                                                    )
+                                                    .with_suggestion(t!("rules.cc_ag_011.suggestion")),
+                                                );
+                                            }
+                                        }
+                                        None => {
+                                            diagnostics.push(
+                                                Diagnostic::error(
+                                                    path.to_path_buf(),
+                                                    1,
+                                                    0,
+                                                    "CC-AG-011",
+                                                    t!(
+                                                        "rules.cc_ag_011.message",
+                                                        error = format!(
+                                                            "matcher in {}.matchers[{}] is missing required 'hooks' array",
+                                                            event_name, i
+                                                        )
+                                                    ),
+                                                )
+                                                .with_suggestion(t!("rules.cc_ag_011.suggestion")),
+                                            );
+                                        }
+                                    }
+                                } else {
+                                    diagnostics.push(
+                                        Diagnostic::error(
+                                            path.to_path_buf(),
+                                            1,
+                                            0,
+                                            "CC-AG-011",
+                                            t!(
+                                                "rules.cc_ag_011.message",
+                                                error = format!(
+                                                    "matcher in {}.matchers[{}] must be an object",
+                                                    event_name, i
+                                                )
+                                            ),
+                                        )
+                                        .with_suggestion(t!("rules.cc_ag_011.suggestion")),
+                                    );
+                                }
+                            }
+                        } else {
+                            diagnostics.push(
+                                Diagnostic::error(
+                                    path.to_path_buf(),
+                                    1,
+                                    0,
+                                    "CC-AG-011",
+                                    t!(
+                                        "rules.cc_ag_011.message",
+                                        error = format!(
+                                            "event '{}' must map to an array of hook matchers",
+                                            event_name
                                         )
                                     ),
                                 )
@@ -2345,6 +2502,146 @@ Agent instructions"#;
             .filter(|d| d.rule == "CC-AG-011")
             .collect();
         assert_eq!(cc_ag_011.len(), 0);
+    }
+
+    #[test]
+    fn test_cc_ag_011_event_value_not_array() {
+        let content = r#"---
+name: my-agent
+description: A test agent
+hooks:
+  PreToolUse: "invalid-string"
+---
+Agent instructions"#;
+
+        let diagnostics = validate(content);
+        let cc_ag_011: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-AG-011")
+            .collect();
+        assert_eq!(cc_ag_011.len(), 1);
+        assert!(cc_ag_011[0].message.contains("must map to an array"));
+    }
+
+    #[test]
+    fn test_cc_ag_011_matcher_missing_hooks_array() {
+        let content = r#"---
+name: my-agent
+description: A test agent
+hooks:
+  PreToolUse:
+    - matcher: "*"
+---
+Agent instructions"#;
+
+        let diagnostics = validate(content);
+        let cc_ag_011: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-AG-011")
+            .collect();
+        assert_eq!(cc_ag_011.len(), 1);
+        assert!(
+            cc_ag_011[0]
+                .message
+                .contains("missing required 'hooks' array")
+        );
+    }
+
+    #[test]
+    fn test_cc_ag_011_hook_missing_type() {
+        let content = r#"---
+name: my-agent
+description: A test agent
+hooks:
+  PreToolUse:
+    - matcher: "*"
+      hooks:
+        - command: echo hello
+---
+Agent instructions"#;
+
+        let diagnostics = validate(content);
+        let cc_ag_011: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-AG-011")
+            .collect();
+        assert_eq!(cc_ag_011.len(), 1);
+        assert!(
+            cc_ag_011[0]
+                .message
+                .contains("missing required 'type' field")
+        );
+    }
+
+    #[test]
+    fn test_cc_ag_011_hook_invalid_type() {
+        let content = r#"---
+name: my-agent
+description: A test agent
+hooks:
+  PreToolUse:
+    - matcher: "*"
+      hooks:
+        - type: invalid
+          command: echo hello
+---
+Agent instructions"#;
+
+        let diagnostics = validate(content);
+        let cc_ag_011: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-AG-011")
+            .collect();
+        assert_eq!(cc_ag_011.len(), 1);
+        assert!(cc_ag_011[0].message.contains("hook type 'invalid'"));
+        assert!(
+            cc_ag_011[0]
+                .message
+                .contains("must be 'command' or 'prompt'")
+        );
+    }
+
+    #[test]
+    fn test_cc_ag_011_matcher_not_object() {
+        let content = r#"---
+name: my-agent
+description: A test agent
+hooks:
+  PreToolUse:
+    - "just a string"
+---
+Agent instructions"#;
+
+        let diagnostics = validate(content);
+        let cc_ag_011: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-AG-011")
+            .collect();
+        assert_eq!(cc_ag_011.len(), 1);
+        assert!(cc_ag_011[0].message.contains("matcher"));
+        assert!(cc_ag_011[0].message.contains("must be an object"));
+    }
+
+    #[test]
+    fn test_cc_ag_011_hooks_field_not_array() {
+        let content = r#"---
+name: my-agent
+description: A test agent
+hooks:
+  PreToolUse:
+    - matcher: "*"
+      hooks: "not-an-array"
+---
+Agent instructions"#;
+
+        let diagnostics = validate(content);
+        let cc_ag_011: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-AG-011")
+            .collect();
+        assert_eq!(cc_ag_011.len(), 1);
+        assert!(cc_ag_011[0].message.contains("'hooks' field"));
+        assert!(cc_ag_011[0].message.contains("must be an array"));
     }
 
     // ===== CC-AG-012 Tests: bypassPermissions Warning =====
