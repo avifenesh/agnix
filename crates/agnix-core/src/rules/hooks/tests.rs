@@ -3394,3 +3394,118 @@ fn test_cc_hk_018_no_autofix_when_duplicate_matcher() {
         "CC-HK-018 should not have auto-fix when matcher is duplicated"
     );
 }
+
+// ===== CC-HK-016 Auto-Fix =====
+
+#[test]
+fn test_cc_hk_016_autofix_case_insensitive() {
+    // "Command" is close to "command" - should produce autofix
+    let content = r#"{
+        "hooks": {
+            "Stop": [
+                {
+                    "hooks": [
+                        { "type": "Command", "command": "echo hi" }
+                    ]
+                }
+            ]
+        }
+    }"#;
+    let diagnostics = validate(content);
+    let cc_hk_016: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-016")
+        .collect();
+    assert_eq!(cc_hk_016.len(), 1);
+    assert!(
+        cc_hk_016[0].has_fixes(),
+        "CC-HK-016 should have auto-fix for case-insensitive match"
+    );
+    assert!(
+        !cc_hk_016[0].fixes[0].safe,
+        "CC-HK-016 fix should be unsafe"
+    );
+    assert_eq!(
+        cc_hk_016[0].fixes[0].replacement, "command",
+        "CC-HK-016 fix should replace with 'command'"
+    );
+}
+
+#[test]
+fn test_cc_hk_016_no_autofix_nonsense() {
+    // "xyzzy" is too far from any valid type - no autofix
+    let content = r#"{
+        "hooks": {
+            "Stop": [
+                {
+                    "hooks": [
+                        { "type": "xyzzy", "command": "echo hi" }
+                    ]
+                }
+            ]
+        }
+    }"#;
+    let diagnostics = validate(content);
+    let cc_hk_016: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-016")
+        .collect();
+    assert_eq!(cc_hk_016.len(), 1);
+    assert!(
+        !cc_hk_016[0].has_fixes(),
+        "CC-HK-016 should not have auto-fix for nonsense value"
+    );
+}
+
+#[test]
+fn test_cc_hk_016_autofix_targets_correct_bytes() {
+    let content = r#"{
+        "hooks": {
+            "Stop": [
+                {
+                    "hooks": [
+                        { "type": "Prompt", "prompt": "hello" }
+                    ]
+                }
+            ]
+        }
+    }"#;
+    let diagnostics = validate(content);
+    let cc_hk_016: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-016")
+        .collect();
+    assert_eq!(cc_hk_016.len(), 1);
+    assert!(cc_hk_016[0].has_fixes());
+    let fix = &cc_hk_016[0].fixes[0];
+    assert_eq!(fix.replacement, "prompt");
+    // The bytes targeted should correspond to "Prompt" in the content
+    let targeted = &content[fix.start_byte..fix.end_byte];
+    assert_eq!(targeted, "Prompt", "Fix should target the exact value bytes");
+}
+
+#[test]
+fn test_cc_hk_016_no_autofix_for_non_string() {
+    // Non-string type value should not produce autofix
+    let content = r#"{
+        "hooks": {
+            "Stop": [
+                {
+                    "hooks": [
+                        { "type": 123, "command": "echo bad" }
+                    ]
+                }
+            ]
+        }
+    }"#;
+    let diagnostics = validate(content);
+    let cc_hk_016: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-016")
+        .collect();
+    assert_eq!(cc_hk_016.len(), 1);
+    assert!(
+        !cc_hk_016[0].has_fixes(),
+        "CC-HK-016 should not have auto-fix for non-string type values"
+    );
+}

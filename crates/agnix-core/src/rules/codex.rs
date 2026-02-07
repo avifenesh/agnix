@@ -7,13 +7,39 @@
 
 use crate::{
     config::LintConfig,
-    diagnostics::Diagnostic,
+    diagnostics::{Diagnostic, Fix},
     rules::Validator,
     schemas::codex::{VALID_APPROVAL_MODES, VALID_FULL_AUTO_ERROR_MODES, parse_codex_toml},
 };
+use regex::Regex;
 use rust_i18n::t;
 use std::collections::HashMap;
 use std::path::Path;
+
+use crate::rules::find_closest_value;
+
+/// Find the byte span of a TOML string value for the given key.
+/// Returns byte positions of the inner string (without quotes).
+/// Returns None if the key is not found or appears more than once (uniqueness guard).
+fn find_toml_string_value_span(
+    content: &str,
+    key: &str,
+    current_value: &str,
+) -> Option<(usize, usize)> {
+    let pattern = format!(
+        r#"(?m){}\s*=\s*"({})"#,
+        regex::escape(key),
+        regex::escape(current_value)
+    );
+    let re = Regex::new(&pattern).ok()?;
+    let mut matches: Vec<_> = re.captures_iter(content).collect();
+    if matches.len() != 1 {
+        return None;
+    }
+    let cap = matches.remove(0);
+    let m = cap.get(1)?;
+    Some((m.start(), m.end()))
+}
 
 pub struct CodexValidator;
 
@@ -100,16 +126,33 @@ impl Validator for CodexValidator {
             } else if let Some(ref approval_value) = schema.approval_mode {
                 if !VALID_APPROVAL_MODES.contains(&approval_value.as_str()) {
                     let line = key_lines.get("approvalMode").copied().unwrap_or(1);
-                    diagnostics.push(
-                        Diagnostic::error(
-                            path.to_path_buf(),
-                            line,
-                            0,
-                            "CDX-001",
-                            t!("rules.cdx_001.message", value = approval_value.as_str()),
-                        )
-                        .with_suggestion(t!("rules.cdx_001.suggestion")),
-                    );
+                    let mut diagnostic = Diagnostic::error(
+                        path.to_path_buf(),
+                        line,
+                        0,
+                        "CDX-001",
+                        t!("rules.cdx_001.message", value = approval_value.as_str()),
+                    )
+                    .with_suggestion(t!("rules.cdx_001.suggestion"));
+
+                    // Unsafe auto-fix: replace with closest valid approval mode.
+                    if let Some(suggested) =
+                        find_closest_value(approval_value, VALID_APPROVAL_MODES)
+                    {
+                        if let Some((start, end)) =
+                            find_toml_string_value_span(content, "approvalMode", approval_value)
+                        {
+                            diagnostic = diagnostic.with_fix(Fix::replace(
+                                start,
+                                end,
+                                suggested,
+                                t!("rules.cdx_001.fix", fixed = suggested),
+                                false,
+                            ));
+                        }
+                    }
+
+                    diagnostics.push(diagnostic);
                 }
             }
         }
@@ -131,16 +174,35 @@ impl Validator for CodexValidator {
             } else if let Some(ref error_mode_value) = schema.full_auto_error_mode {
                 if !VALID_FULL_AUTO_ERROR_MODES.contains(&error_mode_value.as_str()) {
                     let line = key_lines.get("fullAutoErrorMode").copied().unwrap_or(1);
-                    diagnostics.push(
-                        Diagnostic::error(
-                            path.to_path_buf(),
-                            line,
-                            0,
-                            "CDX-002",
-                            t!("rules.cdx_002.message", value = error_mode_value.as_str()),
-                        )
-                        .with_suggestion(t!("rules.cdx_002.suggestion")),
-                    );
+                    let mut diagnostic = Diagnostic::error(
+                        path.to_path_buf(),
+                        line,
+                        0,
+                        "CDX-002",
+                        t!("rules.cdx_002.message", value = error_mode_value.as_str()),
+                    )
+                    .with_suggestion(t!("rules.cdx_002.suggestion"));
+
+                    // Unsafe auto-fix: replace with closest valid error mode.
+                    if let Some(suggested) =
+                        find_closest_value(error_mode_value, VALID_FULL_AUTO_ERROR_MODES)
+                    {
+                        if let Some((start, end)) = find_toml_string_value_span(
+                            content,
+                            "fullAutoErrorMode",
+                            error_mode_value,
+                        ) {
+                            diagnostic = diagnostic.with_fix(Fix::replace(
+                                start,
+                                end,
+                                suggested,
+                                t!("rules.cdx_002.fix", fixed = suggested),
+                                false,
+                            ));
+                        }
+                    }
+
+                    diagnostics.push(diagnostic);
                 }
             }
         }
@@ -294,6 +356,45 @@ mod tests {
     }
 
     #[test]
+    fn test_cdx_001_autofix_case_insensitive() {
+        // "Suggest" is a case-insensitive match to "suggest"
+        let diagnostics = validate_config("approvalMode = \"Suggest\"");
+        let cdx_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CDX-001").collect();
+        assert_eq!(cdx_001.len(), 1);
+        assert!(
+            cdx_001[0].has_fixes(),
+            "CDX-001 should have auto-fix for case mismatch"
+        );
+        let fix = &cdx_001[0].fixes[0];
+        assert!(!fix.safe, "CDX-001 fix should be unsafe");
+        assert_eq!(fix.replacement, "suggest", "Fix should suggest 'suggest'");
+    }
+
+    #[test]
+    fn test_cdx_001_no_autofix_nonsense() {
+        let diagnostics = validate_config("approvalMode = \"yolo\"");
+        let cdx_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CDX-001").collect();
+        assert_eq!(cdx_001.len(), 1);
+        // "yolo" has no close match - should NOT get a fix
+        assert!(
+            !cdx_001[0].has_fixes(),
+            "CDX-001 should not auto-fix nonsense values"
+        );
+    }
+
+    #[test]
+    fn test_cdx_001_autofix_targets_correct_bytes() {
+        let content = "approvalMode = \"Suggest\"";
+        let diagnostics = validate_config(content);
+        let cdx_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CDX-001").collect();
+        assert_eq!(cdx_001.len(), 1);
+        assert!(cdx_001[0].has_fixes());
+        let fix = &cdx_001[0].fixes[0];
+        let target = &content[fix.start_byte..fix.end_byte];
+        assert_eq!(target, "Suggest", "Fix should target the inner value");
+    }
+
+    #[test]
     fn test_cdx_001_type_mismatch() {
         let diagnostics = validate_config("approvalMode = true");
         let cdx_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CDX-001").collect();
@@ -386,6 +487,48 @@ mod tests {
         let diagnostics = validate_config("fullAutoErrorMode = \"\"");
         let cdx_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CDX-002").collect();
         assert_eq!(cdx_002.len(), 1);
+    }
+
+    #[test]
+    fn test_cdx_002_autofix_case_insensitive() {
+        // "Ask-User" is a case-insensitive match to "ask-user"
+        let diagnostics = validate_config("fullAutoErrorMode = \"Ask-User\"");
+        let cdx_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CDX-002").collect();
+        assert_eq!(cdx_002.len(), 1);
+        assert!(
+            cdx_002[0].has_fixes(),
+            "CDX-002 should have auto-fix for case mismatch"
+        );
+        let fix = &cdx_002[0].fixes[0];
+        assert!(!fix.safe, "CDX-002 fix should be unsafe");
+        assert_eq!(
+            fix.replacement, "ask-user",
+            "Fix should suggest 'ask-user'"
+        );
+    }
+
+    #[test]
+    fn test_cdx_002_no_autofix_nonsense() {
+        let diagnostics = validate_config("fullAutoErrorMode = \"crash\"");
+        let cdx_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CDX-002").collect();
+        assert_eq!(cdx_002.len(), 1);
+        // "crash" has no close match - should NOT get a fix
+        assert!(
+            !cdx_002[0].has_fixes(),
+            "CDX-002 should not auto-fix nonsense values"
+        );
+    }
+
+    #[test]
+    fn test_cdx_002_autofix_targets_correct_bytes() {
+        let content = "fullAutoErrorMode = \"Ask-User\"";
+        let diagnostics = validate_config(content);
+        let cdx_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CDX-002").collect();
+        assert_eq!(cdx_002.len(), 1);
+        assert!(cdx_002[0].has_fixes());
+        let fix = &cdx_002[0].fixes[0];
+        let target = &content[fix.start_byte..fix.end_byte];
+        assert_eq!(target, "Ask-User", "Fix should target the inner value");
     }
 
     #[test]

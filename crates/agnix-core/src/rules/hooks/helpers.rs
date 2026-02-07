@@ -1,4 +1,5 @@
 use crate::diagnostics::{Diagnostic, Fix};
+use crate::rules::find_closest_value;
 use crate::schemas::hooks::HooksSchema;
 use regex::Regex;
 use rust_i18n::t;
@@ -551,12 +552,36 @@ pub(super) fn validate_cc_hk_014_once_field(
     });
 }
 
+/// Find the byte span of a JSON string value for the "type" key.
+/// Returns byte positions of the inner string (without quotes).
+/// Returns None if not found or not unique (uniqueness guard).
+fn find_unique_json_string_value_span(
+    content: &str,
+    key: &str,
+    current_value: &str,
+) -> Option<(usize, usize)> {
+    let pattern = format!(
+        r#""{}"\s*:\s*"({})""#,
+        regex::escape(key),
+        regex::escape(current_value)
+    );
+    let re = Regex::new(&pattern).ok()?;
+    let mut matches: Vec<_> = re.captures_iter(content).collect();
+    if matches.len() != 1 {
+        return None;
+    }
+    let cap = matches.remove(0);
+    let m = cap.get(1)?;
+    Some((m.start(), m.end()))
+}
+
 /// CC-HK-016: Validate hook type "agent" - check for unknown types (raw JSON check)
 /// CC-HK-016: Unknown hook type (raw JSON check).
 /// Also catches non-string type values (e.g., numbers, booleans).
 pub(super) fn validate_cc_hk_016_unknown_type(
     raw_value: &serde_json::Value,
     path: &Path,
+    content: &str,
     diagnostics: &mut Vec<Diagnostic>,
 ) {
     let valid_types = ["command", "prompt", "agent"];
@@ -573,20 +598,37 @@ pub(super) fn validate_cc_hk_016_unknown_type(
             };
             if is_invalid {
                 let hook_location = format!("hooks.{}[{}].hooks[{}]", event, matcher_idx, hook_idx);
-                diagnostics.push(
-                    Diagnostic::error(
-                        path.to_path_buf(),
-                        1,
-                        0,
-                        "CC-HK-016",
-                        t!(
-                            "rules.cc_hk_016.message",
-                            hook_type = hook_type_str.as_str(),
-                            location = hook_location.as_str()
-                        ),
-                    )
-                    .with_suggestion(t!("rules.cc_hk_016.suggestion")),
-                );
+                let mut diagnostic = Diagnostic::error(
+                    path.to_path_buf(),
+                    1,
+                    0,
+                    "CC-HK-016",
+                    t!(
+                        "rules.cc_hk_016.message",
+                        hook_type = hook_type_str.as_str(),
+                        location = hook_location.as_str()
+                    ),
+                )
+                .with_suggestion(t!("rules.cc_hk_016.suggestion"));
+
+                // Unsafe auto-fix: replace with closest valid hook type (string values only).
+                if let Some(hook_type_s) = type_value.as_str() {
+                    if let Some(suggested) = find_closest_value(hook_type_s, &valid_types) {
+                        if let Some((start, end)) =
+                            find_unique_json_string_value_span(content, "type", hook_type_s)
+                        {
+                            diagnostic = diagnostic.with_fix(Fix::replace(
+                                start,
+                                end,
+                                suggested,
+                                t!("rules.cc_hk_016.fix", fixed = suggested),
+                                false,
+                            ));
+                        }
+                    }
+                }
+
+                diagnostics.push(diagnostic);
             }
         }
     });

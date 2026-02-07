@@ -142,16 +142,24 @@ impl Validator for CopilotValidator {
             None => {
                 // COP-002: Missing frontmatter in scoped file
                 if config.is_rule_enabled("COP-002") && !is_content_empty(content) {
-                    diagnostics.push(
-                        Diagnostic::error(
-                            path.to_path_buf(),
-                            1,
-                            0,
-                            "COP-002",
-                            t!("rules.cop_002.message_missing"),
-                        )
-                        .with_suggestion(t!("rules.cop_002.suggestion_add_frontmatter")),
-                    );
+                    let mut diagnostic = Diagnostic::error(
+                        path.to_path_buf(),
+                        1,
+                        0,
+                        "COP-002",
+                        t!("rules.cop_002.message_missing"),
+                    )
+                    .with_suggestion(t!("rules.cop_002.suggestion_add_frontmatter"));
+
+                    // Unsafe auto-fix: insert template frontmatter at start of file.
+                    diagnostic = diagnostic.with_fix(Fix::insert(
+                        0,
+                        "---\napplyTo: \"**/*\"\n---\n",
+                        t!("rules.cop_002.fix"),
+                        false,
+                    ));
+
+                    diagnostics.push(diagnostic);
                 }
                 return diagnostics;
             }
@@ -394,6 +402,40 @@ Use strict mode.
         let cop_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "COP-002").collect();
         assert_eq!(cop_002.len(), 1);
         assert!(cop_002[0].message.contains("missing required frontmatter"));
+    }
+
+    #[test]
+    fn test_cop_002_has_autofix_for_missing_frontmatter() {
+        let content = "# Instructions without frontmatter";
+        let diagnostics = validate_scoped(content);
+        let cop_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "COP-002").collect();
+        assert_eq!(cop_002.len(), 1);
+        assert!(
+            cop_002[0].has_fixes(),
+            "COP-002 should have auto-fix for missing frontmatter"
+        );
+        let fix = &cop_002[0].fixes[0];
+        assert!(!fix.safe, "COP-002 fix should be unsafe");
+        assert_eq!(fix.start_byte, 0, "Fix should insert at start of file");
+        assert_eq!(fix.end_byte, 0, "Fix should be an insert (start == end)");
+        assert!(
+            fix.replacement.contains("applyTo:"),
+            "Fix should contain applyTo field"
+        );
+    }
+
+    #[test]
+    fn test_cop_002_no_autofix_for_yaml_error() {
+        // YAML parse error should not get an insert-frontmatter fix
+        let content = "---\napplyTo: [unclosed\n---\n# Body\n";
+        let diagnostics = validate_scoped(content);
+        let cop_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "COP-002").collect();
+        assert_eq!(cop_002.len(), 1);
+        // This diagnostic is about invalid YAML, not missing frontmatter, so no insert fix
+        assert!(
+            !cop_002[0].has_fixes(),
+            "COP-002 should not have auto-fix for YAML parse errors"
+        );
     }
 
     #[test]

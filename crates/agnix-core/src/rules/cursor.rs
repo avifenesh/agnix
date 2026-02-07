@@ -166,16 +166,24 @@ impl Validator for CursorValidator {
             None => {
                 // CUR-002: Missing frontmatter in .mdc file (WARNING)
                 if config.is_rule_enabled("CUR-002") && !is_content_empty(content) {
-                    diagnostics.push(
-                        Diagnostic::warning(
-                            path.to_path_buf(),
-                            1,
-                            0,
-                            "CUR-002",
-                            t!("rules.cur_002.message"),
-                        )
-                        .with_suggestion(t!("rules.cur_002.suggestion")),
-                    );
+                    let mut diagnostic = Diagnostic::warning(
+                        path.to_path_buf(),
+                        1,
+                        0,
+                        "CUR-002",
+                        t!("rules.cur_002.message"),
+                    )
+                    .with_suggestion(t!("rules.cur_002.suggestion"));
+
+                    // Unsafe auto-fix: insert template frontmatter at start of file.
+                    diagnostic = diagnostic.with_fix(Fix::insert(
+                        0,
+                        "---\ndescription: \nglobs: \n---\n",
+                        t!("rules.cur_002.fix"),
+                        false,
+                    ));
+
+                    diagnostics.push(diagnostic);
                 }
                 return diagnostics;
             }
@@ -468,6 +476,42 @@ description: Unclosed frontmatter
                 .message
                 .contains("missing recommended frontmatter")
         );
+    }
+
+    #[test]
+    fn test_cur_002_has_autofix() {
+        let content = "# Rules without frontmatter";
+        let diagnostics = validate_mdc(content);
+        let cur_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CUR-002").collect();
+        assert_eq!(cur_002.len(), 1);
+        assert!(
+            cur_002[0].has_fixes(),
+            "CUR-002 should have auto-fix for missing frontmatter"
+        );
+        let fix = &cur_002[0].fixes[0];
+        assert!(!fix.safe, "CUR-002 fix should be unsafe");
+        assert_eq!(fix.start_byte, 0, "Fix should insert at start of file");
+        assert_eq!(fix.end_byte, 0, "Fix should be an insert (start == end)");
+        assert!(
+            fix.replacement.contains("---\n"),
+            "Fix should contain frontmatter markers"
+        );
+        assert!(
+            fix.replacement.contains("description:"),
+            "Fix should contain description field"
+        );
+        assert!(
+            fix.replacement.contains("globs:"),
+            "Fix should contain globs field"
+        );
+    }
+
+    #[test]
+    fn test_cur_002_no_autofix_for_empty() {
+        // Empty files should not trigger CUR-002 (CUR-001 handles them)
+        let diagnostics = validate_mdc("");
+        let cur_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CUR-002").collect();
+        assert!(cur_002.is_empty());
     }
 
     #[test]

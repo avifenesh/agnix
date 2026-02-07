@@ -243,7 +243,7 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 ### CC-SK-005 [HIGH] Invalid Agent Type
 **Requirement**: agent MUST be: Explore, Plan, general-purpose, or custom kebab-case name (1-64 chars, pattern: `^[a-z0-9]+(-[a-z0-9]+)*$`)
 **Detection**: Check against built-in agents or validate kebab-case format
-**Fix**: Suggest valid agent or correct format
+**Fix**: Auto-fix (unsafe) -- replace invalid agent with 'general-purpose'
 **Source**: code.claude.com/docs/en/sub-agents
 
 <a id="cc-sk-006"></a>
@@ -436,7 +436,7 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 ### CC-HK-016 [HIGH] Validate Hook Type Agent
 **Requirement**: `type: "agent"` MUST be recognized as a valid hook handler type
 **Detection**: Ensure agent type is accepted alongside command and prompt
-**Fix**: N/A (recognition rule)
+**Fix**: Auto-fix (unsafe) -- replace unknown hook type with closest valid type (command, prompt, agent)
 **Source**: code.claude.com/docs/en/hooks
 
 <a id="cc-hk-017"></a>
@@ -538,7 +538,7 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 ### CC-AG-012 [HIGH] Bypass Permissions Warning
 **Requirement**: `permissionMode: bypassPermissions` SHOULD NOT be used (disables all safety checks)
 **Detection**: Check if permissionMode equals `bypassPermissions`
-**Fix**: Consider using `dontAsk` or `acceptEdits` for a safer permission mode
+**Fix**: Auto-fix (unsafe) -- replace 'bypassPermissions' with 'default'
 **Source**: code.claude.com/docs/en/sub-agents
 
 <a id="cc-ag-013"></a>
@@ -863,7 +863,7 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 ### COP-002 [HIGH] Invalid Frontmatter
 **Requirement**: Scoped instruction files (.github/instructions/*.instructions.md) MUST have valid YAML frontmatter with `applyTo` field
 **Detection**: Parse YAML between `---` markers, check for `applyTo` key
-**Fix**: Add valid frontmatter with `applyTo` glob pattern
+**Fix**: Auto-fix (unsafe) -- insert template frontmatter with applyTo field (missing frontmatter only)
 **Source**: docs.github.com/en/copilot/customizing-copilot
 
 <a id="cop-003"></a>
@@ -909,7 +909,7 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 ### CUR-002 [MEDIUM] Missing Frontmatter in .mdc File
 **Requirement**: Cursor .mdc files SHOULD have YAML frontmatter with metadata
 **Detection**: File doesn't start with `---` markers
-**Fix**: Add YAML frontmatter with description and globs fields
+**Fix**: Auto-fix (unsafe) -- insert template frontmatter with description and globs fields
 **Source**: docs.cursor.com/en/context
 
 <a id="cur-003"></a>
@@ -994,7 +994,7 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 ### OC-001 [HIGH] Invalid Share Mode
 **Requirement**: The `share` field in `opencode.json` MUST be `"manual"`, `"auto"`, or `"disabled"`
 **Detection**: Parse JSON, validate `share` value against allowed set
-**Fix**: Use a valid share mode value
+**Fix**: Auto-fix (unsafe) -- replace with closest valid share mode
 **Source**: opencode.ai/docs/config
 
 <a id="oc-002"></a>
@@ -1044,14 +1044,14 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 ### CDX-001 [HIGH] Invalid Approval Mode
 **Requirement**: The `approvalMode` field in `.codex/config.toml` MUST be `"suggest"`, `"auto-edit"`, or `"full-auto"`
 **Detection**: Parse TOML, validate `approvalMode` value against allowed set
-**Fix**: Use a valid approval mode value
+**Fix**: Auto-fix (unsafe) -- replace with closest valid approval mode
 **Source**: github.com/openai/codex
 
 <a id="cdx-002"></a>
 ### CDX-002 [HIGH] Invalid Full Auto Error Mode
 **Requirement**: The `fullAutoErrorMode` field in `.codex/config.toml` MUST be `"ask-user"` or `"ignore-and-continue"`
 **Detection**: Parse TOML, validate `fullAutoErrorMode` value against allowed set
-**Fix**: Use a valid full auto error mode value
+**Fix**: Auto-fix (unsafe) -- replace with closest valid full auto error mode
 **Source**: github.com/openai/codex
 
 <a id="cdx-003"></a>
@@ -1337,25 +1337,25 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | Category | Total Rules | HIGH | MEDIUM | LOW | Auto-Fixable |
 |----------|-------------|------|--------|-----|--------------|
 | Agent Skills | 16 | 14 | 2 | 0 | 5 |
-| Claude Skills | 15 | 12 | 3 | 0 | 8 |
-| Claude Hooks | 18 | 13 | 4 | 1 | 6 |
-| Claude Agents | 13 | 12 | 1 | 0 | 3 |
+| Claude Skills | 15 | 12 | 3 | 0 | 9 |
+| Claude Hooks | 18 | 13 | 4 | 1 | 7 |
+| Claude Agents | 13 | 12 | 1 | 0 | 4 |
 | Claude Memory | 12 | 8 | 4 | 0 | 3 |
 | AGENTS.md | 6 | 1 | 5 | 0 | 0 |
 | Claude Plugins | 10 | 8 | 2 | 0 | 2 |
-| GitHub Copilot | 6 | 4 | 2 | 0 | 2 |
-| Cursor | 9 | 4 | 5 | 0 | 3 |
+| GitHub Copilot | 6 | 4 | 2 | 0 | 3 |
+| Cursor | 9 | 4 | 5 | 0 | 4 |
 | Cline | 3 | 2 | 1 | 0 | 1 |
-| OpenCode | 3 | 3 | 0 | 0 | 0 |
+| OpenCode | 3 | 3 | 0 | 0 | 1 |
 | Gemini CLI | 3 | 1 | 2 | 0 | 0 |
-| Codex CLI | 3 | 2 | 1 | 0 | 0 |
+| Codex CLI | 3 | 2 | 1 | 0 | 2 |
 | MCP | 12 | 10 | 2 | 0 | 4 |
 | XML | 3 | 3 | 0 | 0 | 3 |
 | References | 2 | 2 | 0 | 0 | 0 |
 | Prompt Eng | 4 | 0 | 4 | 0 | 0 |
 | Cross-Platform | 6 | 4 | 2 | 0 | 0 |
 | Version Awareness | 1 | 0 | 0 | 1 | 0 |
-| **TOTAL** | **145** | **103** | **40** | **2** | **40** |
+| **TOTAL** | **145** | **103** | **40** | **2** | **48** |
 
 
 ---
@@ -1389,5 +1389,5 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 
 **Knowledge Base**: 11,036 lines, 320KB, 75+ sources
 **Certainty**: 103 HIGH, 40 MEDIUM, 2 LOW
-**Auto-Fixable**: 40 rules (27%)
+**Auto-Fixable**: 48 rules (33%)
 
