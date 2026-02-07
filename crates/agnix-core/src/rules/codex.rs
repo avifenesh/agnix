@@ -60,8 +60,18 @@ impl Validator for CodexValidator {
 
         let parsed = parse_codex_toml(content);
 
-        // If TOML is broken, we cannot validate further
-        if parsed.parse_error.is_some() {
+        // If TOML is broken, emit a diagnostic so users can fix invalid syntax
+        if let Some(parse_error) = &parsed.parse_error {
+            diagnostics.push(Diagnostic::error(
+                path.to_path_buf(),
+                parse_error.line,
+                parse_error.column,
+                "CDX-000",
+                format!(
+                    "Failed to parse .codex/config.toml as TOML: {}",
+                    parse_error.message
+                ),
+            ));
             return diagnostics;
         }
 
@@ -141,21 +151,32 @@ impl Validator for CodexValidator {
 
 /// Build a map of TOML key names to their 1-indexed line numbers in a single pass.
 ///
-/// Scans each line for a bare key followed by `=` (the TOML key-value separator).
+/// Scans each line for a key followed by `=` (the TOML key-value separator).
 /// Extracts keys by finding '=' positions; indexing is safe because find() returns
-/// char-boundary positions in valid UTF-8. Prevents partial matches by extracting
-/// only up to `=` (e.g., `approvalMode` will not match `approvalModeExtra`).
+/// char-boundary positions in valid UTF-8. Handles both bare keys and simple quoted keys
+/// (e.g., `"approvalMode"`), stripping quotes to normalize lookups. Prevents partial
+/// matches by extracting only up to `=` (e.g., `approvalMode` will not match
+/// `approvalModeExtra`).
 ///
 /// Returns only the first occurrence of each key, which matches TOML semantics.
-fn build_key_line_map(content: &str) -> HashMap<&str, usize> {
+fn build_key_line_map(content: &str) -> HashMap<String, usize> {
     let mut map = HashMap::new();
     for (i, line) in content.lines().enumerate() {
         let trimmed = line.trim_start();
         // Extract the key portion: everything up to `=` or whitespace before `=`
         if let Some(eq_pos) = trimmed.find('=') {
-            let key = trimmed[..eq_pos].trim_end();
+            let key_part = trimmed[..eq_pos].trim_end();
+
+            // Handle both bare keys and simple quoted keys.
+            let key = if key_part.starts_with('"') && key_part.ends_with('"') && key_part.len() >= 2
+            {
+                key_part[1..key_part.len() - 1].to_string()
+            } else {
+                key_part.to_string()
+            };
+
             // Only record the first occurrence (TOML spec: duplicate keys are errors)
-            if !key.is_empty() && !map.contains_key(key) {
+            if !key.is_empty() && !map.contains_key(&key) {
                 map.insert(key, i + 1);
             }
         }
