@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- CC-AG-008: Validate `memory` scope is `user`, `project`, or `local`
+- CC-AG-009: Validate tool names in agent `tools` list
+- CC-AG-010: Validate tool names in agent `disallowedTools` list
+- CC-AG-011: Validate `hooks` object schema in agent frontmatter
+- CC-AG-012: Warn on `permissionMode: bypassPermissions` usage
+- CC-AG-013: Validate skill name format in agent `skills` array
 - MCP-009: Validate `command` is present for stdio MCP servers (HIGH)
 - MCP-010: Validate `url` is present for http/sse MCP servers (HIGH)
 - MCP-011: Validate MCP server `type` is one of stdio, http, sse (HIGH)
@@ -349,7 +355,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Quick-fix code actions from Fix objects
   - Hover documentation for frontmatter fields
   - Document content caching for performance
-  - Supports all 112 agnix validation rules with severity mapping
+  - Supports all 118 agnix validation rules with severity mapping
   - Workspace boundary validation for security (prevents path traversal)
   - Config caching optimization for performance
   - Editor support for VS Code, Neovim, Helix, and other LSP-compatible editors
@@ -363,7 +369,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Case-insensitive tool name matching
   - Takes precedence over legacy `target` field for flexibility
 - VS Code extension with full LSP integration (#22)
-  - Real-time diagnostics for all 112 validation rules
+  - Real-time diagnostics for all 118 validation rules
   - Status bar indicator showing agnix validation status
   - Syntax highlighting for SKILL.md YAML frontmatter
   - Commands: 'Restart Language Server' and 'Show Output Channel'

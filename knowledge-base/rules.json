@@ -1,7 +1,7 @@
 {
   "description": "Machine-readable source of truth for all validation rules. When adding a new rule, add it here AND in VALIDATION-RULES.md. CI parity tests enforce sync.",
   "version": "1.1.0",
-  "total_rules": 112,
+  "total_rules": 118,
   "last_updated": "2026-02-07",
   "schema": {
     "evidence": {
@@ -1287,6 +1287,156 @@
           "tool": "claude-code"
         },
         "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      }
+    },
+    {
+      "id": "CC-AG-008",
+      "name": "Invalid Memory Scope",
+      "severity": "HIGH",
+      "category": "claude-agents",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://code.claude.com/docs/en/sub-agents"
+        ],
+        "verified_on": "2026-02-07",
+        "applies_to": {
+          "tool": "claude-code"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      }
+    },
+    {
+      "id": "CC-AG-009",
+      "name": "Invalid Tool Name in Tools List",
+      "severity": "HIGH",
+      "category": "claude-agents",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://code.claude.com/docs/en/sub-agents"
+        ],
+        "verified_on": "2026-02-07",
+        "applies_to": {
+          "tool": "claude-code"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      }
+    },
+    {
+      "id": "CC-AG-010",
+      "name": "Invalid Tool Name in DisallowedTools",
+      "severity": "HIGH",
+      "category": "claude-agents",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://code.claude.com/docs/en/sub-agents"
+        ],
+        "verified_on": "2026-02-07",
+        "applies_to": {
+          "tool": "claude-code"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      }
+    },
+    {
+      "id": "CC-AG-011",
+      "name": "Invalid Hooks in Agent Frontmatter",
+      "severity": "HIGH",
+      "category": "claude-agents",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://code.claude.com/docs/en/sub-agents"
+        ],
+        "verified_on": "2026-02-07",
+        "applies_to": {
+          "tool": "claude-code"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      }
+    },
+    {
+      "id": "CC-AG-012",
+      "name": "Bypass Permissions Warning",
+      "severity": "HIGH",
+      "category": "claude-agents",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://code.claude.com/docs/en/sub-agents"
+        ],
+        "verified_on": "2026-02-07",
+        "applies_to": {
+          "tool": "claude-code"
+        },
+        "normative_level": "SHOULD",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      }
+    },
+    {
+      "id": "CC-AG-013",
+      "name": "Invalid Skill Name Format",
+      "severity": "MEDIUM",
+      "category": "claude-agents",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://code.claude.com/docs/en/sub-agents"
+        ],
+        "verified_on": "2026-02-07",
+        "applies_to": {
+          "tool": "claude-code"
+        },
+        "normative_level": "SHOULD",
         "tests": {
           "unit": true,
           "fixtures": true,
@@ -3096,7 +3246,8 @@
             "key": "tools",
             "docs": "Allowed tools for this agent.",
             "rules": [
-              "CC-AG-006"
+              "CC-AG-006",
+              "CC-AG-009"
             ],
             "values": [
               "Read",
@@ -3113,7 +3264,8 @@
             "key": "disallowedTools",
             "docs": "Tools this agent must never use.",
             "rules": [
-              "CC-AG-006"
+              "CC-AG-006",
+              "CC-AG-010"
             ],
             "values": [
               "Bash"
@@ -3138,7 +3290,8 @@
             "key": "permissionMode",
             "docs": "Permission interaction policy.",
             "rules": [
-              "CC-AG-004"
+              "CC-AG-004",
+              "CC-AG-012"
             ],
             "values": [
               "default",
@@ -3153,16 +3306,31 @@
             "key": "skills",
             "docs": "Preloaded skills for this agent.",
             "rules": [
-              "CC-AG-005"
+              "CC-AG-005",
+              "CC-AG-013"
             ],
             "values": [],
             "snippet": "skills:\n  - code-review"
           },
           {
+            "key": "memory",
+            "docs": "Memory scope for this agent.",
+            "rules": [
+              "CC-AG-008"
+            ],
+            "values": [
+              "user",
+              "project",
+              "local"
+            ],
+            "snippet": "memory: project"
+          },
+          {
             "key": "hooks",
             "docs": "Hook configuration for agent lifecycle.",
             "rules": [
-              "CC-AG-007"
+              "CC-AG-007",
+              "CC-AG-011"
             ],
             "values": [],
             "snippet": "hooks: {}"
@@ -3175,7 +3343,9 @@
             "docs": "Base Claude sub-agent frontmatter scaffold.",
             "rules": [
               "CC-AG-001",
-              "CC-AG-002"
+              "CC-AG-002",
+              "CC-AG-003",
+              "CC-AG-004"
             ]
           }
         ]

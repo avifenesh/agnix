@@ -1,6 +1,6 @@
 # agnix Knowledge Base - Master Index
 
-> 112 validation rules across 15 categories, sourced from 75+ references
+> 118 validation rules across 15 categories, sourced from 75+ references
 
 ---
 
@@ -8,7 +8,7 @@
 
 | What You Need | Start Here |
 |---------------|------------|
-| **Implement validator** | [VALIDATION-RULES.md](./VALIDATION-RULES.md) - 112 rules with detection logic |
+| **Implement validator** | [VALIDATION-RULES.md](./VALIDATION-RULES.md) - 118 rules with detection logic |
 | **Understand a standard** | [standards/](#standards) - HARD-RULES files |
 | **Learn best practices** | [standards/](#standards) - OPINIONS files |
 | **Find patterns** | [PATTERNS-CATALOG.md](./PATTERNS-CATALOG.md) - 70 patterns from awesome-slash |
@@ -26,7 +26,7 @@
 knowledge-base/
 ├── INDEX.md                        # This file
 ├── README.md                       # Detailed navigation guide
-├── VALIDATION-RULES.md             # ⭐ Master validation reference (112 rules)
+├── VALIDATION-RULES.md             # ⭐ Master validation reference (118 rules)
 ├── PATTERNS-CATALOG.md             # 70 production-tested patterns
 ├── RESEARCH-TRACKING.md            # Tool inventory and monitoring process
 ├── MONTHLY-REVIEW.md               # Monthly review checklist and history
@@ -78,7 +78,7 @@ knowledge-base/
 | **AGENTS.md** | 5 | - | - | 6 rules |
 | **Cursor** | 2 | - | - | 6 rules |
 | **awesome-slash** | 12 | - | - | 70 patterns |
-| **Total** | **75+** | **117KB** | **160KB** | **112 rules** |
+| **Total** | **75+** | **117KB** | **160KB** | **118 rules** |
 
 ### Validation Rules by Category
 
@@ -87,7 +87,7 @@ knowledge-base/
 | Agent Skills | 16 | 14 | 2 | 0 | 6 |
 | Claude Skills | 15 | 12 | 3 | 0 | 3 |
 | Claude Hooks | 12 | 11 | 1 | 0 | 2 |
-| Claude Agents | 7 | 7 | 0 | 0 | 1 |
+| Claude Agents | 13 | 12 | 1 | 0 | 2 |
 | Claude Memory | 10 | 7 | 3 | 0 | 2 |
 | AGENTS.md | 6 | 1 | 5 | 0 | 2 |
 | Claude Plugins | 6 | 6 | 0 | 0 | 1 |
@@ -99,7 +99,7 @@ knowledge-base/
 | Cross-Platform | 6 | 4 | 2 | 0 | 0 |
 | Cursor | 6 | 3 | 3 | 0 | 1 |
 | Version Awareness | 1 | 0 | 0 | 1 | 0 |
-| **TOTAL** | **112** | **84** | **27** | **1** | **23** |
+| **TOTAL** | **118** | **89** | **28** | **1** | **28** |
 
 ---
 
@@ -137,7 +137,7 @@ knowledge-base/
 ### For Implementation
 
 **Start here**: [VALIDATION-RULES.md](./VALIDATION-RULES.md)
-- 112 rules with rule IDs (AS-001, CC-HK-001, etc.)
+- 118 rules with rule IDs (AS-001, CC-HK-001, etc.)
 - Detection pseudocode
 - Auto-fix implementations
 - Priority matrix (P0/P1/P2)
@@ -262,8 +262,8 @@ Total Size:           650KB
 Standards Covered:     5 (Agent Skills, MCP, Claude Code, Multi-Platform, Prompt Eng)
 Sources Consulted:    75+ (specs, docs, research papers, repos)
 Research Agents:       5 (10+ sources each)
-Validation Rules:     112 rules
-Auto-Fixable Rules:   22 rules
+Validation Rules:     118 rules
+Auto-Fixable Rules:   28 rules
 Test Fixtures:        116 files
 Platforms Analyzed:   9 (Claude Code, Codex CLI, OpenCode, Copilot, Cursor, Cline, Roo-Cline, Continue.dev, Aider)
 ```
