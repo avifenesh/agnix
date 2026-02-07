@@ -13,6 +13,16 @@
 
 /// Advance past ASCII whitespace (space, tab, newline, carriage return).
 /// Returns the first position that is not whitespace, or `content.len()`.
+/// Skip inline whitespace (space and tab only, not newlines).
+/// Used when scanning within a single line.
+fn skip_inline_whitespace(bytes: &[u8], pos: usize) -> usize {
+    let mut i = pos;
+    while i < bytes.len() && matches!(bytes[i], b' ' | b'\t') {
+        i += 1;
+    }
+    i
+}
+
 fn skip_whitespace(content: &[u8], pos: usize) -> usize {
     let mut i = pos;
     while i < content.len() && matches!(content[i], b' ' | b'\t' | b'\n' | b'\r') {
@@ -214,7 +224,6 @@ pub(crate) fn find_unique_json_field_line(
     found
 }
 
-
 /// Find a line matching `  "matcher": "value",\n` exactly once.
 /// Returns the full line span from leading whitespace through trailing newline.
 ///
@@ -327,17 +336,17 @@ pub(crate) fn find_unique_toml_string_value(
     while pos < bytes.len() {
         // At pos, we should be at the start of a line or at position 0
         // Skip leading whitespace
-        let key_area = skip_whitespace(bytes, pos);
+        let key_area = skip_inline_whitespace(bytes, pos);
         // Check if the key matches here
         if key_area + key_bytes.len() <= bytes.len()
             && &bytes[key_area..key_area + key_bytes.len()] == key_bytes
         {
             let after_key = key_area + key_bytes.len();
             // Skip whitespace, expect '='
-            let eq_pos = skip_whitespace(bytes, after_key);
+            let eq_pos = skip_inline_whitespace(bytes, after_key);
             if eq_pos < bytes.len() && bytes[eq_pos] == b'=' {
                 // Skip whitespace after '='
-                let val_pos = skip_whitespace(bytes, eq_pos + 1);
+                let val_pos = skip_inline_whitespace(bytes, eq_pos + 1);
                 // Expect '"value"'
                 if let Some((inner_start, inner_end, _)) = parse_string_value_at(bytes, val_pos) {
                     if &bytes[inner_start..inner_end] == value_bytes {
