@@ -2,7 +2,7 @@
 id: cc-hk-016
 title: "CC-HK-016: Validate Hook Type Agent - Claude Hooks"
 sidebar_label: "CC-HK-016"
-description: "agnix rule CC-HK-016 validates hook type agent is recognized in claude hooks files. Severity: HIGH. See examples and fix guidance."
+description: "agnix rule CC-HK-016 checks for validate hook type agent in claude hooks files. Severity: HIGH. See examples and fix guidance."
 keywords: ["CC-HK-016", "validate hook type agent", "claude hooks", "validation", "agnix", "linter"]
 ---
 
@@ -39,15 +39,12 @@ The following examples are illustrative snippets for this rule category.
 
 ```json
 {
-  "hooks": {
-    "Stop": [
-      {
-        "hooks": [
-          { "type": "webhook", "url": "https://example.com" }
-        ]
-      }
-    ]
-  }
+  "hooks": [
+    {
+      "event": "PreToolUse",
+      "matcher": "*"
+    }
+  ]
 }
 ```
 
@@ -55,14 +52,13 @@ The following examples are illustrative snippets for this rule category.
 
 ```json
 {
-  "hooks": {
-    "Stop": [
-      {
-        "hooks": [
-          { "type": "agent", "prompt": "Review the session" }
-        ]
-      }
-    ]
-  }
+  "hooks": [
+    {
+      "event": "PreToolUse",
+      "matcher": "Write",
+      "command": "./scripts/validate.sh",
+      "timeout": 30
+    }
+  ]
 }
 ```

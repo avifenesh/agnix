@@ -2,7 +2,7 @@
 id: cc-sk-011
 title: "CC-SK-011: Unreachable Skill - Claude Skills"
 sidebar_label: "CC-SK-011"
-description: "agnix rule CC-SK-011 checks for unreachable skill configuration in claude skills files. Severity: HIGH. See examples and fix guidance."
+description: "agnix rule CC-SK-011 checks for unreachable skill in claude skills files. Severity: HIGH. See examples and fix guidance."
 keywords: ["CC-SK-011", "unreachable skill", "claude skills", "validation", "agnix", "linter"]
 ---
 
@@ -39,10 +39,8 @@ The following examples are illustrative snippets for this rule category.
 
 ```markdown
 ---
-name: my-skill
-description: Use when testing
-user-invocable: false
-disable-model-invocation: true
+name: Deploy_Prod
+description: Deploys production changes
 ---
 ```
 
@@ -50,9 +48,7 @@ disable-model-invocation: true
 
 ```markdown
 ---
-name: my-skill
-description: Use when testing
-user-invocable: true
-disable-model-invocation: true
+name: deploy-prod
+description: Deploy production with explicit checks
 ---
 ```

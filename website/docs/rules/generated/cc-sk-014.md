@@ -1,6 +1,6 @@
 ---
 id: cc-sk-014
-title: "CC-SK-014: Invalid disable-model-invocation Type - Claude Skills"
+title: "CC-SK-014: Invalid disable-model-invocation Type"
 sidebar_label: "CC-SK-014"
 description: "agnix rule CC-SK-014 checks for invalid disable-model-invocation type in claude skills files. Severity: HIGH. See examples and fix guidance."
 keywords: ["CC-SK-014", "invalid disable-model-invocation type", "claude skills", "validation", "agnix", "linter"]
@@ -39,9 +39,8 @@ The following examples are illustrative snippets for this rule category.
 
 ```markdown
 ---
-name: my-skill
-description: Use when testing
-disable-model-invocation: "true"
+name: Deploy_Prod
+description: Deploys production changes
 ---
 ```
 
@@ -49,8 +48,7 @@ disable-model-invocation: "true"
 
 ```markdown
 ---
-name: my-skill
-description: Use when testing
-disable-model-invocation: true
+name: deploy-prod
+description: Deploy production with explicit checks
 ---
 ```

@@ -39,11 +39,7 @@ The following examples are illustrative snippets for this rule category.
 
 ```markdown
 ---
-name: my-agent
-description: Agent with bad skill names
-skills:
-  - MySkill
-  - has_underscore
+name: reviewer
 ---
 ```
 
@@ -51,10 +47,9 @@ skills:
 
 ```markdown
 ---
-name: my-agent
-description: Agent with valid skill names
-skills:
-  - my-skill
-  - code-review
+name: reviewer
+description: Review code for correctness and tests
+model: sonnet
+tools: [Read, Grep, Bash]
 ---
 ```

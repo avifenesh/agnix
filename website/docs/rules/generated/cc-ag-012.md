@@ -2,7 +2,7 @@
 id: cc-ag-012
 title: "CC-AG-012: Bypass Permissions Warning - Claude Agents"
 sidebar_label: "CC-AG-012"
-description: "agnix rule CC-AG-012 warns when bypassPermissions is used in claude agents files. Severity: HIGH. See examples and fix guidance."
+description: "agnix rule CC-AG-012 checks for bypass permissions warning in claude agents files. Severity: HIGH. See examples and fix guidance."
 keywords: ["CC-AG-012", "bypass permissions warning", "claude agents", "validation", "agnix", "linter"]
 ---
 
@@ -39,9 +39,7 @@ The following examples are illustrative snippets for this rule category.
 
 ```markdown
 ---
-name: my-agent
-description: Agent that bypasses permissions
-permissionMode: bypassPermissions
+name: reviewer
 ---
 ```
 
@@ -49,8 +47,9 @@ permissionMode: bypassPermissions
 
 ```markdown
 ---
-name: my-agent
-description: Agent with safe permission mode
-permissionMode: dontAsk
+name: reviewer
+description: Review code for correctness and tests
+model: sonnet
+tools: [Read, Grep, Bash]
 ---
 ```

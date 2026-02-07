@@ -988,6 +988,31 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 
 ---
 
+## OPENCODE RULES
+
+<a id="oc-001"></a>
+### OC-001 [HIGH] Invalid Share Mode
+**Requirement**: The `share` field in `opencode.json` MUST be `"manual"`, `"auto"`, or `"disabled"`
+**Detection**: Parse JSON, validate `share` value against allowed set
+**Fix**: Use a valid share mode value
+**Source**: opencode.ai/docs/config
+
+<a id="oc-002"></a>
+### OC-002 [HIGH] Invalid Instruction Path
+**Requirement**: Paths in the `instructions` array MUST exist on disk or be valid glob patterns
+**Detection**: Parse JSON, resolve each path in `instructions` array relative to config file location
+**Fix**: Fix or remove broken instruction paths
+**Source**: opencode.ai/docs/config
+
+<a id="oc-003"></a>
+### OC-003 [HIGH] opencode.json Parse Error
+**Requirement**: `opencode.json` MUST be valid JSON (or JSONC with comments stripped)
+**Detection**: Attempt JSON parse, report errors with line/column location
+**Fix**: Fix JSON syntax errors
+**Source**: opencode.ai/docs/config
+
+---
+
 ## UNIVERSAL RULES (XML)
 
 <a id="xml-001"></a>
@@ -1261,13 +1286,14 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | GitHub Copilot | 6 | 4 | 2 | 0 | 1 |
 | Cursor | 9 | 4 | 5 | 0 | 2 |
 | Cline | 3 | 2 | 1 | 0 | 1 |
+| OpenCode | 3 | 3 | 0 | 0 | 0 |
 | MCP | 12 | 10 | 2 | 0 | 3 |
 | XML | 3 | 3 | 0 | 0 | 3 |
 | References | 2 | 2 | 0 | 0 | 0 |
 | Prompt Eng | 4 | 0 | 4 | 0 | 0 |
 | Cross-Platform | 6 | 4 | 2 | 0 | 0 |
 | Version Awareness | 1 | 0 | 0 | 1 | 0 |
-| **TOTAL** | **136** | **97** | **37** | **2** | **32** |
+| **TOTAL** | **139** | **100** | **37** | **2** | **32** |
 
 
 ---
@@ -1297,9 +1323,9 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 
 ---
 
-**Total Coverage**: 136 validation rules across 16 categories
+**Total Coverage**: 139 validation rules across 17 categories
 
 **Knowledge Base**: 11,036 lines, 320KB, 75+ sources
-**Certainty**: 97 HIGH, 37 MEDIUM, 2 LOW
+**Certainty**: 100 HIGH, 37 MEDIUM, 2 LOW
 **Auto-Fixable**: 32 rules (24%)
 

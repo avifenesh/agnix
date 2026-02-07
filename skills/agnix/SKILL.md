@@ -1,6 +1,6 @@
 ---
 name: agnix
-description: "Use when user asks to 'lint agent configs', 'validate skills', 'check CLAUDE.md', 'validate hooks', 'lint MCP'. Validates agent configuration files against 136 rules."
+description: "Use when user asks to 'lint agent configs', 'validate skills', 'check CLAUDE.md', 'validate hooks', 'lint MCP'. Validates agent configuration files against 139 rules."
 version: 1.0.0
 argument-hint: "[path] [--fix] [--strict]"
 allowed-tools: Bash(agnix:*), Bash(cargo:*), Read, Glob, Grep

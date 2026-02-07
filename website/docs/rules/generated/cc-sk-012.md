@@ -2,8 +2,8 @@
 id: cc-sk-012
 title: "CC-SK-012: Argument Hint Without $ARGUMENTS - Claude Skills"
 sidebar_label: "CC-SK-012"
-description: "agnix rule CC-SK-012 checks for argument-hint without $ARGUMENTS reference in claude skills files. Severity: MEDIUM. See examples and fix guidance."
-keywords: ["CC-SK-012", "argument hint without arguments", "claude skills", "validation", "agnix", "linter"]
+description: "agnix rule CC-SK-012 checks for argument hint without $arguments in claude skills files. Severity: MEDIUM. See examples and fix guidance."
+keywords: ["CC-SK-012", "argument hint without $arguments", "claude skills", "validation", "agnix", "linter"]
 ---
 
 ## Summary
@@ -39,20 +39,16 @@ The following examples are illustrative snippets for this rule category.
 
 ```markdown
 ---
-name: greeter
-description: Use when greeting users
-argument-hint: user-name
+name: Deploy_Prod
+description: Deploys production changes
 ---
-Greet the user with a friendly message.
 ```
 
 ### Valid
 
 ```markdown
 ---
-name: greeter
-description: Use when greeting users
-argument-hint: user-name
+name: deploy-prod
+description: Deploy production with explicit checks
 ---
-Greet the user specified in $ARGUMENTS with a friendly message.
 ```

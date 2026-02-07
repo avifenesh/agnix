@@ -357,6 +357,21 @@ rules:
     message: "Clave de frontmatter desconocida '%{key}' en archivo de reglas de Cline"
     suggestion: "Elimina la clave desconocida '%{key}'. Solo 'paths' es una clave de frontmatter reconocida."
 
+  # --- OpenCode (opencode.rs) ---
+  oc_001:
+    message: "Modo de compartir invalido '%{value}'. Valores validos: 'manual', 'auto', 'disabled'"
+    type_error: "El campo 'share' debe ser una cadena de texto. Valores validos: 'manual', 'auto', 'disabled'"
+    suggestion: "Usa 'manual', 'auto' o 'disabled' para el campo share"
+  oc_002:
+    not_found: "La ruta de instruccion '%{path}' no existe"
+    invalid_glob: "La ruta de instruccion '%{path}' tiene sintaxis glob invalida"
+    traversal: "La ruta de instruccion '%{path}' debe ser relativa y no debe contener '..'"
+    type_error: "El campo 'instructions' debe ser un array de cadenas de texto"
+    suggestion: "Usa rutas relativas que existan o patrones glob validos en el array de instrucciones"
+  oc_003:
+    message: "Error de analisis en opencode.json: %{error}"
+    suggestion: "Corrige la sintaxis JSON en opencode.json"
+
   # --- Prompt engineering (prompt.rs) ---
   pe_001:
     message: "Palabra clave critica '%{keyword}' al %{percent} por ciento del documento (40-60 por ciento es la zona 'perdido en el medio')"

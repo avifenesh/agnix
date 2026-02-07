@@ -81,7 +81,7 @@ The extension automatically downloads the `agnix-lsp` binary. See `editors/zed/R
 
 - Real-time diagnostics as you type (via textDocument/didChange)
 - Real-time diagnostics on file open and save
-- Supports all agnix validation rules (136 rules)
+- Supports all agnix validation rules (139 rules)
 
 - Maps diagnostic severity levels (Error, Warning, Info)
 - Rule codes shown in diagnostic messages

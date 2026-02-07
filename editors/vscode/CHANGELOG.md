@@ -60,7 +60,7 @@ All notable changes to the "agnix" extension will be documented in this file.
 - **New commands:**
   - `agnix: Validate Current File` - Validate the active file
   - `agnix: Validate Workspace` - Validate all agent configs in workspace
-  - `agnix: Show All Rules` - Browse 136 validation rules by category
+  - `agnix: Show All Rules` - Browse 139 validation rules by category
   - `agnix: Fix All Issues in File` - Apply all available quick fixes
 - **Context menu integration** - Right-click on agent config files
 - **Keyboard shortcuts:**

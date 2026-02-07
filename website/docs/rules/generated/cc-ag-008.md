@@ -39,9 +39,7 @@ The following examples are illustrative snippets for this rule category.
 
 ```markdown
 ---
-name: my-agent
-description: An agent with invalid memory
-memory: global
+name: reviewer
 ---
 ```
 
@@ -49,8 +47,9 @@ memory: global
 
 ```markdown
 ---
-name: my-agent
-description: An agent with valid memory
-memory: project
+name: reviewer
+description: Review code for correctness and tests
+model: sonnet
+tools: [Read, Grep, Bash]
 ---
 ```

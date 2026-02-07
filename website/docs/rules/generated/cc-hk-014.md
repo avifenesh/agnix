@@ -1,9 +1,9 @@
 ---
 id: cc-hk-014
-title: "CC-HK-014: Once Outside Skill/Agent Frontmatter - Claude Hooks"
+title: "CC-HK-014: Once Outside Skill/Agent Frontmatter"
 sidebar_label: "CC-HK-014"
-description: "agnix rule CC-HK-014 checks for once field outside skill/agent frontmatter in claude hooks files. Severity: MEDIUM. See examples and fix guidance."
-keywords: ["CC-HK-014", "once outside frontmatter", "claude hooks", "validation", "agnix", "linter"]
+description: "agnix rule CC-HK-014 checks for once outside skill/agent frontmatter in claude hooks files. Severity: MEDIUM. See examples and fix guidance."
+keywords: ["CC-HK-014", "once outside skill/agent frontmatter", "claude hooks", "validation", "agnix", "linter"]
 ---
 
 ## Summary
@@ -39,15 +39,12 @@ The following examples are illustrative snippets for this rule category.
 
 ```json
 {
-  "hooks": {
-    "Stop": [
-      {
-        "hooks": [
-          { "type": "command", "command": "echo done", "once": true }
-        ]
-      }
-    ]
-  }
+  "hooks": [
+    {
+      "event": "PreToolUse",
+      "matcher": "*"
+    }
+  ]
 }
 ```
 
@@ -55,14 +52,13 @@ The following examples are illustrative snippets for this rule category.
 
 ```json
 {
-  "hooks": {
-    "Stop": [
-      {
-        "hooks": [
-          { "type": "command", "command": "echo done" }
-        ]
-      }
-    ]
-  }
+  "hooks": [
+    {
+      "event": "PreToolUse",
+      "matcher": "Write",
+      "command": "./scripts/validate.sh",
+      "timeout": 30
+    }
+  ]
 }
 ```

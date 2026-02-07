@@ -9,7 +9,7 @@ Contributions are welcome and appreciated.
 
 ## Found something off?
 
-agnix validates against 136 rules, but the agent config ecosystem moves fast. If a rule is wrong, missing, or too noisy, we want to know.
+agnix validates against 139 rules, but the agent config ecosystem moves fast. If a rule is wrong, missing, or too noisy, we want to know.
 
 - [Report a bug](https://github.com/avifenesh/agnix/issues/new)
 - [Request a rule](https://github.com/avifenesh/agnix/issues/new)

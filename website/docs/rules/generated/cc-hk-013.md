@@ -2,7 +2,7 @@
 id: cc-hk-013
 title: "CC-HK-013: Async on Non-Command Hook - Claude Hooks"
 sidebar_label: "CC-HK-013"
-description: "agnix rule CC-HK-013 checks for async field on non-command hooks in claude hooks files. Severity: HIGH. See examples and fix guidance."
+description: "agnix rule CC-HK-013 checks for async on non-command hook in claude hooks files. Severity: HIGH. See examples and fix guidance."
 keywords: ["CC-HK-013", "async on non-command hook", "claude hooks", "validation", "agnix", "linter"]
 ---
 
@@ -39,15 +39,12 @@ The following examples are illustrative snippets for this rule category.
 
 ```json
 {
-  "hooks": {
-    "Stop": [
-      {
-        "hooks": [
-          { "type": "prompt", "prompt": "Summarize", "async": true }
-        ]
-      }
-    ]
-  }
+  "hooks": [
+    {
+      "event": "PreToolUse",
+      "matcher": "*"
+    }
+  ]
 }
 ```
 
@@ -55,15 +52,13 @@ The following examples are illustrative snippets for this rule category.
 
 ```json
 {
-  "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Bash",
-        "hooks": [
-          { "type": "command", "command": "echo test", "async": true }
-        ]
-      }
-    ]
-  }
+  "hooks": [
+    {
+      "event": "PreToolUse",
+      "matcher": "Write",
+      "command": "./scripts/validate.sh",
+      "timeout": 30
+    }
+  ]
 }
 ```

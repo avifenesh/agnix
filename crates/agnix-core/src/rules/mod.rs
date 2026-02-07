@@ -11,6 +11,7 @@ pub mod cursor;
 pub mod hooks;
 pub mod imports;
 pub mod mcp;
+pub mod opencode;
 pub mod plugin;
 pub mod prompt;
 pub mod skill;

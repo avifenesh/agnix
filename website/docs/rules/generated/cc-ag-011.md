@@ -1,6 +1,6 @@
 ---
 id: cc-ag-011
-title: "CC-AG-011: Invalid Hooks in Agent Frontmatter - Claude Agents"
+title: "CC-AG-011: Invalid Hooks in Agent Frontmatter"
 sidebar_label: "CC-AG-011"
 description: "agnix rule CC-AG-011 checks for invalid hooks in agent frontmatter in claude agents files. Severity: HIGH. See examples and fix guidance."
 keywords: ["CC-AG-011", "invalid hooks in agent frontmatter", "claude agents", "validation", "agnix", "linter"]
@@ -39,13 +39,7 @@ The following examples are illustrative snippets for this rule category.
 
 ```markdown
 ---
-name: my-agent
-description: Agent with invalid hook event
-hooks:
-  BadEvent:
-    - hooks:
-        - type: command
-          command: echo test
+name: reviewer
 ---
 ```
 
@@ -53,13 +47,9 @@ hooks:
 
 ```markdown
 ---
-name: my-agent
-description: Agent with valid hooks
-hooks:
-  PreToolUse:
-    - matcher: "*"
-      hooks:
-        - type: command
-          command: echo test
+name: reviewer
+description: Review code for correctness and tests
+model: sonnet
+tools: [Read, Grep, Bash]
 ---
 ```

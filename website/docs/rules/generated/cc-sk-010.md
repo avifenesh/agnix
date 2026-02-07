@@ -1,8 +1,8 @@
 ---
 id: cc-sk-010
-title: "CC-SK-010: Invalid Hooks in Skill Frontmatter - Claude Skills"
+title: "CC-SK-010: Invalid Hooks in Skill Frontmatter"
 sidebar_label: "CC-SK-010"
-description: "agnix rule CC-SK-010 checks for invalid hooks configuration in claude skills files. Severity: HIGH. See examples and fix guidance."
+description: "agnix rule CC-SK-010 checks for invalid hooks in skill frontmatter in claude skills files. Severity: HIGH. See examples and fix guidance."
 keywords: ["CC-SK-010", "invalid hooks in skill frontmatter", "claude skills", "validation", "agnix", "linter"]
 ---
 
@@ -39,12 +39,8 @@ The following examples are illustrative snippets for this rule category.
 
 ```markdown
 ---
-name: my-skill
-description: Use when testing hooks
-hooks:
-  InvalidEvent:
-    - type: command
-      command: echo hello
+name: Deploy_Prod
+description: Deploys production changes
 ---
 ```
 
@@ -52,11 +48,7 @@ hooks:
 
 ```markdown
 ---
-name: my-skill
-description: Use when testing hooks
-hooks:
-  PreToolUse:
-    - type: command
-      command: echo pre-tool
+name: deploy-prod
+description: Deploy production with explicit checks
 ---
 ```

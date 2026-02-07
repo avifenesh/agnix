@@ -1,6 +1,6 @@
 # Rules Reference
 
-This section contains all `136` validation rules generated from `knowledge-base/rules.json`.
+This section contains all `139` validation rules generated from `knowledge-base/rules.json`.
 `32` rules have automatic fixes.
 
 
@@ -141,4 +141,7 @@ This section contains all `136` validation rules generated from `knowledge-base/
 | [XP-004](./generated/xp-004.md) | Conflicting Build/Test Commands | MEDIUM | Cross-Platform | No |
 | [XP-005](./generated/xp-005.md) | Conflicting Tool Constraints | HIGH | Cross-Platform | No |
 | [XP-006](./generated/xp-006.md) | Multiple Layers Without Documented Precedence | MEDIUM | Cross-Platform | No |
+| [OC-001](./generated/oc-001.md) | Invalid Share Mode | HIGH | OpenCode | No |
+| [OC-002](./generated/oc-002.md) | Invalid Instruction Path | HIGH | OpenCode | No |
+| [OC-003](./generated/oc-003.md) | opencode.json Parse Error | HIGH | OpenCode | No |
 | [VER-001](./generated/ver-001.md) | No Tool/Spec Versions Pinned | LOW | Version Awareness | No |

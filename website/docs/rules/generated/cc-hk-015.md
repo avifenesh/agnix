@@ -2,7 +2,7 @@
 id: cc-hk-015
 title: "CC-HK-015: Model on Command Hook - Claude Hooks"
 sidebar_label: "CC-HK-015"
-description: "agnix rule CC-HK-015 checks for model field on command hooks in claude hooks files. Severity: MEDIUM. See examples and fix guidance."
+description: "agnix rule CC-HK-015 checks for model on command hook in claude hooks files. Severity: MEDIUM. See examples and fix guidance."
 keywords: ["CC-HK-015", "model on command hook", "claude hooks", "validation", "agnix", "linter"]
 ---
 
@@ -39,16 +39,12 @@ The following examples are illustrative snippets for this rule category.
 
 ```json
 {
-  "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Bash",
-        "hooks": [
-          { "type": "command", "command": "echo test", "model": "claude-sonnet-4-5-20250929" }
-        ]
-      }
-    ]
-  }
+  "hooks": [
+    {
+      "event": "PreToolUse",
+      "matcher": "*"
+    }
+  ]
 }
 ```
 
@@ -56,14 +52,13 @@ The following examples are illustrative snippets for this rule category.
 
 ```json
 {
-  "hooks": {
-    "Stop": [
-      {
-        "hooks": [
-          { "type": "prompt", "prompt": "Summarize", "model": "claude-sonnet-4-5-20250929" }
-        ]
-      }
-    ]
-  }
+  "hooks": [
+    {
+      "event": "PreToolUse",
+      "matcher": "Write",
+      "command": "./scripts/validate.sh",
+      "timeout": 30
+    }
+  ]
 }
 ```

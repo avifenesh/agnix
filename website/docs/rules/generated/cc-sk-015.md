@@ -39,9 +39,8 @@ The following examples are illustrative snippets for this rule category.
 
 ```markdown
 ---
-name: my-skill
-description: Use when testing
-user-invocable: "false"
+name: Deploy_Prod
+description: Deploys production changes
 ---
 ```
 
@@ -49,8 +48,7 @@ user-invocable: "false"
 
 ```markdown
 ---
-name: my-skill
-description: Use when testing
-user-invocable: false
+name: deploy-prod
+description: Deploy production with explicit checks
 ---
 ```

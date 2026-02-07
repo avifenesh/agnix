@@ -1,6 +1,6 @@
 ---
 id: cc-sk-013
-title: "CC-SK-013: Fork Context Without Actionable Instructions - Claude Skills"
+title: "CC-SK-013: Fork Context Without Actionable Instructions"
 sidebar_label: "CC-SK-013"
 description: "agnix rule CC-SK-013 checks for fork context without actionable instructions in claude skills files. Severity: MEDIUM. See examples and fix guidance."
 keywords: ["CC-SK-013", "fork context without actionable instructions", "claude skills", "validation", "agnix", "linter"]
@@ -39,24 +39,16 @@ The following examples are illustrative snippets for this rule category.
 
 ```markdown
 ---
-name: ref-skill
-description: Use when looking up docs
-context: fork
-agent: general-purpose
+name: Deploy_Prod
+description: Deploys production changes
 ---
-This is a reference document about the API.
-It describes the system architecture.
 ```
 
 ### Valid
 
 ```markdown
 ---
-name: build-skill
-description: Use when building the project
-context: fork
-agent: general-purpose
+name: deploy-prod
+description: Deploy production with explicit checks
 ---
-Run the build command and check for errors.
-Create a report of the results.
 ```

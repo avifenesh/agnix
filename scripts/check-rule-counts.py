@@ -122,6 +122,7 @@ def main() -> int:
         "cross-platform": "Cross-Platform",
         "cursor": "Cursor",
         "cline": "Cline",
+        "opencode": "OpenCode",
         "version-awareness": "Version Awareness",
     }
 
@@ -204,6 +205,7 @@ def main() -> int:
         "GitHub Copilot": ["copilot"],
         "Cursor Project Rules": ["cursor"],
         "Cline": ["cline"],
+        "OpenCode": ["opencode"],
         "Version Awareness": ["version-awareness"],
     }
     spec_sum = 0

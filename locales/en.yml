@@ -426,6 +426,21 @@ rules:
     message: "Unknown frontmatter key '%{key}' in Cline rules file"
     suggestion: "Remove unknown key '%{key}'. Only 'paths' is a recognized frontmatter key."
 
+  # --- OpenCode (opencode.rs) ---
+  oc_001:
+    message: "Invalid share mode '%{value}'. Valid values: 'manual', 'auto', 'disabled'"
+    type_error: "Field 'share' must be a string. Valid values: 'manual', 'auto', 'disabled'"
+    suggestion: "Use 'manual', 'auto', or 'disabled' for the share field"
+  oc_002:
+    not_found: "Instruction path '%{path}' does not exist"
+    invalid_glob: "Instruction path '%{path}' has invalid glob syntax"
+    traversal: "Instruction path '%{path}' must be relative and must not contain '..'"
+    type_error: "Field 'instructions' must be an array of strings"
+    suggestion: "Use relative paths that exist or valid glob patterns in the instructions array"
+  oc_003:
+    message: "opencode.json parse error: %{error}"
+    suggestion: "Fix the JSON syntax in opencode.json"
+
   # --- Prompt engineering (prompt.rs) ---
   pe_001:
     message: "Critical keyword '%{keyword}' at %{percent} percent of document (40-60 percent is the 'lost in the middle' zone)"

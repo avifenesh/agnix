@@ -39,10 +39,7 @@ The following examples are illustrative snippets for this rule category.
 
 ```markdown
 ---
-name: my-agent
-description: Agent with unknown tool
-tools:
-  - UnknownTool
+name: reviewer
 ---
 ```
 
@@ -50,11 +47,9 @@ tools:
 
 ```markdown
 ---
-name: my-agent
-description: Agent with valid tools
-tools:
-  - Bash
-  - Read
-  - Write
+name: reviewer
+description: Review code for correctness and tests
+model: sonnet
+tools: [Read, Grep, Bash]
 ---
 ```

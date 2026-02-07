@@ -1,8 +1,7 @@
 {
   "description": "Machine-readable source of truth for all validation rules. When adding a new rule, add it here AND in VALIDATION-RULES.md. CI parity tests enforce sync.",
   "version": "1.1.0",
-  "total_rules": 136,
-
+  "total_rules": 139,
   "last_updated": "2026-02-07",
   "schema": {
     "evidence": {
@@ -3402,6 +3401,81 @@
         "verified_on": "2026-02-04",
         "applies_to": {},
         "normative_level": "SHOULD",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      }
+    },
+    {
+      "id": "OC-001",
+      "name": "Invalid Share Mode",
+      "severity": "HIGH",
+      "category": "opencode",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://opencode.ai/docs/config"
+        ],
+        "verified_on": "2026-02-07",
+        "applies_to": {
+          "tool": "opencode"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      }
+    },
+    {
+      "id": "OC-002",
+      "name": "Invalid Instruction Path",
+      "severity": "HIGH",
+      "category": "opencode",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://opencode.ai/docs/config"
+        ],
+        "verified_on": "2026-02-07",
+        "applies_to": {
+          "tool": "opencode"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      }
+    },
+    {
+      "id": "OC-003",
+      "name": "opencode.json Parse Error",
+      "severity": "HIGH",
+      "category": "opencode",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://opencode.ai/docs/config"
+        ],
+        "verified_on": "2026-02-07",
+        "applies_to": {
+          "tool": "opencode"
+        },
+        "normative_level": "MUST",
         "tests": {
           "unit": true,
           "fixtures": true,

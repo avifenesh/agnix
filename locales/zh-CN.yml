@@ -357,6 +357,21 @@ rules:
     message: "Cline 规则文件中未知的 frontmatter 键 '%{key}'"
     suggestion: "删除未知键 '%{key}'。只有 'paths' 是已识别的 frontmatter 键。"
 
+  # --- OpenCode (opencode.rs) ---
+  oc_001:
+    message: "无效的共享模式 '%{value}'。有效值: 'manual', 'auto', 'disabled'"
+    type_error: "字段 'share' 必须是字符串。有效值: 'manual', 'auto', 'disabled'"
+    suggestion: "使用 'manual'、'auto' 或 'disabled' 作为 share 字段的值"
+  oc_002:
+    not_found: "指令路径 '%{path}' 不存在"
+    invalid_glob: "指令路径 '%{path}' 的 glob 语法无效"
+    traversal: "指令路径 '%{path}' 必须是相对路径且不能包含 '..'"
+    type_error: "字段 'instructions' 必须是字符串数组"
+    suggestion: "在指令数组中使用存在的相对路径或有效的 glob 模式"
+  oc_003:
+    message: "opencode.json 解析错误: %{error}"
+    suggestion: "修复 opencode.json 中的 JSON 语法"
+
   # --- Prompt engineering (prompt.rs) ---
   pe_001:
     message: "关键词 '%{keyword}' 在文档的 %{percent} 百分比处（40-60 百分比是'中间遗忘'区域）"

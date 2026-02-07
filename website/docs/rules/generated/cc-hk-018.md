@@ -2,8 +2,8 @@
 id: cc-hk-018
 title: "CC-HK-018: Matcher on UserPromptSubmit/Stop - Claude Hooks"
 sidebar_label: "CC-HK-018"
-description: "agnix rule CC-HK-018 checks for matchers on UserPromptSubmit and Stop events that are silently ignored. Severity: LOW. See examples and fix guidance."
-keywords: ["CC-HK-018", "matcher on userpromptsubmit stop", "claude hooks", "validation", "agnix", "linter"]
+description: "agnix rule CC-HK-018 checks for matcher on userpromptsubmit/stop in claude hooks files. Severity: LOW. See examples and fix guidance."
+keywords: ["CC-HK-018", "matcher on userpromptsubmit/stop", "claude hooks", "validation", "agnix", "linter"]
 ---
 
 ## Summary
@@ -39,16 +39,12 @@ The following examples are illustrative snippets for this rule category.
 
 ```json
 {
-  "hooks": {
-    "UserPromptSubmit": [
-      {
-        "matcher": "Bash",
-        "hooks": [
-          { "type": "command", "command": "echo submitted" }
-        ]
-      }
-    ]
-  }
+  "hooks": [
+    {
+      "event": "PreToolUse",
+      "matcher": "*"
+    }
+  ]
 }
 ```
 
@@ -56,14 +52,13 @@ The following examples are illustrative snippets for this rule category.
 
 ```json
 {
-  "hooks": {
-    "UserPromptSubmit": [
-      {
-        "hooks": [
-          { "type": "command", "command": "echo submitted" }
-        ]
-      }
-    ]
-  }
+  "hooks": [
+    {
+      "event": "PreToolUse",
+      "matcher": "Write",
+      "command": "./scripts/validate.sh",
+      "timeout": 30
+    }
+  ]
 }
 ```

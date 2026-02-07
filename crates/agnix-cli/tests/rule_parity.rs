@@ -1,6 +1,6 @@
 //! Rule parity integration tests.
 //!
-//! Ensures all 136 rules from knowledge-base/rules.json are:
+//! Ensures all 139 rules from knowledge-base/rules.json are:
 
 //! 1. Registered in SARIF output (sarif.rs)
 //! 2. Implemented in agnix-core/src/rules/*.rs
@@ -166,7 +166,7 @@ fn extract_implemented_rule_ids() -> BTreeSet<String> {
     // Known rule ID prefixes to filter out false positives
     let valid_prefixes = [
         "AS-", "CC-SK-", "CC-HK-", "CC-AG-", "CC-MEM-", "CC-PL-", "AGM-", "MCP-", "COP-", "CUR-",
-        "CLN-", "XML-", "REF-", "PE-", "XP-", "VER-",
+        "CLN-", "OC-", "XML-", "REF-", "PE-", "XP-", "VER-",
     ];
 
     fn extract_from_file(
@@ -299,6 +299,7 @@ fn infer_fixture_coverage(rules: &[RuleEntry]) -> HashMap<String, Vec<String>> {
             vec!["prompt", "invalid/pe", "valid/pe"],
         ),
         ("cross-platform", vec!["cross_platform"]),
+        ("opencode", vec!["opencode", "opencode-invalid"]),
     ]
     .into_iter()
     .collect();
@@ -449,8 +450,8 @@ fn test_rules_json_integrity() {
     // Check total count matches expected
     assert_eq!(
         rules_index.rules.len(),
-        136,
-        "Expected 136 rules in rules.json, found {}",
+        139,
+        "Expected 139 rules in rules.json, found {}",
         rules_index.rules.len()
     );
 
@@ -492,6 +493,7 @@ fn test_rules_json_integrity() {
         "references",
         "prompt-engineering",
         "cross-platform",
+        "opencode",
         "version-awareness",
     ];
     for rule in &rules_index.rules {
@@ -543,12 +545,12 @@ fn test_rules_json_matches_validation_rules_md() {
 fn test_sarif_rule_count() {
     let sarif_rules = extract_sarif_rule_ids();
 
-    // SARIF should have exactly 136 rules to match rules.json
+    // SARIF should have exactly 139 rules to match rules.json
 
     assert_eq!(
         sarif_rules.len(),
-        136,
-        "SARIF should have 136 rules, found {}. Missing or extra rules detected.",
+        139,
+        "SARIF should have 139 rules, found {}. Missing or extra rules detected.",
         sarif_rules.len()
     );
 }

@@ -92,6 +92,8 @@ pub enum FileType {
     ClineRules,
     /// Cline rules folder files (.clinerules/*.md)
     ClineRulesFolder,
+    /// OpenCode configuration (opencode.json)
+    OpenCodeConfig,
     /// Other .md files (for XML/import checks)
     GenericMarkdown,
     /// Skip validation
@@ -173,6 +175,7 @@ impl ValidatorRegistry {
             (FileType::CursorRulesLegacy, claude_md_validator),
             (FileType::ClineRules, cline_validator),
             (FileType::ClineRulesFolder, cline_validator),
+            (FileType::OpenCodeConfig, opencode_validator),
             (FileType::GenericMarkdown, cross_platform_validator),
             (FileType::GenericMarkdown, xml_validator),
             (FileType::GenericMarkdown, imports_validator),
@@ -248,6 +251,10 @@ fn cursor_validator() -> Box<dyn Validator> {
 
 fn cline_validator() -> Box<dyn Validator> {
     Box::new(rules::cline::ClineValidator)
+}
+
+fn opencode_validator() -> Box<dyn Validator> {
+    Box::new(rules::opencode::OpenCodeValidator)
 }
 
 /// Returns true if the file is inside a documentation directory that
@@ -332,6 +339,8 @@ pub fn detect_file_type(path: &Path) -> FileType {
         name if name.ends_with(".md") && parent == Some(".clinerules") => {
             FileType::ClineRulesFolder
         }
+        // OpenCode configuration (opencode.json)
+        "opencode.json" => FileType::OpenCodeConfig,
         name if name.ends_with(".md") => {
             // Agent directories take precedence over filename exclusions.
             // Files like agents/README.md should be validated as agent configs.
