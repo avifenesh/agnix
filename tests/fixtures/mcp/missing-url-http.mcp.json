@@ -1,0 +1,7 @@
+{
+  "mcpServers": {
+    "http-server": {
+      "type": "http"
+    }
+  }
+}

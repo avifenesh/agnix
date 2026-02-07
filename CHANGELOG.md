@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- MCP-009: Validate `command` is present for stdio MCP servers (HIGH)
+- MCP-010: Validate `url` is present for http/sse MCP servers (HIGH)
+- MCP-011: Validate MCP server `type` is one of stdio, http, sse (HIGH)
+- MCP-012: Warn when SSE transport is used (deprecated in favor of Streamable HTTP) with auto-fix (MEDIUM)
 - CC-SK-010: Validate hooks in skill frontmatter follow settings.json schema
 - CC-SK-011: Detect unreachable skills (user-invocable=false + disable-model-invocation=true)
 - CC-SK-012: Warn when argument-hint is set but body never references $ARGUMENTS
@@ -345,7 +349,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Quick-fix code actions from Fix objects
   - Hover documentation for frontmatter fields
   - Document content caching for performance
-  - Supports all 108 agnix validation rules with severity mapping
+  - Supports all 112 agnix validation rules with severity mapping
   - Workspace boundary validation for security (prevents path traversal)
   - Config caching optimization for performance
   - Editor support for VS Code, Neovim, Helix, and other LSP-compatible editors
@@ -359,7 +363,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Case-insensitive tool name matching
   - Takes precedence over legacy `target` field for flexibility
 - VS Code extension with full LSP integration (#22)
-  - Real-time diagnostics for all 108 validation rules
+  - Real-time diagnostics for all 112 validation rules
   - Status bar indicator showing agnix validation status
   - Syntax highlighting for SKILL.md YAML frontmatter
   - Commands: 'Restart Language Server' and 'Show Output Channel'

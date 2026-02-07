@@ -178,6 +178,19 @@ rules:
     request_suggestion: "Consider updating to protocol version '%{expected}' for compatibility"
     response_suggestion: "Server negotiated version '%{found}', expected '%{expected}'. Verify compatibility."
     assumption: "Using default MCP protocol version. Pin mcp_protocol in .agnix.toml [spec_revisions] for explicit control."
+  mcp_009:
+    message: "Server '%{server}' has type 'stdio' but is missing required 'command' field"
+    suggestion: "Add a 'command' field specifying the executable to run"
+  mcp_010:
+    message: "Server '%{server}' has type '%{server_type}' but is missing required 'url' field"
+    suggestion: "Add a 'url' field specifying the server endpoint"
+  mcp_011:
+    message: "Server '%{server}' has invalid type '%{server_type}'. Must be 'stdio', 'http', or 'sse'"
+    suggestion: "Use one of: stdio, http, sse"
+  mcp_012:
+    message: "Server '%{server}' uses deprecated SSE transport"
+    suggestion: "Consider changing type from 'sse' to 'http' (Streamable HTTP)"
+    fix: "Change type from 'sse' to 'http'"
   invalid_tool: "Tool #%{num}: Invalid tool definition: %{error}"
   invalid_tool_single: "Invalid tool definition: %{error}"
   invalid_tool_suggestion: "Ensure tool has valid field types (name: string, description: string, inputSchema: object)"
