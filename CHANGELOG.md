@@ -10,14 +10,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.10.2] - 2026-02-08
 
 ### Fixed
+
 - VS Code extension version was out of sync with release binaries, causing download failures for agnix-lsp
 
 ## [0.10.1] - 2026-02-07
 
 ### Added
+
 - **Per-client skill validation** - 10 new rules detect when SKILL.md files in client-specific directories use unsupported frontmatter fields: CR-SK-001 (Cursor), CL-SK-001 (Cline), CP-SK-001 (Copilot), CX-SK-001 (Codex), OC-SK-001 (OpenCode), WS-SK-001 (Windsurf), KR-SK-001 (Kiro), AMP-SK-001 (Amp), RC-SK-001 (Roo Code), XP-SK-001 (cross-platform portability)
 
 ### Fixed
+
 - Markdown structure validation now skips headers inside fenced code blocks
 - Flaky telemetry env-dependent tests serialized with mutex
 - Clippy warnings in span_utils test assertions
@@ -25,9 +28,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.10.0] - 2026-02-07
 
 ### Performance
+
 - **Auto-fix span finding** - Replaced 8 dynamic `Regex::new()` calls with byte-level scanning in auto-fix helpers, eliminating regex compilation overhead entirely (closes #325)
 
 ### Added
+
 - **Website automation** - `generate-docs-rules.py` now generates `website/src/data/siteData.json` with dynamic stats (rule count, category count, autofix count, tool list); landing page and JSON-LD import generated data instead of hardcoding; `release.yml` `version-docs` job auto-cuts versioned docs on release
 - **GEMINI.md categorization** - `categorize_layer()` now recognizes `GEMINI.md` and `GEMINI.local.md` files as `LayerType::GeminiMd` for accurate XP-006 layer categorization
 - **Codex CLI support** - 3 new validation rules (CDX-001, CDX-002, CDX-003) for `.codex/config.toml` configuration files
@@ -79,6 +84,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Priority: exclude > include_as_memory > include_as_generic > built-in detection
 
 ### Changed
+
 - **Actionable diagnostic suggestions** - All parse error diagnostics now include actionable suggestions (AS-016, CC-HK-012, MCP-007, CC-AG-007, CC-PL-006, CDX-000, file-level errors); improved 4 generic suggestions with concrete guidance (MCP-003 lists valid JSON Schema types, MCP-006 warns about self-reported annotations, AGM-001/GM-001 specify common markdown issues)
 - **Website landing page** - Updated stats (145 rules, 2400+ tests, 10+ tools), added Cline/OpenCode/Gemini CLI/Roo Code/Kiro CLI to tools grid, visual redesign with Outfit font, syntax-highlighted terminal, scroll reveal animations, and open-ended "And many more" tool card
 - Auto-fix implementations added for 8 rules: CC-SK-011 (unsafe), CC-HK-013 (safe), CC-HK-015 (safe), CC-HK-018 (safe), CUR-008 (safe), COP-005 (unsafe), CC-AG-008 (unsafe), MCP-011 (unsafe)
@@ -94,6 +100,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.9.3] - 2026-02-06
 
 ### Fixed
+
 - VS Code extension now probes PATH binaries with `--version` and prefers up-to-date downloaded binary over outdated system installations
 - Version check handles pre-0.9.2 agnix-lsp binaries without `--version` support
 - Reordered `findLspBinary()` to prefer the downloaded binary when its version marker matches, skipping the `--version` probe on subsequent restarts
@@ -101,9 +108,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.9.2] - 2026-02-06
 
 ### Added
+
 - `agnix-lsp --version`/`-V` flag for debugging
 
 ### Fixed
+
 - VS Code and JetBrains plugins now auto-update LSP binary when plugin version changes
 - Plugin writes `.agnix-lsp-version` marker file to detect version mismatches
 - GitHub release URLs use versioned paths instead of `/latest/` for reliable downloads
@@ -111,6 +120,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.9.1] - 2026-02-06
 
 ### Fixed
+
 - CC-MEM-006: Detect positive alternatives after negatives ("NEVER X - always Y" no longer false positive)
 - PE-004: Skip ambiguous terms inside parentheses (descriptive text no longer flagged)
 - CC-AG-007: Humanize YAML parse errors ("expected a YAML list" instead of "expected a sequence")
@@ -119,6 +129,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Exclude DEVELOPER.md and 11 other developer-focused files from validation
 
 ### Added
+
 - JetBrains plugin auto-publish in release workflow
 - Zed extension auto-publish via zed-extension-action
 - All editor extension versions now auto-synced from Cargo.toml on release
@@ -126,12 +137,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.9.0] - 2026-02-06
 
 ### Changed
+
 - Validated against 1,200+ real-world repositories with 71 rules triggered
 - Exclude non-agent markdown files (README.md, docs/, wiki/) from validation
 - Restrict REF-002 broken link detection to agent config files only
 - Skip HTML5 void elements and markdown-safe elements in XML balance checking
 - Resolve @imports relative to project root when file-relative fails
-- Apply prompt quality rules (CC-MEM-005/006, PE-*) to Cursor rule files
+- Apply prompt quality rules (CC-MEM-005/006, PE-\*) to Cursor rule files
 - Detect .cursorrules.md as Cursor rules variant
 - Flag `|| true` and `2>/dev/null` as error suppression in hooks (CC-HK-009)
 - Broaden persona detection in CC-MEM-005 ("You're a senior...")
@@ -142,6 +154,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Filter email domains, Java annotations, and social handles from @import detection
 
 ### Added
+
 - `docs/RELEASING.md` - Release process guide with install target verification
 - `docs/REAL-WORLD-TESTING.md` - Real-world validation and manual inspection guide
 - `scripts/real-world-validate.py` - Batch validation harness
@@ -151,31 +164,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.8.1] - 2026-02-06
 
 ### Added
+
 - Authoring metadata and completion system (`authoring` module) with context-aware suggestions and hover docs for all config file types
 - LSP completion provider with intelligent key/value/snippet suggestions
 - Auto-fix support across validators: skills (AS-005, AS-006, CC-SK-001, CC-SK-003, CC-SK-005), agents (CC-AG-003, CC-AG-004), hooks (CC-HK-011), plugins (CC-PL-005), MCP (MCP-001)
 - Safety tagging for all auto-fixes (safe vs unsafe)
 
 ### Changed
+
 - LSP hover provider simplified by delegating to `agnix_core::authoring` module
 - Agent and skill validators now use `split_frontmatter()` directly for better error location and fix generation
 
 ### Fixed
+
 - CC-AG-007 parse error diagnostics now report the actual error line/column instead of always line 1
 
 ## [0.8.0] - 2026-02-06
 
 ### Added
+
 - Real-world validation harness (`scripts/real-world-validate.py`) with 121 curated repos (`tests/real-world/repos.yaml`) (#184)
 - XP-001: detect `@import` syntax in AGENTS.md files (Claude Code specific)
 - XP-003: detect OS-specific absolute paths (`/Users/`, `/home/`, `~/Library/`, `~/.config/`)
 - CC-MEM-005: detect role-play preambles and generic programming principles
 
 ### Changed
+
 - Exclude non-agent markdown files from validation (README.md, CONTRIBUTING.md, docs/, wiki/, etc.) to reduce false positives by 57%
 - Agent directory files (`agents/*.md`) take precedence over filename exclusions
 
 ### Fixed
+
 - Operator precedence bug in `@import` email filtering that incorrectly matched email addresses
 - Zed editor extension with automatic LSP binary download and MDC file type support (#198)
 - Documentation website pipeline (#195)
@@ -202,6 +221,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Supports explicit null to revert to auto-detection
 
 ### Changed
+
 - Documentation and website navigation now include direct install links for VS Code and JetBrains extensions, plus a prominent website link in the README.
 - Core: introduce `static_regex!` macro for validated regex initialization (#246)
   - Replaces bare `.unwrap()` on `Regex::new()` with descriptive `.expect()` messages
@@ -211,11 +231,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Adds per-module `test_regex_patterns_compile` tests for all static patterns
 
 ### Fixed
+
 - CLI: harden telemetry queue timestamp parsing against malformed data (#231)
   - Replace panic-prone byte-index slicing with safe `str::get()` calls
   - Add ASCII guard, separator validation, and range checks (year, month-aware day bounds, hour, minute, second)
   - Use `checked_sub` for day arithmetic to prevent u32 underflow
-- Config validation: accept VER-* prefix in disabled_rules (#233)
+- Config validation: accept VER-\* prefix in disabled_rules (#233)
 - VS Code extension: harden `downloadFile()` cleanup for stream and HTTP failure paths (#240)
   - Closes file/request handles on failure
   - Removes temporary download artifacts on failed downloads
@@ -226,7 +247,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added stub-path unit tests and validated both feature and non-feature builds
 - LSP backend now uses shared `Arc<String>` document cache entries to avoid full-text cloning on `did_change`, `did_save`, `codeAction`, and `hover` paths (#244)
 - LSP now revalidates open documents with bounded concurrency on config changes and drops stale diagnostics from outdated config/content snapshots (#243)
+
 ### Security
+
 - ReDoS protection via regex input size limits (MAX_REGEX_INPUT_SIZE = 64KB)
   - Markdown XML tag extraction skips oversized content
   - Cross-platform and prompt engineering validators protected
@@ -256,6 +279,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Prevents path traversal via .. components in non-canonical paths
 
 ### Added
+
 - Neovim plugin at `editors/neovim/` with full LSP integration (#187)
   - Automatic LSP attachment to agnix-relevant files
   - Commands: `:AgnixStart`, `:AgnixStop`, `:AgnixRestart`, `:AgnixInfo`, `:AgnixValidateFile`, `:AgnixShowRules`, `:AgnixFixAll`, `:AgnixFixSafe`, `:AgnixIgnoreRule`, `:AgnixShowRuleDoc`
@@ -298,6 +322,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Built with Svelte for reactive UI
 
 ### Changed
+
 - Refactored SkillValidator internal structure for better maintainability (#211)
   - Extracted monolithic 660-line validate() method into ValidationContext struct
   - Grouped validation logic into 11 focused methods by concern
@@ -313,12 +338,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - No validation behavior changes; refactor is layout-only for maintainability
 
 ### Fixed
+
 - CLI `--fix` now exits with status `0` when all diagnostics are resolved by auto-fixes (#230)
   - Exit status now reflects post-fix diagnostics for non-dry-run fix modes
   - Added integration regression test for `--fix` success after full auto-fix
 - Imports validation now recovers from poisoned shared `ImportCache` locks during project validation (#239)
 - Import traversal now revisits files discovered at shallower depth and avoids duplicate REF-001 diagnostics (#239)
+
 ### Performance
+
 - Benchmark infrastructure with iai-callgrind for deterministic CI testing (#202)
   - Instruction count benchmarks immune to system load variance
   - Helper script (./scripts/bench.sh) for iai/criterion/bloat workflows
@@ -330,6 +358,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.7.2] - 2026-02-05
 
 ### Fixed
+
 - npm package wrapper script now preserved during binary installation
   - Fixes "command not found" error when running `agnix` from npm install
   - Postinstall script backs up and restores wrapper script
@@ -337,6 +366,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.7.1] - 2026-02-05
 
 ### Fixed
+
 - VS Code extension LSP installation - now downloads LSP-specific archives (`agnix-lsp-*.tar.gz`)
   - Fixes "chmod: No such file or directory" error on macOS ARM64 and Linux ARM64
   - Added binary existence check before chmod for better error messages
@@ -345,17 +375,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Example: "Fetch web resources fresh, don't rely on cached data" ✓
 
 ### Changed
+
 - Release workflow now builds separate LSP archives for VS Code auto-download
 
 ## [0.7.0] - 2026-02-05
 
 ### Changed
+
 - Refactored LintConfig internal structure for better maintainability (#214)
   - Introduced RuntimeContext struct to group non-serialized state
   - Introduced RuleFilter trait to encapsulate rule filtering logic
   - Public API remains fully backward compatible
 
 ### Added
+
 - FileSystem trait for abstracting file system operations (#213)
   - Enables unit testing validators with MockFileSystem instead of requiring real temp files
   - RealFileSystem delegates to std::fs and file_utils for production use
@@ -368,16 +401,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Fixed test logic to properly reflect tool event requirements
 
 ### Performance
+
 - Shared import cache at project validation level reduces redundant parsing (#216)
 
 ## [0.3.0] - 2026-02-05
 
 ### Added
+
 - Comprehensive config file tests (30+ new tests)
 - Performance benchmarks for validation pipeline
 - Support for partial config files (only specify fields you need)
 
 ### Fixed
+
 - Config now allows partial files - users can specify only `disabled_rules` without all other fields
 - Windows path false positives - regex patterns (`\n`, `\s`, `\d`) no longer flagged as Windows paths
 - Comma-separated tool parsing - both `Read, Grep` and `Read Write` formats now work
@@ -388,12 +424,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - @import/reference false positives - requires file extension for paths with `/`
 
 ### Changed
+
 - README updated for v0.3.0 with accurate config examples and benchmark numbers
 - Installation now uses `cargo install agnix-cli` from crates.io
 
 ## [0.2.0] - 2026-02-05
 
 ### Added
+
 - crates.io publishing support (#20)
   - New `agnix-rules` crate for independent rule updates without CLI republish
   - LICENSE-MIT and LICENSE-APACHE files for dual licensing
@@ -416,10 +454,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Comprehensive test coverage with 36 unit and integration tests
   - Installation: `cargo install --path crates/agnix-lsp`
   - LSP now loads `.agnix.toml` from workspace root (#174)
+
 - Multi-tool support via `tools` array in config (#175)
   - Specify `tools = ["claude-code", "cursor"]` to enable only relevant rules
-  - Tool-specific rules (CC-*, COP-*, CUR-*) filtered based on tools list
-  - Generic rules (AS-*, XP-*, AGM-*, MCP-*, PE-*) always apply
+  - Tool-specific rules (CC-_, COP-_, CUR-\*) filtered based on tools list
+  - Generic rules (AS-_, XP-_, AGM-_, MCP-_, PE-\*) always apply
   - Case-insensitive tool name matching
   - Takes precedence over legacy `target` field for flexibility
 - VS Code extension with full LSP integration (#22)
@@ -431,6 +470,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Configuration: agnix.lspPath, agnix.enable, agnix.trace.server
   - Safe LSP binary detection (prevents command injection)
   - Documentation in editors/vscode/README.md
+
 - Spec Drift Sentinel workflow for automated upstream specification monitoring (#107)
   - Weekly checks for S-tier sources (Agent Skills, MCP, Claude Code, Codex CLI, OpenCode)
   - Monthly checks for A-tier sources (Cursor, GitHub Copilot, Cline)
@@ -451,7 +491,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - XP-005: Conflicting tool constraints detection (allow vs disallow across files)
   - XP-006: Multiple instruction layers without documented precedence warning
   - Detects contradictions across CLAUDE.md, AGENTS.md, .cursor/rules, and Copilot files
-  - HashMap-based O(n*m) algorithms for efficient conflict detection
+  - HashMap-based O(n\*m) algorithms for efficient conflict detection
   - Word boundary matching to prevent false positives
   - Backup file exclusion (.bak, .old, .tmp, .swp, ~)
 - Evidence metadata schema for all 100 validation rules
@@ -476,6 +516,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Comprehensive test coverage with 8 fixtures
 
 ### Performance
+
 - LSP server now caches ValidatorRegistry in Backend struct (#171)
   - Registry wrapped in Arc and shared across spawn_blocking validation tasks
   - Eliminates redundant HashMap allocations and validator factory lookups per validation
@@ -487,9 +528,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Small synchronization overhead traded for significant memory reduction on large repos
 
 ### Tests
+
 - Added validation pipeline tests for AGENTS.md path collection and files_checked counter (#83)
 
 ### Changed
+
 - Tool mappings derived from rules.json at compile time (#176)
   - VALID_TOOLS and TOOL_RULE_PREFIXES now extracted from rules.json evidence metadata
   - New helper functions in agnix-rules: valid_tools(), get_tool_for_prefix(), get_prefixes_for_tool()
@@ -502,11 +545,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - No breaking changes for agnix-cli or external consumers using documented API
 
 ### Removed
+
 - Removed unused config flags `tool_names` and `required_fields` from `.agnix.toml`
   - These flags were never referenced in the codebase
   - Backward compatibility maintained - old configs with these fields still parse correctly
 
 ### Fixed
+
 - Mutex locks in streaming validation now use unwrap() for consistent fail-fast on poisoning (#172)
 - CLAUDE/AGENTS parity test now resilient to different directory structures (worktrees, symlinks)
   - Replaced brittle `.ancestors().nth(2)` with dynamic workspace root detection
@@ -535,6 +580,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - This allows MCP-008 assumption notes to appear when no version is configured
 
 ### Security
+
 - GitHub Action: Validate version input format to prevent path traversal attacks
 - GitHub Action: Sanitize diagnostic messages in workflow commands to prevent injection
 - GitHub Action: Use authenticated GitHub API requests when token available (avoids rate limits)
@@ -552,13 +598,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Documented SHA pin reference in .github/workflows/README.md for maintainability
 
 ### Added
+
 - Evaluation harness with `agnix eval` command for measuring rule efficacy
   - Load test cases from YAML manifests with expected rule IDs
   - Calculate precision, recall, and F1 scores per rule and overall
   - Output formats: markdown (default), JSON, CSV
   - Filter by rule prefix (`--filter`)
   - Verbose mode for per-case details (`--verbose`)
-  - 39 test cases covering AS-*, CC-SK-*, MCP-*, AGM-*, XP-*, XML-*, REF-* rules
+  - 39 test cases covering AS-_, CC-SK-_, MCP-_, AGM-_, XP-_, XML-_, REF-\* rules
   - Path traversal protection (relative paths only)
   - Documentation in knowledge-base/EVALUATION.md
 - MCP-008 rule for protocol version validation with configurable `mcp_protocol_version` option
@@ -608,7 +655,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - COP-003: Invalid applyTo glob pattern
   - COP-004: Unknown frontmatter keys
   - Supports .github/copilot-instructions.md (global instructions)
-  - Supports .github/instructions/*.instructions.md (path-scoped instructions)
+  - Supports .github/instructions/\*.instructions.md (path-scoped instructions)
   - Config-based copilot category toggle (rules.copilot)
 - ValidatorRegistry API for custom validator registration in agnix-core
 - AGENTS.md validation rules (AGM-001 to AGM-006)
@@ -647,7 +694,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Supports section guards: Features inside Claude-specific sections (e.g., `## Claude Code Specific`) are allowed
   - XP-002: Validates AGENTS.md markdown structure for cross-platform compatibility (warning)
   - XP-003: Detects hard-coded platform paths (.claude/, .opencode/, .cursor/, etc.) in configs (warning)
-- New `cross_platform` config category toggle for XP-* rules
+- New `cross_platform` config category toggle for XP-\* rules
 - 5 test fixtures in tests/fixtures/cross_platform/ directory
 - 30 comprehensive unit tests for cross-platform validation
 - Hook timeout validation rules CC-HK-010 and CC-HK-011
@@ -707,7 +754,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Diagnostics now include `[fixable]` marker in output for issues with available fixes
 - Hint message in CLI output when fixable issues are detected
 - Config-based rule filtering with category toggles (skills, hooks, agents, memory, plugins, xml, imports)
-- Target tool filtering - CC-* rules automatically disabled for non-Claude Code targets (Cursor, Codex)
+- Target tool filtering - CC-\* rules automatically disabled for non-Claude Code targets (Cursor, Codex)
 - Individual rule disabling via `disabled_rules` config list
 - `is_rule_enabled()` method with category and target awareness
 - AgentValidator implementation with 6 validation rules (CC-AG-001 to CC-AG-006)
@@ -733,6 +780,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - 31 comprehensive unit tests for reference validation
 
 ### Changed
+
 - Removed miette dependency from agnix-core to reduce binary size and compile times
   - agnix-core is now a pure library without terminal output dependencies
   - CLI continues to use colored for output formatting
@@ -768,5 +816,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Prompt hooks: warn when timeout > 30s (30-second default)
 
 ### Performance
+
 - Significant speed improvements on projects with many files
 - Maintains correctness with deterministic sorting of results
