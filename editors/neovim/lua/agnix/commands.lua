@@ -153,11 +153,8 @@ function M._show_rules_fallback()
   end
   vim.ui.select(items, { prompt = 'agnix rule categories:' }, function(choice)
     if choice then
-      local prefix = choice:match('^([^*]+)%*')
-      if prefix then
-        local url = 'https://avifenesh.github.io/agnix/docs/rules'
-        vim.notify('[agnix] See: ' .. url, vim.log.levels.INFO)
-      end
+      local url = 'https://avifenesh.github.io/agnix/docs/rules'
+      vim.notify('[agnix] See: ' .. url, vim.log.levels.INFO)
     end
   end)
 end
