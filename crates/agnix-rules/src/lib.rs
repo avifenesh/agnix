@@ -214,6 +214,7 @@ mod tests {
     // ===== AUTHORING catalog tests =====
 
     #[test]
+    #[allow(clippy::const_is_empty)]
     fn test_authoring_families_not_empty() {
         assert!(
             !AUTHORING_FAMILIES.is_empty(),

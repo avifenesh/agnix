@@ -447,12 +447,10 @@ impl ServerHandler for AgnixServer {
                 "Agnix - AI agent configuration linter.\n\n\
                  Validates SKILL.md, CLAUDE.md, AGENTS.md, hooks, MCP configs, \
                  Cursor rules, and more against 155 rules.\n\n\
-
                  Tools:\n\
                  - validate_project: Validate all agent configs in a directory\n\
                  - validate_file: Validate a single config file\n\
                  - get_rules: List all 155 validation rules\n\
-
                  - get_rule_docs: Get details about a specific rule\n\n\
                  Preferred input: tools (CSV string or array)\n\
                  Legacy fallback: target\n\

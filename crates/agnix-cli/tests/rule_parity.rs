@@ -124,10 +124,10 @@ fn workspace_root() -> &'static Path {
         let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         for ancestor in manifest_dir.ancestors() {
             let cargo_toml = ancestor.join("Cargo.toml");
-            if let Ok(content) = fs::read_to_string(&cargo_toml) {
-                if content.contains("[workspace]") || content.contains("[workspace.") {
-                    return ancestor.to_path_buf();
-                }
+            if let Ok(content) = fs::read_to_string(&cargo_toml)
+                && (content.contains("[workspace]") || content.contains("[workspace."))
+            {
+                return ancestor.to_path_buf();
             }
         }
         panic!(

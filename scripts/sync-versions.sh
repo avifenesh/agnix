@@ -27,10 +27,25 @@ if [ -f editors/vscode/package.json ]; then
   echo "  editors/vscode/package.json -> $VERSION"
 fi
 
-# VS Code package-lock.json
+# VS Code package-lock.json (only update root-level version fields, not dependency versions)
 if [ -f editors/vscode/package-lock.json ]; then
-  sed -i.bak "s/\"version\": \"[^\"]*\"/\"version\": \"$VERSION\"/" editors/vscode/package-lock.json
-  rm -f editors/vscode/package-lock.json.bak
+  if command -v jq &>/dev/null; then
+    jq --arg v "$VERSION" '.version = $v | .packages[""].version = $v' editors/vscode/package-lock.json > editors/vscode/package-lock.json.tmp
+    mv editors/vscode/package-lock.json.tmp editors/vscode/package-lock.json
+  else
+    # Fallback: only replace the first two occurrences (root "version" fields)
+    python3 -c "
+import json, sys
+with open('editors/vscode/package-lock.json') as f:
+    data = json.load(f)
+data['version'] = '$VERSION'
+if '' in data.get('packages', {}):
+    data['packages']['']['version'] = '$VERSION'
+with open('editors/vscode/package-lock.json', 'w') as f:
+    json.dump(data, f, indent=2)
+    f.write('\n')
+"
+  fi
   echo "  editors/vscode/package-lock.json -> $VERSION"
 fi
 

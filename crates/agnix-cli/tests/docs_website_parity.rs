@@ -26,13 +26,13 @@ fn workspace_root() -> &'static Path {
         let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         for ancestor in manifest_dir.ancestors() {
             let cargo_toml = ancestor.join("Cargo.toml");
-            if let Ok(content) = fs::read_to_string(&cargo_toml) {
-                if content.lines().any(|line| {
+            if let Ok(content) = fs::read_to_string(&cargo_toml)
+                && content.lines().any(|line| {
                     let trimmed = line.trim();
                     trimmed == "[workspace]" || trimmed.starts_with("[workspace.")
-                }) {
-                    return ancestor.to_path_buf();
-                }
+                })
+            {
+                return ancestor.to_path_buf();
             }
         }
         panic!(
