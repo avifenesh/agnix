@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.2] - 2026-02-08
+
+### Fixed
+- VS Code extension version was out of sync with release binaries, causing download failures for agnix-lsp
+
 ## [0.10.1] - 2026-02-07
 
 ### Added
