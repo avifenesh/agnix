@@ -98,4 +98,4 @@ Found 1 error, 1 warning (2 fixable)
 ## Links
 
 - [GitHub](https://github.com/avifenesh/agnix)
-- [Rules Reference](https://github.com/avifenesh/agnix/blob/main/knowledge-base/VALIDATION-RULES.md)
+- [Rules Reference](https://avifenesh.github.io/agnix/docs/rules)

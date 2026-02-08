@@ -4,7 +4,8 @@ use agnix_core::{Diagnostic, DiagnosticLevel, Fix};
 use rust_i18n::t;
 use serde_json::Value as JsonValue;
 use tower_lsp::lsp_types::{
-    Diagnostic as LspDiagnostic, DiagnosticSeverity, NumberOrString, Position, Range,
+    CodeDescription, Diagnostic as LspDiagnostic, DiagnosticSeverity, NumberOrString, Position,
+    Range, Url,
 };
 
 /// Serialize fixes to JSON for storage in diagnostic.data.
@@ -56,6 +57,13 @@ pub fn to_lsp_diagnostic(diag: &Diagnostic) -> LspDiagnostic {
 
     let data = serialize_fixes(&diag.fixes);
 
+    let code_description = Url::parse(&format!(
+        "https://avifenesh.github.io/agnix/docs/rules/generated/{}",
+        diag.rule.to_lowercase()
+    ))
+    .ok()
+    .map(|href| CodeDescription { href });
+
     LspDiagnostic {
         range: Range {
             start: Position {
@@ -69,7 +77,7 @@ pub fn to_lsp_diagnostic(diag: &Diagnostic) -> LspDiagnostic {
         },
         severity: Some(severity),
         code: Some(NumberOrString::String(diag.rule.clone())),
-        code_description: None,
+        code_description,
         source: Some("agnix".to_string()),
         message,
         related_information: None,
@@ -200,6 +208,28 @@ mod tests {
         assert_eq!(
             lsp_diag.code,
             Some(NumberOrString::String("CC-SK-001".to_string()))
+        );
+    }
+
+    #[test]
+    fn test_code_description_links_to_website() {
+        let diag = make_diagnostic(DiagnosticLevel::Error, "Test", 1, 1, "AS-001", None);
+        let lsp_diag = to_lsp_diagnostic(&diag);
+        let desc = lsp_diag.code_description.expect("code_description should be set");
+        assert_eq!(
+            desc.href.as_str(),
+            "https://avifenesh.github.io/agnix/docs/rules/generated/as-001"
+        );
+    }
+
+    #[test]
+    fn test_code_description_lowercases_rule_id() {
+        let diag = make_diagnostic(DiagnosticLevel::Error, "Test", 1, 1, "CC-SK-001", None);
+        let lsp_diag = to_lsp_diagnostic(&diag);
+        let desc = lsp_diag.code_description.expect("code_description should be set");
+        assert_eq!(
+            desc.href.as_str(),
+            "https://avifenesh.github.io/agnix/docs/rules/generated/cc-sk-001"
         );
     }
 

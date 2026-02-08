@@ -923,7 +923,7 @@ async function showRules(): Promise<void> {
     // Open documentation
     vscode.env.openExternal(
       vscode.Uri.parse(
-        'https://github.com/avifenesh/agnix/blob/main/knowledge-base/VALIDATION-RULES.md'
+        'https://avifenesh.github.io/agnix/docs/rules'
       )
     );
   }
@@ -1565,32 +1565,7 @@ class AgnixDiagnosticsTreeProvider implements vscode.TreeDataProvider<Diagnostic
  * Show documentation for a specific rule.
  */
 async function showRuleDoc(ruleId: string): Promise<void> {
-  const ruleCategories: Record<string, string> = {
-    AS: 'agent-skills',
-    'CC-SK': 'claude-skills',
-    'CC-HK': 'claude-hooks',
-    'CC-AG': 'claude-agents',
-    'CC-PL': 'claude-plugins',
-    'CC-MEM': 'claude-memory',
-    PE: 'prompt-engineering',
-    MCP: 'mcp',
-    AGM: 'agents-md',
-    COP: 'copilot',
-    CUR: 'cursor',
-    XML: 'xml',
-    XP: 'cross-platform',
-  };
-
-  // Find category for rule
-  let category = 'agent-skills';
-  for (const [prefix, cat] of Object.entries(ruleCategories)) {
-    if (ruleId.startsWith(prefix)) {
-      category = cat;
-      break;
-    }
-  }
-
-  const url = `https://github.com/avifenesh/agnix/blob/main/knowledge-base/VALIDATION-RULES.md#${ruleId.toLowerCase()}`;
+  const url = `https://avifenesh.github.io/agnix/docs/rules/generated/${ruleId.toLowerCase()}`;
   vscode.env.openExternal(vscode.Uri.parse(url));
 }
 

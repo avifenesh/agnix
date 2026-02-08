@@ -50,7 +50,7 @@ function M.pick_rules()
           local selection = action_state.get_selected_entry()
           if selection then
             local prefix = selection.value.prefix
-            local url = 'https://github.com/avifenesh/agnix/blob/main/knowledge-base/VALIDATION-RULES.md#'
+            local url = 'https://avifenesh.github.io/agnix/docs/rules/generated/'
               .. prefix:lower():gsub('%-$', '')
             vim.notify('[agnix] See: ' .. url, vim.log.levels.INFO)
           end

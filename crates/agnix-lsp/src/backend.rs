@@ -395,7 +395,12 @@ impl LanguageServer for Backend {
                 text_document_sync: Some(TextDocumentSyncCapability::Kind(
                     TextDocumentSyncKind::FULL,
                 )),
-                code_action_provider: Some(CodeActionProviderCapability::Simple(true)),
+                code_action_provider: Some(CodeActionProviderCapability::Options(
+                    CodeActionOptions {
+                        code_action_kinds: Some(vec![CodeActionKind::QUICKFIX]),
+                        ..Default::default()
+                    },
+                )),
                 hover_provider: Some(HoverProviderCapability::Simple(true)),
                 completion_provider: Some(CompletionOptions {
                     resolve_provider: Some(false),

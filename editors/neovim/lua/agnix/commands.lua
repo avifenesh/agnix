@@ -110,7 +110,7 @@ function M.setup()
       vim.notify('[agnix] Invalid rule ID format: ' .. rule_id, vim.log.levels.ERROR)
       return
     end
-    local url = 'https://github.com/avifenesh/agnix/blob/main/knowledge-base/VALIDATION-RULES.md#'
+    local url = 'https://avifenesh.github.io/agnix/docs/rules/generated/'
       .. rule_id:lower()
     if vim.ui.open then
       vim.ui.open(url)
@@ -155,7 +155,7 @@ function M._show_rules_fallback()
     if choice then
       local prefix = choice:match('^([^*]+)%*')
       if prefix then
-        local url = 'https://github.com/avifenesh/agnix/blob/main/knowledge-base/VALIDATION-RULES.md#'
+        local url = 'https://avifenesh.github.io/agnix/docs/rules/generated/'
           .. prefix:lower():gsub('%-$', '')
         vim.notify('[agnix] See: ' .. url, vim.log.levels.INFO)
       end
