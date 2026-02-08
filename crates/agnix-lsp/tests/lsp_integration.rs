@@ -142,12 +142,10 @@ mod server_capability_tests {
         // Verify that the capabilities we advertise are what we expect
         let capabilities = ServerCapabilities {
             text_document_sync: Some(TextDocumentSyncCapability::Kind(TextDocumentSyncKind::FULL)),
-            code_action_provider: Some(CodeActionProviderCapability::Options(
-                CodeActionOptions {
-                    code_action_kinds: Some(vec![CodeActionKind::QUICKFIX]),
-                    ..Default::default()
-                },
-            )),
+            code_action_provider: Some(CodeActionProviderCapability::Options(CodeActionOptions {
+                code_action_kinds: Some(vec![CodeActionKind::QUICKFIX]),
+                ..Default::default()
+            })),
             hover_provider: Some(HoverProviderCapability::Simple(true)),
             ..Default::default()
         };
@@ -162,8 +160,14 @@ mod server_capability_tests {
         // Verify code action capability
         match capabilities.code_action_provider {
             Some(CodeActionProviderCapability::Options(ref opts)) => {
-                let kinds = opts.code_action_kinds.as_ref().expect("Expected code action kinds");
-                assert!(kinds.contains(&CodeActionKind::QUICKFIX), "Expected QUICKFIX kind");
+                let kinds = opts
+                    .code_action_kinds
+                    .as_ref()
+                    .expect("Expected code action kinds");
+                assert!(
+                    kinds.contains(&CodeActionKind::QUICKFIX),
+                    "Expected QUICKFIX kind"
+                );
             }
             _ => panic!("Expected code action provider with options"),
         }
@@ -944,8 +948,14 @@ unknownfield: value
 
         match result.capabilities.code_action_provider {
             Some(CodeActionProviderCapability::Options(ref opts)) => {
-                let kinds = opts.code_action_kinds.as_ref().expect("Expected code action kinds");
-                assert!(kinds.contains(&CodeActionKind::QUICKFIX), "Expected QUICKFIX kind");
+                let kinds = opts
+                    .code_action_kinds
+                    .as_ref()
+                    .expect("Expected code action kinds");
+                assert!(
+                    kinds.contains(&CodeActionKind::QUICKFIX),
+                    "Expected QUICKFIX kind"
+                );
             }
             _ => panic!("Expected code action capability with options"),
         }
