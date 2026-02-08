@@ -387,8 +387,7 @@ mod tests {
     #[test]
     fn test_help_uri_format_and_anchor() {
         let rules = get_all_rules();
-        const BASE_URL: &str =
-            "https://avifenesh.github.io/agnix/docs/rules/generated/";
+        const BASE_URL: &str = "https://avifenesh.github.io/agnix/docs/rules/generated/";
 
         for rule in rules {
             let uri = rule

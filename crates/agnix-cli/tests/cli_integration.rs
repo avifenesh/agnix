@@ -825,7 +825,9 @@ fn test_format_sarif_rules_have_help_uri() {
             rule["id"]
         );
         assert!(
-            help_uri.unwrap().contains("avifenesh.github.io/agnix/docs/rules/generated/"),
+            help_uri
+                .unwrap()
+                .contains("avifenesh.github.io/agnix/docs/rules/generated/"),
             "helpUri should reference website rule docs"
         );
     }

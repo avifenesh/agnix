@@ -110,11 +110,11 @@ agnix --target claude-code .  # Target specific tool
 |------|-------|--------------|
 | [Agent Skills](https://agentskills.io) | AS-\*, CC-SK-\* | SKILL.md |
 | [Claude Code](https://docs.anthropic.com/en/docs/build-with-claude/claude-code) | CC-\* | CLAUDE.md, hooks, agents, plugins |
-| [GitHub Copilot](https://docs.github.com/en/copilot) | COP-\* | .github/copilot-instructions.md |
+| [GitHub Copilot](https://docs.github.com/en/copilot) | COP-\* | .github/copilot-instructions.md, .github/instructions/\*.instructions.md |
 | [Cursor](https://cursor.com) | CUR-\* | .cursor/rules/\*.mdc, .cursorrules |
 | [MCP](https://modelcontextprotocol.io) | MCP-\* | \*.mcp.json |
-| [AGENTS.md](https://agentsmd.org) | AGM-\*, XP-\* | AGENTS.md |
-| [Gemini CLI](https://github.com/google-gemini/gemini-cli) | GM-\* | GEMINI.md |
+| [AGENTS.md](https://agentsmd.org) | AGM-\*, XP-\* | AGENTS.md, AGENTS.local.md, AGENTS.override.md |
+| [Gemini CLI](https://github.com/google-gemini/gemini-cli) | GM-\* | GEMINI.md, GEMINI.local.md |
 
 ## Contributing
 

@@ -215,7 +215,9 @@ mod tests {
     fn test_code_description_links_to_website() {
         let diag = make_diagnostic(DiagnosticLevel::Error, "Test", 1, 1, "AS-001", None);
         let lsp_diag = to_lsp_diagnostic(&diag);
-        let desc = lsp_diag.code_description.expect("code_description should be set");
+        let desc = lsp_diag
+            .code_description
+            .expect("code_description should be set");
         assert_eq!(
             desc.href.as_str(),
             "https://avifenesh.github.io/agnix/docs/rules/generated/as-001"
@@ -226,7 +228,9 @@ mod tests {
     fn test_code_description_lowercases_rule_id() {
         let diag = make_diagnostic(DiagnosticLevel::Error, "Test", 1, 1, "CC-SK-001", None);
         let lsp_diag = to_lsp_diagnostic(&diag);
-        let desc = lsp_diag.code_description.expect("code_description should be set");
+        let desc = lsp_diag
+            .code_description
+            .expect("code_description should be set");
         assert_eq!(
             desc.href.as_str(),
             "https://avifenesh.github.io/agnix/docs/rules/generated/cc-sk-001"

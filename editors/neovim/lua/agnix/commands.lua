@@ -155,8 +155,7 @@ function M._show_rules_fallback()
     if choice then
       local prefix = choice:match('^([^*]+)%*')
       if prefix then
-        local url = 'https://avifenesh.github.io/agnix/docs/rules/generated/'
-          .. prefix:lower():gsub('%-$', '')
+        local url = 'https://avifenesh.github.io/agnix/docs/rules'
         vim.notify('[agnix] See: ' .. url, vim.log.levels.INFO)
       end
     end
