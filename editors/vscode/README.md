@@ -190,7 +190,7 @@ The auto-downloaded binary is stored in the extension's global storage directory
 ## Links
 
 - [agnix on GitHub](https://github.com/avifenesh/agnix)
-- [Validation Rules Reference](https://github.com/avifenesh/agnix/blob/main/knowledge-base/VALIDATION-RULES.md)
+- [Validation Rules Reference](https://avifenesh.github.io/agnix/docs/rules)
 - [Agent Skills Specification](https://agentskills.io)
 - [Model Context Protocol](https://modelcontextprotocol.io)
 

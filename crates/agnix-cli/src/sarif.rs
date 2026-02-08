@@ -120,7 +120,7 @@ static RULES: LazyLock<Vec<ReportingDescriptor>> = LazyLock::new(|| {
                 text: desc.to_string(),
             },
             help_uri: Some(format!(
-                "https://github.com/avifenesh/agnix/blob/main/knowledge-base/VALIDATION-RULES.md#{}",
+                "https://avifenesh.github.io/agnix/docs/rules/generated/{}",
                 id.to_lowercase()
             )),
         })
@@ -387,8 +387,7 @@ mod tests {
     #[test]
     fn test_help_uri_format_and_anchor() {
         let rules = get_all_rules();
-        const BASE_URL: &str =
-            "https://github.com/avifenesh/agnix/blob/main/knowledge-base/VALIDATION-RULES.md#";
+        const BASE_URL: &str = "https://avifenesh.github.io/agnix/docs/rules/generated/";
 
         for rule in rules {
             let uri = rule

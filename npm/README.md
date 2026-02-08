@@ -96,7 +96,7 @@ Run `agnix --help` for the full command reference.
 ## Links
 
 - [GitHub Repository](https://github.com/avifenesh/agnix)
-- [Validation Rules](https://github.com/avifenesh/agnix/blob/main/knowledge-base/VALIDATION-RULES.md)
+- [Validation Rules](https://avifenesh.github.io/agnix/docs/rules)
 - [VS Code Extension](https://marketplace.visualstudio.com/items?itemName=avifenesh.agnix)
 
 ## License
