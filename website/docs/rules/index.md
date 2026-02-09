@@ -27,7 +27,7 @@ This section contains all `155` validation rules generated from `knowledge-base/
 | [CC-SK-004](./generated/cc-sk-004.md) | Agent Without Context | HIGH | Claude Skills | Yes (unsafe) |
 | [CC-SK-005](./generated/cc-sk-005.md) | Invalid Agent Type | HIGH | Claude Skills | Yes (unsafe) |
 | [CC-SK-006](./generated/cc-sk-006.md) | Dangerous Auto-Invocation | HIGH | Claude Skills | No |
-| [CC-SK-007](./generated/cc-sk-007.md) | Unrestricted Bash | HIGH | Claude Skills | Yes (unsafe) |
+| [CC-SK-007](./generated/cc-sk-007.md) | Unrestricted Bash | MEDIUM | Claude Skills | Yes (unsafe) |
 | [CC-SK-008](./generated/cc-sk-008.md) | Unknown Tool Name | HIGH | Claude Skills | No |
 | [CC-SK-009](./generated/cc-sk-009.md) | Too Many Injections | MEDIUM | Claude Skills | No |
 | [CC-SK-010](./generated/cc-sk-010.md) | Invalid Hooks in Skill Frontmatter | HIGH | Claude Skills | No |
@@ -135,8 +135,8 @@ This section contains all `155` validation rules generated from `knowledge-base/
 | [PE-003](./generated/pe-003.md) | Weak Imperative Language | MEDIUM | Prompt Engineering | No |
 | [PE-004](./generated/pe-004.md) | Ambiguous Instructions | MEDIUM | Prompt Engineering | No |
 | [XP-001](./generated/xp-001.md) | Platform-Specific Feature in Generic Config | HIGH | Cross-Platform | No |
-| [XP-002](./generated/xp-002.md) | AGENTS.md Platform Compatibility | HIGH | Cross-Platform | No |
-| [XP-003](./generated/xp-003.md) | Hard-Coded Platform Paths | HIGH | Cross-Platform | No |
+| [XP-002](./generated/xp-002.md) | AGENTS.md Platform Compatibility | MEDIUM | Cross-Platform | No |
+| [XP-003](./generated/xp-003.md) | Hard-Coded Platform Paths | MEDIUM | Cross-Platform | No |
 | [XP-004](./generated/xp-004.md) | Conflicting Build/Test Commands | MEDIUM | Cross-Platform | No |
 | [XP-005](./generated/xp-005.md) | Conflicting Tool Constraints | HIGH | Cross-Platform | No |
 | [XP-006](./generated/xp-006.md) | Multiple Layers Without Documented Precedence | MEDIUM | Cross-Platform | No |
@@ -150,13 +150,13 @@ This section contains all `155` validation rules generated from `knowledge-base/
 | [CDX-002](./generated/cdx-002.md) | Invalid Full Auto Error Mode | HIGH | Codex CLI | Yes (unsafe) |
 | [CDX-003](./generated/cdx-003.md) | AGENTS.override.md in Version Control | MEDIUM | Codex CLI | No |
 | [VER-001](./generated/ver-001.md) | No Tool/Spec Versions Pinned | LOW | Version Awareness | No |
-| [CR-SK-001](./generated/cr-sk-001.md) | Cursor Skill Uses Unsupported Field | MEDIUM | cursor-skills | Yes (safe) |
-| [CL-SK-001](./generated/cl-sk-001.md) | Cline Skill Uses Unsupported Field | MEDIUM | cline-skills | Yes (safe) |
-| [CP-SK-001](./generated/cp-sk-001.md) | Copilot Skill Uses Unsupported Field | MEDIUM | copilot-skills | Yes (safe) |
-| [CX-SK-001](./generated/cx-sk-001.md) | Codex Skill Uses Unsupported Field | MEDIUM | codex-skills | Yes (safe) |
-| [OC-SK-001](./generated/oc-sk-001.md) | OpenCode Skill Uses Unsupported Field | MEDIUM | opencode-skills | Yes (safe) |
-| [WS-SK-001](./generated/ws-sk-001.md) | Windsurf Skill Uses Unsupported Field | MEDIUM | windsurf-skills | Yes (safe) |
-| [KR-SK-001](./generated/kr-sk-001.md) | Kiro Skill Uses Unsupported Field | MEDIUM | kiro-skills | Yes (safe) |
-| [AMP-SK-001](./generated/amp-sk-001.md) | Amp Skill Uses Unsupported Field | MEDIUM | amp-skills | Yes (safe) |
-| [RC-SK-001](./generated/rc-sk-001.md) | Roo Code Skill Uses Unsupported Field | MEDIUM | roo-code-skills | Yes (safe) |
+| [CR-SK-001](./generated/cr-sk-001.md) | Cursor Skill Uses Unsupported Field | MEDIUM | cursor-skills | Yes (safe/unsafe) |
+| [CL-SK-001](./generated/cl-sk-001.md) | Cline Skill Uses Unsupported Field | MEDIUM | cline-skills | Yes (safe/unsafe) |
+| [CP-SK-001](./generated/cp-sk-001.md) | Copilot Skill Uses Unsupported Field | MEDIUM | copilot-skills | Yes (safe/unsafe) |
+| [CX-SK-001](./generated/cx-sk-001.md) | Codex Skill Uses Unsupported Field | MEDIUM | codex-skills | Yes (safe/unsafe) |
+| [OC-SK-001](./generated/oc-sk-001.md) | OpenCode Skill Uses Unsupported Field | MEDIUM | opencode-skills | Yes (safe/unsafe) |
+| [WS-SK-001](./generated/ws-sk-001.md) | Windsurf Skill Uses Unsupported Field | MEDIUM | windsurf-skills | Yes (safe/unsafe) |
+| [KR-SK-001](./generated/kr-sk-001.md) | Kiro Skill Uses Unsupported Field | MEDIUM | kiro-skills | Yes (safe/unsafe) |
+| [AMP-SK-001](./generated/amp-sk-001.md) | Amp Skill Uses Unsupported Field | MEDIUM | amp-skills | Yes (safe/unsafe) |
+| [RC-SK-001](./generated/rc-sk-001.md) | Roo Code Skill Uses Unsupported Field | MEDIUM | roo-code-skills | Yes (safe/unsafe) |
 | [XP-SK-001](./generated/xp-sk-001.md) | Skill Uses Client-Specific Features | LOW | Cross-Platform | No |

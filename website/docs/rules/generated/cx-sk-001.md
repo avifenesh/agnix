@@ -1,18 +1,18 @@
 ---
 id: cx-sk-001
-title: "CX-SK-001: Codex Skill Uses Unsupported Field - codex-skills"
+title: "CX-SK-001: Codex Skill Uses Unsupported Field - Codex Skills"
 sidebar_label: "CX-SK-001"
-description: "agnix rule CX-SK-001 checks for codex skill uses unsupported field in codex-skills files. Severity: MEDIUM. See examples and fix guidance."
-keywords: ["CX-SK-001", "codex skill uses unsupported field", "codex-skills", "validation", "agnix", "linter"]
+description: "agnix rule CX-SK-001 checks for codex skill uses unsupported field in codex skills files. Severity: MEDIUM. See examples and fix guidance."
+keywords: ["CX-SK-001", "codex skill uses unsupported field", "codex skills", "validation", "agnix", "linter"]
 ---
 
 ## Summary
 
 - **Rule ID**: `CX-SK-001`
 - **Severity**: `MEDIUM`
-- **Category**: `codex-skills`
+- **Category**: `Codex Skills`
 - **Normative Level**: `SHOULD`
-- **Auto-Fix**: `Yes (safe)`
+- **Auto-Fix**: `Yes (safe/unsafe)`
 - **Verified On**: `2026-02-07`
 
 ## Applicability
@@ -33,14 +33,29 @@ keywords: ["CX-SK-001", "codex skill uses unsupported field", "codex-skills", "v
 
 ## Examples
 
-The following examples are illustrative snippets for this rule category.
+The following examples demonstrate what triggers this rule and how to fix it.
 
 ### Invalid
 
-```text
-Configuration omitted required fields for this rule.```
+```markdown
+---
+name: my-skill
+description: A useful development skill
+hooks: some-value
+---
+# My Skill
+
+Skill instructions here.
+```
 
 ### Valid
 
-```text
-Configuration includes required fields and follows the rule.```
+```markdown
+---
+name: my-skill
+description: A useful development skill
+---
+# My Skill
+
+Skill instructions here.
+```

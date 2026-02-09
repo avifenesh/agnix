@@ -33,19 +33,29 @@ keywords: ["CC-MEM-011", "invalid paths glob in rules", "claude memory", "valida
 
 ## Examples
 
-The following examples are illustrative snippets for this rule category.
+The following examples demonstrate what triggers this rule and how to fix it.
 
 ### Invalid
 
 ```markdown
-# Memory
-Always be helpful.
+---
+paths:
+  - "[unclosed"
+---
+# TypeScript Guidelines
+
+Always use strict mode.
 ```
 
 ### Valid
 
 ```markdown
-# Project Memory
-- Use Rust workspace conventions
-- Keep AGENTS.md and CLAUDE.md identical
+---
+paths:
+  - "src/**/*.ts"
+  - "lib/**/*.js"
+---
+# TypeScript Guidelines
+
+Always use strict mode.
 ```

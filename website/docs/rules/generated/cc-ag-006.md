@@ -33,23 +33,34 @@ keywords: ["CC-AG-006", "tool/disallowed conflict", "claude agents", "validation
 
 ## Examples
 
-The following examples are illustrative snippets for this rule category.
+The following examples demonstrate what triggers this rule and how to fix it.
 
 ### Invalid
 
 ```markdown
 ---
-name: reviewer
+name: conflict-agent
+description: Agent with conflicting tool lists
+tools:
+  - Read
+  - Bash
+disallowedTools:
+  - Bash
 ---
+Agent instructions.
 ```
 
 ### Valid
 
 ```markdown
 ---
-name: reviewer
-description: Review code for correctness and tests
-model: sonnet
-tools: [Read, Grep, Bash]
+name: safe-agent
+description: Agent with separate tool lists
+tools:
+  - Read
+  - Grep
+disallowedTools:
+  - Bash
 ---
+Agent instructions.
 ```

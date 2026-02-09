@@ -33,18 +33,21 @@ keywords: ["CC-HK-005", "missing type field", "claude hooks", "validation", "agn
 
 ## Examples
 
-The following examples are illustrative snippets for this rule category.
+The following examples demonstrate what triggers this rule and how to fix it.
 
 ### Invalid
 
 ```json
 {
-  "hooks": [
-    {
-      "event": "PreToolUse",
-      "matcher": "*"
-    }
-  ]
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          { "command": "echo missing type field" }
+        ]
+      }
+    ]
+  }
 }
 ```
 
@@ -52,13 +55,14 @@ The following examples are illustrative snippets for this rule category.
 
 ```json
 {
-  "hooks": [
-    {
-      "event": "PreToolUse",
-      "matcher": "Write",
-      "command": "./scripts/validate.sh",
-      "timeout": 30
-    }
-  ]
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          { "type": "command", "command": "echo done", "timeout": 30 }
+        ]
+      }
+    ]
+  }
 }
 ```

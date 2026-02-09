@@ -33,23 +33,26 @@ keywords: ["CC-AG-004", "invalid permission mode", "claude agents", "validation"
 
 ## Examples
 
-The following examples are illustrative snippets for this rule category.
+The following examples demonstrate what triggers this rule and how to fix it.
 
 ### Invalid
 
 ```markdown
 ---
-name: reviewer
+name: code-reviewer
+description: Reviews code
+permissionMode: yolo
 ---
+Review code changes.
 ```
 
 ### Valid
 
 ```markdown
 ---
-name: reviewer
-description: Review code for correctness and tests
-model: sonnet
-tools: [Read, Grep, Bash]
+name: code-reviewer
+description: Reviews code
+permissionMode: acceptEdits
 ---
+Review code changes.
 ```

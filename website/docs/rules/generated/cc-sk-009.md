@@ -33,22 +33,24 @@ keywords: ["CC-SK-009", "too many injections", "claude skills", "validation", "a
 
 ## Examples
 
-The following examples are illustrative snippets for this rule category.
+The following examples demonstrate what triggers this rule and how to fix it.
 
 ### Invalid
 
 ```markdown
 ---
-name: Deploy_Prod
-description: Deploys production changes
+name: template-skill
+description: Use when applying a code template
 ---
+Use !`config.json` and !`env.json` and !`secrets.json` and !`overrides.json` for setup.
 ```
 
 ### Valid
 
 ```markdown
 ---
-name: deploy-prod
-description: Deploy production with explicit checks
+name: template-skill
+description: Use when applying a code template
 ---
+Apply the template with !`config.json` values.
 ```

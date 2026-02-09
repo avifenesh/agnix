@@ -2,17 +2,17 @@
 id: cr-sk-001
 title: "CR-SK-001: Cursor Skill Uses Unsupported Field"
 sidebar_label: "CR-SK-001"
-description: "agnix rule CR-SK-001 checks for cursor skill uses unsupported field in cursor-skills files. Severity: MEDIUM. See examples and fix guidance."
-keywords: ["CR-SK-001", "cursor skill uses unsupported field", "cursor-skills", "validation", "agnix", "linter"]
+description: "agnix rule CR-SK-001 checks for cursor skill uses unsupported field in cursor skills files. Severity: MEDIUM. See examples and fix guidance."
+keywords: ["CR-SK-001", "cursor skill uses unsupported field", "cursor skills", "validation", "agnix", "linter"]
 ---
 
 ## Summary
 
 - **Rule ID**: `CR-SK-001`
 - **Severity**: `MEDIUM`
-- **Category**: `cursor-skills`
+- **Category**: `Cursor Skills`
 - **Normative Level**: `SHOULD`
-- **Auto-Fix**: `Yes (safe)`
+- **Auto-Fix**: `Yes (safe/unsafe)`
 - **Verified On**: `2026-02-07`
 
 ## Applicability
@@ -33,14 +33,30 @@ keywords: ["CR-SK-001", "cursor skill uses unsupported field", "cursor-skills", 
 
 ## Examples
 
-The following examples are illustrative snippets for this rule category.
+The following examples demonstrate what triggers this rule and how to fix it.
 
 ### Invalid
 
-```text
-Configuration omitted required fields for this rule.```
+```markdown
+---
+name: my-skill
+description: A useful development skill
+model: opus
+---
+# My Skill
+
+Skill instructions here.
+```
 
 ### Valid
 
-```text
-Configuration includes required fields and follows the rule.```
+```markdown
+---
+name: my-skill
+description: A useful development skill
+disable-model-invocation: true
+---
+# My Skill
+
+Skill instructions here.
+```

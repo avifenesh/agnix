@@ -33,22 +33,25 @@ keywords: ["CC-SK-006", "dangerous auto-invocation", "claude skills", "validatio
 
 ## Examples
 
-The following examples are illustrative snippets for this rule category.
+The following examples demonstrate what triggers this rule and how to fix it.
 
 ### Invalid
 
 ```markdown
 ---
-name: Deploy_Prod
-description: Deploys production changes
+name: deploy-staging
+description: Use when deploying to staging environment
 ---
+Deploy the application to staging.
 ```
 
 ### Valid
 
 ```markdown
 ---
-name: deploy-prod
-description: Deploy production with explicit checks
+name: deploy-staging
+description: Use when deploying to staging environment
+disable-model-invocation: true
 ---
+Deploy the application to staging.
 ```

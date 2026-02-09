@@ -33,22 +33,28 @@ keywords: ["CC-SK-005", "invalid agent type", "claude skills", "validation", "ag
 
 ## Examples
 
-The following examples are illustrative snippets for this rule category.
+The following examples demonstrate what triggers this rule and how to fix it.
 
 ### Invalid
 
 ```markdown
 ---
-name: Deploy_Prod
-description: Deploys production changes
+name: search-files
+description: Use when searching for files in the project
+context: fork
+agent: Invalid Agent!!
 ---
+Search the project for relevant files.
 ```
 
 ### Valid
 
 ```markdown
 ---
-name: deploy-prod
-description: Deploy production with explicit checks
+name: search-files
+description: Use when searching for files in the project
+context: fork
+agent: Explore
 ---
+Search the project for relevant files.
 ```

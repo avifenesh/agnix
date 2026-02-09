@@ -1,18 +1,18 @@
 ---
 id: amp-sk-001
-title: "AMP-SK-001: Amp Skill Uses Unsupported Field - amp-skills"
+title: "AMP-SK-001: Amp Skill Uses Unsupported Field - Amp Skills"
 sidebar_label: "AMP-SK-001"
-description: "agnix rule AMP-SK-001 checks for amp skill uses unsupported field in amp-skills files. Severity: MEDIUM. See examples and fix guidance."
-keywords: ["AMP-SK-001", "amp skill uses unsupported field", "amp-skills", "validation", "agnix", "linter"]
+description: "agnix rule AMP-SK-001 checks for amp skill uses unsupported field in amp skills files. Severity: MEDIUM. See examples and fix guidance."
+keywords: ["AMP-SK-001", "amp skill uses unsupported field", "amp skills", "validation", "agnix", "linter"]
 ---
 
 ## Summary
 
 - **Rule ID**: `AMP-SK-001`
 - **Severity**: `MEDIUM`
-- **Category**: `amp-skills`
+- **Category**: `Amp Skills`
 - **Normative Level**: `SHOULD`
-- **Auto-Fix**: `Yes (safe)`
+- **Auto-Fix**: `Yes (safe/unsafe)`
 - **Verified On**: `2026-02-07`
 
 ## Applicability
@@ -33,14 +33,31 @@ keywords: ["AMP-SK-001", "amp skill uses unsupported field", "amp-skills", "vali
 
 ## Examples
 
-The following examples are illustrative snippets for this rule category.
+The following examples demonstrate what triggers this rule and how to fix it.
 
 ### Invalid
 
-```text
-Configuration omitted required fields for this rule.```
+```markdown
+---
+name: my-skill
+description: A useful development skill
+model: opus
+---
+# My Skill
+
+Skill instructions here.
+
+(Note: AMP-SK-001 requires explicit Amp configuration context. The .agents/ directory is mapped to Codex by default.)
+```
 
 ### Valid
 
-```text
-Configuration includes required fields and follows the rule.```
+```markdown
+---
+name: my-skill
+description: A useful development skill
+---
+# My Skill
+
+Skill instructions here.
+```

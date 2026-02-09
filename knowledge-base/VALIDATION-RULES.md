@@ -254,7 +254,7 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 **Source**: code.claude.com/docs/en/skills
 
 <a id="cc-sk-007"></a>
-### CC-SK-007 [HIGH] Unrestricted Bash
+### CC-SK-007 [MEDIUM] Unrestricted Bash
 **Requirement**: Bash in allowed-tools SHOULD be scoped
 **Detection**: `allowed_tools.contains("Bash") && !allowed_tools.contains("Bash(")`
 **Fix**: [AUTO-FIX] Replace unrestricted Bash with scoped version (e.g., `Bash(git:*)`)
@@ -1223,7 +1223,7 @@ agent: reviewer
 **Source**: multi-platform research
 
 <a id="xp-002"></a>
-### XP-002 [HIGH] AGENTS.md Platform Compatibility
+### XP-002 [MEDIUM] AGENTS.md Platform Compatibility
 **Requirement**: AGENTS.md is a widely-adopted standard used by multiple platforms
 **Supported Platforms**:
 - Codex CLI (OpenAI)
@@ -1237,7 +1237,7 @@ agent: reviewer
 **Source**: developers.openai.com/codex/guides/agents-md, opencode.ai/docs/rules, docs.cursor.com/en/context, docs.cline.bot/features/custom-instructions, github.com/github/docs/changelog/2025-06-17-github-copilot-coding-agent-now-supports-agents-md-custom-instructions
 
 <a id="xp-003"></a>
-### XP-003 [HIGH] Hard-Coded Platform Paths
+### XP-003 [MEDIUM] Hard-Coded Platform Paths
 **Requirement**: Paths SHOULD use environment variables
 **Detection**: Check for `.claude/`, `.opencode/` in configs
 **Fix**: Use `$CLAUDE_PROJECT_DIR` or equivalent
@@ -1412,7 +1412,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | Category | Total Rules | HIGH | MEDIUM | LOW | Auto-Fixable |
 |----------|-------------|------|--------|-----|--------------|
 | Agent Skills | 16 | 14 | 2 | 0 | 5 |
-| Claude Skills | 15 | 12 | 3 | 0 | 9 |
+| Claude Skills | 15 | 11 | 4 | 0 | 9 |
 | Claude Hooks | 18 | 13 | 4 | 1 | 7 |
 | Claude Agents | 13 | 12 | 1 | 0 | 4 |
 | Claude Memory | 12 | 8 | 4 | 0 | 3 |
@@ -1428,7 +1428,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | XML | 3 | 3 | 0 | 0 | 3 |
 | References | 2 | 2 | 0 | 0 | 0 |
 | Prompt Eng | 4 | 0 | 4 | 0 | 0 |
-| Cross-Platform | 7 | 4 | 2 | 1 | 0 |
+| Cross-Platform | 7 | 2 | 4 | 1 | 0 |
 | Cursor Skills | 1 | 0 | 1 | 0 | 1 |
 | Cline Skills | 1 | 0 | 1 | 0 | 1 |
 | Copilot Skills | 1 | 0 | 1 | 0 | 1 |
@@ -1439,7 +1439,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | Amp Skills | 1 | 0 | 1 | 0 | 1 |
 | Roo Code Skills | 1 | 0 | 1 | 0 | 1 |
 | Version Awareness | 1 | 0 | 0 | 1 | 0 |
-| **TOTAL** | **155** | **103** | **49** | **3** | **57** |
+| **TOTAL** | **155** | **100** | **52** | **3** | **57** |
 
 
 ---

@@ -33,19 +33,66 @@ keywords: ["CC-MEM-008", "critical content in middle", "claude memory", "validat
 
 ## Examples
 
-The following examples are illustrative snippets for this rule category.
+The following examples demonstrate what triggers this rule and how to fix it.
 
 ### Invalid
 
 ```markdown
-# Memory
-Always be helpful.
+## Setup
+
+Install dependencies with npm install.
+
+## Architecture
+
+The project uses a monorepo structure.
+
+## Testing
+
+Run unit tests with npm test.
+
+IMPORTANT: Always run tests before committing.
+
+## Deployment
+
+Deploy to staging first.
+
+## Monitoring
+
+Check dashboards after deploy.
+
+## Cleanup
+
+Remove temp files after build.
 ```
 
 ### Valid
 
 ```markdown
-# Project Memory
-- Use Rust workspace conventions
-- Keep AGENTS.md and CLAUDE.md identical
+# Critical Rules
+
+IMPORTANT: Always run tests before committing.
+
+## Setup
+
+Install dependencies with npm install.
+
+## Architecture
+
+The project uses a monorepo structure.
+
+## Testing
+
+Run unit tests.
+
+## Deployment
+
+Deploy to staging.
+
+## Monitoring
+
+Check dashboards.
+
+## Cleanup
+
+Remove temp files.
 ```

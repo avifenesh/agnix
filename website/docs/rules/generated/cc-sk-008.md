@@ -33,22 +33,26 @@ keywords: ["CC-SK-008", "unknown tool name", "claude skills", "validation", "agn
 
 ## Examples
 
-The following examples are illustrative snippets for this rule category.
+The following examples demonstrate what triggers this rule and how to fix it.
 
 ### Invalid
 
 ```markdown
 ---
-name: Deploy_Prod
-description: Deploys production changes
+name: find-files
+description: Use when finding files by pattern
+allowed-tools: Glob, Grep, FooBar
 ---
+Search for files matching the pattern.
 ```
 
 ### Valid
 
 ```markdown
 ---
-name: deploy-prod
-description: Deploy production with explicit checks
+name: find-files
+description: Use when finding files by pattern
+allowed-tools: Glob, Grep, Read
 ---
+Search for files matching the pattern.
 ```

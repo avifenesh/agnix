@@ -33,22 +33,27 @@ keywords: ["CC-SK-004", "agent without context", "claude skills", "validation", 
 
 ## Examples
 
-The following examples are illustrative snippets for this rule category.
+The following examples demonstrate what triggers this rule and how to fix it.
 
 ### Invalid
 
 ```markdown
 ---
-name: Deploy_Prod
-description: Deploys production changes
+name: explore-code
+description: Use when exploring the codebase
+agent: Explore
 ---
+Explore the codebase structure.
 ```
 
 ### Valid
 
 ```markdown
 ---
-name: deploy-prod
-description: Deploy production with explicit checks
+name: explore-code
+description: Use when exploring the codebase
+context: fork
+agent: Explore
 ---
+Explore the codebase structure.
 ```

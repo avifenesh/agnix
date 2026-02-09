@@ -1,18 +1,18 @@
 ---
 id: cl-sk-001
-title: "CL-SK-001: Cline Skill Uses Unsupported Field - cline-skills"
+title: "CL-SK-001: Cline Skill Uses Unsupported Field - Cline Skills"
 sidebar_label: "CL-SK-001"
-description: "agnix rule CL-SK-001 checks for cline skill uses unsupported field in cline-skills files. Severity: MEDIUM. See examples and fix guidance."
-keywords: ["CL-SK-001", "cline skill uses unsupported field", "cline-skills", "validation", "agnix", "linter"]
+description: "agnix rule CL-SK-001 checks for cline skill uses unsupported field in cline skills files. Severity: MEDIUM. See examples and fix guidance."
+keywords: ["CL-SK-001", "cline skill uses unsupported field", "cline skills", "validation", "agnix", "linter"]
 ---
 
 ## Summary
 
 - **Rule ID**: `CL-SK-001`
 - **Severity**: `MEDIUM`
-- **Category**: `cline-skills`
+- **Category**: `Cline Skills`
 - **Normative Level**: `SHOULD`
-- **Auto-Fix**: `Yes (safe)`
+- **Auto-Fix**: `Yes (safe/unsafe)`
 - **Verified On**: `2026-02-07`
 
 ## Applicability
@@ -33,14 +33,29 @@ keywords: ["CL-SK-001", "cline skill uses unsupported field", "cline-skills", "v
 
 ## Examples
 
-The following examples are illustrative snippets for this rule category.
+The following examples demonstrate what triggers this rule and how to fix it.
 
 ### Invalid
 
-```text
-Configuration omitted required fields for this rule.```
+```markdown
+---
+name: my-skill
+description: A useful development skill
+context: fork
+---
+# My Skill
+
+Skill instructions here.
+```
 
 ### Valid
 
-```text
-Configuration includes required fields and follows the rule.```
+```markdown
+---
+name: my-skill
+description: A useful development skill
+---
+# My Skill
+
+Skill instructions here.
+```

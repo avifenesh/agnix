@@ -33,18 +33,21 @@ keywords: ["CC-HK-017", "prompt/agent hook missing $arguments", "claude hooks", 
 
 ## Examples
 
-The following examples are illustrative snippets for this rule category.
+The following examples demonstrate what triggers this rule and how to fix it.
 
 ### Invalid
 
 ```json
 {
-  "hooks": [
-    {
-      "event": "PreToolUse",
-      "matcher": "*"
-    }
-  ]
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          { "type": "prompt", "prompt": "Summarize what was done", "timeout": 30 }
+        ]
+      }
+    ]
+  }
 }
 ```
 
@@ -52,13 +55,14 @@ The following examples are illustrative snippets for this rule category.
 
 ```json
 {
-  "hooks": [
-    {
-      "event": "PreToolUse",
-      "matcher": "Write",
-      "command": "./scripts/validate.sh",
-      "timeout": 30
-    }
-  ]
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          { "type": "prompt", "prompt": "Summarize: $ARGUMENTS", "timeout": 30 }
+        ]
+      }
+    ]
+  }
 }
 ```

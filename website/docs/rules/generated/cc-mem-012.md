@@ -33,19 +33,30 @@ keywords: ["CC-MEM-012", "rules file unknown frontmatter key", "claude memory", 
 
 ## Examples
 
-The following examples are illustrative snippets for this rule category.
+The following examples demonstrate what triggers this rule and how to fix it.
 
 ### Invalid
 
 ```markdown
-# Memory
-Always be helpful.
+---
+paths:
+  - "src/**/*.ts"
+description: "some rule"
+alwaysApply: true
+---
+# TypeScript Guidelines
+
+Always use strict mode.
 ```
 
 ### Valid
 
 ```markdown
-# Project Memory
-- Use Rust workspace conventions
-- Keep AGENTS.md and CLAUDE.md identical
+---
+paths:
+  - "src/**/*.ts"
+---
+# TypeScript Guidelines
+
+Always use strict mode.
 ```
