@@ -103,6 +103,9 @@ pub fn record_validation(
 
 /// Try to submit queued events via HTTP (called from background thread).
 /// Events are already safely persisted to the queue before this is called.
+/// Note: No file-level locking is used for the queue file. Concurrent CLI
+/// invocations may lose events due to unsynchronized reads/writes. This is
+/// accepted as a limitation for best-effort telemetry.
 #[cfg(feature = "telemetry")]
 fn try_submit_queued_events(config: &TelemetryConfig, queue: &mut EventQueue) {
     if let Ok(client) = TelemetryClient::new(config) {

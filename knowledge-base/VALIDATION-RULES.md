@@ -920,21 +920,21 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 ## GITHUB COPILOT RULES
 
 <a id="cop-001"></a>
-### COP-001 [HIGH] Empty Instruction File
+### COP-001 [HIGH] Empty Copilot Instruction File
 **Requirement**: Copilot instruction files MUST have non-empty content
 **Detection**: `content.trim().is_empty()` after stripping frontmatter
 **Fix**: Add meaningful instructions
 **Source**: docs.github.com/en/copilot/customizing-copilot
 
 <a id="cop-002"></a>
-### COP-002 [HIGH] Invalid Frontmatter
+### COP-002 [HIGH] Invalid Frontmatter in Scoped Instructions
 **Requirement**: Scoped instruction files (.github/instructions/*.instructions.md) MUST have valid YAML frontmatter with `applyTo` field
 **Detection**: Parse YAML between `---` markers, check for `applyTo` key
 **Fix**: Auto-fix (unsafe) -- insert template frontmatter with applyTo field (missing frontmatter only)
 **Source**: docs.github.com/en/copilot/customizing-copilot
 
 <a id="cop-003"></a>
-### COP-003 [HIGH] Invalid Glob Pattern
+### COP-003 [HIGH] Invalid Glob Pattern in applyTo
 **Requirement**: `applyTo` field MUST contain valid glob patterns
 **Detection**: Attempt to parse as glob pattern
 **Fix**: Correct the glob syntax
@@ -1108,11 +1108,12 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 ## CODEX CLI RULES
 
 <a id="cdx-000"></a>
-### CDX-000 [HIGH] Codex Config Parse Error
-**Requirement**: `.codex/config.toml` MUST be valid TOML
-**Detection**: Parse TOML and report parser errors with line/column details
-**Fix**: No auto-fix (TOML syntax errors must be corrected manually)
+### CDX-000 [HIGH] TOML Parse Error
+**Requirement**: Codex config.toml files MUST have valid TOML syntax
+**Detection**: Attempt to parse as TOML; report parse errors with line/column
+**Fix**: Correct the TOML syntax
 **Source**: github.com/openai/codex
+
 
 <a id="cdx-001"></a>
 ### CDX-001 [HIGH] Invalid Approval Mode

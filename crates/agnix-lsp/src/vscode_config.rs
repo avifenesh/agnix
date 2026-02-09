@@ -645,6 +645,7 @@ mod tests {
 
     #[test]
     fn test_locale_merge() {
+        let _guard = crate::locale::LOCALE_MUTEX.lock().unwrap();
         // Pin locale to "en" for test isolation
         rust_i18n::set_locale("en");
 
@@ -667,6 +668,7 @@ mod tests {
 
     #[test]
     fn test_locale_null_reverts_to_auto_detect() {
+        let _guard = crate::locale::LOCALE_MUTEX.lock().unwrap();
         // Pin locale to "es" to simulate a previously set locale
         rust_i18n::set_locale("es");
 

@@ -46,19 +46,21 @@ pub fn find_generic_instructions(content: &str) -> Vec<GenericInstruction> {
     let mut results = Vec::new();
     let patterns = generic_patterns();
     let mut byte_offset: usize = 0;
-    let content_len = content.len();
-
-    // Detect line ending type: CRLF (2 bytes) or LF (1 byte)
-    let line_ending_len = if content.contains("\r\n") { 2 } else { 1 };
 
     for (line_num, line) in content.lines().enumerate() {
         let line_start = byte_offset;
-        // Calculate the end of line: line length + line ending bytes (if not at end of file)
-        let line_end = if byte_offset + line.len() < content_len {
-            byte_offset + line.len() + line_ending_len // Include line ending
+
+        // Compute actual line end by inspecting the bytes after the line content
+        let line_bytes = line.len();
+        let remaining = &content.as_bytes()[byte_offset + line_bytes..];
+        let newline_len = if remaining.starts_with(b"\r\n") {
+            2
+        } else if remaining.starts_with(b"\n") {
+            1
         } else {
-            byte_offset + line.len() // Last line may not have trailing newline
+            0 // last line, no newline
         };
+        let line_end = byte_offset + line_bytes + newline_len;
 
         for pattern in patterns {
             if let Some(mat) = pattern.find(line) {
@@ -107,7 +109,7 @@ pub struct TokenCountExceeded {
 /// Check if content exceeds token limit (~1500 tokens = ~6000 chars)
 /// Returns Some if exceeded, None if within limit
 pub fn check_token_count(content: &str) -> Option<TokenCountExceeded> {
-    let char_count = content.len();
+    let char_count = content.chars().count();
     let estimated_tokens = char_count / 4; // Rough approximation: 4 chars per token
     let limit = 1500;
 
@@ -215,15 +217,22 @@ pub fn find_weak_constraints(content: &str) -> Vec<WeakConstraint> {
     let weak_pattern = weak_language_pattern();
     let section_pattern = critical_section_pattern();
     let mut byte_offset: usize = 0;
-    let content_len = content.len();
-
-    // Detect line ending type: CRLF (2 bytes) or LF (1 byte)
-    let line_ending_len = if content.contains("\r\n") { 2 } else { 1 };
 
     let mut current_section: Option<String> = None;
 
     for (line_num, line) in content.lines().enumerate() {
         let line_start = byte_offset;
+
+        // Compute actual line end by inspecting the bytes after the line content
+        let line_bytes = line.len();
+        let remaining = &content.as_bytes()[byte_offset + line_bytes..];
+        let newline_len = if remaining.starts_with(b"\r\n") {
+            2
+        } else if remaining.starts_with(b"\n") {
+            1
+        } else {
+            0 // last line, no newline
+        };
 
         // Check if this is a header line
         if line.starts_with('#') {
@@ -249,12 +258,8 @@ pub fn find_weak_constraints(content: &str) -> Vec<WeakConstraint> {
             }
         }
 
-        // Move to next line: line length + line ending bytes (if not at end of file)
-        byte_offset = if byte_offset + line.len() < content_len {
-            byte_offset + line.len() + line_ending_len
-        } else {
-            byte_offset + line.len()
-        };
+        // Move to next line
+        byte_offset += line_bytes + newline_len;
     }
 
     results
@@ -330,7 +335,7 @@ pub fn extract_npm_scripts(content: &str) -> Vec<NpmScriptReference> {
             if let Some(script_match) = cap.get(1) {
                 results.push(NpmScriptReference {
                     line: line_num + 1,
-                    column: cap.get(0).map(|m| m.start()).unwrap_or(0),
+                    column: cap.get(0).map(|m| m.start() + 1).unwrap_or(1),
                     script_name: script_match.as_str().to_string(),
                 });
             }

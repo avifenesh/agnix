@@ -1,6 +1,7 @@
-//! Codex CLI configuration validation rules (CDX-001 to CDX-003)
+//! Codex CLI configuration validation rules (CDX-000 to CDX-003)
 //!
 //! Validates:
+//! - CDX-000: TOML Parse Error (HIGH) - invalid TOML syntax in config.toml
 //! - CDX-001: Invalid approvalMode (HIGH) - must be "suggest", "auto-edit", or "full-auto"
 //! - CDX-002: Invalid fullAutoErrorMode (HIGH) - must be "ask-user" or "ignore-and-continue"
 //! - CDX-003: AGENTS.override.md in version control (MEDIUM) - should be in .gitignore
@@ -74,7 +75,7 @@ impl Validator for CodexValidator {
         let parsed = parse_codex_toml(content);
 
         // If TOML is broken, emit a diagnostic so users can fix invalid syntax
-        if let Some(parse_error) = &parsed.parse_error {
+        if config.is_rule_enabled("CDX-000") && let Some(parse_error) = &parsed.parse_error {
             diagnostics.push(
                 Diagnostic::error(
                     path.to_path_buf(),

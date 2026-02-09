@@ -32,7 +32,7 @@ mod code_actions;
 mod completion_provider;
 mod diagnostic_mapper;
 mod hover_provider;
-mod locale;
+pub(crate) mod locale;
 mod position;
 mod vscode_config;
 

@@ -3861,7 +3861,7 @@
     },
     {
       "id": "CDX-000",
-      "name": "Codex Config Parse Error",
+      "name": "TOML Parse Error",
       "severity": "HIGH",
       "category": "codex",
       "evidence": {
@@ -3882,7 +3882,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "[model]\napprovalMode = \"suggest\"\nfullAutoErrorMode = \"ask-user\"",
+      "bad_example": "[model\napprovalMode = suggest"
     },
     {
       "id": "CDX-001",
@@ -4278,22 +4280,22 @@
     },
     "claude-skills": {
       "prefix": "CC-SK",
-      "count": 9,
+      "count": 15,
       "description": "Claude Code Skills rules"
     },
     "claude-hooks": {
       "prefix": "CC-HK",
-      "count": 12,
+      "count": 18,
       "description": "Claude Code Hooks rules"
     },
     "claude-agents": {
       "prefix": "CC-AG",
-      "count": 7,
+      "count": 13,
       "description": "Claude Code Subagents rules"
     },
     "claude-memory": {
       "prefix": "CC-MEM",
-      "count": 10,
+      "count": 12,
       "description": "Claude Code Memory rules"
     },
     "agents-md": {
@@ -4303,12 +4305,12 @@
     },
     "claude-plugins": {
       "prefix": "CC-PL",
-      "count": 6,
+      "count": 10,
       "description": "Claude Code Plugins rules"
     },
     "mcp": {
       "prefix": "MCP",
-      "count": 8,
+      "count": 12,
       "description": "Model Context Protocol rules"
     },
     "copilot": {
@@ -4318,7 +4320,7 @@
     },
     "cursor": {
       "prefix": "CUR",
-      "count": 6,
+      "count": 9,
       "description": "Cursor project rules"
     },
     "cline": {
@@ -4338,7 +4340,7 @@
     },
     "codex": {
       "prefix": "CDX",
-      "count": 3,
+      "count": 4,
       "description": "Codex CLI configuration validation"
     },
     "xml": {
@@ -4463,7 +4465,7 @@
             "key": "argument-hint",
             "docs": "Optional hint shown to users for skill arguments.",
             "rules": [
-              "AS-016"
+              "CC-SK-012"
             ],
             "values": [],
             "snippet": "argument-hint: path/to/file"
@@ -4484,7 +4486,8 @@
             "key": "user-invocable",
             "docs": "Whether users can invoke this skill directly.",
             "rules": [
-              "AS-016"
+              "CC-SK-015",
+              "CC-SK-011"
             ],
             "values": [
               "true",

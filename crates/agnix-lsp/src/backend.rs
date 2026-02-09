@@ -2120,6 +2120,7 @@ model: sonnet
     /// Test that did_change_configuration handles locale setting.
     #[tokio::test]
     async fn test_did_change_configuration_with_locale() {
+        let _guard = crate::locale::LOCALE_MUTEX.lock().unwrap();
         let (service, _socket) = LspService::new(Backend::new);
 
         service

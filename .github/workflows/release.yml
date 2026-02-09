@@ -102,6 +102,27 @@ jobs:
             (Get-FileHash agnix-lsp-${{ matrix.target }}.zip -Algorithm SHA256).Hash.ToLower() + "  agnix-lsp-${{ matrix.target }}.zip" | Out-File -Encoding ASCII agnix-lsp-${{ matrix.target }}.zip.sha256
           }
 
+      - name: Create MCP archive (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          cd target/${{ matrix.target }}/release
+          if [ -f agnix-mcp ]; then
+            tar czvf ../../../agnix-mcp-${{ matrix.target }}.tar.gz agnix-mcp
+            cd ../../..
+            shasum -a 256 agnix-mcp-${{ matrix.target }}.tar.gz > agnix-mcp-${{ matrix.target }}.tar.gz.sha256
+          fi
+
+      - name: Create MCP archive (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          cd target/${{ matrix.target }}/release
+          if (Test-Path agnix-mcp.exe) {
+            Compress-Archive -Path agnix-mcp.exe -DestinationPath ../../../agnix-mcp-${{ matrix.target }}.zip
+            cd ../../..
+            (Get-FileHash agnix-mcp-${{ matrix.target }}.zip -Algorithm SHA256).Hash.ToLower() + "  agnix-mcp-${{ matrix.target }}.zip" | Out-File -Encoding ASCII agnix-mcp-${{ matrix.target }}.zip.sha256
+          }
+
       - name: Upload artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
@@ -109,6 +130,7 @@ jobs:
           path: |
             agnix-${{ matrix.target }}.*
             agnix-lsp-${{ matrix.target }}.*
+            agnix-mcp-${{ matrix.target }}.*
           if-no-files-found: error
 
   release:

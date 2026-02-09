@@ -14,12 +14,15 @@ pub fn get_field_at_position(content: &str, position: Position) -> Option<String
     let line_idx = position.line as usize;
     let line = content.lines().nth(line_idx)?;
 
-    let trimmed = line.trim_start();
+    // Track whitespace and JSON delimiter stripping separately
+    let after_ws = line.trim_start();
     // Strip JSON object/array delimiters for hover detection
-    let trimmed = trimmed.trim_start_matches(['{', '[', ',']);
-    let trimmed = trimmed.trim_start();
-    if let Some(colon_pos) = trimmed.find(':') {
-        let mut field = trimmed[..colon_pos].trim();
+    let after_json = after_ws.trim_start_matches(['{', '[', ',']);
+    let after_json = after_json.trim_start();
+    let total_prefix = line.len() - after_json.len();
+
+    if let Some(colon_pos) = after_json.find(':') {
+        let mut field = after_json[..colon_pos].trim();
         field = field.trim_matches('"').trim_matches('\'');
 
         if !field.is_empty()
@@ -28,10 +31,11 @@ pub fn get_field_at_position(content: &str, position: Position) -> Option<String
                 .all(|c| c.is_alphanumeric() || c == '_' || c == '-')
         {
             let char_pos = position.character as usize;
-            let leading_spaces = line.len().saturating_sub(trimmed.len());
-            let field_end = leading_spaces + colon_pos;
+            let field_start = total_prefix;
+            let field_end = total_prefix + colon_pos;
 
-            if char_pos <= field_end {
+            // Only return hover when cursor is on the key area (not on delimiters before it)
+            if char_pos >= field_start && char_pos <= field_end {
                 return Some(field.to_string());
             }
         }
