@@ -650,6 +650,234 @@ fn is_excluded_file(path_str: &str, exclude_patterns: &[ExcludePattern]) -> bool
         .any(|p| p.pattern.matches(path_str) && p.dir_only_prefix.as_deref() != Some(path_str))
 }
 
+/// Run project-level checks that require cross-file analysis.
+///
+/// These checks analyze relationships between multiple files in the project:
+/// - AGM-006: Multiple AGENTS.md files
+/// - XP-004: Conflicting build/test commands across instruction files
+/// - XP-005: Conflicting tool constraints across instruction files
+/// - XP-006: Multiple instruction layers without documented precedence
+/// - VER-001: No tool/spec versions pinned
+///
+/// Both `agents_md_paths` and `instruction_file_paths` must be pre-sorted
+/// for deterministic output ordering.
+fn run_project_level_checks(
+    agents_md_paths: &[PathBuf],
+    instruction_file_paths: &[PathBuf],
+    config: &LintConfig,
+    root_dir: &Path,
+) -> Vec<Diagnostic> {
+    let mut diagnostics = Vec::new();
+
+    // AGM-006: Check for multiple AGENTS.md files in the directory tree
+    if config.is_rule_enabled("AGM-006") {
+        if agents_md_paths.len() > 1 {
+            for agents_file in agents_md_paths.iter() {
+                let parent_files =
+                    schemas::agents_md::check_agents_md_hierarchy(agents_file, agents_md_paths);
+                let description = if !parent_files.is_empty() {
+                    let parent_paths: Vec<String> = parent_files
+                        .iter()
+                        .map(|p| p.to_string_lossy().to_string())
+                        .collect();
+                    format!(
+                        "Nested AGENTS.md detected - parent AGENTS.md files exist at: {}",
+                        parent_paths.join(", ")
+                    )
+                } else {
+                    let other_paths: Vec<String> = agents_md_paths
+                        .iter()
+                        .filter(|p| p.as_path() != agents_file.as_path())
+                        .map(|p| p.to_string_lossy().to_string())
+                        .collect();
+                    format!(
+                        "Multiple AGENTS.md files detected - other AGENTS.md files exist at: {}",
+                        other_paths.join(", ")
+                    )
+                };
+
+                diagnostics.push(
+                    Diagnostic::warning(
+                        agents_file.clone(),
+                        1,
+                        0,
+                        "AGM-006",
+                        description,
+                    )
+                    .with_suggestion(
+                        "Some tools load AGENTS.md hierarchically. Document inheritance behavior or consolidate files.".to_string(),
+                    ),
+                );
+            }
+        }
+    }
+
+    // XP-004, XP-005, XP-006: Cross-layer contradiction detection
+    let xp004_enabled = config.is_rule_enabled("XP-004");
+    let xp005_enabled = config.is_rule_enabled("XP-005");
+    let xp006_enabled = config.is_rule_enabled("XP-006");
+
+    if xp004_enabled || xp005_enabled || xp006_enabled {
+        if instruction_file_paths.len() > 1 {
+            // Read content of all instruction files
+            let mut file_contents: Vec<(PathBuf, String)> = Vec::new();
+            for file_path in instruction_file_paths.iter() {
+                match file_utils::safe_read_file(file_path) {
+                    Ok(content) => {
+                        file_contents.push((file_path.clone(), content));
+                    }
+                    Err(e) => {
+                        diagnostics.push(
+                            Diagnostic::error(
+                                file_path.clone(),
+                                0,
+                                0,
+                                "XP-004",
+                                t!("rules.xp_004_read_error", error = e.to_string()),
+                            )
+                            .with_suggestion(t!("rules.xp_004_read_error_suggestion")),
+                        );
+                    }
+                }
+            }
+
+            // XP-004: Detect conflicting build/test commands
+            if xp004_enabled {
+                let file_commands: Vec<_> = file_contents
+                    .iter()
+                    .map(|(path, content)| {
+                        (
+                            path.clone(),
+                            schemas::cross_platform::extract_build_commands(content),
+                        )
+                    })
+                    .filter(|(_, cmds)| !cmds.is_empty())
+                    .collect();
+
+                let build_conflicts =
+                    schemas::cross_platform::detect_build_conflicts(&file_commands);
+                for conflict in build_conflicts {
+                    diagnostics.push(
+                        Diagnostic::warning(
+                            conflict.file1.clone(),
+                            conflict.file1_line,
+                            0,
+                            "XP-004",
+                            format!(
+                                "Conflicting package managers: {} uses {} but {} uses {} for {} commands",
+                                conflict.file1.display(),
+                                conflict.file1_manager.as_str(),
+                                conflict.file2.display(),
+                                conflict.file2_manager.as_str(),
+                                match conflict.command_type {
+                                    schemas::cross_platform::CommandType::Install => "install",
+                                    schemas::cross_platform::CommandType::Build => "build",
+                                    schemas::cross_platform::CommandType::Test => "test",
+                                    schemas::cross_platform::CommandType::Run => "run",
+                                    schemas::cross_platform::CommandType::Other => "other",
+                                }
+                            ),
+                        )
+                        .with_suggestion(
+                            "Standardize on a single package manager across all instruction files".to_string(),
+                        ),
+                    );
+                }
+            }
+
+            // XP-005: Detect conflicting tool constraints
+            if xp005_enabled {
+                let file_constraints: Vec<_> = file_contents
+                    .iter()
+                    .map(|(path, content)| {
+                        (
+                            path.clone(),
+                            schemas::cross_platform::extract_tool_constraints(content),
+                        )
+                    })
+                    .filter(|(_, constraints)| !constraints.is_empty())
+                    .collect();
+
+                let tool_conflicts =
+                    schemas::cross_platform::detect_tool_conflicts(&file_constraints);
+                for conflict in tool_conflicts {
+                    diagnostics.push(
+                        Diagnostic::error(
+                            conflict.allow_file.clone(),
+                            conflict.allow_line,
+                            0,
+                            "XP-005",
+                            format!(
+                                "Conflicting tool constraints: '{}' is allowed in {} but disallowed in {}",
+                                conflict.tool_name,
+                                conflict.allow_file.display(),
+                                conflict.disallow_file.display()
+                            ),
+                        )
+                        .with_suggestion(
+                            "Resolve the conflict by consistently allowing or disallowing the tool".to_string(),
+                        ),
+                    );
+                }
+            }
+
+            // XP-006: Detect multiple layers without documented precedence
+            if xp006_enabled {
+                let layers: Vec<_> = file_contents
+                    .iter()
+                    .map(|(path, content)| schemas::cross_platform::categorize_layer(path, content))
+                    .collect();
+
+                if let Some(issue) = schemas::cross_platform::detect_precedence_issues(&layers) {
+                    // Report on the first layer file
+                    if let Some(first_layer) = issue.layers.first() {
+                        diagnostics.push(
+                            Diagnostic::warning(
+                                first_layer.path.clone(),
+                                1,
+                                0,
+                                "XP-006",
+                                issue.description,
+                            )
+                            .with_suggestion(
+                                "Document which file takes precedence (e.g., 'CLAUDE.md takes precedence over AGENTS.md')".to_string(),
+                            ),
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    // VER-001: Warn when no tool/spec versions are explicitly pinned
+    if config.is_rule_enabled("VER-001") {
+        let has_any_version_pinned = config.is_claude_code_version_pinned()
+            || config.tool_versions.codex.is_some()
+            || config.tool_versions.cursor.is_some()
+            || config.tool_versions.copilot.is_some()
+            || config.is_mcp_revision_pinned()
+            || config.spec_revisions.agent_skills_spec.is_some()
+            || config.spec_revisions.agents_md_spec.is_some();
+
+        if !has_any_version_pinned {
+            // Use .agnix.toml path or project root as the file reference
+            let config_file = root_dir.join(".agnix.toml");
+            let report_path = if config_file.exists() {
+                config_file
+            } else {
+                root_dir.to_path_buf()
+            };
+
+            diagnostics.push(
+                Diagnostic::info(report_path, 1, 0, "VER-001", t!("rules.ver_001.message"))
+                    .with_suggestion(t!("rules.ver_001.suggestion")),
+            );
+        }
+    }
+
+    diagnostics
+}
+
 /// Main entry point for validating a project with a custom validator registry
 pub fn validate_project_with_registry(
     path: &Path,
@@ -792,221 +1020,19 @@ pub fn validate_project_with_registry(
         }
     }
 
-    // AGM-006: Check for multiple AGENTS.md files in the directory tree (project-level check)
-    if config.is_rule_enabled("AGM-006") {
-        // Sort for deterministic ordering (parallel collection order is non-deterministic)
-        let mut agents_md_paths = agents_md_paths.lock().unwrap().clone();
-        agents_md_paths.sort();
+    // Run project-level checks (AGM-006, XP-004/005/006, VER-001)
+    {
+        let mut sorted_agents_md = agents_md_paths.lock().unwrap().clone();
+        sorted_agents_md.sort();
+        let mut sorted_instruction_files = instruction_file_paths.lock().unwrap().clone();
+        sorted_instruction_files.sort();
 
-        if agents_md_paths.len() > 1 {
-            for agents_file in agents_md_paths.iter() {
-                let parent_files =
-                    schemas::agents_md::check_agents_md_hierarchy(agents_file, &agents_md_paths);
-                let description = if !parent_files.is_empty() {
-                    let parent_paths: Vec<String> = parent_files
-                        .iter()
-                        .map(|p| p.to_string_lossy().to_string())
-                        .collect();
-                    format!(
-                        "Nested AGENTS.md detected - parent AGENTS.md files exist at: {}",
-                        parent_paths.join(", ")
-                    )
-                } else {
-                    let other_paths: Vec<String> = agents_md_paths
-                        .iter()
-                        .filter(|p| p.as_path() != agents_file.as_path())
-                        .map(|p| p.to_string_lossy().to_string())
-                        .collect();
-                    format!(
-                        "Multiple AGENTS.md files detected - other AGENTS.md files exist at: {}",
-                        other_paths.join(", ")
-                    )
-                };
-
-                diagnostics.push(
-                    Diagnostic::warning(
-                        agents_file.clone(),
-                        1,
-                        0,
-                        "AGM-006",
-                        description,
-                    )
-                    .with_suggestion(
-                        "Some tools load AGENTS.md hierarchically. Document inheritance behavior or consolidate files.".to_string(),
-                    ),
-                );
-            }
-        }
-    }
-
-    // XP-004, XP-005, XP-006: Cross-layer contradiction detection (project-level checks)
-    // These rules analyze relationships between multiple instruction files
-    let xp004_enabled = config.is_rule_enabled("XP-004");
-    let xp005_enabled = config.is_rule_enabled("XP-005");
-    let xp006_enabled = config.is_rule_enabled("XP-006");
-
-    if xp004_enabled || xp005_enabled || xp006_enabled {
-        // Use instruction files collected during streaming validation
-        // Sort for deterministic ordering (parallel collection order is non-deterministic)
-        let mut instruction_files = instruction_file_paths.lock().unwrap().clone();
-        instruction_files.sort();
-
-        if instruction_files.len() > 1 {
-            // Read content of all instruction files
-            let mut file_contents: Vec<(PathBuf, String)> = Vec::new();
-            for file_path in instruction_files.iter() {
-                match file_utils::safe_read_file(file_path) {
-                    Ok(content) => {
-                        file_contents.push((file_path.clone(), content));
-                    }
-                    Err(e) => {
-                        diagnostics.push(
-                            Diagnostic::error(
-                                file_path.clone(),
-                                0,
-                                0,
-                                "XP-004",
-                                t!("rules.xp_004_read_error", error = e.to_string()),
-                            )
-                            .with_suggestion(t!("rules.xp_004_read_error_suggestion")),
-                        );
-                    }
-                }
-            }
-
-            // XP-004: Detect conflicting build/test commands
-            if xp004_enabled {
-                let file_commands: Vec<_> = file_contents
-                    .iter()
-                    .map(|(path, content)| {
-                        (
-                            path.clone(),
-                            schemas::cross_platform::extract_build_commands(content),
-                        )
-                    })
-                    .filter(|(_, cmds)| !cmds.is_empty())
-                    .collect();
-
-                let build_conflicts =
-                    schemas::cross_platform::detect_build_conflicts(&file_commands);
-                for conflict in build_conflicts {
-                    diagnostics.push(
-                        Diagnostic::warning(
-                            conflict.file1.clone(),
-                            conflict.file1_line,
-                            0,
-                            "XP-004",
-                            format!(
-                                "Conflicting package managers: {} uses {} but {} uses {} for {} commands",
-                                conflict.file1.display(),
-                                conflict.file1_manager.as_str(),
-                                conflict.file2.display(),
-                                conflict.file2_manager.as_str(),
-                                match conflict.command_type {
-                                    schemas::cross_platform::CommandType::Install => "install",
-                                    schemas::cross_platform::CommandType::Build => "build",
-                                    schemas::cross_platform::CommandType::Test => "test",
-                                    schemas::cross_platform::CommandType::Run => "run",
-                                    schemas::cross_platform::CommandType::Other => "other",
-                                }
-                            ),
-                        )
-                        .with_suggestion(
-                            "Standardize on a single package manager across all instruction files".to_string(),
-                        ),
-                    );
-                }
-            }
-
-            // XP-005: Detect conflicting tool constraints
-            if xp005_enabled {
-                let file_constraints: Vec<_> = file_contents
-                    .iter()
-                    .map(|(path, content)| {
-                        (
-                            path.clone(),
-                            schemas::cross_platform::extract_tool_constraints(content),
-                        )
-                    })
-                    .filter(|(_, constraints)| !constraints.is_empty())
-                    .collect();
-
-                let tool_conflicts =
-                    schemas::cross_platform::detect_tool_conflicts(&file_constraints);
-                for conflict in tool_conflicts {
-                    diagnostics.push(
-                        Diagnostic::error(
-                            conflict.allow_file.clone(),
-                            conflict.allow_line,
-                            0,
-                            "XP-005",
-                            format!(
-                                "Conflicting tool constraints: '{}' is allowed in {} but disallowed in {}",
-                                conflict.tool_name,
-                                conflict.allow_file.display(),
-                                conflict.disallow_file.display()
-                            ),
-                        )
-                        .with_suggestion(
-                            "Resolve the conflict by consistently allowing or disallowing the tool".to_string(),
-                        ),
-                    );
-                }
-            }
-
-            // XP-006: Detect multiple layers without documented precedence
-            if xp006_enabled {
-                let layers: Vec<_> = file_contents
-                    .iter()
-                    .map(|(path, content)| schemas::cross_platform::categorize_layer(path, content))
-                    .collect();
-
-                if let Some(issue) = schemas::cross_platform::detect_precedence_issues(&layers) {
-                    // Report on the first layer file
-                    if let Some(first_layer) = issue.layers.first() {
-                        diagnostics.push(
-                            Diagnostic::warning(
-                                first_layer.path.clone(),
-                                1,
-                                0,
-                                "XP-006",
-                                issue.description,
-                            )
-                            .with_suggestion(
-                                "Document which file takes precedence (e.g., 'CLAUDE.md takes precedence over AGENTS.md')".to_string(),
-                            ),
-                        );
-                    }
-                }
-            }
-        }
-    }
-
-    // VER-001: Warn when no tool/spec versions are explicitly pinned (project-level check)
-    // This helps users understand that version-dependent rules are using default assumptions
-    if config.is_rule_enabled("VER-001") {
-        let has_any_version_pinned = config.is_claude_code_version_pinned()
-            || config.tool_versions.codex.is_some()
-            || config.tool_versions.cursor.is_some()
-            || config.tool_versions.copilot.is_some()
-            || config.is_mcp_revision_pinned()
-            || config.spec_revisions.agent_skills_spec.is_some()
-            || config.spec_revisions.agents_md_spec.is_some();
-
-        if !has_any_version_pinned {
-            // Use .agnix.toml path or project root as the file reference
-            let config_file = root_dir.join(".agnix.toml");
-            let report_path = if config_file.exists() {
-                config_file
-            } else {
-                root_dir.clone()
-            };
-
-            diagnostics.push(
-                Diagnostic::info(report_path, 1, 0, "VER-001", t!("rules.ver_001.message"))
-                    .with_suggestion(t!("rules.ver_001.suggestion")),
-            );
-        }
+        diagnostics.extend(run_project_level_checks(
+            &sorted_agents_md,
+            &sorted_instruction_files,
+            &config,
+            &root_dir,
+        ));
     }
 
     // Sort by severity (errors first), then by file path, then by line/rule for full determinism
