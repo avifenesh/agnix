@@ -3,7 +3,7 @@
 //! Implements the Language Server Protocol using tower-lsp, providing
 //! real-time validation of agent configuration files.
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::future::Future;
 use std::path::{Component, Path, PathBuf};
 use std::sync::Arc;
@@ -16,7 +16,7 @@ use tower_lsp::{Client, LanguageServer};
 
 use crate::code_actions::fixes_to_code_actions_with_diagnostic;
 use crate::completion_provider::completion_items_for_document;
-use crate::diagnostic_mapper::{deserialize_fixes, to_lsp_diagnostics};
+use crate::diagnostic_mapper::{deserialize_fixes, to_lsp_diagnostic, to_lsp_diagnostics};
 use crate::hover_provider::hover_at_position;
 use crate::vscode_config::VsCodeConfig;
 
@@ -153,6 +153,11 @@ pub struct Backend {
     /// Cached validator registry reused across validations.
     /// Immutable after construction; Arc enables sharing across spawn_blocking tasks.
     registry: Arc<agnix_core::ValidatorRegistry>,
+    /// Cached project-level diagnostics per URI (from validate_project_rules).
+    /// Stored separately so they can be merged with per-file diagnostics at publish time.
+    project_level_diagnostics: Arc<RwLock<HashMap<Url, Vec<Diagnostic>>>>,
+    /// Tracks which URIs received project-level diagnostics so stale ones can be cleared.
+    project_diagnostics_uris: Arc<RwLock<HashSet<Url>>>,
 }
 
 impl Backend {
@@ -166,6 +171,8 @@ impl Backend {
             documents: Arc::new(RwLock::new(HashMap::new())),
             config_generation: Arc::new(AtomicU64::new(0)),
             registry: Arc::new(agnix_core::ValidatorRegistry::with_defaults()),
+            project_level_diagnostics: Arc::new(RwLock::new(HashMap::new())),
+            project_diagnostics_uris: Arc::new(RwLock::new(HashSet::new())),
         }
     }
 
@@ -342,6 +349,153 @@ impl Backend {
         }
 
         true
+    }
+
+    /// Run project-level validation and publish diagnostics per affected file.
+    ///
+    /// Calls `agnix_core::validate_project_rules()` in a blocking task, then
+    /// groups the resulting diagnostics by file path. For files open in the
+    /// editor, the diagnostics are cached so `validate_from_content_and_publish`
+    /// can merge them with per-file diagnostics. For files not open, diagnostics
+    /// are published directly.
+    ///
+    /// Stale URIs from previous runs are cleared by publishing empty diagnostics.
+    async fn validate_project_rules_and_publish(&self) {
+        let workspace_root = match &*self.workspace_root.read().await {
+            Some(root) => root.clone(),
+            None => return,
+        };
+
+        let config = Arc::clone(&*self.config.read().await);
+
+        let result = tokio::task::spawn_blocking(move || {
+            agnix_core::validate_project_rules(&workspace_root, &config)
+        })
+        .await;
+
+        let core_diagnostics = match result {
+            Ok(Ok(diags)) => diags,
+            Ok(Err(e)) => {
+                self.client
+                    .log_message(
+                        MessageType::WARNING,
+                        format!("Project-level validation error: {}", e),
+                    )
+                    .await;
+                return;
+            }
+            Err(e) => {
+                self.client
+                    .log_message(
+                        MessageType::ERROR,
+                        format!("Project-level validation task failed: {}", e),
+                    )
+                    .await;
+                return;
+            }
+        };
+
+        // Group diagnostics by file path
+        let mut by_uri: HashMap<Url, Vec<Diagnostic>> = HashMap::new();
+        for diag in &core_diagnostics {
+            if let Ok(uri) = Url::from_file_path(&diag.file) {
+                by_uri
+                    .entry(uri)
+                    .or_default()
+                    .push(to_lsp_diagnostic(diag));
+            }
+        }
+
+        // Clear stale project diagnostic URIs from the previous run
+        let previous_uris: HashSet<Url> = {
+            let prev = self.project_diagnostics_uris.read().await;
+            prev.clone()
+        };
+        for stale_uri in previous_uris.difference(&by_uri.keys().cloned().collect()) {
+            // Only clear if the document is not open (open docs will re-merge on next validate)
+            let is_open = self.documents.read().await.contains_key(stale_uri);
+            if !is_open {
+                self.client
+                    .publish_diagnostics(stale_uri.clone(), vec![], None)
+                    .await;
+            }
+        }
+
+        // Store new project-level diagnostics and track URIs
+        {
+            let mut proj_diags = self.project_level_diagnostics.write().await;
+            let mut proj_uris = self.project_diagnostics_uris.write().await;
+            *proj_diags = by_uri.clone();
+            *proj_uris = by_uri.keys().cloned().collect();
+        }
+
+        // Publish diagnostics
+        let open_docs = self.documents.read().await;
+        for (uri, lsp_diags) in &by_uri {
+            if open_docs.contains_key(uri) {
+                // For open documents, re-trigger full validation so per-file and
+                // project-level diagnostics are merged before publishing.
+                let backend = self.clone();
+                let uri = uri.clone();
+                tokio::spawn(async move {
+                    backend
+                        .validate_from_content_and_publish(uri, None)
+                        .await;
+                });
+            } else {
+                // For files not open in the editor, publish directly
+                self.client
+                    .publish_diagnostics(uri.clone(), lsp_diags.clone(), None)
+                    .await;
+            }
+        }
+
+        // Also clear project-level diagnostics from open docs whose URIs
+        // are no longer in the results (stale open docs need re-merge too)
+        for stale_uri in previous_uris.difference(&by_uri.keys().cloned().collect()) {
+            if open_docs.contains_key(stale_uri) {
+                let backend = self.clone();
+                let uri = stale_uri.clone();
+                tokio::spawn(async move {
+                    backend
+                        .validate_from_content_and_publish(uri, None)
+                        .await;
+                });
+            }
+        }
+    }
+
+    /// Check if a file path is relevant to project-level rules.
+    ///
+    /// Returns true for instruction files (CLAUDE.md, AGENTS.md, .clinerules,
+    /// .cursorrules, copilot-instructions.md, etc.) and .agnix.toml config.
+    fn is_project_level_trigger(path: &Path) -> bool {
+        let file_name = path
+            .file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or("")
+            .to_lowercase();
+
+        // .agnix.toml config changes affect all rules
+        if file_name == ".agnix.toml" {
+            return true;
+        }
+
+        // Instruction files that affect project-level cross-file checks
+        file_name == "claude.md"
+            || file_name == "claude.local.md"
+            || file_name == "agents.md"
+            || file_name == "agents.local.md"
+            || file_name == "agents.override.md"
+            || file_name == "gemini.md"
+            || file_name == "gemini.local.md"
+            || file_name == ".clinerules"
+            || file_name == ".cursorrules"
+            || file_name == ".cursorrules.md"
+            || file_name == "copilot-instructions.md"
+            || file_name.ends_with(".instructions.md")
+            || file_name.ends_with(".mdc")
+            || file_name == "opencode.json"
     }
 
     /// Get cached document content for a URI.
