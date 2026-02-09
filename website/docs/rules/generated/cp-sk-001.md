@@ -12,7 +12,7 @@ keywords: ["CP-SK-001", "copilot skill uses unsupported field", "copilot-skills"
 - **Severity**: `MEDIUM`
 - **Category**: `copilot-skills`
 - **Normative Level**: `SHOULD`
-- **Auto-Fix**: `Yes (safe)`
+- **Auto-Fix**: `Yes (safe/unsafe)`
 - **Verified On**: `2026-02-07`
 
 ## Applicability

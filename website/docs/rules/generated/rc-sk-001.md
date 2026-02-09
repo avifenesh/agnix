@@ -12,7 +12,7 @@ keywords: ["RC-SK-001", "roo code skill uses unsupported field", "roo-code-skill
 - **Severity**: `MEDIUM`
 - **Category**: `roo-code-skills`
 - **Normative Level**: `SHOULD`
-- **Auto-Fix**: `Yes (safe)`
+- **Auto-Fix**: `Yes (safe/unsafe)`
 - **Verified On**: `2026-02-07`
 
 ## Applicability

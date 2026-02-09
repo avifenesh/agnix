@@ -12,7 +12,7 @@ keywords: ["KR-SK-001", "kiro skill uses unsupported field", "kiro-skills", "val
 - **Severity**: `MEDIUM`
 - **Category**: `kiro-skills`
 - **Normative Level**: `SHOULD`
-- **Auto-Fix**: `Yes (safe)`
+- **Auto-Fix**: `Yes (safe/unsafe)`
 - **Verified On**: `2026-02-07`
 
 ## Applicability

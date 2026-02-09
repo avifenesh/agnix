@@ -639,7 +639,7 @@
     {
       "id": "CC-SK-007",
       "name": "Unrestricted Bash",
-      "severity": "HIGH",
+      "severity": "MEDIUM",
       "category": "claude-skills",
       "evidence": {
         "source_type": "community",
@@ -2607,7 +2607,7 @@
         "applies_to": {
           "spec_revision": "2025-06-18"
         },
-        "normative_level": "MUST",
+        "normative_level": "SHOULD",
         "tests": {
           "unit": true,
           "fixtures": true,
@@ -2714,7 +2714,7 @@
         ],
         "verified_on": "2026-02-07",
         "applies_to": {
-          "spec_revision": "2025-03-26"
+          "spec_revision": "2025-06-18"
         },
         "normative_level": "MUST",
         "tests": {
@@ -3566,7 +3566,7 @@
     {
       "id": "XP-002",
       "name": "AGENTS.md Platform Compatibility",
-      "severity": "HIGH",
+      "severity": "MEDIUM",
       "category": "cross-platform",
       "evidence": {
         "source_type": "community",
@@ -3595,7 +3595,7 @@
     {
       "id": "XP-003",
       "name": "Hard-Coded Platform Paths",
-      "severity": "HIGH",
+      "severity": "MEDIUM",
       "category": "cross-platform",
       "evidence": {
         "source_type": "community",
@@ -3990,7 +3990,7 @@
       },
       "fix": {
         "autofix": true,
-        "fix_safety": "safe"
+        "fix_safety": "safe/unsafe"
       },
       "good_example": "---\nname: my-skill\ndescription: A useful development skill\ndisable-model-invocation: true\n---\n# My Skill\n\nSkill instructions here.",
       "bad_example": "---\nname: my-skill\ndescription: A useful development skill\nmodel: opus\n---\n# My Skill\n\nSkill instructions here."
@@ -4018,7 +4018,7 @@
       },
       "fix": {
         "autofix": true,
-        "fix_safety": "safe"
+        "fix_safety": "safe/unsafe"
       },
       "good_example": "---\nname: my-skill\ndescription: A useful development skill\n---\n# My Skill\n\nSkill instructions here.",
       "bad_example": "---\nname: my-skill\ndescription: A useful development skill\ncontext: fork\n---\n# My Skill\n\nSkill instructions here."
@@ -4046,7 +4046,7 @@
       },
       "fix": {
         "autofix": true,
-        "fix_safety": "safe"
+        "fix_safety": "safe/unsafe"
       },
       "good_example": "---\nname: my-skill\ndescription: A useful development skill\n---\n# My Skill\n\nSkill instructions here.",
       "bad_example": "---\nname: my-skill\ndescription: A useful development skill\nagent: general-purpose\n---\n# My Skill\n\nSkill instructions here."
@@ -4074,7 +4074,7 @@
       },
       "fix": {
         "autofix": true,
-        "fix_safety": "safe"
+        "fix_safety": "safe/unsafe"
       },
       "good_example": "---\nname: my-skill\ndescription: A useful development skill\n---\n# My Skill\n\nSkill instructions here.",
       "bad_example": "---\nname: my-skill\ndescription: A useful development skill\nhooks: some-value\n---\n# My Skill\n\nSkill instructions here."
@@ -4102,7 +4102,7 @@
       },
       "fix": {
         "autofix": true,
-        "fix_safety": "safe"
+        "fix_safety": "safe/unsafe"
       },
       "good_example": "---\nname: my-skill\ndescription: A useful development skill\n---\n# My Skill\n\nSkill instructions here.",
       "bad_example": "---\nname: my-skill\ndescription: A useful development skill\nargument-hint: provide a file path\n---\n# My Skill\n\nSkill instructions here."
@@ -4130,7 +4130,7 @@
       },
       "fix": {
         "autofix": true,
-        "fix_safety": "safe"
+        "fix_safety": "safe/unsafe"
       },
       "good_example": "---\nname: my-skill\ndescription: A useful development skill\n---\n# My Skill\n\nSkill instructions here.",
       "bad_example": "---\nname: my-skill\ndescription: A useful development skill\nuser-invocable: true\n---\n# My Skill\n\nSkill instructions here."
@@ -4158,7 +4158,7 @@
       },
       "fix": {
         "autofix": true,
-        "fix_safety": "safe"
+        "fix_safety": "safe/unsafe"
       },
       "good_example": "---\nname: my-skill\ndescription: A useful development skill\n---\n# My Skill\n\nSkill instructions here.",
       "bad_example": "---\nname: my-skill\ndescription: A useful development skill\nmodel: haiku\n---\n# My Skill\n\nSkill instructions here."
@@ -4186,7 +4186,7 @@
       },
       "fix": {
         "autofix": true,
-        "fix_safety": "safe"
+        "fix_safety": "safe/unsafe"
       },
       "good_example": "---\nname: my-skill\ndescription: A useful development skill\n---\n# My Skill\n\nSkill instructions here.",
       "bad_example": "---\nname: my-skill\ndescription: A useful development skill\nmodel: opus\n---\n# My Skill\n\nSkill instructions here."
@@ -4214,7 +4214,7 @@
       },
       "fix": {
         "autofix": true,
-        "fix_safety": "safe"
+        "fix_safety": "safe/unsafe"
       },
       "good_example": "---\nname: my-skill\ndescription: A useful development skill\n---\n# My Skill\n\nSkill instructions here.",
       "bad_example": "---\nname: my-skill\ndescription: A useful development skill\ndisable-model-invocation: false\n---\n# My Skill\n\nSkill instructions here."

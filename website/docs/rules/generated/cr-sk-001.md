@@ -12,7 +12,7 @@ keywords: ["CR-SK-001", "cursor skill uses unsupported field", "cursor-skills", 
 - **Severity**: `MEDIUM`
 - **Category**: `cursor-skills`
 - **Normative Level**: `SHOULD`
-- **Auto-Fix**: `Yes (safe)`
+- **Auto-Fix**: `Yes (safe/unsafe)`
 - **Verified On**: `2026-02-07`
 
 ## Applicability

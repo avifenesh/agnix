@@ -12,7 +12,7 @@ keywords: ["AMP-SK-001", "amp skill uses unsupported field", "amp-skills", "vali
 - **Severity**: `MEDIUM`
 - **Category**: `amp-skills`
 - **Normative Level**: `SHOULD`
-- **Auto-Fix**: `Yes (safe)`
+- **Auto-Fix**: `Yes (safe/unsafe)`
 - **Verified On**: `2026-02-07`
 
 ## Applicability

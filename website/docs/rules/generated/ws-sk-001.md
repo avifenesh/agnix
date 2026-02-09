@@ -12,7 +12,7 @@ keywords: ["WS-SK-001", "windsurf skill uses unsupported field", "windsurf-skill
 - **Severity**: `MEDIUM`
 - **Category**: `windsurf-skills`
 - **Normative Level**: `SHOULD`
-- **Auto-Fix**: `Yes (safe)`
+- **Auto-Fix**: `Yes (safe/unsafe)`
 - **Verified On**: `2026-02-07`
 
 ## Applicability

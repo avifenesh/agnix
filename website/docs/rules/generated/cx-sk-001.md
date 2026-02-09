@@ -12,7 +12,7 @@ keywords: ["CX-SK-001", "codex skill uses unsupported field", "codex-skills", "v
 - **Severity**: `MEDIUM`
 - **Category**: `codex-skills`
 - **Normative Level**: `SHOULD`
-- **Auto-Fix**: `Yes (safe)`
+- **Auto-Fix**: `Yes (safe/unsafe)`
 - **Verified On**: `2026-02-07`
 
 ## Applicability
