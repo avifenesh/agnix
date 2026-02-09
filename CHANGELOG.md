@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - **Clickable rule links in IDEs** - LSP diagnostics now include `code_description` so rule codes (e.g. AS-001) link to per-rule website docs
 - **Explicit code action kinds** - LSP advertises QUICKFIX capability for more reliable quick-fix surfacing
+- **Per-rule examples for all 155 rules** - Each rule now has specific good/bad examples in `rules.json` and on the website, replacing generic category-level stubs
 
 ### Changed
 - All rule documentation links now point to website (`avifenesh.github.io/agnix`) instead of GitHub `VALIDATION-RULES.md`
