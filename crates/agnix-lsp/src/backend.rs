@@ -294,7 +294,7 @@ impl Backend {
         })
         .await;
 
-        let diagnostics = match result {
+        let mut diagnostics = match result {
             Ok(Ok(diagnostics)) => to_lsp_diagnostics(diagnostics),
             Ok(Err(e)) => vec![create_error_diagnostic(
                 "agnix::validation-error",
@@ -305,6 +305,14 @@ impl Backend {
                 format!("Internal error: {}", e),
             )],
         };
+
+        // Merge cached project-level diagnostics for this URI (AGM-006, XP-004/005/006, VER-001)
+        {
+            let proj_diags = self.project_level_diagnostics.read().await;
+            if let Some(project_diags) = proj_diags.get(&uri) {
+                diagnostics.extend(project_diags.iter().cloned());
+            }
+        }
 
         if !self
             .should_publish_diagnostics(&uri, expected_config_generation, expected_content.as_ref())
