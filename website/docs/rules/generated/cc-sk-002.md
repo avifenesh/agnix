@@ -44,7 +44,8 @@ description: Use when running tasks in parallel
 context: spawn
 agent: general-purpose
 ---
-Run the task in a spawned context.```
+Run the task in a spawned context.
+```
 
 ### Valid
 
@@ -55,4 +56,5 @@ description: Use when running tasks in parallel
 context: fork
 agent: general-purpose
 ---
-Run the task in a forked context.```
+Run the task in a forked context.
+```

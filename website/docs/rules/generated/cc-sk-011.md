@@ -44,7 +44,8 @@ description: Use when running internal automation
 user-invocable: false
 disable-model-invocation: true
 ---
-This skill cannot be reached by anyone.```
+This skill cannot be reached by anyone.
+```
 
 ### Valid
 
@@ -54,4 +55,5 @@ name: internal-skill
 description: Use when running internal automation
 user-invocable: false
 ---
-This skill can still be invoked by the model.```
+This skill can still be invoked by the model.
+```

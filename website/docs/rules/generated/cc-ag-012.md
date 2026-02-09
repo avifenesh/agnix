@@ -43,7 +43,8 @@ name: my-agent
 description: Agent with dangerous permissions
 permissionMode: bypassPermissions
 ---
-Agent instructions.```
+Agent instructions.
+```
 
 ### Valid
 
@@ -53,4 +54,5 @@ name: my-agent
 description: Agent with safe permissions
 permissionMode: default
 ---
-Agent instructions.```
+Agent instructions.
+```

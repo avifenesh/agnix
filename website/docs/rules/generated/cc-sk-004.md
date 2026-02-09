@@ -43,7 +43,8 @@ name: explore-code
 description: Use when exploring the codebase
 agent: Explore
 ---
-Explore the codebase structure.```
+Explore the codebase structure.
+```
 
 ### Valid
 
@@ -54,4 +55,5 @@ description: Use when exploring the codebase
 context: fork
 agent: Explore
 ---
-Explore the codebase structure.```
+Explore the codebase structure.
+```

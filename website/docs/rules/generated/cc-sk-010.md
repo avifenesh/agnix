@@ -46,7 +46,8 @@ hooks:
     - type: command
       command: echo bad
 ---
-Run with hooks.```
+Run with hooks.
+```
 
 ### Valid
 
@@ -59,4 +60,5 @@ hooks:
     - type: command
       command: echo pre
 ---
-Run with hooks.```
+Run with hooks.
+```

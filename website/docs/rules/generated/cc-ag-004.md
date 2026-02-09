@@ -43,7 +43,8 @@ name: code-reviewer
 description: Reviews code
 permissionMode: yolo
 ---
-Review code changes.```
+Review code changes.
+```
 
 ### Valid
 
@@ -53,4 +54,5 @@ name: code-reviewer
 description: Reviews code
 permissionMode: acceptEdits
 ---
-Review code changes.```
+Review code changes.
+```

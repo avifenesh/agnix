@@ -43,7 +43,8 @@ name: quiet-skill
 description: Use when running without model invocation
 disable-model-invocation: "true"
 ---
-Run silently.```
+Run silently.
+```
 
 ### Valid
 
@@ -53,4 +54,5 @@ name: quiet-skill
 description: Use when running without model invocation
 disable-model-invocation: true
 ---
-Run silently.```
+Run silently.
+```

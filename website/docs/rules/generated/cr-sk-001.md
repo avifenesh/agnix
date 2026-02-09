@@ -45,7 +45,8 @@ model: opus
 ---
 # My Skill
 
-Skill instructions here.```
+Skill instructions here.
+```
 
 ### Valid
 
@@ -57,4 +58,5 @@ disable-model-invocation: true
 ---
 # My Skill
 
-Skill instructions here.```
+Skill instructions here.
+```

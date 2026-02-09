@@ -40,7 +40,8 @@ The following examples demonstrate what triggers this rule and how to fix it.
 ```markdown
 # Commands
 
-Run tests with `npm run nonexistent````
+Run tests with `npm run nonexistent`
+```
 
 ### Valid
 
@@ -48,4 +49,5 @@ Run tests with `npm run nonexistent````
 # Commands
 
 Run tests with `npm run test`
-Build with `npm run build````
+Build with `npm run build`
+```

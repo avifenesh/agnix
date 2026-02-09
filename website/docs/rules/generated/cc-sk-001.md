@@ -43,7 +43,8 @@ name: fast-review
 description: Use when doing quick code reviews
 model: gpt-4
 ---
-Review the code for obvious issues.```
+Review the code for obvious issues.
+```
 
 ### Valid
 
@@ -53,4 +54,5 @@ name: fast-review
 description: Use when doing quick code reviews
 model: haiku
 ---
-Review the code for obvious issues.```
+Review the code for obvious issues.
+```

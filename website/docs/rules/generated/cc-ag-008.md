@@ -43,7 +43,8 @@ name: my-agent
 description: Agent with invalid memory
 memory: global
 ---
-Agent instructions.```
+Agent instructions.
+```
 
 ### Valid
 
@@ -53,4 +54,5 @@ name: my-agent
 description: Agent with valid memory
 memory: project
 ---
-Agent instructions.```
+Agent instructions.
+```

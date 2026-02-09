@@ -40,7 +40,8 @@ The following examples demonstrate what triggers this rule and how to fix it.
 
 ```markdown
 Be helpful and accurate when responding.
-Always provide the best possible answer.```
+Always provide the best possible answer.
+```
 
 ### Valid
 
@@ -48,4 +49,5 @@ Always provide the best possible answer.```
 # Project Rules
 
 Always use TypeScript strict mode.
-Run `cargo test` before committing.```
+Run `cargo test` before committing.
+```

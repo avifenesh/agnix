@@ -45,7 +45,8 @@ tools:
   - Read
   - MakeFile
 ---
-Agent instructions.```
+Agent instructions.
+```
 
 ### Valid
 
@@ -58,4 +59,5 @@ tools:
   - Write
   - Bash
 ---
-Agent instructions.```
+Agent instructions.
+```

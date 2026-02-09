@@ -44,7 +44,8 @@ description: Use when searching for files in the project
 context: fork
 agent: Invalid Agent!!
 ---
-Search the project for relevant files.```
+Search the project for relevant files.
+```
 
 ### Valid
 
@@ -55,4 +56,5 @@ description: Use when searching for files in the project
 context: fork
 agent: Explore
 ---
-Search the project for relevant files.```
+Search the project for relevant files.
+```

@@ -151,10 +151,14 @@ def render_rule(rule: dict) -> str:
     tests = evidence.get("tests", {})
 
     template = TEMPLATES.get(category, DEFAULT_TEMPLATE)
-    # Prefer per-rule examples from rules.json; fall back to category template
-    invalid = rule.get("bad_example") or template["invalid"]
-    valid = rule.get("good_example") or template["valid"]
+    # Prefer per-rule examples from rules.json; fall back to category template.
+    # Normalize so each example ends with exactly one trailing newline.
+    invalid = (rule.get("bad_example") or template["invalid"]).rstrip("\n") + "\n"
+    valid = (rule.get("good_example") or template["valid"]).rstrip("\n") + "\n"
     lang = template["lang"]
+
+    # Use longer fence when examples contain triple backticks to avoid breakout
+    fence = "````" if ("```" in invalid or "```" in valid) else "```"
 
     sources = "\n".join(
         f"- {url}" for url in evidence.get("source_urls", [])
@@ -231,13 +235,13 @@ The following examples demonstrate what triggers this rule and how to fix it.
 
 ### Invalid
 
-```{lang}
-{invalid}```
+{fence}{lang}
+{invalid}{fence}
 
 ### Valid
 
-```{lang}
-{valid}```
+{fence}{lang}
+{valid}{fence}
 """
 
 

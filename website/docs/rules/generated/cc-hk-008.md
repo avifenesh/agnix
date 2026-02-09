@@ -49,7 +49,8 @@ The following examples demonstrate what triggers this rule and how to fix it.
       }
     ]
   }
-}```
+}
+```
 
 ### Valid
 
@@ -65,4 +66,5 @@ The following examples demonstrate what triggers this rule and how to fix it.
       }
     ]
   }
-}```
+}
+```

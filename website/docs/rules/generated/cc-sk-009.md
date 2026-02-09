@@ -42,7 +42,8 @@ The following examples demonstrate what triggers this rule and how to fix it.
 name: template-skill
 description: Use when applying a code template
 ---
-Use !`config.json` and !`env.json` and !`secrets.json` and !`overrides.json` for setup.```
+Use !`config.json` and !`env.json` and !`secrets.json` and !`overrides.json` for setup.
+```
 
 ### Valid
 
@@ -51,4 +52,5 @@ Use !`config.json` and !`env.json` and !`secrets.json` and !`overrides.json` for
 name: template-skill
 description: Use when applying a code template
 ---
-Apply the template with !`config.json` values.```
+Apply the template with !`config.json` values.
+```

@@ -42,7 +42,8 @@ The following examples demonstrate what triggers this rule and how to fix it.
 
 This project validates agent configurations using Rust for performance.
 
-(Content duplicated verbatim from README.md)```
+(Content duplicated verbatim from README.md)
+```
 
 ### Valid
 
@@ -51,4 +52,5 @@ This project validates agent configurations using Rust for performance.
 
 Project-specific agent instructions:
 - Always run tests before committing
-- Use feature branches for changes```
+- Use feature branches for changes
+```

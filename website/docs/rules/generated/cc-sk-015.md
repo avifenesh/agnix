@@ -43,7 +43,8 @@ name: slash-cmd
 description: Use when user types the slash command
 user-invocable: "false"
 ---
-Handle the slash command.```
+Handle the slash command.
+```
 
 ### Valid
 
@@ -53,4 +54,5 @@ name: slash-cmd
 description: Use when user types the slash command
 user-invocable: true
 ---
-Handle the slash command.```
+Handle the slash command.
+```

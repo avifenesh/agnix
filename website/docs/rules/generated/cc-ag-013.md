@@ -45,7 +45,8 @@ skills:
   - Code_Review
   - --bad-name
 ---
-Agent instructions.```
+Agent instructions.
+```
 
 ### Valid
 
@@ -57,4 +58,5 @@ skills:
   - code-review
   - deploy-prod
 ---
-Agent instructions.```
+Agent instructions.
+```

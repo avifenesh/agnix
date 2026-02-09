@@ -44,7 +44,8 @@ paths:
 ---
 # TypeScript Guidelines
 
-Always use strict mode.```
+Always use strict mode.
+```
 
 ### Valid
 
@@ -56,4 +57,5 @@ paths:
 ---
 # TypeScript Guidelines
 
-Always use strict mode.```
+Always use strict mode.
+```

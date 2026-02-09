@@ -45,7 +45,8 @@ agent: general-purpose
 ---
 # My Skill
 
-Skill instructions here.```
+Skill instructions here.
+```
 
 ### Valid
 
@@ -56,4 +57,5 @@ description: A useful development skill
 ---
 # My Skill
 
-Skill instructions here.```
+Skill instructions here.
+```

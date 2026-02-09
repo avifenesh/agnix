@@ -43,7 +43,8 @@ The following examples demonstrate what triggers this rule and how to fix it.
   "description": "A useful plugin",
   "version": "1.0.0",
   "author": { "email": "jane@example.com" }
-}```
+}
+```
 
 ### Valid
 
@@ -53,4 +54,5 @@ The following examples demonstrate what triggers this rule and how to fix it.
   "description": "A useful plugin",
   "version": "1.0.0",
   "author": { "name": "Jane Doe" }
-}```
+}
+```

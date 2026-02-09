@@ -47,7 +47,8 @@ tools:
 disallowedTools:
   - Bash
 ---
-Agent instructions.```
+Agent instructions.
+```
 
 ### Valid
 
@@ -61,4 +62,5 @@ tools:
 disallowedTools:
   - Bash
 ---
-Agent instructions.```
+Agent instructions.
+```

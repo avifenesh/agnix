@@ -62,7 +62,8 @@ IMPORTANT: Always run tests before committing.
 
 ## Cleanup
 
-Remove temp files.```
+Remove temp files.
+```
 
 ### Valid
 
@@ -77,4 +78,5 @@ Install dependencies with npm install.
 
 ## Architecture
 
-The project uses a monorepo structure.```
+The project uses a monorepo structure.
+```

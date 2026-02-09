@@ -43,7 +43,8 @@ name: find-files
 description: Use when finding files by pattern
 allowed-tools: Glob, Grep, FooBar
 ---
-Search for files matching the pattern.```
+Search for files matching the pattern.
+```
 
 ### Valid
 
@@ -53,4 +54,5 @@ name: find-files
 description: Use when finding files by pattern
 allowed-tools: Glob, Grep, Read
 ---
-Search for files matching the pattern.```
+Search for files matching the pattern.
+```

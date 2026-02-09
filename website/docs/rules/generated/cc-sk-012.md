@@ -43,7 +43,8 @@ name: greet-user
 description: Use when greeting a user by name
 argument-hint: Enter the user's name
 ---
-Greet the user with a friendly message.```
+Greet the user with a friendly message.
+```
 
 ### Valid
 
@@ -53,4 +54,5 @@ name: greet-user
 description: Use when greeting a user by name
 argument-hint: Enter the user's name
 ---
-Greet the user: Hello, $ARGUMENTS!```
+Greet the user: Hello, $ARGUMENTS!
+```

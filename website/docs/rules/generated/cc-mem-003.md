@@ -42,7 +42,8 @@ The following examples demonstrate what triggers this rule and how to fix it.
 
 @import ./level1.md
 
-This starts a chain: level1 -> level2 -> level3 -> level4 -> level5 -> level6 (exceeds depth 5).```
+This starts a chain: level1 -> level2 -> level3 -> level4 -> level5 -> level6 (exceeds depth 5).
+```
 
 ### Valid
 
@@ -51,4 +52,5 @@ This starts a chain: level1 -> level2 -> level3 -> level4 -> level5 -> level6 (e
 
 @import ./docs/guidelines.md
 
-Keep import chains shallow.```
+Keep import chains shallow.
+```

@@ -44,7 +44,8 @@ description: Use when analyzing code quality
 context: fork
 agent: general-purpose
 ---
-This is some informational text without any actionable verbs.```
+This is some informational text without any actionable verbs.
+```
 
 ### Valid
 
@@ -55,4 +56,5 @@ description: Use when analyzing code quality
 context: fork
 agent: general-purpose
 ---
-Run static analysis on the codebase and report findings.```
+Run static analysis on the codebase and report findings.
+```

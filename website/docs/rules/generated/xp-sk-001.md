@@ -45,7 +45,8 @@ model: opus
 context: fork
 agent: general-purpose
 ---
-Review the code for bugs and style issues.```
+Review the code for bugs and style issues.
+```
 
 ### Valid
 
@@ -54,4 +55,5 @@ Review the code for bugs and style issues.```
 name: code-review
 description: Reviews code for quality issues
 ---
-Review the code for bugs and style issues.```
+Review the code for bugs and style issues.
+```

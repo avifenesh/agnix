@@ -43,7 +43,8 @@ name: sub-task
 description: Use when delegating work to a sub-agent
 context: fork
 ---
-Delegate the task to a sub-agent.```
+Delegate the task to a sub-agent.
+```
 
 ### Valid
 
@@ -54,4 +55,5 @@ description: Use when delegating work to a sub-agent
 context: fork
 agent: general-purpose
 ---
-Delegate the task to a sub-agent.```
+Delegate the task to a sub-agent.
+```

@@ -40,11 +40,13 @@ The following examples demonstrate what triggers this rule and how to fix it.
 ```markdown
 # Rules
 
-Never use var in JavaScript.```
+Never use var in JavaScript.
+```
 
 ### Valid
 
 ```markdown
 # Rules
 
-Never use var in JavaScript, instead prefer const or let.```
+Never use var in JavaScript, instead prefer const or let.
+```

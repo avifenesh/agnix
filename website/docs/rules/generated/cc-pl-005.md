@@ -42,7 +42,8 @@ The following examples demonstrate what triggers this rule and how to fix it.
   "name": "  ",
   "description": "A useful plugin",
   "version": "1.0.0"
-}```
+}
+```
 
 ### Valid
 
@@ -51,4 +52,5 @@ The following examples demonstrate what triggers this rule and how to fix it.
   "name": "my-plugin",
   "description": "A useful plugin",
   "version": "1.0.0"
-}```
+}
+```

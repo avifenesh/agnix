@@ -42,7 +42,8 @@ The following examples demonstrate what triggers this rule and how to fix it.
 
 @import ./CLAUDE.md
 
-This file imports itself, creating a circular dependency.```
+This file imports itself, creating a circular dependency.
+```
 
 ### Valid
 
@@ -52,4 +53,5 @@ This file imports itself, creating a circular dependency.```
 @import ./docs/style.md
 @import ./docs/testing.md
 
-Follow these standards.```
+Follow these standards.
+```

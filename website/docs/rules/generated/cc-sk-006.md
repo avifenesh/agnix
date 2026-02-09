@@ -42,7 +42,8 @@ The following examples demonstrate what triggers this rule and how to fix it.
 name: deploy-staging
 description: Use when deploying to staging environment
 ---
-Deploy the application to staging.```
+Deploy the application to staging.
+```
 
 ### Valid
 
@@ -52,4 +53,5 @@ name: deploy-staging
 description: Use when deploying to staging environment
 disable-model-invocation: true
 ---
-Deploy the application to staging.```
+Deploy the application to staging.
+```

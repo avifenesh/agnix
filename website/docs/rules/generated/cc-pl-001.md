@@ -43,7 +43,8 @@ plugin.json:
   "name": "my-plugin",
   "description": "A useful plugin",
   "version": "1.0.0"
-}```
+}
+```
 
 ### Valid
 
@@ -53,4 +54,5 @@ plugin.json:
   "name": "my-plugin",
   "description": "A useful plugin",
   "version": "1.0.0"
-}```
+}
+```

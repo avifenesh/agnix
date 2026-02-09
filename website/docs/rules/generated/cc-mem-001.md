@@ -42,7 +42,8 @@ The following examples demonstrate what triggers this rule and how to fix it.
 
 @import /absolute/path/to/nonexistent.md
 
-Follow these coding standards.```
+Follow these coding standards.
+```
 
 ### Valid
 
@@ -51,4 +52,5 @@ Follow these coding standards.```
 
 @import ./docs/guidelines.md
 
-Follow these coding standards.```
+Follow these coding standards.
+```

@@ -40,7 +40,8 @@ The following examples demonstrate what triggers this rule and how to fix it.
 ```markdown
 # Project Rules
 
-[...6000+ characters of instructions that exceed the ~1500 token limit for CLAUDE.md files, causing context window bloat and reduced instruction adherence...]```
+[...6000+ characters of instructions that exceed the ~1500 token limit for CLAUDE.md files, causing context window bloat and reduced instruction adherence...]
+```
 
 ### Valid
 
@@ -49,4 +50,5 @@ The following examples demonstrate what triggers this rule and how to fix it.
 
 Use TypeScript strict mode.
 Run tests before committing.
-Follow the style guide.```
+Follow the style guide.
+```

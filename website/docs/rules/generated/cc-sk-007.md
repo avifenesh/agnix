@@ -43,7 +43,8 @@ name: git-status
 description: Use when checking git status
 allowed-tools: Bash, Read
 ---
-Run git status and read the output.```
+Run git status and read the output.
+```
 
 ### Valid
 
@@ -53,4 +54,5 @@ name: git-status
 description: Use when checking git status
 allowed-tools: Bash(git:*), Read
 ---
-Run git status and read the output.```
+Run git status and read the output.
+```

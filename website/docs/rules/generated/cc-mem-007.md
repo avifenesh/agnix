@@ -40,11 +40,13 @@ The following examples demonstrate what triggers this rule and how to fix it.
 ```markdown
 # Critical Rules
 
-You should follow the coding style guide.```
+You should follow the coding style guide.
+```
 
 ### Valid
 
 ```markdown
 # Critical Rules
 
-You must follow the coding style guide.```
+You must follow the coding style guide.
+```

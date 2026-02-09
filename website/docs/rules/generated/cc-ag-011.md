@@ -48,7 +48,8 @@ hooks:
         - type: command
           command: echo ok
 ---
-Agent instructions.```
+Agent instructions.
+```
 
 ### Valid
 
@@ -63,4 +64,5 @@ hooks:
         - type: command
           command: echo ok
 ---
-Agent instructions.```
+Agent instructions.
+```

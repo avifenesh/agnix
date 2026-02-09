@@ -41,7 +41,8 @@ The following examples demonstrate what triggers this rule and how to fix it.
 name: my-agent
 description: Missing the --- delimiters
 
-Agent instructions here.```
+Agent instructions here.
+```
 
 ### Valid
 
@@ -50,4 +51,5 @@ Agent instructions here.```
 name: my-agent
 description: A working agent
 ---
-Agent instructions here.```
+Agent instructions here.
+```

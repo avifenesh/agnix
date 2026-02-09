@@ -41,7 +41,8 @@ The following examples demonstrate what triggers this rule and how to fix it.
 ---
 description: Reviews pull requests for quality
 ---
-Review code changes and provide feedback.```
+Review code changes and provide feedback.
+```
 
 ### Valid
 
@@ -50,4 +51,5 @@ Review code changes and provide feedback.```
 name: code-reviewer
 description: Reviews pull requests for quality
 ---
-Review code changes and provide feedback.```
+Review code changes and provide feedback.
+```

@@ -44,7 +44,8 @@ description: Reviews code
 skills:
   - nonexistent-skill
 ---
-Review code changes.```
+Review code changes.
+```
 
 ### Valid
 
@@ -55,4 +56,5 @@ description: Reviews code
 skills:
   - code-review
 ---
-Review code changes.```
+Review code changes.
+```

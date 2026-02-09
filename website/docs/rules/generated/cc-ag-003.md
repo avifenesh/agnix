@@ -43,7 +43,8 @@ name: code-reviewer
 description: Reviews code
 model: gpt-4
 ---
-Review code changes.```
+Review code changes.
+```
 
 ### Valid
 
@@ -53,4 +54,5 @@ name: code-reviewer
 description: Reviews code
 model: sonnet
 ---
-Review code changes.```
+Review code changes.
+```

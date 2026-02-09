@@ -45,7 +45,8 @@ disallowedTools:
   - Bash
   - RunCode
 ---
-Agent instructions.```
+Agent instructions.
+```
 
 ### Valid
 
@@ -57,4 +58,5 @@ disallowedTools:
   - Bash
   - WebFetch
 ---
-Agent instructions.```
+Agent instructions.
+```
