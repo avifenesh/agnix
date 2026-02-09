@@ -878,6 +878,87 @@ fn run_project_level_checks(
     diagnostics
 }
 
+/// Run only project-level validation checks without per-file validation.
+///
+/// This is a lightweight alternative to [`validate_project`] that only runs
+/// cross-file analysis rules (AGM-006, XP-004/005/006, VER-001). It does
+/// not validate individual file contents.
+///
+/// Designed for the LSP server to provide project-level diagnostics that
+/// require workspace-wide analysis, without the overhead of full per-file
+/// validation (which the LSP handles incrementally via `did_open`/`did_change`).
+pub fn validate_project_rules(root: &Path, config: &LintConfig) -> LintResult<Vec<Diagnostic>> {
+    use ignore::WalkBuilder;
+    use std::sync::Arc;
+
+    let root_dir = resolve_validation_root(root);
+    let mut config = config.clone();
+    config.set_root_dir(root_dir.clone());
+
+    // Pre-compile exclude patterns once (Arc for filter_entry 'static bound)
+    let exclude_patterns = Arc::new(compile_exclude_patterns(&config.exclude)?);
+
+    let walk_root = std::fs::canonicalize(root).unwrap_or_else(|_| root.to_path_buf());
+    let root_path = root_dir.clone();
+
+    let mut agents_md_paths: Vec<PathBuf> = Vec::new();
+    let mut instruction_file_paths: Vec<PathBuf> = Vec::new();
+
+    // Walk directory tree collecting only paths relevant to project-level checks.
+    // No per-file validation is performed -- this walk is lightweight.
+    for entry in WalkBuilder::new(&walk_root)
+        .hidden(false)
+        .git_ignore(true)
+        .git_exclude(false)
+        .filter_entry({
+            let exclude_patterns = Arc::clone(&exclude_patterns);
+            let root_path = root_path.clone();
+            move |entry| {
+                let entry_path = entry.path();
+                if entry_path == root_path {
+                    return true;
+                }
+                if entry.file_type().is_some_and(|ft| ft.is_dir()) {
+                    let rel_path = normalize_rel_path(entry_path, &root_path);
+                    return !should_prune_dir(&rel_path, exclude_patterns.as_slice());
+                }
+                true
+            }
+        })
+        .build()
+        .filter_map(|entry| entry.ok())
+        .filter(|entry| entry.path().is_file())
+    {
+        let file_path = entry.path().to_path_buf();
+
+        let path_str = normalize_rel_path(&file_path, &root_path);
+        if is_excluded_file(&path_str, exclude_patterns.as_slice()) {
+            continue;
+        }
+
+        // Collect AGENTS.md paths for AGM-006 check
+        if file_path.file_name().and_then(|n| n.to_str()) == Some("AGENTS.md") {
+            agents_md_paths.push(file_path.clone());
+        }
+
+        // Collect instruction file paths for XP-004/005/006 checks
+        if schemas::cross_platform::is_instruction_file(&file_path) {
+            instruction_file_paths.push(file_path);
+        }
+    }
+
+    // Sort for deterministic ordering
+    agents_md_paths.sort();
+    instruction_file_paths.sort();
+
+    Ok(run_project_level_checks(
+        &agents_md_paths,
+        &instruction_file_paths,
+        &config,
+        &root_dir,
+    ))
+}
+
 /// Main entry point for validating a project with a custom validator registry
 pub fn validate_project_with_registry(
     path: &Path,
@@ -4705,6 +4786,103 @@ Use idiomatic Rust patterns.
             resolve_file_type(Path::new("/project/other/file.md"), &config),
             FileType::ClaudeMd,
             "instructions/**/*.md should NOT match other/file.md"
+        );
+    }
+
+    // ===== validate_project_rules() Tests =====
+
+    #[test]
+    fn test_validate_project_rules_agm006() {
+        let temp_dir = tempfile::tempdir().unwrap();
+
+        // Create two AGENTS.md files at different levels
+        std::fs::write(temp_dir.path().join("AGENTS.md"), "# Root AGENTS").unwrap();
+        let sub_dir = temp_dir.path().join("sub");
+        std::fs::create_dir(&sub_dir).unwrap();
+        std::fs::write(sub_dir.join("AGENTS.md"), "# Sub AGENTS").unwrap();
+
+        let config = LintConfig::default();
+        let diagnostics = validate_project_rules(temp_dir.path(), &config).unwrap();
+        let agm006: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AGM-006").collect();
+        assert!(
+            agm006.len() >= 2,
+            "Expected AGM-006 for both AGENTS.md files, got {} diagnostics",
+            agm006.len()
+        );
+    }
+
+    #[test]
+    fn test_validate_project_rules_empty_dir() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let config = LintConfig::default();
+        let diagnostics = validate_project_rules(temp_dir.path(), &config).unwrap();
+        // Only VER-001 should fire (no version pins)
+        let non_ver = diagnostics
+            .iter()
+            .filter(|d| d.rule != "VER-001")
+            .count();
+        assert_eq!(non_ver, 0, "Empty dir should produce no non-VER diagnostics");
+    }
+
+    #[test]
+    fn test_validate_project_rules_ver001() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        // No .agnix.toml, no version pins
+        let config = LintConfig::default();
+        let diagnostics = validate_project_rules(temp_dir.path(), &config).unwrap();
+        assert!(
+            diagnostics.iter().any(|d| d.rule == "VER-001"),
+            "Expected VER-001 when no versions are pinned"
+        );
+    }
+
+    #[test]
+    fn test_validate_project_rules_disabled_rules() {
+        let temp_dir = tempfile::tempdir().unwrap();
+
+        // Create two AGENTS.md files
+        std::fs::write(temp_dir.path().join("AGENTS.md"), "# Root").unwrap();
+        let sub = temp_dir.path().join("sub");
+        std::fs::create_dir(&sub).unwrap();
+        std::fs::write(sub.join("AGENTS.md"), "# Sub").unwrap();
+
+        let mut config = LintConfig::default();
+        config.rules.disabled_rules.push("AGM-006".to_string());
+        config.rules.disabled_rules.push("VER-001".to_string());
+
+        let diagnostics = validate_project_rules(temp_dir.path(), &config).unwrap();
+        assert!(
+            !diagnostics.iter().any(|d| d.rule == "AGM-006"),
+            "AGM-006 should be disabled"
+        );
+        assert!(
+            !diagnostics.iter().any(|d| d.rule == "VER-001"),
+            "VER-001 should be disabled"
+        );
+    }
+
+    #[test]
+    fn test_validate_project_rules_xp004() {
+        let temp_dir = tempfile::tempdir().unwrap();
+
+        // Create conflicting instruction files
+        std::fs::write(
+            temp_dir.path().join("CLAUDE.md"),
+            "# Setup\n\nRun `npm install` to install deps.\n`npm test` to run tests.\n",
+        )
+        .unwrap();
+        std::fs::write(
+            temp_dir.path().join("AGENTS.md"),
+            "# Setup\n\nRun `yarn install` to install deps.\n`yarn test` to run tests.\n",
+        )
+        .unwrap();
+
+        let config = LintConfig::default();
+        let diagnostics = validate_project_rules(temp_dir.path(), &config).unwrap();
+        let xp004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XP-004").collect();
+        assert!(
+            !xp004.is_empty(),
+            "Expected XP-004 for conflicting package managers"
         );
     }
 }
