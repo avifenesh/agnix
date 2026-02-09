@@ -89,7 +89,7 @@ knowledge-base/
 | Category | Rules | HIGH | MEDIUM | LOW | Auto-Fix |
 |----------|-------|------|--------|-----|----------|
 | Agent Skills | 16 | 14 | 2 | 0 | 5 |
-| Claude Skills | 15 | 12 | 3 | 0 | 7 |
+| Claude Skills | 15 | 11 | 4 | 0 | 7 |
 | Claude Hooks | 18 | 13 | 4 | 1 | 3 |
 | Claude Agents | 13 | 12 | 1 | 0 | 2 |
 | Claude Memory | 12 | 8 | 4 | 0 | 3 |
@@ -100,7 +100,7 @@ knowledge-base/
 | XML | 3 | 3 | 0 | 0 | 3 |
 | References | 2 | 2 | 0 | 0 | 0 |
 | Prompt Eng | 4 | 0 | 4 | 0 | 0 |
-| Cross-Platform | 7 | 4 | 2 | 1 | 0 |
+| Cross-Platform | 7 | 2 | 4 | 1 | 0 |
 | Cursor | 9 | 4 | 5 | 0 | 2 |
 | Cursor Skills | 1 | 0 | 1 | 0 | 1 |
 | Cline | 3 | 2 | 1 | 0 | 1 |
@@ -116,7 +116,7 @@ knowledge-base/
 | Kiro Skills | 1 | 0 | 1 | 0 | 1 |
 | Amp Skills | 1 | 0 | 1 | 0 | 1 |
 | Roo Code Skills | 1 | 0 | 1 | 0 | 1 |
-| **TOTAL** | **156** | **104** | **49** | **3** | **41** |
+| **TOTAL** | **156** | **101** | **52** | **3** | **41** |
 
 
 ---

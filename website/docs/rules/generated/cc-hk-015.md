@@ -33,18 +33,22 @@ keywords: ["CC-HK-015", "model on command hook", "claude hooks", "validation", "
 
 ## Examples
 
-The following examples are illustrative snippets for this rule category.
+The following examples demonstrate what triggers this rule and how to fix it.
 
 ### Invalid
 
 ```json
 {
-  "hooks": [
-    {
-      "event": "PreToolUse",
-      "matcher": "*"
-    }
-  ]
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          { "type": "command", "command": "echo ok", "model": "haiku", "timeout": 30 }
+        ]
+      }
+    ]
+  }
 }
 ```
 
@@ -52,13 +56,14 @@ The following examples are illustrative snippets for this rule category.
 
 ```json
 {
-  "hooks": [
-    {
-      "event": "PreToolUse",
-      "matcher": "Write",
-      "command": "./scripts/validate.sh",
-      "timeout": 30
-    }
-  ]
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          { "type": "prompt", "prompt": "Summarize", "model": "haiku", "timeout": 30 }
+        ]
+      }
+    ]
+  }
 }
 ```

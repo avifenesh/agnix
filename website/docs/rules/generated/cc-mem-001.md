@@ -33,19 +33,23 @@ keywords: ["CC-MEM-001", "invalid import path", "claude memory", "validation", "
 
 ## Examples
 
-The following examples are illustrative snippets for this rule category.
+The following examples demonstrate what triggers this rule and how to fix it.
 
 ### Invalid
 
 ```markdown
-# Memory
-Always be helpful.
+# Project Memory
+
+See @docs/nonexistent-guide.md for the coding standards.
+
+Always run tests before committing.
 ```
 
 ### Valid
 
 ```markdown
 # Project Memory
-- Use Rust workspace conventions
-- Keep AGENTS.md and CLAUDE.md identical
+
+Always run tests before committing.
+Follow the coding standards in the docs/ directory.
 ```

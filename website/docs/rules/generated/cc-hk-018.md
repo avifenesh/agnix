@@ -33,18 +33,22 @@ keywords: ["CC-HK-018", "matcher on userpromptsubmit/stop", "claude hooks", "val
 
 ## Examples
 
-The following examples are illustrative snippets for this rule category.
+The following examples demonstrate what triggers this rule and how to fix it.
 
 ### Invalid
 
 ```json
 {
-  "hooks": [
-    {
-      "event": "PreToolUse",
-      "matcher": "*"
-    }
-  ]
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          { "type": "command", "command": "echo submit", "timeout": 30 }
+        ]
+      }
+    ]
+  }
 }
 ```
 
@@ -52,13 +56,14 @@ The following examples are illustrative snippets for this rule category.
 
 ```json
 {
-  "hooks": [
-    {
-      "event": "PreToolUse",
-      "matcher": "Write",
-      "command": "./scripts/validate.sh",
-      "timeout": 30
-    }
-  ]
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          { "type": "command", "command": "echo submit", "timeout": 30 }
+        ]
+      }
+    ]
+  }
 }
 ```

@@ -33,22 +33,28 @@ keywords: ["CC-SK-002", "invalid context value", "claude skills", "validation", 
 
 ## Examples
 
-The following examples are illustrative snippets for this rule category.
+The following examples demonstrate what triggers this rule and how to fix it.
 
 ### Invalid
 
 ```markdown
 ---
-name: Deploy_Prod
-description: Deploys production changes
+name: parallel-task
+description: Use when running tasks in parallel
+context: spawn
+agent: general-purpose
 ---
+Run the task in a spawned context.
 ```
 
 ### Valid
 
 ```markdown
 ---
-name: deploy-prod
-description: Deploy production with explicit checks
+name: parallel-task
+description: Use when running tasks in parallel
+context: fork
+agent: general-purpose
 ---
+Run the task in a forked context.
 ```

@@ -33,23 +33,23 @@ keywords: ["CC-AG-007", "agent parse error", "claude agents", "validation", "agn
 
 ## Examples
 
-The following examples are illustrative snippets for this rule category.
+The following examples demonstrate what triggers this rule and how to fix it.
 
 ### Invalid
 
 ```markdown
----
-name: reviewer
----
+name: my-agent
+description: Missing the --- delimiters
+
+Agent instructions here.
 ```
 
 ### Valid
 
 ```markdown
 ---
-name: reviewer
-description: Review code for correctness and tests
-model: sonnet
-tools: [Read, Grep, Bash]
+name: my-agent
+description: A working agent
 ---
+Agent instructions here.
 ```

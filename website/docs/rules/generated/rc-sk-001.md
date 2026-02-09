@@ -2,17 +2,17 @@
 id: rc-sk-001
 title: "RC-SK-001: Roo Code Skill Uses Unsupported Field"
 sidebar_label: "RC-SK-001"
-description: "agnix rule RC-SK-001 checks for roo code skill uses unsupported field in roo-code-skills files. Severity: MEDIUM. See examples and fix guidance."
-keywords: ["RC-SK-001", "roo code skill uses unsupported field", "roo-code-skills", "validation", "agnix", "linter"]
+description: "agnix rule RC-SK-001 checks for roo code skill uses unsupported field in roo code skills files. Severity: MEDIUM. See examples and fix guidance."
+keywords: ["RC-SK-001", "roo code skill uses unsupported field", "roo code skills", "validation", "agnix", "linter"]
 ---
 
 ## Summary
 
 - **Rule ID**: `RC-SK-001`
 - **Severity**: `MEDIUM`
-- **Category**: `roo-code-skills`
+- **Category**: `Roo Code Skills`
 - **Normative Level**: `SHOULD`
-- **Auto-Fix**: `Yes (safe)`
+- **Auto-Fix**: `Yes (safe/unsafe)`
 - **Verified On**: `2026-02-07`
 
 ## Applicability
@@ -33,14 +33,29 @@ keywords: ["RC-SK-001", "roo code skill uses unsupported field", "roo-code-skill
 
 ## Examples
 
-The following examples are illustrative snippets for this rule category.
+The following examples demonstrate what triggers this rule and how to fix it.
 
 ### Invalid
 
-```text
-Configuration omitted required fields for this rule.```
+```markdown
+---
+name: my-skill
+description: A useful development skill
+disable-model-invocation: false
+---
+# My Skill
+
+Skill instructions here.
+```
 
 ### Valid
 
-```text
-Configuration includes required fields and follows the rule.```
+```markdown
+---
+name: my-skill
+description: A useful development skill
+---
+# My Skill
+
+Skill instructions here.
+```

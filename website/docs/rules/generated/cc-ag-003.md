@@ -33,23 +33,26 @@ keywords: ["CC-AG-003", "invalid model value", "claude agents", "validation", "a
 
 ## Examples
 
-The following examples are illustrative snippets for this rule category.
+The following examples demonstrate what triggers this rule and how to fix it.
 
 ### Invalid
 
 ```markdown
 ---
-name: reviewer
+name: code-reviewer
+description: Reviews code
+model: gpt-4
 ---
+Review code changes.
 ```
 
 ### Valid
 
 ```markdown
 ---
-name: reviewer
-description: Review code for correctness and tests
+name: code-reviewer
+description: Reviews code
 model: sonnet
-tools: [Read, Grep, Bash]
 ---
+Review code changes.
 ```

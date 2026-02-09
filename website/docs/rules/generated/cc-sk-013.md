@@ -33,22 +33,28 @@ keywords: ["CC-SK-013", "fork context without actionable instructions", "claude 
 
 ## Examples
 
-The following examples are illustrative snippets for this rule category.
+The following examples demonstrate what triggers this rule and how to fix it.
 
 ### Invalid
 
 ```markdown
 ---
-name: Deploy_Prod
-description: Deploys production changes
+name: analyze-code
+description: Use when analyzing code quality
+context: fork
+agent: general-purpose
 ---
+This is some informational text without any actionable verbs.
 ```
 
 ### Valid
 
 ```markdown
 ---
-name: deploy-prod
-description: Deploy production with explicit checks
+name: analyze-code
+description: Use when analyzing code quality
+context: fork
+agent: general-purpose
 ---
+Run static analysis on the codebase and report findings.
 ```

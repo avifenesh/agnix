@@ -33,23 +33,23 @@ keywords: ["CC-AG-002", "missing description field", "claude agents", "validatio
 
 ## Examples
 
-The following examples are illustrative snippets for this rule category.
+The following examples demonstrate what triggers this rule and how to fix it.
 
 ### Invalid
 
 ```markdown
 ---
-name: reviewer
+name: code-reviewer
 ---
+Review code changes and provide feedback.
 ```
 
 ### Valid
 
 ```markdown
 ---
-name: reviewer
-description: Review code for correctness and tests
-model: sonnet
-tools: [Read, Grep, Bash]
+name: code-reviewer
+description: Reviews pull requests for quality
 ---
+Review code changes and provide feedback.
 ```

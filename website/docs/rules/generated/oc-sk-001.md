@@ -2,17 +2,17 @@
 id: oc-sk-001
 title: "OC-SK-001: OpenCode Skill Uses Unsupported Field"
 sidebar_label: "OC-SK-001"
-description: "agnix rule OC-SK-001 checks for opencode skill uses unsupported field in opencode-skills files. Severity: MEDIUM. See examples and fix guidance."
-keywords: ["OC-SK-001", "opencode skill uses unsupported field", "opencode-skills", "validation", "agnix", "linter"]
+description: "agnix rule OC-SK-001 checks for opencode skill uses unsupported field in opencode skills files. Severity: MEDIUM. See examples and fix guidance."
+keywords: ["OC-SK-001", "opencode skill uses unsupported field", "opencode skills", "validation", "agnix", "linter"]
 ---
 
 ## Summary
 
 - **Rule ID**: `OC-SK-001`
 - **Severity**: `MEDIUM`
-- **Category**: `opencode-skills`
+- **Category**: `OpenCode Skills`
 - **Normative Level**: `SHOULD`
-- **Auto-Fix**: `Yes (safe)`
+- **Auto-Fix**: `Yes (safe/unsafe)`
 - **Verified On**: `2026-02-07`
 
 ## Applicability
@@ -33,14 +33,29 @@ keywords: ["OC-SK-001", "opencode skill uses unsupported field", "opencode-skill
 
 ## Examples
 
-The following examples are illustrative snippets for this rule category.
+The following examples demonstrate what triggers this rule and how to fix it.
 
 ### Invalid
 
-```text
-Configuration omitted required fields for this rule.```
+```markdown
+---
+name: my-skill
+description: A useful development skill
+argument-hint: provide a file path
+---
+# My Skill
+
+Skill instructions here.
+```
 
 ### Valid
 
-```text
-Configuration includes required fields and follows the rule.```
+```markdown
+---
+name: my-skill
+description: A useful development skill
+---
+# My Skill
+
+Skill instructions here.
+```

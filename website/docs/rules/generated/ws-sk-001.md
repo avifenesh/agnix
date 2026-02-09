@@ -2,17 +2,17 @@
 id: ws-sk-001
 title: "WS-SK-001: Windsurf Skill Uses Unsupported Field"
 sidebar_label: "WS-SK-001"
-description: "agnix rule WS-SK-001 checks for windsurf skill uses unsupported field in windsurf-skills files. Severity: MEDIUM. See examples and fix guidance."
-keywords: ["WS-SK-001", "windsurf skill uses unsupported field", "windsurf-skills", "validation", "agnix", "linter"]
+description: "agnix rule WS-SK-001 checks for windsurf skill uses unsupported field in windsurf skills files. Severity: MEDIUM. See examples and fix guidance."
+keywords: ["WS-SK-001", "windsurf skill uses unsupported field", "windsurf skills", "validation", "agnix", "linter"]
 ---
 
 ## Summary
 
 - **Rule ID**: `WS-SK-001`
 - **Severity**: `MEDIUM`
-- **Category**: `windsurf-skills`
+- **Category**: `Windsurf Skills`
 - **Normative Level**: `SHOULD`
-- **Auto-Fix**: `Yes (safe)`
+- **Auto-Fix**: `Yes (safe/unsafe)`
 - **Verified On**: `2026-02-09`
 
 ## Applicability
@@ -33,14 +33,29 @@ keywords: ["WS-SK-001", "windsurf skill uses unsupported field", "windsurf-skill
 
 ## Examples
 
-The following examples are illustrative snippets for this rule category.
+The following examples demonstrate what triggers this rule and how to fix it.
 
 ### Invalid
 
-```text
-Configuration omitted required fields for this rule.```
+```markdown
+---
+name: my-skill
+description: A useful development skill
+user-invocable: true
+---
+# My Skill
+
+Skill instructions here.
+```
 
 ### Valid
 
-```text
-Configuration includes required fields and follows the rule.```
+```markdown
+---
+name: my-skill
+description: A useful development skill
+---
+# My Skill
+
+Skill instructions here.
+```
