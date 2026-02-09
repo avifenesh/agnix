@@ -33,23 +33,22 @@ keywords: ["CC-PL-003", "invalid semver", "claude plugins", "validation", "agnix
 
 ## Examples
 
-The following examples are illustrative snippets for this rule category.
+The following examples demonstrate what triggers this rule and how to fix it.
 
 ### Invalid
 
 ```json
 {
-  "name": "plugin"
-}
-```
+  "name": "my-plugin",
+  "description": "A useful plugin",
+  "version": "1.0"
+}```
 
 ### Valid
 
 ```json
 {
-  "name": "agnix-plugin",
-  "commands": [
-    {"name": "validate", "entrypoint": "./scripts/validate.sh"}
-  ]
-}
-```
+  "name": "my-plugin",
+  "description": "A useful plugin",
+  "version": "1.0.0"
+}```

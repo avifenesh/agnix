@@ -33,22 +33,30 @@ keywords: ["CC-SK-010", "invalid hooks in skill frontmatter", "claude skills", "
 
 ## Examples
 
-The following examples are illustrative snippets for this rule category.
+The following examples demonstrate what triggers this rule and how to fix it.
 
 ### Invalid
 
 ```markdown
 ---
-name: Deploy_Prod
-description: Deploys production changes
+name: hook-skill
+description: Use when running a skill with hooks
+hooks:
+  InvalidEvent:
+    - type: command
+      command: echo bad
 ---
-```
+Run with hooks.```
 
 ### Valid
 
 ```markdown
 ---
-name: deploy-prod
-description: Deploy production with explicit checks
+name: hook-skill
+description: Use when running a skill with hooks
+hooks:
+  PreToolCall:
+    - type: command
+      command: echo pre
 ---
-```
+Run with hooks.```

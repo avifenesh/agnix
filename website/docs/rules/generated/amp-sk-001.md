@@ -33,14 +33,27 @@ keywords: ["AMP-SK-001", "amp skill uses unsupported field", "amp-skills", "vali
 
 ## Examples
 
-The following examples are illustrative snippets for this rule category.
+The following examples demonstrate what triggers this rule and how to fix it.
 
 ### Invalid
 
 ```text
-Configuration omitted required fields for this rule.```
+---
+name: my-skill
+description: A useful development skill
+model: opus
+---
+# My Skill
+
+Skill instructions here.```
 
 ### Valid
 
 ```text
-Configuration includes required fields and follows the rule.```
+---
+name: my-skill
+description: A useful development skill
+---
+# My Skill
+
+Skill instructions here.```

@@ -33,32 +33,35 @@ keywords: ["CC-HK-003", "missing matcher for tool events", "claude hooks", "vali
 
 ## Examples
 
-The following examples are illustrative snippets for this rule category.
+The following examples demonstrate what triggers this rule and how to fix it.
 
 ### Invalid
 
 ```json
 {
-  "hooks": [
-    {
-      "event": "PreToolUse",
-      "matcher": "*"
-    }
-  ]
-}
-```
+  "hooks": {
+    "PreToolUse": [
+      {
+        "hooks": [
+          { "type": "command", "command": "echo ok", "timeout": 30 }
+        ]
+      }
+    ]
+  }
+}```
 
 ### Valid
 
 ```json
 {
-  "hooks": [
-    {
-      "event": "PreToolUse",
-      "matcher": "Write",
-      "command": "./scripts/validate.sh",
-      "timeout": 30
-    }
-  ]
-}
-```
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          { "type": "command", "command": "echo ok", "timeout": 30 }
+        ]
+      }
+    ]
+  }
+}```

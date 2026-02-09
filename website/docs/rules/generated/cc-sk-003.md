@@ -33,22 +33,25 @@ keywords: ["CC-SK-003", "context without agent", "claude skills", "validation", 
 
 ## Examples
 
-The following examples are illustrative snippets for this rule category.
+The following examples demonstrate what triggers this rule and how to fix it.
 
 ### Invalid
 
 ```markdown
 ---
-name: Deploy_Prod
-description: Deploys production changes
+name: sub-task
+description: Use when delegating work to a sub-agent
+context: fork
 ---
-```
+Delegate the task to a sub-agent.```
 
 ### Valid
 
 ```markdown
 ---
-name: deploy-prod
-description: Deploy production with explicit checks
+name: sub-task
+description: Use when delegating work to a sub-agent
+context: fork
+agent: general-purpose
 ---
-```
+Delegate the task to a sub-agent.```

@@ -33,23 +33,24 @@ keywords: ["CC-AG-012", "bypass permissions warning", "claude agents", "validati
 
 ## Examples
 
-The following examples are illustrative snippets for this rule category.
+The following examples demonstrate what triggers this rule and how to fix it.
 
 ### Invalid
 
 ```markdown
 ---
-name: reviewer
+name: my-agent
+description: Agent with dangerous permissions
+permissionMode: bypassPermissions
 ---
-```
+Agent instructions.```
 
 ### Valid
 
 ```markdown
 ---
-name: reviewer
-description: Review code for correctness and tests
-model: sonnet
-tools: [Read, Grep, Bash]
+name: my-agent
+description: Agent with safe permissions
+permissionMode: default
 ---
-```
+Agent instructions.```

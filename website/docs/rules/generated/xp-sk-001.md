@@ -33,16 +33,25 @@ keywords: ["XP-SK-001", "skill uses client-specific features", "cross-platform",
 
 ## Examples
 
-The following examples are illustrative snippets for this rule category.
+The following examples demonstrate what triggers this rule and how to fix it.
 
 ### Invalid
 
 ```markdown
-Use only CLAUDE.md instructions and ignore AGENTS.md.
-```
+---
+name: code-review
+description: Reviews code for quality issues
+model: opus
+context: fork
+agent: general-purpose
+---
+Review the code for bugs and style issues.```
 
 ### Valid
 
 ```markdown
-Use both CLAUDE.md and AGENTS.md with explicit precedence and conflict handling.
-```
+---
+name: code-review
+description: Reviews code for quality issues
+---
+Review the code for bugs and style issues.```

@@ -33,23 +33,34 @@ keywords: ["CC-AG-011", "invalid hooks in agent frontmatter", "claude agents", "
 
 ## Examples
 
-The following examples are illustrative snippets for this rule category.
+The following examples demonstrate what triggers this rule and how to fix it.
 
 ### Invalid
 
 ```markdown
 ---
-name: reviewer
+name: my-agent
+description: Agent with invalid hooks
+hooks:
+  InvalidEvent:
+    - matcher: Bash
+      hooks:
+        - type: command
+          command: echo ok
 ---
-```
+Agent instructions.```
 
 ### Valid
 
 ```markdown
 ---
-name: reviewer
-description: Review code for correctness and tests
-model: sonnet
-tools: [Read, Grep, Bash]
+name: my-agent
+description: Agent with valid hooks
+hooks:
+  PreToolUse:
+    - matcher: Bash
+      hooks:
+        - type: command
+          command: echo ok
 ---
-```
+Agent instructions.```

@@ -151,8 +151,9 @@ def render_rule(rule: dict) -> str:
     tests = evidence.get("tests", {})
 
     template = TEMPLATES.get(category, DEFAULT_TEMPLATE)
-    invalid = template["invalid"]
-    valid = template["valid"]
+    # Prefer per-rule examples from rules.json; fall back to category template
+    invalid = rule.get("bad_example") or template["invalid"]
+    valid = rule.get("good_example") or template["valid"]
     lang = template["lang"]
 
     sources = "\n".join(
@@ -226,7 +227,7 @@ keywords: [{keywords}]
 
 ## Examples
 
-The following examples are illustrative snippets for this rule category.
+The following examples demonstrate what triggers this rule and how to fix it.
 
 ### Invalid
 

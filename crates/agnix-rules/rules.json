@@ -25,7 +25,9 @@
     "fix": {
       "autofix": "boolean - whether this rule has an automatic fix",
       "fix_safety": "safe|unsafe|safe/unsafe (only present when autofix is true)"
-    }
+    },
+    "good_example": "string - valid config snippet that passes this rule (optional, falls back to category template)",
+    "bad_example": "string - invalid config snippet that triggers this rule (optional, falls back to category template)"
   },
   "rules": [
     {
@@ -51,7 +53,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "---\nname: deploy-app\ndescription: Use when deploying the application to production\n---\nRun the deploy script with the correct environment variables.",
+      "bad_example": "No frontmatter here.\nJust plain markdown content without YAML delimiters."
     },
     {
       "id": "AS-002",
@@ -76,7 +80,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "---\nname: lint-code\ndescription: Use when linting the codebase\n---\nRun eslint on all source files.",
+      "bad_example": "---\ndescription: Use when linting the codebase\n---\nRun eslint on all source files."
     },
     {
       "id": "AS-003",
@@ -101,7 +107,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "---\nname: lint-code\ndescription: Use when linting the codebase\n---\nRun eslint on all source files.",
+      "bad_example": "---\nname: lint-code\n---\nRun eslint on all source files."
     },
     {
       "id": "AS-004",
@@ -127,7 +135,9 @@
       "fix": {
         "autofix": true,
         "fix_safety": "safe/unsafe"
-      }
+      },
+      "good_example": "---\nname: run-tests\ndescription: Use when running the test suite\n---\nExecute all unit tests.",
+      "bad_example": "---\nname: Run_Tests!\ndescription: Use when running the test suite\n---\nExecute all unit tests."
     },
     {
       "id": "AS-005",
@@ -153,7 +163,9 @@
       "fix": {
         "autofix": true,
         "fix_safety": "safe"
-      }
+      },
+      "good_example": "---\nname: build-project\ndescription: Use when building the project\n---\nRun the build script.",
+      "bad_example": "---\nname: -build-project-\ndescription: Use when building the project\n---\nRun the build script."
     },
     {
       "id": "AS-006",
@@ -179,7 +191,9 @@
       "fix": {
         "autofix": true,
         "fix_safety": "safe"
-      }
+      },
+      "good_example": "---\nname: format-code\ndescription: Use when formatting source code\n---\nRun prettier on all files.",
+      "bad_example": "---\nname: format--code\ndescription: Use when formatting source code\n---\nRun prettier on all files."
     },
     {
       "id": "AS-007",
@@ -204,7 +218,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "---\nname: my-helper\ndescription: Use when the user needs help with tasks\n---\nProvide assistance.",
+      "bad_example": "---\nname: claude\ndescription: Use when the user needs help with tasks\n---\nProvide assistance."
     },
     {
       "id": "AS-008",
@@ -229,7 +245,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "---\nname: check-deps\ndescription: Use when checking project dependencies for updates\n---\nRun npm outdated.",
+      "bad_example": "---\nname: check-deps\ndescription:\n---\nRun npm outdated."
     },
     {
       "id": "AS-009",
@@ -254,7 +272,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "---\nname: review-pr\ndescription: Use when reviewing a pull request for issues\n---\nCheck the PR for bugs.",
+      "bad_example": "---\nname: review-pr\ndescription: Use when reviewing a <pull-request> for <issues>\n---\nCheck the PR for bugs."
     },
     {
       "id": "AS-010",
@@ -281,7 +301,9 @@
       "fix": {
         "autofix": true,
         "fix_safety": "unsafe"
-      }
+      },
+      "good_example": "---\nname: gen-docs\ndescription: Use when generating API documentation from source\n---\nRun typedoc on the project.",
+      "bad_example": "---\nname: gen-docs\ndescription: Generates API documentation from source\n---\nRun typedoc on the project."
     },
     {
       "id": "AS-011",
@@ -306,7 +328,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "---\nname: migrate-db\ndescription: Use when running database migrations\ncompatibility: Requires PostgreSQL 14+ and Node.js 18+\n---\nRun the migration scripts.",
+      "bad_example": "---\nname: migrate-db\ndescription: Use when running database migrations\ncompatibility:\n---\nRun the migration scripts."
     },
     {
       "id": "AS-012",
@@ -332,7 +356,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "---\nname: setup-env\ndescription: Use when setting up the development environment\n---\nInstall dependencies and configure env vars.",
+      "bad_example": "---\nname: setup-env\ndescription: Use when setting up the development environment\n---\nStep 1: Install Node.js\nStep 2: Install npm packages\nStep 3: Configure database\nStep 4: Set environment variables\nStep 5: Run migrations\nStep 6: Seed data\nStep 7: Start server\nStep 8: Verify health check\nStep 9: Run smoke tests\nStep 10: Done\n(imagine this continues for 500+ lines)"
     },
     {
       "id": "AS-013",
@@ -357,7 +383,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "---\nname: read-config\ndescription: Use when reading project configuration\n---\nSee references/config.md for details.",
+      "bad_example": "---\nname: read-config\ndescription: Use when reading project configuration\n---\nSee references/deep/nested/config.md for details."
     },
     {
       "id": "AS-014",
@@ -383,7 +411,9 @@
       "fix": {
         "autofix": true,
         "fix_safety": "safe"
-      }
+      },
+      "good_example": "---\nname: check-paths\ndescription: Use when validating file paths\n---\nCheck src/utils/helper.ts for the implementation.",
+      "bad_example": "---\nname: check-paths\ndescription: Use when validating file paths\n---\nCheck src\\utils\\helper.ts for the implementation."
     },
     {
       "id": "AS-015",
@@ -408,7 +438,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "---\nname: small-skill\ndescription: Use when running a lightweight task\n---\nThis skill directory is under 8MB total.",
+      "bad_example": "---\nname: huge-skill\ndescription: Use when running a task with many large assets\n---\nThis skill bundles 10MB of binary data in its directory."
     },
     {
       "id": "AS-016",
@@ -433,7 +465,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "---\nname: valid-yaml\ndescription: Use when demonstrating valid YAML frontmatter\n---\nBody content here.",
+      "bad_example": "---\nname: broken-yaml\ndescription: [unclosed bracket\n---\nBody content here."
     },
     {
       "id": "CC-SK-001",
@@ -459,7 +493,9 @@
       "fix": {
         "autofix": true,
         "fix_safety": "unsafe"
-      }
+      },
+      "good_example": "---\nname: fast-review\ndescription: Use when doing quick code reviews\nmodel: haiku\n---\nReview the code for obvious issues.",
+      "bad_example": "---\nname: fast-review\ndescription: Use when doing quick code reviews\nmodel: gpt-4\n---\nReview the code for obvious issues."
     },
     {
       "id": "CC-SK-002",
@@ -485,7 +521,9 @@
       "fix": {
         "autofix": true,
         "fix_safety": "unsafe"
-      }
+      },
+      "good_example": "---\nname: parallel-task\ndescription: Use when running tasks in parallel\ncontext: fork\nagent: general-purpose\n---\nRun the task in a forked context.",
+      "bad_example": "---\nname: parallel-task\ndescription: Use when running tasks in parallel\ncontext: spawn\nagent: general-purpose\n---\nRun the task in a spawned context."
     },
     {
       "id": "CC-SK-003",
@@ -511,7 +549,9 @@
       "fix": {
         "autofix": true,
         "fix_safety": "unsafe"
-      }
+      },
+      "good_example": "---\nname: sub-task\ndescription: Use when delegating work to a sub-agent\ncontext: fork\nagent: general-purpose\n---\nDelegate the task to a sub-agent.",
+      "bad_example": "---\nname: sub-task\ndescription: Use when delegating work to a sub-agent\ncontext: fork\n---\nDelegate the task to a sub-agent."
     },
     {
       "id": "CC-SK-004",
@@ -537,7 +577,9 @@
       "fix": {
         "autofix": true,
         "fix_safety": "unsafe"
-      }
+      },
+      "good_example": "---\nname: explore-code\ndescription: Use when exploring the codebase\ncontext: fork\nagent: Explore\n---\nExplore the codebase structure.",
+      "bad_example": "---\nname: explore-code\ndescription: Use when exploring the codebase\nagent: Explore\n---\nExplore the codebase structure."
     },
     {
       "id": "CC-SK-005",
@@ -563,7 +605,9 @@
       "fix": {
         "autofix": true,
         "fix_safety": "unsafe"
-      }
+      },
+      "good_example": "---\nname: search-files\ndescription: Use when searching for files in the project\ncontext: fork\nagent: Explore\n---\nSearch the project for relevant files.",
+      "bad_example": "---\nname: search-files\ndescription: Use when searching for files in the project\ncontext: fork\nagent: Invalid Agent!!\n---\nSearch the project for relevant files."
     },
     {
       "id": "CC-SK-006",
@@ -588,7 +632,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "---\nname: deploy-staging\ndescription: Use when deploying to staging environment\ndisable-model-invocation: true\n---\nDeploy the application to staging.",
+      "bad_example": "---\nname: deploy-staging\ndescription: Use when deploying to staging environment\n---\nDeploy the application to staging."
     },
     {
       "id": "CC-SK-007",
@@ -614,7 +660,9 @@
       "fix": {
         "autofix": true,
         "fix_safety": "unsafe"
-      }
+      },
+      "good_example": "---\nname: git-status\ndescription: Use when checking git status\nallowed-tools: Bash(git:*), Read\n---\nRun git status and read the output.",
+      "bad_example": "---\nname: git-status\ndescription: Use when checking git status\nallowed-tools: Bash, Read\n---\nRun git status and read the output."
     },
     {
       "id": "CC-SK-008",
@@ -639,7 +687,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "---\nname: find-files\ndescription: Use when finding files by pattern\nallowed-tools: Glob, Grep, Read\n---\nSearch for files matching the pattern.",
+      "bad_example": "---\nname: find-files\ndescription: Use when finding files by pattern\nallowed-tools: Glob, Grep, FooBar\n---\nSearch for files matching the pattern."
     },
     {
       "id": "CC-SK-009",
@@ -664,7 +714,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "---\nname: template-skill\ndescription: Use when applying a code template\n---\nApply the template with !`config.json` values.",
+      "bad_example": "---\nname: template-skill\ndescription: Use when applying a code template\n---\nUse !`config.json` and !`env.json` and !`secrets.json` and !`overrides.json` for setup."
     },
     {
       "id": "CC-SK-010",
@@ -689,7 +741,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "---\nname: hook-skill\ndescription: Use when running a skill with hooks\nhooks:\n  PreToolCall:\n    - type: command\n      command: echo pre\n---\nRun with hooks.",
+      "bad_example": "---\nname: hook-skill\ndescription: Use when running a skill with hooks\nhooks:\n  InvalidEvent:\n    - type: command\n      command: echo bad\n---\nRun with hooks."
     },
     {
       "id": "CC-SK-011",
@@ -715,7 +769,9 @@
       "fix": {
         "autofix": true,
         "fix_safety": "unsafe"
-      }
+      },
+      "good_example": "---\nname: internal-skill\ndescription: Use when running internal automation\nuser-invocable: false\n---\nThis skill can still be invoked by the model.",
+      "bad_example": "---\nname: internal-skill\ndescription: Use when running internal automation\nuser-invocable: false\ndisable-model-invocation: true\n---\nThis skill cannot be reached by anyone."
     },
     {
       "id": "CC-SK-012",
@@ -740,7 +796,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "---\nname: greet-user\ndescription: Use when greeting a user by name\nargument-hint: Enter the user's name\n---\nGreet the user: Hello, $ARGUMENTS!",
+      "bad_example": "---\nname: greet-user\ndescription: Use when greeting a user by name\nargument-hint: Enter the user's name\n---\nGreet the user with a friendly message."
     },
     {
       "id": "CC-SK-013",
@@ -765,7 +823,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "---\nname: analyze-code\ndescription: Use when analyzing code quality\ncontext: fork\nagent: general-purpose\n---\nRun static analysis on the codebase and report findings.",
+      "bad_example": "---\nname: analyze-code\ndescription: Use when analyzing code quality\ncontext: fork\nagent: general-purpose\n---\nThis is some informational text without any actionable verbs."
     },
     {
       "id": "CC-SK-014",
@@ -791,7 +851,9 @@
       "fix": {
         "autofix": true,
         "fix_safety": "safe"
-      }
+      },
+      "good_example": "---\nname: quiet-skill\ndescription: Use when running without model invocation\ndisable-model-invocation: true\n---\nRun silently.",
+      "bad_example": "---\nname: quiet-skill\ndescription: Use when running without model invocation\ndisable-model-invocation: \"true\"\n---\nRun silently."
     },
     {
       "id": "CC-SK-015",
@@ -817,7 +879,9 @@
       "fix": {
         "autofix": true,
         "fix_safety": "safe"
-      }
+      },
+      "good_example": "---\nname: slash-cmd\ndescription: Use when user types the slash command\nuser-invocable: true\n---\nHandle the slash command.",
+      "bad_example": "---\nname: slash-cmd\ndescription: Use when user types the slash command\nuser-invocable: \"false\"\n---\nHandle the slash command."
     },
     {
       "id": "CC-HK-001",
@@ -843,7 +907,9 @@
       "fix": {
         "autofix": true,
         "fix_safety": "safe/unsafe"
-      }
+      },
+      "good_example": "{\n  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Bash\",\n        \"hooks\": [\n          { \"type\": \"command\", \"command\": \"echo pre-tool\", \"timeout\": 30 }\n        ]\n      }\n    ]\n  }\n}",
+      "bad_example": "{\n  \"hooks\": {\n    \"OnBeforeTool\": [\n      {\n        \"matcher\": \"Bash\",\n        \"hooks\": [\n          { \"type\": \"command\", \"command\": \"echo hello\", \"timeout\": 30 }\n        ]\n      }\n    ]\n  }\n}"
     },
     {
       "id": "CC-HK-002",
@@ -868,7 +934,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "{\n  \"hooks\": {\n    \"Stop\": [\n      {\n        \"hooks\": [\n          { \"type\": \"prompt\", \"prompt\": \"Summarize the session\", \"timeout\": 30 }\n        ]\n      }\n    ]\n  }\n}",
+      "bad_example": "{\n  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Bash\",\n        \"hooks\": [\n          { \"type\": \"prompt\", \"prompt\": \"Check this tool call\", \"timeout\": 30 }\n        ]\n      }\n    ]\n  }\n}"
     },
     {
       "id": "CC-HK-003",
@@ -893,7 +961,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "{\n  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Bash\",\n        \"hooks\": [\n          { \"type\": \"command\", \"command\": \"echo ok\", \"timeout\": 30 }\n        ]\n      }\n    ]\n  }\n}",
+      "bad_example": "{\n  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"hooks\": [\n          { \"type\": \"command\", \"command\": \"echo ok\", \"timeout\": 30 }\n        ]\n      }\n    ]\n  }\n}"
     },
     {
       "id": "CC-HK-004",
@@ -919,7 +989,9 @@
       "fix": {
         "autofix": true,
         "fix_safety": "safe"
-      }
+      },
+      "good_example": "{\n  \"hooks\": {\n    \"Notification\": [\n      {\n        \"hooks\": [\n          { \"type\": \"command\", \"command\": \"echo notified\", \"timeout\": 30 }\n        ]\n      }\n    ]\n  }\n}",
+      "bad_example": "{\n  \"hooks\": {\n    \"Notification\": [\n      {\n        \"matcher\": \"Bash\",\n        \"hooks\": [\n          { \"type\": \"command\", \"command\": \"echo notified\", \"timeout\": 30 }\n        ]\n      }\n    ]\n  }\n}"
     },
     {
       "id": "CC-HK-005",
@@ -944,7 +1016,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "{\n  \"hooks\": {\n    \"Stop\": [\n      {\n        \"hooks\": [\n          { \"type\": \"command\", \"command\": \"echo done\", \"timeout\": 30 }\n        ]\n      }\n    ]\n  }\n}",
+      "bad_example": "{\n  \"hooks\": {\n    \"Stop\": [\n      {\n        \"hooks\": [\n          { \"command\": \"echo missing type field\" }\n        ]\n      }\n    ]\n  }\n}"
     },
     {
       "id": "CC-HK-006",
@@ -969,7 +1043,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "{\n  \"hooks\": {\n    \"Stop\": [\n      {\n        \"hooks\": [\n          { \"type\": \"command\", \"command\": \"echo done\", \"timeout\": 30 }\n        ]\n      }\n    ]\n  }\n}",
+      "bad_example": "{\n  \"hooks\": {\n    \"Stop\": [\n      {\n        \"hooks\": [\n          { \"type\": \"command\", \"timeout\": 30 }\n        ]\n      }\n    ]\n  }\n}"
     },
     {
       "id": "CC-HK-007",
@@ -994,7 +1070,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "{\n  \"hooks\": {\n    \"Stop\": [\n      {\n        \"hooks\": [\n          { \"type\": \"prompt\", \"prompt\": \"Summarize what was done\", \"timeout\": 30 }\n        ]\n      }\n    ]\n  }\n}",
+      "bad_example": "{\n  \"hooks\": {\n    \"Stop\": [\n      {\n        \"hooks\": [\n          { \"type\": \"prompt\", \"timeout\": 30 }\n        ]\n      }\n    ]\n  }\n}"
     },
     {
       "id": "CC-HK-008",
@@ -1019,7 +1097,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "{\n  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Bash\",\n        \"hooks\": [\n          { \"type\": \"command\", \"command\": \"echo inline check\", \"timeout\": 30 }\n        ]\n      }\n    ]\n  }\n}",
+      "bad_example": "{\n  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Bash\",\n        \"hooks\": [\n          { \"type\": \"command\", \"command\": \"./scripts/nonexistent-hook.sh\", \"timeout\": 30 }\n        ]\n      }\n    ]\n  }\n}"
     },
     {
       "id": "CC-HK-009",
@@ -1044,7 +1124,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "{\n  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Bash\",\n        \"hooks\": [\n          { \"type\": \"command\", \"command\": \"echo $TOOL_INPUT | jq .command\", \"timeout\": 30 }\n        ]\n      }\n    ]\n  }\n}",
+      "bad_example": "{\n  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Bash\",\n        \"hooks\": [\n          { \"type\": \"command\", \"command\": \"rm -rf /\", \"timeout\": 30 }\n        ]\n      }\n    ]\n  }\n}"
     },
     {
       "id": "CC-HK-010",
@@ -1069,7 +1151,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "{\n  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Bash\",\n        \"hooks\": [\n          { \"type\": \"command\", \"command\": \"echo ok\", \"timeout\": 30 }\n        ]\n      }\n    ]\n  }\n}",
+      "bad_example": "{\n  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Bash\",\n        \"hooks\": [\n          { \"type\": \"command\", \"command\": \"echo ok\" }\n        ]\n      }\n    ]\n  }\n}"
     },
     {
       "id": "CC-HK-011",
@@ -1095,7 +1179,9 @@
       "fix": {
         "autofix": true,
         "fix_safety": "unsafe"
-      }
+      },
+      "good_example": "{\n  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Bash\",\n        \"hooks\": [\n          { \"type\": \"command\", \"command\": \"echo ok\", \"timeout\": 30 }\n        ]\n      }\n    ]\n  }\n}",
+      "bad_example": "{\n  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Bash\",\n        \"hooks\": [\n          { \"type\": \"command\", \"command\": \"echo ok\", \"timeout\": -5 }\n        ]\n      }\n    ]\n  }\n}"
     },
     {
       "id": "CC-HK-012",
@@ -1120,7 +1206,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "{\n  \"hooks\": {\n    \"Stop\": [\n      {\n        \"hooks\": [\n          { \"type\": \"command\", \"command\": \"echo bye\", \"timeout\": 30 }\n        ]\n      }\n    ]\n  }\n}",
+      "bad_example": "{\n  \"hooks\": {\n    \"Stop\": [\n      {\n        hooks: [\n          { type: command }\n        ]\n      }\n    ]\n  }\n}"
     },
     {
       "id": "CC-HK-013",
@@ -1146,7 +1234,9 @@
       "fix": {
         "autofix": true,
         "fix_safety": "safe"
-      }
+      },
+      "good_example": "{\n  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Bash\",\n        \"hooks\": [\n          { \"type\": \"command\", \"command\": \"echo ok\", \"timeout\": 30 }\n        ]\n      }\n    ]\n  }\n}",
+      "bad_example": "{\n  \"hooks\": {\n    \"Stop\": [\n      {\n        \"hooks\": [\n          { \"type\": \"prompt\", \"prompt\": \"Summarize\", \"async\": true, \"timeout\": 30 }\n        ]\n      }\n    ]\n  }\n}"
     },
     {
       "id": "CC-HK-014",
@@ -1171,7 +1261,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "{\n  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Bash\",\n        \"hooks\": [\n          { \"type\": \"command\", \"command\": \"echo ok\", \"timeout\": 30 }\n        ]\n      }\n    ]\n  }\n}",
+      "bad_example": "{\n  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Bash\",\n        \"hooks\": [\n          { \"type\": \"command\", \"command\": \"echo ok\", \"once\": true, \"timeout\": 30 }\n        ]\n      }\n    ]\n  }\n}"
     },
     {
       "id": "CC-HK-015",
@@ -1197,7 +1289,9 @@
       "fix": {
         "autofix": true,
         "fix_safety": "safe"
-      }
+      },
+      "good_example": "{\n  \"hooks\": {\n    \"Stop\": [\n      {\n        \"hooks\": [\n          { \"type\": \"prompt\", \"prompt\": \"Summarize\", \"model\": \"haiku\", \"timeout\": 30 }\n        ]\n      }\n    ]\n  }\n}",
+      "bad_example": "{\n  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Bash\",\n        \"hooks\": [\n          { \"type\": \"command\", \"command\": \"echo ok\", \"model\": \"haiku\", \"timeout\": 30 }\n        ]\n      }\n    ]\n  }\n}"
     },
     {
       "id": "CC-HK-016",
@@ -1223,7 +1317,9 @@
       "fix": {
         "autofix": true,
         "fix_safety": "unsafe"
-      }
+      },
+      "good_example": "{\n  \"hooks\": {\n    \"Stop\": [\n      {\n        \"hooks\": [\n          { \"type\": \"command\", \"command\": \"echo done\", \"timeout\": 30 }\n        ]\n      }\n    ]\n  }\n}",
+      "bad_example": "{\n  \"hooks\": {\n    \"Stop\": [\n      {\n        \"hooks\": [\n          { \"type\": \"webhook\", \"url\": \"https://example.com\", \"timeout\": 30 }\n        ]\n      }\n    ]\n  }\n}"
     },
     {
       "id": "CC-HK-017",
@@ -1248,7 +1344,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "{\n  \"hooks\": {\n    \"Stop\": [\n      {\n        \"hooks\": [\n          { \"type\": \"prompt\", \"prompt\": \"Summarize: $ARGUMENTS\", \"timeout\": 30 }\n        ]\n      }\n    ]\n  }\n}",
+      "bad_example": "{\n  \"hooks\": {\n    \"Stop\": [\n      {\n        \"hooks\": [\n          { \"type\": \"prompt\", \"prompt\": \"Summarize what was done\", \"timeout\": 30 }\n        ]\n      }\n    ]\n  }\n}"
     },
     {
       "id": "CC-HK-018",
@@ -1274,7 +1372,9 @@
       "fix": {
         "autofix": true,
         "fix_safety": "safe"
-      }
+      },
+      "good_example": "{\n  \"hooks\": {\n    \"UserPromptSubmit\": [\n      {\n        \"hooks\": [\n          { \"type\": \"command\", \"command\": \"echo submit\", \"timeout\": 30 }\n        ]\n      }\n    ]\n  }\n}",
+      "bad_example": "{\n  \"hooks\": {\n    \"UserPromptSubmit\": [\n      {\n        \"matcher\": \"Bash\",\n        \"hooks\": [\n          { \"type\": \"command\", \"command\": \"echo submit\", \"timeout\": 30 }\n        ]\n      }\n    ]\n  }\n}"
     },
     {
       "id": "CC-AG-001",
@@ -1299,7 +1399,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "---\nname: code-reviewer\ndescription: Reviews pull requests for quality\n---\nReview code changes and provide feedback.",
+      "bad_example": "---\ndescription: Reviews pull requests for quality\n---\nReview code changes and provide feedback."
     },
     {
       "id": "CC-AG-002",
@@ -1324,7 +1426,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "---\nname: code-reviewer\ndescription: Reviews pull requests for quality\n---\nReview code changes and provide feedback.",
+      "bad_example": "---\nname: code-reviewer\n---\nReview code changes and provide feedback."
     },
     {
       "id": "CC-AG-003",
@@ -1350,7 +1454,9 @@
       "fix": {
         "autofix": true,
         "fix_safety": "unsafe"
-      }
+      },
+      "good_example": "---\nname: code-reviewer\ndescription: Reviews code\nmodel: sonnet\n---\nReview code changes.",
+      "bad_example": "---\nname: code-reviewer\ndescription: Reviews code\nmodel: gpt-4\n---\nReview code changes."
     },
     {
       "id": "CC-AG-004",
@@ -1376,7 +1482,9 @@
       "fix": {
         "autofix": true,
         "fix_safety": "unsafe"
-      }
+      },
+      "good_example": "---\nname: code-reviewer\ndescription: Reviews code\npermissionMode: acceptEdits\n---\nReview code changes.",
+      "bad_example": "---\nname: code-reviewer\ndescription: Reviews code\npermissionMode: yolo\n---\nReview code changes."
     },
     {
       "id": "CC-AG-005",
@@ -1401,7 +1509,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "---\nname: code-reviewer\ndescription: Reviews code\nskills:\n  - code-review\n---\nReview code changes.",
+      "bad_example": "---\nname: code-reviewer\ndescription: Reviews code\nskills:\n  - nonexistent-skill\n---\nReview code changes."
     },
     {
       "id": "CC-AG-006",
@@ -1426,7 +1536,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "---\nname: safe-agent\ndescription: Agent with separate tool lists\ntools:\n  - Read\n  - Grep\ndisallowedTools:\n  - Bash\n---\nAgent instructions.",
+      "bad_example": "---\nname: conflict-agent\ndescription: Agent with conflicting tool lists\ntools:\n  - Read\n  - Bash\ndisallowedTools:\n  - Bash\n---\nAgent instructions."
     },
     {
       "id": "CC-AG-007",
@@ -1451,7 +1563,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "---\nname: my-agent\ndescription: A working agent\n---\nAgent instructions here.",
+      "bad_example": "name: my-agent\ndescription: Missing the --- delimiters\n\nAgent instructions here."
     },
     {
       "id": "CC-AG-008",
@@ -1477,7 +1591,9 @@
       "fix": {
         "autofix": true,
         "fix_safety": "unsafe"
-      }
+      },
+      "good_example": "---\nname: my-agent\ndescription: Agent with valid memory\nmemory: project\n---\nAgent instructions.",
+      "bad_example": "---\nname: my-agent\ndescription: Agent with invalid memory\nmemory: global\n---\nAgent instructions."
     },
     {
       "id": "CC-AG-009",
@@ -1502,7 +1618,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "---\nname: my-agent\ndescription: Agent with valid tools\ntools:\n  - Read\n  - Write\n  - Bash\n---\nAgent instructions.",
+      "bad_example": "---\nname: my-agent\ndescription: Agent with unknown tool\ntools:\n  - Read\n  - MakeFile\n---\nAgent instructions."
     },
     {
       "id": "CC-AG-010",
@@ -1527,7 +1645,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "---\nname: my-agent\ndescription: Agent with valid disallowed tools\ndisallowedTools:\n  - Bash\n  - WebFetch\n---\nAgent instructions.",
+      "bad_example": "---\nname: my-agent\ndescription: Agent with unknown disallowed tool\ndisallowedTools:\n  - Bash\n  - RunCode\n---\nAgent instructions."
     },
     {
       "id": "CC-AG-011",
@@ -1552,7 +1672,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "---\nname: my-agent\ndescription: Agent with valid hooks\nhooks:\n  PreToolUse:\n    - matcher: Bash\n      hooks:\n        - type: command\n          command: echo ok\n---\nAgent instructions.",
+      "bad_example": "---\nname: my-agent\ndescription: Agent with invalid hooks\nhooks:\n  InvalidEvent:\n    - matcher: Bash\n      hooks:\n        - type: command\n          command: echo ok\n---\nAgent instructions."
     },
     {
       "id": "CC-AG-012",
@@ -1578,7 +1700,9 @@
       "fix": {
         "autofix": true,
         "fix_safety": "unsafe"
-      }
+      },
+      "good_example": "---\nname: my-agent\ndescription: Agent with safe permissions\npermissionMode: default\n---\nAgent instructions.",
+      "bad_example": "---\nname: my-agent\ndescription: Agent with dangerous permissions\npermissionMode: bypassPermissions\n---\nAgent instructions."
     },
     {
       "id": "CC-AG-013",
@@ -1603,7 +1727,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "---\nname: my-agent\ndescription: Agent with valid skill names\nskills:\n  - code-review\n  - deploy-prod\n---\nAgent instructions.",
+      "bad_example": "---\nname: my-agent\ndescription: Agent with invalid skill name format\nskills:\n  - Code_Review\n  - --bad-name\n---\nAgent instructions."
     },
     {
       "id": "CC-MEM-001",
@@ -1628,7 +1754,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "# Project Memory\n\n@import ./docs/guidelines.md\n\nFollow these coding standards.",
+      "bad_example": "# Project Memory\n\n@import /absolute/path/to/nonexistent.md\n\nFollow these coding standards."
     },
     {
       "id": "CC-MEM-002",
@@ -1653,7 +1781,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "# Project Memory\n\n@import ./docs/style.md\n@import ./docs/testing.md\n\nFollow these standards.",
+      "bad_example": "# Project Memory\n\n@import ./CLAUDE.md\n\nThis file imports itself, creating a circular dependency."
     },
     {
       "id": "CC-MEM-003",
@@ -1678,7 +1808,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "# Project Memory\n\n@import ./docs/guidelines.md\n\nKeep import chains shallow.",
+      "bad_example": "# Project Memory\n\n@import ./level1.md\n\nThis starts a chain: level1 -> level2 -> level3 -> level4 -> level5 -> level6 (exceeds depth 5)."
     },
     {
       "id": "CC-MEM-004",
@@ -1703,7 +1835,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "# Commands\n\nRun tests with `npm run test`\nBuild with `npm run build`",
+      "bad_example": "# Commands\n\nRun tests with `npm run nonexistent`"
     },
     {
       "id": "CC-MEM-005",
@@ -1730,7 +1864,9 @@
       "fix": {
         "autofix": true,
         "fix_safety": "safe"
-      }
+      },
+      "good_example": "# Project Rules\n\nAlways use TypeScript strict mode.\nRun `cargo test` before committing.",
+      "bad_example": "Be helpful and accurate when responding.\nAlways provide the best possible answer."
     },
     {
       "id": "CC-MEM-006",
@@ -1753,7 +1889,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "# Rules\n\nNever use var in JavaScript, instead prefer const or let.",
+      "bad_example": "# Rules\n\nNever use var in JavaScript."
     },
     {
       "id": "CC-MEM-007",
@@ -1777,7 +1915,9 @@
       "fix": {
         "autofix": true,
         "fix_safety": "safe/unsafe"
-      }
+      },
+      "good_example": "# Critical Rules\n\nYou must follow the coding style guide.",
+      "bad_example": "# Critical Rules\n\nYou should follow the coding style guide."
     },
     {
       "id": "CC-MEM-008",
@@ -1800,7 +1940,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "# Critical Rules\n\nIMPORTANT: Always run tests before committing.\n\n## Setup\n\nInstall dependencies with npm install.\n\n## Architecture\n\nThe project uses a monorepo structure.",
+      "bad_example": "## Setup\n\nInstall dependencies with npm install.\n\n## Architecture\n\nThe project uses a monorepo structure.\n\n## Testing\n\nRun unit tests.\n\n## Deployment\n\nDeploy to staging.\n\n## Monitoring\n\nCheck dashboards.\n\nIMPORTANT: Always run tests before committing.\n\n## Cleanup\n\nRemove temp files."
     },
     {
       "id": "CC-MEM-009",
@@ -1825,7 +1967,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "# Project Rules\n\nUse TypeScript strict mode.\nRun tests before committing.\nFollow the style guide.",
+      "bad_example": "# Project Rules\n\n[...6000+ characters of instructions that exceed the ~1500 token limit for CLAUDE.md files, causing context window bloat and reduced instruction adherence...]"
     },
     {
       "id": "CC-MEM-010",
@@ -1850,7 +1994,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "# Project Memory\n\nProject-specific agent instructions:\n- Always run tests before committing\n- Use feature branches for changes",
+      "bad_example": "# My Project\n\nThis project validates agent configurations using Rust for performance.\n\n(Content duplicated verbatim from README.md)"
     },
     {
       "id": "CC-MEM-011",
@@ -1875,7 +2021,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "---\npaths:\n  - \"src/**/*.ts\"\n  - \"lib/**/*.js\"\n---\n# TypeScript Guidelines\n\nAlways use strict mode.",
+      "bad_example": "---\npaths:\n  - \"[unclosed\"\n---\n# TypeScript Guidelines\n\nAlways use strict mode."
     },
     {
       "id": "CC-MEM-012",
@@ -1901,7 +2049,9 @@
       "fix": {
         "autofix": true,
         "fix_safety": "unsafe"
-      }
+      },
+      "good_example": "---\npaths:\n  - \"src/**/*.ts\"\n---\n# TypeScript Guidelines\n\nAlways use strict mode.",
+      "bad_example": "---\npaths:\n  - \"src/**/*.ts\"\ndescription: \"some rule\"\nalwaysApply: true\n---\n# TypeScript Guidelines\n\nAlways use strict mode."
     },
     {
       "id": "AGM-001",
@@ -1926,7 +2076,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "# Project\n\n```python\ndef hello():\n    print(\"world\")\n```\n\nSee [docs](https://example.com) for more.",
+      "bad_example": "# Project\n\n```python\ndef hello():\n    print(\"world\")\n\nThis code block is never closed."
     },
     {
       "id": "AGM-002",
@@ -1950,7 +2102,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "# Main Title\n\nSome content here.\n\n## Section\n\nMore content.",
+      "bad_example": "Just plain text without any headers.\nNo structure at all.\nHard to navigate."
     },
     {
       "id": "AGM-003",
@@ -1975,7 +2129,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "# Project\n\nConcise agent instructions that stay well under the 12000 character limit.\n\n## Commands\n\n- npm test\n- npm build",
+      "bad_example": "# Project\n\nThis AGENTS.md file has grown far too large and exceeds the 12000 character Windsurf compatibility limit. When files exceed this threshold, Windsurf may silently truncate the instructions, causing agents to miss critical context.\n\n[Imagine 12000+ characters of content here]"
     },
     {
       "id": "AGM-004",
@@ -1999,7 +2155,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "# Project\n\nThis is a web application for task management built with React and Node.js.\n\n## Build Commands\n\nRun npm install and npm build.",
+      "bad_example": "# Build Commands\n\nRun npm install and npm build.\n\n## Testing\n\nUse npm test."
     },
     {
       "id": "AGM-005",
@@ -2023,7 +2181,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "# Project\n\nThis project uses various tools.\n\n## Claude Code Specific\n\n- type: PreToolExecution\n  command: echo \"lint\"\n\ncontext: fork\nagent: security-reviewer",
+      "bad_example": "# Project\n\nThis project uses hooks.\n\n- type: PreToolExecution\n  command: echo \"test\"\n\ncontext: fork\nagent: reviewer\nallowed-tools: Read Write"
     },
     {
       "id": "AGM-006",
@@ -2048,7 +2208,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "# Project\n\nSingle AGENTS.md at the project root with all instructions.\n\n## Commands\n\n- npm test",
+      "bad_example": "# Root AGENTS.md\n\nProject instructions.\n\n# src/AGENTS.md (nested, separate file)\n\nComponent-specific instructions that create hierarchy ambiguity."
     },
     {
       "id": "CC-PL-001",
@@ -2073,7 +2235,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": ".claude-plugin/plugin.json:\n{\n  \"name\": \"my-plugin\",\n  \"description\": \"A useful plugin\",\n  \"version\": \"1.0.0\"\n}",
+      "bad_example": "plugin.json:\n{\n  \"name\": \"my-plugin\",\n  \"description\": \"A useful plugin\",\n  \"version\": \"1.0.0\"\n}"
     },
     {
       "id": "CC-PL-002",
@@ -2098,7 +2262,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": ".claude-plugin/plugin.json (no skills/agents/hooks/commands dirs inside .claude-plugin/):\n{\n  \"name\": \"my-plugin\",\n  \"description\": \"A useful plugin\",\n  \"version\": \"1.0.0\"\n}",
+      "bad_example": ".claude-plugin/plugin.json (with .claude-plugin/skills/ directory present):\n{\n  \"name\": \"my-plugin\",\n  \"description\": \"A useful plugin\",\n  \"version\": \"1.0.0\"\n}"
     },
     {
       "id": "CC-PL-003",
@@ -2123,7 +2289,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "{\n  \"name\": \"my-plugin\",\n  \"description\": \"A useful plugin\",\n  \"version\": \"1.0.0\"\n}",
+      "bad_example": "{\n  \"name\": \"my-plugin\",\n  \"description\": \"A useful plugin\",\n  \"version\": \"1.0\"\n}"
     },
     {
       "id": "CC-PL-004",
@@ -2148,7 +2316,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "{\n  \"name\": \"my-plugin\",\n  \"description\": \"A useful plugin\",\n  \"version\": \"1.0.0\"\n}",
+      "bad_example": "{\n  \"name\": \"my-plugin\"\n}"
     },
     {
       "id": "CC-PL-005",
@@ -2174,7 +2344,9 @@
       "fix": {
         "autofix": true,
         "fix_safety": "unsafe"
-      }
+      },
+      "good_example": "{\n  \"name\": \"my-plugin\",\n  \"description\": \"A useful plugin\",\n  \"version\": \"1.0.0\"\n}",
+      "bad_example": "{\n  \"name\": \"  \",\n  \"description\": \"A useful plugin\",\n  \"version\": \"1.0.0\"\n}"
     },
     {
       "id": "CC-PL-006",
@@ -2199,7 +2371,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "{\n  \"name\": \"my-plugin\",\n  \"description\": \"A useful plugin\",\n  \"version\": \"1.0.0\"\n}",
+      "bad_example": "{ name: my-plugin, version: 1.0.0 }"
     },
     {
       "id": "CC-PL-007",
@@ -2225,7 +2399,9 @@
       "fix": {
         "autofix": true,
         "fix_safety": "safe"
-      }
+      },
+      "good_example": "{\n  \"name\": \"my-plugin\",\n  \"description\": \"A useful plugin\",\n  \"version\": \"1.0.0\",\n  \"commands\": \"./commands/\"\n}",
+      "bad_example": "{\n  \"name\": \"my-plugin\",\n  \"description\": \"A useful plugin\",\n  \"version\": \"1.0.0\",\n  \"commands\": \"/usr/local/bin/cmd\"\n}"
     },
     {
       "id": "CC-PL-008",
@@ -2250,7 +2426,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "{\n  \"name\": \"my-plugin\",\n  \"description\": \"A useful plugin\",\n  \"version\": \"1.0.0\",\n  \"agents\": \"./agents/\"\n}",
+      "bad_example": "{\n  \"name\": \"my-plugin\",\n  \"description\": \"A useful plugin\",\n  \"version\": \"1.0.0\",\n  \"agents\": \".claude-plugin/agents\"\n}"
     },
     {
       "id": "CC-PL-009",
@@ -2275,7 +2453,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "{\n  \"name\": \"my-plugin\",\n  \"description\": \"A useful plugin\",\n  \"version\": \"1.0.0\",\n  \"author\": { \"name\": \"Jane Doe\" }\n}",
+      "bad_example": "{\n  \"name\": \"my-plugin\",\n  \"description\": \"A useful plugin\",\n  \"version\": \"1.0.0\",\n  \"author\": { \"email\": \"jane@example.com\" }\n}"
     },
     {
       "id": "CC-PL-010",
@@ -2300,7 +2480,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "{\n  \"name\": \"my-plugin\",\n  \"description\": \"A useful plugin\",\n  \"version\": \"1.0.0\",\n  \"homepage\": \"https://example.com/my-plugin\"\n}",
+      "bad_example": "{\n  \"name\": \"my-plugin\",\n  \"description\": \"A useful plugin\",\n  \"version\": \"1.0.0\",\n  \"homepage\": \"not-a-valid-url\"\n}"
     },
     {
       "id": "MCP-001",
@@ -2326,7 +2508,9 @@
       "fix": {
         "autofix": true,
         "fix_safety": "safe"
-      }
+      },
+      "good_example": "{\n  \"jsonrpc\": \"2.0\",\n  \"method\": \"tools/list\",\n  \"id\": 1\n}",
+      "bad_example": "{\n  \"jsonrpc\": \"1.0\",\n  \"method\": \"tools/list\",\n  \"id\": 1\n}"
     },
     {
       "id": "MCP-002",
@@ -2351,7 +2535,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "{\n  \"name\": \"read-file\",\n  \"description\": \"Reads a file from disk and returns its contents\",\n  \"inputSchema\": {\n    \"type\": \"object\",\n    \"properties\": {\n      \"path\": { \"type\": \"string\" }\n    },\n    \"required\": [\"path\"]\n  }\n}",
+      "bad_example": "{\n  \"description\": \"Reads a file from disk\",\n  \"inputSchema\": { \"type\": \"object\" }\n}"
     },
     {
       "id": "MCP-003",
@@ -2376,7 +2562,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "{\n  \"name\": \"search\",\n  \"description\": \"Searches for files matching a query string\",\n  \"inputSchema\": {\n    \"type\": \"object\",\n    \"properties\": {\n      \"query\": { \"type\": \"string\" }\n    }\n  }\n}",
+      "bad_example": "{\n  \"name\": \"search\",\n  \"description\": \"Searches for files matching a query string\",\n  \"inputSchema\": {\n    \"type\": \"invalid_type\"\n  }\n}"
     },
     {
       "id": "MCP-004",
@@ -2401,7 +2589,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "{\n  \"name\": \"deploy\",\n  \"description\": \"Deploys the application to the specified environment with rollback support\",\n  \"inputSchema\": { \"type\": \"object\" }\n}",
+      "bad_example": "{\n  \"name\": \"deploy\",\n  \"description\": \"Short\",\n  \"inputSchema\": { \"type\": \"object\" }\n}"
     },
     {
       "id": "MCP-005",
@@ -2426,7 +2616,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "{\n  \"name\": \"delete-file\",\n  \"description\": \"Permanently deletes a file from the filesystem\",\n  \"inputSchema\": { \"type\": \"object\" },\n  \"requiresApproval\": true\n}",
+      "bad_example": "{\n  \"name\": \"delete-file\",\n  \"description\": \"Permanently deletes a file from the filesystem\",\n  \"inputSchema\": { \"type\": \"object\" }\n}"
     },
     {
       "id": "MCP-006",
@@ -2451,7 +2643,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "{\n  \"name\": \"read-file\",\n  \"description\": \"Reads a file and returns its contents as text\",\n  \"inputSchema\": { \"type\": \"object\" },\n  \"requiresApproval\": true\n}",
+      "bad_example": "{\n  \"name\": \"read-file\",\n  \"description\": \"Reads a file and returns its contents as text\",\n  \"inputSchema\": { \"type\": \"object\" },\n  \"requiresApproval\": true,\n  \"annotations\": { \"readOnlyHint\": true, \"title\": \"File Reader\" }\n}"
     },
     {
       "id": "MCP-007",
@@ -2476,7 +2670,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "{\n  \"jsonrpc\": \"2.0\",\n  \"method\": \"tools/list\",\n  \"id\": 1\n}",
+      "bad_example": "{ invalid json content"
     },
     {
       "id": "MCP-008",
@@ -2502,7 +2698,9 @@
       "fix": {
         "autofix": true,
         "fix_safety": "unsafe"
-      }
+      },
+      "good_example": "{\n  \"jsonrpc\": \"2.0\",\n  \"method\": \"initialize\",\n  \"id\": 1,\n  \"params\": {\n    \"protocolVersion\": \"2025-06-18\",\n    \"clientInfo\": { \"name\": \"my-client\", \"version\": \"1.0.0\" }\n  }\n}",
+      "bad_example": "{\n  \"jsonrpc\": \"2.0\",\n  \"method\": \"initialize\",\n  \"id\": 1,\n  \"params\": {\n    \"protocolVersion\": \"2024-11-05\",\n    \"clientInfo\": { \"name\": \"my-client\", \"version\": \"1.0.0\" }\n  }\n}"
     },
     {
       "id": "MCP-009",
@@ -2527,7 +2725,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "{\n  \"mcpServers\": {\n    \"my-server\": {\n      \"type\": \"stdio\",\n      \"command\": \"node\",\n      \"args\": [\"server.js\"]\n    }\n  }\n}",
+      "bad_example": "{\n  \"mcpServers\": {\n    \"my-server\": {\n      \"type\": \"stdio\",\n      \"args\": [\"server.js\"]\n    }\n  }\n}"
     },
     {
       "id": "MCP-010",
@@ -2552,7 +2752,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "{\n  \"mcpServers\": {\n    \"remote-api\": {\n      \"type\": \"http\",\n      \"url\": \"http://localhost:3000/mcp\"\n    }\n  }\n}",
+      "bad_example": "{\n  \"mcpServers\": {\n    \"remote-api\": {\n      \"type\": \"http\"\n    }\n  }\n}"
     },
     {
       "id": "MCP-011",
@@ -2578,7 +2780,9 @@
       "fix": {
         "autofix": true,
         "fix_safety": "unsafe"
-      }
+      },
+      "good_example": "{\n  \"mcpServers\": {\n    \"my-server\": {\n      \"type\": \"stdio\",\n      \"command\": \"node\"\n    }\n  }\n}",
+      "bad_example": "{\n  \"mcpServers\": {\n    \"my-server\": {\n      \"type\": \"websocket\",\n      \"url\": \"ws://localhost:8080\"\n    }\n  }\n}"
     },
     {
       "id": "MCP-012",
@@ -2604,7 +2808,9 @@
       "fix": {
         "autofix": true,
         "fix_safety": "unsafe"
-      }
+      },
+      "good_example": "{\n  \"mcpServers\": {\n    \"remote-api\": {\n      \"type\": \"http\",\n      \"url\": \"http://localhost:3000/mcp\"\n    }\n  }\n}",
+      "bad_example": "{\n  \"mcpServers\": {\n    \"remote-api\": {\n      \"type\": \"sse\",\n      \"url\": \"http://localhost:3000/sse\"\n    }\n  }\n}"
     },
     {
       "id": "COP-001",
@@ -2629,7 +2835,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "# Copilot Instructions\n\nFollow the project coding standards and use TypeScript strict mode.",
+      "bad_example": "# Copilot Instructions\n"
     },
     {
       "id": "COP-002",
@@ -2655,7 +2863,9 @@
       "fix": {
         "autofix": true,
         "fix_safety": "unsafe"
-      }
+      },
+      "good_example": "---\napplyTo: \"**/*.ts\"\n---\n# TypeScript Instructions\n\nUse strict mode and explicit types.",
+      "bad_example": "# TypeScript Instructions\n\nUse strict mode and explicit types."
     },
     {
       "id": "COP-003",
@@ -2680,7 +2890,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "---\napplyTo: \"**/*.ts\"\n---\n# TypeScript Instructions\n\nUse strict mode.",
+      "bad_example": "---\napplyTo: \"[unclosed\"\n---\n# TypeScript Instructions\n\nUse strict mode."
     },
     {
       "id": "COP-004",
@@ -2706,7 +2918,9 @@
       "fix": {
         "autofix": true,
         "fix_safety": "safe"
-      }
+      },
+      "good_example": "---\napplyTo: \"**/*.ts\"\n---\n# TypeScript Instructions\n\nUse strict mode.",
+      "bad_example": "---\napplyTo: \"**/*.ts\"\nunknownKey: some-value\n---\n# TypeScript Instructions\n\nUse strict mode."
     },
     {
       "id": "COP-005",
@@ -2732,7 +2946,9 @@
       "fix": {
         "autofix": true,
         "fix_safety": "unsafe"
-      }
+      },
+      "good_example": "---\napplyTo: \"**/*.ts\"\nexcludeAgent: \"code-review\"\n---\n# TypeScript Instructions\n\nUse strict mode.",
+      "bad_example": "---\napplyTo: \"**/*.ts\"\nexcludeAgent: \"invalid-agent\"\n---\n# TypeScript Instructions\n\nUse strict mode."
     },
     {
       "id": "COP-006",
@@ -2757,7 +2973,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "# Copilot Instructions\n\nKeep instructions concise and focused on key coding standards.",
+      "bad_example": "# Copilot Instructions\n\nThis file contains overly detailed coding guidelines.\n\nFollow consistent naming conventions for variables and functions. Use descriptive names that clearly convey purpose.\nFollow consistent naming conventions for variables and functions. Use descriptive names that clearly convey purpose.\nFollow consistent naming conventions for variables and functions. Use descriptive names that clearly convey purpose.\nFollow consistent naming conventions for variables and functions. Use descriptive names that clearly convey purpose.\nFollow consistent naming conventions for variables and functions. Use descriptive names that clearly convey purpose.\nFollow consistent naming conventions for variables and functions. Use descriptive names that clearly convey purpose.\nFollow consistent naming conventions for variables and functions. Use descriptive names that clearly convey purpose.\nFollow consistent naming conventions for variables and functions. Use descriptive names that clearly convey purpose.\nFollow consistent naming conventions for variables and functions. Use descriptive names that clearly convey purpose.\nFollow consistent naming conventions for variables and functions. Use descriptive names that clearly convey purpose.\nFollow consistent naming conventions for variables and functions. Use descriptive names that clearly convey purpose.\nFollow consistent naming conventions for variables and functions. Use descriptive names that clearly convey purpose.\nFollow consistent naming conventions for variables and functions. Use descriptive names that clearly convey purpose.\nFollow consistent naming conventions for variables and functions. Use descriptive names that clearly convey purpose.\nFollow consistent naming conventions for variables and functions. Use descriptive names that clearly convey purpose.\nFollow consistent naming conventions for variables and functions. Use descriptive names that clearly convey purpose.\nFollow consistent naming conventions for variables and functions. Use descriptive names that clearly convey purpose.\nFollow consistent naming conventions for variables and functions. Use descriptive names that clearly convey purpose.\nFollow consistent naming conventions for variables and functions. Use descriptive names that clearly convey purpose.\nFollow consistent naming conventions for variables and functions. Use descriptive names that clearly convey purpose.\nFollow consistent naming conventions for variables and functions. Use descriptive names that clearly convey purpose.\nFollow consistent naming conventions for variables and functions. Use descriptive names that clearly convey purpose.\nFollow consistent naming conventions for variables and functions. Use descriptive names that clearly convey purpose.\nFollow consistent naming conventions for variables and functions. Use descriptive names that clearly convey purpose.\nFollow consistent naming conventions for variables and functions. Use descriptive names that clearly convey purpose.\nFollow consistent naming conventions for variables and functions. Use descriptive names that clearly convey purpose.\nFollow consistent naming conventions for variables and functions. Use descriptive names that clearly convey purpose.\nFollow consistent naming conventions for variables and functions. Use descriptive names that clearly convey purpose.\nFollow consistent naming conventions for variables and functions. Use descriptive names that clearly convey purpose.\nFollow consistent naming conventions for variables and functions. Use descriptive names that clearly convey purpose.\nFollow consistent naming conventions for variables and functions. Use descriptive names that clearly convey purpose.\nFollow consistent naming conventions for variables and functions. Use descriptive names that clearly convey purpose.\nFollow consistent naming conventions for variables and functions. Use descriptive names that clearly convey purpose.\nFollow consistent naming conventions for variables and functions. Use descriptive names that clearly convey purpose.\nFollow consistent naming conventions for variables and functions. Use descriptive names that clearly convey purpose.\n"
     },
     {
       "id": "CUR-001",
@@ -2782,7 +3000,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "---\ndescription: TypeScript coding rules\nglobs: \"**/*.ts\"\n---\n# TypeScript Rules\n\nUse strict mode and explicit types.",
+      "bad_example": "---\ndescription: \n---\n"
     },
     {
       "id": "CUR-002",
@@ -2808,7 +3028,9 @@
       "fix": {
         "autofix": true,
         "fix_safety": "unsafe"
-      }
+      },
+      "good_example": "---\ndescription: TypeScript rules\nglobs: \"**/*.ts\"\n---\n# TypeScript Rules\n\nUse strict mode.",
+      "bad_example": "# TypeScript Rules\n\nUse strict mode and explicit types."
     },
     {
       "id": "CUR-003",
@@ -2833,7 +3055,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "---\ndescription: TypeScript rules\nglobs: \"**/*.ts\"\n---\n# Rules\n\nUse strict mode.",
+      "bad_example": "---\nglobs: [unclosed\n---\n# Rules\n\nUse strict mode."
     },
     {
       "id": "CUR-004",
@@ -2858,7 +3082,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "---\ndescription: TypeScript rules\nglobs: \"**/*.ts\"\n---\n# Rules\n\nUse strict mode.",
+      "bad_example": "---\ndescription: TypeScript rules\nglobs: \"[unclosed\"\n---\n# Rules\n\nUse strict mode."
     },
     {
       "id": "CUR-005",
@@ -2884,7 +3110,9 @@
       "fix": {
         "autofix": true,
         "fix_safety": "safe"
-      }
+      },
+      "good_example": "---\ndescription: TypeScript rules\nglobs: \"**/*.ts\"\nalwaysApply: false\n---\n# Rules\n\nUse strict mode.",
+      "bad_example": "---\ndescription: TypeScript rules\nunknownKey: some-value\n---\n# Rules\n\nUse strict mode."
     },
     {
       "id": "CUR-006",
@@ -2909,7 +3137,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "---\ndescription: TypeScript rules\nglobs: \"**/*.ts\"\n---\n# TypeScript Rules\n\nUse strict mode.",
+      "bad_example": "# Legacy cursor rules\n\nUse strict mode and explicit types."
     },
     {
       "id": "CUR-007",
@@ -2935,7 +3165,9 @@
       "fix": {
         "autofix": true,
         "fix_safety": "safe"
-      }
+      },
+      "good_example": "---\ndescription: Global rules\nalwaysApply: true\n---\n# Rules\n\nAlways apply these rules.",
+      "bad_example": "---\ndescription: TypeScript rules\nalwaysApply: true\nglobs: \"**/*.ts\"\n---\n# Rules\n\nUse strict mode."
     },
     {
       "id": "CUR-008",
@@ -2961,7 +3193,9 @@
       "fix": {
         "autofix": true,
         "fix_safety": "safe"
-      }
+      },
+      "good_example": "---\ndescription: TypeScript rules\nalwaysApply: true\n---\n# Rules\n\nAlways use strict mode.",
+      "bad_example": "---\ndescription: TypeScript rules\nalwaysApply: \"true\"\n---\n# Rules\n\nAlways use strict mode."
     },
     {
       "id": "CUR-009",
@@ -2986,7 +3220,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "---\ndescription: TypeScript coding standards and best practices\n---\n# Rules\n\nUse strict mode.",
+      "bad_example": "---\n\n---\n# Rules\n\nUse strict mode and explicit types."
     },
     {
       "id": "CLN-001",
@@ -3011,7 +3247,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "# Project Rules\n\nAlways follow the coding style guide and write tests for new features.",
+      "bad_example": "# Rules\n"
     },
     {
       "id": "CLN-002",
@@ -3036,7 +3274,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "---\npaths: \"**/*.ts\"\n---\n# TypeScript Rules\n\nUse strict mode.",
+      "bad_example": "---\npaths: \"[unclosed\"\n---\n# TypeScript Rules\n\nUse strict mode."
     },
     {
       "id": "CLN-003",
@@ -3062,7 +3302,9 @@
       "fix": {
         "autofix": true,
         "fix_safety": "unsafe"
-      }
+      },
+      "good_example": "---\npaths: \"**/*.ts\"\n---\n# TypeScript Rules\n\nUse strict mode.",
+      "bad_example": "---\npaths: \"**/*.ts\"\nunknownKey: some-value\n---\n# TypeScript Rules\n\nUse strict mode."
     },
     {
       "id": "XML-001",
@@ -3086,7 +3328,9 @@
       "fix": {
         "autofix": true,
         "fix_safety": "unsafe"
-      }
+      },
+      "good_example": "<example>\nThis is a properly closed XML tag in markdown.\n</example>",
+      "bad_example": "<example>\nThis XML tag is never closed and will confuse the parser."
     },
     {
       "id": "XML-002",
@@ -3110,7 +3354,9 @@
       "fix": {
         "autofix": true,
         "fix_safety": "unsafe"
-      }
+      },
+      "good_example": "<outer>\n<inner>\nContent here.\n</inner>\n</outer>",
+      "bad_example": "<outer>\n<inner>\nContent here.\n</outer>\n</inner>"
     },
     {
       "id": "XML-003",
@@ -3134,7 +3380,9 @@
       "fix": {
         "autofix": true,
         "fix_safety": "unsafe"
-      }
+      },
+      "good_example": "<instructions>\nFollow these guidelines.\n</instructions>",
+      "bad_example": "Follow these guidelines.\n</instructions>"
     },
     {
       "id": "REF-001",
@@ -3159,7 +3407,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "# Project\n\nSee @docs/coding-standards.md for style guide.\n\n(where docs/coding-standards.md exists on disk)",
+      "bad_example": "# Project\n\nSee @docs/nonexistent-file.md for the style guide.\n\n(where docs/nonexistent-file.md does not exist)"
     },
     {
       "id": "REF-002",
@@ -3182,7 +3432,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "# Project\n\nSee [style guide](docs/STYLE.md) for conventions.\nVisit [GitHub](https://github.com) for source.\n\n(where docs/STYLE.md exists on disk)",
+      "bad_example": "# Project\n\nSee [style guide](docs/STYLE.md) for conventions.\nSee [architecture](docs/ARCHITECTURE.md) for design.\n\n(where docs/STYLE.md and docs/ARCHITECTURE.md do not exist)"
     },
     {
       "id": "PE-001",
@@ -3205,7 +3457,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "# Critical Rules\n\nNEVER commit secrets to the repository.\nAlways run tests before pushing.\n\n## Guidelines\n\nLine 1\nLine 2\nLine 3\nLine 4\nLine 5\nLine 6\nLine 7\nLine 8\nLine 9\nLine 10\nLine 11\nLine 12\nLine 13\nLine 14\nLine 15\nLine 16\nLine 17\nLine 18",
+      "bad_example": "## Guidelines\n\nLine 1\nLine 2\nLine 3\nLine 4\nLine 5\nLine 6\nLine 7\nLine 8\nNEVER commit secrets to the repository.\nLine 10\nLine 11\nLine 12\nLine 13\nLine 14\nLine 15\nLine 16\nLine 17\nLine 18\nLine 19\nLine 20"
     },
     {
       "id": "PE-002",
@@ -3228,7 +3482,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "# Code Review Skill\n\nThink step by step when reviewing complex code.",
+      "bad_example": "# Read File Skill\n\nWhen asked to read the file, think step by step."
     },
     {
       "id": "PE-003",
@@ -3252,7 +3508,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "# Critical Rules\n\nYou must follow the style guide.\nAlways run linting before commits.",
+      "bad_example": "# Critical Rules\n\nYou should follow the style guide.\nTry to run linting before commits."
     },
     {
       "id": "PE-004",
@@ -3275,7 +3533,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "# Rules\n\nAlways format output as JSON.\nNever skip test execution.",
+      "bad_example": "# Rules\n\nUsually format output as JSON.\nInclude tests if possible.\nSometimes run the linter when appropriate."
     },
     {
       "id": "XP-001",
@@ -3299,7 +3559,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "# Project Guidelines\n\nFollow the coding style guide.\n\n## Commands\n- npm run build\n- npm run test",
+      "bad_example": "# Project Guidelines\n\n---\ncontext: fork\nagent: reviewer\nallowed-tools: Read Write\n---\n\n- type: PreToolExecution\n  command: echo \"lint\""
     },
     {
       "id": "XP-002",
@@ -3326,7 +3588,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "# Project Memory\n\n## Build Commands\n\n### Testing\n\nRun tests with npm test.",
+      "bad_example": "Just plain text without any markdown headers or structure."
     },
     {
       "id": "XP-003",
@@ -3350,7 +3614,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "# Configuration\n\nUse environment variables for all platform-specific settings.\nSee ./src/config.ts for defaults.",
+      "bad_example": "# Configuration\n\n- Claude: .claude/settings.json\n- Cursor: .cursor/rules/\n- Config: ~/.config/my-tool/config.yaml"
     },
     {
       "id": "XP-004",
@@ -3374,7 +3640,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "# CLAUDE.md\n\n## Commands\n- `npm install`\n- `npm run build`\n- `npm test`\n\n# AGENTS.md (separate file, same project)\n\n## Commands\n- `npm install`\n- `npm run build`\n- `npm test`",
+      "bad_example": "# CLAUDE.md\n\n## Commands\n- `npm install`\n- `npm run build`\n- `npm run test`\n\n# AGENTS.md (separate file, same project)\n\n## Commands\n- `pnpm install`\n- `pnpm build`\n- `pnpm test`"
     },
     {
       "id": "XP-005",
@@ -3398,7 +3666,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "# CLAUDE.md\n\nallowed-tools: Read Write Edit Bash Grep\n\n# AGENTS.md (separate file, same project)\n\nallowed-tools: Read Write Edit Bash Grep",
+      "bad_example": "# CLAUDE.md\n\nallowed-tools: Read Write Edit Bash Grep\nYou can use Bash for git operations.\n\n# AGENTS.md (separate file, same project)\n\nNever use Bash for any operations.\nDo not use Edit or Write tools."
     },
     {
       "id": "XP-006",
@@ -3422,7 +3692,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "# CLAUDE.md\n\nCLAUDE.md takes precedence over AGENTS.md.\n\n## Code Style\n- Use TypeScript\n- Follow ESLint rules",
+      "bad_example": "# CLAUDE.md\n\n## Code Style\n- Use TypeScript\n- Follow ESLint rules\n\n# AGENTS.md (separate file, same project)\n\n## Code Style\n- Use JavaScript\n- Follow Prettier rules"
     },
     {
       "id": "OC-001",
@@ -3448,7 +3720,9 @@
       "fix": {
         "autofix": true,
         "fix_safety": "unsafe"
-      }
+      },
+      "good_example": "{\n  \"share\": \"manual\"\n}",
+      "bad_example": "{\n  \"share\": \"public\"\n}"
     },
     {
       "id": "OC-002",
@@ -3473,7 +3747,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "{\n  \"instructions\": [\"**/*.md\"]\n}",
+      "bad_example": "{\n  \"instructions\": [\"[unclosed\"]\n}"
     },
     {
       "id": "OC-003",
@@ -3498,7 +3774,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "{\n  \"share\": \"manual\",\n  \"instructions\": [\"**/*.md\"]\n}",
+      "bad_example": "{ invalid json content }"
     },
     {
       "id": "GM-001",
@@ -3523,7 +3801,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "# Project\n\nThis is a web application.\n\n```bash\nnpm install\n```\n\n## Testing\n\nRun npm test.",
+      "bad_example": "# Project\n\nThis is a web application.\n\n```bash\nnpm install"
     },
     {
       "id": "GM-002",
@@ -3548,7 +3828,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "# My Project\n\nA web application built with TypeScript.\n\n## Build\n\nRun npm build.",
+      "bad_example": "Just plain text instructions without any section headers or structure."
     },
     {
       "id": "GM-003",
@@ -3573,7 +3855,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "# Project\n\nThis is a linter for agent configurations.\n\n## Build\n\nRun cargo build.",
+      "bad_example": "# Build Commands\n\nRun npm install and npm build.\n\n## Testing\n\nUse npm test."
     },
     {
       "id": "CDX-001",
@@ -3599,7 +3883,9 @@
       "fix": {
         "autofix": true,
         "fix_safety": "unsafe"
-      }
+      },
+      "good_example": "approvalMode = \"suggest\"",
+      "bad_example": "approvalMode = \"yolo\""
     },
     {
       "id": "CDX-002",
@@ -3625,7 +3911,9 @@
       "fix": {
         "autofix": true,
         "fix_safety": "unsafe"
-      }
+      },
+      "good_example": "fullAutoErrorMode = \"ask-user\"",
+      "bad_example": "fullAutoErrorMode = \"crash\""
     },
     {
       "id": "CDX-003",
@@ -3650,7 +3938,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "# AGENTS.md\n\nProject instructions for Codex CLI.",
+      "bad_example": "# AGENTS.override.md\n\nLocal overrides that should not be committed to version control."
     },
     {
       "id": "VER-001",
@@ -3673,7 +3963,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "# .agnix.toml\n\n[tool_versions]\nclaude_code = \"1.0.20\"\n\n[spec_revisions]\nagent_skills_spec = \"2025-01-15\"",
+      "bad_example": "# .agnix.toml\n\n[rules]\nprompt_engineering = true\n\n# No tool_versions or spec_revisions pinned"
     },
     {
       "id": "CR-SK-001",
@@ -3699,7 +3991,9 @@
       "fix": {
         "autofix": true,
         "fix_safety": "safe"
-      }
+      },
+      "good_example": "---\nname: my-skill\ndescription: A useful development skill\ndisable-model-invocation: true\n---\n# My Skill\n\nSkill instructions here.",
+      "bad_example": "---\nname: my-skill\ndescription: A useful development skill\nmodel: opus\n---\n# My Skill\n\nSkill instructions here."
     },
     {
       "id": "CL-SK-001",
@@ -3725,7 +4019,9 @@
       "fix": {
         "autofix": true,
         "fix_safety": "safe"
-      }
+      },
+      "good_example": "---\nname: my-skill\ndescription: A useful development skill\n---\n# My Skill\n\nSkill instructions here.",
+      "bad_example": "---\nname: my-skill\ndescription: A useful development skill\ncontext: fork\n---\n# My Skill\n\nSkill instructions here."
     },
     {
       "id": "CP-SK-001",
@@ -3751,7 +4047,9 @@
       "fix": {
         "autofix": true,
         "fix_safety": "safe"
-      }
+      },
+      "good_example": "---\nname: my-skill\ndescription: A useful development skill\n---\n# My Skill\n\nSkill instructions here.",
+      "bad_example": "---\nname: my-skill\ndescription: A useful development skill\nagent: general-purpose\n---\n# My Skill\n\nSkill instructions here."
     },
     {
       "id": "CX-SK-001",
@@ -3777,7 +4075,9 @@
       "fix": {
         "autofix": true,
         "fix_safety": "safe"
-      }
+      },
+      "good_example": "---\nname: my-skill\ndescription: A useful development skill\n---\n# My Skill\n\nSkill instructions here.",
+      "bad_example": "---\nname: my-skill\ndescription: A useful development skill\nhooks: some-value\n---\n# My Skill\n\nSkill instructions here."
     },
     {
       "id": "OC-SK-001",
@@ -3803,7 +4103,9 @@
       "fix": {
         "autofix": true,
         "fix_safety": "safe"
-      }
+      },
+      "good_example": "---\nname: my-skill\ndescription: A useful development skill\n---\n# My Skill\n\nSkill instructions here.",
+      "bad_example": "---\nname: my-skill\ndescription: A useful development skill\nargument-hint: provide a file path\n---\n# My Skill\n\nSkill instructions here."
     },
     {
       "id": "WS-SK-001",
@@ -3829,7 +4131,9 @@
       "fix": {
         "autofix": true,
         "fix_safety": "safe"
-      }
+      },
+      "good_example": "---\nname: my-skill\ndescription: A useful development skill\n---\n# My Skill\n\nSkill instructions here.",
+      "bad_example": "---\nname: my-skill\ndescription: A useful development skill\nuser-invocable: true\n---\n# My Skill\n\nSkill instructions here."
     },
     {
       "id": "KR-SK-001",
@@ -3855,7 +4159,9 @@
       "fix": {
         "autofix": true,
         "fix_safety": "safe"
-      }
+      },
+      "good_example": "---\nname: my-skill\ndescription: A useful development skill\n---\n# My Skill\n\nSkill instructions here.",
+      "bad_example": "---\nname: my-skill\ndescription: A useful development skill\nmodel: haiku\n---\n# My Skill\n\nSkill instructions here."
     },
     {
       "id": "AMP-SK-001",
@@ -3881,7 +4187,9 @@
       "fix": {
         "autofix": true,
         "fix_safety": "safe"
-      }
+      },
+      "good_example": "---\nname: my-skill\ndescription: A useful development skill\n---\n# My Skill\n\nSkill instructions here.",
+      "bad_example": "---\nname: my-skill\ndescription: A useful development skill\nmodel: opus\n---\n# My Skill\n\nSkill instructions here."
     },
     {
       "id": "RC-SK-001",
@@ -3907,7 +4215,9 @@
       "fix": {
         "autofix": true,
         "fix_safety": "safe"
-      }
+      },
+      "good_example": "---\nname: my-skill\ndescription: A useful development skill\n---\n# My Skill\n\nSkill instructions here.",
+      "bad_example": "---\nname: my-skill\ndescription: A useful development skill\ndisable-model-invocation: false\n---\n# My Skill\n\nSkill instructions here."
     },
     {
       "id": "XP-SK-001",
@@ -3930,7 +4240,9 @@
       },
       "fix": {
         "autofix": false
-      }
+      },
+      "good_example": "---\nname: code-review\ndescription: Reviews code for quality issues\n---\nReview the code for bugs and style issues.",
+      "bad_example": "---\nname: code-review\ndescription: Reviews code for quality issues\nmodel: opus\ncontext: fork\nagent: general-purpose\n---\nReview the code for bugs and style issues."
     }
   ],
   "categories": {

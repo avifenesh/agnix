@@ -33,23 +33,28 @@ keywords: ["CC-AG-013", "invalid skill name format", "claude agents", "validatio
 
 ## Examples
 
-The following examples are illustrative snippets for this rule category.
+The following examples demonstrate what triggers this rule and how to fix it.
 
 ### Invalid
 
 ```markdown
 ---
-name: reviewer
+name: my-agent
+description: Agent with invalid skill name format
+skills:
+  - Code_Review
+  - --bad-name
 ---
-```
+Agent instructions.```
 
 ### Valid
 
 ```markdown
 ---
-name: reviewer
-description: Review code for correctness and tests
-model: sonnet
-tools: [Read, Grep, Bash]
+name: my-agent
+description: Agent with valid skill names
+skills:
+  - code-review
+  - deploy-prod
 ---
-```
+Agent instructions.```

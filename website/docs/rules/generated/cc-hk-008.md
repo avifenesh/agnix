@@ -33,32 +33,36 @@ keywords: ["CC-HK-008", "script file not found", "claude hooks", "validation", "
 
 ## Examples
 
-The following examples are illustrative snippets for this rule category.
+The following examples demonstrate what triggers this rule and how to fix it.
 
 ### Invalid
 
 ```json
 {
-  "hooks": [
-    {
-      "event": "PreToolUse",
-      "matcher": "*"
-    }
-  ]
-}
-```
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          { "type": "command", "command": "./scripts/nonexistent-hook.sh", "timeout": 30 }
+        ]
+      }
+    ]
+  }
+}```
 
 ### Valid
 
 ```json
 {
-  "hooks": [
-    {
-      "event": "PreToolUse",
-      "matcher": "Write",
-      "command": "./scripts/validate.sh",
-      "timeout": 30
-    }
-  ]
-}
-```
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          { "type": "command", "command": "echo inline check", "timeout": 30 }
+        ]
+      }
+    ]
+  }
+}```

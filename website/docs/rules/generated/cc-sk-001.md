@@ -33,22 +33,24 @@ keywords: ["CC-SK-001", "invalid model value", "claude skills", "validation", "a
 
 ## Examples
 
-The following examples are illustrative snippets for this rule category.
+The following examples demonstrate what triggers this rule and how to fix it.
 
 ### Invalid
 
 ```markdown
 ---
-name: Deploy_Prod
-description: Deploys production changes
+name: fast-review
+description: Use when doing quick code reviews
+model: gpt-4
 ---
-```
+Review the code for obvious issues.```
 
 ### Valid
 
 ```markdown
 ---
-name: deploy-prod
-description: Deploy production with explicit checks
+name: fast-review
+description: Use when doing quick code reviews
+model: haiku
 ---
-```
+Review the code for obvious issues.```

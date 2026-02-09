@@ -33,23 +33,29 @@ keywords: ["CC-AG-009", "invalid tool name in tools list", "claude agents", "val
 
 ## Examples
 
-The following examples are illustrative snippets for this rule category.
+The following examples demonstrate what triggers this rule and how to fix it.
 
 ### Invalid
 
 ```markdown
 ---
-name: reviewer
+name: my-agent
+description: Agent with unknown tool
+tools:
+  - Read
+  - MakeFile
 ---
-```
+Agent instructions.```
 
 ### Valid
 
 ```markdown
 ---
-name: reviewer
-description: Review code for correctness and tests
-model: sonnet
-tools: [Read, Grep, Bash]
+name: my-agent
+description: Agent with valid tools
+tools:
+  - Read
+  - Write
+  - Bash
 ---
-```
+Agent instructions.```

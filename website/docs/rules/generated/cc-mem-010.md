@@ -33,19 +33,22 @@ keywords: ["CC-MEM-010", "readme duplication", "claude memory", "validation", "a
 
 ## Examples
 
-The following examples are illustrative snippets for this rule category.
+The following examples demonstrate what triggers this rule and how to fix it.
 
 ### Invalid
 
 ```markdown
-# Memory
-Always be helpful.
-```
+# My Project
+
+This project validates agent configurations using Rust for performance.
+
+(Content duplicated verbatim from README.md)```
 
 ### Valid
 
 ```markdown
 # Project Memory
-- Use Rust workspace conventions
-- Keep AGENTS.md and CLAUDE.md identical
-```
+
+Project-specific agent instructions:
+- Always run tests before committing
+- Use feature branches for changes```

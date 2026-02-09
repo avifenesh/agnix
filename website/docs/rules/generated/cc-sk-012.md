@@ -33,22 +33,24 @@ keywords: ["CC-SK-012", "argument hint without $arguments", "claude skills", "va
 
 ## Examples
 
-The following examples are illustrative snippets for this rule category.
+The following examples demonstrate what triggers this rule and how to fix it.
 
 ### Invalid
 
 ```markdown
 ---
-name: Deploy_Prod
-description: Deploys production changes
+name: greet-user
+description: Use when greeting a user by name
+argument-hint: Enter the user's name
 ---
-```
+Greet the user with a friendly message.```
 
 ### Valid
 
 ```markdown
 ---
-name: deploy-prod
-description: Deploy production with explicit checks
+name: greet-user
+description: Use when greeting a user by name
+argument-hint: Enter the user's name
 ---
-```
+Greet the user: Hello, $ARGUMENTS!```

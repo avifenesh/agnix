@@ -33,19 +33,20 @@ keywords: ["CC-MEM-009", "token count exceeded", "claude memory", "validation", 
 
 ## Examples
 
-The following examples are illustrative snippets for this rule category.
+The following examples demonstrate what triggers this rule and how to fix it.
 
 ### Invalid
 
 ```markdown
-# Memory
-Always be helpful.
-```
+# Project Rules
+
+[...6000+ characters of instructions that exceed the ~1500 token limit for CLAUDE.md files, causing context window bloat and reduced instruction adherence...]```
 
 ### Valid
 
 ```markdown
-# Project Memory
-- Use Rust workspace conventions
-- Keep AGENTS.md and CLAUDE.md identical
-```
+# Project Rules
+
+Use TypeScript strict mode.
+Run tests before committing.
+Follow the style guide.```

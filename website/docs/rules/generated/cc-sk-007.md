@@ -33,22 +33,24 @@ keywords: ["CC-SK-007", "unrestricted bash", "claude skills", "validation", "agn
 
 ## Examples
 
-The following examples are illustrative snippets for this rule category.
+The following examples demonstrate what triggers this rule and how to fix it.
 
 ### Invalid
 
 ```markdown
 ---
-name: Deploy_Prod
-description: Deploys production changes
+name: git-status
+description: Use when checking git status
+allowed-tools: Bash, Read
 ---
-```
+Run git status and read the output.```
 
 ### Valid
 
 ```markdown
 ---
-name: deploy-prod
-description: Deploy production with explicit checks
+name: git-status
+description: Use when checking git status
+allowed-tools: Bash(git:*), Read
 ---
-```
+Run git status and read the output.```

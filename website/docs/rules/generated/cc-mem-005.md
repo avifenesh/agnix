@@ -34,19 +34,18 @@ keywords: ["CC-MEM-005", "generic instruction", "claude memory", "validation", "
 
 ## Examples
 
-The following examples are illustrative snippets for this rule category.
+The following examples demonstrate what triggers this rule and how to fix it.
 
 ### Invalid
 
 ```markdown
-# Memory
-Always be helpful.
-```
+Be helpful and accurate when responding.
+Always provide the best possible answer.```
 
 ### Valid
 
 ```markdown
-# Project Memory
-- Use Rust workspace conventions
-- Keep AGENTS.md and CLAUDE.md identical
-```
+# Project Rules
+
+Always use TypeScript strict mode.
+Run `cargo test` before committing.```

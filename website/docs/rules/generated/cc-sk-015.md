@@ -33,22 +33,24 @@ keywords: ["CC-SK-015", "invalid user-invocable type", "claude skills", "validat
 
 ## Examples
 
-The following examples are illustrative snippets for this rule category.
+The following examples demonstrate what triggers this rule and how to fix it.
 
 ### Invalid
 
 ```markdown
 ---
-name: Deploy_Prod
-description: Deploys production changes
+name: slash-cmd
+description: Use when user types the slash command
+user-invocable: "false"
 ---
-```
+Handle the slash command.```
 
 ### Valid
 
 ```markdown
 ---
-name: deploy-prod
-description: Deploy production with explicit checks
+name: slash-cmd
+description: Use when user types the slash command
+user-invocable: true
 ---
-```
+Handle the slash command.```

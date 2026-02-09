@@ -33,22 +33,24 @@ keywords: ["CC-SK-014", "invalid disable-model-invocation type", "claude skills"
 
 ## Examples
 
-The following examples are illustrative snippets for this rule category.
+The following examples demonstrate what triggers this rule and how to fix it.
 
 ### Invalid
 
 ```markdown
 ---
-name: Deploy_Prod
-description: Deploys production changes
+name: quiet-skill
+description: Use when running without model invocation
+disable-model-invocation: "true"
 ---
-```
+Run silently.```
 
 ### Valid
 
 ```markdown
 ---
-name: deploy-prod
-description: Deploy production with explicit checks
+name: quiet-skill
+description: Use when running without model invocation
+disable-model-invocation: true
 ---
-```
+Run silently.```

@@ -33,22 +33,25 @@ keywords: ["CC-SK-011", "unreachable skill", "claude skills", "validation", "agn
 
 ## Examples
 
-The following examples are illustrative snippets for this rule category.
+The following examples demonstrate what triggers this rule and how to fix it.
 
 ### Invalid
 
 ```markdown
 ---
-name: Deploy_Prod
-description: Deploys production changes
+name: internal-skill
+description: Use when running internal automation
+user-invocable: false
+disable-model-invocation: true
 ---
-```
+This skill cannot be reached by anyone.```
 
 ### Valid
 
 ```markdown
 ---
-name: deploy-prod
-description: Deploy production with explicit checks
+name: internal-skill
+description: Use when running internal automation
+user-invocable: false
 ---
-```
+This skill can still be invoked by the model.```

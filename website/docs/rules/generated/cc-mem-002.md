@@ -33,19 +33,23 @@ keywords: ["CC-MEM-002", "circular import", "claude memory", "validation", "agni
 
 ## Examples
 
-The following examples are illustrative snippets for this rule category.
+The following examples demonstrate what triggers this rule and how to fix it.
 
 ### Invalid
 
 ```markdown
-# Memory
-Always be helpful.
-```
+# Project Memory
+
+@import ./CLAUDE.md
+
+This file imports itself, creating a circular dependency.```
 
 ### Valid
 
 ```markdown
 # Project Memory
-- Use Rust workspace conventions
-- Keep AGENTS.md and CLAUDE.md identical
-```
+
+@import ./docs/style.md
+@import ./docs/testing.md
+
+Follow these standards.```

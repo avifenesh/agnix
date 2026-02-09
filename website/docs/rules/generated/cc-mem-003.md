@@ -33,19 +33,22 @@ keywords: ["CC-MEM-003", "import depth exceeds 5", "claude memory", "validation"
 
 ## Examples
 
-The following examples are illustrative snippets for this rule category.
+The following examples demonstrate what triggers this rule and how to fix it.
 
 ### Invalid
 
 ```markdown
-# Memory
-Always be helpful.
-```
+# Project Memory
+
+@import ./level1.md
+
+This starts a chain: level1 -> level2 -> level3 -> level4 -> level5 -> level6 (exceeds depth 5).```
 
 ### Valid
 
 ```markdown
 # Project Memory
-- Use Rust workspace conventions
-- Keep AGENTS.md and CLAUDE.md identical
-```
+
+@import ./docs/guidelines.md
+
+Keep import chains shallow.```

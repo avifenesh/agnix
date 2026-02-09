@@ -33,23 +33,24 @@ keywords: ["CC-AG-008", "invalid memory scope", "claude agents", "validation", "
 
 ## Examples
 
-The following examples are illustrative snippets for this rule category.
+The following examples demonstrate what triggers this rule and how to fix it.
 
 ### Invalid
 
 ```markdown
 ---
-name: reviewer
+name: my-agent
+description: Agent with invalid memory
+memory: global
 ---
-```
+Agent instructions.```
 
 ### Valid
 
 ```markdown
 ---
-name: reviewer
-description: Review code for correctness and tests
-model: sonnet
-tools: [Read, Grep, Bash]
+name: my-agent
+description: Agent with valid memory
+memory: project
 ---
-```
+Agent instructions.```

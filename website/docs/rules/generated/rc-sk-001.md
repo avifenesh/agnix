@@ -33,14 +33,27 @@ keywords: ["RC-SK-001", "roo code skill uses unsupported field", "roo-code-skill
 
 ## Examples
 
-The following examples are illustrative snippets for this rule category.
+The following examples demonstrate what triggers this rule and how to fix it.
 
 ### Invalid
 
 ```text
-Configuration omitted required fields for this rule.```
+---
+name: my-skill
+description: A useful development skill
+disable-model-invocation: false
+---
+# My Skill
+
+Skill instructions here.```
 
 ### Valid
 
 ```text
-Configuration includes required fields and follows the rule.```
+---
+name: my-skill
+description: A useful development skill
+---
+# My Skill
+
+Skill instructions here.```

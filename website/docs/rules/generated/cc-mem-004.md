@@ -33,19 +33,19 @@ keywords: ["CC-MEM-004", "invalid command reference", "claude memory", "validati
 
 ## Examples
 
-The following examples are illustrative snippets for this rule category.
+The following examples demonstrate what triggers this rule and how to fix it.
 
 ### Invalid
 
 ```markdown
-# Memory
-Always be helpful.
-```
+# Commands
+
+Run tests with `npm run nonexistent````
 
 ### Valid
 
 ```markdown
-# Project Memory
-- Use Rust workspace conventions
-- Keep AGENTS.md and CLAUDE.md identical
-```
+# Commands
+
+Run tests with `npm run test`
+Build with `npm run build````
