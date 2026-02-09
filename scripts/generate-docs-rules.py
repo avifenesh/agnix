@@ -34,6 +34,15 @@ CATEGORY_LABELS: Dict[str, str] = {
     "gemini-cli": "Gemini CLI",
     "opencode": "OpenCode",
     "version-awareness": "Version Awareness",
+    "cursor-skills": "Cursor Skills",
+    "cline-skills": "Cline Skills",
+    "copilot-skills": "Copilot Skills",
+    "codex-skills": "Codex Skills",
+    "opencode-skills": "OpenCode Skills",
+    "windsurf-skills": "Windsurf Skills",
+    "kiro-skills": "Kiro Skills",
+    "amp-skills": "Amp Skills",
+    "roo-code-skills": "Roo Code Skills",
 }
 
 TEMPLATES: Dict[str, Dict[str, str]] = {
@@ -112,6 +121,35 @@ TEMPLATES: Dict[str, Dict[str, str]] = {
         "valid": """Declare supported version range and degrade gracefully outside the range.\n""",
         "lang": "markdown",
     },
+    "cline": {
+        "invalid": "# Rules\n",
+        "valid": "# Project Rules\n\nFollow coding standards and write tests.\n",
+        "lang": "markdown",
+    },
+    "codex": {
+        "invalid": "",
+        "valid": "[model]\nmodel = \"o4-mini\"\n",
+        "lang": "toml",
+    },
+    "gemini-cli": {
+        "invalid": "# Gemini\n",
+        "valid": "# Gemini Instructions\n\nFollow project coding standards.\n",
+        "lang": "markdown",
+    },
+    "opencode": {
+        "invalid": "{}",
+        "valid": """{"model": "claude-sonnet-4-5-20250929", "share": "manual"}\n""",
+        "lang": "json",
+    },
+    "cline-skills": {"invalid": "", "valid": "", "lang": "markdown"},
+    "codex-skills": {"invalid": "", "valid": "", "lang": "markdown"},
+    "copilot-skills": {"invalid": "", "valid": "", "lang": "markdown"},
+    "cursor-skills": {"invalid": "", "valid": "", "lang": "markdown"},
+    "opencode-skills": {"invalid": "", "valid": "", "lang": "markdown"},
+    "windsurf-skills": {"invalid": "", "valid": "", "lang": "markdown"},
+    "kiro-skills": {"invalid": "", "valid": "", "lang": "markdown"},
+    "amp-skills": {"invalid": "", "valid": "", "lang": "markdown"},
+    "roo-code-skills": {"invalid": "", "valid": "", "lang": "markdown"},
 }
 
 

@@ -2,15 +2,15 @@
 id: cr-sk-001
 title: "CR-SK-001: Cursor Skill Uses Unsupported Field"
 sidebar_label: "CR-SK-001"
-description: "agnix rule CR-SK-001 checks for cursor skill uses unsupported field in cursor-skills files. Severity: MEDIUM. See examples and fix guidance."
-keywords: ["CR-SK-001", "cursor skill uses unsupported field", "cursor-skills", "validation", "agnix", "linter"]
+description: "agnix rule CR-SK-001 checks for cursor skill uses unsupported field in cursor skills files. Severity: MEDIUM. See examples and fix guidance."
+keywords: ["CR-SK-001", "cursor skill uses unsupported field", "cursor skills", "validation", "agnix", "linter"]
 ---
 
 ## Summary
 
 - **Rule ID**: `CR-SK-001`
 - **Severity**: `MEDIUM`
-- **Category**: `cursor-skills`
+- **Category**: `Cursor Skills`
 - **Normative Level**: `SHOULD`
 - **Auto-Fix**: `Yes (safe/unsafe)`
 - **Verified On**: `2026-02-07`
@@ -37,7 +37,7 @@ The following examples demonstrate what triggers this rule and how to fix it.
 
 ### Invalid
 
-```text
+```markdown
 ---
 name: my-skill
 description: A useful development skill
@@ -50,7 +50,7 @@ Skill instructions here.
 
 ### Valid
 
-```text
+```markdown
 ---
 name: my-skill
 description: A useful development skill

@@ -1,16 +1,16 @@
 ---
 id: kr-sk-001
-title: "KR-SK-001: Kiro Skill Uses Unsupported Field - kiro-skills"
+title: "KR-SK-001: Kiro Skill Uses Unsupported Field - Kiro Skills"
 sidebar_label: "KR-SK-001"
-description: "agnix rule KR-SK-001 checks for kiro skill uses unsupported field in kiro-skills files. Severity: MEDIUM. See examples and fix guidance."
-keywords: ["KR-SK-001", "kiro skill uses unsupported field", "kiro-skills", "validation", "agnix", "linter"]
+description: "agnix rule KR-SK-001 checks for kiro skill uses unsupported field in kiro skills files. Severity: MEDIUM. See examples and fix guidance."
+keywords: ["KR-SK-001", "kiro skill uses unsupported field", "kiro skills", "validation", "agnix", "linter"]
 ---
 
 ## Summary
 
 - **Rule ID**: `KR-SK-001`
 - **Severity**: `MEDIUM`
-- **Category**: `kiro-skills`
+- **Category**: `Kiro Skills`
 - **Normative Level**: `SHOULD`
 - **Auto-Fix**: `Yes (safe/unsafe)`
 - **Verified On**: `2026-02-07`
@@ -37,7 +37,7 @@ The following examples demonstrate what triggers this rule and how to fix it.
 
 ### Invalid
 
-```text
+```markdown
 ---
 name: my-skill
 description: A useful development skill
@@ -50,7 +50,7 @@ Skill instructions here.
 
 ### Valid
 
-```text
+```markdown
 ---
 name: my-skill
 description: A useful development skill

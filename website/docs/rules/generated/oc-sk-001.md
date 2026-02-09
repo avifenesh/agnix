@@ -2,15 +2,15 @@
 id: oc-sk-001
 title: "OC-SK-001: OpenCode Skill Uses Unsupported Field"
 sidebar_label: "OC-SK-001"
-description: "agnix rule OC-SK-001 checks for opencode skill uses unsupported field in opencode-skills files. Severity: MEDIUM. See examples and fix guidance."
-keywords: ["OC-SK-001", "opencode skill uses unsupported field", "opencode-skills", "validation", "agnix", "linter"]
+description: "agnix rule OC-SK-001 checks for opencode skill uses unsupported field in opencode skills files. Severity: MEDIUM. See examples and fix guidance."
+keywords: ["OC-SK-001", "opencode skill uses unsupported field", "opencode skills", "validation", "agnix", "linter"]
 ---
 
 ## Summary
 
 - **Rule ID**: `OC-SK-001`
 - **Severity**: `MEDIUM`
-- **Category**: `opencode-skills`
+- **Category**: `OpenCode Skills`
 - **Normative Level**: `SHOULD`
 - **Auto-Fix**: `Yes (safe/unsafe)`
 - **Verified On**: `2026-02-07`
@@ -37,7 +37,7 @@ The following examples demonstrate what triggers this rule and how to fix it.
 
 ### Invalid
 
-```text
+```markdown
 ---
 name: my-skill
 description: A useful development skill
@@ -50,7 +50,7 @@ Skill instructions here.
 
 ### Valid
 
-```text
+```markdown
 ---
 name: my-skill
 description: A useful development skill

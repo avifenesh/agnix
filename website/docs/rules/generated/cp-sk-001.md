@@ -2,15 +2,15 @@
 id: cp-sk-001
 title: "CP-SK-001: Copilot Skill Uses Unsupported Field"
 sidebar_label: "CP-SK-001"
-description: "agnix rule CP-SK-001 checks for copilot skill uses unsupported field in copilot-skills files. Severity: MEDIUM. See examples and fix guidance."
-keywords: ["CP-SK-001", "copilot skill uses unsupported field", "copilot-skills", "validation", "agnix", "linter"]
+description: "agnix rule CP-SK-001 checks for copilot skill uses unsupported field in copilot skills files. Severity: MEDIUM. See examples and fix guidance."
+keywords: ["CP-SK-001", "copilot skill uses unsupported field", "copilot skills", "validation", "agnix", "linter"]
 ---
 
 ## Summary
 
 - **Rule ID**: `CP-SK-001`
 - **Severity**: `MEDIUM`
-- **Category**: `copilot-skills`
+- **Category**: `Copilot Skills`
 - **Normative Level**: `SHOULD`
 - **Auto-Fix**: `Yes (safe/unsafe)`
 - **Verified On**: `2026-02-07`
@@ -37,7 +37,7 @@ The following examples demonstrate what triggers this rule and how to fix it.
 
 ### Invalid
 
-```text
+```markdown
 ---
 name: my-skill
 description: A useful development skill
@@ -50,7 +50,7 @@ Skill instructions here.
 
 ### Valid
 
-```text
+```markdown
 ---
 name: my-skill
 description: A useful development skill

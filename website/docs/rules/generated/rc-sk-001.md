@@ -2,15 +2,15 @@
 id: rc-sk-001
 title: "RC-SK-001: Roo Code Skill Uses Unsupported Field"
 sidebar_label: "RC-SK-001"
-description: "agnix rule RC-SK-001 checks for roo code skill uses unsupported field in roo-code-skills files. Severity: MEDIUM. See examples and fix guidance."
-keywords: ["RC-SK-001", "roo code skill uses unsupported field", "roo-code-skills", "validation", "agnix", "linter"]
+description: "agnix rule RC-SK-001 checks for roo code skill uses unsupported field in roo code skills files. Severity: MEDIUM. See examples and fix guidance."
+keywords: ["RC-SK-001", "roo code skill uses unsupported field", "roo code skills", "validation", "agnix", "linter"]
 ---
 
 ## Summary
 
 - **Rule ID**: `RC-SK-001`
 - **Severity**: `MEDIUM`
-- **Category**: `roo-code-skills`
+- **Category**: `Roo Code Skills`
 - **Normative Level**: `SHOULD`
 - **Auto-Fix**: `Yes (safe/unsafe)`
 - **Verified On**: `2026-02-07`
@@ -37,7 +37,7 @@ The following examples demonstrate what triggers this rule and how to fix it.
 
 ### Invalid
 
-```text
+```markdown
 ---
 name: my-skill
 description: A useful development skill
@@ -50,7 +50,7 @@ Skill instructions here.
 
 ### Valid
 
-```text
+```markdown
 ---
 name: my-skill
 description: A useful development skill
