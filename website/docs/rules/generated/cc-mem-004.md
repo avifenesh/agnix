@@ -41,6 +41,8 @@ The following examples demonstrate what triggers this rule and how to fix it.
 # Commands
 
 Run tests with `npm run nonexistent`
+
+(Requires package.json with scripts section in the same directory for this rule to trigger)
 ```
 
 ### Valid
@@ -50,4 +52,6 @@ Run tests with `npm run nonexistent`
 
 Run tests with `npm run test`
 Build with `npm run build`
+
+(Valid when package.json has test and build scripts)
 ```

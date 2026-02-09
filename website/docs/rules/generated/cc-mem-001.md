@@ -40,9 +40,9 @@ The following examples demonstrate what triggers this rule and how to fix it.
 ```markdown
 # Project Memory
 
-@import /absolute/path/to/nonexistent.md
+See @docs/nonexistent-guide.md for the coding standards.
 
-Follow these coding standards.
+Always run tests before committing.
 ```
 
 ### Valid
@@ -50,7 +50,6 @@ Follow these coding standards.
 ```markdown
 # Project Memory
 
-@import ./docs/guidelines.md
-
-Follow these coding standards.
+Always run tests before committing.
+Follow the coding standards in the docs/ directory.
 ```

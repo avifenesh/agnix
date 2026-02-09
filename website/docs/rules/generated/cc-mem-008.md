@@ -48,21 +48,21 @@ The project uses a monorepo structure.
 
 ## Testing
 
-Run unit tests.
-
-## Deployment
-
-Deploy to staging.
-
-## Monitoring
-
-Check dashboards.
+Run unit tests with npm test.
 
 IMPORTANT: Always run tests before committing.
 
+## Deployment
+
+Deploy to staging first.
+
+## Monitoring
+
+Check dashboards after deploy.
+
 ## Cleanup
 
-Remove temp files.
+Remove temp files after build.
 ```
 
 ### Valid
@@ -79,4 +79,20 @@ Install dependencies with npm install.
 ## Architecture
 
 The project uses a monorepo structure.
+
+## Testing
+
+Run unit tests.
+
+## Deployment
+
+Deploy to staging.
+
+## Monitoring
+
+Check dashboards.
+
+## Cleanup
+
+Remove temp files.
 ```

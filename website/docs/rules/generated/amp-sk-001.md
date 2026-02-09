@@ -46,6 +46,8 @@ model: opus
 # My Skill
 
 Skill instructions here.
+
+(Note: AMP-SK-001 requires explicit Amp configuration context. The .agents/ directory is mapped to Codex by default.)
 ```
 
 ### Valid
