@@ -254,7 +254,7 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 **Source**: code.claude.com/docs/en/skills
 
 <a id="cc-sk-007"></a>
-### CC-SK-007 [HIGH] Unrestricted Bash
+### CC-SK-007 [MEDIUM] Unrestricted Bash
 **Requirement**: Bash in allowed-tools SHOULD be scoped
 **Detection**: `allowed_tools.contains("Bash") && !allowed_tools.contains("Bash(")`
 **Fix**: [AUTO-FIX] Replace unrestricted Bash with scoped version (e.g., `Bash(git:*)`)
@@ -1223,7 +1223,7 @@ agent: reviewer
 **Source**: multi-platform research
 
 <a id="xp-002"></a>
-### XP-002 [HIGH] AGENTS.md Platform Compatibility
+### XP-002 [MEDIUM] AGENTS.md Platform Compatibility
 **Requirement**: AGENTS.md is a widely-adopted standard used by multiple platforms
 **Supported Platforms**:
 - Codex CLI (OpenAI)
@@ -1237,7 +1237,7 @@ agent: reviewer
 **Source**: developers.openai.com/codex/guides/agents-md, opencode.ai/docs/rules, docs.cursor.com/en/context, docs.cline.bot/features/custom-instructions, github.com/github/docs/changelog/2025-06-17-github-copilot-coding-agent-now-supports-agents-md-custom-instructions
 
 <a id="xp-003"></a>
-### XP-003 [HIGH] Hard-Coded Platform Paths
+### XP-003 [MEDIUM] Hard-Coded Platform Paths
 **Requirement**: Paths SHOULD use environment variables
 **Detection**: Check for `.claude/`, `.opencode/` in configs
 **Fix**: Use `$CLAUDE_PROJECT_DIR` or equivalent
