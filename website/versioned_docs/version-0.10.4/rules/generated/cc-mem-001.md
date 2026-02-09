@@ -1,0 +1,55 @@
+---
+id: cc-mem-001
+title: "CC-MEM-001: Invalid Import Path - Claude Memory"
+sidebar_label: "CC-MEM-001"
+description: "agnix rule CC-MEM-001 checks for invalid import path in claude memory files. Severity: HIGH. See examples and fix guidance."
+keywords: ["CC-MEM-001", "invalid import path", "claude memory", "validation", "agnix", "linter"]
+---
+
+## Summary
+
+- **Rule ID**: `CC-MEM-001`
+- **Severity**: `HIGH`
+- **Category**: `Claude Memory`
+- **Normative Level**: `MUST`
+- **Auto-Fix**: `No`
+- **Verified On**: `2026-02-04`
+
+## Applicability
+
+- **Tool**: `claude-code`
+- **Version Range**: `unspecified`
+- **Spec Revision**: `unspecified`
+
+## Evidence Sources
+
+- https://code.claude.com/docs/en/memory
+
+## Test Coverage Metadata
+
+- Unit tests: `true`
+- Fixture tests: `true`
+- E2E tests: `false`
+
+## Examples
+
+The following examples demonstrate what triggers this rule and how to fix it.
+
+### Invalid
+
+```markdown
+# Project Memory
+
+See @docs/nonexistent-guide.md for the coding standards.
+
+Always run tests before committing.
+```
+
+### Valid
+
+```markdown
+# Project Memory
+
+Always run tests before committing.
+Follow the coding standards in the docs/ directory.
+```
