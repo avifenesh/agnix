@@ -13,7 +13,7 @@ keywords: ["CC-MEM-005", "generic instruction", "claude memory", "validation", "
 - **Category**: `Claude Memory`
 - **Normative Level**: `SHOULD`
 - **Auto-Fix**: `Yes (safe)`
-- **Verified On**: `2026-02-04`
+- **Verified On**: `2026-02-09`
 
 ## Applicability
 
@@ -23,7 +23,7 @@ keywords: ["CC-MEM-005", "generic instruction", "claude memory", "validation", "
 
 ## Evidence Sources
 
-- https://github.com/anthropics/awesome-slash
+- https://github.com/anthropics/claude-code/tree/main/.claude/commands
 - https://arxiv.org/abs/2201.11903
 
 ## Test Coverage Metadata

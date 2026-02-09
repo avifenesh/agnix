@@ -1,6 +1,6 @@
 # Rules Reference
 
-This section contains all `155` validation rules generated from `knowledge-base/rules.json`.
+This section contains all `156` validation rules generated from `knowledge-base/rules.json`.
 `57` rules have automatic fixes.
 
 | Rule | Name | Severity | Category | Auto-Fix |
@@ -146,6 +146,7 @@ This section contains all `155` validation rules generated from `knowledge-base/
 | [GM-001](./generated/gm-001.md) | Invalid Markdown Structure in GEMINI.md | HIGH | Gemini CLI | No |
 | [GM-002](./generated/gm-002.md) | Missing Section Headers in GEMINI.md | MEDIUM | Gemini CLI | No |
 | [GM-003](./generated/gm-003.md) | Missing Project Context in GEMINI.md | MEDIUM | Gemini CLI | No |
+| [CDX-000](./generated/cdx-000.md) | Codex Config Parse Error | HIGH | Codex CLI | No |
 | [CDX-001](./generated/cdx-001.md) | Invalid Approval Mode | HIGH | Codex CLI | Yes (unsafe) |
 | [CDX-002](./generated/cdx-002.md) | Invalid Full Auto Error Mode | HIGH | Codex CLI | Yes (unsafe) |
 | [CDX-003](./generated/cdx-003.md) | AGENTS.override.md in Version Control | MEDIUM | Codex CLI | No |

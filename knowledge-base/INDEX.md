@@ -1,6 +1,6 @@
 # agnix Knowledge Base - Master Index
 
-> 155 validation rules across 28 categories, sourced from 75+ references
+> 156 validation rules across 28 categories, sourced from 75+ references
 
 
 ---
@@ -9,7 +9,7 @@
 
 | What You Need | Start Here |
 |---------------|------------|
-| **Implement validator** | [VALIDATION-RULES.md](./VALIDATION-RULES.md) - 155 rules with detection logic |
+| **Implement validator** | [VALIDATION-RULES.md](./VALIDATION-RULES.md) - 156 rules with detection logic |
 
 | **Understand a standard** | [standards/](#standards) - HARD-RULES files |
 | **Learn best practices** | [standards/](#standards) - OPINIONS files |
@@ -28,7 +28,7 @@
 knowledge-base/
 ├── INDEX.md                        # This file
 ├── README.md                       # Detailed navigation guide
-├── VALIDATION-RULES.md             # ⭐ Master validation reference (155 rules)
+├── VALIDATION-RULES.md             # ⭐ Master validation reference (156 rules)
 
 ├── PATTERNS-CATALOG.md             # 70 production-tested patterns
 ├── RESEARCH-TRACKING.md            # Tool inventory and monitoring process
@@ -81,7 +81,7 @@ knowledge-base/
 | **AGENTS.md** | 5 | - | - | 6 rules |
 | **Cursor** | 2 | - | - | 9 rules |
 | **awesome-slash** | 12 | - | - | 70 patterns |
-| **Total** | **75+** | **117KB** | **160KB** | **155 rules** |
+| **Total** | **75+** | **117KB** | **160KB** | **156 rules** |
 
 
 ### Validation Rules by Category
@@ -109,14 +109,14 @@ knowledge-base/
 | OpenCode Skills | 1 | 0 | 1 | 0 | 1 |
 | Gemini CLI | 3 | 1 | 2 | 0 | 0 |
 | Version Awareness | 1 | 0 | 0 | 1 | 0 |
-| Codex CLI | 3 | 2 | 1 | 0 | 0 |
+| Codex CLI | 4 | 3 | 1 | 0 | 0 |
 | Copilot Skills | 1 | 0 | 1 | 0 | 1 |
 | Codex Skills | 1 | 0 | 1 | 0 | 1 |
 | Windsurf Skills | 1 | 0 | 1 | 0 | 1 |
 | Kiro Skills | 1 | 0 | 1 | 0 | 1 |
 | Amp Skills | 1 | 0 | 1 | 0 | 1 |
 | Roo Code Skills | 1 | 0 | 1 | 0 | 1 |
-| **TOTAL** | **155** | **103** | **49** | **3** | **41** |
+| **TOTAL** | **156** | **104** | **49** | **3** | **41** |
 
 
 ---
@@ -155,7 +155,7 @@ knowledge-base/
 ### For Implementation
 
 **Start here**: [VALIDATION-RULES.md](./VALIDATION-RULES.md)
-- 155 rules with rule IDs (AS-001, CC-HK-001, etc.)
+- 156 rules with rule IDs (AS-001, CC-HK-001, etc.)
 
 - Detection pseudocode
 - Auto-fix implementations
@@ -281,7 +281,7 @@ Total Size:           650KB
 Standards Covered:     5 (Agent Skills, MCP, Claude Code, Multi-Platform, Prompt Eng)
 Sources Consulted:    75+ (specs, docs, research papers, repos)
 Research Agents:       5 (10+ sources each)
-Validation Rules:     155 rules
+Validation Rules:     156 rules
 Auto-Fixable Rules:   48 rules
 
 Test Fixtures:        116 files

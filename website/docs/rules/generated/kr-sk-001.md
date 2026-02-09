@@ -13,7 +13,7 @@ keywords: ["KR-SK-001", "kiro skill uses unsupported field", "kiro-skills", "val
 - **Category**: `kiro-skills`
 - **Normative Level**: `SHOULD`
 - **Auto-Fix**: `Yes (safe)`
-- **Verified On**: `2026-02-07`
+- **Verified On**: `2026-02-09`
 
 ## Applicability
 
@@ -23,7 +23,7 @@ keywords: ["KR-SK-001", "kiro skill uses unsupported field", "kiro-skills", "val
 
 ## Evidence Sources
 
-- https://kiro.dev/docs/context/steering
+- https://kiro.dev/docs/steering/
 
 ## Test Coverage Metadata
 

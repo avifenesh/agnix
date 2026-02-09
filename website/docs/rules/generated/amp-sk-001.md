@@ -13,7 +13,7 @@ keywords: ["AMP-SK-001", "amp skill uses unsupported field", "amp-skills", "vali
 - **Category**: `amp-skills`
 - **Normative Level**: `SHOULD`
 - **Auto-Fix**: `Yes (safe)`
-- **Verified On**: `2026-02-07`
+- **Verified On**: `2026-02-09`
 
 ## Applicability
 
@@ -23,7 +23,7 @@ keywords: ["AMP-SK-001", "amp skill uses unsupported field", "amp-skills", "vali
 
 ## Evidence Sources
 
-- https://docs.amp.dev/setup/customization
+- https://ampcode.com/manual#agent-skills
 
 ## Test Coverage Metadata
 

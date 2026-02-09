@@ -13,7 +13,7 @@ keywords: ["CC-SK-007", "unrestricted bash", "claude skills", "validation", "agn
 - **Category**: `Claude Skills`
 - **Normative Level**: `SHOULD`
 - **Auto-Fix**: `Yes (unsafe)`
-- **Verified On**: `2026-02-04`
+- **Verified On**: `2026-02-09`
 
 ## Applicability
 
@@ -23,7 +23,7 @@ keywords: ["CC-SK-007", "unrestricted bash", "claude skills", "validation", "agn
 
 ## Evidence Sources
 
-- https://github.com/anthropics/awesome-slash
+- https://github.com/anthropics/claude-code/tree/main/.claude/commands
 
 ## Test Coverage Metadata
 
