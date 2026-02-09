@@ -247,7 +247,7 @@
         "autofix": false
       },
       "good_example": "---\nname: check-deps\ndescription: Use when checking project dependencies for updates\n---\nRun npm outdated.",
-      "bad_example": "---\nname: check-deps\ndescription:\n---\nRun npm outdated."
+      "bad_example": "---\nname: check-deps\ndescription: \"\"\n---\nRun npm outdated."
     },
     {
       "id": "AS-009",
@@ -330,7 +330,7 @@
         "autofix": false
       },
       "good_example": "---\nname: migrate-db\ndescription: Use when running database migrations\ncompatibility: Requires PostgreSQL 14+ and Node.js 18+\n---\nRun the migration scripts.",
-      "bad_example": "---\nname: migrate-db\ndescription: Use when running database migrations\ncompatibility:\n---\nRun the migration scripts."
+      "bad_example": "---\nname: migrate-db\ndescription: Use when running database migrations\ncompatibility: \"\"\n---\nRun the migration scripts."
     },
     {
       "id": "AS-012",
@@ -2837,7 +2837,7 @@
         "autofix": false
       },
       "good_example": "# Copilot Instructions\n\nFollow the project coding standards and use TypeScript strict mode.",
-      "bad_example": "# Copilot Instructions\n"
+      "bad_example": "   \n\n"
     },
     {
       "id": "COP-002",
@@ -3249,7 +3249,7 @@
         "autofix": false
       },
       "good_example": "# Project Rules\n\nAlways follow the coding style guide and write tests for new features.",
-      "bad_example": "# Rules\n"
+      "bad_example": "   \n\n"
     },
     {
       "id": "CLN-002",
