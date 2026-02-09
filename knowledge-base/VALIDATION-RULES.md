@@ -1412,7 +1412,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | Category | Total Rules | HIGH | MEDIUM | LOW | Auto-Fixable |
 |----------|-------------|------|--------|-----|--------------|
 | Agent Skills | 16 | 14 | 2 | 0 | 5 |
-| Claude Skills | 15 | 12 | 3 | 0 | 9 |
+| Claude Skills | 15 | 11 | 4 | 0 | 9 |
 | Claude Hooks | 18 | 13 | 4 | 1 | 7 |
 | Claude Agents | 13 | 12 | 1 | 0 | 4 |
 | Claude Memory | 12 | 8 | 4 | 0 | 3 |
@@ -1428,7 +1428,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | XML | 3 | 3 | 0 | 0 | 3 |
 | References | 2 | 2 | 0 | 0 | 0 |
 | Prompt Eng | 4 | 0 | 4 | 0 | 0 |
-| Cross-Platform | 7 | 4 | 2 | 1 | 0 |
+| Cross-Platform | 7 | 2 | 4 | 1 | 0 |
 | Cursor Skills | 1 | 0 | 1 | 0 | 1 |
 | Cline Skills | 1 | 0 | 1 | 0 | 1 |
 | Copilot Skills | 1 | 0 | 1 | 0 | 1 |
@@ -1439,7 +1439,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | Amp Skills | 1 | 0 | 1 | 0 | 1 |
 | Roo Code Skills | 1 | 0 | 1 | 0 | 1 |
 | Version Awareness | 1 | 0 | 0 | 1 | 0 |
-| **TOTAL** | **155** | **103** | **49** | **3** | **57** |
+| **TOTAL** | **155** | **100** | **52** | **3** | **57** |
 
 
 ---
