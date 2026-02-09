@@ -183,13 +183,21 @@ def evaluate_probe(probe: ProbeResult) -> UrlResult:
 def check_once(url: str, timeout: float, max_body_bytes: int) -> UrlResult:
     head_probe = fetch(url, "HEAD", timeout, max_body_bytes)
     head_result = evaluate_probe(head_probe)
-    if head_result.ok and not is_html(head_probe.content_type):
-        return head_result
     get_probe = fetch(url, "GET", timeout, max_body_bytes)
     get_result = evaluate_probe(get_probe)
+
+    # Always verify with GET when HEAD succeeds. Some servers omit or misreport
+    # HEAD content-type, which can hide soft-404 pages.
     if head_result.ok:
-        get_result.method = "GET (verify-html)"
-    elif get_result.method == "GET":
+        if get_result.method == "GET":
+            get_result.method = "GET (verify)"
+        # If GET transiently fails but HEAD succeeded, prefer the successful HEAD
+        # probe to avoid false negatives caused by short-lived GET network issues.
+        if not get_result.ok and get_result.retryable:
+            return head_result
+        return get_result
+
+    if get_result.method == "GET":
         get_result.method = "GET (fallback)"
     if (not get_result.ok) and head_probe.status and head_probe.status >= 400 and get_probe.status is None:
         return head_result
