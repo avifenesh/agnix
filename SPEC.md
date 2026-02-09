@@ -1,6 +1,6 @@
 # agnix Technical Reference
 
-> Linter for agent configs. 155 rules across 28 categories.
+> Linter for agent configs. 156 rules across 28 categories.
 
 
 ## What agnix Validates
@@ -23,7 +23,7 @@
 | Cline | .clinerules, .clinerules/*.md | 3 |
 | OpenCode | opencode.json | 3 |
 | Gemini CLI | GEMINI.md, GEMINI.local.md | 3 |
-| Codex CLI | .codex/config.toml | 3 |
+| Codex CLI | .codex/config.toml | 4 |
 | Version Awareness | .agnix.toml | 1 |
 | Cursor Skills | .cursor/skills/*/SKILL.md | 1 |
 | Cline Skills | .cline/skills/*/SKILL.md | 1 |
@@ -49,7 +49,7 @@ agnix/
 │   ├── agnix-lsp/      # LSP server
 │   └── agnix-mcp/      # MCP server
 ├── editors/            # Neovim, VS Code, JetBrains, Zed integrations
-├── knowledge-base/     # 155 rules documented
+├── knowledge-base/     # 156 rules documented
 
 ├── scripts/            # Build/dev automation scripts
 ├── website/            # Docusaurus documentation website

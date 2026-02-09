@@ -13,7 +13,7 @@ keywords: ["CC-HK-009", "dangerous command pattern", "claude hooks", "validation
 - **Category**: `Claude Hooks`
 - **Normative Level**: `SHOULD`
 - **Auto-Fix**: `No`
-- **Verified On**: `2026-02-04`
+- **Verified On**: `2026-02-09`
 
 ## Applicability
 
@@ -23,7 +23,7 @@ keywords: ["CC-HK-009", "dangerous command pattern", "claude hooks", "validation
 
 ## Evidence Sources
 
-- https://github.com/anthropics/awesome-slash
+- https://github.com/anthropics/claude-code/tree/main/.claude/commands
 
 ## Test Coverage Metadata
 

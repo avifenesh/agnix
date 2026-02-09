@@ -1,8 +1,8 @@
 {
   "description": "Machine-readable source of truth for all validation rules. When adding a new rule, add it here AND in VALIDATION-RULES.md. CI parity tests enforce sync.",
   "version": "1.1.0",
-  "total_rules": 155,
-  "last_updated": "2026-02-07",
+  "total_rules": 156,
+  "last_updated": "2026-02-09",
   "schema": {
     "evidence": {
       "source_type": "spec|vendor_docs|vendor_code|paper|community",
@@ -284,10 +284,10 @@
       "evidence": {
         "source_type": "community",
         "source_urls": [
-          "https://github.com/anthropics/awesome-slash",
+          "https://github.com/anthropics/claude-code/tree/main/.claude/commands",
           "https://platform.claude.com/docs"
         ],
-        "verified_on": "2026-02-04",
+        "verified_on": "2026-02-09",
         "applies_to": {
           "tool": "claude-code"
         },
@@ -644,9 +644,9 @@
       "evidence": {
         "source_type": "community",
         "source_urls": [
-          "https://github.com/anthropics/awesome-slash"
+          "https://github.com/anthropics/claude-code/tree/main/.claude/commands"
         ],
-        "verified_on": "2026-02-04",
+        "verified_on": "2026-02-09",
         "applies_to": {
           "tool": "claude-code"
         },
@@ -1109,9 +1109,9 @@
       "evidence": {
         "source_type": "community",
         "source_urls": [
-          "https://github.com/anthropics/awesome-slash"
+          "https://github.com/anthropics/claude-code/tree/main/.claude/commands"
         ],
-        "verified_on": "2026-02-04",
+        "verified_on": "2026-02-09",
         "applies_to": {
           "tool": "claude-code"
         },
@@ -1820,9 +1820,9 @@
       "evidence": {
         "source_type": "community",
         "source_urls": [
-          "https://github.com/anthropics/awesome-slash"
+          "https://github.com/anthropics/claude-code/tree/main/.claude/commands"
         ],
-        "verified_on": "2026-02-04",
+        "verified_on": "2026-02-09",
         "applies_to": {
           "tool": "claude-code"
         },
@@ -1847,10 +1847,10 @@
       "evidence": {
         "source_type": "community",
         "source_urls": [
-          "https://github.com/anthropics/awesome-slash",
+          "https://github.com/anthropics/claude-code/tree/main/.claude/commands",
           "https://arxiv.org/abs/2201.11903"
         ],
-        "verified_on": "2026-02-04",
+        "verified_on": "2026-02-09",
         "applies_to": {
           "tool": "claude-code"
         },
@@ -1979,9 +1979,9 @@
       "evidence": {
         "source_type": "community",
         "source_urls": [
-          "https://github.com/anthropics/awesome-slash"
+          "https://github.com/anthropics/claude-code/tree/main/.claude/commands"
         ],
-        "verified_on": "2026-02-04",
+        "verified_on": "2026-02-09",
         "applies_to": {
           "tool": "claude-code"
         },
@@ -2063,9 +2063,9 @@
         "source_urls": [
           "https://developers.openai.com/codex/guides/agents-md",
           "https://docs.cursor.com/en/context",
-          "https://docs.cline.bot/features/custom-instructions"
+          "https://docs.cline.bot/prompting/cline-memory-bank#cline-memory-bank-custom-instructions-[copy-this]"
         ],
-        "verified_on": "2026-02-04",
+        "verified_on": "2026-02-09",
         "applies_to": {},
         "normative_level": "MUST",
         "tests": {
@@ -2089,9 +2089,9 @@
         "source_type": "community",
         "source_urls": [
           "https://docs.cursor.com/en/context",
-          "https://docs.cline.bot/features/custom-instructions"
+          "https://docs.cline.bot/prompting/cline-memory-bank#cline-memory-bank-custom-instructions-[copy-this]"
         ],
-        "verified_on": "2026-02-04",
+        "verified_on": "2026-02-09",
         "applies_to": {},
         "normative_level": "SHOULD",
         "tests": {
@@ -2116,7 +2116,7 @@
         "source_urls": [
           "https://docs.windsurf.com/windsurf/cascade/memories"
         ],
-        "verified_on": "2026-02-04",
+        "verified_on": "2026-02-09",
         "applies_to": {
           "tool": "windsurf"
         },
@@ -2194,10 +2194,10 @@
         "source_type": "community",
         "source_urls": [
           "https://developers.openai.com/codex/guides/agents-md",
-          "https://docs.cline.bot/features/custom-instructions",
-          "https://github.com/github/docs/changelog/2025-06-17-github-copilot-coding-agent-now-supports-agents-md-custom-instructions"
+          "https://docs.cline.bot/prompting/cline-memory-bank#cline-memory-bank-custom-instructions-[copy-this]",
+          "https://github.blog/changelog/2025-08-28-copilot-coding-agent-now-supports-agents-md-custom-instructions/"
         ],
-        "verified_on": "2026-02-04",
+        "verified_on": "2026-02-09",
         "applies_to": {},
         "normative_level": "BEST_PRACTICE",
         "tests": {
@@ -3232,9 +3232,9 @@
       "evidence": {
         "source_type": "vendor_docs",
         "source_urls": [
-          "https://docs.cline.bot/improving-your-workflow/cline-rules"
+          "https://docs.cline.bot/features/cline-rules/overview"
         ],
-        "verified_on": "2026-02-07",
+        "verified_on": "2026-02-09",
         "applies_to": {
           "tool": "cline"
         },
@@ -3259,9 +3259,9 @@
       "evidence": {
         "source_type": "vendor_docs",
         "source_urls": [
-          "https://docs.cline.bot/improving-your-workflow/cline-rules"
+          "https://docs.cline.bot/features/cline-rules/overview"
         ],
-        "verified_on": "2026-02-07",
+        "verified_on": "2026-02-09",
         "applies_to": {
           "tool": "cline"
         },
@@ -3286,9 +3286,9 @@
       "evidence": {
         "source_type": "vendor_docs",
         "source_urls": [
-          "https://docs.cline.bot/improving-your-workflow/cline-rules"
+          "https://docs.cline.bot/features/cline-rules/overview"
         ],
-        "verified_on": "2026-02-07",
+        "verified_on": "2026-02-09",
         "applies_to": {
           "tool": "cline"
         },
@@ -3574,10 +3574,10 @@
           "https://developers.openai.com/codex/guides/agents-md",
           "https://opencode.ai/docs/rules",
           "https://docs.cursor.com/en/context",
-          "https://docs.cline.bot/features/custom-instructions",
-          "https://github.com/github/docs/changelog/2025-06-17-github-copilot-coding-agent-now-supports-agents-md-custom-instructions"
+          "https://docs.cline.bot/prompting/cline-memory-bank#cline-memory-bank-custom-instructions-[copy-this]",
+          "https://github.blog/changelog/2025-08-28-copilot-coding-agent-now-supports-agents-md-custom-instructions/"
         ],
-        "verified_on": "2026-02-04",
+        "verified_on": "2026-02-09",
         "applies_to": {},
         "normative_level": "SHOULD",
         "tests": {
@@ -3860,6 +3860,31 @@
       "bad_example": "# Build Commands\n\nRun npm install and npm build.\n\n## Testing\n\nUse npm test."
     },
     {
+      "id": "CDX-000",
+      "name": "Codex Config Parse Error",
+      "severity": "HIGH",
+      "category": "codex",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://github.com/openai/codex"
+        ],
+        "verified_on": "2026-02-09",
+        "applies_to": {
+          "tool": "codex"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      }
+    },
+    {
       "id": "CDX-001",
       "name": "Invalid Approval Mode",
       "severity": "HIGH",
@@ -4003,9 +4028,9 @@
       "evidence": {
         "source_type": "vendor_docs",
         "source_urls": [
-          "https://docs.cline.bot/features/custom-instructions"
+          "https://docs.cline.bot/prompting/cline-memory-bank#cline-memory-bank-custom-instructions-[copy-this]"
         ],
-        "verified_on": "2026-02-07",
+        "verified_on": "2026-02-09",
         "applies_to": {
           "tool": "cline"
         },
@@ -4115,9 +4140,9 @@
       "evidence": {
         "source_type": "vendor_docs",
         "source_urls": [
-          "https://docs.windsurf.com/windsurf/memories"
+          "https://docs.windsurf.com/windsurf/cascade/memories"
         ],
-        "verified_on": "2026-02-07",
+        "verified_on": "2026-02-09",
         "applies_to": {
           "tool": "windsurf"
         },
@@ -4143,9 +4168,9 @@
       "evidence": {
         "source_type": "vendor_docs",
         "source_urls": [
-          "https://kiro.dev/docs/context/steering"
+          "https://kiro.dev/docs/steering/"
         ],
-        "verified_on": "2026-02-07",
+        "verified_on": "2026-02-09",
         "applies_to": {
           "tool": "kiro"
         },
@@ -4171,9 +4196,9 @@
       "evidence": {
         "source_type": "vendor_docs",
         "source_urls": [
-          "https://docs.amp.dev/setup/customization"
+          "https://ampcode.com/manual#agent-skills"
         ],
-        "verified_on": "2026-02-07",
+        "verified_on": "2026-02-09",
         "applies_to": {
           "tool": "amp"
         },

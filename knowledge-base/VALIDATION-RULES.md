@@ -1107,6 +1107,13 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 
 ## CODEX CLI RULES
 
+<a id="cdx-000"></a>
+### CDX-000 [HIGH] Codex Config Parse Error
+**Requirement**: `.codex/config.toml` MUST be valid TOML
+**Detection**: Parse TOML and report parser errors with line/column details
+**Fix**: No auto-fix (TOML syntax errors must be corrected manually)
+**Source**: github.com/openai/codex
+
 <a id="cdx-001"></a>
 ### CDX-001 [HIGH] Invalid Approval Mode
 **Requirement**: The `approvalMode` field in `.codex/config.toml` MUST be `"suggest"`, `"auto-edit"`, or `"full-auto"`
@@ -1423,7 +1430,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | Cline | 3 | 2 | 1 | 0 | 1 |
 | OpenCode | 3 | 3 | 0 | 0 | 1 |
 | Gemini CLI | 3 | 1 | 2 | 0 | 0 |
-| Codex CLI | 3 | 2 | 1 | 0 | 2 |
+| Codex CLI | 4 | 3 | 1 | 0 | 2 |
 | MCP | 12 | 10 | 2 | 0 | 4 |
 | XML | 3 | 3 | 0 | 0 | 3 |
 | References | 2 | 2 | 0 | 0 | 0 |
@@ -1439,7 +1446,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | Amp Skills | 1 | 0 | 1 | 0 | 1 |
 | Roo Code Skills | 1 | 0 | 1 | 0 | 1 |
 | Version Awareness | 1 | 0 | 0 | 1 | 0 |
-| **TOTAL** | **155** | **100** | **52** | **3** | **57** |
+| **TOTAL** | **156** | **101** | **52** | **3** | **57** |
 
 
 ---
@@ -1469,9 +1476,8 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 
 ---
 
-**Total Coverage**: 155 validation rules across 28 categories
+**Total Coverage**: 156 validation rules across 28 categories
 
 **Knowledge Base**: 11,036 lines, 320KB, 75+ sources
 **Certainty**: 103 HIGH, 49 MEDIUM, 3 LOW
 **Auto-Fixable**: 57 rules (37%)
-

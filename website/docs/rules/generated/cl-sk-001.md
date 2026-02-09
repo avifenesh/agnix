@@ -13,7 +13,7 @@ keywords: ["CL-SK-001", "cline skill uses unsupported field", "cline skills", "v
 - **Category**: `Cline Skills`
 - **Normative Level**: `SHOULD`
 - **Auto-Fix**: `Yes (safe/unsafe)`
-- **Verified On**: `2026-02-07`
+- **Verified On**: `2026-02-09`
 
 ## Applicability
 
@@ -23,7 +23,7 @@ keywords: ["CL-SK-001", "cline skill uses unsupported field", "cline skills", "v
 
 ## Evidence Sources
 
-- https://docs.cline.bot/features/custom-instructions
+- https://docs.cline.bot/prompting/cline-memory-bank#cline-memory-bank-custom-instructions-[copy-this]
 
 ## Test Coverage Metadata
 

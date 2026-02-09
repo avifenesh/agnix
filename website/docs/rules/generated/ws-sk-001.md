@@ -13,7 +13,7 @@ keywords: ["WS-SK-001", "windsurf skill uses unsupported field", "windsurf skill
 - **Category**: `Windsurf Skills`
 - **Normative Level**: `SHOULD`
 - **Auto-Fix**: `Yes (safe/unsafe)`
-- **Verified On**: `2026-02-07`
+- **Verified On**: `2026-02-09`
 
 ## Applicability
 
@@ -23,7 +23,7 @@ keywords: ["WS-SK-001", "windsurf skill uses unsupported field", "windsurf skill
 
 ## Evidence Sources
 
-- https://docs.windsurf.com/windsurf/memories
+- https://docs.windsurf.com/windsurf/cascade/memories
 
 ## Test Coverage Metadata
 
