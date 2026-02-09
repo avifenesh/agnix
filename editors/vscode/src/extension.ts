@@ -236,8 +236,18 @@ const AGNIX_FILE_PATTERNS = [
 const AGNIX_RULE_RE = /^(AS|CC|PE|MCP|AGM|COP|CUR|XML|XP)-/;
 
 function isAgnixDiagnostic(diagnostic: vscode.Diagnostic): boolean {
-  const code = diagnostic.code?.toString() || '';
+  const code = getDiagCode(diagnostic);
   return diagnostic.source === 'agnix' || AGNIX_RULE_RE.test(code);
+}
+
+/** Extract the rule ID string from a diagnostic code, handling both simple
+ *  string/number codes and structured `{ value, target }` objects used for
+ *  clickable rule links. */
+function getDiagCode(d: vscode.Diagnostic): string {
+  const c = d.code;
+  if (c == null) return '';
+  if (typeof c === 'object' && 'value' in c) return String(c.value);
+  return String(c);
 }
 
 function extractRuleIds(diagnostics: readonly vscode.Diagnostic[] | undefined): string[] {
@@ -245,7 +255,7 @@ function extractRuleIds(diagnostics: readonly vscode.Diagnostic[] | undefined): 
     return [];
   }
   const ids = diagnostics
-    .map((d) => d.code?.toString() || '')
+    .map((d) => getDiagCode(d))
     .filter((code) => AGNIX_RULE_RE.test(code));
   return Array.from(new Set(ids));
 }
@@ -1376,7 +1386,7 @@ class AgnixCodeLensProvider implements vscode.CodeLensProvider {
     const agnixDiagnostics = diagnostics.filter(
       (d) =>
         d.source === 'agnix' ||
-        d.code?.toString().match(/^(AS|CC|PE|MCP|AGM|COP|CUR|XML|XP)-/)
+        getDiagCode(d).match(/^(AS|CC|PE|MCP|AGM|COP|CUR|XML|XP)-/)
     );
 
     if (agnixDiagnostics.length === 0) {
@@ -1410,7 +1420,7 @@ class AgnixCodeLensProvider implements vscode.CodeLensProvider {
       if (errors > 0) parts.push(`${errors} error${errors > 1 ? 's' : ''}`);
       if (warnings > 0) parts.push(`${warnings} warning${warnings > 1 ? 's' : ''}`);
 
-      const ruleIds = diags.map((d) => d.code?.toString() || '').filter(Boolean);
+      const ruleIds = diags.map((d) => getDiagCode(d)).filter(Boolean);
       const rulesText = ruleIds.length <= 2 ? ruleIds.join(', ') : `${ruleIds.length} rules`;
 
       codeLenses.push(
@@ -1423,7 +1433,7 @@ class AgnixCodeLensProvider implements vscode.CodeLensProvider {
 
       // Add individual rule CodeLenses for quick actions
       for (const diag of diags.slice(0, 3)) {
-        const ruleId = diag.code?.toString() || '';
+        const ruleId = getDiagCode(diag);
         if (ruleId) {
           codeLenses.push(
             new vscode.CodeLens(range, {
@@ -1504,7 +1514,7 @@ class AgnixDiagnosticsTreeProvider implements vscode.TreeDataProvider<Diagnostic
       const agnixDiagnostics = diagnostics.filter(
         (d) =>
           d.source === 'agnix' ||
-          d.code?.toString().match(/^(AS|CC|PE|MCP|AGM|COP|CUR|XML|XP)-/)
+          getDiagCode(d).match(/^(AS|CC|PE|MCP|AGM|COP|CUR|XML|XP)-/)
       );
 
       if (agnixDiagnostics.length === 0) {
@@ -1520,7 +1530,7 @@ class AgnixDiagnosticsTreeProvider implements vscode.TreeDataProvider<Diagnostic
 
       // Create children for this file
       const children = agnixDiagnostics.map((diag) => {
-        const ruleId = diag.code?.toString() || '';
+        const ruleId = getDiagCode(diag);
         return new DiagnosticItem(
           `${ruleId}: ${diag.message}`,
           vscode.TreeItemCollapsibleState.None,
