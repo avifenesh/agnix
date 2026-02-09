@@ -200,6 +200,10 @@ def check_once(url: str, timeout: float, max_body_bytes: int) -> UrlResult:
     if get_result.method == "GET":
         get_result.method = "GET (fallback)"
     if (not get_result.ok) and head_probe.status and head_probe.status >= 400 and get_probe.status is None:
+        # Preserve retryability when GET fails transiently (status is None),
+        # even if HEAD returned a hard error like 405/4xx.
+        if get_result.retryable:
+            return get_result
         return head_result
     return get_result
 
