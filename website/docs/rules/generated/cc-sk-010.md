@@ -56,7 +56,7 @@ Run with hooks.
 name: hook-skill
 description: Use when running a skill with hooks
 hooks:
-  PreToolCall:
+  PreToolUse:
     - type: command
       command: echo pre
 ---

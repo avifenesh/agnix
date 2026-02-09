@@ -38,18 +38,17 @@ The following examples demonstrate what triggers this rule and how to fix it.
 ### Invalid
 
 ```json
-.claude-plugin/plugin.json (with .claude-plugin/skills/ directory present):
 {
   "name": "my-plugin",
   "description": "A useful plugin",
-  "version": "1.0.0"
+  "version": "1.0.0",
+  "skills": "./.claude-plugin/skills"
 }
 ```
 
 ### Valid
 
 ```json
-.claude-plugin/plugin.json (no skills/agents/hooks/commands dirs inside .claude-plugin/):
 {
   "name": "my-plugin",
   "description": "A useful plugin",

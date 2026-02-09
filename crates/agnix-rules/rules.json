@@ -742,7 +742,7 @@
       "fix": {
         "autofix": false
       },
-      "good_example": "---\nname: hook-skill\ndescription: Use when running a skill with hooks\nhooks:\n  PreToolCall:\n    - type: command\n      command: echo pre\n---\nRun with hooks.",
+      "good_example": "---\nname: hook-skill\ndescription: Use when running a skill with hooks\nhooks:\n  PreToolUse:\n    - type: command\n      command: echo pre\n---\nRun with hooks.",
       "bad_example": "---\nname: hook-skill\ndescription: Use when running a skill with hooks\nhooks:\n  InvalidEvent:\n    - type: command\n      command: echo bad\n---\nRun with hooks."
     },
     {
@@ -2236,8 +2236,8 @@
       "fix": {
         "autofix": false
       },
-      "good_example": ".claude-plugin/plugin.json:\n{\n  \"name\": \"my-plugin\",\n  \"description\": \"A useful plugin\",\n  \"version\": \"1.0.0\"\n}",
-      "bad_example": "plugin.json:\n{\n  \"name\": \"my-plugin\",\n  \"description\": \"A useful plugin\",\n  \"version\": \"1.0.0\"\n}"
+      "good_example": "{\n  \"name\": \"my-plugin\",\n  \"description\": \"A useful plugin\",\n  \"version\": \"1.0.0\"\n}",
+      "bad_example": "{\n  \"name\": \"my-plugin\",\n  \"description\": \"A useful plugin\",\n  \"version\": \"1.0.0\"\n}"
     },
     {
       "id": "CC-PL-002",
@@ -2263,8 +2263,8 @@
       "fix": {
         "autofix": false
       },
-      "good_example": ".claude-plugin/plugin.json (no skills/agents/hooks/commands dirs inside .claude-plugin/):\n{\n  \"name\": \"my-plugin\",\n  \"description\": \"A useful plugin\",\n  \"version\": \"1.0.0\"\n}",
-      "bad_example": ".claude-plugin/plugin.json (with .claude-plugin/skills/ directory present):\n{\n  \"name\": \"my-plugin\",\n  \"description\": \"A useful plugin\",\n  \"version\": \"1.0.0\"\n}"
+      "good_example": "{\n  \"name\": \"my-plugin\",\n  \"description\": \"A useful plugin\",\n  \"version\": \"1.0.0\"\n}",
+      "bad_example": "{\n  \"name\": \"my-plugin\",\n  \"description\": \"A useful plugin\",\n  \"version\": \"1.0.0\",\n  \"skills\": \"./.claude-plugin/skills\"\n}"
     },
     {
       "id": "CC-PL-003",

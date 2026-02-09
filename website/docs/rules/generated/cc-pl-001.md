@@ -38,7 +38,6 @@ The following examples demonstrate what triggers this rule and how to fix it.
 ### Invalid
 
 ```json
-plugin.json:
 {
   "name": "my-plugin",
   "description": "A useful plugin",
@@ -49,7 +48,6 @@ plugin.json:
 ### Valid
 
 ```json
-.claude-plugin/plugin.json:
 {
   "name": "my-plugin",
   "description": "A useful plugin",
