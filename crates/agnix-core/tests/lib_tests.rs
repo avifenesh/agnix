@@ -336,12 +336,7 @@ fn test_validate_file_with_custom_registry() {
     struct DummyValidator;
 
     impl Validator for DummyValidator {
-        fn validate(
-            &self,
-            path: &Path,
-            _content: &str,
-            _config: &LintConfig,
-        ) -> Vec<Diagnostic> {
+        fn validate(&self, path: &Path, _content: &str, _config: &LintConfig) -> Vec<Diagnostic> {
             vec![Diagnostic::error(
                 path.to_path_buf(),
                 1,
@@ -1835,8 +1830,10 @@ fn test_validate_fixtures_directory() {
 
     // missing-required-fields.mcp.json should trigger MCP-002 (missing description)
     assert!(
-        mcp_diagnostics.iter().any(|d| d.rule == "MCP-002"
-            && d.file.to_string_lossy().contains("missing-required-fields")),
+        mcp_diagnostics
+            .iter()
+            .any(|d| d.rule == "MCP-002"
+                && d.file.to_string_lossy().contains("missing-required-fields")),
         "Expected MCP-002 from missing-required-fields.mcp.json fixture"
     );
 
@@ -1844,37 +1841,42 @@ fn test_validate_fixtures_directory() {
     assert!(
         mcp_diagnostics
             .iter()
-            .any(|d| d.rule == "MCP-004"
-                && d.file.to_string_lossy().contains("empty-description")),
+            .any(|d| d.rule == "MCP-004" && d.file.to_string_lossy().contains("empty-description")),
         "Expected MCP-004 from empty-description.mcp.json fixture"
     );
 
     // invalid-input-schema.mcp.json should trigger MCP-003 (invalid schema)
     assert!(
-        mcp_diagnostics.iter().any(|d| d.rule == "MCP-003"
-            && d.file.to_string_lossy().contains("invalid-input-schema")),
+        mcp_diagnostics
+            .iter()
+            .any(|d| d.rule == "MCP-003"
+                && d.file.to_string_lossy().contains("invalid-input-schema")),
         "Expected MCP-003 from invalid-input-schema.mcp.json fixture"
     );
 
     // invalid-jsonrpc-version.mcp.json should trigger MCP-001 (invalid jsonrpc)
     assert!(
-        mcp_diagnostics.iter().any(|d| d.rule == "MCP-001"
-            && d.file.to_string_lossy().contains("invalid-jsonrpc-version")),
+        mcp_diagnostics
+            .iter()
+            .any(|d| d.rule == "MCP-001"
+                && d.file.to_string_lossy().contains("invalid-jsonrpc-version")),
         "Expected MCP-001 from invalid-jsonrpc-version.mcp.json fixture"
     );
 
     // missing-consent.mcp.json should trigger MCP-005 (missing consent)
     assert!(
-        mcp_diagnostics.iter().any(
-            |d| d.rule == "MCP-005" && d.file.to_string_lossy().contains("missing-consent")
-        ),
+        mcp_diagnostics
+            .iter()
+            .any(|d| d.rule == "MCP-005" && d.file.to_string_lossy().contains("missing-consent")),
         "Expected MCP-005 from missing-consent.mcp.json fixture"
     );
 
     // untrusted-annotations.mcp.json should trigger MCP-006 (untrusted annotations)
     assert!(
-        mcp_diagnostics.iter().any(|d| d.rule == "MCP-006"
-            && d.file.to_string_lossy().contains("untrusted-annotations")),
+        mcp_diagnostics
+            .iter()
+            .any(|d| d.rule == "MCP-006"
+                && d.file.to_string_lossy().contains("untrusted-annotations")),
         "Expected MCP-006 from untrusted-annotations.mcp.json fixture"
     );
 
@@ -2654,8 +2656,7 @@ fn test_pe_rules_dispatched() {
         let content = std::fs::read_to_string(fixtures_dir.join(fixture))
             .unwrap_or_else(|_| panic!("Failed to read fixture: {}", fixture));
         std::fs::write(&claude_path, &content).unwrap();
-        let diagnostics =
-            validate_file_with_registry(&claude_path, &config, &registry).unwrap();
+        let diagnostics = validate_file_with_registry(&claude_path, &config, &registry).unwrap();
         assert!(
             diagnostics.iter().any(|d| d.rule == expected_rule),
             "Expected {} from {} content",
@@ -2786,7 +2787,6 @@ fn test_exclude_patterns_nested_directories() {
         target_diags
     );
 }
-
 
 // ===== ValidationResult files_checked Tests =====
 
@@ -2974,12 +2974,7 @@ fn test_validate_project_with_poisoned_import_cache_does_not_panic() {
     struct PoisonImportCacheValidator;
 
     impl Validator for PoisonImportCacheValidator {
-        fn validate(
-            &self,
-            _path: &Path,
-            _content: &str,
-            config: &LintConfig,
-        ) -> Vec<Diagnostic> {
+        fn validate(&self, _path: &Path, _content: &str, config: &LintConfig) -> Vec<Diagnostic> {
             use std::thread;
 
             if let Some(cache) = config.get_import_cache().cloned() {
