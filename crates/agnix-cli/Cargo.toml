@@ -40,7 +40,7 @@ rust-i18n = { workspace = true }
 sys-locale = { workspace = true }
 
 # Optional: HTTP client for telemetry submission
-reqwest = { version = "0.12", features = ["blocking", "json"], optional = true }
+reqwest = { version = "0.13", features = ["blocking", "json"], optional = true }
 
 [dev-dependencies]
 assert_cmd = "2"
