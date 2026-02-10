@@ -2610,4 +2610,265 @@ model: sonnet
 
         // Should pass boundary check -- '.' resolves to the same directory
     }
+
+    // ===== Project-Level Validation Tests =====
+
+    /// Test that validate_project_rules_and_publish returns early without panic
+    /// when no workspace root is set.
+    #[tokio::test]
+    async fn test_validate_project_rules_no_workspace() {
+        let (service, _socket) = LspService::new(Backend::new);
+
+        // Initialize without workspace root
+        service
+            .inner()
+            .initialize(InitializeParams::default())
+            .await
+            .unwrap();
+
+        // Should return early without error (no workspace root)
+        service
+            .inner()
+            .validate_project_rules_and_publish()
+            .await;
+
+        // Verify no project diagnostics were stored
+        let proj_diags = service.inner().project_level_diagnostics.read().await;
+        assert!(
+            proj_diags.is_empty(),
+            "No project diagnostics should be stored without workspace root"
+        );
+    }
+
+    /// Test that project-level diagnostics are cached after running validation.
+    #[tokio::test]
+    async fn test_project_diagnostics_cached() {
+        let (service, _socket) = LspService::new(Backend::new);
+
+        let temp_dir = tempfile::tempdir().unwrap();
+
+        // Create two AGENTS.md files to trigger AGM-006
+        std::fs::write(temp_dir.path().join("AGENTS.md"), "# Root").unwrap();
+        let sub = temp_dir.path().join("sub");
+        std::fs::create_dir(&sub).unwrap();
+        std::fs::write(sub.join("AGENTS.md"), "# Sub").unwrap();
+
+        let root_uri = Url::from_file_path(temp_dir.path()).unwrap();
+        service
+            .inner()
+            .initialize(InitializeParams {
+                root_uri: Some(root_uri),
+                ..Default::default()
+            })
+            .await
+            .unwrap();
+
+        // Run project-level validation
+        service
+            .inner()
+            .validate_project_rules_and_publish()
+            .await;
+
+        // Verify project diagnostics are stored
+        let proj_diags = service.inner().project_level_diagnostics.read().await;
+        assert!(
+            !proj_diags.is_empty(),
+            "Project diagnostics should be cached for AGM-006"
+        );
+
+        // Verify URIs are tracked for cleanup
+        let proj_uris = service.inner().project_diagnostics_uris.read().await;
+        assert!(
+            !proj_uris.is_empty(),
+            "Project diagnostic URIs should be tracked"
+        );
+    }
+
+    /// Test that stale project diagnostics are cleared on re-run.
+    #[tokio::test]
+    async fn test_project_diagnostics_cleared_on_rerun() {
+        let (service, _socket) = LspService::new(Backend::new);
+
+        let temp_dir = tempfile::tempdir().unwrap();
+
+        // Create two AGENTS.md files to trigger AGM-006
+        std::fs::write(temp_dir.path().join("AGENTS.md"), "# Root").unwrap();
+        let sub = temp_dir.path().join("sub");
+        std::fs::create_dir(&sub).unwrap();
+        std::fs::write(sub.join("AGENTS.md"), "# Sub").unwrap();
+
+        let root_uri = Url::from_file_path(temp_dir.path()).unwrap();
+        service
+            .inner()
+            .initialize(InitializeParams {
+                root_uri: Some(root_uri),
+                ..Default::default()
+            })
+            .await
+            .unwrap();
+
+        // First run: should find AGM-006
+        service
+            .inner()
+            .validate_project_rules_and_publish()
+            .await;
+
+        let count_before = service
+            .inner()
+            .project_diagnostics_uris
+            .read()
+            .await
+            .len();
+        assert!(count_before > 0, "Should have project diagnostics before cleanup");
+
+        // Remove the nested AGENTS.md to resolve the issue
+        std::fs::remove_file(sub.join("AGENTS.md")).unwrap();
+
+        // Second run: AGM-006 should no longer fire
+        service
+            .inner()
+            .validate_project_rules_and_publish()
+            .await;
+
+        let proj_diags = service.inner().project_level_diagnostics.read().await;
+        let agm006_count: usize = proj_diags
+            .values()
+            .flat_map(|diags| diags.iter())
+            .filter(|d| {
+                d.code
+                    .as_ref()
+                    .map(|c| matches!(c, NumberOrString::String(s) if s == "AGM-006"))
+                    .unwrap_or(false)
+            })
+            .count();
+        assert_eq!(agm006_count, 0, "AGM-006 should be cleared after fix");
+    }
+
+    /// Test is_project_level_trigger for various file names.
+    #[test]
+    fn test_is_project_level_trigger() {
+        // Instruction files should trigger
+        assert!(Backend::is_project_level_trigger(Path::new(
+            "/project/CLAUDE.md"
+        )));
+        assert!(Backend::is_project_level_trigger(Path::new(
+            "/project/AGENTS.md"
+        )));
+        assert!(Backend::is_project_level_trigger(Path::new(
+            "/project/.clinerules"
+        )));
+        assert!(Backend::is_project_level_trigger(Path::new(
+            "/project/.cursorrules"
+        )));
+        assert!(Backend::is_project_level_trigger(Path::new(
+            "/project/.github/copilot-instructions.md"
+        )));
+        assert!(Backend::is_project_level_trigger(Path::new(
+            "/project/.github/instructions/test.instructions.md"
+        )));
+        assert!(Backend::is_project_level_trigger(Path::new(
+            "/project/.cursor/rules/test.mdc"
+        )));
+        assert!(Backend::is_project_level_trigger(Path::new(
+            "/project/GEMINI.md"
+        )));
+
+        // .agnix.toml should trigger
+        assert!(Backend::is_project_level_trigger(Path::new(
+            "/project/.agnix.toml"
+        )));
+
+        // Non-instruction files should not trigger
+        assert!(!Backend::is_project_level_trigger(Path::new(
+            "/project/SKILL.md"
+        )));
+        assert!(!Backend::is_project_level_trigger(Path::new(
+            "/project/README.md"
+        )));
+        assert!(!Backend::is_project_level_trigger(Path::new(
+            "/project/settings.json"
+        )));
+        assert!(!Backend::is_project_level_trigger(Path::new(
+            "/project/plugin.json"
+        )));
+    }
+
+    /// Test that initialize advertises executeCommand capability.
+    #[tokio::test]
+    async fn test_initialize_advertises_execute_command() {
+        let (service, _socket) = LspService::new(Backend::new);
+
+        let result = service
+            .inner()
+            .initialize(InitializeParams::default())
+            .await
+            .unwrap();
+
+        match result.capabilities.execute_command_provider {
+            Some(ref opts) => {
+                assert!(
+                    opts.commands
+                        .contains(&"agnix.validateProjectRules".to_string()),
+                    "Expected agnix.validateProjectRules in execute commands, got: {:?}",
+                    opts.commands
+                );
+            }
+            None => panic!("Expected execute command capability"),
+        }
+    }
+
+    /// Test that execute_command handles the validateProjectRules command.
+    #[tokio::test]
+    async fn test_execute_command_validate_project_rules() {
+        let (service, _socket) = LspService::new(Backend::new);
+
+        let temp_dir = tempfile::tempdir().unwrap();
+        let root_uri = Url::from_file_path(temp_dir.path()).unwrap();
+
+        service
+            .inner()
+            .initialize(InitializeParams {
+                root_uri: Some(root_uri),
+                ..Default::default()
+            })
+            .await
+            .unwrap();
+
+        // Execute the command
+        let result = service
+            .inner()
+            .execute_command(ExecuteCommandParams {
+                command: "agnix.validateProjectRules".to_string(),
+                arguments: vec![],
+                work_done_progress_params: WorkDoneProgressParams::default(),
+            })
+            .await;
+
+        assert!(result.is_ok());
+        assert!(result.unwrap().is_none());
+    }
+
+    /// Test that execute_command handles unknown commands gracefully.
+    #[tokio::test]
+    async fn test_execute_command_unknown() {
+        let (service, _socket) = LspService::new(Backend::new);
+
+        service
+            .inner()
+            .initialize(InitializeParams::default())
+            .await
+            .unwrap();
+
+        let result = service
+            .inner()
+            .execute_command(ExecuteCommandParams {
+                command: "unknown.command".to_string(),
+                arguments: vec![],
+                work_done_progress_params: WorkDoneProgressParams::default(),
+            })
+            .await;
+
+        assert!(result.is_ok());
+        assert!(result.unwrap().is_none());
+    }
 }
