@@ -187,7 +187,10 @@ pub fn resolve_file_type(path: &Path, config: &LintConfig) -> FileType {
 
 /// Validate a single file
 pub fn validate_file(path: &Path, config: &LintConfig) -> LintResult<Vec<Diagnostic>> {
-    let registry = ValidatorRegistry::with_defaults();
+    let mut registry = ValidatorRegistry::with_defaults();
+    for name in &config.rules.disabled_validators {
+        registry.disable_validator(name);
+    }
     validate_file_with_registry(path, config, &registry)
 }
 
@@ -230,7 +233,10 @@ fn validate_file_with_type(
 
 /// Main entry point for validating a project
 pub fn validate_project(path: &Path, config: &LintConfig) -> LintResult<ValidationResult> {
-    let registry = ValidatorRegistry::with_defaults();
+    let mut registry = ValidatorRegistry::with_defaults();
+    for name in &config.rules.disabled_validators {
+        registry.disable_validator(name);
+    }
     validate_project_with_registry(path, config, &registry)
 }
 
