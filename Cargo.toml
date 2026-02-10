@@ -1,3 +1,9 @@
+[package]
+name = "agnix-workspace-tests"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
 [workspace]
 resolver = "2"
 members = [
@@ -60,6 +66,12 @@ tower-lsp = "0.20"
 # i18n
 rust-i18n = "3.1"
 sys-locale = "0.3"
+
+[dev-dependencies]
+agnix-core = { path = "crates/agnix-core" }
+agnix-rules = { path = "crates/agnix-rules" }
+serde_json = "1"
+tempfile = "3"
 
 [profile.release]
 lto = "fat"
