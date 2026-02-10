@@ -120,7 +120,6 @@ fn lsp_lint_config_is_send_sync() {
     assert_send_sync::<agnix_core::LintConfig>();
 }
 
-
 #[test]
 fn lsp_file_type_detection_for_relevant_types() {
     // LSP uses detect_file_type to decide whether to validate a file
@@ -130,10 +129,16 @@ fn lsp_file_type_detection_for_relevant_types() {
         (".claude/agents/reviewer.md", agnix_core::FileType::Agent),
         ("skills/deploy/SKILL.md", agnix_core::FileType::Skill),
         (".claude/settings.json", agnix_core::FileType::Hooks),
-        (".cursor/rules/my-rule.mdc", agnix_core::FileType::CursorRule),
+        (
+            ".cursor/rules/my-rule.mdc",
+            agnix_core::FileType::CursorRule,
+        ),
         ("plugin.json", agnix_core::FileType::Plugin),
         ("tools.mcp.json", agnix_core::FileType::Mcp),
-        (".github/copilot-instructions.md", agnix_core::FileType::Copilot),
+        (
+            ".github/copilot-instructions.md",
+            agnix_core::FileType::Copilot,
+        ),
     ];
 
     for (path, expected_type) in test_cases {
