@@ -400,3 +400,109 @@ fn target_tool_covers_all_variants() {
         }
     }
 }
+
+// ============================================================================
+// SeverityLevel enum exhaustive match
+// ============================================================================
+
+#[test]
+fn severity_level_covers_all_variants() {
+    let levels = [
+        agnix_core::config::SeverityLevel::Error,
+        agnix_core::config::SeverityLevel::Warning,
+        agnix_core::config::SeverityLevel::Info,
+    ];
+
+    for level in &levels {
+        match level {
+            agnix_core::config::SeverityLevel::Error => {}
+            agnix_core::config::SeverityLevel::Warning => {}
+            agnix_core::config::SeverityLevel::Info => {}
+        }
+    }
+}
+
+// ============================================================================
+// Fix constructor and helper methods
+// ============================================================================
+
+#[test]
+fn fix_constructors_and_helpers() {
+    // Fix::replace
+    let replace = agnix_core::Fix::replace(0, 10, "new", "replace text", true);
+    assert_eq!(replace.start_byte, 0);
+    assert_eq!(replace.end_byte, 10);
+    assert!(!replace.is_insertion());
+    assert!(!replace.is_deletion());
+
+    // Fix::insert (start_byte == end_byte)
+    let insert = agnix_core::Fix::insert(5, "inserted", "insert text", true);
+    assert_eq!(insert.start_byte, 5);
+    assert_eq!(insert.end_byte, 5);
+    assert!(insert.is_insertion());
+    assert!(!insert.is_deletion());
+
+    // Fix::delete (replacement is empty)
+    let delete = agnix_core::Fix::delete(10, 20, "delete text", false);
+    assert_eq!(delete.start_byte, 10);
+    assert_eq!(delete.end_byte, 20);
+    assert!(!delete.is_insertion());
+    assert!(delete.is_deletion());
+}
+
+// ============================================================================
+// Diagnostic builder methods
+// ============================================================================
+
+#[test]
+fn diagnostic_builder_methods() {
+    use std::path::PathBuf;
+
+    // Constructor variants
+    let _err = agnix_core::Diagnostic::error(PathBuf::from("a.md"), 1, 0, "R-001", "err");
+    let _warn = agnix_core::Diagnostic::warning(PathBuf::from("b.md"), 2, 0, "R-002", "warn");
+    let _info = agnix_core::Diagnostic::info(PathBuf::from("c.md"), 3, 0, "R-003", "info");
+
+    // Builder chain
+    let diag = agnix_core::Diagnostic::error(PathBuf::from("d.md"), 1, 0, "R-004", "test")
+        .with_suggestion("try this")
+        .with_assumption("assuming v1")
+        .with_fix(agnix_core::Fix::replace(0, 5, "fixed", "auto", true))
+        .with_fixes(vec![agnix_core::Fix::insert(
+            10,
+            "extra",
+            "add extra",
+            true,
+        )]);
+
+    assert!(diag.has_fixes());
+    assert!(diag.has_safe_fixes());
+    assert_eq!(diag.fixes.len(), 2);
+    assert_eq!(diag.assumption, Some("assuming v1".to_string()));
+    assert_eq!(diag.suggestion, Some("try this".to_string()));
+}
+
+// ============================================================================
+// ValidatorRegistry method signatures
+// ============================================================================
+
+#[test]
+fn validator_registry_methods() {
+    // new() and with_defaults()
+    let empty = agnix_core::ValidatorRegistry::new();
+    let defaults = agnix_core::ValidatorRegistry::with_defaults();
+
+    // validators_for returns Vec<Box<dyn Validator>>
+    let empty_validators = empty.validators_for(agnix_core::FileType::Skill);
+    assert!(empty_validators.is_empty());
+
+    let default_validators = defaults.validators_for(agnix_core::FileType::Skill);
+    assert!(!default_validators.is_empty());
+
+    // register() signature check: accepts FileType + ValidatorFactory (fn pointer)
+    let _: fn(
+        &mut agnix_core::ValidatorRegistry,
+        agnix_core::FileType,
+        agnix_core::ValidatorFactory,
+    ) = agnix_core::ValidatorRegistry::register;
+}

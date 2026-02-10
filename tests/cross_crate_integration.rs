@@ -100,9 +100,10 @@ fn lsp_diagnostic_level_variant_mapping() {
     let warning = agnix_core::DiagnosticLevel::Warning;
     let info = agnix_core::DiagnosticLevel::Info;
 
-    // Verify ordering (LSP relies on this for severity mapping)
+    // Verify ordering semantics: Error is most severe (lowest), Info least (highest)
     assert!(error < warning);
     assert!(warning < info);
+    assert!(error < info);
 }
 
 #[test]

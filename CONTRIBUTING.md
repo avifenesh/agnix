@@ -163,7 +163,7 @@ The following changes to **Public/Stable** items are considered breaking:
 
 These changes are safe to make in any release:
 
-- Adding new enum variants (existing exhaustive matches may break, but FileType is not `#[non_exhaustive]` today; consumers should use wildcard arms)
+- Adding new enum variants (this may break exhaustive matches; consumers should use wildcard `_` arms to stay forward-compatible)
 - Adding new optional struct fields with `#[serde(default)]`
 - Adding new public functions, types, or modules
 - Adding new validators to `ValidatorRegistry::with_defaults()`
