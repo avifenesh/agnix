@@ -92,7 +92,7 @@ pub use pipeline::{
     ValidationResult, resolve_file_type, validate_file, validate_file_with_registry,
     validate_project, validate_project_rules, validate_project_with_registry,
 };
-pub use registry::{ValidatorFactory, ValidatorRegistry};
+pub use registry::{ValidatorFactory, ValidatorProvider, ValidatorRegistry, ValidatorRegistryBuilder};
 pub use rules::Validator;
 
 // Internal re-exports (not part of the stable API).
