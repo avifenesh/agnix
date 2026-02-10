@@ -520,4 +520,8 @@ fn validator_registry_methods() {
         agnix_core::FileType,
         agnix_core::ValidatorFactory,
     ) = agnix_core::ValidatorRegistry::register;
+
+    // total_factory_count()
+    assert_eq!(empty.total_factory_count(), 0);
+    assert!(defaults.total_factory_count() > 0);
 }

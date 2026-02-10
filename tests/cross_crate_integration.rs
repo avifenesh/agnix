@@ -48,9 +48,9 @@ fn cli_validation_result_fields_accessible() {
     let _count: usize = result.files_checked;
     let _diags: &[agnix_core::Diagnostic] = &result.diagnostics;
 
-    // Metadata fields are accessible
-    let _timing: Option<u64> = result.validation_time_ms;
-    let _rules: usize = result.rules_checked;
+    // Metadata fields are accessible and populated
+    assert!(result.validation_time_ms.is_some());
+    assert!(result.rules_checked > 0);
 }
 
 #[test]

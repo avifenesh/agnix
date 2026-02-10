@@ -124,7 +124,7 @@ pub struct ValidationResult {
     pub files_checked: usize,
     /// Wall-clock time spent in validation, in milliseconds.
     pub validation_time_ms: Option<u64>,
-    /// Total number of validator rules that were checked across all files.
+    /// Number of validator factories registered in the registry at validation time.
     pub rules_checked: usize,
 }
 
