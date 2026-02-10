@@ -2564,6 +2564,51 @@ Agent instructions"#;
         );
     }
 
+    #[test]
+    fn test_cc_ag_009_mcp_case_sensitive() {
+        let content = r#"---
+name: my-agent
+description: A test agent
+tools:
+  - MCP__memory__create_entities
+  - Mcp__test__tool
+---
+Agent instructions"#;
+
+        let diagnostics = validate(content);
+        let cc_ag_009: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-AG-009")
+            .collect();
+        assert_eq!(
+            cc_ag_009.len(),
+            2,
+            "MCP prefix is case-sensitive: MCP__ and Mcp__ should be rejected"
+        );
+    }
+
+    #[test]
+    fn test_cc_ag_009_scoped_mcp_tool_valid() {
+        let content = r#"---
+name: my-agent
+description: A test agent
+tools:
+  - mcp__github__search_repositories(scope:*)
+---
+Agent instructions"#;
+
+        let diagnostics = validate(content);
+        let cc_ag_009: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-AG-009")
+            .collect();
+        assert_eq!(
+            cc_ag_009.len(),
+            0,
+            "Scoped MCP tools should be accepted"
+        );
+    }
+
     // ===== CC-AG-011 Tests: Hooks in Agent Frontmatter =====
 
     #[test]

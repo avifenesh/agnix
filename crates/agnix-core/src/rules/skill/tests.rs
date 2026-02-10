@@ -1415,6 +1415,30 @@ Body"#;
 }
 
 #[test]
+fn test_cc_sk_008_mcp_case_sensitive() {
+    let content = r#"---
+name: test-skill
+description: Use when testing
+allowed-tools: MCP__memory__create Mcp__test__tool
+---
+Body"#;
+
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+    let cc_sk_008: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-SK-008")
+        .collect();
+
+    assert_eq!(
+        cc_sk_008.len(),
+        2,
+        "MCP prefix is case-sensitive: MCP__ and Mcp__ should be rejected"
+    );
+}
+
+#[test]
 fn test_as_010_case_insensitive() {
     let content = r#"---
 name: test-skill
