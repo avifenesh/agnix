@@ -71,19 +71,28 @@ jobs:
       - run: cargo machete
 
   test:
-    name: Test (${{ matrix.os }})
+    name: Test (${{ matrix.os }}, rust ${{ matrix.rust }})
     runs-on: ${{ matrix.os }}
     needs: clippy
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
+        rust: [stable, "1.85"]
+        exclude:
+          # Only test MSRV on Ubuntu to save CI minutes
+          - os: macos-latest
+            rust: "1.85"
+          - os: windows-latest
+            rust: "1.85"
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-      - uses: dtolnay/rust-toolchain@4be9e76fd7c4901c61fb841f559994984270fce7 # stable
+      - uses: dtolnay/rust-toolchain@4be9e76fd7c4901c61fb841f559994984270fce7
+        with:
+          toolchain: ${{ matrix.rust }}
       - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2
         with:
-          key: ${{ matrix.os }}
+          key: ${{ matrix.os }}-${{ matrix.rust }}
           save-if: ${{ github.ref == 'refs/heads/main' }}
       - uses: taiki-e/install-action@cd05dcd6eb73067dda063b97a15b7060049dacd9 # nextest
       - run: cargo nextest run --workspace
@@ -112,7 +121,7 @@ jobs:
         with:
           files: lcov.info
           flags: unittests
-          fail_ci_if_error: false
+          fail_ci_if_error: true
           token: ${{ secrets.CODECOV_TOKEN }}
 
   benchmark-iai:

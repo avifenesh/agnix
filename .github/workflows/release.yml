@@ -45,7 +45,7 @@ jobs:
 
       - name: Install cross
         if: matrix.cross
-        run: cargo install cross --git https://github.com/cross-rs/cross
+        run: cargo install cross --git https://github.com/cross-rs/cross --tag v0.2.5
 
       - uses: dtolnay/rust-toolchain@4be9e76fd7c4901c61fb841f559994984270fce7 # stable
         with:
@@ -194,25 +194,35 @@ jobs:
 
       # Publish order: agnix-rules (leaf) → agnix-core → agnix-cli/agnix-lsp
       - name: Publish agnix-rules
-        run: cargo publish -p agnix-rules --token ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: cargo publish -p agnix-rules
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
 
       - name: Wait for crates.io indexing
         run: sleep 30
 
       - name: Publish agnix-core
-        run: cargo publish -p agnix-core --token ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: cargo publish -p agnix-core
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
 
       - name: Wait for crates.io indexing
         run: sleep 30
 
       - name: Publish agnix-cli
-        run: cargo publish -p agnix-cli --token ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: cargo publish -p agnix-cli
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
 
       - name: Publish agnix-lsp
-        run: cargo publish -p agnix-lsp --token ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: cargo publish -p agnix-lsp
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
 
       - name: Publish agnix-mcp
-        run: cargo publish -p agnix-mcp --token ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: cargo publish -p agnix-mcp
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
 
   vscode:
     name: Publish VS Code Extension
@@ -315,7 +325,7 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ !contains(github.ref, '-') }}
     steps:
-      - uses: huacnlee/zed-extension-action@v2
+      - uses: huacnlee/zed-extension-action@8cd592a0d24e1e41157740f1a529aeabddc88a1b # v2
         with:
           extension-name: agnix
           push-to: avifenesh/extensions

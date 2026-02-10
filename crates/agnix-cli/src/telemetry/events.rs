@@ -191,11 +191,11 @@ mod tests {
             timestamp: "2024-01-01T00:00:00Z".to_string(),
         };
 
-        let json = serde_json::to_string(&event).unwrap();
+        let json = serde_json::to_string(&event).expect("ValidationRunEvent serialization should not fail");
         assert!(json.contains("\"error_count\":1"));
         assert!(json.contains("\"duration_ms\":150"));
 
-        let parsed: ValidationRunEvent = serde_json::from_str(&json).unwrap();
+        let parsed: ValidationRunEvent = serde_json::from_str(&json).expect("round-trip deserialization should not fail");
         assert_eq!(parsed.error_count, 1);
         assert_eq!(parsed.duration_ms, 150);
     }
@@ -212,7 +212,7 @@ mod tests {
             timestamp: "2024-01-01T00:00:00Z".to_string(),
         });
 
-        let json = serde_json::to_string(&event).unwrap();
+        let json = serde_json::to_string(&event).expect("TelemetryEvent serialization should not fail");
         assert!(json.contains("\"type\":\"validation_run\""));
     }
 

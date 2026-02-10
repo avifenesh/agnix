@@ -178,6 +178,34 @@ mod validation_tests {
     }
 
     #[test]
+    fn test_validate_nonexistent_project_path() {
+        let config = LintConfig::default();
+        let result = validate_project(std::path::Path::new("/nonexistent/project/dir"), &config);
+
+        assert!(result.is_ok());
+        let validation = result.unwrap();
+        assert_eq!(
+            validation.files_checked, 0,
+            "Non-existent project path should find no files"
+        );
+    }
+
+    #[test]
+    fn test_validate_empty_path_string() {
+        let config = LintConfig::default();
+        let result = validate_file(std::path::Path::new(""), &config);
+
+        // Empty path produces an empty diagnostics list (file is unrecognized)
+        // rather than an error, since validate_file reads the file content
+        // and detects it as an unknown file type.
+        assert!(
+            result.is_ok(),
+            "Empty path should not panic: {:?}",
+            result
+        );
+    }
+
+    #[test]
     fn test_validate_with_target_claude_code() {
         let temp = create_temp_project();
         let skill_path = temp.path().join("SKILL.md");

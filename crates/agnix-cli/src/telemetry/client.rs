@@ -119,7 +119,7 @@ mod tests {
             events: &events,
         };
 
-        let json = serde_json::to_string(&payload).unwrap();
+        let json = serde_json::to_string(&payload).expect("serialization of TelemetryPayload should not fail");
         assert!(json.contains("\"installation_id\":\"test-id\""));
         assert!(json.contains("\"events\":["));
     }

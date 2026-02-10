@@ -691,17 +691,17 @@ impl<'a> ValidationContext<'a> {
         // Supports both formats:
         // - Comma-separated: "Bash(git:*), Read, Grep" (preferred)
         // - Space-separated: "Read Write Grep" (legacy)
-        let tool_list: Option<Vec<String>> = schema.allowed_tools.as_ref().map(|tools| {
+        let tool_list: Option<Vec<&str>> = schema.allowed_tools.as_ref().map(|tools| {
             if tools.contains(',') {
                 // Comma-separated format
                 tools
                     .split(',')
-                    .map(|t| t.trim().to_string())
+                    .map(|t| t.trim())
                     .filter(|t| !t.is_empty())
                     .collect()
             } else {
                 // Space-separated format (legacy)
-                tools.split_whitespace().map(|t| t.to_string()).collect()
+                tools.split_whitespace().collect()
             }
         });
 
@@ -717,8 +717,8 @@ impl<'a> ValidationContext<'a> {
 
                 let mut bash_pos_iter = bash_positions.iter();
 
-                for tool in tools {
-                    if *tool == "Bash" {
+                for &tool in tools {
+                    if tool == "Bash" {
                         let mut diagnostic = Diagnostic::warning(
                             self.path.to_path_buf(),
                             allowed_tools_line,
@@ -755,7 +755,7 @@ impl<'a> ValidationContext<'a> {
                 static KNOWN_TOOLS_LIST: OnceLock<String> = OnceLock::new();
                 let known_tools_str = KNOWN_TOOLS_LIST.get_or_init(|| KNOWN_TOOLS.join(", "));
 
-                for tool in tools {
+                for &tool in tools {
                     let base_name = tool.split('(').next().unwrap_or(tool);
                     if !is_valid_skill_tool_name(base_name) {
                         self.diagnostics.push(

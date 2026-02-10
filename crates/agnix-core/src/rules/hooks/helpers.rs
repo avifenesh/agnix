@@ -19,65 +19,68 @@ fn dangerous_patterns() -> &'static Vec<DangerousPattern> {
     DANGEROUS_PATTERNS.get_or_init(|| {
         let patterns: &[(&str, &str)] = &[
             (
-                r"rm\s+-rf\s+/",
+                r"(?i)rm\s+-rf\s+/",
                 "Recursive delete from root is extremely dangerous",
             ),
             (
-                r"rm\s+-rf\s+\*",
+                r"(?i)rm\s+-rf\s+\*",
                 "Recursive delete with wildcard could delete unintended files",
             ),
             (
-                r"rm\s+-rf\s+\.\.",
+                r"(?i)rm\s+-rf\s+\.\.",
                 "Recursive delete of parent directories is dangerous",
             ),
             (
-                r"git\s+reset\s+--hard",
+                r"(?i)git\s+reset\s+--hard",
                 "Hard reset discards uncommitted changes permanently",
             ),
             (
-                r"git\s+clean\s+-fd",
+                r"(?i)git\s+clean\s+-fd",
                 "Git clean -fd removes untracked files permanently",
             ),
             (
-                r"git\s+push\s+.*--force",
+                r"(?i)git\s+push\s+.*--force",
                 "Force push can overwrite remote history",
             ),
-            (r"drop\s+database", "Dropping database is irreversible"),
-            (r"drop\s+table", "Dropping table is irreversible"),
-            (r"truncate\s+table", "Truncating table deletes all data"),
+            (r"(?i)drop\s+database", "Dropping database is irreversible"),
+            (r"(?i)drop\s+table", "Dropping table is irreversible"),
             (
-                r"curl\s+.*\|\s*sh",
+                r"(?i)truncate\s+table",
+                "Truncating table deletes all data",
+            ),
+            (
+                r"(?i)curl\s+.*\|\s*sh",
                 "Piping curl to shell is a security risk",
             ),
             (
-                r"curl\s+.*\|\s*bash",
+                r"(?i)curl\s+.*\|\s*bash",
                 "Piping curl to bash is a security risk",
             ),
             (
-                r"wget\s+.*\|\s*sh",
+                r"(?i)wget\s+.*\|\s*sh",
                 "Piping wget to shell is a security risk",
             ),
-            (r"chmod\s+777", "chmod 777 gives everyone full access"),
+            (r"(?i)chmod\s+777", "chmod 777 gives everyone full access"),
             (
-                r">\s*/dev/sd[a-z]",
+                r"(?i)>\s*/dev/sd[a-z]",
                 "Writing directly to block devices can destroy data",
             ),
-            (r"mkfs\.", "Formatting filesystem destroys all data"),
-            (r"dd\s+if=.*of=/dev/", "dd to device can destroy data"),
+            (r"(?i)mkfs\.", "Formatting filesystem destroys all data"),
+            (r"(?i)dd\s+if=.*of=/dev/", "dd to device can destroy data"),
             (
-                r"\|\|\s*true\s*$",
+                r"(?i)\|\|\s*true\s*$",
                 "Error suppression with '|| true' silently hides hook failures",
             ),
             (
-                r"2>\s*/dev/null",
+                r"(?i)2>\s*/dev/null",
                 "Redirecting stderr to /dev/null hides error messages",
             ),
         ];
         patterns
             .iter()
             .map(|&(pattern, reason)| {
-                let regex = Regex::new(&format!("(?i){}", pattern)).unwrap_or_else(|_| {
-                    panic!("BUG: invalid dangerous pattern regex: {}", pattern)
+                let regex = Regex::new(pattern).unwrap_or_else(|e| {
+                    panic!("BUG: invalid dangerous pattern regex '{}': {}", pattern, e)
                 });
                 DangerousPattern {
                     regex,
@@ -100,7 +103,8 @@ fn script_patterns() -> &'static Vec<Regex> {
         ]
         .iter()
         .map(|p| {
-            Regex::new(p).unwrap_or_else(|_| panic!("BUG: invalid script pattern regex: {}", p))
+            Regex::new(p)
+                .unwrap_or_else(|e| panic!("BUG: invalid script pattern regex '{}': {}", p, e))
         })
         .collect()
     })

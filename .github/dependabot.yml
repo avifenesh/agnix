@@ -1,0 +1,25 @@
+version: 2
+updates:
+  - package-ecosystem: "cargo"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "avifenesh"
+    labels:
+      - "dependencies"
+    commit-message:
+      prefix: "chore(deps):"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "avifenesh"
+    labels:
+      - "dependencies"
+    commit-message:
+      prefix: "chore(deps):"

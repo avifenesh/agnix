@@ -244,3 +244,287 @@ pub enum LintError {
     #[error(transparent)]
     Other(anyhow::Error),
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ===== Fix::is_insertion() tests =====
+
+    #[test]
+    fn test_fix_is_insertion_true_when_start_equals_end() {
+        let fix = Fix::insert(10, "inserted text", "insert something", true);
+        assert!(fix.is_insertion());
+    }
+
+    #[test]
+    fn test_fix_is_insertion_false_when_replacement_empty() {
+        // start == end but replacement is empty -> not an insertion
+        let fix = Fix {
+            start_byte: 5,
+            end_byte: 5,
+            replacement: String::new(),
+            description: "no-op".to_string(),
+            safe: true,
+        };
+        assert!(!fix.is_insertion());
+    }
+
+    #[test]
+    fn test_fix_is_insertion_false_when_range_differs() {
+        let fix = Fix::replace(0, 10, "replacement", "replace", true);
+        assert!(!fix.is_insertion());
+    }
+
+    #[test]
+    fn test_fix_is_insertion_at_zero() {
+        let fix = Fix::insert(0, "prepend", "prepend text", true);
+        assert!(fix.is_insertion());
+    }
+
+    // ===== Fix::is_deletion() tests =====
+
+    #[test]
+    fn test_fix_is_deletion_true_when_replacement_empty() {
+        let fix = Fix::delete(5, 15, "remove text", true);
+        assert!(fix.is_deletion());
+    }
+
+    #[test]
+    fn test_fix_is_deletion_false_when_replacement_nonempty() {
+        let fix = Fix::replace(5, 15, "new text", "replace", true);
+        assert!(!fix.is_deletion());
+    }
+
+    #[test]
+    fn test_fix_is_deletion_false_when_start_equals_end() {
+        // Empty range with empty replacement -> not a deletion
+        let fix = Fix {
+            start_byte: 5,
+            end_byte: 5,
+            replacement: String::new(),
+            description: "no-op".to_string(),
+            safe: true,
+        };
+        assert!(!fix.is_deletion());
+    }
+
+    #[test]
+    fn test_fix_is_deletion_single_byte() {
+        let fix = Fix::delete(10, 11, "delete one byte", false);
+        assert!(fix.is_deletion());
+    }
+
+    // ===== Fix constructors =====
+
+    #[test]
+    fn test_fix_replace_fields() {
+        let fix = Fix::replace(2, 8, "new", "replace old", false);
+        assert_eq!(fix.start_byte, 2);
+        assert_eq!(fix.end_byte, 8);
+        assert_eq!(fix.replacement, "new");
+        assert_eq!(fix.description, "replace old");
+        assert!(!fix.safe);
+        assert!(!fix.is_insertion());
+        assert!(!fix.is_deletion());
+    }
+
+    #[test]
+    fn test_fix_insert_fields() {
+        let fix = Fix::insert(42, "text", "insert", true);
+        assert_eq!(fix.start_byte, 42);
+        assert_eq!(fix.end_byte, 42);
+        assert_eq!(fix.replacement, "text");
+        assert!(fix.safe);
+    }
+
+    #[test]
+    fn test_fix_delete_fields() {
+        let fix = Fix::delete(0, 100, "remove block", true);
+        assert_eq!(fix.start_byte, 0);
+        assert_eq!(fix.end_byte, 100);
+        assert!(fix.replacement.is_empty());
+        assert!(fix.safe);
+    }
+
+    // ===== Diagnostic builder methods =====
+
+    #[test]
+    fn test_diagnostic_with_suggestion() {
+        let diag = Diagnostic::warning(PathBuf::from("test.md"), 1, 0, "AS-001", "test message")
+            .with_suggestion("try this instead");
+
+        assert_eq!(diag.suggestion, Some("try this instead".to_string()));
+        assert_eq!(diag.level, DiagnosticLevel::Warning);
+        assert_eq!(diag.message, "test message");
+    }
+
+    #[test]
+    fn test_diagnostic_with_fix() {
+        let fix = Fix::insert(0, "added", "add prefix", true);
+        let diag = Diagnostic::error(PathBuf::from("a.md"), 5, 3, "CC-AG-001", "missing prefix")
+            .with_fix(fix);
+
+        assert!(diag.has_fixes());
+        assert!(diag.has_safe_fixes());
+        assert_eq!(diag.fixes.len(), 1);
+        assert_eq!(diag.fixes[0].replacement, "added");
+    }
+
+    #[test]
+    fn test_diagnostic_with_fixes_multiple() {
+        let fixes = vec![
+            Fix::insert(0, "a", "fix a", true),
+            Fix::delete(10, 20, "fix b", false),
+        ];
+        let diag = Diagnostic::info(PathBuf::from("b.md"), 1, 0, "XML-001", "xml issue")
+            .with_fixes(fixes);
+
+        assert_eq!(diag.fixes.len(), 2);
+        assert!(diag.has_fixes());
+        // One safe, one unsafe
+        assert!(diag.has_safe_fixes());
+    }
+
+    #[test]
+    fn test_diagnostic_with_assumption() {
+        let diag = Diagnostic::warning(PathBuf::from("c.md"), 2, 0, "CC-HK-001", "hook issue")
+            .with_assumption("Assuming Claude Code >= 1.0.0");
+
+        assert_eq!(
+            diag.assumption,
+            Some("Assuming Claude Code >= 1.0.0".to_string())
+        );
+    }
+
+    #[test]
+    fn test_diagnostic_builder_chaining() {
+        let diag = Diagnostic::error(PathBuf::from("d.md"), 10, 5, "MCP-001", "mcp error")
+            .with_suggestion("fix it")
+            .with_fix(Fix::replace(0, 5, "fixed", "auto fix", true))
+            .with_assumption("Assuming MCP protocol 2025-06-18");
+
+        assert_eq!(diag.suggestion, Some("fix it".to_string()));
+        assert_eq!(diag.fixes.len(), 1);
+        assert!(diag.assumption.is_some());
+        assert_eq!(diag.level, DiagnosticLevel::Error);
+        assert_eq!(diag.rule, "MCP-001");
+    }
+
+    #[test]
+    fn test_diagnostic_no_fixes_by_default() {
+        let diag =
+            Diagnostic::warning(PathBuf::from("e.md"), 1, 0, "AS-005", "something wrong");
+
+        assert!(!diag.has_fixes());
+        assert!(!diag.has_safe_fixes());
+        assert!(diag.fixes.is_empty());
+        assert!(diag.suggestion.is_none());
+        assert!(diag.assumption.is_none());
+    }
+
+    #[test]
+    fn test_diagnostic_has_safe_fixes_false_when_all_unsafe() {
+        let fixes = vec![
+            Fix::delete(0, 5, "remove a", false),
+            Fix::delete(10, 15, "remove b", false),
+        ];
+        let diag = Diagnostic::error(PathBuf::from("f.md"), 1, 0, "CC-AG-002", "agent error")
+            .with_fixes(fixes);
+
+        assert!(diag.has_fixes());
+        assert!(!diag.has_safe_fixes());
+    }
+
+    // ===== Diagnostic level constructors =====
+
+    #[test]
+    fn test_diagnostic_error_level() {
+        let diag = Diagnostic::error(PathBuf::from("x.md"), 1, 0, "R-001", "err");
+        assert_eq!(diag.level, DiagnosticLevel::Error);
+    }
+
+    #[test]
+    fn test_diagnostic_warning_level() {
+        let diag = Diagnostic::warning(PathBuf::from("x.md"), 1, 0, "R-002", "warn");
+        assert_eq!(diag.level, DiagnosticLevel::Warning);
+    }
+
+    #[test]
+    fn test_diagnostic_info_level() {
+        let diag = Diagnostic::info(PathBuf::from("x.md"), 1, 0, "R-003", "info");
+        assert_eq!(diag.level, DiagnosticLevel::Info);
+    }
+
+    // ===== Serialization roundtrip =====
+
+    #[test]
+    fn test_diagnostic_serialization_roundtrip() {
+        let original = Diagnostic::error(
+            PathBuf::from("project/CLAUDE.md"),
+            42,
+            7,
+            "CC-AG-003",
+            "Agent configuration issue",
+        )
+        .with_suggestion("Add the required field")
+        .with_fix(Fix::insert(100, "new_field: true\n", "add field", true))
+        .with_fix(Fix::delete(200, 250, "remove deprecated", false))
+        .with_assumption("Assuming Claude Code >= 1.0.0");
+
+        let json = serde_json::to_string(&original).expect("serialization should succeed");
+        let deserialized: Diagnostic =
+            serde_json::from_str(&json).expect("deserialization should succeed");
+
+        assert_eq!(deserialized.level, original.level);
+        assert_eq!(deserialized.message, original.message);
+        assert_eq!(deserialized.file, original.file);
+        assert_eq!(deserialized.line, original.line);
+        assert_eq!(deserialized.column, original.column);
+        assert_eq!(deserialized.rule, original.rule);
+        assert_eq!(deserialized.suggestion, original.suggestion);
+        assert_eq!(deserialized.assumption, original.assumption);
+        assert_eq!(deserialized.fixes.len(), 2);
+        assert_eq!(deserialized.fixes[0].replacement, "new_field: true\n");
+        assert!(deserialized.fixes[0].safe);
+        assert!(deserialized.fixes[1].replacement.is_empty());
+        assert!(!deserialized.fixes[1].safe);
+    }
+
+    #[test]
+    fn test_fix_serialization_roundtrip() {
+        let original = Fix::replace(10, 20, "replaced", "test fix", true);
+        let json = serde_json::to_string(&original).expect("serialization should succeed");
+        let deserialized: Fix =
+            serde_json::from_str(&json).expect("deserialization should succeed");
+
+        assert_eq!(deserialized.start_byte, original.start_byte);
+        assert_eq!(deserialized.end_byte, original.end_byte);
+        assert_eq!(deserialized.replacement, original.replacement);
+        assert_eq!(deserialized.description, original.description);
+        assert_eq!(deserialized.safe, original.safe);
+    }
+
+    #[test]
+    fn test_diagnostic_without_optional_fields_roundtrip() {
+        let original =
+            Diagnostic::info(PathBuf::from("simple.md"), 1, 0, "AS-001", "simple message");
+
+        let json = serde_json::to_string(&original).expect("serialization should succeed");
+        let deserialized: Diagnostic =
+            serde_json::from_str(&json).expect("deserialization should succeed");
+
+        assert_eq!(deserialized.suggestion, None);
+        assert_eq!(deserialized.assumption, None);
+        assert!(deserialized.fixes.is_empty());
+    }
+
+    // ===== DiagnosticLevel ordering =====
+
+    #[test]
+    fn test_diagnostic_level_ordering() {
+        assert!(DiagnosticLevel::Error < DiagnosticLevel::Warning);
+        assert!(DiagnosticLevel::Warning < DiagnosticLevel::Info);
+        assert!(DiagnosticLevel::Error < DiagnosticLevel::Info);
+    }
+}

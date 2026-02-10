@@ -15,6 +15,7 @@ exclude = [
 [workspace.package]
 version = "0.10.4"
 edition = "2024"
+rust-version = "1.85"
 license = "MIT OR Apache-2.0"
 authors = ["Avi Fenesh <avifenesh@gmail.com>"]
 repository = "https://github.com/avifenesh/agnix"
