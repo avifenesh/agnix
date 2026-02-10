@@ -4,19 +4,23 @@ agnix supports multiple languages for diagnostic messages, CLI output, and LSP l
 
 ## Supported Locales
 
-| Code    | Language              | File           |
-|---------|-----------------------|----------------|
-| `en`    | English               | `locales/en.yml` |
-| `es`    | Spanish               | `locales/es.yml` |
-| `zh-CN` | Chinese (Simplified)  | `locales/zh-CN.yml` |
+| Code    | Language              | Crate-local files              |
+|---------|-----------------------|--------------------------------|
+| `en`    | English               | `crates/*/locales/en.yml`      |
+| `es`    | Spanish               | `crates/*/locales/es.yml`      |
+| `zh-CN` | Chinese (Simplified)  | `crates/*/locales/zh-CN.yml`   |
+
+Locale files are stored per-crate (`agnix-core/locales/`, `agnix-cli/locales/`, `agnix-lsp/locales/`) so each crate embeds its required translations at compile time. A CI `locale-sync` job verifies all copies stay in sync.
 
 ## Adding a New Language
 
-1. **Copy the English locale file** as your starting template:
+1. **Copy the English locale file** into each crate as your starting template:
    ```bash
-   cp locales/en.yml locales/<code>.yml
+   for crate in agnix-core agnix-cli agnix-lsp; do
+     cp "crates/$crate/locales/en.yml" "crates/$crate/locales/<code>.yml"
+   done
    ```
-   Use the [BCP 47 language tag](https://www.rfc-editor.org/info/bcp47) as the filename (e.g., `fr.yml`, `ja.yml`, `pt-BR.yml`).
+   Use the [BCP 47 language tag](https://www.rfc-editor.org/info/bcp47) as the filename (e.g., `fr.yml`, `ja.yml`, `pt-BR.yml`). All three crate copies must stay identical; the CI `locale-sync` job enforces this.
 
 2. **Translate all string values** in the new file. Keep the YAML keys unchanged; only modify the values.
 

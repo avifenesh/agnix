@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- i18n diagnostic messages now display properly translated text instead of raw key paths when installed via `cargo install` (fixes #341)
+- CI locale-sync check prevents locale files from drifting across crates
+
 ### Added
 - **Clickable rule links in IDEs** - LSP diagnostics now include `code_description` so rule codes (e.g. AS-001) link to per-rule website docs
 - **Explicit code action kinds** - LSP advertises QUICKFIX capability for more reliable quick-fix surfacing
