@@ -13,6 +13,18 @@
 //! - Claude Code hooks
 //! - CLAUDE.md memory files
 //! - Plugin manifests
+//!
+//! ## Stability Tiers
+//!
+//! Public modules are classified into stability tiers:
+//!
+//! - **Stable** -- `config`, `diagnostics`, `fixes`, `fs`.
+//!   These modules follow semver: breaking changes require a major version bump.
+//! - **Unstable** -- `authoring`, `eval`, `i18n`, `validation`.
+//!   Interfaces may change on minor releases. Use with care in downstream crates.
+//! - **Internal** -- `parsers` (pub(crate)).
+//!   Not part of the public API. Some types are re-exported at the crate root
+//!   with `#[doc(hidden)]` for fuzz/bench/test use only.
 
 // Allow common test patterns that clippy flags but are intentional in tests
 #![cfg_attr(
@@ -26,19 +38,46 @@
 
 rust_i18n::i18n!("locales", fallback = "en");
 
+/// Skill authoring and scaffolding utilities.
+///
+/// **Stability: unstable** -- interface may change on minor releases.
 pub mod authoring;
+/// Lint configuration types and schema generation.
+///
+/// **Stability: stable** -- breaking changes require a major version bump.
 pub mod config;
+/// Diagnostic, severity, fix, and error types.
+///
+/// **Stability: stable** -- breaking changes require a major version bump.
 pub mod diagnostics;
+/// Rule efficacy evaluation (precision/recall/F1).
+///
+/// **Stability: unstable** -- interface may change on minor releases.
 pub mod eval;
 mod file_utils;
+/// Auto-fix application engine.
+///
+/// **Stability: stable** -- breaking changes require a major version bump.
 pub mod fixes;
+/// Filesystem abstraction (real and mock).
+///
+/// **Stability: stable** -- breaking changes require a major version bump.
 pub mod fs;
+/// Internationalization helpers.
+///
+/// **Stability: unstable** -- interface may change on minor releases.
 pub mod i18n;
+/// Internal parsers (frontmatter, JSON, Markdown).
+///
+/// **Stability: internal** -- not part of the public API.
 pub(crate) mod parsers;
 mod regex_util;
 mod rules;
 mod schemas;
 pub(crate) mod span_utils;
+/// Validation registry and file-type detection.
+///
+/// **Stability: unstable** -- interface may change on minor releases.
 pub mod validation;
 
 use std::collections::HashMap;
