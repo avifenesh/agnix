@@ -936,10 +936,7 @@ pub fn validate_project_rules(root: &Path, config: &LintConfig) -> LintResult<Ve
         // Enforce file count limit to prevent unbounded traversal
         if let Some(limit) = max_files {
             if files_seen >= limit {
-                return Err(LintError::TooManyFiles {
-                    count: files_seen,
-                    limit,
-                });
+                break;
             }
         }
         let file_path = entry.path().to_path_buf();

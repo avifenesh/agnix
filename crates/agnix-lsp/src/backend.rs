@@ -452,6 +452,11 @@ impl Backend {
             prev.clone()
         };
 
+        // Drop stale results from slower runs BEFORE any side effects
+        if self.project_validation_generation.load(Ordering::SeqCst) != expected_generation {
+            return;
+        }
+
         // Capture the set of open document URIs once, then release the lock
         // so we don't hold it across await points (publish_diagnostics calls).
         let open_uris: HashSet<Url> = {
@@ -482,11 +487,6 @@ impl Backend {
             .filter(|uri| open_uris.contains(uri))
             .cloned()
             .collect();
-
-        // Drop stale results from slower runs
-        if self.project_validation_generation.load(Ordering::SeqCst) != expected_generation {
-            return;
-        }
 
         {
             let mut proj_diags = self.project_level_diagnostics.write().await;
