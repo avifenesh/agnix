@@ -5203,10 +5203,10 @@ mod i18n_tests {
             ($key:expr) => {
                 let value = t!($key);
                 assert!(
-                    !value.contains('.') || !value.starts_with("rules.")
-                        && !value.starts_with("cli.")
-                        && !value.starts_with("lsp.")
-                        && !value.starts_with("core."),
+                    (!value.starts_with("rules."))
+                        && (!value.starts_with("cli."))
+                        && (!value.starts_with("lsp."))
+                        && (!value.starts_with("core.")),
                     "Key '{}' returned raw path instead of translated text: {}",
                     $key,
                     value
@@ -5215,10 +5215,10 @@ mod i18n_tests {
             ($key:expr, $($param:ident = $val:expr),+) => {
                 let value = t!($key, $($param = $val),+);
                 assert!(
-                    !value.contains('.') || !value.starts_with("rules.")
-                        && !value.starts_with("cli.")
-                        && !value.starts_with("lsp.")
-                        && !value.starts_with("core."),
+                    (!value.starts_with("rules."))
+                        && (!value.starts_with("cli."))
+                        && (!value.starts_with("lsp."))
+                        && (!value.starts_with("core.")),
                     "Key '{}' returned raw path instead of translated text: {}",
                     $key,
                     value
@@ -5226,11 +5226,23 @@ mod i18n_tests {
             };
         }
 
-        // Rules section - sample from different validators
+        // Rules section - sample messages from different validators
         assert_not_raw_key!("rules.as_001.message");
         assert_not_raw_key!("rules.as_004.message", name = "test");
         assert_not_raw_key!("rules.cc_ag_009.message", tool = "x", known = "y");
         assert_not_raw_key!("rules.xml_001.message", tag = "div");
+        assert_not_raw_key!("rules.cc_hk_001.message");
+        assert_not_raw_key!("rules.pe_003.message");
+        assert_not_raw_key!("rules.cc_mem_009.message");
+
+        // Rules section - suggestions
+        assert_not_raw_key!("rules.as_001.suggestion");
+        assert_not_raw_key!("rules.as_004.suggestion");
+        assert_not_raw_key!("rules.cc_ag_009.suggestion");
+
+        // Rules section - assumptions
+        assert_not_raw_key!("rules.cc_hk_010.assumption");
+        assert_not_raw_key!("rules.mcp_008.assumption");
 
         // CLI section
         assert_not_raw_key!("cli.validating");

@@ -3055,3 +3055,59 @@ fn test_no_raw_i18n_keys_in_diagnostic_output() {
         "CLI should produce diagnostic output for invalid fixtures"
     );
 }
+
+/// Verify that JSON format output also contains resolved messages, not raw
+/// i18n key paths in the message and suggestion fields.
+#[test]
+fn test_no_raw_i18n_keys_in_json_output() {
+    use regex::Regex;
+    use std::fs;
+    use std::io::Write;
+
+    let temp_dir = tempfile::tempdir().unwrap();
+
+    // Create a skill with an invalid name to trigger AS-004
+    let skills_dir = temp_dir.path().join("skills").join("bad-skill");
+    fs::create_dir_all(&skills_dir).unwrap();
+    let mut file = fs::File::create(skills_dir.join("SKILL.md")).unwrap();
+    writeln!(
+        file,
+        "---\nname: Bad-Skill\ndescription: test\n---\nContent"
+    )
+    .unwrap();
+
+    let mut cmd = agnix();
+    let output = cmd
+        .arg("--format")
+        .arg("json")
+        .arg(temp_dir.path().to_str().unwrap())
+        .output()
+        .unwrap();
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+
+    // Parse JSON output and check message/suggestion fields
+    let json: serde_json::Value = serde_json::from_str(&stdout)
+        .unwrap_or_else(|e| panic!("Failed to parse JSON output: {}\nOutput: {}", e, stdout));
+
+    let raw_key_re = Regex::new(r"^(rules|cli|lsp|core)\.[a-z_]+").unwrap();
+
+    if let Some(diagnostics) = json.as_array() {
+        for diag in diagnostics {
+            if let Some(msg) = diag.get("message").and_then(|v| v.as_str()) {
+                assert!(
+                    !raw_key_re.is_match(msg),
+                    "JSON diagnostic 'message' contains raw i18n key: {}",
+                    msg
+                );
+            }
+            if let Some(sug) = diag.get("suggestion").and_then(|v| v.as_str()) {
+                assert!(
+                    !raw_key_re.is_match(sug),
+                    "JSON diagnostic 'suggestion' contains raw i18n key: {}",
+                    sug
+                );
+            }
+        }
+    }
+}
