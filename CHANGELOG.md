@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - All rule documentation links now point to website (`avifenesh.github.io/agnix`) instead of GitHub `VALIDATION-RULES.md`
 - README overhauled to focused landing page with punchy value prop and website links
+- **ValidatorRegistry API** - Replaced mutable `register()` method with immutable `ValidatorRegistryBuilder` using fluent builder pattern (`ValidatorRegistry::builder().with_defaults().build()`)
 
 ## [0.10.2] - 2026-02-08
 

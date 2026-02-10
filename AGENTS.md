@@ -83,6 +83,11 @@ pub trait Validator {
 pub struct ValidatorRegistry {
     validators: HashMap<FileType, Vec<ValidatorFactory>>
 }
+
+// Construct registry via builder pattern
+let registry = ValidatorRegistry::builder()
+    .with_defaults()
+    .build();
 ```
 
 ### Validation Flow
