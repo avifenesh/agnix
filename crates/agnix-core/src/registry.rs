@@ -199,6 +199,9 @@ impl ValidatorRegistryBuilder {
     }
 
     /// Add all built-in validators (equivalent to [`ValidatorRegistry::with_defaults`]).
+    ///
+    /// This method is additive: calling it multiple times will register
+    /// duplicate factories. For most use cases, call it once.
     pub fn with_defaults(&mut self) -> &mut Self {
         self.with_provider(&BuiltinProvider)
     }
@@ -224,7 +227,12 @@ impl ValidatorRegistryBuilder {
         self
     }
 
-    /// Consume the builder and produce a [`ValidatorRegistry`].
+    /// Produce a [`ValidatorRegistry`] from this builder.
+    ///
+    /// Drains the builder's disabled set via [`std::mem::take`], so calling
+    /// `build()` a second time produces a registry with no disabled validators.
+    /// This is intentional: reuse a builder by calling configuration methods
+    /// again before a subsequent `build()`.
     pub fn build(&mut self) -> ValidatorRegistry {
         let mut registry = ValidatorRegistry {
             validators: HashMap::new(),

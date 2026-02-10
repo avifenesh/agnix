@@ -26,11 +26,14 @@ use std::path::Path;
 /// Extract the short (unqualified) type name from `std::any::type_name`.
 ///
 /// Given a fully-qualified path like `"agnix_core::rules::skill::SkillValidator"`,
-/// returns `"SkillValidator"`. Falls back to the full name when no `::` separator
-/// is found.
+/// returns `"SkillValidator"`. For generic types like `"Wrapper<foo::Bar>"`,
+/// strips the generic suffix first, yielding `"Wrapper"`.
+/// Falls back to the full name when no `::` separator is found.
 fn short_type_name<T: ?Sized + 'static>() -> &'static str {
     let full = std::any::type_name::<T>();
-    full.rsplit("::").next().unwrap_or(full)
+    // Strip generic suffix (e.g., "Wrapper<foo::Bar>" -> "Wrapper")
+    let base = full.split('<').next().unwrap_or(full);
+    base.rsplit("::").next().unwrap_or(base)
 }
 
 /// Trait for file validators.

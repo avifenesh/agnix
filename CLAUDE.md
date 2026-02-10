@@ -80,11 +80,12 @@ tests/fixtures/     # Test cases by category
 // Primary extension point
 pub trait Validator {
     fn validate(&self, path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic>;
-    fn name(&self) -> &'static str; // Defaults to short type name
+    fn name(&self) -> &'static str { /* default: short type name */ }
 }
 
 // Plugin architecture for extensibility
-pub trait ValidatorProvider {
+pub trait ValidatorProvider: Send + Sync {
+    fn name(&self) -> &str { /* default: short type name */ }
     fn validators(&self) -> Vec<(FileType, ValidatorFactory)>;
 }
 
