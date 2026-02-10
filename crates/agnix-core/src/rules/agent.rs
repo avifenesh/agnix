@@ -2565,6 +2565,51 @@ Agent instructions"#;
     }
 
     #[test]
+    fn test_cc_ag_010_mcp_case_sensitive() {
+        let content = r#"---
+name: my-agent
+description: A test agent
+disallowedTools:
+  - MCP__memory__create_entities
+  - Mcp__test__tool
+---
+Agent instructions"#;
+
+        let diagnostics = validate(content);
+        let cc_ag_010: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-AG-010")
+            .collect();
+        assert_eq!(
+            cc_ag_010.len(),
+            2,
+            "MCP prefix is case-sensitive: MCP__ and Mcp__ should be rejected in disallowedTools"
+        );
+    }
+
+    #[test]
+    fn test_cc_ag_010_scoped_mcp_tool_valid() {
+        let content = r#"---
+name: my-agent
+description: A test agent
+disallowedTools:
+  - mcp__memory__create_entities(scope:*)
+---
+Agent instructions"#;
+
+        let diagnostics = validate(content);
+        let cc_ag_010: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-AG-010")
+            .collect();
+        assert_eq!(
+            cc_ag_010.len(),
+            0,
+            "Scoped MCP tools should be accepted in disallowedTools"
+        );
+    }
+
+    #[test]
     fn test_cc_ag_009_mcp_case_sensitive() {
         let content = r#"---
 name: my-agent

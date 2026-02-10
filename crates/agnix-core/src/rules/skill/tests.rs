@@ -1415,6 +1415,30 @@ Body"#;
 }
 
 #[test]
+fn test_cc_sk_008_scoped_mcp_tool_valid() {
+    let content = r#"---
+name: test-skill
+description: Use when testing
+allowed-tools: Read mcp__github__search_repositories(scope:*)
+---
+Body"#;
+
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+    let cc_sk_008: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-SK-008")
+        .collect();
+
+    assert_eq!(
+        cc_sk_008.len(),
+        0,
+        "Scoped MCP tools should be accepted in allowed-tools"
+    );
+}
+
+#[test]
 fn test_cc_sk_008_mcp_case_sensitive() {
     let content = r#"---
 name: test-skill
