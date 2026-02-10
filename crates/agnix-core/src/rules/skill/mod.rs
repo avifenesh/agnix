@@ -8,6 +8,7 @@ use crate::{
     rules::Validator,
     schemas::hooks::HooksSchema,
     schemas::skill::SkillSchema,
+    validation::is_valid_mcp_tool_format,
 };
 use regex::Regex;
 use rust_i18n::t;
@@ -70,10 +71,17 @@ const KNOWN_TOOLS: &[&str] = &[
     "Glob",
     "Task",
     "WebFetch",
+    "WebSearch",
     "AskUserQuestion",
     "TodoRead",
     "TodoWrite",
     "MultiTool",
+    "NotebookEdit",
+    "EnterPlanMode",
+    "ExitPlanMode",
+    "Skill",
+    "StatusBarMessageTool",
+    "TaskOutput",
 ];
 
 /// Maximum dynamic injections for CC-SK-009
@@ -749,7 +757,7 @@ impl<'a> ValidationContext<'a> {
 
                 for tool in tools {
                     let base_name = tool.split('(').next().unwrap_or(tool);
-                    if !KNOWN_TOOLS.contains(&base_name) {
+                    if !is_valid_skill_tool_name(base_name) {
                         self.diagnostics.push(
                             Diagnostic::error(
                                 self.path.to_path_buf(),
@@ -1226,6 +1234,11 @@ impl<'a> ValidationContext<'a> {
 }
 
 pub struct SkillValidator;
+
+/// Helper to check if a tool name is valid for skills (either known or properly formatted MCP tool).
+fn is_valid_skill_tool_name(tool: &str) -> bool {
+    is_valid_mcp_tool_format(tool, KNOWN_TOOLS)
+}
 
 impl Validator for SkillValidator {
     fn validate(&self, path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic> {

@@ -1138,7 +1138,7 @@ fn test_cc_sk_008_all_known_tools_ok() {
     let content = r#"---
 name: test-skill
 description: Use when testing
-allowed-tools: Bash Read Write Edit Grep Glob Task
+allowed-tools: Bash Read Write Edit Grep Glob Task WebFetch WebSearch AskUserQuestion TodoRead TodoWrite MultiTool NotebookEdit EnterPlanMode ExitPlanMode Skill StatusBarMessageTool TaskOutput
 ---
 Body"#;
 
@@ -1388,6 +1388,78 @@ Body"#;
 
     // Tool names are case-sensitive: bash != Bash
     assert_eq!(cc_sk_008.len(), 2, "lowercase tool names are unknown");
+}
+
+#[test]
+fn test_cc_sk_008_mcp_tool_valid() {
+    let content = r#"---
+name: test-skill
+description: Use when testing
+allowed-tools: Read mcp__memory__create_entities mcp__filesystem__read_file
+---
+Body"#;
+
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+    let cc_sk_008: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-SK-008")
+        .collect();
+
+    assert_eq!(
+        cc_sk_008.len(),
+        0,
+        "MCP tools with mcp__ prefix should be accepted in allowed-tools"
+    );
+}
+
+#[test]
+fn test_cc_sk_008_scoped_mcp_tool_valid() {
+    let content = r#"---
+name: test-skill
+description: Use when testing
+allowed-tools: Read mcp__github__search_repositories(scope:*)
+---
+Body"#;
+
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+    let cc_sk_008: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-SK-008")
+        .collect();
+
+    assert_eq!(
+        cc_sk_008.len(),
+        0,
+        "Scoped MCP tools should be accepted in allowed-tools"
+    );
+}
+
+#[test]
+fn test_cc_sk_008_mcp_case_sensitive() {
+    let content = r#"---
+name: test-skill
+description: Use when testing
+allowed-tools: MCP__memory__create Mcp__test__tool
+---
+Body"#;
+
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+    let cc_sk_008: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-SK-008")
+        .collect();
+
+    assert_eq!(
+        cc_sk_008.len(),
+        2,
+        "MCP prefix is case-sensitive: MCP__ and Mcp__ should be rejected"
+    );
 }
 
 #[test]

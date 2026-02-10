@@ -11,6 +11,7 @@ use crate::{
     rules::Validator,
     schemas::agent::AgentSchema,
     schemas::hooks::HooksSchema,
+    validation::is_valid_mcp_tool_format,
 };
 use rust_i18n::t;
 use std::collections::HashSet;
@@ -83,6 +84,9 @@ const KNOWN_AGENT_TOOLS: &[&str] = &[
     "NotebookEdit",
     "EnterPlanMode",
     "ExitPlanMode",
+    "Skill",
+    "StatusBarMessageTool",
+    "TaskOutput",
 ];
 
 pub struct AgentValidator;
@@ -222,6 +226,11 @@ impl AgentValidator {
             .join(skill_name)
             .join("SKILL.md");
         fs.exists(&skill_path)
+    }
+
+    /// Helper to check if a tool name is valid (either known or properly formatted MCP tool).
+    fn is_valid_tool_name(tool: &str) -> bool {
+        is_valid_mcp_tool_format(tool, KNOWN_AGENT_TOOLS)
     }
 }
 
@@ -477,8 +486,7 @@ impl Validator for AgentValidator {
         if config.is_rule_enabled("CC-AG-009") {
             if let Some(tools) = &schema.tools {
                 for tool in tools {
-                    let base_name = tool.split('(').next().unwrap_or(tool);
-                    if !KNOWN_AGENT_TOOLS.contains(&base_name) {
+                    if !Self::is_valid_tool_name(tool) {
                         diagnostics.push(
                             Diagnostic::error(
                                 path.to_path_buf(),
@@ -501,8 +509,7 @@ impl Validator for AgentValidator {
         if config.is_rule_enabled("CC-AG-010") {
             if let Some(disallowed) = &schema.disallowed_tools {
                 for tool in disallowed {
-                    let base_name = tool.split('(').next().unwrap_or(tool);
-                    if !KNOWN_AGENT_TOOLS.contains(&base_name) {
+                    if !Self::is_valid_tool_name(tool) {
                         diagnostics.push(
                             Diagnostic::error(
                                 path.to_path_buf(),
@@ -2392,6 +2399,9 @@ tools:
   - WebFetch
   - WebSearch
   - NotebookEdit
+  - Skill
+  - StatusBarMessageTool
+  - TaskOutput
 ---
 Agent instructions"#;
 
@@ -2440,6 +2450,78 @@ Agent instructions"#;
         assert_eq!(cc_ag_009.len(), 2);
     }
 
+    #[test]
+    fn test_cc_ag_009_mcp_tool_valid() {
+        let content = r#"---
+name: my-agent
+description: A test agent
+tools:
+  - Read
+  - mcp__memory__create_entities
+  - mcp__filesystem__read_file
+---
+Agent instructions"#;
+
+        let diagnostics = validate(content);
+        let cc_ag_009: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-AG-009")
+            .collect();
+        assert_eq!(
+            cc_ag_009.len(),
+            0,
+            "MCP tools with mcp__ prefix should be accepted"
+        );
+    }
+
+    #[test]
+    fn test_cc_ag_009_mcp_tool_invalid_formats() {
+        // Test various invalid MCP formats
+        let content = r#"---
+name: my-agent
+description: A test agent
+tools:
+  - Read
+  - mcp__
+  - mcp__server
+  - mcp__bad name
+  - MCP__server__tool
+---
+Agent instructions"#;
+
+        let diagnostics = validate(content);
+        let cc_ag_009: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-AG-009")
+            .collect();
+        // Should flag: mcp__, mcp__server, mcp__bad name, MCP__server__tool (uppercase)
+        assert_eq!(cc_ag_009.len(), 4, "Invalid MCP formats should be rejected");
+    }
+
+    #[test]
+    fn test_cc_ag_009_skill_tool_valid() {
+        let content = r#"---
+name: my-agent
+description: A test agent
+tools:
+  - Skill
+  - StatusBarMessageTool
+  - TaskOutput
+---
+Agent instructions"#;
+
+        let diagnostics = validate(content);
+        let cc_ag_009: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-AG-009")
+            .collect();
+        assert_eq!(
+            cc_ag_009.len(),
+            0,
+            "Skill, StatusBarMessageTool, and TaskOutput should be recognized"
+        );
+    }
+
     // ===== CC-AG-010 Tests: Invalid Tool Name in DisallowedTools =====
 
     #[test]
@@ -2481,6 +2563,115 @@ Agent instructions"#;
             .filter(|d| d.rule == "CC-AG-010")
             .collect();
         assert_eq!(cc_ag_010.len(), 0);
+    }
+
+    #[test]
+    fn test_cc_ag_010_mcp_tool_valid() {
+        let content = r#"---
+name: my-agent
+description: A test agent
+disallowedTools:
+  - mcp__memory__create_entities
+  - mcp__filesystem__read_file
+---
+Agent instructions"#;
+
+        let diagnostics = validate(content);
+        let cc_ag_010: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-AG-010")
+            .collect();
+        assert_eq!(
+            cc_ag_010.len(),
+            0,
+            "MCP tools with mcp__ prefix should be accepted in disallowedTools"
+        );
+    }
+
+    #[test]
+    fn test_cc_ag_010_mcp_case_sensitive() {
+        let content = r#"---
+name: my-agent
+description: A test agent
+disallowedTools:
+  - MCP__memory__create_entities
+  - Mcp__test__tool
+---
+Agent instructions"#;
+
+        let diagnostics = validate(content);
+        let cc_ag_010: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-AG-010")
+            .collect();
+        assert_eq!(
+            cc_ag_010.len(),
+            2,
+            "MCP prefix is case-sensitive: MCP__ and Mcp__ should be rejected in disallowedTools"
+        );
+    }
+
+    #[test]
+    fn test_cc_ag_010_scoped_mcp_tool_valid() {
+        let content = r#"---
+name: my-agent
+description: A test agent
+disallowedTools:
+  - mcp__memory__create_entities(scope:*)
+---
+Agent instructions"#;
+
+        let diagnostics = validate(content);
+        let cc_ag_010: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-AG-010")
+            .collect();
+        assert_eq!(
+            cc_ag_010.len(),
+            0,
+            "Scoped MCP tools should be accepted in disallowedTools"
+        );
+    }
+
+    #[test]
+    fn test_cc_ag_009_mcp_case_sensitive() {
+        let content = r#"---
+name: my-agent
+description: A test agent
+tools:
+  - MCP__memory__create_entities
+  - Mcp__test__tool
+---
+Agent instructions"#;
+
+        let diagnostics = validate(content);
+        let cc_ag_009: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-AG-009")
+            .collect();
+        assert_eq!(
+            cc_ag_009.len(),
+            2,
+            "MCP prefix is case-sensitive: MCP__ and Mcp__ should be rejected"
+        );
+    }
+
+    #[test]
+    fn test_cc_ag_009_scoped_mcp_tool_valid() {
+        let content = r#"---
+name: my-agent
+description: A test agent
+tools:
+  - mcp__github__search_repositories(scope:*)
+---
+Agent instructions"#;
+
+        let diagnostics = validate(content);
+        let cc_ag_009: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-AG-009")
+            .collect();
+        assert_eq!(cc_ag_009.len(), 0, "Scoped MCP tools should be accepted");
     }
 
     // ===== CC-AG-011 Tests: Hooks in Agent Frontmatter =====

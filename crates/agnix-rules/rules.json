@@ -4445,7 +4445,7 @@
           },
           {
             "key": "allowed-tools",
-            "docs": "Comma-separated tool allowlist. Restrict scope for safety.",
+            "docs": "Comma-separated tool allowlist. Restrict scope for safety. MCP tools use mcp__ prefix.",
             "rules": [
               "CC-SK-007",
               "CC-SK-008"
@@ -4457,7 +4457,19 @@
               "Bash(git:*)",
               "Grep",
               "Glob",
-              "Task"
+              "Task",
+              "WebFetch",
+              "WebSearch",
+              "AskUserQuestion",
+              "TodoRead",
+              "TodoWrite",
+              "MultiTool",
+              "NotebookEdit",
+              "EnterPlanMode",
+              "ExitPlanMode",
+              "Skill",
+              "StatusBarMessageTool",
+              "TaskOutput"
             ],
             "snippet": "allowed-tools: Read, Grep, Bash(git:*)"
           },
@@ -4601,7 +4613,7 @@
           },
           {
             "key": "tools",
-            "docs": "Allowed tools for this agent.",
+            "docs": "Allowed tools for this agent. MCP tools use mcp__ prefix.",
             "rules": [
               "CC-AG-006",
               "CC-AG-009"
@@ -4613,19 +4625,49 @@
               "Bash",
               "Grep",
               "Glob",
-              "Task"
+              "Task",
+              "WebFetch",
+              "WebSearch",
+              "AskUserQuestion",
+              "TodoRead",
+              "TodoWrite",
+              "MultiTool",
+              "NotebookEdit",
+              "EnterPlanMode",
+              "ExitPlanMode",
+              "Skill",
+              "StatusBarMessageTool",
+              "TaskOutput"
             ],
             "snippet": "tools:\n  - Read\n  - Grep"
           },
           {
             "key": "disallowedTools",
-            "docs": "Tools this agent must never use.",
+            "docs": "Tools this agent must never use. MCP tools use mcp__ prefix.",
             "rules": [
               "CC-AG-006",
               "CC-AG-010"
             ],
             "values": [
-              "Bash"
+              "Bash",
+              "Read",
+              "Write",
+              "Edit",
+              "Grep",
+              "Glob",
+              "Task",
+              "WebFetch",
+              "WebSearch",
+              "AskUserQuestion",
+              "TodoRead",
+              "TodoWrite",
+              "MultiTool",
+              "NotebookEdit",
+              "EnterPlanMode",
+              "ExitPlanMode",
+              "Skill",
+              "StatusBarMessageTool",
+              "TaskOutput"
             ],
             "snippet": "disallowedTools:\n  - Bash"
           },
