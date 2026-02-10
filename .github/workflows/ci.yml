@@ -24,6 +24,13 @@ jobs:
       - run: python scripts/check-rule-counts.py
       - run: python scripts/validate-evidence-links.py --timeout 8 --retries 1
 
+  locale-sync:
+    name: Locale Sync Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - run: bash scripts/check-locale-sync.sh
+
   format:
     name: Format Check
     runs-on: ubuntu-latest
