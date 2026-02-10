@@ -80,7 +80,7 @@ rules:
     fix: "Replace unrestricted Bash with scoped Bash(git:*)"
   cc_sk_008:
     message: "Unknown tool '%{tool}'. Known tools: %{known}. MCP tools must use lowercase mcp__<server>__<tool> format"
-    suggestion: "Use one of the known Claude Code tools: %{known}"
+    suggestion: "Use one of the known Claude Code tools: %{known}, or a valid MCP tool (mcp__<server>__<tool>, case-sensitive lowercase prefix)"
   cc_sk_009:
     message: "Too many dynamic injections (%{count}). Limit to %{max} for better performance"
     suggestion: "Consider moving complex logic to a scripts/ directory or reducing injections"

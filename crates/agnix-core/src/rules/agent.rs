@@ -11,6 +11,7 @@ use crate::{
     rules::Validator,
     schemas::agent::AgentSchema,
     schemas::hooks::HooksSchema,
+    validation::is_valid_mcp_tool_format,
 };
 use rust_i18n::t;
 use std::collections::HashSet;
@@ -228,27 +229,8 @@ impl AgentValidator {
     }
 
     /// Helper to check if a tool name is valid (either known or properly formatted MCP tool).
-    /// MCP tools must follow the format: mcp__<server>__<tool> (case-sensitive, lowercase prefix).
     fn is_valid_tool_name(tool: &str) -> bool {
-        let base_name = tool.split('(').next().unwrap_or(tool);
-
-        // Check if it's a known tool
-        if KNOWN_AGENT_TOOLS.contains(&base_name) {
-            return true;
-        }
-
-        // Check if it's a valid MCP tool: mcp__<server>__<tool>
-        if let Some(rest) = base_name.strip_prefix("mcp__") {
-            // Must have at least one more double-underscore separator for server__tool
-            // and both server and tool parts must be non-empty
-            if let Some(tool_start) = rest.find("__") {
-                let server = &rest[..tool_start];
-                let tool_name = &rest[tool_start + 2..];
-                return !server.is_empty() && !tool_name.is_empty();
-            }
-        }
-
-        false
+        is_valid_mcp_tool_format(tool, KNOWN_AGENT_TOOLS)
     }
 }
 

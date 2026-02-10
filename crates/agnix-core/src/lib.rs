@@ -39,6 +39,7 @@ mod regex_util;
 mod rules;
 mod schemas;
 pub(crate) mod span_utils;
+pub mod validation;
 
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
