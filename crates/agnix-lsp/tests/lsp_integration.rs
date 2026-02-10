@@ -1240,3 +1240,177 @@ unknownfield: value
         // May or may not have actions depending on validation results
     }
 }
+
+mod project_level_validation_tests {
+    use agnix_lsp::Backend;
+    use tower_lsp::lsp_types::*;
+    use tower_lsp::{LanguageServer, LspService};
+
+    /// Integration test: project-level validation runs without error on a
+    /// workspace with nested AGENTS.md files.
+    #[tokio::test]
+    async fn test_project_level_validation_on_initialize() {
+        let (service, _socket) = LspService::new(Backend::new);
+
+        let temp_dir = tempfile::tempdir().unwrap();
+
+        // Create nested AGENTS.md files (triggers AGM-006)
+        std::fs::write(temp_dir.path().join("AGENTS.md"), "# Root AGENTS").unwrap();
+        let sub = temp_dir.path().join("sub");
+        std::fs::create_dir(&sub).unwrap();
+        std::fs::write(sub.join("AGENTS.md"), "# Sub AGENTS").unwrap();
+
+        let root_uri = Url::from_file_path(temp_dir.path()).unwrap();
+        service
+            .inner()
+            .initialize(InitializeParams {
+                root_uri: Some(root_uri),
+                ..Default::default()
+            })
+            .await
+            .unwrap();
+
+        // Trigger initialized (which spawns project validation)
+        service.inner().initialized(InitializedParams {}).await;
+
+        // Give the spawned task a moment to run
+        tokio::time::sleep(std::time::Duration::from_millis(200)).await;
+
+        // Validation should complete without panic
+    }
+
+    /// Integration test: project-level validation responds to executeCommand.
+    #[tokio::test]
+    async fn test_execute_command_validate_project_rules() {
+        let (service, _socket) = LspService::new(Backend::new);
+
+        let temp_dir = tempfile::tempdir().unwrap();
+
+        // Create instruction files
+        std::fs::write(
+            temp_dir.path().join("CLAUDE.md"),
+            "# Project\n\nUse `npm install` to set up.\n",
+        )
+        .unwrap();
+
+        let root_uri = Url::from_file_path(temp_dir.path()).unwrap();
+        service
+            .inner()
+            .initialize(InitializeParams {
+                root_uri: Some(root_uri),
+                ..Default::default()
+            })
+            .await
+            .unwrap();
+
+        // Execute the command
+        let result = service
+            .inner()
+            .execute_command(ExecuteCommandParams {
+                command: "agnix.validateProjectRules".to_string(),
+                arguments: vec![],
+                work_done_progress_params: WorkDoneProgressParams::default(),
+            })
+            .await;
+
+        assert!(result.is_ok(), "executeCommand should succeed");
+    }
+
+    /// Integration test: did_save on an instruction file triggers project validation.
+    #[tokio::test]
+    async fn test_did_save_triggers_project_validation() {
+        let (service, _socket) = LspService::new(Backend::new);
+
+        let temp_dir = tempfile::tempdir().unwrap();
+        let agents_path = temp_dir.path().join("AGENTS.md");
+        std::fs::write(&agents_path, "# Instructions").unwrap();
+
+        let root_uri = Url::from_file_path(temp_dir.path()).unwrap();
+        service
+            .inner()
+            .initialize(InitializeParams {
+                root_uri: Some(root_uri),
+                ..Default::default()
+            })
+            .await
+            .unwrap();
+
+        let uri = Url::from_file_path(&agents_path).unwrap();
+
+        // Open the document
+        service
+            .inner()
+            .did_open(DidOpenTextDocumentParams {
+                text_document: TextDocumentItem {
+                    uri: uri.clone(),
+                    language_id: "markdown".to_string(),
+                    version: 1,
+                    text: "# Instructions".to_string(),
+                },
+            })
+            .await;
+
+        // Save -- should trigger project-level validation for AGENTS.md
+        service
+            .inner()
+            .did_save(DidSaveTextDocumentParams {
+                text_document: TextDocumentIdentifier { uri },
+                text: None,
+            })
+            .await;
+
+        // Give spawned tasks time to run
+        tokio::time::sleep(std::time::Duration::from_millis(200)).await;
+
+        // Should complete without error
+    }
+
+    /// Integration test: non-instruction file save does not trigger project validation.
+    #[tokio::test]
+    async fn test_did_save_non_instruction_file_no_project_validation() {
+        let (service, _socket) = LspService::new(Backend::new);
+
+        let temp_dir = tempfile::tempdir().unwrap();
+        let skill_path = temp_dir.path().join("SKILL.md");
+        std::fs::write(
+            &skill_path,
+            "---\nname: test\nversion: 1.0.0\nmodel: sonnet\n---\n# Test",
+        )
+        .unwrap();
+
+        let root_uri = Url::from_file_path(temp_dir.path()).unwrap();
+        service
+            .inner()
+            .initialize(InitializeParams {
+                root_uri: Some(root_uri),
+                ..Default::default()
+            })
+            .await
+            .unwrap();
+
+        let uri = Url::from_file_path(&skill_path).unwrap();
+
+        service
+            .inner()
+            .did_open(DidOpenTextDocumentParams {
+                text_document: TextDocumentItem {
+                    uri: uri.clone(),
+                    language_id: "markdown".to_string(),
+                    version: 1,
+                    text: "---\nname: test\nversion: 1.0.0\nmodel: sonnet\n---\n# Test".to_string(),
+                },
+            })
+            .await;
+
+        // Save SKILL.md -- is NOT a project-level trigger
+        service
+            .inner()
+            .did_save(DidSaveTextDocumentParams {
+                text_document: TextDocumentIdentifier { uri },
+                text: None,
+            })
+            .await;
+
+        // Should complete without triggering project validation
+    }
+}

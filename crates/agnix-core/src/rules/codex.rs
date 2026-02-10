@@ -75,7 +75,9 @@ impl Validator for CodexValidator {
         let parsed = parse_codex_toml(content);
 
         // If TOML is broken, emit a diagnostic so users can fix invalid syntax
-        if config.is_rule_enabled("CDX-000") && let Some(parse_error) = &parsed.parse_error {
+        if config.is_rule_enabled("CDX-000")
+            && let Some(parse_error) = &parsed.parse_error
+        {
             diagnostics.push(
                 Diagnostic::error(
                     path.to_path_buf(),

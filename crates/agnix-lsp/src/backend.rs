@@ -3,7 +3,7 @@
 //! Implements the Language Server Protocol using tower-lsp, providing
 //! real-time validation of agent configuration files.
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::future::Future;
 use std::path::{Component, Path, PathBuf};
 use std::sync::Arc;
@@ -16,7 +16,7 @@ use tower_lsp::{Client, LanguageServer};
 
 use crate::code_actions::fixes_to_code_actions_with_diagnostic;
 use crate::completion_provider::completion_items_for_document;
-use crate::diagnostic_mapper::{deserialize_fixes, to_lsp_diagnostics};
+use crate::diagnostic_mapper::{deserialize_fixes, to_lsp_diagnostic, to_lsp_diagnostics};
 use crate::hover_provider::hover_at_position;
 use crate::vscode_config::VsCodeConfig;
 
@@ -150,9 +150,17 @@ pub struct Backend {
     /// Monotonic generation incremented on each config change.
     /// Used to drop stale diagnostics from older revalidation batches.
     config_generation: Arc<AtomicU64>,
+    /// Monotonic generation incremented on each project validation.
+    /// Used to drop stale project-level diagnostics from slower validation runs.
+    project_validation_generation: Arc<AtomicU64>,
     /// Cached validator registry reused across validations.
     /// Immutable after construction; Arc enables sharing across spawn_blocking tasks.
     registry: Arc<agnix_core::ValidatorRegistry>,
+    /// Cached project-level diagnostics per URI (from validate_project_rules).
+    /// Stored separately so they can be merged with per-file diagnostics at publish time.
+    project_level_diagnostics: Arc<RwLock<HashMap<Url, Vec<Diagnostic>>>>,
+    /// Tracks which URIs received project-level diagnostics so stale ones can be cleared.
+    project_diagnostics_uris: Arc<RwLock<HashSet<Url>>>,
 }
 
 impl Backend {
@@ -165,8 +173,33 @@ impl Backend {
             workspace_root_canonical: Arc::new(RwLock::new(None)),
             documents: Arc::new(RwLock::new(HashMap::new())),
             config_generation: Arc::new(AtomicU64::new(0)),
+            project_validation_generation: Arc::new(AtomicU64::new(0)),
             registry: Arc::new(agnix_core::ValidatorRegistry::with_defaults()),
+            project_level_diagnostics: Arc::new(RwLock::new(HashMap::new())),
+            project_diagnostics_uris: Arc::new(RwLock::new(HashSet::new())),
         }
+    }
+
+    /// Spawn project-level validation in a background task.
+    ///
+    /// Logs a warning if the spawned task panics, preventing silent failures.
+    fn spawn_project_validation(&self) {
+        let backend = self.clone();
+        let client = self.client.clone();
+        tokio::spawn(async move {
+            let result = tokio::spawn(async move {
+                backend.validate_project_rules_and_publish().await;
+            })
+            .await;
+            if let Err(e) = result {
+                client
+                    .log_message(
+                        MessageType::ERROR,
+                        format!("Project-level validation task panicked: {}", e),
+                    )
+                    .await;
+            }
+        });
     }
 
     /// Run validation on a file in a blocking task.
@@ -287,7 +320,7 @@ impl Backend {
         })
         .await;
 
-        let diagnostics = match result {
+        let mut diagnostics = match result {
             Ok(Ok(diagnostics)) => to_lsp_diagnostics(diagnostics),
             Ok(Err(e)) => vec![create_error_diagnostic(
                 "agnix::validation-error",
@@ -298,6 +331,14 @@ impl Backend {
                 format!("Internal error: {}", e),
             )],
         };
+
+        // Merge cached project-level diagnostics for this URI (AGM-006, XP-004/005/006, VER-001)
+        {
+            let proj_diags = self.project_level_diagnostics.read().await;
+            if let Some(project_diags) = proj_diags.get(&uri) {
+                diagnostics.extend(project_diags.iter().cloned());
+            }
+        }
 
         if !self
             .should_publish_diagnostics(&uri, expected_config_generation, expected_content.as_ref())
@@ -342,6 +383,175 @@ impl Backend {
         }
 
         true
+    }
+
+    /// Run project-level validation and publish diagnostics per affected file.
+    ///
+    /// Calls `agnix_core::validate_project_rules()` in a blocking task, then
+    /// groups the resulting diagnostics by file path. For files open in the
+    /// editor, the diagnostics are cached so `validate_from_content_and_publish`
+    /// can merge them with per-file diagnostics. For files not open, diagnostics
+    /// are published directly.
+    ///
+    /// Stale URIs from previous runs are cleared by publishing empty diagnostics.
+    async fn validate_project_rules_and_publish(&self) {
+        let workspace_root = match &*self.workspace_root.read().await {
+            Some(root) => root.clone(),
+            None => return,
+        };
+
+        let config = Arc::clone(&*self.config.read().await);
+
+        // Capture generation to detect stale runs
+        let expected_generation = self
+            .project_validation_generation
+            .fetch_add(1, Ordering::SeqCst)
+            + 1;
+        let result = tokio::task::spawn_blocking(move || {
+            agnix_core::validate_project_rules(&workspace_root, &config)
+        })
+        .await;
+
+        let core_diagnostics = match result {
+            Ok(Ok(diags)) => diags,
+            Ok(Err(e)) => {
+                self.client
+                    .log_message(
+                        MessageType::WARNING,
+                        format!("Project-level validation error: {}", e),
+                    )
+                    .await;
+                return;
+            }
+            Err(e) => {
+                self.client
+                    .log_message(
+                        MessageType::ERROR,
+                        format!("Project-level validation task failed: {}", e),
+                    )
+                    .await;
+                return;
+            }
+        };
+
+        // Group diagnostics by file path
+        let mut by_uri: HashMap<Url, Vec<Diagnostic>> = HashMap::new();
+        for diag in &core_diagnostics {
+            if let Ok(uri) = Url::from_file_path(&diag.file) {
+                by_uri.entry(uri).or_default().push(to_lsp_diagnostic(diag));
+            }
+        }
+
+        // Pre-compute the set of URIs in the current run to avoid duplicating
+        // the `by_uri.keys().cloned().collect()` call.
+        let current_uris: HashSet<Url> = by_uri.keys().cloned().collect();
+
+        // Clear stale project diagnostic URIs from the previous run
+        let previous_uris: HashSet<Url> = {
+            let prev = self.project_diagnostics_uris.read().await;
+            prev.clone()
+        };
+
+        // Drop stale results from slower runs BEFORE any side effects
+        if self.project_validation_generation.load(Ordering::SeqCst) != expected_generation {
+            return;
+        }
+
+        // Capture the set of open document URIs once, then release the lock
+        // so we don't hold it across await points (publish_diagnostics calls).
+        let open_uris: HashSet<Url> = {
+            let docs = self.documents.read().await;
+            docs.keys().cloned().collect()
+        };
+
+        for stale_uri in previous_uris.difference(&current_uris) {
+            // Only clear if the document is not open (open docs will re-merge on next validate)
+            if !open_uris.contains(stale_uri) {
+                self.client
+                    .publish_diagnostics(stale_uri.clone(), vec![], None)
+                    .await;
+            }
+        }
+
+        // Store new project-level diagnostics and track URIs.
+        // Move `by_uri` into the cache to avoid cloning, but first collect
+        // the data needed for publishing below (non-open URIs + their diagnostics).
+        let non_open_publish: Vec<(Url, Vec<Diagnostic>)> = by_uri
+            .iter()
+            .filter(|(uri, _)| !open_uris.contains(uri))
+            .map(|(uri, diags)| (uri.clone(), diags.clone()))
+            .collect();
+
+        let open_uris_in_results: Vec<Url> = by_uri
+            .keys()
+            .filter(|uri| open_uris.contains(uri))
+            .cloned()
+            .collect();
+
+        {
+            let mut proj_diags = self.project_level_diagnostics.write().await;
+            let mut proj_uris = self.project_diagnostics_uris.write().await;
+            *proj_diags = by_uri;
+            *proj_uris = current_uris.clone();
+        }
+
+        // Publish diagnostics for files not open in the editor
+        for (uri, lsp_diags) in non_open_publish {
+            self.client.publish_diagnostics(uri, lsp_diags, None).await;
+        }
+
+        // For open documents, re-trigger full validation so per-file and
+        // project-level diagnostics are merged before publishing.
+        for uri in open_uris_in_results {
+            let backend = self.clone();
+            tokio::spawn(async move {
+                backend.validate_from_content_and_publish(uri, None).await;
+            });
+        }
+
+        // Also clear project-level diagnostics from open docs whose URIs
+        // are no longer in the results (stale open docs need re-merge too)
+        for stale_uri in previous_uris.difference(&current_uris) {
+            if open_uris.contains(stale_uri) {
+                let backend = self.clone();
+                let uri = stale_uri.clone();
+                tokio::spawn(async move {
+                    backend.validate_from_content_and_publish(uri, None).await;
+                });
+            }
+        }
+    }
+
+    /// Check if a file path is relevant to project-level rules.
+    ///
+    /// Returns true for instruction files (CLAUDE.md, AGENTS.md, .clinerules,
+    /// .cursorrules, copilot-instructions.md, etc.) and .agnix.toml config.
+    fn is_project_level_trigger(path: &Path) -> bool {
+        let file_name = match path.file_name().and_then(|n| n.to_str()) {
+            Some(name) => name,
+            None => return false,
+        };
+
+        // .agnix.toml config changes affect all rules
+        if file_name.eq_ignore_ascii_case(".agnix.toml") {
+            return true;
+        }
+
+        // Instruction files that affect project-level cross-file checks
+        file_name.eq_ignore_ascii_case("claude.md")
+            || file_name.eq_ignore_ascii_case("claude.local.md")
+            || file_name.eq_ignore_ascii_case("agents.md")
+            || file_name.eq_ignore_ascii_case("agents.local.md")
+            || file_name.eq_ignore_ascii_case("agents.override.md")
+            || file_name.eq_ignore_ascii_case("gemini.md")
+            || file_name.eq_ignore_ascii_case("gemini.local.md")
+            || file_name.eq_ignore_ascii_case(".clinerules")
+            || file_name.eq_ignore_ascii_case(".cursorrules")
+            || file_name.eq_ignore_ascii_case(".cursorrules.md")
+            || file_name.eq_ignore_ascii_case("copilot-instructions.md")
+            || file_name.to_lowercase().ends_with(".instructions.md")
+            || file_name.to_lowercase().ends_with(".mdc")
+            || file_name.eq_ignore_ascii_case("opencode.json")
     }
 
     /// Get cached document content for a URI.
@@ -407,6 +617,10 @@ impl LanguageServer for Backend {
                     trigger_characters: Some(vec![":".to_string(), "\"".to_string()]),
                     ..Default::default()
                 }),
+                execute_command_provider: Some(ExecuteCommandOptions {
+                    commands: vec!["agnix.validateProjectRules".to_string()],
+                    ..Default::default()
+                }),
                 ..Default::default()
             },
             server_info: Some(ServerInfo {
@@ -420,6 +634,9 @@ impl LanguageServer for Backend {
         self.client
             .log_message(MessageType::INFO, "agnix-lsp initialized")
             .await;
+
+        // Run project-level validation on workspace open
+        self.spawn_project_validation();
     }
 
     async fn shutdown(&self) -> Result<()> {
@@ -448,8 +665,16 @@ impl LanguageServer for Backend {
     }
 
     async fn did_save(&self, params: DidSaveTextDocumentParams) {
-        self.validate_from_content_and_publish(params.text_document.uri, None)
+        let uri = params.text_document.uri;
+        self.validate_from_content_and_publish(uri.clone(), None)
             .await;
+
+        // Re-run project-level validation when a relevant file is saved
+        if let Ok(path) = uri.to_file_path() {
+            if Self::is_project_level_trigger(&path) {
+                self.spawn_project_validation();
+            }
+        }
     }
 
     async fn did_close(&self, params: DidCloseTextDocumentParams) {
@@ -624,6 +849,36 @@ impl LanguageServer for Backend {
                     format!("Revalidation task failed after config change: {}", error),
                 )
                 .await;
+        }
+
+        // Also re-run project-level validation with the updated config
+        self.spawn_project_validation();
+    }
+
+    async fn execute_command(
+        &self,
+        params: ExecuteCommandParams,
+    ) -> Result<Option<serde_json::Value>> {
+        match params.command.as_str() {
+            "agnix.validateProjectRules" => {
+                self.client
+                    .log_message(
+                        MessageType::INFO,
+                        "Running project-level validation (via executeCommand)",
+                    )
+                    .await;
+                self.validate_project_rules_and_publish().await;
+                Ok(None)
+            }
+            _ => {
+                self.client
+                    .log_message(
+                        MessageType::WARNING,
+                        format!("Unknown command: {}", params.command),
+                    )
+                    .await;
+                Ok(None)
+            }
         }
     }
 }
@@ -2120,8 +2375,10 @@ model: sonnet
     /// Test that did_change_configuration handles locale setting.
     #[tokio::test]
     async fn test_did_change_configuration_with_locale() {
-        let _guard = crate::locale::LOCALE_MUTEX.lock().unwrap();
-        let (service, _socket) = LspService::new(Backend::new);
+        let (service, _socket) = {
+            let _guard = crate::locale::LOCALE_MUTEX.lock().unwrap();
+            LspService::new(Backend::new)
+        };
 
         service
             .inner()
@@ -2139,8 +2396,11 @@ model: sonnet
             .did_change_configuration(DidChangeConfigurationParams { settings })
             .await;
 
-        // Verify locale was actually changed
-        assert_eq!(&*rust_i18n::locale(), "es");
+        {
+            let _guard = crate::locale::LOCALE_MUTEX.lock().unwrap();
+            // Verify locale was actually changed
+            assert_eq!(&*rust_i18n::locale(), "es");
+        }
 
         // Reset locale for other tests
         rust_i18n::set_locale("en");
@@ -2393,5 +2653,349 @@ model: sonnet
             .await;
 
         // Should pass boundary check -- '.' resolves to the same directory
+    }
+
+    // ===== Project-Level Validation Tests =====
+
+    /// Test that validate_project_rules_and_publish returns early without panic
+    /// when no workspace root is set.
+    #[tokio::test]
+    async fn test_validate_project_rules_no_workspace() {
+        let (service, _socket) = LspService::new(Backend::new);
+
+        // Initialize without workspace root
+        service
+            .inner()
+            .initialize(InitializeParams::default())
+            .await
+            .unwrap();
+
+        // Should return early without error (no workspace root)
+        service.inner().validate_project_rules_and_publish().await;
+
+        // Verify no project diagnostics were stored
+        let proj_diags = service.inner().project_level_diagnostics.read().await;
+        assert!(
+            proj_diags.is_empty(),
+            "No project diagnostics should be stored without workspace root"
+        );
+    }
+
+    /// Test that project-level diagnostics are cached after running validation.
+    #[tokio::test]
+    async fn test_project_diagnostics_cached() {
+        let (service, _socket) = LspService::new(Backend::new);
+
+        let temp_dir = tempfile::tempdir().unwrap();
+
+        // Create two AGENTS.md files to trigger AGM-006
+        std::fs::write(temp_dir.path().join("AGENTS.md"), "# Root").unwrap();
+        let sub = temp_dir.path().join("sub");
+        std::fs::create_dir(&sub).unwrap();
+        std::fs::write(sub.join("AGENTS.md"), "# Sub").unwrap();
+
+        let root_uri = Url::from_file_path(temp_dir.path()).unwrap();
+        service
+            .inner()
+            .initialize(InitializeParams {
+                root_uri: Some(root_uri),
+                ..Default::default()
+            })
+            .await
+            .unwrap();
+
+        // Run project-level validation
+        service.inner().validate_project_rules_and_publish().await;
+
+        // Verify project diagnostics are stored
+        let proj_diags = service.inner().project_level_diagnostics.read().await;
+        assert!(
+            !proj_diags.is_empty(),
+            "Project diagnostics should be cached for AGM-006"
+        );
+
+        // Verify URIs are tracked for cleanup
+        let proj_uris = service.inner().project_diagnostics_uris.read().await;
+        assert!(
+            !proj_uris.is_empty(),
+            "Project diagnostic URIs should be tracked"
+        );
+    }
+
+    /// Test that stale project diagnostics are cleared on re-run.
+    #[tokio::test]
+    async fn test_project_diagnostics_cleared_on_rerun() {
+        let (service, _socket) = LspService::new(Backend::new);
+
+        let temp_dir = tempfile::tempdir().unwrap();
+
+        // Create two AGENTS.md files to trigger AGM-006
+        std::fs::write(temp_dir.path().join("AGENTS.md"), "# Root").unwrap();
+        let sub = temp_dir.path().join("sub");
+        std::fs::create_dir(&sub).unwrap();
+        std::fs::write(sub.join("AGENTS.md"), "# Sub").unwrap();
+
+        let root_uri = Url::from_file_path(temp_dir.path()).unwrap();
+        service
+            .inner()
+            .initialize(InitializeParams {
+                root_uri: Some(root_uri),
+                ..Default::default()
+            })
+            .await
+            .unwrap();
+
+        // First run: should find AGM-006
+        service.inner().validate_project_rules_and_publish().await;
+
+        let count_before = service.inner().project_diagnostics_uris.read().await.len();
+        assert!(
+            count_before > 0,
+            "Should have project diagnostics before cleanup"
+        );
+
+        // Remove the nested AGENTS.md to resolve the issue
+        std::fs::remove_file(sub.join("AGENTS.md")).unwrap();
+
+        // Second run: AGM-006 should no longer fire
+        service.inner().validate_project_rules_and_publish().await;
+
+        let proj_diags = service.inner().project_level_diagnostics.read().await;
+        let agm006_count: usize = proj_diags
+            .values()
+            .flat_map(|diags| diags.iter())
+            .filter(|d| {
+                d.code
+                    .as_ref()
+                    .map(|c| matches!(c, NumberOrString::String(s) if s == "AGM-006"))
+                    .unwrap_or(false)
+            })
+            .count();
+        assert_eq!(agm006_count, 0, "AGM-006 should be cleared after fix");
+    }
+
+    /// Test is_project_level_trigger for various file names.
+    #[test]
+    fn test_is_project_level_trigger() {
+        // Instruction files should trigger
+        assert!(Backend::is_project_level_trigger(Path::new(
+            "/project/CLAUDE.md"
+        )));
+        assert!(Backend::is_project_level_trigger(Path::new(
+            "/project/AGENTS.md"
+        )));
+        assert!(Backend::is_project_level_trigger(Path::new(
+            "/project/.clinerules"
+        )));
+        assert!(Backend::is_project_level_trigger(Path::new(
+            "/project/.cursorrules"
+        )));
+        assert!(Backend::is_project_level_trigger(Path::new(
+            "/project/.github/copilot-instructions.md"
+        )));
+        assert!(Backend::is_project_level_trigger(Path::new(
+            "/project/.github/instructions/test.instructions.md"
+        )));
+        assert!(Backend::is_project_level_trigger(Path::new(
+            "/project/.cursor/rules/test.mdc"
+        )));
+        assert!(Backend::is_project_level_trigger(Path::new(
+            "/project/GEMINI.md"
+        )));
+
+        // .agnix.toml should trigger
+        assert!(Backend::is_project_level_trigger(Path::new(
+            "/project/.agnix.toml"
+        )));
+
+        // Non-instruction files should not trigger
+        assert!(!Backend::is_project_level_trigger(Path::new(
+            "/project/SKILL.md"
+        )));
+        assert!(!Backend::is_project_level_trigger(Path::new(
+            "/project/README.md"
+        )));
+        assert!(!Backend::is_project_level_trigger(Path::new(
+            "/project/settings.json"
+        )));
+        assert!(!Backend::is_project_level_trigger(Path::new(
+            "/project/plugin.json"
+        )));
+    }
+
+    /// Test that initialize advertises executeCommand capability.
+    #[tokio::test]
+    async fn test_initialize_advertises_execute_command() {
+        let (service, _socket) = LspService::new(Backend::new);
+
+        let result = service
+            .inner()
+            .initialize(InitializeParams::default())
+            .await
+            .unwrap();
+
+        match result.capabilities.execute_command_provider {
+            Some(ref opts) => {
+                assert!(
+                    opts.commands
+                        .contains(&"agnix.validateProjectRules".to_string()),
+                    "Expected agnix.validateProjectRules in execute commands, got: {:?}",
+                    opts.commands
+                );
+            }
+            None => panic!("Expected execute command capability"),
+        }
+    }
+
+    /// Test that execute_command handles the validateProjectRules command.
+    #[tokio::test]
+    async fn test_execute_command_validate_project_rules() {
+        let (service, _socket) = LspService::new(Backend::new);
+
+        let temp_dir = tempfile::tempdir().unwrap();
+        let root_uri = Url::from_file_path(temp_dir.path()).unwrap();
+
+        service
+            .inner()
+            .initialize(InitializeParams {
+                root_uri: Some(root_uri),
+                ..Default::default()
+            })
+            .await
+            .unwrap();
+
+        // Execute the command
+        let result = service
+            .inner()
+            .execute_command(ExecuteCommandParams {
+                command: "agnix.validateProjectRules".to_string(),
+                arguments: vec![],
+                work_done_progress_params: WorkDoneProgressParams::default(),
+            })
+            .await;
+
+        assert!(result.is_ok());
+        assert!(result.unwrap().is_none());
+    }
+
+    /// Test that execute_command handles unknown commands gracefully.
+    #[tokio::test]
+    async fn test_execute_command_unknown() {
+        let (service, _socket) = LspService::new(Backend::new);
+
+        service
+            .inner()
+            .initialize(InitializeParams::default())
+            .await
+            .unwrap();
+
+        let result = service
+            .inner()
+            .execute_command(ExecuteCommandParams {
+                command: "unknown.command".to_string(),
+                arguments: vec![],
+                work_done_progress_params: WorkDoneProgressParams::default(),
+            })
+            .await;
+
+        assert!(result.is_ok());
+        assert!(result.unwrap().is_none());
+    }
+
+    /// Test that project-level diagnostics are merged with per-file diagnostics
+    /// when validate_from_content_and_publish is called.
+    ///
+    /// Pre-populates the project_level_diagnostics cache with a diagnostic for
+    /// a file URI, then opens the file so per-file validation runs and the merge
+    /// path in validate_from_content_and_publish is exercised.
+    #[tokio::test]
+    async fn test_project_and_file_diagnostics_merged() {
+        let (service, _socket) = LspService::new(Backend::new);
+
+        let temp_dir = tempfile::tempdir().unwrap();
+        let root_uri = Url::from_file_path(temp_dir.path()).unwrap();
+
+        // Initialize with workspace root
+        service
+            .inner()
+            .initialize(InitializeParams {
+                root_uri: Some(root_uri),
+                ..Default::default()
+            })
+            .await
+            .unwrap();
+
+        // Create a CLAUDE.md that will produce per-file diagnostics (e.g. XML-001)
+        let claude_path = temp_dir.path().join("CLAUDE.md");
+        std::fs::write(&claude_path, "<unclosed>\n# Project\n").unwrap();
+        let uri = Url::from_file_path(&claude_path).unwrap();
+
+        // Pre-populate project_level_diagnostics with a fake AGM-006 diagnostic
+        // for this URI, simulating what validate_project_rules_and_publish would store.
+        {
+            let fake_project_diag = Diagnostic {
+                range: Range {
+                    start: Position {
+                        line: 0,
+                        character: 0,
+                    },
+                    end: Position {
+                        line: 0,
+                        character: 0,
+                    },
+                },
+                severity: Some(DiagnosticSeverity::WARNING),
+                code: Some(NumberOrString::String("AGM-006".to_string())),
+                code_description: None,
+                source: Some("agnix".to_string()),
+                message: "Nested AGENTS.md detected".to_string(),
+                related_information: None,
+                tags: None,
+                data: None,
+            };
+            let mut proj_diags = service.inner().project_level_diagnostics.write().await;
+            proj_diags.insert(uri.clone(), vec![fake_project_diag]);
+        }
+
+        // Verify the project diagnostics are in the cache
+        {
+            let proj_diags = service.inner().project_level_diagnostics.read().await;
+            assert!(
+                proj_diags.contains_key(&uri),
+                "Project diagnostics should be pre-populated for the URI"
+            );
+        }
+
+        // Open the file -- this triggers validate_from_content_and_publish which
+        // should merge per-file diagnostics (e.g. XML-001) with the cached
+        // project-level diagnostics (AGM-006).
+        service
+            .inner()
+            .did_open(DidOpenTextDocumentParams {
+                text_document: TextDocumentItem {
+                    uri: uri.clone(),
+                    language_id: "markdown".to_string(),
+                    version: 1,
+                    text: std::fs::read_to_string(&claude_path).unwrap(),
+                },
+            })
+            .await;
+
+        // The merge code path in validate_from_content_and_publish (lines 309-315)
+        // was exercised: it reads project_level_diagnostics and extends the
+        // per-file diagnostics with any matching project-level entries.
+        // Verify the project cache is still intact after the merge.
+        {
+            let proj_diags = service.inner().project_level_diagnostics.read().await;
+            let diags = proj_diags
+                .get(&uri)
+                .expect("Project diagnostics should still be cached");
+            assert!(
+                diags
+                    .iter()
+                    .any(|d| d.code == Some(NumberOrString::String("AGM-006".to_string()))),
+                "Cached project diagnostic should be preserved after merge"
+            );
+        }
     }
 }

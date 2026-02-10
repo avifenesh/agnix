@@ -38,6 +38,24 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
+For project-level validation across multiple files:
+
+```rust
+use agnix_core::{validate_project_rules, LintConfig};
+use std::path::Path;
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let config = LintConfig::default();
+    let result = validate_project_rules(Path::new("."), &config)?;
+
+    for diag in result.diagnostics {
+        println!("{}:{} {} {} {}", diag.file.display(), diag.line, diag.rule, diag.level, diag.message);
+    }
+
+    Ok(())
+}
+```
+
 ## License
 
 Licensed under either of Apache License, Version 2.0 or MIT license at your option.

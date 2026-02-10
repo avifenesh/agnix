@@ -68,6 +68,22 @@ The validation process follows these steps:
 
 This architecture ensures fast validation on large projects while maintaining consistent, reproducible output.
 
+### Project-Level Validation
+
+Cross-file validation rules (AGM-006, XP-004/005/006, VER-001) require analysis across multiple files to detect:
+
+- **AGM-006**: Nested AGENTS.md hierarchies across different directories
+- **XP-004 to XP-006**: Conflicting build commands, tool constraints, and instruction layers across CLAUDE.md, AGENTS.md, Cursor rules, and Copilot files
+- **VER-001**: Missing or incomplete version pinning in .agnix.toml
+
+Project-level validation runs:
+- On workspace open (LSP `initialized` event)
+- After any configuration change (LSP `didChangeConfiguration`)
+- After file save events (LSP `didSave`)
+- Explicitly via `agnix.validateProjectRules` LSP command (VS Code `Validate Workspace`)
+
+Results are published to all affected files as diagnostics, ensuring users see context-aware feedback for cross-file issues.
+
 ### File Type Resolution
 
 `resolve_file_type(path, config)` determines which validators apply to a file:

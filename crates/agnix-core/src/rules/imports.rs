@@ -560,7 +560,10 @@ fn validate_markdown_links(
 
         // Security: Verify resolved path stays within project root
         // Use project root if available, otherwise fall back to file's parent dir
-        let containment_dir = config.root_dir().cloned().unwrap_or_else(|| base_dir.to_path_buf());
+        let containment_dir = config
+            .root_dir()
+            .cloned()
+            .unwrap_or_else(|| base_dir.to_path_buf());
         if let Ok(canonical_resolved) = fs.canonicalize(&resolved) {
             if let Ok(canonical_base) = fs.canonicalize(&containment_dir) {
                 if !canonical_resolved.starts_with(&canonical_base) {
