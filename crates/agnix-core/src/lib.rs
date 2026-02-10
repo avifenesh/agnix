@@ -162,7 +162,7 @@ impl ValidatorRegistry {
 ///     .with_defaults()
 ///     .build();
 ///
-/// // Build a custom registry mixing defaults with a custom validator:
+/// // Or use the convenience method on ValidatorRegistry:
 /// let registry = ValidatorRegistry::builder()
 ///     .with_defaults()
 ///     .build();
@@ -175,7 +175,7 @@ impl ValidatorRegistryBuilder {
     /// Create a new empty builder.
     pub fn new() -> Self {
         Self {
-            validators: HashMap::new(),
+            validators: HashMap::with_capacity(16),
         }
     }
 
@@ -1562,6 +1562,73 @@ mod tests {
             default_count + 1,
             "with_defaults() + with_validator() should append to existing validators"
         );
+    }
+
+    #[test]
+    fn test_builder_ordering_preserved() {
+        struct OrderedValidator(&'static str);
+        impl Validator for OrderedValidator {
+            fn validate(
+                &self,
+                path: &Path,
+                _content: &str,
+                _config: &LintConfig,
+            ) -> Vec<Diagnostic> {
+                vec![Diagnostic::error(
+                    path.to_path_buf(),
+                    1,
+                    1,
+                    self.0,
+                    "ordered".to_string(),
+                )]
+            }
+        }
+
+        let registry = ValidatorRegistryBuilder::new()
+            .with_validator(FileType::Skill, || Box::new(OrderedValidator("FIRST")))
+            .with_validator(FileType::Skill, || Box::new(OrderedValidator("SECOND")))
+            .with_validator(FileType::Skill, || Box::new(OrderedValidator("THIRD")))
+            .build();
+
+        let validators = registry.validators_for(FileType::Skill);
+        assert_eq!(validators.len(), 3);
+
+        let path = Path::new("SKILL.md");
+        let config = LintConfig::default();
+        assert_eq!(validators[0].validate(path, "", &config)[0].rule, "FIRST");
+        assert_eq!(validators[1].validate(path, "", &config)[0].rule, "SECOND");
+        assert_eq!(validators[2].validate(path, "", &config)[0].rule, "THIRD");
+    }
+
+    #[test]
+    fn test_builder_default_trait() {
+        let builder = ValidatorRegistryBuilder::default();
+        let registry = builder.build();
+        assert_eq!(registry.validators_for(FileType::Skill).len(), 0);
+    }
+
+    #[test]
+    fn test_registry_default_has_validators() {
+        let registry = ValidatorRegistry::default();
+        assert!(!registry.validators_for(FileType::Skill).is_empty());
+    }
+
+    #[test]
+    fn test_builder_double_defaults_accumulates() {
+        let single = ValidatorRegistry::builder()
+            .with_defaults()
+            .build()
+            .validators_for(FileType::Skill)
+            .len();
+
+        let double = ValidatorRegistry::builder()
+            .with_defaults()
+            .with_defaults()
+            .build()
+            .validators_for(FileType::Skill)
+            .len();
+
+        assert_eq!(double, single * 2, "calling with_defaults() twice should double the validators");
     }
 
     #[test]
