@@ -904,13 +904,12 @@ pub fn validate_project_rules(root: &Path, config: &LintConfig) -> LintResult<Ve
     let mut agents_md_paths: Vec<PathBuf> = Vec::new();
     let mut instruction_file_paths: Vec<PathBuf> = Vec::new();
     let max_files = config.max_files_to_validate;
-    let mut files_seen: usize = 0;
 
     // Walk directory tree collecting only paths relevant to project-level checks.
     // No per-file validation is performed -- this walk is lightweight.
     // Respects the same max_files_to_validate limit as validate_project_with_registry
     // to prevent unbounded directory traversal in large workspaces.
-    for entry in WalkBuilder::new(&walk_root)
+    for (files_seen, entry) in WalkBuilder::new(&walk_root)
         .hidden(false)
         .git_ignore(true)
         .git_exclude(false)
@@ -932,6 +931,7 @@ pub fn validate_project_rules(root: &Path, config: &LintConfig) -> LintResult<Ve
         .build()
         .filter_map(|entry| entry.ok())
         .filter(|entry| entry.path().is_file())
+        .enumerate()
     {
         // Enforce file count limit to prevent unbounded traversal
         if let Some(limit) = max_files {
@@ -939,8 +939,6 @@ pub fn validate_project_rules(root: &Path, config: &LintConfig) -> LintResult<Ve
                 break;
             }
         }
-        files_seen += 1;
-
         let file_path = entry.path().to_path_buf();
 
         let path_str = normalize_rel_path(&file_path, &root_path);
