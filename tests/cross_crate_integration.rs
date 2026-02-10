@@ -120,35 +120,31 @@ fn lsp_lint_config_is_send_sync() {
     assert_send_sync::<agnix_core::LintConfig>();
 }
 
+
 #[test]
 fn lsp_file_type_detection_for_relevant_types() {
     // LSP uses detect_file_type to decide whether to validate a file
-    assert_eq!(
-        agnix_core::detect_file_type(Path::new("CLAUDE.md")),
-        agnix_core::FileType::ClaudeMd
-    );
-    assert_eq!(
-        agnix_core::detect_file_type(Path::new("AGENTS.md")),
-        agnix_core::FileType::ClaudeMd
-    );
-    assert_eq!(
-        agnix_core::detect_file_type(Path::new(".claude/agents/reviewer.md")),
-        agnix_core::FileType::Agent
-    );
-    assert_eq!(
-        agnix_core::detect_file_type(Path::new("skills/deploy/SKILL.md")),
-        agnix_core::FileType::Skill
-    );
-    assert_eq!(
-        agnix_core::detect_file_type(Path::new(".claude/settings.json")),
-        agnix_core::FileType::Hooks
-    );
-    assert_eq!(
-        agnix_core::detect_file_type(Path::new(".cursor/rules/my-rule.mdc")),
-        agnix_core::FileType::CursorRule
-    );
-}
+    let test_cases = [
+        ("CLAUDE.md", agnix_core::FileType::ClaudeMd),
+        ("AGENTS.md", agnix_core::FileType::ClaudeMd),
+        (".claude/agents/reviewer.md", agnix_core::FileType::Agent),
+        ("skills/deploy/SKILL.md", agnix_core::FileType::Skill),
+        (".claude/settings.json", agnix_core::FileType::Hooks),
+        (".cursor/rules/my-rule.mdc", agnix_core::FileType::CursorRule),
+        ("plugin.json", agnix_core::FileType::Plugin),
+        ("tools.mcp.json", agnix_core::FileType::Mcp),
+        (".github/copilot-instructions.md", agnix_core::FileType::Copilot),
+    ];
 
+    for (path, expected_type) in test_cases {
+        assert_eq!(
+            agnix_core::detect_file_type(Path::new(path)),
+            expected_type,
+            "Failed for path: {}",
+            path
+        );
+    }
+}
 #[test]
 fn lsp_authoring_completion_candidates_accessible() {
     // LSP calls authoring::completion_candidates for completions

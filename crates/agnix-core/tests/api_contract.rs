@@ -233,6 +233,8 @@ fn file_type_enum_covers_all_variants() {
         agnix_core::FileType::Unknown,
     ];
 
+    assert_eq!(variants.len(), 18, "A new FileType variant may have been added or removed. Please update this test's variant list and the match statement below.");
+
     for variant in &variants {
         match variant {
             agnix_core::FileType::Skill => {}
