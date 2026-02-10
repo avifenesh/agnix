@@ -4829,11 +4829,11 @@ Use idiomatic Rust patterns.
         let config = LintConfig::default();
         let diagnostics = validate_project_rules(temp_dir.path(), &config).unwrap();
         // Only VER-001 should fire (no version pins)
-        let non_ver = diagnostics
-            .iter()
-            .filter(|d| d.rule != "VER-001")
-            .count();
-        assert_eq!(non_ver, 0, "Empty dir should produce no non-VER diagnostics");
+        let non_ver = diagnostics.iter().filter(|d| d.rule != "VER-001").count();
+        assert_eq!(
+            non_ver, 0,
+            "Empty dir should produce no non-VER diagnostics"
+        );
     }
 
     #[test]

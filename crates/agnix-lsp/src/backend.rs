@@ -150,6 +150,9 @@ pub struct Backend {
     /// Monotonic generation incremented on each config change.
     /// Used to drop stale diagnostics from older revalidation batches.
     config_generation: Arc<AtomicU64>,
+    /// Monotonic generation incremented on each project validation.
+    /// Used to drop stale project-level diagnostics from slower validation runs.
+    project_validation_generation: Arc<AtomicU64>,
     /// Cached validator registry reused across validations.
     /// Immutable after construction; Arc enables sharing across spawn_blocking tasks.
     registry: Arc<agnix_core::ValidatorRegistry>,
@@ -170,6 +173,7 @@ impl Backend {
             workspace_root_canonical: Arc::new(RwLock::new(None)),
             documents: Arc::new(RwLock::new(HashMap::new())),
             config_generation: Arc::new(AtomicU64::new(0)),
+            project_validation_generation: Arc::new(AtomicU64::new(0)),
             registry: Arc::new(agnix_core::ValidatorRegistry::with_defaults()),
             project_level_diagnostics: Arc::new(RwLock::new(HashMap::new())),
             project_diagnostics_uris: Arc::new(RwLock::new(HashSet::new())),
@@ -398,6 +402,11 @@ impl Backend {
 
         let config = Arc::clone(&*self.config.read().await);
 
+        // Capture generation to detect stale runs
+        let expected_generation = self
+            .project_validation_generation
+            .fetch_add(1, Ordering::SeqCst)
+            + 1;
         let result = tokio::task::spawn_blocking(move || {
             agnix_core::validate_project_rules(&workspace_root, &config)
         })
@@ -429,10 +438,7 @@ impl Backend {
         let mut by_uri: HashMap<Url, Vec<Diagnostic>> = HashMap::new();
         for diag in &core_diagnostics {
             if let Ok(uri) = Url::from_file_path(&diag.file) {
-                by_uri
-                    .entry(uri)
-                    .or_default()
-                    .push(to_lsp_diagnostic(diag));
+                by_uri.entry(uri).or_default().push(to_lsp_diagnostic(diag));
             }
         }
 
@@ -477,6 +483,11 @@ impl Backend {
             .cloned()
             .collect();
 
+        // Drop stale results from slower runs
+        if self.project_validation_generation.load(Ordering::SeqCst) != expected_generation {
+            return;
+        }
+
         {
             let mut proj_diags = self.project_level_diagnostics.write().await;
             let mut proj_uris = self.project_diagnostics_uris.write().await;
@@ -486,9 +497,7 @@ impl Backend {
 
         // Publish diagnostics for files not open in the editor
         for (uri, lsp_diags) in non_open_publish {
-            self.client
-                .publish_diagnostics(uri, lsp_diags, None)
-                .await;
+            self.client.publish_diagnostics(uri, lsp_diags, None).await;
         }
 
         // For open documents, re-trigger full validation so per-file and
@@ -496,9 +505,7 @@ impl Backend {
         for uri in open_uris_in_results {
             let backend = self.clone();
             tokio::spawn(async move {
-                backend
-                    .validate_from_content_and_publish(uri, None)
-                    .await;
+                backend.validate_from_content_and_publish(uri, None).await;
             });
         }
 
@@ -509,9 +516,7 @@ impl Backend {
                 let backend = self.clone();
                 let uri = stale_uri.clone();
                 tokio::spawn(async move {
-                    backend
-                        .validate_from_content_and_publish(uri, None)
-                        .await;
+                    backend.validate_from_content_and_publish(uri, None).await;
                 });
             }
         }
@@ -544,11 +549,8 @@ impl Backend {
             || file_name.eq_ignore_ascii_case(".cursorrules")
             || file_name.eq_ignore_ascii_case(".cursorrules.md")
             || file_name.eq_ignore_ascii_case("copilot-instructions.md")
-            || file_name.len() > ".instructions.md".len()
-                && file_name[file_name.len() - ".instructions.md".len()..]
-                    .eq_ignore_ascii_case(".instructions.md")
-            || file_name.len() > ".mdc".len()
-                && file_name[file_name.len() - ".mdc".len()..].eq_ignore_ascii_case(".mdc")
+            || file_name.to_lowercase().ends_with(".instructions.md")
+            || file_name.to_lowercase().ends_with(".mdc")
             || file_name.eq_ignore_ascii_case("opencode.json")
     }
 
@@ -2664,10 +2666,7 @@ model: sonnet
             .unwrap();
 
         // Should return early without error (no workspace root)
-        service
-            .inner()
-            .validate_project_rules_and_publish()
-            .await;
+        service.inner().validate_project_rules_and_publish().await;
 
         // Verify no project diagnostics were stored
         let proj_diags = service.inner().project_level_diagnostics.read().await;
@@ -2701,10 +2700,7 @@ model: sonnet
             .unwrap();
 
         // Run project-level validation
-        service
-            .inner()
-            .validate_project_rules_and_publish()
-            .await;
+        service.inner().validate_project_rules_and_publish().await;
 
         // Verify project diagnostics are stored
         let proj_diags = service.inner().project_level_diagnostics.read().await;
@@ -2745,27 +2741,19 @@ model: sonnet
             .unwrap();
 
         // First run: should find AGM-006
-        service
-            .inner()
-            .validate_project_rules_and_publish()
-            .await;
+        service.inner().validate_project_rules_and_publish().await;
 
-        let count_before = service
-            .inner()
-            .project_diagnostics_uris
-            .read()
-            .await
-            .len();
-        assert!(count_before > 0, "Should have project diagnostics before cleanup");
+        let count_before = service.inner().project_diagnostics_uris.read().await.len();
+        assert!(
+            count_before > 0,
+            "Should have project diagnostics before cleanup"
+        );
 
         // Remove the nested AGENTS.md to resolve the issue
         std::fs::remove_file(sub.join("AGENTS.md")).unwrap();
 
         // Second run: AGM-006 should no longer fire
-        service
-            .inner()
-            .validate_project_rules_and_publish()
-            .await;
+        service.inner().validate_project_rules_and_publish().await;
 
         let proj_diags = service.inner().project_level_diagnostics.read().await;
         let agm006_count: usize = proj_diags
@@ -2994,10 +2982,13 @@ model: sonnet
         // Verify the project cache is still intact after the merge.
         {
             let proj_diags = service.inner().project_level_diagnostics.read().await;
-            let diags = proj_diags.get(&uri).expect("Project diagnostics should still be cached");
+            let diags = proj_diags
+                .get(&uri)
+                .expect("Project diagnostics should still be cached");
             assert!(
-                diags.iter().any(|d| d.code
-                    == Some(NumberOrString::String("AGM-006".to_string()))),
+                diags
+                    .iter()
+                    .any(|d| d.code == Some(NumberOrString::String("AGM-006".to_string()))),
                 "Cached project diagnostic should be preserved after merge"
             );
         }

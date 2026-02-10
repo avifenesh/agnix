@@ -1397,8 +1397,7 @@ mod project_level_validation_tests {
                     uri: uri.clone(),
                     language_id: "markdown".to_string(),
                     version: 1,
-                    text: "---\nname: test\nversion: 1.0.0\nmodel: sonnet\n---\n# Test"
-                        .to_string(),
+                    text: "---\nname: test\nversion: 1.0.0\nmodel: sonnet\n---\n# Test".to_string(),
                 },
             })
             .await;
