@@ -14,17 +14,25 @@ Locale files are stored per-crate (`agnix-core/locales/`, `agnix-cli/locales/`, 
 
 ## Adding a New Language
 
-1. **Copy the English locale file** into each crate as your starting template:
+Each locale needs identical YAML files in three crate directories and the workspace root. The workflow:
+
+1. **Create the new locale file** in the workspace root `locales/` directory:
+   ```bash
+   cp locales/en.yml locales/<code>.yml
+   ```
+   Use a [BCP 47 language tag](https://www.rfc-editor.org/info/bcp47) (e.g., `fr.yml`, `ja.yml`, `pt-BR.yml`).
+
+2. **Translate all string values** in `locales/<code>.yml`. Keep YAML keys unchanged; only modify values.
+
+3. **Sync to all crates** -- copy the translated file into each crate's `locales/` directory:
    ```bash
    for crate in agnix-core agnix-cli agnix-lsp; do
-     cp "crates/$crate/locales/en.yml" "crates/$crate/locales/<code>.yml"
+     cp "locales/<code>.yml" "crates/$crate/locales/<code>.yml"
    done
    ```
-   Use the [BCP 47 language tag](https://www.rfc-editor.org/info/bcp47) as the filename (e.g., `fr.yml`, `ja.yml`, `pt-BR.yml`). All three crate copies must stay identical; the CI `locale-sync` job enforces this.
+   All four copies (root + 3 crates) must be identical. The CI `locale-sync` job will fail if they drift.
 
-2. **Translate all string values** in the new file. Keep the YAML keys unchanged; only modify the values.
-
-3. **Register the locale** in two places:
+4. **Register the locale** in two places:
 
    a. Add to `SUPPORTED_LOCALES` in `crates/agnix-core/src/i18n.rs`:
    ```rust

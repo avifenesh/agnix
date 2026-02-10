@@ -3092,22 +3092,29 @@ fn test_no_raw_i18n_keys_in_json_output() {
 
     let raw_key_re = Regex::new(r"^(rules|cli|lsp|core)\.[a-z_]+").unwrap();
 
-    if let Some(diagnostics) = json.as_array() {
-        for diag in diagnostics {
-            if let Some(msg) = diag.get("message").and_then(|v| v.as_str()) {
-                assert!(
-                    !raw_key_re.is_match(msg),
-                    "JSON diagnostic 'message' contains raw i18n key: {}",
-                    msg
-                );
-            }
-            if let Some(sug) = diag.get("suggestion").and_then(|v| v.as_str()) {
-                assert!(
-                    !raw_key_re.is_match(sug),
-                    "JSON diagnostic 'suggestion' contains raw i18n key: {}",
-                    sug
-                );
-            }
+    let diagnostics = json
+        .get("diagnostics")
+        .and_then(|v| v.as_array())
+        .expect("JSON output should have a 'diagnostics' array");
+    assert!(
+        !diagnostics.is_empty(),
+        "JSON output should contain at least one diagnostic"
+    );
+
+    for diag in diagnostics {
+        if let Some(msg) = diag.get("message").and_then(|v| v.as_str()) {
+            assert!(
+                !raw_key_re.is_match(msg),
+                "JSON diagnostic 'message' contains raw i18n key: {}",
+                msg
+            );
+        }
+        if let Some(sug) = diag.get("suggestion").and_then(|v| v.as_str()) {
+            assert!(
+                !raw_key_re.is_match(sug),
+                "JSON diagnostic 'suggestion' contains raw i18n key: {}",
+                sug
+            );
         }
     }
 }

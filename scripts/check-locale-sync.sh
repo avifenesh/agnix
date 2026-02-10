@@ -7,7 +7,17 @@ set -euo pipefail
 
 ROOT_LOCALES="locales"
 CRATES=("crates/agnix-core" "crates/agnix-cli" "crates/agnix-lsp")
-LOCALE_FILES=("en.yml" "es.yml" "zh-CN.yml")
+
+# Dynamically discover locale files from root directory
+LOCALE_FILES=()
+for f in "${ROOT_LOCALES}"/*.yml; do
+  [ -f "$f" ] && LOCALE_FILES+=("$(basename "$f")")
+done
+
+if [ ${#LOCALE_FILES[@]} -eq 0 ]; then
+  echo "FAIL: No .yml files found in ${ROOT_LOCALES}/"
+  exit 1
+fi
 
 errors=0
 
