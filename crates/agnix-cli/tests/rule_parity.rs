@@ -209,13 +209,17 @@ fn extract_implemented_rule_ids() -> BTreeSet<String> {
     let rules_dir = core_src.join("rules");
     scan_rules_recursive(&rules_dir, &re, &valid_prefixes, &mut rule_ids);
 
-    // Also scan lib.rs for project-level rules (e.g., AGM-006)
-    extract_from_file(
-        &core_src.join("lib.rs"),
-        &re,
-        &valid_prefixes,
-        &mut rule_ids,
-    );
+    // Also scan top-level .rs files for project-level rules (e.g., AGM-006
+    // in pipeline.rs, VER-001, XP-004/005/006).
+    for entry in fs::read_dir(&core_src)
+        .unwrap_or_else(|e| panic!("Failed to read core src dir {}: {}", core_src.display(), e))
+    {
+        let entry = entry.expect("Failed to read directory entry");
+        let path = entry.path();
+        if path.extension().is_some_and(|ext| ext == "rs") {
+            extract_from_file(&path, &re, &valid_prefixes, &mut rule_ids);
+        }
+    }
 
     rule_ids
 }
