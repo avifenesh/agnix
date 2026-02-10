@@ -12,7 +12,7 @@ pub type ValidatorFactory = fn() -> Box<dyn Validator>;
 ///
 /// Implement this trait to supply validators from an external source (e.g., a
 /// plugin or a secondary rule set). The built-in validators are packaged as
-/// [`BuiltinProvider`].
+/// a `BuiltinProvider` (internal to the crate).
 ///
 /// # Example
 ///
