@@ -3778,11 +3778,7 @@ fn test_validator_names_are_ascii_and_nonempty() {
         for v in &validators {
             let name = v.name();
             assert!(!name.is_empty(), "Validator name should not be empty");
-            assert!(
-                name.is_ascii(),
-                "Validator name should be ASCII: {}",
-                name
-            );
+            assert!(name.is_ascii(), "Validator name should be ASCII: {}", name);
             assert!(
                 name.ends_with("Validator"),
                 "Validator name should end with 'Validator': {}",
@@ -3846,7 +3842,11 @@ fn test_disabled_validators_config_filters_in_validate_project() {
     assert!(
         !xml_diags.is_empty(),
         "Expected XML-001 in project validation, got rules: {:?}",
-        result.diagnostics.iter().map(|d| &d.rule).collect::<Vec<_>>()
+        result
+            .diagnostics
+            .iter()
+            .map(|d| &d.rule)
+            .collect::<Vec<_>>()
     );
 
     // With XmlValidator disabled
