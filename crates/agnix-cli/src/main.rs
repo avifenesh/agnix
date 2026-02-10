@@ -398,6 +398,7 @@ fn validate_command(path: &Path, cli: &Cli) -> anyhow::Result<()> {
     let ValidationResult {
         diagnostics,
         files_checked,
+        ..
     } = validate_project(path, &config)?;
 
     // Restore user locale after validation so stderr messages use their language
@@ -631,6 +632,7 @@ fn validate_command(path: &Path, cli: &Cli) -> anyhow::Result<()> {
             let ValidationResult {
                 diagnostics: post_fix_diagnostics,
                 files_checked: _,
+                ..
             } = validate_project(path, &config)?;
 
             (final_errors, final_warnings) = count_errors_warnings(&post_fix_diagnostics);
@@ -674,6 +676,7 @@ fn run_single_validation(
     let ValidationResult {
         diagnostics,
         files_checked: _,
+        ..
     } = validate_project(path, &config)?;
 
     println!("{} {}", t!("cli.validating").cyan().bold(), path.display());

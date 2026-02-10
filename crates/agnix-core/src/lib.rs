@@ -72,12 +72,48 @@ pub use parsers::markdown::{
 pub use parsers::json::parse_json_config;
 
 /// Result of validating a project, including diagnostics and metadata.
+///
+/// This struct is marked `#[non_exhaustive]` so that new metadata fields can be
+/// added in minor releases without breaking downstream destructuring patterns.
+/// Use `ValidationResult::new()` to construct instances in tests.
 #[derive(Debug, Clone)]
+#[non_exhaustive]
 pub struct ValidationResult {
     /// Diagnostics found during validation.
     pub diagnostics: Vec<Diagnostic>,
     /// Number of files that were checked (excludes Unknown file types).
     pub files_checked: usize,
+    /// Wall-clock time spent in validation, in milliseconds.
+    pub validation_time_ms: Option<u64>,
+    /// Total number of validator rules that were checked across all files.
+    pub rules_checked: usize,
+}
+
+impl ValidationResult {
+    /// Create a new `ValidationResult` with the given diagnostics and file count.
+    ///
+    /// Metadata fields (`validation_time_ms`, `rules_checked`) default to
+    /// `None` / `0` and can be set with the builder-style helpers.
+    pub fn new(diagnostics: Vec<Diagnostic>, files_checked: usize) -> Self {
+        Self {
+            diagnostics,
+            files_checked,
+            validation_time_ms: None,
+            rules_checked: 0,
+        }
+    }
+
+    /// Set the wall-clock validation time (builder pattern).
+    pub fn with_timing(mut self, ms: u64) -> Self {
+        self.validation_time_ms = Some(ms);
+        self
+    }
+
+    /// Set the total number of rules checked (builder pattern).
+    pub fn with_rules_checked(mut self, count: usize) -> Self {
+        self.rules_checked = count;
+        self
+    }
 }
 
 /// Detected file type for validator dispatch
@@ -155,6 +191,11 @@ impl ValidatorRegistry {
     /// Register a validator factory for a given file type.
     pub fn register(&mut self, file_type: FileType, factory: ValidatorFactory) {
         self.validators.entry(file_type).or_default().push(factory);
+    }
+
+    /// Return the total number of registered validator factories across all file types.
+    pub fn total_factory_count(&self) -> usize {
+        self.validators.values().map(|v| v.len()).sum()
     }
 
     /// Build a fresh validator instance list for the given file type.
@@ -1001,6 +1042,9 @@ pub fn validate_project_with_registry(
 ) -> LintResult<ValidationResult> {
     use ignore::WalkBuilder;
     use std::sync::Arc;
+    use std::time::Instant;
+
+    let validation_start = Instant::now();
 
     let root_dir = resolve_validation_root(path);
     let mut config = config.clone();
@@ -1182,10 +1226,12 @@ pub fn validate_project_with_registry(
     // Extract final count from atomic counter
     let files_checked = files_checked.load(Ordering::Relaxed);
 
-    Ok(ValidationResult {
-        diagnostics,
-        files_checked,
-    })
+    let elapsed_ms = validation_start.elapsed().as_millis() as u64;
+    let rules_checked = registry.total_factory_count();
+
+    Ok(ValidationResult::new(diagnostics, files_checked)
+        .with_timing(elapsed_ms)
+        .with_rules_checked(rules_checked))
 }
 
 fn resolve_validation_root(path: &Path) -> PathBuf {

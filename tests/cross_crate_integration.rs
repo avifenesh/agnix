@@ -26,6 +26,16 @@ fn cli_lint_config_default_works() {
     // validate_project returns a valid ValidationResult.
     let _files: usize = validation.files_checked;
     let _diags: &[agnix_core::Diagnostic] = &validation.diagnostics;
+
+    // New metadata fields are populated by validate_project
+    assert!(
+        validation.validation_time_ms.is_some(),
+        "validation_time_ms should be populated"
+    );
+    assert!(
+        validation.rules_checked > 0,
+        "rules_checked should be positive when using default registry"
+    );
 }
 
 #[test]
@@ -37,6 +47,10 @@ fn cli_validation_result_fields_accessible() {
     // CLI reads these fields to build output
     let _count: usize = result.files_checked;
     let _diags: &[agnix_core::Diagnostic] = &result.diagnostics;
+
+    // Metadata fields are accessible
+    let _timing: Option<u64> = result.validation_time_ms;
+    let _rules: usize = result.rules_checked;
 }
 
 #[test]
