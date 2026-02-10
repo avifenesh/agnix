@@ -224,4 +224,89 @@ mod tests {
         };
         assert!(skill.validate_model().is_err());
     }
+
+    fn make_skill(name: &str, description: &str) -> SkillSchema {
+        SkillSchema {
+            name: name.to_string(),
+            description: description.to_string(),
+            license: None,
+            compatibility: None,
+            metadata: None,
+            allowed_tools: None,
+            argument_hint: None,
+            disable_model_invocation: None,
+            user_invocable: None,
+            model: None,
+            context: None,
+            agent: None,
+        }
+    }
+
+    #[test]
+    fn test_empty_name_rejected() {
+        let skill = make_skill("", "Valid description");
+        assert!(skill.validate_name().is_err());
+    }
+
+    #[test]
+    fn test_max_length_name_accepted() {
+        // Exactly 64 chars - should be accepted
+        let name = "a".repeat(64);
+        let skill = make_skill(&name, "Valid description");
+        assert!(skill.validate_name().is_ok());
+    }
+
+    #[test]
+    fn test_over_max_length_name_rejected() {
+        // 65 chars - should be rejected
+        let name = "a".repeat(65);
+        let skill = make_skill(&name, "Valid description");
+        assert!(skill.validate_name().is_err());
+    }
+
+    #[test]
+    fn test_empty_description_rejected() {
+        let skill = make_skill("valid-name", "");
+        assert!(skill.validate_description().is_err());
+    }
+
+    #[test]
+    fn test_max_length_description_accepted() {
+        let desc = "x".repeat(1024);
+        let skill = make_skill("valid-name", &desc);
+        assert!(skill.validate_description().is_ok());
+    }
+
+    #[test]
+    fn test_over_max_length_description_rejected() {
+        let desc = "x".repeat(1025);
+        let skill = make_skill("valid-name", &desc);
+        assert!(skill.validate_description().is_err());
+    }
+
+    #[test]
+    fn test_empty_compatibility_rejected() {
+        let mut skill = make_skill("valid-name", "Valid description");
+        skill.compatibility = Some(String::new());
+        assert!(skill.validate_compatibility().is_err());
+    }
+
+    #[test]
+    fn test_over_max_compatibility_rejected() {
+        let mut skill = make_skill("valid-name", "Valid description");
+        skill.compatibility = Some("x".repeat(501));
+        assert!(skill.validate_compatibility().is_err());
+    }
+
+    #[test]
+    fn test_validate_collects_all_errors() {
+        // Multiple invalid fields should all be reported
+        let skill = make_skill("", "");
+        let errors = skill.validate();
+        assert!(
+            errors.len() >= 2,
+            "Should report errors for both name and description, got: {:?}",
+            errors
+        );
+    }
 }

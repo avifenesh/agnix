@@ -963,4 +963,87 @@ mod tests {
         let (s, e) = result.unwrap();
         assert_eq!(&content[s..e], "command");
     }
+
+    // ===== Position boundary tests =====
+
+    #[test]
+    fn field_line_at_position_zero() {
+        // Key at the very start of content (position 0)
+        let content = "\"field\": true\n";
+        let result = find_unique_json_field_line(content, "field");
+        assert!(result.is_some());
+        let (s, _e) = result.unwrap();
+        assert_eq!(s, 0, "Should start at position 0");
+    }
+
+    #[test]
+    fn key_value_at_end_of_content() {
+        // Value extends to the very end of content (content.len())
+        let content = "\"key\": \"val\"";
+        let result = find_unique_json_string_inner(content, "key", "val");
+        assert!(result.is_some());
+        let (_s, e) = result.unwrap();
+        assert_eq!(
+            e,
+            content.len() - 1,
+            "Inner end should be at last quote pos"
+        );
+    }
+
+    #[test]
+    fn skip_whitespace_at_content_len() {
+        // Calling skip_whitespace at exactly content.len() should return content.len()
+        let content = b"hello";
+        assert_eq!(skip_whitespace(content, content.len()), content.len());
+    }
+
+    #[test]
+    fn skip_whitespace_beyond_content_len() {
+        // When pos > len, the while-loop condition (i < content.len()) is immediately false,
+        // so the function returns pos unchanged. Callers are responsible for providing
+        // valid positions; this test documents the current no-panic guarantee.
+        let content = b"hello";
+        assert_eq!(
+            skip_whitespace(content, content.len() + 10),
+            content.len() + 10
+        );
+    }
+
+    // ===== Unicode multi-byte boundary tests =====
+
+    #[test]
+    fn unicode_multibyte_key_boundaries_are_valid() {
+        // 3-byte UTF-8 chars in key and value
+        let content = "{\"k\u{00e9}y\": \"v\u{00e0}l\"}";
+        let result = find_unique_json_string_inner(content, "k\u{00e9}y", "v\u{00e0}l");
+        assert!(result.is_some());
+        let (s, e) = result.unwrap();
+        assert!(content.is_char_boundary(s), "Start must be a char boundary");
+        assert!(content.is_char_boundary(e), "End must be a char boundary");
+        assert_eq!(&content[s..e], "v\u{00e0}l");
+    }
+
+    #[test]
+    fn four_byte_unicode_scalar_span_boundaries() {
+        // 4-byte emoji chars in value
+        let content = "{\"tag\": \"\u{1f600}\u{1f601}\u{1f602}\"}";
+        let result = find_unique_json_scalar_span(content, "tag");
+        assert!(result.is_some());
+        let (s, e) = result.unwrap();
+        assert!(content.is_char_boundary(s));
+        assert!(content.is_char_boundary(e));
+        // Should include the surrounding quotes
+        assert_eq!(&content[s..e], "\"\u{1f600}\u{1f601}\u{1f602}\"");
+    }
+
+    #[test]
+    fn toml_with_unicode_value_boundaries() {
+        let content = "name = \"caf\u{00e9}\"\n";
+        let result = find_unique_toml_string_value(content, "name", "caf\u{00e9}");
+        assert!(result.is_some());
+        let (s, e) = result.unwrap();
+        assert!(content.is_char_boundary(s));
+        assert!(content.is_char_boundary(e));
+        assert_eq!(&content[s..e], "caf\u{00e9}");
+    }
 }

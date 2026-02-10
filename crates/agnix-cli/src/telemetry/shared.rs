@@ -74,7 +74,7 @@ pub fn is_valid_rule_id(s: &str) -> bool {
         }
     }
 
-    let last = parts.last().unwrap();
+    let last = parts.last().expect("guaranteed by bounds check above");
     !last.is_empty() && last.chars().all(|c| c.is_ascii_digit())
 }
 

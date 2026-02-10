@@ -57,6 +57,9 @@ codecov/codecov-action@v5:     671740ac38dd9b0130fbe1cec585b89eea48d3de
 # Release
 softprops/action-gh-release@v2: a06a81a03ee405af7f2048a818ed3f03bbf83c7b
 
+# Zed Extension
+huacnlee/zed-extension-action@v2: 8cd592a0d24e1e41157740f1a529aeabddc88a1b
+
 # Claude Code
 anthropics/claude-code-action@v1: 6867bb3ab0b2c0a10629b6823e457347e74ad6d2
 ```

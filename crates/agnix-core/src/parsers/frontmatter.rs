@@ -279,6 +279,30 @@ Body content here"#;
         assert!(parts.has_frontmatter);
         assert!(parts.has_closing);
     }
+
+    #[test]
+    fn test_split_frontmatter_emoji_in_yaml_keys() {
+        // Emoji characters (4-byte UTF-8) in YAML keys should be handled without panic
+        let content = "---\n\u{1f525}fire: hot\n\u{1f680}rocket: fast\n---\nbody";
+        let parts = split_frontmatter(content);
+        assert!(parts.has_frontmatter);
+        assert!(parts.has_closing);
+        assert!(parts.frontmatter.contains("\u{1f525}fire"));
+        assert!(parts.frontmatter.contains("\u{1f680}rocket"));
+        // Verify byte offsets are valid char boundaries
+        assert!(content.is_char_boundary(parts.frontmatter_start));
+        assert!(content.is_char_boundary(parts.body_start));
+    }
+
+    #[test]
+    fn test_split_frontmatter_emoji_in_yaml_values() {
+        let content = "---\nstatus: \u{2705} done\nmood: \u{1f60a}\n---\nbody";
+        let parts = split_frontmatter(content);
+        assert!(parts.has_frontmatter);
+        assert!(parts.has_closing);
+        assert!(parts.frontmatter.contains("\u{2705}"));
+        assert!(parts.frontmatter.contains("\u{1f60a}"));
+    }
 }
 
 #[cfg(test)]

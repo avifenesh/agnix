@@ -268,7 +268,7 @@ mod tests {
         // Version 4
         assert_eq!(uuid.chars().nth(14), Some('4'));
         // Variant (8, 9, a, or b)
-        let variant_char = uuid.chars().nth(19).unwrap();
+        let variant_char = uuid.chars().nth(19).expect("UUID v4 must be 36 characters");
         assert!(matches!(variant_char, '8' | '9' | 'a' | 'b'));
     }
 
@@ -313,15 +313,45 @@ mod tests {
     // so concurrent modifications cause flaky failures.
     static ENV_MUTEX: std::sync::Mutex<()> = std::sync::Mutex::new(());
 
+    /// RAII guard that restores an environment variable to its original state on drop.
+    /// This ensures cleanup even if a test panics.
+    struct EnvGuard {
+        key: &'static str,
+        original: Option<String>,
+    }
+
+    impl EnvGuard {
+        /// Set an environment variable, returning a guard that restores the original value on drop.
+        fn set(key: &'static str, value: &str) -> Self {
+            let original = std::env::var(key).ok();
+            unsafe { std::env::set_var(key, value) };
+            Self { key, original }
+        }
+
+        /// Remove an environment variable, returning a guard that restores the original value on drop.
+        fn remove(key: &'static str) -> Self {
+            let original = std::env::var(key).ok();
+            unsafe { std::env::remove_var(key) };
+            Self { key, original }
+        }
+    }
+
+    impl Drop for EnvGuard {
+        fn drop(&mut self) {
+            match &self.original {
+                Some(val) => unsafe { std::env::set_var(self.key, val) },
+                None => unsafe { std::env::remove_var(self.key) },
+            }
+        }
+    }
+
     #[test]
     fn test_do_not_track_disables_telemetry() {
+        // Hold the lock for the entire test to prevent concurrent env var mutations.
         let _guard = ENV_MUTEX.lock().unwrap();
 
-        // Save current env state
-        let original = std::env::var("DO_NOT_TRACK").ok();
-
-        // Set DO_NOT_TRACK and verify telemetry is disabled
-        unsafe { std::env::set_var("DO_NOT_TRACK", "1") };
+        // Set DO_NOT_TRACK; EnvGuard restores the original value on drop (even on panic).
+        let _env = EnvGuard::set("DO_NOT_TRACK", "1");
         let config = TelemetryConfig {
             enabled: true,
             installation_id: Some(generate_uuid()),
@@ -331,24 +361,15 @@ mod tests {
             !config.is_enabled(),
             "DO_NOT_TRACK should disable telemetry"
         );
-
-        // Restore original state
-        match original {
-            Some(val) => unsafe { std::env::set_var("DO_NOT_TRACK", val) },
-            None => unsafe { std::env::remove_var("DO_NOT_TRACK") },
-        }
     }
 
     #[test]
     fn test_agnix_telemetry_env_overrides() {
+        // Hold the lock for the entire test to prevent concurrent env var mutations.
         let _guard = ENV_MUTEX.lock().unwrap();
 
-        // Save current env state
-        let original = std::env::var("AGNIX_TELEMETRY").ok();
-        let original_dnt = std::env::var("DO_NOT_TRACK").ok();
-
-        // Clear DO_NOT_TRACK to isolate this test
-        unsafe { std::env::remove_var("DO_NOT_TRACK") };
+        // Clear DO_NOT_TRACK to isolate this test; guard restores on drop.
+        let _env_dnt = EnvGuard::remove("DO_NOT_TRACK");
 
         let config = TelemetryConfig {
             enabled: true,
@@ -358,22 +379,12 @@ mod tests {
 
         // Test various override values
         for val in &["0", "false", "no", "off"] {
-            unsafe { std::env::set_var("AGNIX_TELEMETRY", val) };
+            let _env = EnvGuard::set("AGNIX_TELEMETRY", val);
             assert!(
                 !config.is_enabled(),
                 "AGNIX_TELEMETRY={} should disable telemetry",
                 val
             );
-        }
-
-        // Restore original state
-        match original {
-            Some(val) => unsafe { std::env::set_var("AGNIX_TELEMETRY", val) },
-            None => unsafe { std::env::remove_var("AGNIX_TELEMETRY") },
-        }
-        match original_dnt {
-            Some(val) => unsafe { std::env::set_var("DO_NOT_TRACK", val) },
-            None => unsafe { std::env::remove_var("DO_NOT_TRACK") },
         }
     }
 

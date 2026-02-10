@@ -1089,4 +1089,90 @@ cases:
         // Parent of "manifest.yaml" is either "" or "." depending on platform
         assert!(base == std::path::Path::new(".") || base == std::path::Path::new(""));
     }
+
+    #[test]
+    fn test_eval_summary_zero_fixtures() {
+        // Zero cases should produce a valid summary with default metrics
+        let manifest = EvalManifest { cases: vec![] };
+        let config = LintConfig::default();
+        let temp = tempfile::TempDir::new().unwrap();
+
+        let results = evaluate_manifest(&manifest, temp.path(), &config, None);
+        assert!(results.is_empty());
+
+        let summary = EvalSummary::from_results(&results);
+        assert_eq!(summary.cases_run, 0);
+        assert_eq!(summary.cases_passed, 0);
+        assert_eq!(summary.cases_failed, 0);
+        assert!(summary.rules.is_empty());
+        // With no data, precision and recall default to 1.0
+        assert!((summary.overall_precision - 1.0).abs() < 0.001);
+        assert!((summary.overall_recall - 1.0).abs() < 0.001);
+        // F1 of (1.0, 1.0) = 1.0
+        assert!((summary.overall_f1 - 1.0).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_f1_when_precision_is_zero_recall_is_nonzero() {
+        let mut m = RuleMetrics::new("TEST-001");
+        m.tp = 0;
+        m.fp = 0;
+        m.fn_count = 5;
+
+        // precision = 0/(0+0) = 1.0 (vacuously true: no predictions made)
+        // recall = 0/(0+5) = 0.0
+        assert!((m.precision() - 1.0).abs() < 0.001);
+        assert!((m.recall() - 0.0).abs() < 0.001);
+        // F1 = 2 * 1.0 * 0.0 / (1.0 + 0.0) = 0.0
+        assert!((m.f1() - 0.0).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_f1_when_recall_is_zero_precision_is_nonzero() {
+        let mut m = RuleMetrics::new("TEST-001");
+        m.tp = 0;
+        m.fp = 5;
+        m.fn_count = 0;
+
+        // precision = 0/(0+5) = 0.0
+        // recall = 0/(0+0) = 1.0 (vacuously true: no actual positives)
+        assert!((m.precision() - 0.0).abs() < 0.001);
+        assert!((m.recall() - 1.0).abs() < 0.001);
+        // F1 = 2 * 0.0 * 1.0 / (0.0 + 1.0) = 0.0
+        assert!((m.f1() - 0.0).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_f1_perfect_score() {
+        let mut m = RuleMetrics::new("TEST-001");
+        m.tp = 10;
+        m.fp = 0;
+        m.fn_count = 0;
+
+        assert!((m.precision() - 1.0).abs() < 0.001);
+        assert!((m.recall() - 1.0).abs() < 0.001);
+        assert!((m.f1() - 1.0).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_eval_summary_to_json() {
+        let results = vec![EvalResult {
+            case: EvalCase {
+                file: PathBuf::from("test.md"),
+                expected: vec!["AS-001".to_string()],
+                description: None,
+            },
+            actual: vec!["AS-001".to_string()],
+            true_positives: vec!["AS-001".to_string()],
+            false_positives: vec![],
+            false_negatives: vec![],
+        }];
+
+        let summary = EvalSummary::from_results(&results);
+        let json = summary.to_json();
+        assert!(json.is_ok());
+        let json_str = json.unwrap();
+        assert!(json_str.contains("cases_run"));
+        assert!(json_str.contains("overall_f1"));
+    }
 }

@@ -81,6 +81,14 @@ fn config_revalidation_concurrency(document_count: usize) -> usize {
     document_count.min(available.clamp(1, MAX_CONFIG_REVALIDATION_CONCURRENCY))
 }
 
+/// Execute `operation` on each item with bounded concurrency.
+///
+/// Spawns up to `max_concurrency` tasks at once (minimum 1). As each task
+/// completes, the next item is dispatched, maintaining the concurrency cap.
+///
+/// Partial failures are collected, not propagated: if a spawned task panics
+/// or is cancelled, its `JoinError` is appended to the returned `Vec` and
+/// processing continues with the remaining items.
 async fn for_each_bounded<T, I, F, Fut>(
     items: I,
     max_concurrency: usize,
@@ -2997,5 +3005,64 @@ model: sonnet
                 "Cached project diagnostic should be preserved after merge"
             );
         }
+    }
+
+    // ===== for_each_bounded additional tests =====
+
+    #[tokio::test]
+    async fn test_for_each_bounded_concurrency_limit_one() {
+        use std::sync::atomic::{AtomicUsize, Ordering};
+
+        let max_concurrent = Arc::new(AtomicUsize::new(0));
+        let current = Arc::new(AtomicUsize::new(0));
+
+        let items: Vec<usize> = (0..5).collect();
+
+        let max_c = Arc::clone(&max_concurrent);
+        let cur = Arc::clone(&current);
+
+        let errors = for_each_bounded(items, 1, move |_item| {
+            let max_c = Arc::clone(&max_c);
+            let cur = Arc::clone(&cur);
+            async move {
+                let c = cur.fetch_add(1, Ordering::SeqCst) + 1;
+                // Update max observed concurrency
+                max_c.fetch_max(c, Ordering::SeqCst);
+                // Yield to give other tasks a chance to run
+                tokio::task::yield_now().await;
+                cur.fetch_sub(1, Ordering::SeqCst);
+            }
+        })
+        .await;
+
+        assert!(errors.is_empty());
+        assert_eq!(
+            max_concurrent.load(Ordering::SeqCst),
+            1,
+            "With concurrency limit 1, at most 1 task should run concurrently"
+        );
+    }
+
+    #[tokio::test]
+    async fn test_for_each_bounded_zero_concurrency_defaults_to_one() {
+        // Passing 0 as max_concurrency should be clamped to 1 (not hang or panic)
+        let items = vec![1, 2, 3];
+        let count = Arc::new(std::sync::atomic::AtomicUsize::new(0));
+        let count_clone = Arc::clone(&count);
+
+        let errors = for_each_bounded(items, 0, move |_| {
+            let count = Arc::clone(&count_clone);
+            async move {
+                count.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+            }
+        })
+        .await;
+
+        assert!(errors.is_empty());
+        assert_eq!(
+            count.load(std::sync::atomic::Ordering::SeqCst),
+            3,
+            "All items should be processed even with concurrency 0"
+        );
     }
 }

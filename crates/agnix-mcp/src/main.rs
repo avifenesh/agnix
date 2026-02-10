@@ -36,7 +36,10 @@ const TOOL_ALIASES: &[(&str, &str)] =
 
 const COMPAT_TOOL_NAMES: &[&str] = &["generic", "codex"];
 
-/// Input for validate_file tool
+/// Input for validate_file tool.
+///
+/// The `path` field accepts absolute or relative paths. Path safety is enforced
+/// downstream by `safe_read_file()` (symlink rejection, size limits).
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 #[schemars(description = "Input for validating a single agent configuration file")]
 pub struct ValidateFileInput {

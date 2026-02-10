@@ -11,6 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - i18n diagnostic messages now display properly translated text instead of raw key paths when installed via `cargo install` (fixes #341)
 - CI locale-sync check prevents locale files from drifting across crates
 - CC-AG-009, CC-AG-010, CC-SK-008 false positives for `Skill`, `StatusBarMessageTool`, `TaskOutput` tools and MCP server tools with `mcp__<server>__<tool>` format (fixes #342)
+- **Performance**: Replaced Mutex-based path collection with rayon fold/reduce in parallel validation, eliminating lock contention
+- **Performance**: Reduced string allocations in `normalize_rel_path`, `detect_file_type`, and project-level checks
+- **Code quality**: Merged duplicate `resolve_config_path` functions in CLI
+- **Code quality**: Improved regex error messages in hooks validator
+- **Code quality**: Added panic-safe `EnvGuard` for telemetry test isolation
+- **Code quality**: Added panic logging in markdown parser instead of silent failure
+- **CI**: Pinned `huacnlee/zed-extension-action` to SHA, pinned cargo tool versions
+- **CI**: Moved `CARGO_REGISTRY_TOKEN` from CLI args to env vars in release workflow
 
 ### Added
 - **Clickable rule links in IDEs** - LSP diagnostics now include `code_description` so rule codes (e.g. AS-001) link to per-rule website docs
@@ -19,6 +27,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **LSP project-level validation** - `validate_project_rules()` public API for workspace-wide rules (AGM-006, XP-004/005/006, VER-001)
 - **LSP lifecycle integration** - project-level diagnostics on workspace open, file save, config change
 - **VS Code `validateWorkspace`** - now triggers `agnix.validateProjectRules` executeCommand
+- **Dependabot** config for automated cargo and GitHub Actions dependency updates
+- **MSRV** defined as Rust 1.91 (latest stable), tested in CI matrix
+- **70+ new tests** covering diagnostics, config versions, LSP backend, MCP errors, parsers, schemas, span_utils, eval edge cases
 
 ### Changed
 - All rule documentation links now point to website (`avifenesh.github.io/agnix`) instead of GitHub `VALIDATION-RULES.md`

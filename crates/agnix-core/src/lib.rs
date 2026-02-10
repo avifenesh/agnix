@@ -47,7 +47,6 @@ use std::path::{Path, PathBuf};
 use rayon::iter::ParallelBridge;
 use rayon::prelude::*;
 use rust_i18n::t;
-use std::sync::Mutex;
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 
 pub use config::{ConfigWarning, FilesConfig, LintConfig, generate_schema};
@@ -294,15 +293,14 @@ fn is_documentation_directory(path: &Path) -> bool {
     for component in path.components() {
         if let std::path::Component::Normal(name) = component {
             if let Some(name_str) = name.to_str() {
-                let lower = name_str.to_lowercase();
-                if lower == "docs"
-                    || lower == "doc"
-                    || lower == "documentation"
-                    || lower == "wiki"
-                    || lower == "licenses"
-                    || lower == "examples"
-                    || lower == "api-docs"
-                    || lower == "api_docs"
+                if name_str.eq_ignore_ascii_case("docs")
+                    || name_str.eq_ignore_ascii_case("doc")
+                    || name_str.eq_ignore_ascii_case("documentation")
+                    || name_str.eq_ignore_ascii_case("wiki")
+                    || name_str.eq_ignore_ascii_case("licenses")
+                    || name_str.eq_ignore_ascii_case("examples")
+                    || name_str.eq_ignore_ascii_case("api-docs")
+                    || name_str.eq_ignore_ascii_case("api_docs")
                 {
                     return true;
                 }
@@ -384,42 +382,39 @@ pub fn detect_file_type(path: &Path) -> FileType {
                 // Exclude common project files that are not agent configurations.
                 // These files commonly contain HTML, @mentions, and cross-platform
                 // references that would produce false positives if validated.
-                let lower = name.to_lowercase();
-                let parent_lower = parent.map(|p| p.to_lowercase());
-                let parent_lower_str = parent_lower.as_deref();
-                if lower == "changelog.md"
-                    || lower == "history.md"
-                    || lower == "releases.md"
-                    || lower == "readme.md"
-                    || lower == "contributing.md"
-                    || lower == "license.md"
-                    || lower == "code_of_conduct.md"
-                    || lower == "security.md"
-                    || lower == "pull_request_template.md"
-                    || lower == "issue_template.md"
-                    || lower == "bug_report.md"
-                    || lower == "feature_request.md"
+                if name.eq_ignore_ascii_case("changelog.md")
+                    || name.eq_ignore_ascii_case("history.md")
+                    || name.eq_ignore_ascii_case("releases.md")
+                    || name.eq_ignore_ascii_case("readme.md")
+                    || name.eq_ignore_ascii_case("contributing.md")
+                    || name.eq_ignore_ascii_case("license.md")
+                    || name.eq_ignore_ascii_case("code_of_conduct.md")
+                    || name.eq_ignore_ascii_case("security.md")
+                    || name.eq_ignore_ascii_case("pull_request_template.md")
+                    || name.eq_ignore_ascii_case("issue_template.md")
+                    || name.eq_ignore_ascii_case("bug_report.md")
+                    || name.eq_ignore_ascii_case("feature_request.md")
                     // Developer-focused docs, not agent instructions
-                    || lower == "developer.md"
-                    || lower == "developers.md"
-                    || lower == "development.md"
-                    || lower == "hacking.md"
-                    || lower == "maintainers.md"
-                    || lower == "governance.md"
-                    || lower == "support.md"
-                    || lower == "authors.md"
-                    || lower == "credits.md"
-                    || lower == "thanks.md"
-                    || lower == "migration.md"
-                    || lower == "upgrading.md"
+                    || name.eq_ignore_ascii_case("developer.md")
+                    || name.eq_ignore_ascii_case("developers.md")
+                    || name.eq_ignore_ascii_case("development.md")
+                    || name.eq_ignore_ascii_case("hacking.md")
+                    || name.eq_ignore_ascii_case("maintainers.md")
+                    || name.eq_ignore_ascii_case("governance.md")
+                    || name.eq_ignore_ascii_case("support.md")
+                    || name.eq_ignore_ascii_case("authors.md")
+                    || name.eq_ignore_ascii_case("credits.md")
+                    || name.eq_ignore_ascii_case("thanks.md")
+                    || name.eq_ignore_ascii_case("migration.md")
+                    || name.eq_ignore_ascii_case("upgrading.md")
                 {
                     FileType::Unknown
                 } else if is_documentation_directory(path) {
                     // Markdown files in documentation directories are not agent configs
                     FileType::Unknown
-                } else if parent_lower_str == Some(".github")
-                    || parent_lower_str == Some("issue_template")
-                    || parent_lower_str == Some("pull_request_template")
+                } else if parent.is_some_and(|p| p.eq_ignore_ascii_case(".github"))
+                    || parent.is_some_and(|p| p.eq_ignore_ascii_case("issue_template"))
+                    || parent.is_some_and(|p| p.eq_ignore_ascii_case("pull_request_template"))
                 {
                     FileType::Unknown
                 } else {
@@ -455,7 +450,13 @@ fn compile_patterns_lenient(patterns: &[String]) -> Vec<glob::Pattern> {
         .iter()
         .filter_map(|p| {
             let normalized = p.replace('\\', "/");
-            glob::Pattern::new(&normalized).ok()
+            match glob::Pattern::new(&normalized) {
+                Ok(pat) => Some(pat),
+                Err(e) => {
+                    eprintln!("warning: ignoring invalid glob pattern '{}': {}", p, e);
+                    None
+                }
+            }
         })
         .collect()
 }
@@ -601,11 +602,11 @@ struct ExcludePattern {
 
 fn normalize_rel_path(entry_path: &Path, root: &Path) -> String {
     let rel_path = entry_path.strip_prefix(root).unwrap_or(entry_path);
-    let mut path_str = rel_path.to_string_lossy().replace('\\', "/");
-    if let Some(stripped) = path_str.strip_prefix("./") {
-        path_str = stripped.to_string();
+    let path_str = rel_path.to_string_lossy().replace('\\', "/");
+    match path_str.strip_prefix("./") {
+        Some(stripped) => stripped.to_string(),
+        None => path_str,
     }
-    path_str
 }
 
 fn compile_exclude_patterns(excludes: &[String]) -> LintResult<Vec<ExcludePattern>> {
@@ -679,7 +680,7 @@ fn run_project_level_checks(
                 let description = if !parent_files.is_empty() {
                     let parent_paths: Vec<String> = parent_files
                         .iter()
-                        .map(|p| p.to_string_lossy().to_string())
+                        .map(|p| p.to_string_lossy().into_owned())
                         .collect();
                     format!(
                         "Nested AGENTS.md detected - parent AGENTS.md files exist at: {}",
@@ -689,7 +690,7 @@ fn run_project_level_checks(
                     let other_paths: Vec<String> = agents_md_paths
                         .iter()
                         .filter(|p| p.as_path() != agents_file.as_path())
-                        .map(|p| p.to_string_lossy().to_string())
+                        .map(|p| p.to_string_lossy().into_owned())
                         .collect();
                     format!(
                         "Multiple AGENTS.md files detected - other AGENTS.md files exist at: {}",
@@ -746,13 +747,14 @@ fn run_project_level_checks(
             if xp004_enabled {
                 let file_commands: Vec<_> = file_contents
                     .iter()
-                    .map(|(path, content)| {
-                        (
-                            path.clone(),
-                            schemas::cross_platform::extract_build_commands(content),
-                        )
+                    .filter_map(|(path, content)| {
+                        let cmds = schemas::cross_platform::extract_build_commands(content);
+                        if cmds.is_empty() {
+                            None
+                        } else {
+                            Some((path.clone(), cmds))
+                        }
                     })
-                    .filter(|(_, cmds)| !cmds.is_empty())
                     .collect();
 
                 let build_conflicts =
@@ -790,13 +792,15 @@ fn run_project_level_checks(
             if xp005_enabled {
                 let file_constraints: Vec<_> = file_contents
                     .iter()
-                    .map(|(path, content)| {
-                        (
-                            path.clone(),
-                            schemas::cross_platform::extract_tool_constraints(content),
-                        )
+                    .filter_map(|(path, content)| {
+                        let constraints =
+                            schemas::cross_platform::extract_tool_constraints(content);
+                        if constraints.is_empty() {
+                            None
+                        } else {
+                            Some((path.clone(), constraints))
+                        }
                     })
-                    .filter(|(_, constraints)| !constraints.is_empty())
                     .collect();
 
                 let tool_conflicts =
@@ -1004,13 +1008,14 @@ pub fn validate_project_with_registry(
 
     let root_path = root_dir.clone();
 
+    // Fallback to relative path is safe: symlink checks and size limits still apply per-file
     let walk_root = std::fs::canonicalize(path).unwrap_or_else(|_| path.to_path_buf());
 
-    // Shared state for streaming validation
+    // Shared atomic state for file-limit enforcement across parallel workers.
+    // These must remain atomic (not fold/reduce) because the limit check must
+    // be visible immediately to all threads to stop work promptly.
     let files_checked = Arc::new(AtomicUsize::new(0));
     let limit_exceeded = Arc::new(AtomicBool::new(false));
-    let agents_md_paths: Arc<Mutex<Vec<PathBuf>>> = Arc::new(Mutex::new(Vec::new()));
-    let instruction_file_paths: Arc<Mutex<Vec<PathBuf>>> = Arc::new(Mutex::new(Vec::new()));
 
     // Get the file limit from config (None means no limit)
     let max_files = config.max_files_to_validate;
@@ -1022,88 +1027,109 @@ pub fn validate_project_with_registry(
     //       Trade-off: this may surface files the user intentionally excluded locally,
     //       but security is still enforced via symlink rejection (file_utils::safe_read)
     //       and file size limits, so the exposure is limited to lint noise, not unsafe I/O.
-    let mut diagnostics: Vec<Diagnostic> = WalkBuilder::new(&walk_root)
-        .hidden(false)
-        .git_ignore(true)
-        .git_exclude(false)
-        .filter_entry({
-            let exclude_patterns = Arc::clone(&exclude_patterns);
-            let root_path = root_path.clone();
-            move |entry| {
-                let entry_path = entry.path();
-                if entry_path == root_path {
-                    return true;
-                }
-                if entry.file_type().is_some_and(|ft| ft.is_dir()) {
-                    let rel_path = normalize_rel_path(entry_path, &root_path);
-                    return !should_prune_dir(&rel_path, exclude_patterns.as_slice());
-                }
-                true
-            }
-        })
-        .build()
-        .filter_map(|entry| entry.ok())
-        .filter(|entry| entry.path().is_file())
-        .filter(|entry| {
-            let entry_path = entry.path();
-            let path_str = normalize_rel_path(entry_path, &root_path);
-            !is_excluded_file(&path_str, exclude_patterns.as_slice())
-        })
-        .map(|entry| entry.path().to_path_buf())
-        .par_bridge()
-        .flat_map(|file_path| {
-            // Security: Check if file limit has been exceeded
-            // Once exceeded, skip processing additional files
-            // Use SeqCst ordering for consistency with store operations
-            if limit_exceeded.load(Ordering::SeqCst) {
-                return Vec::new();
-            }
-
-            // Count recognized files (resolve_with_compiled is string-only, no I/O)
-            let file_type = resolve_with_compiled(&file_path, Some(&root_path), &compiled_files);
-            if file_type != FileType::Unknown {
-                let count = files_checked.fetch_add(1, Ordering::SeqCst);
-                // Security: Enforce file count limit to prevent DoS
-                if let Some(limit) = max_files {
-                    if count >= limit {
-                        limit_exceeded.store(true, Ordering::SeqCst);
-                        return Vec::new();
+    //
+    // Uses fold/reduce instead of Mutex-protected Vecs to accumulate paths and
+    // diagnostics thread-locally, eliminating lock contention in the hot loop.
+    let (mut diagnostics, mut agents_md_paths, mut instruction_file_paths) =
+        WalkBuilder::new(&walk_root)
+            .hidden(false)
+            .git_ignore(true)
+            .git_exclude(false)
+            .filter_entry({
+                let exclude_patterns = Arc::clone(&exclude_patterns);
+                let root_path = root_path.clone();
+                move |entry| {
+                    let entry_path = entry.path();
+                    if entry_path == root_path {
+                        return true;
                     }
+                    if entry.file_type().is_some_and(|ft| ft.is_dir()) {
+                        let rel_path = normalize_rel_path(entry_path, &root_path);
+                        return !should_prune_dir(&rel_path, exclude_patterns.as_slice());
+                    }
+                    true
                 }
-            }
+            })
+            .build()
+            .filter_map(|entry| entry.ok())
+            .filter(|entry| entry.path().is_file())
+            .filter(|entry| {
+                let entry_path = entry.path();
+                let path_str = normalize_rel_path(entry_path, &root_path);
+                !is_excluded_file(&path_str, exclude_patterns.as_slice())
+            })
+            .map(|entry| entry.path().to_path_buf())
+            .par_bridge()
+            .fold(
+                || {
+                    (
+                        Vec::<Diagnostic>::new(),
+                        Vec::<PathBuf>::new(),
+                        Vec::<PathBuf>::new(),
+                    )
+                },
+                |(mut diags, mut agents, mut instructions), file_path| {
+                    // Security: Check if file limit has been exceeded
+                    // Once exceeded, skip processing additional files
+                    // Use SeqCst ordering for consistency with store operations
+                    if limit_exceeded.load(Ordering::SeqCst) {
+                        return (diags, agents, instructions);
+                    }
 
-            // Collect AGENTS.md paths for AGM-006 check
-            if file_path.file_name().and_then(|n| n.to_str()) == Some("AGENTS.md") {
-                agents_md_paths.lock().unwrap().push(file_path.clone());
-            }
+                    // Count recognized files (resolve_with_compiled is string-only, no I/O)
+                    let file_type =
+                        resolve_with_compiled(&file_path, Some(&root_path), &compiled_files);
+                    if file_type != FileType::Unknown {
+                        let count = files_checked.fetch_add(1, Ordering::SeqCst);
+                        // Security: Enforce file count limit to prevent DoS
+                        if let Some(limit) = max_files {
+                            if count >= limit {
+                                limit_exceeded.store(true, Ordering::SeqCst);
+                                return (diags, agents, instructions);
+                            }
+                        }
+                    }
 
-            // Collect instruction file paths for XP-004/005/006 checks
-            if schemas::cross_platform::is_instruction_file(&file_path) {
-                instruction_file_paths
-                    .lock()
-                    .unwrap()
-                    .push(file_path.clone());
-            }
+                    // Collect AGENTS.md paths for AGM-006 check (thread-local, no lock)
+                    if file_path.file_name().and_then(|n| n.to_str()) == Some("AGENTS.md") {
+                        agents.push(file_path.clone());
+                    }
 
-            // Validate the file using the pre-resolved file_type to avoid
-            // re-compiling [files] glob patterns for every file.
-            match validate_file_with_type(&file_path, file_type, &config, registry) {
-                Ok(file_diagnostics) => file_diagnostics,
-                Err(e) => {
-                    vec![
-                        Diagnostic::error(
-                            file_path.clone(),
-                            0,
-                            0,
-                            "file::read",
-                            t!("rules.file_read_error", error = e.to_string()),
-                        )
-                        .with_suggestion(t!("rules.file_read_error_suggestion")),
-                    ]
-                }
-            }
-        })
-        .collect();
+                    // Collect instruction file paths for XP-004/005/006 checks (thread-local, no lock)
+                    if schemas::cross_platform::is_instruction_file(&file_path) {
+                        instructions.push(file_path.clone());
+                    }
+
+                    // Validate the file using the pre-resolved file_type to avoid
+                    // re-compiling [files] glob patterns for every file.
+                    match validate_file_with_type(&file_path, file_type, &config, registry) {
+                        Ok(file_diagnostics) => diags.extend(file_diagnostics),
+                        Err(e) => {
+                            diags.push(
+                                Diagnostic::error(
+                                    file_path.clone(),
+                                    0,
+                                    0,
+                                    "file::read",
+                                    t!("rules.file_read_error", error = e.to_string()),
+                                )
+                                .with_suggestion(t!("rules.file_read_error_suggestion")),
+                            );
+                        }
+                    }
+
+                    (diags, agents, instructions)
+                },
+            )
+            .reduce(
+                || (Vec::new(), Vec::new(), Vec::new()),
+                |(mut d1, mut a1, mut i1), (d2, a2, i2)| {
+                    d1.extend(d2);
+                    a1.extend(a2);
+                    i1.extend(i2);
+                    (d1, a1, i1)
+                },
+            );
 
     // Check if limit was exceeded and return error
     if limit_exceeded.load(Ordering::Relaxed) {
@@ -1117,14 +1143,12 @@ pub fn validate_project_with_registry(
 
     // Run project-level checks (AGM-006, XP-004/005/006, VER-001)
     {
-        let mut sorted_agents_md = agents_md_paths.lock().unwrap().clone();
-        sorted_agents_md.sort();
-        let mut sorted_instruction_files = instruction_file_paths.lock().unwrap().clone();
-        sorted_instruction_files.sort();
+        agents_md_paths.sort();
+        instruction_file_paths.sort();
 
         diagnostics.extend(run_project_level_checks(
-            &sorted_agents_md,
-            &sorted_instruction_files,
+            &agents_md_paths,
+            &instruction_file_paths,
             &config,
             &root_dir,
         ));

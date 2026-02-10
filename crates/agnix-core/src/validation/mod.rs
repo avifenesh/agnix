@@ -14,6 +14,8 @@
 /// assert!(!is_valid_mcp_tool_format("MCP__server__tool", &["Read"])); // Uppercase
 /// ```
 pub fn is_valid_mcp_tool_format(tool: &str, known_tools: &[&str]) -> bool {
+    // Strip parenthesized parameters from tool names like "Read(file_path)"
+    // so that both "Read" and "Read(file_path)" match the known tool "Read".
     let base_name = tool.split('(').next().unwrap_or(tool);
 
     // Check if it's a known tool

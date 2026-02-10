@@ -130,7 +130,7 @@ Format: `[CATEGORY]-[NUMBER]` (AS-004, CC-HK-001, etc.)
 - v0.10.0 - Production-ready with full validation pipeline
 - 156 validation rules across 19 validators
 
-- 2400+ passing tests
+- 2500+ passing tests
 - LSP + MCP servers with VS Code extension
 - See GitHub issues for roadmap
 
