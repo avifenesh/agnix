@@ -90,7 +90,10 @@ fn compile_patterns_lenient(patterns: &[String]) -> Vec<glob::Pattern> {
             match glob::Pattern::new(&normalized) {
                 Ok(pat) => Some(pat),
                 Err(e) => {
-                    eprintln!("warning: ignoring invalid glob pattern '{}': {}", p, e);
+                    // TODO: Consider returning invalid glob patterns as Diagnostic warnings instead of eprintln!
+                    // This would allow library consumers to handle warnings programmatically.
+                    // See: https://github.com/avifenesh/agnix/issues
+                    eprintln!("warning: ignoring invalid glob pattern '{}' : {}", p, e);
                     None
                 }
             }

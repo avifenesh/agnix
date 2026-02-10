@@ -141,32 +141,33 @@ pub fn detect_file_type(path: &Path) -> FileType {
                 // Exclude common project files that are not agent configurations.
                 // These files commonly contain HTML, @mentions, and cross-platform
                 // references that would produce false positives if validated.
-                if name.eq_ignore_ascii_case("changelog.md")
-                    || name.eq_ignore_ascii_case("history.md")
-                    || name.eq_ignore_ascii_case("releases.md")
-                    || name.eq_ignore_ascii_case("readme.md")
-                    || name.eq_ignore_ascii_case("contributing.md")
-                    || name.eq_ignore_ascii_case("license.md")
-                    || name.eq_ignore_ascii_case("code_of_conduct.md")
-                    || name.eq_ignore_ascii_case("security.md")
-                    || name.eq_ignore_ascii_case("pull_request_template.md")
-                    || name.eq_ignore_ascii_case("issue_template.md")
-                    || name.eq_ignore_ascii_case("bug_report.md")
-                    || name.eq_ignore_ascii_case("feature_request.md")
-                    // Developer-focused docs, not agent instructions
-                    || name.eq_ignore_ascii_case("developer.md")
-                    || name.eq_ignore_ascii_case("developers.md")
-                    || name.eq_ignore_ascii_case("development.md")
-                    || name.eq_ignore_ascii_case("hacking.md")
-                    || name.eq_ignore_ascii_case("maintainers.md")
-                    || name.eq_ignore_ascii_case("governance.md")
-                    || name.eq_ignore_ascii_case("support.md")
-                    || name.eq_ignore_ascii_case("authors.md")
-                    || name.eq_ignore_ascii_case("credits.md")
-                    || name.eq_ignore_ascii_case("thanks.md")
-                    || name.eq_ignore_ascii_case("migration.md")
-                    || name.eq_ignore_ascii_case("upgrading.md")
-                {
+                if matches!(
+                    name.to_ascii_lowercase().as_str(),
+                    "changelog.md"
+                        | "history.md"
+                        | "releases.md"
+                        | "readme.md"
+                        | "contributing.md"
+                        | "license.md"
+                        | "code_of_conduct.md"
+                        | "security.md"
+                        | "pull_request_template.md"
+                        | "issue_template.md"
+                        | "bug_report.md"
+                        | "feature_request.md"
+                        | "developer.md"
+                        | "developers.md"
+                        | "development.md"
+                        | "hacking.md"
+                        | "maintainers.md"
+                        | "governance.md"
+                        | "support.md"
+                        | "authors.md"
+                        | "credits.md"
+                        | "thanks.md"
+                        | "migration.md"
+                        | "upgrading.md"
+                ) {
                     FileType::Unknown
                 } else if is_documentation_directory(path) {
                     // Markdown files in documentation directories are not agent configs
