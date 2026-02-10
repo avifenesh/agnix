@@ -578,6 +578,13 @@ pub struct RuleConfig {
         description = "List of rule IDs to explicitly disable (e.g., [\"CC-AG-001\", \"AS-005\"])"
     )]
     pub disabled_rules: Vec<String>,
+
+    /// Explicitly disabled validators by name (e.g., ["XmlValidator", "PromptValidator"])
+    #[serde(default)]
+    #[schemars(
+        description = "List of validator names to disable (e.g., [\"XmlValidator\", \"PromptValidator\"])"
+    )]
+    pub disabled_validators: Vec<String>,
 }
 
 impl Default for RuleConfig {
@@ -605,6 +612,7 @@ impl Default for RuleConfig {
             xml_balance: true,
             import_references: true,
             disabled_rules: Vec::new(),
+            disabled_validators: Vec::new(),
         }
     }
 }
