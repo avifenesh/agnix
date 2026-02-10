@@ -28,9 +28,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **LSP lifecycle integration** - project-level diagnostics on workspace open, file save, config change
 - **VS Code `validateWorkspace`** - now triggers `agnix.validateProjectRules` executeCommand
 - **Dependabot** config for automated cargo and GitHub Actions dependency updates
-- **MSRV** defined as Rust 1.85, tested in CI matrix
+- **MSRV** defined as Rust 1.91 (latest stable), tested in CI matrix
 - **70+ new tests** covering diagnostics, config versions, LSP backend, MCP errors, parsers, schemas, span_utils, eval edge cases
-- **Codecov enforcement** - CI now fails on upload errors
 
 ### Changed
 - All rule documentation links now point to website (`avifenesh.github.io/agnix`) instead of GitHub `VALIDATION-RULES.md`

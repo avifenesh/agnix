@@ -86,7 +86,7 @@ pub fn safe_write_file(path: &Path, content: &str) -> LintResult<()> {
         path: path.to_path_buf(),
         source: io::Error::other("Missing parent directory"),
     })?;
-    // file_name() is None only for paths ending in ".." which we don't expect here
+    // file_name() is None for paths like "/", ".", "..", or empty; fall back to "file"
     let file_name = path
         .file_name()
         .and_then(|name| name.to_str())

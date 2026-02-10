@@ -180,7 +180,9 @@ mod validation_tests {
     #[test]
     fn test_validate_nonexistent_project_path() {
         let config = LintConfig::default();
-        let result = validate_project(std::path::Path::new("/nonexistent/project/dir"), &config);
+        let temp = tempfile::TempDir::new().unwrap();
+        let missing = temp.path().join("nonexistent_subdir");
+        let result = validate_project(&missing, &config);
 
         assert!(result.is_ok());
         let validation = result.unwrap();
@@ -195,9 +197,8 @@ mod validation_tests {
         let config = LintConfig::default();
         let result = validate_file(std::path::Path::new(""), &config);
 
-        // Empty path produces an empty diagnostics list (file is unrecognized)
-        // rather than an error, since validate_file reads the file content
-        // and detects it as an unknown file type.
+        // Empty path resolves to FileType::Unknown, and validate_file returns
+        // Ok(vec![]) for unknown file types without reading the file.
         assert!(result.is_ok(), "Empty path should not panic: {:?}", result);
     }
 

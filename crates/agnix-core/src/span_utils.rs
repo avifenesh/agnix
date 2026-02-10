@@ -999,7 +999,9 @@ mod tests {
 
     #[test]
     fn skip_whitespace_beyond_content_len() {
-        // Calling with pos > len should not panic
+        // When pos > len, the while-loop condition (i < content.len()) is immediately false,
+        // so the function returns pos unchanged. Callers are responsible for providing
+        // valid positions; this test documents the current no-panic guarantee.
         let content = b"hello";
         assert_eq!(
             skip_whitespace(content, content.len() + 10),
