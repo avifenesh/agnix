@@ -44,10 +44,7 @@ fn dangerous_patterns() -> &'static Vec<DangerousPattern> {
             ),
             (r"(?i)drop\s+database", "Dropping database is irreversible"),
             (r"(?i)drop\s+table", "Dropping table is irreversible"),
-            (
-                r"(?i)truncate\s+table",
-                "Truncating table deletes all data",
-            ),
+            (r"(?i)truncate\s+table", "Truncating table deletes all data"),
             (
                 r"(?i)curl\s+.*\|\s*sh",
                 "Piping curl to shell is a security risk",

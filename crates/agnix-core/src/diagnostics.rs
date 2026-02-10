@@ -377,8 +377,8 @@ mod tests {
             Fix::insert(0, "a", "fix a", true),
             Fix::delete(10, 20, "fix b", false),
         ];
-        let diag = Diagnostic::info(PathBuf::from("b.md"), 1, 0, "XML-001", "xml issue")
-            .with_fixes(fixes);
+        let diag =
+            Diagnostic::info(PathBuf::from("b.md"), 1, 0, "XML-001", "xml issue").with_fixes(fixes);
 
         assert_eq!(diag.fixes.len(), 2);
         assert!(diag.has_fixes());
@@ -413,8 +413,7 @@ mod tests {
 
     #[test]
     fn test_diagnostic_no_fixes_by_default() {
-        let diag =
-            Diagnostic::warning(PathBuf::from("e.md"), 1, 0, "AS-005", "something wrong");
+        let diag = Diagnostic::warning(PathBuf::from("e.md"), 1, 0, "AS-005", "something wrong");
 
         assert!(!diag.has_fixes());
         assert!(!diag.has_safe_fixes());

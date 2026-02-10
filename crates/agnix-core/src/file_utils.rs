@@ -406,10 +406,7 @@ mod tests {
             LintError::FileNotRegular { path } => {
                 assert_eq!(path, temp.path());
             }
-            other => panic!(
-                "Expected FileNotRegular for directory, got {:?}",
-                other
-            ),
+            other => panic!("Expected FileNotRegular for directory, got {:?}", other),
         }
     }
 

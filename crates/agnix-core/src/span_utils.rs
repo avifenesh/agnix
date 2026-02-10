@@ -983,7 +983,11 @@ mod tests {
         let result = find_unique_json_string_inner(content, "key", "val");
         assert!(result.is_some());
         let (_s, e) = result.unwrap();
-        assert_eq!(e, content.len() - 1, "Inner end should be at last quote pos");
+        assert_eq!(
+            e,
+            content.len() - 1,
+            "Inner end should be at last quote pos"
+        );
     }
 
     #[test]
@@ -997,7 +1001,10 @@ mod tests {
     fn skip_whitespace_beyond_content_len() {
         // Calling with pos > len should not panic
         let content = b"hello";
-        assert_eq!(skip_whitespace(content, content.len() + 10), content.len() + 10);
+        assert_eq!(
+            skip_whitespace(content, content.len() + 10),
+            content.len() + 10
+        );
     }
 
     // ===== Unicode multi-byte boundary tests =====

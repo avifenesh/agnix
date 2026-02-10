@@ -198,11 +198,7 @@ mod validation_tests {
         // Empty path produces an empty diagnostics list (file is unrecognized)
         // rather than an error, since validate_file reads the file content
         // and detects it as an unknown file type.
-        assert!(
-            result.is_ok(),
-            "Empty path should not panic: {:?}",
-            result
-        );
+        assert!(result.is_ok(), "Empty path should not panic: {:?}", result);
     }
 
     #[test]

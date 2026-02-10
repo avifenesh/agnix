@@ -1982,10 +1982,7 @@ codex = "0.2.0-beta.3"
             config.tool_versions.claude_code,
             Some("1.0.0-rc1".to_string())
         );
-        assert_eq!(
-            config.tool_versions.codex,
-            Some("0.2.0-beta.3".to_string())
-        );
+        assert_eq!(config.tool_versions.codex, Some("0.2.0-beta.3".to_string()));
         // Pre-release strings are valid semver, confirm they parse
         assert!(semver::Version::parse("1.0.0-rc1").is_ok());
         assert!(semver::Version::parse("0.2.0-beta.3").is_ok());

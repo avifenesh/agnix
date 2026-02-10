@@ -341,7 +341,10 @@ mod tests {
     #[test]
     fn test_completion_skill_value_context() {
         let content = "---\nmodel: \n---\n";
-        let byte = content.find("model: ").expect("test content must contain 'model: '") + "model: ".len();
+        let byte = content
+            .find("model: ")
+            .expect("test content must contain 'model: '")
+            + "model: ".len();
         let candidates = completion_candidates(FileType::Skill, content, byte);
         assert!(candidates.iter().any(|c| c.label == "sonnet"));
         assert!(candidates.iter().any(|c| c.label == "opus"));
@@ -350,7 +353,10 @@ mod tests {
     #[test]
     fn test_completion_mcp_json_value_context_quotes_strings() {
         let content = "{\n  \"jsonrpc\": \n}";
-        let byte = content.find("\"jsonrpc\": ").expect("test content must contain '\"jsonrpc\": '") + "\"jsonrpc\": ".len();
+        let byte = content
+            .find("\"jsonrpc\": ")
+            .expect("test content must contain '\"jsonrpc\": '")
+            + "\"jsonrpc\": ".len();
         let candidates = completion_candidates(FileType::Mcp, content, byte);
         let version = candidates
             .iter()
@@ -397,7 +403,10 @@ mod tests {
     #[test]
     fn test_completion_agent_value_context() {
         let content = "---\nmodel: \n---\n";
-        let byte = content.find("model: ").expect("test content must contain 'model: '") + "model: ".len();
+        let byte = content
+            .find("model: ")
+            .expect("test content must contain 'model: '")
+            + "model: ".len();
         let candidates = completion_candidates(FileType::Agent, content, byte);
         assert!(
             candidates.iter().any(|c| c.label == "sonnet"),
