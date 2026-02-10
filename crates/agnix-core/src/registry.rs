@@ -120,11 +120,19 @@ impl ValidatorRegistry {
     ///
     /// Validators whose [`name()`](Validator::name) appears in the
     /// `disabled_validators` set are excluded from the returned list.
+    /// When no validators are disabled, the filter is skipped entirely.
     pub fn validators_for(&self, file_type: FileType) -> Vec<Box<dyn Validator>> {
-        self.validators
-            .get(&file_type)
-            .into_iter()
-            .flatten()
+        let factories = match self.validators.get(&file_type) {
+            Some(f) => f,
+            None => return Vec::new(),
+        };
+
+        if self.disabled_validators.is_empty() {
+            return factories.iter().map(|factory| factory()).collect();
+        }
+
+        factories
+            .iter()
             .map(|factory| factory())
             .filter(|v| !self.disabled_validators.contains(v.name()))
             .collect()
@@ -217,10 +225,10 @@ impl ValidatorRegistryBuilder {
     }
 
     /// Consume the builder and produce a [`ValidatorRegistry`].
-    pub fn build(&self) -> ValidatorRegistry {
+    pub fn build(&mut self) -> ValidatorRegistry {
         let mut registry = ValidatorRegistry {
             validators: HashMap::new(),
-            disabled_validators: self.disabled_validators.clone(),
+            disabled_validators: std::mem::take(&mut self.disabled_validators),
         };
         for &(file_type, factory) in &self.entries {
             registry.register(file_type, factory);
@@ -503,6 +511,86 @@ mod tests {
         let registry = ValidatorRegistry::with_defaults();
         let validators = registry.validators_for(FileType::Unknown);
         assert!(validators.is_empty());
+    }
+
+    // ---- Multiple disabled validators ----
+
+    #[test]
+    fn builder_multiple_without_validators() {
+        let registry = ValidatorRegistry::builder()
+            .with_defaults()
+            .without_validator("XmlValidator")
+            .without_validator("PromptValidator")
+            .build();
+
+        assert_eq!(registry.disabled_validator_count(), 2);
+
+        let skill_names: Vec<&str> = registry
+            .validators_for(FileType::Skill)
+            .iter()
+            .map(|v| v.name())
+            .collect();
+        assert!(!skill_names.contains(&"XmlValidator"));
+
+        let claude_names: Vec<&str> = registry
+            .validators_for(FileType::ClaudeMd)
+            .iter()
+            .map(|v| v.name())
+            .collect();
+        assert!(!claude_names.contains(&"PromptValidator"));
+        assert!(!claude_names.contains(&"XmlValidator"));
+    }
+
+    #[test]
+    fn disable_all_validators_for_file_type() {
+        let registry = ValidatorRegistry::builder()
+            .with_defaults()
+            .without_validator("SkillValidator")
+            .without_validator("PerClientSkillValidator")
+            .without_validator("XmlValidator")
+            .without_validator("ImportsValidator")
+            .build();
+
+        assert!(
+            registry.validators_for(FileType::Skill).is_empty(),
+            "All Skill validators disabled, should return empty"
+        );
+    }
+
+    #[test]
+    fn disable_same_validator_twice_is_idempotent() {
+        let mut registry = ValidatorRegistry::with_defaults();
+        registry.disable_validator("XmlValidator");
+        registry.disable_validator("XmlValidator");
+        assert_eq!(registry.disabled_validator_count(), 1);
+    }
+
+    // ---- Multiple providers ----
+
+    struct ProviderA;
+    impl ValidatorProvider for ProviderA {
+        fn validators(&self) -> Vec<(FileType, ValidatorFactory)> {
+            vec![(FileType::Skill, skill_validator)]
+        }
+    }
+
+    struct ProviderB;
+    impl ValidatorProvider for ProviderB {
+        fn validators(&self) -> Vec<(FileType, ValidatorFactory)> {
+            vec![(FileType::Agent, agent_validator)]
+        }
+    }
+
+    #[test]
+    fn builder_multiple_providers() {
+        let registry = ValidatorRegistry::builder()
+            .with_provider(&ProviderA)
+            .with_provider(&ProviderB)
+            .build();
+
+        assert!(!registry.validators_for(FileType::Skill).is_empty());
+        assert!(!registry.validators_for(FileType::Agent).is_empty());
+        assert_eq!(registry.total_factory_count(), 2);
     }
 
     // ---- Backward compatibility ----

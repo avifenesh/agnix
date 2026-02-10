@@ -2595,6 +2595,41 @@ disabled_rules = ["CC-MEM-006"]
         assert!(config.exclude.contains(&"node_modules/**".to_string()));
     }
 
+    // ===== Disabled Validators TOML Deserialization =====
+
+    #[test]
+    fn test_disabled_validators_toml_deserialization() {
+        let toml_str = r#"
+[rules]
+disabled_validators = ["XmlValidator", "PromptValidator"]
+"#;
+        let config: LintConfig = toml::from_str(toml_str).unwrap();
+        assert_eq!(
+            config.rules.disabled_validators,
+            vec!["XmlValidator", "PromptValidator"]
+        );
+    }
+
+    #[test]
+    fn test_disabled_validators_defaults_to_empty() {
+        let toml_str = r#"
+[rules]
+skills = true
+"#;
+        let config: LintConfig = toml::from_str(toml_str).unwrap();
+        assert!(config.rules.disabled_validators.is_empty());
+    }
+
+    #[test]
+    fn test_disabled_validators_empty_array() {
+        let toml_str = r#"
+[rules]
+disabled_validators = []
+"#;
+        let config: LintConfig = toml::from_str(toml_str).unwrap();
+        assert!(config.rules.disabled_validators.is_empty());
+    }
+
     // ===== Disabled Rules Edge Cases =====
 
     #[test]
