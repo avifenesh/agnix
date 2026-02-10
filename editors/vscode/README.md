@@ -41,7 +41,7 @@ Access via Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`):
 | Command | Shortcut | Description |
 |---------|----------|-------------|
 | `agnix: Validate Current File` | `Ctrl+Shift+V` | Validate active file |
-| `agnix: Validate Workspace` | - | Validate all agent configs |
+| `agnix: Validate Workspace` | - | Validate all agent configs including project-level rules (AGM-006, XP-004/005/006, VER-001) |
 | `agnix: Fix All Issues in File` | `Ctrl+Shift+.` | Apply all available fixes |
 | `agnix: Preview Fixes` | - | Browse fixes with diff preview |
 | `agnix: Fix All Safe Issues` | `Ctrl+Alt+.` | Apply only safe fixes |
