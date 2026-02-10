@@ -146,8 +146,8 @@ agnix follows a stability policy to protect downstream consumers (CLI, LSP, MCP,
 | Tier | Scope | Contract |
 |------|-------|----------|
 | **Public/Stable** | Re-exported types at `agnix_core` root (`LintConfig`, `Diagnostic`, `DiagnosticLevel`, `Fix`, `LintError`, `LintResult`, `ValidationResult`, `FileType`, `ValidatorRegistry`, `ValidatorFactory`, `Validator` trait, `FileSystem` trait, `MockFileSystem`, `RealFileSystem`, `FixResult`, `ConfigWarning`, `FilesConfig`, `generate_schema`) and all `agnix_rules` public items (`RULES_DATA`, `VALID_TOOLS`, `TOOL_RULE_PREFIXES`, `rule_count`, `get_rule_name`, `valid_tools`, `normalize_tool_name`, etc.) | Breaking changes require a minor version bump (pre-1.0) or major version bump (post-1.0) with advance notice in CHANGELOG.md |
-| **Public/Unstable** | Accessible public modules that may change between minor versions: `authoring`, `eval`, `parsers`, `i18n`, `validation` | May change with a minor version bump; consumers should pin exact versions if depending on these |
-| **Internal** | Private modules not accessible outside the crate: `rules`, `schemas`, `file_utils`, `regex_util`, `span_utils` | May change freely in any release |
+| **Public/Unstable** | Accessible public modules that may change between minor versions: `authoring`, `eval`, `i18n`, `validation` | May change with a minor version bump; consumers should pin exact versions if depending on these |
+| **Internal** | Private modules not accessible outside the crate: `parsers`, `rules`, `schemas`, `file_utils`, `regex_util`, `span_utils` | May change freely in any release |
 
 ### What Constitutes a Breaking Change
 
