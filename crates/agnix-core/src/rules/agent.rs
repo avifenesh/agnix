@@ -83,6 +83,9 @@ const KNOWN_AGENT_TOOLS: &[&str] = &[
     "NotebookEdit",
     "EnterPlanMode",
     "ExitPlanMode",
+    "Skill",
+    "StatusBarMessageTool",
+    "TaskOutput",
 ];
 
 pub struct AgentValidator;
@@ -478,7 +481,9 @@ impl Validator for AgentValidator {
             if let Some(tools) = &schema.tools {
                 for tool in tools {
                     let base_name = tool.split('(').next().unwrap_or(tool);
-                    if !KNOWN_AGENT_TOOLS.contains(&base_name) {
+                    if !base_name.starts_with("mcp__")
+                        && !KNOWN_AGENT_TOOLS.contains(&base_name)
+                    {
                         diagnostics.push(
                             Diagnostic::error(
                                 path.to_path_buf(),
@@ -502,7 +507,9 @@ impl Validator for AgentValidator {
             if let Some(disallowed) = &schema.disallowed_tools {
                 for tool in disallowed {
                     let base_name = tool.split('(').next().unwrap_or(tool);
-                    if !KNOWN_AGENT_TOOLS.contains(&base_name) {
+                    if !base_name.starts_with("mcp__")
+                        && !KNOWN_AGENT_TOOLS.contains(&base_name)
+                    {
                         diagnostics.push(
                             Diagnostic::error(
                                 path.to_path_buf(),
@@ -2392,6 +2399,9 @@ tools:
   - WebFetch
   - WebSearch
   - NotebookEdit
+  - Skill
+  - StatusBarMessageTool
+  - TaskOutput
 ---
 Agent instructions"#;
 
@@ -2440,6 +2450,54 @@ Agent instructions"#;
         assert_eq!(cc_ag_009.len(), 2);
     }
 
+    #[test]
+    fn test_cc_ag_009_mcp_tool_valid() {
+        let content = r#"---
+name: my-agent
+description: A test agent
+tools:
+  - Read
+  - mcp__memory__create_entities
+  - mcp__filesystem__read_file
+---
+Agent instructions"#;
+
+        let diagnostics = validate(content);
+        let cc_ag_009: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-AG-009")
+            .collect();
+        assert_eq!(
+            cc_ag_009.len(),
+            0,
+            "MCP tools with mcp__ prefix should be accepted"
+        );
+    }
+
+    #[test]
+    fn test_cc_ag_009_skill_tool_valid() {
+        let content = r#"---
+name: my-agent
+description: A test agent
+tools:
+  - Skill
+  - StatusBarMessageTool
+  - TaskOutput
+---
+Agent instructions"#;
+
+        let diagnostics = validate(content);
+        let cc_ag_009: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-AG-009")
+            .collect();
+        assert_eq!(
+            cc_ag_009.len(),
+            0,
+            "Skill, StatusBarMessageTool, and TaskOutput should be recognized"
+        );
+    }
+
     // ===== CC-AG-010 Tests: Invalid Tool Name in DisallowedTools =====
 
     #[test]
@@ -2481,6 +2539,29 @@ Agent instructions"#;
             .filter(|d| d.rule == "CC-AG-010")
             .collect();
         assert_eq!(cc_ag_010.len(), 0);
+    }
+
+    #[test]
+    fn test_cc_ag_010_mcp_tool_valid() {
+        let content = r#"---
+name: my-agent
+description: A test agent
+disallowedTools:
+  - mcp__memory__create_entities
+  - mcp__filesystem__read_file
+---
+Agent instructions"#;
+
+        let diagnostics = validate(content);
+        let cc_ag_010: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-AG-010")
+            .collect();
+        assert_eq!(
+            cc_ag_010.len(),
+            0,
+            "MCP tools with mcp__ prefix should be accepted in disallowedTools"
+        );
     }
 
     // ===== CC-AG-011 Tests: Hooks in Agent Frontmatter =====
