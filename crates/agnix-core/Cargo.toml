@@ -26,7 +26,7 @@ rayon.workspace = true
 dirs = "5"
 semver = "1"
 toml = "0.8"
-schemars = { version = "0.8", features = ["derive"] }
+schemars = { version = "1.2", features = ["derive"] }
 rust-i18n = { workspace = true }
 
 [dev-dependencies]
