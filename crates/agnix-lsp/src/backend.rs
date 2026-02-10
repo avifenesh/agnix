@@ -176,6 +176,28 @@ impl Backend {
         }
     }
 
+    /// Spawn project-level validation in a background task.
+    ///
+    /// Logs a warning if the spawned task panics, preventing silent failures.
+    fn spawn_project_validation(&self) {
+        let backend = self.clone();
+        let client = self.client.clone();
+        tokio::spawn(async move {
+            let result = tokio::spawn(async move {
+                backend.validate_project_rules_and_publish().await;
+            })
+            .await;
+            if let Err(e) = result {
+                client
+                    .log_message(
+                        MessageType::ERROR,
+                        format!("Project-level validation task panicked: {}", e),
+                    )
+                    .await;
+            }
+        });
+    }
+
     /// Run validation on a file in a blocking task.
     ///
     /// agnix-core validation is CPU-bound and synchronous, so we run it
@@ -414,54 +436,76 @@ impl Backend {
             }
         }
 
+        // Pre-compute the set of URIs in the current run to avoid duplicating
+        // the `by_uri.keys().cloned().collect()` call.
+        let current_uris: HashSet<Url> = by_uri.keys().cloned().collect();
+
         // Clear stale project diagnostic URIs from the previous run
         let previous_uris: HashSet<Url> = {
             let prev = self.project_diagnostics_uris.read().await;
             prev.clone()
         };
-        for stale_uri in previous_uris.difference(&by_uri.keys().cloned().collect()) {
+
+        // Capture the set of open document URIs once, then release the lock
+        // so we don't hold it across await points (publish_diagnostics calls).
+        let open_uris: HashSet<Url> = {
+            let docs = self.documents.read().await;
+            docs.keys().cloned().collect()
+        };
+
+        for stale_uri in previous_uris.difference(&current_uris) {
             // Only clear if the document is not open (open docs will re-merge on next validate)
-            let is_open = self.documents.read().await.contains_key(stale_uri);
-            if !is_open {
+            if !open_uris.contains(stale_uri) {
                 self.client
                     .publish_diagnostics(stale_uri.clone(), vec![], None)
                     .await;
             }
         }
 
-        // Store new project-level diagnostics and track URIs
+        // Store new project-level diagnostics and track URIs.
+        // Move `by_uri` into the cache to avoid cloning, but first collect
+        // the data needed for publishing below (non-open URIs + their diagnostics).
+        let non_open_publish: Vec<(Url, Vec<Diagnostic>)> = by_uri
+            .iter()
+            .filter(|(uri, _)| !open_uris.contains(uri))
+            .map(|(uri, diags)| (uri.clone(), diags.clone()))
+            .collect();
+
+        let open_uris_in_results: Vec<Url> = by_uri
+            .keys()
+            .filter(|uri| open_uris.contains(uri))
+            .cloned()
+            .collect();
+
         {
             let mut proj_diags = self.project_level_diagnostics.write().await;
             let mut proj_uris = self.project_diagnostics_uris.write().await;
-            *proj_diags = by_uri.clone();
-            *proj_uris = by_uri.keys().cloned().collect();
+            *proj_diags = by_uri;
+            *proj_uris = current_uris.clone();
         }
 
-        // Publish diagnostics
-        let open_docs = self.documents.read().await;
-        for (uri, lsp_diags) in &by_uri {
-            if open_docs.contains_key(uri) {
-                // For open documents, re-trigger full validation so per-file and
-                // project-level diagnostics are merged before publishing.
-                let backend = self.clone();
-                let uri = uri.clone();
-                tokio::spawn(async move {
-                    backend
-                        .validate_from_content_and_publish(uri, None)
-                        .await;
-                });
-            } else {
-                // For files not open in the editor, publish directly
-                self.client
-                    .publish_diagnostics(uri.clone(), lsp_diags.clone(), None)
+        // Publish diagnostics for files not open in the editor
+        for (uri, lsp_diags) in non_open_publish {
+            self.client
+                .publish_diagnostics(uri, lsp_diags, None)
+                .await;
+        }
+
+        // For open documents, re-trigger full validation so per-file and
+        // project-level diagnostics are merged before publishing.
+        for uri in open_uris_in_results {
+            let backend = self.clone();
+            tokio::spawn(async move {
+                backend
+                    .validate_from_content_and_publish(uri, None)
                     .await;
-            }
+            });
         }
 
         // Also clear project-level diagnostics from open docs whose URIs
         // are no longer in the results (stale open docs need re-merge too)
-        for stale_uri in previous_uris.difference(&by_uri.keys().cloned().collect()) {
-            if open_docs.contains_key(stale_uri) {
+        for stale_uri in previous_uris.difference(&current_uris) {
+            if open_uris.contains(stale_uri) {
                 let backend = self.clone();
                 let uri = stale_uri.clone();
                 tokio::spawn(async move {
@@ -478,32 +522,34 @@ impl Backend {
     /// Returns true for instruction files (CLAUDE.md, AGENTS.md, .clinerules,
     /// .cursorrules, copilot-instructions.md, etc.) and .agnix.toml config.
     fn is_project_level_trigger(path: &Path) -> bool {
-        let file_name = path
-            .file_name()
-            .and_then(|n| n.to_str())
-            .unwrap_or("")
-            .to_lowercase();
+        let file_name = match path.file_name().and_then(|n| n.to_str()) {
+            Some(name) => name,
+            None => return false,
+        };
 
         // .agnix.toml config changes affect all rules
-        if file_name == ".agnix.toml" {
+        if file_name.eq_ignore_ascii_case(".agnix.toml") {
             return true;
         }
 
         // Instruction files that affect project-level cross-file checks
-        file_name == "claude.md"
-            || file_name == "claude.local.md"
-            || file_name == "agents.md"
-            || file_name == "agents.local.md"
-            || file_name == "agents.override.md"
-            || file_name == "gemini.md"
-            || file_name == "gemini.local.md"
-            || file_name == ".clinerules"
-            || file_name == ".cursorrules"
-            || file_name == ".cursorrules.md"
-            || file_name == "copilot-instructions.md"
-            || file_name.ends_with(".instructions.md")
-            || file_name.ends_with(".mdc")
-            || file_name == "opencode.json"
+        file_name.eq_ignore_ascii_case("claude.md")
+            || file_name.eq_ignore_ascii_case("claude.local.md")
+            || file_name.eq_ignore_ascii_case("agents.md")
+            || file_name.eq_ignore_ascii_case("agents.local.md")
+            || file_name.eq_ignore_ascii_case("agents.override.md")
+            || file_name.eq_ignore_ascii_case("gemini.md")
+            || file_name.eq_ignore_ascii_case("gemini.local.md")
+            || file_name.eq_ignore_ascii_case(".clinerules")
+            || file_name.eq_ignore_ascii_case(".cursorrules")
+            || file_name.eq_ignore_ascii_case(".cursorrules.md")
+            || file_name.eq_ignore_ascii_case("copilot-instructions.md")
+            || file_name.len() > ".instructions.md".len()
+                && file_name[file_name.len() - ".instructions.md".len()..]
+                    .eq_ignore_ascii_case(".instructions.md")
+            || file_name.len() > ".mdc".len()
+                && file_name[file_name.len() - ".mdc".len()..].eq_ignore_ascii_case(".mdc")
+            || file_name.eq_ignore_ascii_case("opencode.json")
     }
 
     /// Get cached document content for a URI.
@@ -588,10 +634,7 @@ impl LanguageServer for Backend {
             .await;
 
         // Run project-level validation on workspace open
-        let backend = self.clone();
-        tokio::spawn(async move {
-            backend.validate_project_rules_and_publish().await;
-        });
+        self.spawn_project_validation();
     }
 
     async fn shutdown(&self) -> Result<()> {
@@ -627,10 +670,7 @@ impl LanguageServer for Backend {
         // Re-run project-level validation when a relevant file is saved
         if let Ok(path) = uri.to_file_path() {
             if Self::is_project_level_trigger(&path) {
-                let backend = self.clone();
-                tokio::spawn(async move {
-                    backend.validate_project_rules_and_publish().await;
-                });
+                self.spawn_project_validation();
             }
         }
     }
@@ -810,10 +850,7 @@ impl LanguageServer for Backend {
         }
 
         // Also re-run project-level validation with the updated config
-        let backend = self.clone();
-        tokio::spawn(async move {
-            backend.validate_project_rules_and_publish().await;
-        });
+        self.spawn_project_validation();
     }
 
     async fn execute_command(
