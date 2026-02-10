@@ -756,9 +756,7 @@ impl<'a> ValidationContext<'a> {
 
                 for tool in tools {
                     let base_name = tool.split('(').next().unwrap_or(tool);
-                    if !base_name.starts_with("mcp__")
-                        && !KNOWN_TOOLS.contains(&base_name)
-                    {
+                    if !base_name.starts_with("mcp__") && !KNOWN_TOOLS.contains(&base_name) {
                         self.diagnostics.push(
                             Diagnostic::error(
                                 self.path.to_path_buf(),

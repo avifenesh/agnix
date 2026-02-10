@@ -226,6 +226,12 @@ impl AgentValidator {
             .join("SKILL.md");
         fs.exists(&skill_path)
     }
+
+    /// Helper to check if a tool name is valid (either known or MCP-prefixed).
+    fn is_valid_tool_name(tool: &str) -> bool {
+        let base_name = tool.split('(').next().unwrap_or(tool);
+        base_name.starts_with("mcp__") || KNOWN_AGENT_TOOLS.contains(&base_name)
+    }
 }
 
 impl Validator for AgentValidator {
@@ -480,10 +486,7 @@ impl Validator for AgentValidator {
         if config.is_rule_enabled("CC-AG-009") {
             if let Some(tools) = &schema.tools {
                 for tool in tools {
-                    let base_name = tool.split('(').next().unwrap_or(tool);
-                    if !base_name.starts_with("mcp__")
-                        && !KNOWN_AGENT_TOOLS.contains(&base_name)
-                    {
+                    if !Self::is_valid_tool_name(tool) {
                         diagnostics.push(
                             Diagnostic::error(
                                 path.to_path_buf(),
@@ -506,10 +509,7 @@ impl Validator for AgentValidator {
         if config.is_rule_enabled("CC-AG-010") {
             if let Some(disallowed) = &schema.disallowed_tools {
                 for tool in disallowed {
-                    let base_name = tool.split('(').next().unwrap_or(tool);
-                    if !base_name.starts_with("mcp__")
-                        && !KNOWN_AGENT_TOOLS.contains(&base_name)
-                    {
+                    if !Self::is_valid_tool_name(tool) {
                         diagnostics.push(
                             Diagnostic::error(
                                 path.to_path_buf(),
@@ -2647,11 +2647,7 @@ Agent instructions"#;
             .iter()
             .filter(|d| d.rule == "CC-AG-009")
             .collect();
-        assert_eq!(
-            cc_ag_009.len(),
-            0,
-            "Scoped MCP tools should be accepted"
-        );
+        assert_eq!(cc_ag_009.len(), 0, "Scoped MCP tools should be accepted");
     }
 
     // ===== CC-AG-011 Tests: Hooks in Agent Frontmatter =====
