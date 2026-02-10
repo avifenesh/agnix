@@ -569,6 +569,10 @@ impl LanguageServer for Backend {
                     trigger_characters: Some(vec![":".to_string(), "\"".to_string()]),
                     ..Default::default()
                 }),
+                execute_command_provider: Some(ExecuteCommandOptions {
+                    commands: vec!["agnix.validateProjectRules".to_string()],
+                    ..Default::default()
+                }),
                 ..Default::default()
             },
             server_info: Some(ServerInfo {
@@ -810,6 +814,33 @@ impl LanguageServer for Backend {
         tokio::spawn(async move {
             backend.validate_project_rules_and_publish().await;
         });
+    }
+
+    async fn execute_command(
+        &self,
+        params: ExecuteCommandParams,
+    ) -> Result<Option<serde_json::Value>> {
+        match params.command.as_str() {
+            "agnix.validateProjectRules" => {
+                self.client
+                    .log_message(
+                        MessageType::INFO,
+                        "Running project-level validation (via executeCommand)",
+                    )
+                    .await;
+                self.validate_project_rules_and_publish().await;
+                Ok(None)
+            }
+            _ => {
+                self.client
+                    .log_message(
+                        MessageType::WARNING,
+                        format!("Unknown command: {}", params.command),
+                    )
+                    .await;
+                Ok(None)
+            }
+        }
     }
 }
 

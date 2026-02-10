@@ -890,6 +890,17 @@ async function validateWorkspace(): Promise<void> {
     }
   }
 
+  // Also trigger project-level validation (AGM-006, XP-004/005/006, VER-001)
+  try {
+    await client.sendRequest('workspace/executeCommand', {
+      command: 'agnix.validateProjectRules',
+      arguments: [],
+    });
+    outputChannel.appendLine('Project-level validation triggered');
+  } catch (err) {
+    outputChannel.appendLine(`Project-level validation request failed: ${err}`);
+  }
+
   outputChannel.appendLine(`Found ${fileCount} agent config files`);
   vscode.window.showInformationMessage(
     `Validating ${fileCount} agent config files. Check Problems panel for results.`
