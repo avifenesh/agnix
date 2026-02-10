@@ -10,8 +10,8 @@
 //! internal unit tests since they require access to private modules.
 
 use agnix_core::{
-    config::LintConfig, diagnostics::LintError, split_frontmatter, validate_project,
-    MAX_REGEX_INPUT_SIZE,
+    MAX_REGEX_INPUT_SIZE, config::LintConfig, diagnostics::LintError, split_frontmatter,
+    validate_project,
 };
 use tempfile::TempDir;
 

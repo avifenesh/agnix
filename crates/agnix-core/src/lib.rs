@@ -99,16 +99,16 @@ pub use rules::Validator;
 #[doc(hidden)]
 pub use parsers::ImportCache;
 #[doc(hidden)]
-pub use parsers::markdown::Import;
-#[doc(hidden)]
-pub use parsers::frontmatter::{split_frontmatter, FrontmatterParts};
-#[doc(hidden)]
-pub use parsers::markdown::{
-    check_xml_balance, check_xml_balance_with_content_end, extract_imports,
-    extract_markdown_links, extract_xml_tags, MarkdownLink, XmlTag, MAX_REGEX_INPUT_SIZE,
-};
+pub use parsers::frontmatter::{FrontmatterParts, split_frontmatter};
 #[doc(hidden)]
 pub use parsers::json::parse_json_config;
+#[doc(hidden)]
+pub use parsers::markdown::Import;
+#[doc(hidden)]
+pub use parsers::markdown::{
+    MAX_REGEX_INPUT_SIZE, MarkdownLink, XmlTag, check_xml_balance,
+    check_xml_balance_with_content_end, extract_imports, extract_markdown_links, extract_xml_tags,
+};
 
 /// Result of validating a project, including diagnostics and metadata.
 ///

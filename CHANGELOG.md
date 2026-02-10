@@ -37,6 +37,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - All rule documentation links now point to website (`avifenesh.github.io/agnix`) instead of GitHub `VALIDATION-RULES.md`
 - README overhauled to focused landing page with punchy value prop and website links
+- **API**: Made `parsers` module internal (not part of public API surface) (closes #350)
+- **API**: Marked `ValidationResult` as `#[non_exhaustive]` for forward compatibility
+- **API**: Added stability tier documentation (Stable/Unstable/Internal) to all public modules
+- **API**: Added metadata fields to `ValidationResult`: `validation_time_ms` and `rules_checked`
 
 ## [0.10.2] - 2026-02-08
 
