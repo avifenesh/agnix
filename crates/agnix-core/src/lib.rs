@@ -4885,6 +4885,64 @@ Use idiomatic Rust patterns.
             "Expected XP-004 for conflicting package managers"
         );
     }
+
+    #[test]
+    fn test_validate_project_rules_xp005() {
+        let temp_dir = tempfile::tempdir().unwrap();
+
+        // CLAUDE.md allows Bash
+        std::fs::write(
+            temp_dir.path().join("CLAUDE.md"),
+            "# Project\n\nallowed-tools: Read Write Bash\n",
+        )
+        .unwrap();
+
+        // AGENTS.md disallows Bash
+        std::fs::write(
+            temp_dir.path().join("AGENTS.md"),
+            "# Project\n\nNever use Bash for operations.\n",
+        )
+        .unwrap();
+
+        let config = LintConfig::default();
+        let diagnostics = validate_project_rules(temp_dir.path(), &config).unwrap();
+        let xp005: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XP-005").collect();
+        assert!(
+            !xp005.is_empty(),
+            "Expected XP-005 for conflicting tool constraints (Bash allowed in one, disallowed in other)"
+        );
+        assert!(
+            xp005.iter().any(|d| d.message.contains("Bash")),
+            "XP-005 diagnostic should mention the conflicting tool 'Bash'"
+        );
+    }
+
+    #[test]
+    fn test_validate_project_rules_xp006() {
+        let temp_dir = tempfile::tempdir().unwrap();
+
+        // CLAUDE.md with commands section (no precedence documentation)
+        std::fs::write(
+            temp_dir.path().join("CLAUDE.md"),
+            "# Project\n\n## Commands\n- npm test\n",
+        )
+        .unwrap();
+
+        // AGENTS.md with commands section (no precedence documentation)
+        std::fs::write(
+            temp_dir.path().join("AGENTS.md"),
+            "# Project\n\n## Commands\n- npm build\n",
+        )
+        .unwrap();
+
+        let config = LintConfig::default();
+        let diagnostics = validate_project_rules(temp_dir.path(), &config).unwrap();
+        let xp006: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XP-006").collect();
+        assert!(
+            !xp006.is_empty(),
+            "Expected XP-006 for multiple instruction layers without precedence documentation"
+        );
+    }
 }
 
 #[cfg(test)]
