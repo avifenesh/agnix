@@ -3722,3 +3722,173 @@ fn test_validate_project_rules_xp006() {
         "Expected XP-006 for multiple instruction layers without precedence documentation"
     );
 }
+
+// ============================================================================
+// Validator name() tests
+// ============================================================================
+
+#[test]
+fn test_validator_name_returns_expected_values() {
+    let registry = ValidatorRegistry::with_defaults();
+
+    // Skill validators should include known names
+    let skill_validators = registry.validators_for(FileType::Skill);
+    let names: Vec<&str> = skill_validators.iter().map(|v| v.name()).collect();
+    assert!(names.contains(&"SkillValidator"));
+    assert!(names.contains(&"PerClientSkillValidator"));
+    assert!(names.contains(&"XmlValidator"));
+    assert!(names.contains(&"ImportsValidator"));
+
+    // ClaudeMd validators should include known names
+    let claude_validators = registry.validators_for(FileType::ClaudeMd);
+    let claude_names: Vec<&str> = claude_validators.iter().map(|v| v.name()).collect();
+    assert!(claude_names.contains(&"ClaudeMdValidator"));
+    assert!(claude_names.contains(&"CrossPlatformValidator"));
+    assert!(claude_names.contains(&"AgentsMdValidator"));
+    assert!(claude_names.contains(&"PromptValidator"));
+}
+
+#[test]
+fn test_validator_names_are_ascii_and_nonempty() {
+    let registry = ValidatorRegistry::with_defaults();
+
+    // Check all file types that have validators
+    let file_types = [
+        FileType::Skill,
+        FileType::ClaudeMd,
+        FileType::Agent,
+        FileType::Hooks,
+        FileType::Plugin,
+        FileType::Mcp,
+        FileType::Copilot,
+        FileType::CopilotScoped,
+        FileType::ClaudeRule,
+        FileType::CursorRule,
+        FileType::CursorRulesLegacy,
+        FileType::ClineRules,
+        FileType::ClineRulesFolder,
+        FileType::OpenCodeConfig,
+        FileType::GeminiMd,
+        FileType::CodexConfig,
+        FileType::GenericMarkdown,
+    ];
+
+    for file_type in file_types {
+        let validators = registry.validators_for(file_type);
+        for v in &validators {
+            let name = v.name();
+            assert!(!name.is_empty(), "Validator name should not be empty");
+            assert!(
+                name.is_ascii(),
+                "Validator name should be ASCII: {}",
+                name
+            );
+            assert!(
+                name.ends_with("Validator"),
+                "Validator name should end with 'Validator': {}",
+                name
+            );
+        }
+    }
+}
+
+// ============================================================================
+// disabled_validators config integration tests
+// ============================================================================
+
+#[test]
+fn test_disabled_validators_config_filters_in_validate_file() {
+    let temp_dir = tempfile::tempdir().unwrap();
+    let claude_md = temp_dir.path().join("CLAUDE.md");
+    // Content with an unclosed XML tag to trigger XmlValidator (XML-001)
+    // Pattern: <example>text (opening tag with body, no closing tag)
+    std::fs::write(&claude_md, "# Project\n\n<example>some content here\n").unwrap();
+
+    // Without disabling, XmlValidator should fire
+    let config = LintConfig::default();
+    let diags = validate_file(&claude_md, &config).unwrap();
+    let xml_diags: Vec<_> = diags.iter().filter(|d| d.rule == "XML-001").collect();
+    assert!(
+        !xml_diags.is_empty(),
+        "Expected XML-001 diagnostic without disabled_validators, got rules: {:?}",
+        diags.iter().map(|d| &d.rule).collect::<Vec<_>>()
+    );
+
+    // With XmlValidator disabled, XML-001 should not appear
+    let mut config_disabled = LintConfig::default();
+    config_disabled.rules.disabled_validators = vec!["XmlValidator".to_string()];
+    let diags_disabled = validate_file(&claude_md, &config_disabled).unwrap();
+    let xml_diags_disabled: Vec<_> = diags_disabled
+        .iter()
+        .filter(|d| d.rule == "XML-001")
+        .collect();
+    assert!(
+        xml_diags_disabled.is_empty(),
+        "Expected no XML-001 with XmlValidator disabled, got: {:?}",
+        xml_diags_disabled
+    );
+}
+
+#[test]
+fn test_disabled_validators_config_filters_in_validate_project() {
+    let temp_dir = tempfile::tempdir().unwrap();
+    let claude_md = temp_dir.path().join("CLAUDE.md");
+    std::fs::write(&claude_md, "# Project\n\n<example>some content here\n").unwrap();
+
+    // Without disabling
+    let config = LintConfig::default();
+    let result = validate_project(temp_dir.path(), &config).unwrap();
+    let xml_diags: Vec<_> = result
+        .diagnostics
+        .iter()
+        .filter(|d| d.rule == "XML-001")
+        .collect();
+    assert!(
+        !xml_diags.is_empty(),
+        "Expected XML-001 in project validation, got rules: {:?}",
+        result.diagnostics.iter().map(|d| &d.rule).collect::<Vec<_>>()
+    );
+
+    // With XmlValidator disabled
+    let mut config_disabled = LintConfig::default();
+    config_disabled.rules.disabled_validators = vec!["XmlValidator".to_string()];
+    let result_disabled = validate_project(temp_dir.path(), &config_disabled).unwrap();
+    let xml_diags_disabled: Vec<_> = result_disabled
+        .diagnostics
+        .iter()
+        .filter(|d| d.rule == "XML-001")
+        .collect();
+    assert!(
+        xml_diags_disabled.is_empty(),
+        "Expected no XML-001 with XmlValidator disabled"
+    );
+}
+
+// ============================================================================
+// Custom provider end-to-end test
+// ============================================================================
+
+#[test]
+fn test_custom_provider_end_to_end() {
+    use agnix_core::{ValidatorFactory, ValidatorProvider};
+
+    struct NoOpProvider;
+    impl ValidatorProvider for NoOpProvider {
+        fn validators(&self) -> Vec<(FileType, ValidatorFactory)> {
+            vec![]
+        }
+    }
+
+    // Build registry with defaults + empty provider
+    let registry = ValidatorRegistry::builder()
+        .with_defaults()
+        .with_provider(&NoOpProvider)
+        .build();
+
+    // Should have the same count as defaults (empty provider adds nothing)
+    let defaults = ValidatorRegistry::with_defaults();
+    assert_eq!(
+        registry.total_factory_count(),
+        defaults.total_factory_count()
+    );
+}

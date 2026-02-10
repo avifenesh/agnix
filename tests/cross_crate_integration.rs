@@ -369,3 +369,83 @@ fn fix_serde_roundtrip_preserves_all_fields() {
     assert_eq!(deserialized.description, original.description);
     assert_eq!(deserialized.safe, original.safe);
 }
+
+// ============================================================================
+// Plugin architecture cross-crate contracts (#348)
+// ============================================================================
+
+#[test]
+fn plugin_types_importable_from_outside_crate() {
+    // ValidatorProvider trait is importable and usable as trait bound
+    fn _assert_provider(_: &dyn agnix_core::ValidatorProvider) {}
+
+    // ValidatorRegistryBuilder is importable
+    let _ = std::any::type_name::<agnix_core::ValidatorRegistryBuilder>();
+}
+
+#[test]
+fn builder_usable_from_outside_crate() {
+    let registry = agnix_core::ValidatorRegistry::builder()
+        .with_defaults()
+        .without_validator("XmlValidator")
+        .build();
+
+    // Verify the builder produced a valid registry
+    assert!(registry.total_factory_count() > 0);
+    assert_eq!(registry.disabled_validator_count(), 1);
+
+    // XmlValidator should be excluded from Skill validators
+    let skill_validators = registry.validators_for(agnix_core::FileType::Skill);
+    let names: Vec<&str> = skill_validators.iter().map(|v| v.name()).collect();
+    assert!(!names.contains(&"XmlValidator"));
+    assert!(names.contains(&"SkillValidator"));
+}
+
+#[test]
+fn custom_provider_from_outside_crate() {
+    use agnix_core::ValidatorProvider;
+
+    struct ExternalProvider;
+
+    impl agnix_core::ValidatorProvider for ExternalProvider {
+        fn validators(&self) -> Vec<(agnix_core::FileType, agnix_core::ValidatorFactory)> {
+            vec![]
+        }
+    }
+
+    let provider = ExternalProvider;
+    assert_eq!(provider.name(), "ExternalProvider");
+
+    let registry = agnix_core::ValidatorRegistry::builder()
+        .with_defaults()
+        .with_provider(&provider)
+        .build();
+
+    // Should match default count (empty provider adds nothing)
+    let defaults = agnix_core::ValidatorRegistry::with_defaults();
+    assert_eq!(
+        registry.total_factory_count(),
+        defaults.total_factory_count()
+    );
+}
+
+#[test]
+fn disabled_validators_config_accessible_from_outside_crate() {
+    let mut config = agnix_core::LintConfig::default();
+    assert!(config.rules.disabled_validators.is_empty());
+
+    config.rules.disabled_validators = vec!["XmlValidator".to_string()];
+    assert_eq!(config.rules.disabled_validators.len(), 1);
+}
+
+#[test]
+fn validator_name_accessible_from_outside_crate() {
+    let registry = agnix_core::ValidatorRegistry::with_defaults();
+    let validators = registry.validators_for(agnix_core::FileType::Skill);
+
+    for v in &validators {
+        let name = v.name();
+        assert!(!name.is_empty());
+        assert!(name.is_ascii());
+    }
+}
