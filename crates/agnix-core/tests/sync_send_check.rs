@@ -8,6 +8,11 @@ fn test_validator_registry_is_sync_send() {
 }
 
 #[test]
+fn test_validator_registry_builder_is_sync_send() {
+    assert_sync_send::<agnix_core::ValidatorRegistryBuilder>();
+}
+
+#[test]
 fn test_lint_config_is_sync_send() {
     assert_sync_send::<agnix_core::LintConfig>();
 }

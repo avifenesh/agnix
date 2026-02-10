@@ -131,14 +131,12 @@ impl ValidatorRegistry {
 
     /// Create a registry pre-populated with built-in validators.
     pub fn with_defaults() -> Self {
-        let mut registry = Self::new();
-        registry.register_defaults();
-        registry
+        ValidatorRegistryBuilder::new().with_defaults().build()
     }
 
-    /// Register a validator factory for a given file type.
-    pub fn register(&mut self, file_type: FileType, factory: ValidatorFactory) {
-        self.validators.entry(file_type).or_default().push(factory);
+    /// Return a [`ValidatorRegistryBuilder`] for constructing a custom registry.
+    pub fn builder() -> ValidatorRegistryBuilder {
+        ValidatorRegistryBuilder::new()
     }
 
     /// Build a fresh validator instance list for the given file type.
@@ -150,8 +148,50 @@ impl ValidatorRegistry {
             .map(|factory| factory())
             .collect()
     }
+}
 
-    fn register_defaults(&mut self) {
+/// Builder for constructing a [`ValidatorRegistry`] with a fluent API.
+///
+/// # Examples
+///
+/// ```
+/// use agnix_core::{ValidatorRegistry, ValidatorRegistryBuilder, FileType};
+///
+/// // Build a registry with only the built-in validators:
+/// let registry = ValidatorRegistryBuilder::new()
+///     .with_defaults()
+///     .build();
+///
+/// // Build a custom registry mixing defaults with a custom validator:
+/// let registry = ValidatorRegistry::builder()
+///     .with_defaults()
+///     .build();
+/// ```
+pub struct ValidatorRegistryBuilder {
+    validators: HashMap<FileType, Vec<ValidatorFactory>>,
+}
+
+impl ValidatorRegistryBuilder {
+    /// Create a new empty builder.
+    pub fn new() -> Self {
+        Self {
+            validators: HashMap::new(),
+        }
+    }
+
+    /// Register a single validator factory for the given file type.
+    ///
+    /// Multiple calls for the same [`FileType`] accumulate factories in order.
+    pub fn with_validator(mut self, file_type: FileType, factory: ValidatorFactory) -> Self {
+        self.validators.entry(file_type).or_default().push(factory);
+        self
+    }
+
+    /// Register all built-in validators.
+    ///
+    /// This can be combined with [`with_validator`](Self::with_validator) to
+    /// extend the defaults with custom validators.
+    pub fn with_defaults(mut self) -> Self {
         const DEFAULTS: &[(FileType, ValidatorFactory)] = &[
             (FileType::Skill, skill_validator),
             (FileType::Skill, per_client_skill_validator),
@@ -197,8 +237,22 @@ impl ValidatorRegistry {
         ];
 
         for &(file_type, factory) in DEFAULTS {
-            self.register(file_type, factory);
+            self.validators.entry(file_type).or_default().push(factory);
         }
+        self
+    }
+
+    /// Consume the builder and produce an immutable [`ValidatorRegistry`].
+    pub fn build(self) -> ValidatorRegistry {
+        ValidatorRegistry {
+            validators: self.validators,
+        }
+    }
+}
+
+impl Default for ValidatorRegistryBuilder {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -1381,14 +1435,133 @@ mod tests {
         let skill_path = temp.path().join("SKILL.md");
         std::fs::write(&skill_path, "---\nname: test\n---\nBody").unwrap();
 
-        let mut registry = ValidatorRegistry::new();
-        registry.register(FileType::Skill, || Box::new(DummyValidator));
+        let registry = ValidatorRegistry::builder()
+            .with_validator(FileType::Skill, || Box::new(DummyValidator))
+            .build();
 
         let diagnostics =
             validate_file_with_registry(&skill_path, &LintConfig::default(), &registry).unwrap();
 
         assert_eq!(diagnostics.len(), 1);
         assert_eq!(diagnostics[0].rule, "TEST-001");
+    }
+
+    // ===== ValidatorRegistryBuilder tests =====
+
+    #[test]
+    fn test_builder_basic() {
+        struct StubValidator;
+        impl Validator for StubValidator {
+            fn validate(
+                &self,
+                path: &Path,
+                _content: &str,
+                _config: &LintConfig,
+            ) -> Vec<Diagnostic> {
+                vec![Diagnostic::error(
+                    path.to_path_buf(),
+                    1,
+                    1,
+                    "STUB-001",
+                    "stub".to_string(),
+                )]
+            }
+        }
+
+        let registry = ValidatorRegistryBuilder::new()
+            .with_validator(FileType::Skill, || Box::new(StubValidator))
+            .build();
+
+        let validators = registry.validators_for(FileType::Skill);
+        assert_eq!(validators.len(), 1);
+
+        // Verify the validator actually produces diagnostics
+        let diags = validators[0].validate(
+            Path::new("SKILL.md"),
+            "",
+            &LintConfig::default(),
+        );
+        assert_eq!(diags.len(), 1);
+        assert_eq!(diags[0].rule, "STUB-001");
+    }
+
+    #[test]
+    fn test_builder_with_defaults() {
+        let registry = ValidatorRegistry::builder()
+            .with_defaults()
+            .build();
+
+        let skill_validators = registry.validators_for(FileType::Skill);
+        assert!(
+            !skill_validators.is_empty(),
+            "with_defaults() should register validators for FileType::Skill"
+        );
+    }
+
+    #[test]
+    fn test_builder_chaining() {
+        struct ChainValidator;
+        impl Validator for ChainValidator {
+            fn validate(
+                &self,
+                _path: &Path,
+                _content: &str,
+                _config: &LintConfig,
+            ) -> Vec<Diagnostic> {
+                Vec::new()
+            }
+        }
+
+        let registry = ValidatorRegistryBuilder::new()
+            .with_validator(FileType::Skill, || Box::new(ChainValidator))
+            .with_validator(FileType::ClaudeMd, || Box::new(ChainValidator))
+            .with_validator(FileType::Hooks, || Box::new(ChainValidator))
+            .build();
+
+        assert_eq!(registry.validators_for(FileType::Skill).len(), 1);
+        assert_eq!(registry.validators_for(FileType::ClaudeMd).len(), 1);
+        assert_eq!(registry.validators_for(FileType::Hooks).len(), 1);
+        assert_eq!(registry.validators_for(FileType::Agent).len(), 0);
+    }
+
+    #[test]
+    fn test_builder_empty() {
+        let registry = ValidatorRegistryBuilder::new().build();
+
+        assert_eq!(registry.validators_for(FileType::Skill).len(), 0);
+        assert_eq!(registry.validators_for(FileType::ClaudeMd).len(), 0);
+        assert_eq!(registry.validators_for(FileType::Hooks).len(), 0);
+    }
+
+    #[test]
+    fn test_builder_with_defaults_and_custom() {
+        struct CustomValidator;
+        impl Validator for CustomValidator {
+            fn validate(
+                &self,
+                _path: &Path,
+                _content: &str,
+                _config: &LintConfig,
+            ) -> Vec<Diagnostic> {
+                Vec::new()
+            }
+        }
+
+        let default_count = ValidatorRegistry::with_defaults()
+            .validators_for(FileType::Skill)
+            .len();
+
+        let registry = ValidatorRegistry::builder()
+            .with_defaults()
+            .with_validator(FileType::Skill, || Box::new(CustomValidator))
+            .build();
+
+        let skill_validators = registry.validators_for(FileType::Skill);
+        assert_eq!(
+            skill_validators.len(),
+            default_count + 1,
+            "with_defaults() + with_validator() should append to existing validators"
+        );
     }
 
     #[test]
@@ -4111,9 +4284,10 @@ Use idiomatic Rust patterns.
         let temp = tempfile::TempDir::new().unwrap();
         std::fs::write(temp.path().join("notes.md"), "See @missing.md").unwrap();
 
-        let mut registry = ValidatorRegistry::new();
-        registry.register(FileType::GenericMarkdown, create_poison_validator);
-        registry.register(FileType::GenericMarkdown, create_imports_validator);
+        let registry = ValidatorRegistry::builder()
+            .with_validator(FileType::GenericMarkdown, create_poison_validator)
+            .with_validator(FileType::GenericMarkdown, create_imports_validator)
+            .build();
 
         let config = LintConfig::default();
         let result = validate_project_with_registry(temp.path(), &config, &registry);
