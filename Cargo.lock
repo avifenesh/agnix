@@ -97,6 +97,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "agnix-workspace-tests"
+version = "0.0.0"
+dependencies = [
+ "agnix-core",
+ "agnix-rules",
+ "serde_json",
+ "tempfile",
+]
+
+[[package]]
 name = "aho-corasick"
 version = "1.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
