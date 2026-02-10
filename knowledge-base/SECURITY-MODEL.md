@@ -91,7 +91,7 @@ if metadata.len() > DEFAULT_MAX_FILE_SIZE {
 
 **Property**: Validation stops after processing a configurable maximum number of files.
 
-**Implementation**: `crates/agnix-core/src/lib.rs:validate_project_with_registry()`, `crates/agnix-core/src/config.rs:274-312`
+**Implementation**: `crates/agnix-core/src/pipeline.rs:validate_project_with_registry()`, `crates/agnix-core/src/config.rs:274-312`
 
 ```rust
 // Default limit

@@ -67,9 +67,12 @@ tests/fixtures/     # Test cases by category
 - `config.rs` - LintConfig, ToolVersions, SpecRevisions
 - `diagnostics.rs` - Diagnostic, Fix, DiagnosticLevel
 - `eval.rs` - Rule efficacy evaluation (precision/recall/F1)
+- `file_types.rs` - FileType enum and detect_file_type()
 - `file_utils.rs` - Safe file I/O (symlink rejection, size limits)
 - `fixes.rs` - Auto-fix application engine
 - `fs.rs` - FileSystem trait abstraction (RealFileSystem, MockFileSystem)
+- `pipeline.rs` - ValidationResult, validate_project(), validate_file()
+- `registry.rs` - ValidatorRegistry, factory functions
 
 ### Key Abstractions
 

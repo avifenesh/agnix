@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Refactoring**: Split `crates/agnix-core/src/lib.rs` into focused modules: `file_types.rs`, `registry.rs`, `pipeline.rs`
+
 ### Fixed
 - i18n diagnostic messages now display properly translated text instead of raw key paths when installed via `cargo install` (fixes #341)
 - CI locale-sync check prevents locale files from drifting across crates

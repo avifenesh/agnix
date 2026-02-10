@@ -84,7 +84,7 @@ Step-by-step process for adding a new validation rule:
    - `agents_md.rs` -- project-level validator with cross-file analysis
    - `skill/mod.rs` and `hooks/mod.rs` -- complex validators split into focused `helpers.rs` and `tests.rs` modules
 
-4. **Register in `ValidatorRegistry`** -- Add the validator factory to the appropriate `FileType` in `crates/agnix-core/src/rules/mod.rs`.
+4. **Register in `ValidatorRegistry`** -- Add the validator factory to the appropriate `FileType` in `crates/agnix-core/src/registry.rs`.
 
 5. **Add test fixtures** -- Create test files in `tests/fixtures/` matching the validator's expected file type detection patterns. Fixtures should cover both valid and invalid configs.
 
