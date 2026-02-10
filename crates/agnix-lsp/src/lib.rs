@@ -25,7 +25,7 @@
 //!
 //! The server communicates over stdin/stdout using the LSP protocol.
 
-rust_i18n::i18n!("../../locales", fallback = "en");
+rust_i18n::i18n!("locales", fallback = "en");
 
 mod backend;
 mod code_actions;

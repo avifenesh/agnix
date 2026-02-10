@@ -24,7 +24,7 @@
     )
 )]
 
-rust_i18n::i18n!("../../locales", fallback = "en");
+rust_i18n::i18n!("locales", fallback = "en");
 
 pub mod authoring;
 pub mod config;
@@ -5188,5 +5188,77 @@ mod i18n_tests {
             "xp_004_read_error should interpolate error param, got: {}",
             xp_msg
         );
+    }
+
+    /// Verify that keys across all sections resolve to human-readable text,
+    /// not raw key paths. This catches the bug where i18n!() path resolution
+    /// fails and t!() silently returns the key itself.
+    #[test]
+    fn test_keys_resolve_to_text_not_raw_paths() {
+        let _lock = LOCALE_MUTEX.lock().unwrap();
+        rust_i18n::set_locale("en");
+
+        // Helper: assert a key resolves to real text (not the key path itself)
+        macro_rules! assert_not_raw_key {
+            ($key:expr) => {
+                let value = t!($key);
+                assert!(
+                    (!value.starts_with("rules."))
+                        && (!value.starts_with("cli."))
+                        && (!value.starts_with("lsp."))
+                        && (!value.starts_with("core.")),
+                    "Key '{}' returned raw path instead of translated text: {}",
+                    $key,
+                    value
+                );
+            };
+            ($key:expr, $($param:ident = $val:expr),+) => {
+                let value = t!($key, $($param = $val),+);
+                assert!(
+                    (!value.starts_with("rules."))
+                        && (!value.starts_with("cli."))
+                        && (!value.starts_with("lsp."))
+                        && (!value.starts_with("core.")),
+                    "Key '{}' returned raw path instead of translated text: {}",
+                    $key,
+                    value
+                );
+            };
+        }
+
+        // Rules section - sample messages from different validators
+        assert_not_raw_key!("rules.as_001.message");
+        assert_not_raw_key!("rules.as_004.message", name = "test");
+        assert_not_raw_key!("rules.cc_ag_009.message", tool = "x", known = "y");
+        assert_not_raw_key!("rules.xml_001.message", tag = "div");
+        assert_not_raw_key!("rules.cc_hk_001.message");
+        assert_not_raw_key!("rules.pe_003.message");
+        assert_not_raw_key!("rules.cc_mem_009.message");
+
+        // Rules section - suggestions
+        assert_not_raw_key!("rules.as_001.suggestion");
+        assert_not_raw_key!("rules.as_004.suggestion");
+        assert_not_raw_key!("rules.cc_ag_009.suggestion");
+
+        // Rules section - assumptions
+        assert_not_raw_key!("rules.cc_hk_010.assumption");
+        assert_not_raw_key!("rules.mcp_008.assumption");
+
+        // CLI section
+        assert_not_raw_key!("cli.validating");
+        assert_not_raw_key!("cli.no_issues_found");
+        assert_not_raw_key!(
+            "cli.found_errors_warnings",
+            errors = "1",
+            error_word = "error",
+            warnings = "0",
+            warning_word = "warnings"
+        );
+
+        // LSP section
+        assert_not_raw_key!("lsp.suggestion_label");
+
+        // Core section
+        assert_not_raw_key!("core.error.file_read", path = "/tmp/test");
     }
 }

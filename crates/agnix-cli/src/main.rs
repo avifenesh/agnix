@@ -1,7 +1,7 @@
 #![allow(clippy::collapsible_if, clippy::let_and_return)]
 //! agnix CLI - The nginx of agent configs
 
-rust_i18n::i18n!("../../locales", fallback = "en");
+rust_i18n::i18n!("locales", fallback = "en");
 
 mod json;
 mod locale;
