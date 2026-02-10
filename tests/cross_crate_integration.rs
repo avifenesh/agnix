@@ -1,8 +1,12 @@
 //! Cross-crate integration tests verifying contracts between workspace crates.
 //!
-//! These tests ensure that the interfaces consumed by CLI, LSP, and MCP
-//! remain stable across releases. Each test section simulates how a
-//! downstream binary crate uses agnix-core and agnix-rules.
+//! These tests simulate how downstream CLI, LSP, and MCP binaries use
+//! agnix-core and agnix-rules. For items classified as stable in the
+//! backward-compatibility policy, these tests help ensure that the
+//! corresponding interfaces remain stable across releases. Some sections
+//! also exercise Public/Unstable contracts, whose interfaces may change on
+//! minor releases; for those, the tests only assert current behavior rather
+//! than long-term stability guarantees.
 
 use std::path::Path;
 
@@ -95,17 +99,24 @@ fn lsp_diagnostic_fix_field_accessibility() {
 
 #[test]
 fn lsp_diagnostic_level_variant_mapping() {
-    // LSP maps DiagnosticLevel to LSP severity numbers
+    // LSP maps DiagnosticLevel to LSP severity numbers via explicit matches;
+    // this test only asserts that the variants remain accessible and matchable.
     let error = agnix_core::DiagnosticLevel::Error;
     let warning = agnix_core::DiagnosticLevel::Warning;
     let info = agnix_core::DiagnosticLevel::Info;
 
-    // Verify ordering semantics: Error is most severe (lowest), Info least (highest)
-    assert!(error < warning);
-    assert!(warning < info);
-    assert!(error < info);
-}
+    fn describe(level: agnix_core::DiagnosticLevel) -> &'static str {
+        match level {
+            agnix_core::DiagnosticLevel::Error => "error",
+            agnix_core::DiagnosticLevel::Warning => "warning",
+            agnix_core::DiagnosticLevel::Info => "info",
+        }
+    }
 
+    assert_eq!(describe(error), "error");
+    assert_eq!(describe(warning), "warning");
+    assert_eq!(describe(info), "info");
+}
 #[test]
 fn lsp_validator_registry_is_send_sync() {
     // LSP wraps ValidatorRegistry in Arc for sharing across tasks
