@@ -264,7 +264,7 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 ### CC-SK-008 [HIGH] Unknown Tool Name
 **Requirement**: Tool names MUST match Claude Code tools
 **Known Tools**: Bash, Read, Write, Edit, Grep, Glob, Task, WebFetch, WebSearch, AskUserQuestion, TodoRead, TodoWrite, MultiTool, NotebookEdit, EnterPlanMode, ExitPlanMode, Skill, StatusBarMessageTool, TaskOutput
-**Detection**: Check against tool list; tools with `mcp__` prefix are always accepted (dynamic MCP server tools)
+**Detection**: Check against tool list; MCP tools with lowercase `mcp__<server>__<tool>` format are accepted (case-sensitive prefix)
 **Fix**: Suggest closest match
 **Source**: code.claude.com/docs/en/settings
 
@@ -583,14 +583,14 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 <a id="cc-ag-009"></a>
 ### CC-AG-009 [HIGH] Invalid Tool Name in Tools List
 **Requirement**: Tool names in `tools` MUST match known Claude Code tools
-**Detection**: Check each tool name against known tools list; tools with `mcp__` prefix are always accepted (dynamic MCP server tools)
+**Detection**: Check each tool name against known tools list; MCP tools with lowercase `mcp__<server>__<tool>` format are accepted (case-sensitive prefix)
 **Fix**: Use a known Claude Code tool name
 **Source**: code.claude.com/docs/en/sub-agents
 
 <a id="cc-ag-010"></a>
 ### CC-AG-010 [HIGH] Invalid Tool Name in DisallowedTools
 **Requirement**: Tool names in `disallowedTools` MUST match known Claude Code tools
-**Detection**: Check each disallowed tool name against known tools list; tools with `mcp__` prefix are always accepted (dynamic MCP server tools)
+**Detection**: Check each disallowed tool name against known tools list; MCP tools with lowercase `mcp__<server>__<tool>` format are accepted (case-sensitive prefix)
 **Fix**: Use a known Claude Code tool name
 **Source**: code.claude.com/docs/en/sub-agents
 

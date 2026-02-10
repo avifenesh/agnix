@@ -227,10 +227,28 @@ impl AgentValidator {
         fs.exists(&skill_path)
     }
 
-    /// Helper to check if a tool name is valid (either known or MCP-prefixed).
+    /// Helper to check if a tool name is valid (either known or properly formatted MCP tool).
+    /// MCP tools must follow the format: mcp__<server>__<tool> (case-sensitive, lowercase prefix).
     fn is_valid_tool_name(tool: &str) -> bool {
         let base_name = tool.split('(').next().unwrap_or(tool);
-        base_name.starts_with("mcp__") || KNOWN_AGENT_TOOLS.contains(&base_name)
+
+        // Check if it's a known tool
+        if KNOWN_AGENT_TOOLS.contains(&base_name) {
+            return true;
+        }
+
+        // Check if it's a valid MCP tool: mcp__<server>__<tool>
+        if let Some(rest) = base_name.strip_prefix("mcp__") {
+            // Must have at least one more double-underscore separator for server__tool
+            // and both server and tool parts must be non-empty
+            if let Some(tool_start) = rest.find("__") {
+                let server = &rest[..tool_start];
+                let tool_name = &rest[tool_start + 2..];
+                return !server.is_empty() && !tool_name.is_empty();
+            }
+        }
+
+        false
     }
 }
 
@@ -2472,6 +2490,30 @@ Agent instructions"#;
             0,
             "MCP tools with mcp__ prefix should be accepted"
         );
+    }
+
+    #[test]
+    fn test_cc_ag_009_mcp_tool_invalid_formats() {
+        // Test various invalid MCP formats
+        let content = r#"---
+name: my-agent
+description: A test agent
+tools:
+  - Read
+  - mcp__
+  - mcp__server
+  - mcp__bad name
+  - MCP__server__tool
+---
+Agent instructions"#;
+
+        let diagnostics = validate(content);
+        let cc_ag_009: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-AG-009")
+            .collect();
+        // Should flag: mcp__, mcp__server, mcp__bad name, MCP__server__tool (uppercase)
+        assert_eq!(cc_ag_009.len(), 4, "Invalid MCP formats should be rejected");
     }
 
     #[test]

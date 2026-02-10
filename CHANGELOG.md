@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - i18n diagnostic messages now display properly translated text instead of raw key paths when installed via `cargo install` (fixes #341)
 - CI locale-sync check prevents locale files from drifting across crates
-- CC-AG-009, CC-AG-010, CC-SK-008 false positives for `Skill`, `StatusBarMessageTool`, `TaskOutput` tools and MCP server tools with `mcp__` prefix (fixes #342)
+- CC-AG-009, CC-AG-010, CC-SK-008 false positives for `Skill`, `StatusBarMessageTool`, `TaskOutput` tools and MCP server tools with `mcp__<server>__<tool>` format (fixes #342)
 
 ### Added
 - **Clickable rule links in IDEs** - LSP diagnostics now include `code_description` so rule codes (e.g. AS-001) link to per-rule website docs
