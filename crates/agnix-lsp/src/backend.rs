@@ -582,6 +582,12 @@ impl LanguageServer for Backend {
         self.client
             .log_message(MessageType::INFO, "agnix-lsp initialized")
             .await;
+
+        // Run project-level validation on workspace open
+        let backend = self.clone();
+        tokio::spawn(async move {
+            backend.validate_project_rules_and_publish().await;
+        });
     }
 
     async fn shutdown(&self) -> Result<()> {
@@ -610,8 +616,19 @@ impl LanguageServer for Backend {
     }
 
     async fn did_save(&self, params: DidSaveTextDocumentParams) {
-        self.validate_from_content_and_publish(params.text_document.uri, None)
+        let uri = params.text_document.uri;
+        self.validate_from_content_and_publish(uri.clone(), None)
             .await;
+
+        // Re-run project-level validation when a relevant file is saved
+        if let Ok(path) = uri.to_file_path() {
+            if Self::is_project_level_trigger(&path) {
+                let backend = self.clone();
+                tokio::spawn(async move {
+                    backend.validate_project_rules_and_publish().await;
+                });
+            }
+        }
     }
 
     async fn did_close(&self, params: DidCloseTextDocumentParams) {
@@ -787,6 +804,12 @@ impl LanguageServer for Backend {
                 )
                 .await;
         }
+
+        // Also re-run project-level validation with the updated config
+        let backend = self.clone();
+        tokio::spawn(async move {
+            backend.validate_project_rules_and_publish().await;
+        });
     }
 }
 
