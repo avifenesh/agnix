@@ -315,13 +315,22 @@ fn eval_submodule_types_are_accessible() {
 
 #[test]
 fn validation_result_fields_are_accessible() {
-    let result = agnix_core::ValidationResult {
-        diagnostics: vec![],
-        files_checked: 0,
-    };
+    let result = agnix_core::ValidationResult::new(vec![], 0);
 
     let _: &Vec<agnix_core::Diagnostic> = &result.diagnostics;
     let _: usize = result.files_checked;
+
+    // New metadata fields default to None/0
+    assert!(result.validation_time_ms.is_none());
+    assert_eq!(result.validator_factories_registered, 0);
+
+    // Builder-style setters
+    let result = agnix_core::ValidationResult::new(vec![], 5)
+        .with_timing(42)
+        .with_validator_factories_registered(10);
+    assert_eq!(result.validation_time_ms, Some(42));
+    assert_eq!(result.validator_factories_registered, 10);
+    assert_eq!(result.files_checked, 5);
 }
 
 // ============================================================================
@@ -511,4 +520,8 @@ fn validator_registry_methods() {
         agnix_core::FileType,
         agnix_core::ValidatorFactory,
     ) = agnix_core::ValidatorRegistry::register;
+
+    // total_factory_count()
+    assert_eq!(empty.total_factory_count(), 0);
+    assert!(defaults.total_factory_count() > 0);
 }
