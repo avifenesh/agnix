@@ -95,20 +95,20 @@ pub use fs::{FileSystem, MockFileSystem, RealFileSystem};
 pub use rules::Validator;
 
 // Internal re-exports (not part of the stable API).
-// These types are needed by fuzz/bench/test targets or leak through LintConfig.
-// They are hidden from rustdoc and namespaced to discourage external use.
+// These types leak through LintConfig or are needed by fuzz/bench/test targets.
 #[doc(hidden)]
-pub mod __internal {
-    pub use crate::parsers::ImportCache;
-    pub use crate::parsers::frontmatter::{FrontmatterParts, split_frontmatter};
-    pub use crate::parsers::json::parse_json_config;
-    pub use crate::parsers::markdown::Import;
-    pub use crate::parsers::markdown::{
-        MAX_REGEX_INPUT_SIZE, MarkdownLink, XmlTag, check_xml_balance,
-        check_xml_balance_with_content_end, extract_imports, extract_markdown_links,
-        extract_xml_tags,
-    };
-}
+pub use parsers::ImportCache;
+#[doc(hidden)]
+pub use parsers::frontmatter::{FrontmatterParts, split_frontmatter};
+#[doc(hidden)]
+pub use parsers::json::parse_json_config;
+#[doc(hidden)]
+pub use parsers::markdown::Import;
+#[doc(hidden)]
+pub use parsers::markdown::{
+    MAX_REGEX_INPUT_SIZE, MarkdownLink, XmlTag, check_xml_balance,
+    check_xml_balance_with_content_end, extract_imports, extract_markdown_links, extract_xml_tags,
+};
 
 /// Result of validating a project, including diagnostics and metadata.
 ///
@@ -116,9 +116,6 @@ pub mod __internal {
 /// added in minor releases without breaking downstream destructuring patterns.
 /// Use `ValidationResult::new()` to construct instances in tests.
 #[derive(Debug, Clone)]
-/// **Breaking change in 0.11.0**: This struct is now marked `#[non_exhaustive]`.
-/// Downstream crates using struct literals or exhaustive destructuring must
-/// switch to `ValidationResult::new()` or use `..` in patterns.
 #[non_exhaustive]
 pub struct ValidationResult {
     /// Diagnostics found during validation.
@@ -127,21 +124,21 @@ pub struct ValidationResult {
     pub files_checked: usize,
     /// Wall-clock time spent in validation, in milliseconds.
     pub validation_time_ms: Option<u64>,
-    /// Number of validator factories registered in the registry (not the count of validators executed).
-    pub validator_factories_registered: usize,
+    /// Number of validator factories registered in the registry at validation time.
+    pub rules_checked: usize,
 }
 
 impl ValidationResult {
     /// Create a new `ValidationResult` with the given diagnostics and file count.
     ///
-    /// Metadata fields (`validation_time_ms`, `validator_factories_registered`) default to
+    /// Metadata fields (`validation_time_ms`, `rules_checked`) default to
     /// `None` / `0` and can be set with the builder-style helpers.
     pub fn new(diagnostics: Vec<Diagnostic>, files_checked: usize) -> Self {
         Self {
             diagnostics,
             files_checked,
             validation_time_ms: None,
-            validator_factories_registered: 0,
+            rules_checked: 0,
         }
     }
 
@@ -151,9 +148,9 @@ impl ValidationResult {
         self
     }
 
-    /// Set the total number of validator factories registered (builder pattern).
-    pub fn with_validator_factories_registered(mut self, count: usize) -> Self {
-        self.validator_factories_registered = count;
+    /// Set the total number of rules checked (builder pattern).
+    pub fn with_rules_checked(mut self, count: usize) -> Self {
+        self.rules_checked = count;
         self
     }
 }
@@ -1268,13 +1265,12 @@ pub fn validate_project_with_registry(
     // Extract final count from atomic counter
     let files_checked = files_checked.load(Ordering::Relaxed);
 
-    let elapsed_ms_u128 = validation_start.elapsed().as_millis();
-    let elapsed_ms = std::cmp::min(elapsed_ms_u128, u64::MAX as u128) as u64;
-    let validator_factories_registered = registry.total_factory_count();
+    let elapsed_ms = validation_start.elapsed().as_millis() as u64;
+    let rules_checked = registry.total_factory_count();
 
     Ok(ValidationResult::new(diagnostics, files_checked)
         .with_timing(elapsed_ms)
-        .with_validator_factories_registered(validator_factories_registered))
+        .with_rules_checked(rules_checked))
 }
 
 fn resolve_validation_root(path: &Path) -> PathBuf {

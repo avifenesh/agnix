@@ -322,14 +322,14 @@ fn validation_result_fields_are_accessible() {
 
     // New metadata fields default to None/0
     assert!(result.validation_time_ms.is_none());
-    assert_eq!(result.rules_checked, 0);
+    assert_eq!(result.validator_factories_registered, 0);
 
     // Builder-style setters
     let result = agnix_core::ValidationResult::new(vec![], 5)
         .with_timing(42)
-        .with_rules_checked(10);
+        .with_validator_factories_registered(10);
     assert_eq!(result.validation_time_ms, Some(42));
-    assert_eq!(result.rules_checked, 10);
+    assert_eq!(result.validator_factories_registered, 10);
     assert_eq!(result.files_checked, 5);
 }
 

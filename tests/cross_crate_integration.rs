@@ -33,8 +33,8 @@ fn cli_lint_config_default_works() {
         "validation_time_ms should be populated"
     );
     assert!(
-        validation.rules_checked > 0,
-        "rules_checked should be positive when using default registry"
+        validation.validator_factories_registered > 0,
+        "validator_factories_registered should be positive when using default registry"
     );
 }
 
@@ -50,7 +50,7 @@ fn cli_validation_result_fields_accessible() {
 
     // Metadata fields are accessible and populated
     assert!(result.validation_time_ms.is_some());
-    assert!(result.rules_checked > 0);
+    assert!(result.validator_factories_registered > 0);
 }
 
 #[test]
