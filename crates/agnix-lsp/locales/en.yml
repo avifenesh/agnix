@@ -1,0 +1,717 @@
+# ===========================================================================
+# Rules - Validator diagnostic messages, suggestions, assumptions, fixes
+# ===========================================================================
+rules:
+  # --- Agent Skills (skill/mod.rs) ---
+  as_001:
+    message: "SKILL.md must have YAML frontmatter between --- markers"
+    suggestion: "Add frontmatter between --- markers"
+  as_002:
+    message: "Skill frontmatter is missing required 'name' field"
+    suggestion: "Add 'name: your-skill-name' to frontmatter"
+  as_003:
+    message: "Skill frontmatter is missing required 'description' field"
+    suggestion: "Add 'description: Use when...' to frontmatter"
+  as_004:
+    message: "Name '%{name}' must be 1-64 characters of lowercase letters, digits, and hyphens"
+    suggestion: "Lowercase and trim the name, replace spaces and '_' with '-', collapse multiple '-' into one, remove invalid characters, and truncate to 64 characters"
+    fix: "Convert name to kebab-case: '%{name}'"
+  as_005:
+    message: "Name '%{name}' cannot start or end with hyphen"
+    suggestion: "Remove leading/trailing hyphens from the name"
+  as_006:
+    message: "Name '%{name}' cannot contain consecutive hyphens"
+    suggestion: "Replace '--' with '-' in the name"
+  as_007:
+    message: "Name '%{name}' is reserved and cannot be used"
+    suggestion: "Choose a different skill name"
+  as_008:
+    message: "Description must be 1-1024 characters, got %{len}"
+    suggestion: "Trim the description to 1024 characters or fewer"
+  as_009:
+    message: "Description must not contain XML tags"
+    suggestion: "Remove XML tags from the description"
+  as_010:
+    message: "Description should include a 'Use when...' trigger phrase"
+    suggestion: "Add 'Use when [condition]' to help Claude understand when to invoke this skill"
+    fix: "Prepend 'Use when user wants to ' to description"
+  as_011:
+    message: "Compatibility must be 1-500 characters, got %{len}"
+    suggestion: "Trim compatibility to 500 characters or fewer"
+  as_012:
+    message: "Skill content exceeds 500 lines (got %{count})"
+    suggestion: "Move extra content into references/"
+  as_013:
+    message: "File reference '%{path}' is deeper than one level"
+    suggestion: "Flatten the references/ directory structure"
+  as_014:
+    message: "Windows path separator detected in '%{path}'; use forward slashes"
+    suggestion: "Replace '\\\\' with '/' in file paths"
+  as_015:
+    message: "Skill directory exceeds 8MB (%{size} bytes)"
+    suggestion: "Remove large assets or split the skill into smaller parts"
+  as_016:
+    message: "Failed to parse SKILL.md: %{error}"
+    suggestion: "Check YAML frontmatter syntax -- ensure proper indentation, colon spacing, and matching quotes"
+
+  # --- Claude Code Skills (skill/mod.rs) ---
+  cc_sk_001:
+    message: "Invalid model '%{model}'. Must be one of: %{valid}"
+    suggestion: "Use one of the valid model values: %{valid}"
+  cc_sk_002:
+    message: "Invalid context '%{context}'. Must be 'fork' or omitted"
+    suggestion: "Set context to 'fork' or remove the field entirely"
+  cc_sk_003:
+    message: "Context 'fork' requires an 'agent' field"
+    suggestion: "Add 'agent: general-purpose' or another valid agent type"
+  cc_sk_004:
+    message: "Agent field requires 'context: fork'"
+    suggestion: "Add 'context: fork' to the frontmatter"
+  cc_sk_005:
+    message: "Invalid agent type '%{agent}'. Must be Explore, Plan, general-purpose, or a custom kebab-case name (1-64 chars)"
+    suggestion: "Use a built-in agent (Explore, Plan, general-purpose) or a custom kebab-case name"
+    fix: "Replace invalid agent with 'general-purpose'"
+  cc_sk_006:
+    message: "Dangerous skill '%{name}' must set 'disable-model-invocation: true' to prevent accidental invocation"
+    suggestion: "Add 'disable-model-invocation: true' to the frontmatter"
+  cc_sk_007:
+    message: "Unrestricted Bash access detected. Consider using scoped version for better security."
+    suggestion: "Use scoped Bash like 'Bash(git:*)' or 'Bash(npm:*)' instead of plain 'Bash'"
+    fix: "Replace unrestricted Bash with scoped Bash(git:*)"
+  cc_sk_008:
+    message: "Unknown tool '%{tool}'. Known tools: %{known}"
+    suggestion: "Use one of the known Claude Code tools: %{known}"
+  cc_sk_009:
+    message: "Too many dynamic injections (%{count}). Limit to %{max} for better performance"
+    suggestion: "Consider moving complex logic to a scripts/ directory or reducing injections"
+  cc_sk_010:
+    message: "Invalid hooks configuration in skill frontmatter: %{error}"
+    suggestion: "Ensure hooks follow the same schema as settings.json hooks"
+  cc_sk_011:
+    message: "Skill is unreachable: user-invocable is false and disable-model-invocation is true"
+    suggestion: "Set user-invocable to true or disable-model-invocation to false"
+    fix: "Remove 'disable-model-invocation: true' to allow model invocation"
+  cc_sk_012:
+    message: "argument-hint is set but body does not reference $ARGUMENTS"
+    suggestion: "Add $ARGUMENTS to the skill body or remove the argument-hint field"
+  cc_sk_013:
+    message: "context: fork with reference-only content lacks actionable instructions"
+    suggestion: "Add imperative instructions for the forked agent to follow"
+  cc_sk_014:
+    message: "disable-model-invocation must be a boolean, got string '%{value}'"
+    suggestion: "Use true/false without quotes"
+    fix: "Convert string '%{value}' to boolean %{fixed}"
+  cc_sk_015:
+    message: "user-invocable must be a boolean, got string '%{value}'"
+    suggestion: "Use true/false without quotes"
+    fix: "Convert string '%{value}' to boolean %{fixed}"
+
+  # --- Per-Client Skills (per_client_skill.rs) ---
+  cr_sk_001:
+    message: "field '%{field}' is not supported by %{client} -- it will be ignored"
+    suggestion: "Remove '%{field}' or move this skill to a client that supports it"
+  cl_sk_001:
+    message: "field '%{field}' is not supported by %{client} -- it will be ignored"
+    suggestion: "Remove '%{field}' or move this skill to a client that supports it"
+  cp_sk_001:
+    message: "field '%{field}' is not supported by %{client} -- it will be ignored"
+    suggestion: "Remove '%{field}' or move this skill to a client that supports it"
+  cx_sk_001:
+    message: "field '%{field}' is not supported by %{client} -- it will be ignored"
+    suggestion: "Remove '%{field}' or move this skill to a client that supports it"
+  oc_sk_001:
+    message: "field '%{field}' is not supported by %{client} -- it will be ignored"
+    suggestion: "Remove '%{field}' or move this skill to a client that supports it"
+  ws_sk_001:
+    message: "field '%{field}' is not supported by %{client} -- it will be ignored"
+    suggestion: "Remove '%{field}' or move this skill to a client that supports it"
+  kr_sk_001:
+    message: "field '%{field}' is not supported by %{client} -- it will be ignored"
+    suggestion: "Remove '%{field}' or move this skill to a client that supports it"
+  amp_sk_001:
+    message: "field '%{field}' is not supported by %{client} -- it will be ignored"
+    suggestion: "Remove '%{field}' or move this skill to a client that supports it"
+  rc_sk_001:
+    message: "field '%{field}' is not supported by %{client} -- it will be ignored"
+    suggestion: "Remove '%{field}' or move this skill to a client that supports it"
+  xp_sk_001:
+    message: "skill uses client-specific field '%{field}' which is not part of the universal Agent Skills spec"
+    suggestion: "Consider removing '%{field}' for cross-platform portability"
+
+  # --- Hooks (hooks/mod.rs) ---
+  cc_hk_001:
+    message: "Invalid hook event '%{event}', valid events: %{valid}"
+    fix: "Replace '%{old}' with '%{new}'"
+  cc_hk_002:
+    message: "Prompt/agent hook at %{location} is only allowed for Stop and SubagentStop events, not '%{event}'"
+    suggestion: "Use 'type': 'command' instead, or move this hook to Stop/SubagentStop"
+  cc_hk_003:
+    message: "Tool event '%{event}' at %{location} requires a matcher field"
+    suggestion: "Add 'matcher': '*' for all tools or specify a tool name"
+  cc_hk_004:
+    message: "Non-tool event '%{event}' at %{location} must not have a matcher field"
+    suggestion: "Remove the 'matcher' field"
+  cc_hk_005:
+    message: "Hook at %{location} is missing required 'type' field"
+    suggestion: "Add 'type': 'command', 'type': 'prompt', or 'type': 'agent'"
+  cc_hk_006:
+    message: "Command hook at %{location} is missing required 'command' field"
+    suggestion: "Add a 'command' field with the command to execute"
+  cc_hk_007:
+    message: "Prompt/agent hook at %{location} is missing required 'prompt' field"
+    suggestion: "Add a 'prompt' field with the prompt text"
+  cc_hk_008:
+    message: "Script file not found at '%{script}' (resolved to '%{resolved}')"
+    suggestion: "Create the script file or correct the path"
+  cc_hk_009:
+    message: "Potentially dangerous command pattern detected: %{reason}"
+    suggestion: "Review the command for safety. Pattern matched: %{pattern}"
+  cc_hk_010:
+    command_no_timeout: "Command hook at %{location} has no timeout specified"
+    command_no_timeout_suggestion: "Add a \"timeout\" field (e.g., 600 for command hooks)"
+    command_exceeds: "Command hook at %{location} has timeout %{timeout}s exceeding %{default}s default"
+    command_exceeds_suggestion: "Consider timeout <= %{default}s (10-minute default limit)"
+    prompt_no_timeout: "Prompt/agent hook at %{location} has no timeout specified"
+    prompt_no_timeout_suggestion: "Add a \"timeout\" field (e.g., 30 for prompt/agent hooks)"
+    prompt_exceeds: "Prompt/agent hook at %{location} has timeout %{timeout}s exceeding %{default}s default"
+    prompt_exceeds_suggestion: "Consider timeout <= %{default}s (30-second default limit)"
+    assumption: "Assumes Claude Code default timeout behavior. Pin claude_code version in .agnix.toml [tool_versions] for version-specific validation."
+  cc_hk_011:
+    message: "Invalid timeout value at %{location}: must be a positive integer"
+    suggestion: "Set timeout to a positive integer like 30"
+  cc_hk_012:
+    message: "Failed to parse hooks configuration: %{error}"
+    suggestion: "Validate JSON syntax in hooks configuration -- check for missing commas, brackets, or unquoted keys"
+  cc_hk_013:
+    message: "async field is only valid on command hooks, not %{hook_type} hooks at %{location}"
+    suggestion: "Remove the async field or change the hook type to command"
+    fix: "Remove 'async' field (has no effect on non-command hooks)"
+  cc_hk_014:
+    message: "once field at %{location} is only meaningful in skill/agent frontmatter hooks"
+    suggestion: "Remove the once field from settings.json hooks"
+  cc_hk_015:
+    message: "model field is only valid on prompt/agent hooks, not command hooks at %{location}"
+    suggestion: "Remove the model field or change the hook type to prompt/agent"
+    fix: "Remove 'model' field (has no effect on command hooks)"
+  cc_hk_016:
+    message: "Unknown hook type '%{hook_type}' at %{location}"
+    suggestion: "Valid hook types are: command, prompt, agent"
+    fix: "Change hook type to '%{fixed}'"
+  cc_hk_017:
+    message: "Prompt/agent hook at %{location} does not reference $ARGUMENTS"
+    suggestion: "Include $ARGUMENTS in the prompt to receive event context"
+  cc_hk_018:
+    message: "Matcher at %{location} is silently ignored for '%{event}' events"
+    suggestion: "Remove the matcher field as it has no effect on %{event} events"
+    fix: "Remove 'matcher' field (ignored on %{event} events)"
+
+  # --- MCP (mcp.rs) ---
+  mcp_001:
+    invalid_version: "Invalid JSON-RPC version '%{version}', must be '2.0'"
+    not_string: "JSON-RPC version must be a string"
+    suggestion: "Set \"jsonrpc\": \"2.0\""
+  mcp_002:
+    missing_name: "%{prefix}Missing required field 'name'"
+    missing_name_suggestion: "Add 'name' field to tool definition"
+    missing_description: "%{prefix}Missing required field 'description'"
+    missing_description_suggestion: "Add 'description' field to tool definition"
+    missing_schema: "%{prefix}Missing required field 'inputSchema'"
+    missing_schema_suggestion: "Add 'inputSchema' field with JSON Schema definition"
+  mcp_003:
+    message: "%{prefix}Invalid inputSchema: %{error}"
+    suggestion: "Fix JSON Schema structure -- valid 'type' values are: string, number, integer, boolean, object, array, null"
+  mcp_004:
+    message: "%{prefix}Tool description is too short (%{len} chars), should be at least 10 characters"
+    suggestion: "Add a meaningful description explaining what the tool does"
+  mcp_005:
+    message: "%{prefix}Tool lacks consent mechanism (no 'requiresApproval' or 'confirmation' field)"
+    suggestion: "Consider adding 'requiresApproval: true' for tools that modify data or have side effects"
+  mcp_006:
+    message: "%{prefix}Tool has annotations that should be validated before trusting"
+    suggestion: "Verify annotation values independently -- annotations are self-reported by the server and may be inaccurate or malicious"
+  mcp_007:
+    message: "Failed to parse MCP configuration: %{error}"
+    suggestion: "Validate JSON syntax -- check for missing commas, brackets, or unquoted keys"
+  mcp_008:
+    message: "Protocol version mismatch: found '%{found}', expected '%{expected}'"
+    request_suggestion: "Consider updating to protocol version '%{expected}' for compatibility"
+    response_suggestion: "Server negotiated version '%{found}', expected '%{expected}'. Verify compatibility."
+    assumption: "Using default MCP protocol version. Pin mcp_protocol in .agnix.toml [spec_revisions] for explicit control."
+  mcp_009:
+    message: "Server '%{server}' has type 'stdio' but is missing required 'command' field"
+    suggestion: "Add a 'command' field specifying the executable to run"
+  mcp_010:
+    message: "Server '%{server}' has type '%{server_type}' but is missing required 'url' field"
+    suggestion: "Add a 'url' field specifying the server endpoint"
+  mcp_011:
+    message: "Server '%{server}' has invalid type '%{server_type}'. Must be 'stdio', 'http', or 'sse'"
+    suggestion: "Use one of: stdio, http, sse"
+    fix: "Change server type to '%{fixed}'"
+  mcp_012:
+    message: "Server '%{server}' uses deprecated SSE transport"
+    suggestion: "Consider changing type from 'sse' to 'http' (Streamable HTTP)"
+    fix: "Change type from 'sse' to 'http'"
+  invalid_tool: "Tool #%{num}: Invalid tool definition: %{error}"
+  invalid_tool_single: "Invalid tool definition: %{error}"
+  invalid_tool_suggestion: "Ensure tool has valid field types (name: string, description: string, inputSchema: object)"
+
+  # --- Agent (agent.rs) ---
+  cc_ag_001:
+    message: "Agent frontmatter is missing required 'name' field"
+    suggestion: "Add 'name: your-agent-name' to frontmatter"
+  cc_ag_002:
+    message: "Agent frontmatter is missing required 'description' field"
+    suggestion: "Add 'description: Describe what this agent does' to frontmatter"
+  cc_ag_003:
+    message: "Invalid model '%{model}'. Valid values: %{valid}"
+    suggestion: "Change model to one of: %{valid}"
+  cc_ag_004:
+    message: "Invalid permissionMode '%{mode}'. Valid values: %{valid}"
+    suggestion: "Change permissionMode to one of: %{valid}"
+  cc_ag_005:
+    message: "Referenced skill '%{skill}' not found at .claude/skills/%{skill}/SKILL.md"
+    suggestion: "Create the skill at .claude/skills/%{skill}/SKILL.md or remove the reference"
+  cc_ag_006:
+    message: "Tool(s) appear in both 'tools' and 'disallowedTools': %{conflicts}"
+    suggestion: "Remove conflicting tool(s) from either 'tools' or 'disallowedTools'"
+  cc_ag_007:
+    message: "Agent file must have YAML frontmatter"
+    suggestion: "Add frontmatter between --- markers"
+    parse_error: "Failed to parse agent frontmatter: %{error}"
+    parse_error_suggestion: "Check YAML frontmatter syntax -- ensure proper indentation, colon spacing, and matching quotes"
+  cc_ag_008:
+    message: "Invalid memory scope '%{scope}'. Must be 'user', 'project', or 'local'"
+    suggestion: "Use one of: user, project, local"
+    fix: "Change memory scope to '%{fixed}'"
+  cc_ag_009:
+    message: "Unknown tool '%{tool}' in tools list. Known tools: %{known}"
+    suggestion: "Use a known Claude Code tool name"
+  cc_ag_010:
+    message: "Unknown tool '%{tool}' in disallowedTools list. Known tools: %{known}"
+    suggestion: "Use a known Claude Code tool name"
+  cc_ag_011:
+    message: "Invalid hooks configuration in agent frontmatter: %{error}"
+    suggestion: "Ensure hooks follow the same schema as settings.json hooks"
+  cc_ag_012:
+    message: "permissionMode 'bypassPermissions' disables all safety checks"
+    suggestion: "Consider using 'dontAsk' or 'acceptEdits' for a safer permission mode"
+    fix: "Replace 'bypassPermissions' with 'default'"
+  cc_ag_013:
+    message: "Invalid skill name format '%{name}'. Must be lowercase with hyphens"
+    suggestion: "Use kebab-case format (e.g., 'my-skill-name')"
+
+  # --- Claude MD (claude_md.rs) ---
+  cc_mem_004:
+    message: "npm script '%{script}' not found in package.json"
+    suggestion_no_scripts: "No scripts defined in package.json."
+    suggestion_available: "Available scripts: %{scripts}"
+  cc_mem_005:
+    message: "Generic instruction '%{text}' - Claude already knows this"
+    suggestion: "Remove generic instructions. Focus on project-specific context."
+    fix: "Remove generic instruction line"
+  cc_mem_006:
+    message: "Negative instruction '%{text}' without positive alternative"
+    suggestion: "Add a positive alternative: 'Instead, do...' or 'Use X instead.'"
+  cc_mem_007:
+    message: "Weak constraint '%{text}' in critical section '%{section}'"
+    suggestion: "Use strong language in critical sections: 'must', 'always', 'required'."
+    fix: "Replace '%{text}' with stronger language"
+  cc_mem_008:
+    message: "Critical keyword '%{keyword}' at %{percent} percent of document (middle zone)"
+    suggestion: "Move critical content to the top or bottom of the document for better recall."
+  cc_mem_009:
+    message: "File exceeds recommended token limit (~%{tokens} tokens, limit is %{limit})"
+    suggestion: "Consider using @import to split content into multiple files."
+  cc_mem_010:
+    message: "CLAUDE.md has %{overlap} percent overlap with README.md (threshold: %{threshold} percent)"
+    suggestion: "CLAUDE.md should complement README, not duplicate it. Remove duplicated sections."
+
+  # --- Claude Rules (.claude/rules/*.md) ---
+  cc_mem_011:
+    message: "Invalid glob pattern '%{pattern}' in paths field (item %{index}): %{error}"
+    suggestion: "Fix the glob pattern syntax. Valid examples: 'src/**/*.ts', '*.rs', 'tests/**/*.test.js'"
+  cc_mem_012:
+    message: "Unknown frontmatter key '%{key}' in .claude/rules file"
+    suggestion: "Only 'paths' is a recognized key in .claude/rules/*.md frontmatter. Remove '%{key}' or check for typos."
+
+  # --- AGENTS.md (agents_md.rs) ---
+  agm_001:
+    message: "Invalid markdown: %{description}"
+    suggestion: "Fix the markdown syntax error -- check for unclosed tags, mismatched headers, or invalid link syntax"
+  agm_002:
+    # messages come from schemas::agents_md, not the validator directly
+  agm_003:
+    message: "%{filename} exceeds character limit (%{chars} chars, max %{limit} for Windsurf compatibility)"
+    suggestion: "Split content into multiple files or reduce content length"
+  agm_004:
+    # messages come from schemas::agents_md, not the validator directly
+  agm_005:
+    suggestion: "Add a platform guard section header like '## %{platform} Specific' before platform-specific content"
+  agm_006:
+    # post-processing rule in lib.rs
+
+  # --- XML (xml.rs) ---
+  xml_001:
+    message: "Unclosed XML tag '<%{tag}>'"
+    suggestion: "Add closing tag '</%{tag}>'"
+    fix: "Insert closing tag '</%{tag}>'"
+  xml_002:
+    message: "Expected '</%{expected}>' but found '</%{found}>'"
+    suggestion: "Replace '</%{found}>' with '</%{expected}>'"
+  xml_003:
+    message: "Unmatched closing tag '</%{tag}>'"
+    suggestion: "Remove '</%{tag}>' or add matching opening tag '<%{tag}>'"
+
+  # --- Imports (imports.rs) ---
+  cc_mem_001:
+    not_found: "Import target not found: @%{path}"
+    absolute: "Absolute import paths not allowed: @%{path}"
+    escapes: "Import path escapes project root: @%{path}"
+    absolute_suggestion: "Use relative paths only"
+    escapes_suggestion: "Use relative paths that stay within the project root"
+  cc_mem_002:
+    message: "Circular import detected: %{chain}"
+    suggestion: "Break the circular import chain to prevent infinite recursion"
+  cc_mem_003:
+    message: "Import depth exceeded (%{depth} levels, max %{max})"
+    suggestion: "Flatten the import hierarchy to reduce depth"
+  ref_001:
+    not_found: "Import target not found: @%{path}"
+  ref_002:
+    message: "Broken markdown link: '%{url}' (file not found: %{resolved})"
+    suggestion: "Fix the link target or remove the broken link"
+
+  # --- Cross-platform (cross_platform.rs) ---
+  xp_001:
+    message: "Claude-specific feature '%{feature}' in %{filename}: %{description}"
+    suggestion: "Move to CLAUDE.md or wrap in a Claude-specific section (e.g., '## Claude Code Specific')"
+  xp_002:
+    message: "%{filename} structure issue: %{issue}"
+  xp_003:
+    message: "Hard-coded %{platform} path '%{path}' may cause portability issues"
+    suggestion: "Use environment variables or relative paths for better portability"
+  xp_004:
+    message: "Conflicting package managers: %{file1} uses %{mgr1} but %{file2} uses %{mgr2} for %{cmd_type} commands"
+    suggestion: "Standardize on a single package manager across all instruction files"
+  xp_005:
+    message: "Conflicting tool constraints: '%{tool}' is allowed in %{allow_file} but disallowed in %{disallow_file}"
+    suggestion: "Resolve the conflict by consistently allowing or disallowing the tool"
+  xp_006:
+    suggestion: "Document which file takes precedence (e.g., 'CLAUDE.md takes precedence over AGENTS.md')"
+
+  # --- Copilot (copilot.rs) ---
+  cop_001:
+    message_empty: "Copilot instruction file is empty"
+    message_no_content: "Copilot instruction file has no content after frontmatter"
+    suggestion_empty: "Add meaningful instructions for Copilot to follow"
+    suggestion_scoped_empty: "Add frontmatter with applyTo field and instructions"
+  cop_002:
+    message_missing: "Scoped Copilot instruction file missing required frontmatter"
+    message_invalid_yaml: "Invalid YAML frontmatter: %{error}"
+    message_missing_apply_to: "Scoped Copilot instruction file missing required 'applyTo' field"
+    suggestion_add_frontmatter: "Add YAML frontmatter with --- markers and applyTo field"
+    fix: "Insert template frontmatter with applyTo field"
+    suggestion_fix_yaml: "Fix the YAML syntax in frontmatter"
+    suggestion_add_apply_to: "Add 'applyTo: \"**/*.ts\"' or similar glob pattern"
+  cop_003:
+    message: "Invalid glob pattern '%{pattern}': %{error}"
+    suggestion: "Use valid glob syntax like '**/*.ts' or 'src/**/*.js'"
+  cop_004:
+    message: "Unknown frontmatter key '%{key}' in Copilot instruction file"
+    suggestion: "Remove unknown key '%{key}'. Only 'applyTo' and 'excludeAgent' are recognized."
+  cop_005:
+    message: "Invalid excludeAgent value '%{value}'. Valid values: 'code-review', 'coding-agent'"
+    suggestion: "Use 'code-review' or 'coding-agent' for excludeAgent"
+    fix: "Change excludeAgent to '%{fixed}'"
+  cop_006:
+    message: "Copilot instruction file exceeds recommended length (%{len} characters, limit ~4000)"
+    suggestion: "Reduce content length or split into scoped instruction files"
+
+  # --- Cursor (cursor.rs) ---
+  cur_001:
+    message_empty: "Cursor rule file is empty"
+    message_no_content: "Cursor rule file has no content after frontmatter"
+    suggestion_empty: "Add frontmatter with description and rules content"
+    suggestion_no_content: "Add rules content after the frontmatter"
+    suggestion_legacy_empty: "Add rules content to the file"
+  cur_002:
+    message: "Cursor .mdc file missing recommended frontmatter"
+    suggestion: "Add YAML frontmatter with --- markers and description/globs fields"
+    fix: "Insert template frontmatter with description and globs fields"
+  cur_003:
+    message: "Invalid YAML frontmatter: %{error}"
+    suggestion: "Fix the YAML syntax in frontmatter"
+  cur_004:
+    message: "Invalid glob pattern '%{pattern}': %{error}"
+    suggestion: "Use valid glob syntax like '**/*.ts' or 'src/**/*.js'"
+  cur_005:
+    message: "Unknown frontmatter key '%{key}' in Cursor rule file"
+    suggestion: "Remove unknown key '%{key}'. Valid keys are: description, globs, alwaysApply."
+  cur_006:
+    message: "Legacy .cursorrules file detected - consider migrating to .cursor/rules/*.mdc format"
+    suggestion: "Create .cursor/rules/ directory and add .mdc files with frontmatter for better organization"
+    legacy_empty: "Cursor rules file is empty"
+  cur_007:
+    message: "alwaysApply is true but globs field is also set - globs are redundant"
+    suggestion: "Remove the globs field since alwaysApply: true makes the rule apply to every chat session regardless of file patterns"
+  cur_008:
+    message: "alwaysApply must be a boolean (true/false), not a quoted string"
+    suggestion: "Use alwaysApply: true or alwaysApply: false without quotes. YAML parses quoted values as strings."
+    fix: "Convert '%{value}' to boolean %{fixed}"
+  cur_009:
+    message: "Agent-requested rule has no description - the agent cannot determine when to apply it"
+    suggestion: "Add a description field explaining when this rule should apply, or set alwaysApply or globs to control activation"
+
+  # --- Cline (cline.rs) ---
+  cln_001:
+    message_empty: "Cline rules file is empty"
+    message_no_content: "Cline rules file has no content after frontmatter"
+    suggestion_empty: "Add rules content to the file"
+    suggestion_no_content: "Add rules content after the frontmatter"
+  cln_002:
+    message: "Invalid glob pattern '%{pattern}': %{error}"
+    suggestion: "Use valid glob syntax like '**/*.ts' or 'src/**/*.js'"
+  cln_003:
+    message: "Unknown frontmatter key '%{key}' in Cline rules file"
+    suggestion: "Remove unknown key '%{key}'. Only 'paths' is a recognized frontmatter key."
+
+  # --- Gemini CLI (gemini_md.rs) ---
+  gm_001:
+    message: "Invalid markdown: %{description}"
+    suggestion: "Fix the markdown syntax error -- check for unclosed tags, mismatched headers, or invalid link syntax"
+  gm_002:
+    message: "No markdown headers found in GEMINI.md instruction file"
+    suggestion: "Add section headers (# Title, ## Section) for better organization"
+  gm_003:
+    message: "Missing project context section in GEMINI.md instruction file"
+    suggestion: "Add a '# Project' or '## Overview' section describing the project purpose and tech stack"
+
+  # --- OpenCode (opencode.rs) ---
+  oc_001:
+    message: "Invalid share mode '%{value}'. Valid values: 'manual', 'auto', 'disabled'"
+    type_error: "Field 'share' must be a string. Valid values: 'manual', 'auto', 'disabled'"
+    suggestion: "Use 'manual', 'auto', or 'disabled' for the share field"
+    fix: "Change share mode to '%{fixed}'"
+  oc_002:
+    not_found: "Instruction path '%{path}' does not exist"
+    invalid_glob: "Instruction path '%{path}' has invalid glob syntax"
+    traversal: "Instruction path '%{path}' must be relative and must not contain '..'"
+    type_error: "Field 'instructions' must be an array of strings"
+    suggestion: "Use relative paths that exist or valid glob patterns in the instructions array"
+  oc_003:
+    message: "opencode.json parse error: %{error}"
+    suggestion: "Fix the JSON syntax in opencode.json"
+
+  # --- Codex CLI (codex.rs) ---
+  cdx_000:
+    message: "Failed to parse .codex/config.toml as TOML: %{error}"
+    suggestion: "Validate TOML syntax -- check for missing quotes, brackets, or invalid key-value pairs"
+  cdx_001:
+    message: "Invalid approvalMode '%{value}'. Valid values: 'suggest', 'auto-edit', 'full-auto'"
+    type_error: "Field 'approvalMode' must be a string. Valid values: 'suggest', 'auto-edit', 'full-auto'"
+    suggestion: "Use 'suggest', 'auto-edit', or 'full-auto' for the approvalMode field"
+    fix: "Change approvalMode to '%{fixed}'"
+  cdx_002:
+    message: "Invalid fullAutoErrorMode '%{value}'. Valid values: 'ask-user', 'ignore-and-continue'"
+    type_error: "Field 'fullAutoErrorMode' must be a string. Valid values: 'ask-user', 'ignore-and-continue'"
+    suggestion: "Use 'ask-user' or 'ignore-and-continue' for the fullAutoErrorMode field"
+    fix: "Change fullAutoErrorMode to '%{fixed}'"
+  cdx_003:
+    message: "AGENTS.override.md should not be in version control"
+    suggestion: "Add AGENTS.override.md to .gitignore (it contains user-specific overrides)"
+
+  # --- Prompt engineering (prompt.rs) ---
+  pe_001:
+    message: "Critical keyword '%{keyword}' at %{percent} percent of document (40-60 percent is the 'lost in the middle' zone)"
+    suggestion: "Move critical content to the start or end of the document for better recall"
+  pe_002:
+    message: "Chain-of-thought phrase '%{phrase}' used with simple task '%{task}'"
+    suggestion: "Remove chain-of-thought instructions for simple tasks; CoT can hurt performance on direct operations"
+  pe_003:
+    message: "Weak language '%{term}' in critical section '%{section}'"
+    suggestion: "Use strong language (must/always/never) in critical sections for better compliance"
+  pe_004:
+    message: "Ambiguous term '%{term}' creates unclear instruction"
+    suggestion: "Replace with specific criteria or remove ambiguity (e.g., 'always' instead of 'usually')"
+
+  # --- Plugin (plugin.rs) ---
+  cc_pl_001:
+    message: "plugin.json must be located in .claude-plugin/ directory"
+    suggestion: "Move plugin.json to .claude-plugin/plugin.json"
+  cc_pl_002:
+    message: "Component '%{component}' must not be inside .claude-plugin/"
+    suggestion: "Move components to the plugin root directory"
+  cc_pl_003:
+    message: "Invalid semver format: '%{version}'"
+    suggestion: "Use semver format: 1.0.0, 1.0.0-rc.1, 1.0.0+build"
+  cc_pl_004:
+    message: "Missing required field: %{field}"
+    suggestion: "Add '%{field}' field to plugin.json"
+  cc_pl_005:
+    message: "Plugin name must not be empty"
+    suggestion: "Set a non-empty plugin name"
+  cc_pl_006:
+    message: "Failed to parse plugin.json: %{error}"
+    suggestion: "Validate JSON syntax in plugin.json -- check for missing commas, brackets, or unquoted keys"
+  cc_pl_007:
+    message: "Invalid component path in '%{field}': '%{path}' must be relative (no absolute paths or '..' traversal)"
+    suggestion: "Use a relative path starting with './' (e.g., './skills/')"
+  cc_pl_008:
+    message: "Component path in '%{field}' points inside .claude-plugin/: '%{path}'"
+    suggestion: "Move the component to the plugin root directory and update the path"
+  cc_pl_009:
+    message: "Invalid author object: 'author.name' must be a non-empty string"
+    suggestion: "Set 'author.name' to a non-empty string"
+  cc_pl_010:
+    message: "Invalid homepage URL: '%{url}' must use http:// or https:// scheme"
+    suggestion: "Use a valid URL with http:// or https:// scheme"
+
+  # --- Version (lib.rs) ---
+  ver_001:
+    message: "No tool or spec versions pinned. Version-dependent rules will use default assumptions."
+    suggestion: "Pin versions in .agnix.toml [tool_versions] or [spec_revisions] for deterministic validation."
+
+  # --- File-level errors (lib.rs) ---
+  file_read_error: "Failed to validate file: %{error}"
+  file_read_error_suggestion: "Check file permissions and ensure the file is not locked by another process"
+  xp_004_read_error: "Failed to read instruction file: %{error}"
+  xp_004_read_error_suggestion: "Check file permissions and ensure the file exists and is readable"
+
+# ===========================================================================
+# Core - Config warnings, eval output, LintError
+# ===========================================================================
+core:
+  error:
+    file_read: "Failed to read file: %{path}"
+    file_write: "Failed to write file: %{path}"
+    file_symlink: "Refusing to read symlink: %{path}"
+    file_too_big: "File too large: %{path} (%{size} bytes, limit %{limit} bytes)"
+    file_not_regular: "Not a regular file: %{path}"
+    invalid_exclude: "Invalid exclude pattern: %{pattern} (%{message})"
+    invalid_include: "Invalid include pattern: %{pattern} (%{message})"
+  config:
+    unknown_rule: "Unknown rule ID pattern '%{rule}'. Expected prefix: %{prefixes}"
+    unknown_rule_suggestion: "Check the rule ID spelling or remove if invalid"
+    unknown_tool: "Unknown tool '%{tool}'. Valid tools: %{valid}"
+    unknown_tool_suggestion: "Use one of the supported tool names"
+    deprecated_target: "Field 'target' is deprecated"
+    deprecated_target_suggestion: "Use the 'tools' array instead"
+    deprecated_mcp_version: "Field 'mcp_protocol_version' is deprecated"
+    deprecated_mcp_version_suggestion: "Use 'spec_revisions.mcp_protocol' instead"
+    invalid_files_pattern: "Invalid files pattern '%{pattern}': %{message}"
+    invalid_files_pattern_suggestion: "Fix the glob pattern syntax. Valid examples: 'docs/ai-rules/*.md', '**/*.rules.md'"
+    files_path_traversal: "Pattern '%{pattern}' contains path traversal ('../'). Patterns must be relative to project root without parent references."
+    files_path_traversal_suggestion: "Remove '../' from the pattern and use a path relative to the project root"
+    files_absolute_path: "Pattern '%{pattern}' uses an absolute path. Patterns must be relative to the project root."
+    files_absolute_path_suggestion: "Remove the leading '/' or drive letter and use a relative path"
+    files_pattern_count_limit: "Field '%{field}' has %{count} patterns, which exceeds the recommended limit of %{limit}."
+    files_pattern_count_limit_suggestion: "Consider consolidating patterns or using broader glob expressions"
+    load_warning: "Failed to parse config '%{path}': %{error}. Using defaults."
+
+# ===========================================================================
+# CLI - Command-line interface output strings
+# ===========================================================================
+cli:
+  validating: "Validating:"
+  no_issues_found: "No issues found"
+  found_errors_warnings: "Found %{errors} %{error_word}, %{warnings} %{warning_word}"
+  info_messages: "  %{count} info messages"
+  fixable_issues: "  %{count} %{word} automatically fixable"
+  issue_is: "issue is"
+  issues_are: "issues are"
+  error_singular: "error"
+  error_plural: "errors"
+  warning_singular: "warning"
+  warning_plural: "warnings"
+  hint_run_fix: "Run with %{flag} to apply fixes"
+  applying_fixes: "%{mode} fixes%{safe_mode}..."
+  no_fixes: "  No fixes to apply"
+  would_fix: "Would fix:"
+  fixed: "Fixed:"
+  diff_label: "Diff"
+  fix_summary: "%{action} %{count} %{word}"
+  file_singular: "file"
+  file_plural: "files"
+  preview: "Preview"
+  applying: "Applying"
+  safe_only: " (safe only)"
+  created: "Created:"
+  schema_written: "Schema written to:"
+  error_label: "Error:"
+  warning_label: "Warning:"
+  config_warning_label: "Config warning:"
+  hint_label: "hint:"
+  rule_label: "rule:"
+  help_label: "help:"
+  note_label: "note:"
+  fix_label: "fix:"
+  safe: "safe"
+  unsafe: "unsafe"
+  fixable: "[fixable]"
+  watch_error_text_only: "Watch mode is only supported with text output."
+  watch_error_fix: "Watch mode cannot be combined with fix flags."
+  fix_error_text_only: "Fix flags are only supported with text output. Remove --format or use --format text."
+  evaluating: "Evaluating:"
+  filter_label: "  filter:"
+  per_case_results: "Per-Case Results"
+  pass: "PASS"
+  fail: "FAIL"
+  unexpected_label: "unexpected:"
+  missing_label: "missing:"
+  success: "SUCCESS"
+  failed: "FAILED"
+  all_cases_passed: "All %{count} cases passed"
+  cases_failed: "%{failed}/%{total} cases failed"
+  telemetry_status: "Telemetry Status"
+  telemetry_configured: "Configured:"
+  telemetry_effective: "Effective:"
+  telemetry_enabled: "enabled"
+  telemetry_disabled: "disabled"
+  telemetry_env_note: "Telemetry is disabled due to environment (CI, DO_NOT_TRACK, etc.)"
+  telemetry_installation_id: "Installation ID:"
+  telemetry_consent_given: "Consent given:"
+  telemetry_privacy: "Privacy Guarantees"
+  telemetry_privacy_1: "  - Opt-in only (disabled by default)"
+  telemetry_privacy_2: "  - No file paths or contents ever collected"
+  telemetry_privacy_3: "  - No user identity collected"
+  telemetry_privacy_4: "  - Only aggregate counts (file types, rule triggers)"
+  telemetry_privacy_5: "  - Respects DO_NOT_TRACK, CI environments"
+  telemetry_config_file: "Config file:"
+  telemetry_already_enabled: "Telemetry is already enabled."
+  telemetry_ok_enabled: "Telemetry enabled."
+  telemetry_thanks: "Thank you for helping improve agnix!"
+  telemetry_collect: "What we collect:"
+  telemetry_collect_1: "  - File type counts (e.g., 5 skills, 2 MCP configs)"
+  telemetry_collect_2: "  - Rule trigger counts (e.g., AS-001: 3 times)"
+  telemetry_collect_3: "  - Error/warning counts"
+  telemetry_collect_4: "  - Validation duration"
+  telemetry_never_collect: "What we never collect:"
+  telemetry_never_1: "  - File paths or names"
+  telemetry_never_2: "  - File contents or code"
+  telemetry_never_3: "  - User identity"
+  telemetry_disable_hint: "You can disable telemetry at any time with: %{cmd}"
+  telemetry_already_disabled: "Telemetry is already disabled."
+  telemetry_ok_disabled: "Telemetry disabled."
+  locale_unsupported: "Warning: unsupported locale '%{locale}', falling back to 'en'"
+  watch_starting: "Starting watch mode. Press Ctrl+C to stop."
+  watch_changes_detected: "Changes detected. Re-validating..."
+  watch_error: "Watch error: %{error}"
+  watch_stopped: "Watch mode stopped."
+
+# ===========================================================================
+# LSP - Language server protocol strings
+# ===========================================================================
+lsp:
+  suggestion_label: "Suggestion:"
+  hover:
+    name: "Name"
+    description: "Description"
+    model: "Model"
+    context: "Context"
+    agent: "Agent"
+    allowed_tools: "Allowed Tools"
+    argument_hint: "Argument Hint"
+    user_invocable: "User Invocable"
+    disable_model_invocation: "Disable Model Invocation"
+    license: "License"
+    compatibility: "Compatibility"
