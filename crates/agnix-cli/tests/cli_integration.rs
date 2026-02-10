@@ -3000,3 +3000,58 @@ fn test_locale_es_translates_diagnostic_messages() {
         stdout
     );
 }
+
+/// Verify that CLI diagnostic output contains resolved messages, not raw
+/// i18n key paths like "rules.as_004.message" or "cli.found_errors_warnings".
+#[test]
+fn test_no_raw_i18n_keys_in_diagnostic_output() {
+    use regex::Regex;
+    use std::fs;
+    use std::io::Write;
+
+    let temp_dir = tempfile::tempdir().unwrap();
+
+    // Create a skill with an invalid name to trigger AS-004
+    let skills_dir = temp_dir.path().join("skills").join("bad-skill");
+    fs::create_dir_all(&skills_dir).unwrap();
+    let mut file = fs::File::create(skills_dir.join("SKILL.md")).unwrap();
+    writeln!(
+        file,
+        "---\nname: Bad-Skill\ndescription: test\n---\nContent"
+    )
+    .unwrap();
+
+    // Create a CLAUDE.md with unclosed XML to trigger XML-001
+    let mut claude_file = fs::File::create(temp_dir.path().join("CLAUDE.md")).unwrap();
+    writeln!(claude_file, "<unclosed>\nSome memory content").unwrap();
+
+    let mut cmd = agnix();
+    let output = cmd.arg(temp_dir.path().to_str().unwrap()).output().unwrap();
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+
+    // These patterns match raw i18n key paths that should never appear in output
+    let raw_key_patterns = [
+        Regex::new(r"\brules\.[a-z_]+_\d+\.message\b").unwrap(),
+        Regex::new(r"\brules\.[a-z_]+_\d+\.suggestion\b").unwrap(),
+        Regex::new(r"\bcli\.[a-z_]+\b").unwrap(),
+        Regex::new(r"\blsp\.[a-z_]+\b").unwrap(),
+        Regex::new(r"\bcore\.error\.[a-z_]+\b").unwrap(),
+    ];
+
+    for pattern in &raw_key_patterns {
+        let matches: Vec<&str> = pattern.find_iter(&stdout).map(|m| m.as_str()).collect();
+        assert!(
+            matches.is_empty(),
+            "Found raw i18n key(s) in CLI output: {:?}\nFull output:\n{}",
+            matches,
+            stdout
+        );
+    }
+
+    // Sanity check: output should contain real diagnostic text
+    assert!(
+        !stdout.is_empty(),
+        "CLI should produce diagnostic output for invalid fixtures"
+    );
+}
