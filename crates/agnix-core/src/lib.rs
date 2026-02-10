@@ -155,7 +155,7 @@ impl ValidatorRegistry {
 /// # Examples
 ///
 /// ```
-/// use agnix_core::{ValidatorRegistry, ValidatorRegistryBuilder, FileType};
+/// use agnix_core::{ValidatorRegistry, ValidatorRegistryBuilder};
 ///
 /// // Build a registry with only the built-in validators:
 /// let registry = ValidatorRegistryBuilder::new()
@@ -169,6 +169,7 @@ impl ValidatorRegistry {
 /// ```
 pub struct ValidatorRegistryBuilder {
     validators: HashMap<FileType, Vec<ValidatorFactory>>,
+    defaults_added: bool,
 }
 
 impl ValidatorRegistryBuilder {
@@ -176,6 +177,7 @@ impl ValidatorRegistryBuilder {
     pub fn new() -> Self {
         Self {
             validators: HashMap::with_capacity(16),
+            defaults_added: false,
         }
     }
 
@@ -189,9 +191,15 @@ impl ValidatorRegistryBuilder {
 
     /// Register all built-in validators.
     ///
-    /// This can be combined with [`with_validator`](Self::with_validator) to
-    /// extend the defaults with custom validators.
+    /// This method is idempotent: calling it more than once has no additional
+    /// effect. It can be combined with [`with_validator`](Self::with_validator)
+    /// to extend the defaults with custom validators.
     pub fn with_defaults(mut self) -> Self {
+        if self.defaults_added {
+            return self;
+        }
+        self.defaults_added = true;
+
         const DEFAULTS: &[(FileType, ValidatorFactory)] = &[
             (FileType::Skill, skill_validator),
             (FileType::Skill, per_client_skill_validator),
@@ -1614,7 +1622,7 @@ mod tests {
     }
 
     #[test]
-    fn test_builder_double_defaults_accumulates() {
+    fn test_builder_with_defaults_is_idempotent() {
         let single = ValidatorRegistry::builder()
             .with_defaults()
             .build()
@@ -1628,7 +1636,7 @@ mod tests {
             .validators_for(FileType::Skill)
             .len();
 
-        assert_eq!(double, single * 2, "calling with_defaults() twice should double the validators");
+        assert_eq!(double, single, "with_defaults() is idempotent, calling twice should not duplicate");
     }
 
     #[test]
