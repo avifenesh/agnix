@@ -578,6 +578,13 @@ pub struct RuleConfig {
         description = "List of rule IDs to explicitly disable (e.g., [\"CC-AG-001\", \"AS-005\"])"
     )]
     pub disabled_rules: Vec<String>,
+
+    /// Explicitly disabled validators by name (e.g., ["XmlValidator", "PromptValidator"])
+    #[serde(default)]
+    #[schemars(
+        description = "List of validator names to disable (e.g., [\"XmlValidator\", \"PromptValidator\"])"
+    )]
+    pub disabled_validators: Vec<String>,
 }
 
 impl Default for RuleConfig {
@@ -605,6 +612,7 @@ impl Default for RuleConfig {
             xml_balance: true,
             import_references: true,
             disabled_rules: Vec::new(),
+            disabled_validators: Vec::new(),
         }
     }
 }
@@ -2585,6 +2593,41 @@ disabled_rules = ["CC-MEM-006"]
         assert!(!config.is_rule_enabled("CC-MEM-006"));
         // exclude should use default
         assert!(config.exclude.contains(&"node_modules/**".to_string()));
+    }
+
+    // ===== Disabled Validators TOML Deserialization =====
+
+    #[test]
+    fn test_disabled_validators_toml_deserialization() {
+        let toml_str = r#"
+[rules]
+disabled_validators = ["XmlValidator", "PromptValidator"]
+"#;
+        let config: LintConfig = toml::from_str(toml_str).unwrap();
+        assert_eq!(
+            config.rules.disabled_validators,
+            vec!["XmlValidator", "PromptValidator"]
+        );
+    }
+
+    #[test]
+    fn test_disabled_validators_defaults_to_empty() {
+        let toml_str = r#"
+[rules]
+skills = true
+"#;
+        let config: LintConfig = toml::from_str(toml_str).unwrap();
+        assert!(config.rules.disabled_validators.is_empty());
+    }
+
+    #[test]
+    fn test_disabled_validators_empty_array() {
+        let toml_str = r#"
+[rules]
+disabled_validators = []
+"#;
+        let config: LintConfig = toml::from_str(toml_str).unwrap();
+        assert!(config.rules.disabled_validators.is_empty());
     }
 
     // ===== Disabled Rules Edge Cases =====

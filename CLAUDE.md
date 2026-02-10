@@ -72,7 +72,7 @@ tests/fixtures/     # Test cases by category
 - `fixes.rs` - Auto-fix application engine
 - `fs.rs` - FileSystem trait abstraction (RealFileSystem, MockFileSystem)
 - `pipeline.rs` - ValidationResult, validate_project(), validate_file()
-- `registry.rs` - ValidatorRegistry, factory functions
+- `registry.rs` - ValidatorRegistry, ValidatorRegistryBuilder, ValidatorProvider, factory functions
 
 ### Key Abstractions
 
@@ -80,11 +80,22 @@ tests/fixtures/     # Test cases by category
 // Primary extension point
 pub trait Validator {
     fn validate(&self, path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic>;
+    fn name(&self) -> &'static str { /* default: short type name */ }
 }
 
-// Multiple validators per FileType via factory pattern
-pub struct ValidatorRegistry {
-    validators: HashMap<FileType, Vec<ValidatorFactory>>
+// Plugin architecture for extensibility
+pub trait ValidatorProvider: Send + Sync {
+    fn name(&self) -> &str { /* default: short type name */ }
+    fn validators(&self) -> Vec<(FileType, ValidatorFactory)>;
+}
+
+// Registry with builder pattern and runtime filtering
+pub struct ValidatorRegistry { /* ... */ }
+
+impl ValidatorRegistry {
+    pub fn builder() -> ValidatorRegistryBuilder;
+    pub fn with_defaults() -> Self;
+    pub fn disable_validator(&mut self, name: impl Into<String>);
 }
 ```
 

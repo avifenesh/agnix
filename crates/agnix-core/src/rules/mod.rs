@@ -23,9 +23,44 @@ pub mod xml;
 use crate::{config::LintConfig, diagnostics::Diagnostic};
 use std::path::Path;
 
-/// Trait for file validators
-pub trait Validator {
+/// Extract the short (unqualified) type name from `std::any::type_name`.
+///
+/// Given a fully-qualified path like `"agnix_core::rules::skill::SkillValidator"`,
+/// returns `"SkillValidator"`. For generic types like `"Wrapper<foo::Bar>"`,
+/// strips the generic suffix first, yielding `"Wrapper"`.
+/// Falls back to the full name when no `::` separator is found.
+fn short_type_name<T: ?Sized + 'static>() -> &'static str {
+    let full = std::any::type_name::<T>();
+    // Strip generic suffix (e.g., "Wrapper<foo::Bar>" -> "Wrapper")
+    let base = full.split('<').next().unwrap_or(full);
+    base.rsplit("::").next().unwrap_or(base)
+}
+
+/// Trait for file validators.
+///
+/// Implementors define validation logic for specific file types. Each validator
+/// is created by a [`ValidatorFactory`](crate::ValidatorFactory) registered in
+/// the [`ValidatorRegistry`](crate::ValidatorRegistry).
+///
+/// The [`name()`](Validator::name) method returns a human-readable identifier
+/// used for filtering via `disabled_validators` configuration. The default
+/// implementation derives the name from the concrete struct name (e.g.,
+/// `"SkillValidator"`).
+pub trait Validator: 'static {
+    /// Validate the given file content and return any diagnostics.
     fn validate(&self, path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic>;
+
+    /// Return a short, human-readable name for this validator.
+    ///
+    /// Used by [`ValidatorRegistry`](crate::ValidatorRegistry) to support
+    /// `disabled_validators` filtering. The default implementation extracts
+    /// the unqualified struct name (e.g., `"SkillValidator"`).
+    ///
+    /// Override this if the auto-derived name is unsuitable (e.g., for
+    /// dynamically-generated validators from plugins).
+    fn name(&self) -> &'static str {
+        short_type_name::<Self>()
+    }
 }
 
 /// Trait for frontmatter types that support value range finding.

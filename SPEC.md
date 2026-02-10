@@ -223,6 +223,9 @@ import_references = true
 # Disable specific rules by ID
 disabled_rules = []  # e.g., ["CC-AG-001", "AS-005"]
 
+# Disable entire validators by name
+disabled_validators = []  # e.g., ["XmlValidator", "ImportsValidator"]
+
 exclude = ["node_modules/**", ".git/**", "target/**"]
 ```
 

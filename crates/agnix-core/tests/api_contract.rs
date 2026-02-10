@@ -524,4 +524,55 @@ fn validator_registry_methods() {
     // total_factory_count()
     assert_eq!(empty.total_factory_count(), 0);
     assert!(defaults.total_factory_count() > 0);
+
+    // disable_validator() and disabled_validator_count()
+    let mut registry = agnix_core::ValidatorRegistry::with_defaults();
+    assert_eq!(registry.disabled_validator_count(), 0);
+    registry.disable_validator("XmlValidator");
+    assert_eq!(registry.disabled_validator_count(), 1);
+
+    // builder()
+    let _builder_registry = agnix_core::ValidatorRegistry::builder()
+        .with_defaults()
+        .build();
+}
+
+// ============================================================================
+// ValidatorProvider and ValidatorRegistryBuilder importability
+// ============================================================================
+
+#[test]
+fn new_plugin_types_are_importable() {
+    let _ = std::any::type_name::<agnix_core::ValidatorRegistryBuilder>();
+
+    // ValidatorProvider is a trait - verify it can be used as trait bound
+    fn _assert_provider_trait(_: &dyn agnix_core::ValidatorProvider) {}
+}
+
+#[test]
+fn builder_method_signatures_compile() {
+    // builder() -> ValidatorRegistryBuilder
+    let mut builder = agnix_core::ValidatorRegistry::builder();
+
+    // with_defaults() -> &mut Self
+    let _: &mut agnix_core::ValidatorRegistryBuilder = builder.with_defaults();
+
+    // without_validator() -> &mut Self
+    let _: &mut agnix_core::ValidatorRegistryBuilder = builder.without_validator("XmlValidator");
+
+    // build() -> ValidatorRegistry
+    let _: agnix_core::ValidatorRegistry = builder.build();
+}
+
+#[test]
+fn builder_built_registry_matches_with_defaults_factory_count() {
+    let via_builder = agnix_core::ValidatorRegistry::builder()
+        .with_defaults()
+        .build();
+    let via_direct = agnix_core::ValidatorRegistry::with_defaults();
+
+    assert_eq!(
+        via_builder.total_factory_count(),
+        via_direct.total_factory_count(),
+    );
 }

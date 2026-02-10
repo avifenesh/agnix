@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Plugin architecture**: `ValidatorProvider` trait enables external validator registration
+- **Builder pattern**: `ValidatorRegistry::builder()` for ergonomic registry construction with `with_defaults()`, `with_provider()`, `without_validator()`
+- **Validator disabling**: `disabled_validators` config field in `[rules]` section to disable validators by name at runtime
+- **Validator naming**: `Validator::name()` method for programmatic identification of validators
+
 ### Changed
 - **Refactoring**: Split `crates/agnix-core/src/lib.rs` into focused modules: `file_types.rs`, `registry.rs`, `pipeline.rs`
 
