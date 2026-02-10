@@ -10,10 +10,8 @@
 //! internal unit tests since they require access to private modules.
 
 use agnix_core::{
-    config::LintConfig,
-    diagnostics::LintError,
-    parsers::{frontmatter::split_frontmatter, markdown::MAX_REGEX_INPUT_SIZE},
-    validate_project,
+    config::LintConfig, diagnostics::LintError, split_frontmatter, validate_project,
+    MAX_REGEX_INPUT_SIZE,
 };
 use tempfile::TempDir;
 
@@ -64,7 +62,7 @@ fn test_regex_input_size_limit_constant() {
 
 #[test]
 fn test_oversized_content_skips_regex() {
-    use agnix_core::parsers::markdown::extract_xml_tags;
+    use agnix_core::extract_xml_tags;
 
     // Create content larger than MAX_REGEX_INPUT_SIZE
     let large_content = "a".repeat(MAX_REGEX_INPUT_SIZE + 1000);
@@ -130,7 +128,7 @@ fn test_yaml_deeply_nested() {
 
 #[test]
 fn test_json_deeply_nested() {
-    use agnix_core::parsers::json::parse_json_config;
+    use agnix_core::parse_json_config;
     use serde_json::Value;
 
     // Create deeply nested JSON
@@ -145,7 +143,7 @@ fn test_json_deeply_nested() {
 
 #[test]
 fn test_json_with_long_strings() {
-    use agnix_core::parsers::json::parse_json_config;
+    use agnix_core::parse_json_config;
     use serde_json::Value;
 
     // JSON with very long string value

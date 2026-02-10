@@ -34,7 +34,7 @@ mod file_utils;
 pub mod fixes;
 pub mod fs;
 pub mod i18n;
-pub mod parsers;
+pub(crate) mod parsers;
 mod regex_util;
 mod rules;
 mod schemas;
@@ -54,6 +54,22 @@ pub use diagnostics::{Diagnostic, DiagnosticLevel, Fix, LintError, LintResult};
 pub use fixes::{FixResult, apply_fixes, apply_fixes_with_fs};
 pub use fs::{FileSystem, MockFileSystem, RealFileSystem};
 pub use rules::Validator;
+
+// Internal re-exports (not part of the stable API).
+// These types leak through LintConfig or are needed by fuzz/bench/test targets.
+#[doc(hidden)]
+pub use parsers::ImportCache;
+#[doc(hidden)]
+pub use parsers::markdown::Import;
+#[doc(hidden)]
+pub use parsers::frontmatter::{split_frontmatter, FrontmatterParts};
+#[doc(hidden)]
+pub use parsers::markdown::{
+    check_xml_balance, check_xml_balance_with_content_end, extract_imports,
+    extract_markdown_links, extract_xml_tags, MarkdownLink, XmlTag, MAX_REGEX_INPUT_SIZE,
+};
+#[doc(hidden)]
+pub use parsers::json::parse_json_config;
 
 /// Result of validating a project, including diagnostics and metadata.
 #[derive(Debug, Clone)]

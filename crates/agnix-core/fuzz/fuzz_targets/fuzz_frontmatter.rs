@@ -10,7 +10,7 @@ use libfuzzer_sys::fuzz_target;
 
 fuzz_target!(|data: &str| {
     // Test split_frontmatter() - should never panic on any input
-    let parts = agnix_core::parsers::frontmatter::split_frontmatter(data);
+    let parts = agnix_core::split_frontmatter(data);
 
     // Verify invariants:
     // 1. Offsets must be within bounds

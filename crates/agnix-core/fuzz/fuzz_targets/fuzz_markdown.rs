@@ -10,7 +10,7 @@ use libfuzzer_sys::fuzz_target;
 
 fuzz_target!(|data: &str| {
     // Test extract_xml_tags() - should never panic
-    let tags = agnix_core::parsers::markdown::extract_xml_tags(data);
+    let tags = agnix_core::extract_xml_tags(data);
 
     // Verify invariants for XML tags:
     for tag in &tags {
@@ -29,12 +29,12 @@ fuzz_target!(|data: &str| {
     }
 
     // Test check_xml_balance() - should never panic
-    let _errors = agnix_core::parsers::markdown::check_xml_balance(&tags);
+    let _errors = agnix_core::check_xml_balance(&tags);
     let _errors_with_end =
-        agnix_core::parsers::markdown::check_xml_balance_with_content_end(&tags, Some(data.len()));
+        agnix_core::check_xml_balance_with_content_end(&tags, Some(data.len()));
 
     // Test extract_imports() - should never panic
-    let imports = agnix_core::parsers::markdown::extract_imports(data);
+    let imports = agnix_core::extract_imports(data);
 
     // Verify invariants for imports:
     for import in &imports {
@@ -53,7 +53,7 @@ fuzz_target!(|data: &str| {
     }
 
     // Test extract_markdown_links() - should never panic
-    let links = agnix_core::parsers::markdown::extract_markdown_links(data);
+    let links = agnix_core::extract_markdown_links(data);
 
     // Verify invariants for links:
     for link in &links {
