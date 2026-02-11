@@ -4,6 +4,8 @@ Neovim plugin for [agnix](https://github.com/avifenesh/agnix) - lint agent confi
 
 Provides real-time validation of AI agent configuration files (CLAUDE.md, AGENTS.md, SKILL.md, `.claude/settings.json`, `*.mcp.json`, `.cursor/rules/*.mdc`, and more) using the `agnix-lsp` language server.
 
+![Inline diagnostic in Neovim](assets/diagnostic-inline.png)
+
 ## Features
 
 - Automatic LSP attachment to supported file types
