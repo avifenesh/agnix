@@ -78,7 +78,12 @@ pub trait Validator: 'static {
     ///
     /// The default implementation returns the validator's [`name`](Validator::name)
     /// with an empty `rule_ids` slice. Built-in validators override this to
-    /// advertise the full set of rule IDs they can emit.
+    /// advertise the full set of rule IDs they can emit from their
+    /// [`validate`](Validator::validate) method.
+    ///
+    /// Note: `rule_ids` covers only rules emitted directly by the validator.
+    /// Pipeline-level post-processing rules (e.g. `AGM-006`, `XP-004`..`XP-006`,
+    /// `VER-001`) are not attributed to any validator.
     fn metadata(&self) -> ValidatorMetadata {
         ValidatorMetadata {
             name: self.name(),
