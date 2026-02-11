@@ -4,7 +4,7 @@ use crate::{
     config::LintConfig,
     diagnostics::{Diagnostic, Fix},
     file_utils::safe_read_file,
-    rules::Validator,
+    rules::{Validator, ValidatorMetadata},
     schemas::claude_md::{
         check_readme_duplication, check_token_count, extract_npm_scripts, find_critical_in_middle,
         find_generic_instructions, find_negative_without_positive, find_weak_constraints,
@@ -13,9 +13,26 @@ use crate::{
 use rust_i18n::t;
 use std::path::Path;
 
+const RULE_IDS: &[&str] = &[
+    "CC-MEM-004",
+    "CC-MEM-005",
+    "CC-MEM-006",
+    "CC-MEM-007",
+    "CC-MEM-008",
+    "CC-MEM-009",
+    "CC-MEM-010",
+];
+
 pub struct ClaudeMdValidator;
 
 impl Validator for ClaudeMdValidator {
+    fn metadata(&self) -> ValidatorMetadata {
+        ValidatorMetadata {
+            name: self.name(),
+            rule_ids: RULE_IDS,
+        }
+    }
+
     fn validate(&self, path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic> {
         let mut diagnostics = Vec::new();
 

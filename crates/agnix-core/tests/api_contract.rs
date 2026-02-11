@@ -33,6 +33,9 @@ fn public_types_are_importable() {
     // ValidatorFactory type alias
     let _ = std::any::type_name::<agnix_core::ValidatorFactory>();
 
+    // ValidatorMetadata struct
+    let _ = std::any::type_name::<agnix_core::ValidatorMetadata>();
+
     // Trait objects
     fn _assert_validator_trait(_: &dyn agnix_core::Validator) {}
     fn _assert_filesystem_trait(_: &dyn agnix_core::FileSystem) {}
@@ -576,4 +579,37 @@ fn builder_built_registry_matches_with_defaults_factory_count() {
         via_builder.total_factory_count(),
         via_direct.total_factory_count(),
     );
+}
+
+// ============================================================================
+// ValidatorMetadata API contract
+// ============================================================================
+
+#[test]
+fn validator_metadata_is_copy_and_eq() {
+    let meta = agnix_core::ValidatorMetadata {
+        name: "TestValidator",
+        rule_ids: &["TEST-001"],
+    };
+
+    // ValidatorMetadata must derive Copy
+    let copy = meta;
+    assert_eq!(meta, copy);
+
+    // ValidatorMetadata must derive Eq
+    assert_eq!(meta, meta);
+}
+
+#[test]
+fn validator_metadata_callable_on_dyn_validator() {
+    // Ensure metadata() is object-safe and callable on trait objects
+    let registry = agnix_core::ValidatorRegistry::with_defaults();
+    let validators = registry.validators_for(agnix_core::FileType::Skill);
+    assert!(!validators.is_empty());
+
+    // Call metadata() through a trait object reference (&dyn Validator)
+    let v: &dyn agnix_core::Validator = &*validators[0];
+    let meta = v.metadata();
+    assert!(!meta.name.is_empty());
+    assert!(!meta.rule_ids.is_empty());
 }

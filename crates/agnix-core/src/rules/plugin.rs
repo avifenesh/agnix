@@ -5,15 +5,35 @@
 use crate::{
     config::LintConfig,
     diagnostics::{Diagnostic, Fix},
-    rules::Validator,
+    rules::{Validator, ValidatorMetadata},
     schemas::plugin::PluginSchema,
 };
 use rust_i18n::t;
 use std::path::Path;
 
+const RULE_IDS: &[&str] = &[
+    "CC-PL-001",
+    "CC-PL-002",
+    "CC-PL-003",
+    "CC-PL-004",
+    "CC-PL-005",
+    "CC-PL-006",
+    "CC-PL-007",
+    "CC-PL-008",
+    "CC-PL-009",
+    "CC-PL-010",
+];
+
 pub struct PluginValidator;
 
 impl Validator for PluginValidator {
+    fn metadata(&self) -> ValidatorMetadata {
+        ValidatorMetadata {
+            name: self.name(),
+            rule_ids: RULE_IDS,
+        }
+    }
+
     fn validate(&self, path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic> {
         let mut diagnostics = Vec::new();
 

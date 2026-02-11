@@ -9,7 +9,7 @@
 use crate::{
     config::LintConfig,
     diagnostics::Diagnostic,
-    rules::Validator,
+    rules::{Validator, ValidatorMetadata},
     schemas::prompt::{
         find_ambiguous_instructions, find_cot_on_simple_tasks, find_critical_in_middle_pe,
         find_weak_imperative_language,
@@ -18,9 +18,18 @@ use crate::{
 use rust_i18n::t;
 use std::path::Path;
 
+const RULE_IDS: &[&str] = &["PE-001", "PE-002", "PE-003", "PE-004"];
+
 pub struct PromptValidator;
 
 impl Validator for PromptValidator {
+    fn metadata(&self) -> ValidatorMetadata {
+        ValidatorMetadata {
+            name: self.name(),
+            rule_ids: RULE_IDS,
+        }
+    }
+
     fn validate(&self, path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic> {
         let mut diagnostics = Vec::new();
 

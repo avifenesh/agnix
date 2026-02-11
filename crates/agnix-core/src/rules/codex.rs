@@ -9,7 +9,7 @@
 use crate::{
     config::LintConfig,
     diagnostics::{Diagnostic, Fix},
-    rules::Validator,
+    rules::{Validator, ValidatorMetadata},
     schemas::codex::{VALID_APPROVAL_MODES, VALID_FULL_AUTO_ERROR_MODES, parse_codex_toml},
 };
 use rust_i18n::t;
@@ -29,9 +29,18 @@ fn find_toml_string_value_span(
     crate::span_utils::find_unique_toml_string_value(content, key, current_value)
 }
 
+const RULE_IDS: &[&str] = &["CDX-000", "CDX-001", "CDX-002", "CDX-003"];
+
 pub struct CodexValidator;
 
 impl Validator for CodexValidator {
+    fn metadata(&self) -> ValidatorMetadata {
+        ValidatorMetadata {
+            name: self.name(),
+            rule_ids: RULE_IDS,
+        }
+    }
+
     fn validate(&self, path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic> {
         let mut diagnostics = Vec::new();
 

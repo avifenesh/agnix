@@ -36,6 +36,18 @@ fn short_type_name<T: ?Sized + 'static>() -> &'static str {
     base.rsplit("::").next().unwrap_or(base)
 }
 
+/// Metadata for a validator, providing introspection capabilities.
+///
+/// Returned by [`Validator::metadata`] to expose the validator's name and
+/// the set of rule IDs it can emit during validation.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ValidatorMetadata {
+    /// Human-readable validator name (e.g. `"SkillValidator"`).
+    pub name: &'static str,
+    /// Rule IDs this validator can emit (e.g. `&["AS-001", "AS-002"]`).
+    pub rule_ids: &'static [&'static str],
+}
+
 /// Trait for file validators.
 ///
 /// Implementors define validation logic for specific file types. Each validator
@@ -60,6 +72,23 @@ pub trait Validator: 'static {
     /// dynamically-generated validators from plugins).
     fn name(&self) -> &'static str {
         short_type_name::<Self>()
+    }
+
+    /// Returns metadata describing this validator.
+    ///
+    /// The default implementation returns the validator's [`name`](Validator::name)
+    /// with an empty `rule_ids` slice. Built-in validators override this to
+    /// advertise the full set of rule IDs they can emit from their
+    /// [`validate`](Validator::validate) method.
+    ///
+    /// Note: `rule_ids` covers only rules emitted directly by the validator.
+    /// Pipeline-level post-processing rules (e.g. `AGM-006`, `XP-004`..`XP-006`,
+    /// `VER-001`) are not attributed to any validator.
+    fn metadata(&self) -> ValidatorMetadata {
+        ValidatorMetadata {
+            name: self.name(),
+            rule_ids: &[],
+        }
     }
 }
 
@@ -282,5 +311,50 @@ mod tests {
             Some("ss"),
             "2-char exact match (case-insensitive) should still work"
         );
+    }
+
+    #[test]
+    fn test_validator_metadata_default_has_empty_rule_ids() {
+        struct DummyValidator;
+        impl Validator for DummyValidator {
+            fn validate(&self, _: &Path, _: &str, _: &LintConfig) -> Vec<Diagnostic> {
+                vec![]
+            }
+        }
+        let v = DummyValidator;
+        let meta = v.metadata();
+        assert_eq!(meta.name, "DummyValidator");
+        assert!(meta.rule_ids.is_empty());
+    }
+
+    #[test]
+    fn test_validator_metadata_custom_override() {
+        const IDS: &[&str] = &["TEST-001", "TEST-002"];
+        struct CustomValidator;
+        impl Validator for CustomValidator {
+            fn validate(&self, _: &Path, _: &str, _: &LintConfig) -> Vec<Diagnostic> {
+                vec![]
+            }
+            fn metadata(&self) -> ValidatorMetadata {
+                ValidatorMetadata {
+                    name: "CustomValidator",
+                    rule_ids: IDS,
+                }
+            }
+        }
+        let v = CustomValidator;
+        let meta = v.metadata();
+        assert_eq!(meta.name, "CustomValidator");
+        assert_eq!(meta.rule_ids, &["TEST-001", "TEST-002"]);
+    }
+
+    #[test]
+    fn test_validator_metadata_is_copy() {
+        let meta = ValidatorMetadata {
+            name: "Test",
+            rule_ids: &["R-001"],
+        };
+        let copy = meta;
+        assert_eq!(meta, copy);
     }
 }

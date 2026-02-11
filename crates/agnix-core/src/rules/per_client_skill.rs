@@ -7,7 +7,7 @@
 use crate::config::LintConfig;
 use crate::diagnostics::{Diagnostic, Fix};
 use crate::parsers::frontmatter::split_frontmatter;
-use crate::rules::Validator;
+use crate::rules::{Validator, ValidatorMetadata};
 use rust_i18n::t;
 use std::path::Path;
 
@@ -188,9 +188,29 @@ fn advance_past_line(fm_offset: usize, line_len: usize, fm_bytes: &[u8]) -> usiz
     }
 }
 
+const RULE_IDS: &[&str] = &[
+    "AMP-SK-001",
+    "CL-SK-001",
+    "CP-SK-001",
+    "CR-SK-001",
+    "CX-SK-001",
+    "KR-SK-001",
+    "OC-SK-001",
+    "RC-SK-001",
+    "WS-SK-001",
+    "XP-SK-001",
+];
+
 pub struct PerClientSkillValidator;
 
 impl Validator for PerClientSkillValidator {
+    fn metadata(&self) -> ValidatorMetadata {
+        ValidatorMetadata {
+            name: self.name(),
+            rule_ids: RULE_IDS,
+        }
+    }
+
     fn validate(&self, path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic> {
         let mut diagnostics = Vec::new();
 

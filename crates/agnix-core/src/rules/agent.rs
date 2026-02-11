@@ -8,7 +8,7 @@ use crate::{
     diagnostics::{Diagnostic, Fix},
     fs::FileSystem,
     parsers::frontmatter::split_frontmatter,
-    rules::Validator,
+    rules::{Validator, ValidatorMetadata},
     schemas::agent::AgentSchema,
     schemas::hooks::HooksSchema,
     validation::is_valid_mcp_tool_format,
@@ -87,6 +87,22 @@ const KNOWN_AGENT_TOOLS: &[&str] = &[
     "Skill",
     "StatusBarMessageTool",
     "TaskOutput",
+];
+
+const RULE_IDS: &[&str] = &[
+    "CC-AG-001",
+    "CC-AG-002",
+    "CC-AG-003",
+    "CC-AG-004",
+    "CC-AG-005",
+    "CC-AG-006",
+    "CC-AG-007",
+    "CC-AG-008",
+    "CC-AG-009",
+    "CC-AG-010",
+    "CC-AG-011",
+    "CC-AG-012",
+    "CC-AG-013",
 ];
 
 pub struct AgentValidator;
@@ -235,6 +251,13 @@ impl AgentValidator {
 }
 
 impl Validator for AgentValidator {
+    fn metadata(&self) -> ValidatorMetadata {
+        ValidatorMetadata {
+            name: self.name(),
+            rule_ids: RULE_IDS,
+        }
+    }
+
     fn validate(&self, path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic> {
         let mut diagnostics = Vec::new();
 

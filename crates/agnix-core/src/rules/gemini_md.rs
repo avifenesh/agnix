@@ -8,7 +8,7 @@
 use crate::{
     config::LintConfig,
     diagnostics::Diagnostic,
-    rules::Validator,
+    rules::{Validator, ValidatorMetadata},
     schemas::agents_md::{
         MarkdownIssueType, check_markdown_validity, check_project_context, check_section_headers,
     },
@@ -16,9 +16,18 @@ use crate::{
 use rust_i18n::t;
 use std::path::Path;
 
+const RULE_IDS: &[&str] = &["GM-001", "GM-002", "GM-003"];
+
 pub struct GeminiMdValidator;
 
 impl Validator for GeminiMdValidator {
+    fn metadata(&self) -> ValidatorMetadata {
+        ValidatorMetadata {
+            name: self.name(),
+            rule_ids: RULE_IDS,
+        }
+    }
+
     fn validate(&self, path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic> {
         let mut diagnostics = Vec::new();
 

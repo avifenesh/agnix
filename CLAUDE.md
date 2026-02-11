@@ -81,6 +81,7 @@ tests/fixtures/     # Test cases by category
 pub trait Validator {
     fn validate(&self, path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic>;
     fn name(&self) -> &'static str { /* default: short type name */ }
+    fn metadata(&self) -> ValidatorMetadata { /* default: empty rule_ids */ }
 }
 
 // Plugin architecture for extensibility

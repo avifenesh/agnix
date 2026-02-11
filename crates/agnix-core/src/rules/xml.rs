@@ -6,10 +6,12 @@ use crate::{
     parsers::markdown::{
         XmlBalanceError, XmlTag, check_xml_balance_with_content_end, extract_xml_tags,
     },
-    rules::Validator,
+    rules::{Validator, ValidatorMetadata},
 };
 use rust_i18n::t;
 use std::path::Path;
+
+const RULE_IDS: &[&str] = &["XML-001", "XML-002", "XML-003"];
 
 pub struct XmlValidator;
 
@@ -30,6 +32,13 @@ fn find_unique_closing_tag_span(
 }
 
 impl Validator for XmlValidator {
+    fn metadata(&self) -> ValidatorMetadata {
+        ValidatorMetadata {
+            name: self.name(),
+            rule_ids: RULE_IDS,
+        }
+    }
+
     fn validate(&self, path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic> {
         let mut diagnostics = Vec::new();
 

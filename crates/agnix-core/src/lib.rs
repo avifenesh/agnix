@@ -98,7 +98,7 @@ pub use pipeline::{
 pub use registry::{
     ValidatorFactory, ValidatorProvider, ValidatorRegistry, ValidatorRegistryBuilder,
 };
-pub use rules::Validator;
+pub use rules::{Validator, ValidatorMetadata};
 
 // Internal re-exports (not part of the stable API).
 // These types are needed by fuzz/bench/test targets or leak through LintConfig.

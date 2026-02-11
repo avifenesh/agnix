@@ -5,7 +5,7 @@ use crate::{
     diagnostics::{Diagnostic, Fix},
     parsers::frontmatter::{FrontmatterParts, split_frontmatter},
     regex_util::static_regex,
-    rules::Validator,
+    rules::{Validator, ValidatorMetadata},
     schemas::hooks::HooksSchema,
     schemas::skill::SkillSchema,
     validation::is_valid_mcp_tool_format,
@@ -1233,6 +1233,40 @@ impl<'a> ValidationContext<'a> {
     }
 }
 
+const RULE_IDS: &[&str] = &[
+    "AS-001",
+    "AS-002",
+    "AS-003",
+    "AS-004",
+    "AS-005",
+    "AS-006",
+    "AS-007",
+    "AS-008",
+    "AS-009",
+    "AS-010",
+    "AS-011",
+    "AS-012",
+    "AS-013",
+    "AS-014",
+    "AS-015",
+    "AS-016",
+    "CC-SK-001",
+    "CC-SK-002",
+    "CC-SK-003",
+    "CC-SK-004",
+    "CC-SK-005",
+    "CC-SK-006",
+    "CC-SK-007",
+    "CC-SK-008",
+    "CC-SK-009",
+    "CC-SK-010",
+    "CC-SK-011",
+    "CC-SK-012",
+    "CC-SK-013",
+    "CC-SK-014",
+    "CC-SK-015",
+];
+
 pub struct SkillValidator;
 
 /// Helper to check if a tool name is valid for skills (either known or properly formatted MCP tool).
@@ -1241,6 +1275,13 @@ fn is_valid_skill_tool_name(tool: &str) -> bool {
 }
 
 impl Validator for SkillValidator {
+    fn metadata(&self) -> ValidatorMetadata {
+        ValidatorMetadata {
+            name: self.name(),
+            rule_ids: RULE_IDS,
+        }
+    }
+
     fn validate(&self, path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic> {
         if !config.rules().frontmatter_validation {
             return Vec::new();
