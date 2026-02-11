@@ -7,7 +7,7 @@ use thiserror::Error;
 pub type LintResult<T> = Result<T, LintError>;
 
 /// An automatic fix for a diagnostic
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Fix {
     /// Byte offset start (inclusive)
     pub start_byte: usize,
@@ -339,6 +339,21 @@ mod tests {
         );
     }
 
+    #[test]
+    fn test_lookup_rule_metadata_empty_string() {
+        let meta = lookup_rule_metadata("");
+        assert!(meta.is_none(), "Empty string should return None");
+    }
+
+    #[test]
+    fn test_lookup_rule_metadata_special_characters() {
+        let meta = lookup_rule_metadata("@#$%^&*()");
+        assert!(
+            meta.is_none(),
+            "Rule ID with special characters should return None"
+        );
+    }
+
     // ===== Builder method tests =====
 
     #[test]
@@ -444,5 +459,28 @@ mod tests {
             diag.metadata.is_none(),
             "Missing metadata field should deserialize as None"
         );
+    }
+
+    #[test]
+    fn test_diagnostic_manual_metadata_serde_roundtrip() {
+        let manual_metadata = RuleMetadata {
+            category: "custom-category".to_string(),
+            severity: "MEDIUM".to_string(),
+            applies_to_tool: Some("custom-tool".to_string()),
+        };
+
+        let diag = Diagnostic::error(PathBuf::from("test.md"), 5, 10, "CUSTOM-001", "Custom error")
+            .with_metadata(manual_metadata.clone());
+
+        // Serialize to JSON
+        let json = serde_json::to_string(&diag).unwrap();
+
+        // Deserialize back
+        let deserialized: Diagnostic = serde_json::from_str(&json).unwrap();
+
+        // Verify metadata is preserved
+        assert_eq!(deserialized.metadata, Some(manual_metadata));
+        assert_eq!(deserialized.rule, "CUSTOM-001");
+        assert_eq!(deserialized.message, "Custom error");
     }
 }

@@ -14,7 +14,7 @@ use tower_lsp::lsp_types::{
 /// Serialized as `{ "fixes": [...], "metadata": {...} }`.
 /// When deserializing, the old format (a plain array of `Fix`) is also
 /// accepted for backward compatibility.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct DiagnosticData {
     /// Fixes available for this diagnostic.
     pub fixes: Vec<Fix>,
@@ -449,5 +449,38 @@ mod tests {
         let lsp_diag = to_lsp_diagnostic(&diag);
         // Even with no fixes, metadata means data should be present
         assert!(lsp_diag.data.is_some());
+    }
+
+    #[test]
+    fn test_diagnostic_with_fixes_and_metadata_preserves_both() {
+        use agnix_core::RuleMetadata;
+
+        let fixes = vec![make_fix(0, 5, "hello", "Replace text", true)];
+        let metadata = RuleMetadata {
+            category: "agent-skills".to_string(),
+            severity: "HIGH".to_string(),
+            applies_to_tool: Some("claude-code".to_string()),
+        };
+
+        let mut diag = make_diagnostic_with_fixes(
+            DiagnosticLevel::Error,
+            "Error",
+            1,
+            1,
+            "AS-001",
+            fixes.clone(),
+        );
+        diag.metadata = Some(metadata.clone());
+
+        let lsp_diag = to_lsp_diagnostic(&diag);
+
+        // Verify data is present
+        assert!(lsp_diag.data.is_some());
+
+        // Deserialize and verify both fixes and metadata are preserved
+        let data: DiagnosticData = serde_json::from_value(lsp_diag.data.unwrap()).unwrap();
+        assert_eq!(data.fixes.len(), 1);
+        assert_eq!(data.fixes[0], fixes[0]);
+        assert_eq!(data.metadata, Some(metadata));
     }
 }
