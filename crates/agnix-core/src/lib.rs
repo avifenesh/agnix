@@ -83,10 +83,11 @@ pub(crate) mod span_utils;
 /// **Stability: unstable** -- interface may change on minor releases.
 pub mod validation;
 
-pub use config::{
-    ConfigError, ConfigWarning, FilesConfig, LintConfig, LintConfigBuilder, generate_schema,
+pub use config::{ConfigWarning, FilesConfig, LintConfig, generate_schema};
+pub use diagnostics::{
+    ConfigError, CoreError, CoreResult, Diagnostic, DiagnosticLevel, FileError, Fix, LintError,
+    LintResult, RuleMetadata, ValidationError,
 };
-pub use diagnostics::{Diagnostic, DiagnosticLevel, Fix, LintError, LintResult, RuleMetadata};
 pub use file_types::{FileType, detect_file_type};
 pub use fixes::{FixResult, apply_fixes, apply_fixes_with_fs};
 pub use fs::{FileSystem, MockFileSystem, RealFileSystem};
