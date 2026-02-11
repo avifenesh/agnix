@@ -135,9 +135,9 @@ static RULES: LazyLock<Vec<ReportingDescriptor>> = LazyLock::new(|| {
             let properties =
                 agnix_rules::get_rule_metadata(id).map(|(category, severity, tool)| {
                     ReportingDescriptorProperties {
-                        category: (!category.is_empty()).then(|| category.to_string()),
-                        severity: (!severity.is_empty()).then(|| severity.to_string()),
-                        applies_to_tool: (!tool.is_empty()).then(|| tool.to_string()),
+                        category: (!category.is_empty()).then_some(category.to_string()),
+                        severity: (!severity.is_empty()).then_some(severity.to_string()),
+                        applies_to_tool: (!tool.is_empty()).then_some(tool.to_string()),
                     }
                 });
 

@@ -136,7 +136,7 @@ fn lookup_rule_metadata(rule_id: &str) -> Option<RuleMetadata> {
     agnix_rules::get_rule_metadata(rule_id).map(|(category, severity, tool)| RuleMetadata {
         category: category.to_string(),
         severity: severity.to_string(),
-        applies_to_tool: (!tool.is_empty()).then(|| tool.to_string()),
+        applies_to_tool: (!tool.is_empty()).then_some(tool.to_string()),
     })
 }
 

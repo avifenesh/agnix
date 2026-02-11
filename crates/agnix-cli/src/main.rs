@@ -492,14 +492,14 @@ fn validate_command(path: &Path, cli: &Cli) -> anyhow::Result<()> {
         if cli.verbose {
             println!("  {} {}", t!("cli.rule_label").dimmed(), diag.rule.dimmed());
             if let Some(ref meta) = diag.metadata {
-                let tool_info = meta.applies_to_tool.as_deref().unwrap_or("generic");
+                let tool_info = meta.applies_to_tool.as_deref().unwrap_or_else(|| t!("cli.generic_tool"));
                 println!(
                     "  {} {} | {} {} | {} {}",
-                    "Category:".dimmed(),
+                    t!("cli.category_label").dimmed(),
                     meta.category,
-                    "Severity:".dimmed(),
+                    t!("cli.severity_label").dimmed(),
                     meta.severity,
-                    "Tool:".dimmed(),
+                    t!("cli.tool_label").dimmed(),
                     tool_info
                 );
             }

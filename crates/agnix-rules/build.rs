@@ -179,8 +179,26 @@ fn main() {
         let id = rule["id"]
             .as_str()
             .unwrap_or_else(|| panic!("rule[{}] must have string 'id' field", idx));
-        let category = rule.get("category").and_then(|c| c.as_str()).unwrap_or("");
-        let severity = rule.get("severity").and_then(|s| s.as_str()).unwrap_or("");
+        let category = rule
+            .get("category")
+            .and_then(|c| c.as_str())
+            .filter(|s| !s.trim().is_empty())
+            .unwrap_or_else(|| {
+                panic!(
+                    "rule[{}] with id '{}' must have non-empty string 'category' field",
+                    idx, id
+                )
+            });
+        let severity = rule
+            .get("severity")
+            .and_then(|s| s.as_str())
+            .filter(|s| !s.trim().is_empty())
+            .unwrap_or_else(|| {
+                panic!(
+                    "rule[{}] with id '{}' must have non-empty string 'severity' field",
+                    idx, id
+                )
+            });
         let tool = rule
             .get("evidence")
             .and_then(|e| e.get("applies_to"))
