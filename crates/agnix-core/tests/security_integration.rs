@@ -12,7 +12,7 @@
 use agnix_core::{
     __internal::{MAX_REGEX_INPUT_SIZE, split_frontmatter},
     config::LintConfig,
-    diagnostics::LintError,
+    diagnostics::{CoreError, ValidationError},
     validate_project,
 };
 use tempfile::TempDir;
@@ -39,7 +39,7 @@ fn test_file_count_limit_enforcement() {
     // Should return TooManyFiles error
     assert!(result.is_err());
     match result.unwrap_err() {
-        LintError::TooManyFiles { limit, .. } => {
+        CoreError::Validation(ValidationError::TooManyFiles { limit, .. }) => {
             assert_eq!(limit, 10);
         }
         e => panic!("Expected TooManyFiles error, got: {:?}", e),

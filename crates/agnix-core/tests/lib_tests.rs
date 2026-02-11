@@ -3036,7 +3036,7 @@ fn test_file_count_limit_enforced() {
     // Should return TooManyFiles error
     assert!(result.is_err(), "Should error when file limit exceeded");
     match result.unwrap_err() {
-        LintError::TooManyFiles { count, limit } => {
+        CoreError::Validation(ValidationError::TooManyFiles { count, limit }) => {
             assert!(count > 10, "Count should exceed limit");
             assert_eq!(limit, 10);
         }
