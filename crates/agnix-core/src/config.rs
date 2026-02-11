@@ -156,7 +156,11 @@ impl std::fmt::Display for ConfigError {
                 write!(f, "path traversal in pattern '{}'", pattern)
             }
             ConfigError::ValidationFailed(warnings) => {
-                write!(f, "configuration validation failed with {} warning(s)", warnings.len())
+                write!(
+                    f,
+                    "configuration validation failed with {} warning(s)",
+                    warnings.len()
+                )
             }
         }
     }
@@ -216,7 +220,10 @@ impl std::fmt::Debug for RuntimeContext {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("RuntimeContext")
             .field("root_dir", &self.root_dir)
-            .field("import_cache", &self.import_cache.as_ref().map(|_| "ImportCache(...)"))
+            .field(
+                "import_cache",
+                &self.import_cache.as_ref().map(|_| "ImportCache(...)"),
+            )
             .field("fs", &"Arc<dyn FileSystem>")
             .finish()
     }
@@ -897,7 +904,9 @@ impl LintConfigBuilder {
             rules.disabled_rules.retain(|r| seen.insert(r.clone()));
         }
         if !self.disabled_validators.is_empty() {
-            rules.disabled_validators.append(&mut self.disabled_validators);
+            rules
+                .disabled_validators
+                .append(&mut self.disabled_validators);
             let mut seen = std::collections::HashSet::new();
             rules.disabled_validators.retain(|v| seen.insert(v.clone()));
         }
@@ -4245,9 +4254,7 @@ severity = "Warning"
 
     #[test]
     fn test_builder_deprecated_target_rejected_by_build() {
-        let result = LintConfig::builder()
-            .target(TargetTool::ClaudeCode)
-            .build();
+        let result = LintConfig::builder().target(TargetTool::ClaudeCode).build();
 
         assert!(result.is_err());
         match result.unwrap_err() {
@@ -4319,8 +4326,18 @@ severity = "Warning"
             .build()
             .unwrap();
 
-        assert!(config.rules().disabled_rules.contains(&"AS-001".to_string()));
-        assert!(config.rules().disabled_rules.contains(&"PE-003".to_string()));
+        assert!(
+            config
+                .rules()
+                .disabled_rules
+                .contains(&"AS-001".to_string())
+        );
+        assert!(
+            config
+                .rules()
+                .disabled_rules
+                .contains(&"PE-003".to_string())
+        );
         assert!(!config.is_rule_enabled("AS-001"));
         assert!(!config.is_rule_enabled("PE-003"));
     }
@@ -4357,7 +4374,12 @@ severity = "Warning"
         assert_eq!(config.tools(), &["cursor"]);
         assert_eq!(config.locale(), Some("es"));
         assert_eq!(config.max_files_to_validate(), Some(50));
-        assert!(config.rules().disabled_rules.contains(&"PE-003".to_string()));
+        assert!(
+            config
+                .rules()
+                .disabled_rules
+                .contains(&"PE-003".to_string())
+        );
     }
 
     #[test]
@@ -4382,10 +4404,7 @@ severity = "Warning"
 
     #[test]
     fn test_builder_locale_none() {
-        let config = LintConfig::builder()
-            .locale(None)
-            .build()
-            .unwrap();
+        let config = LintConfig::builder().locale(None).build().unwrap();
 
         assert!(config.locale().is_none());
     }
@@ -4433,13 +4452,16 @@ severity = "Warning"
             exclude: vec!["drafts/**".to_string()],
         };
 
-        let config = LintConfig::builder()
-            .files(files.clone())
-            .build()
-            .unwrap();
+        let config = LintConfig::builder().files(files.clone()).build().unwrap();
 
-        assert_eq!(config.files_config().include_as_memory, files.include_as_memory);
-        assert_eq!(config.files_config().include_as_generic, files.include_as_generic);
+        assert_eq!(
+            config.files_config().include_as_memory,
+            files.include_as_memory
+        );
+        assert_eq!(
+            config.files_config().include_as_generic,
+            files.include_as_generic
+        );
         assert_eq!(config.files_config().exclude, files.exclude);
     }
 
@@ -4474,7 +4496,10 @@ severity = "Warning"
             .iter()
             .filter(|v| *v == "XmlValidator")
             .count();
-        assert_eq!(count, 1, "Duplicate disable_validator should be deduplicated");
+        assert_eq!(
+            count, 1,
+            "Duplicate disable_validator should be deduplicated"
+        );
     }
 
     #[test]
@@ -4564,9 +4589,7 @@ severity = "Warning"
     #[test]
     fn test_builder_import_cache() {
         let cache = crate::parsers::ImportCache::default();
-        let config = LintConfig::builder()
-            .import_cache(cache)
-            .build_unchecked();
+        let config = LintConfig::builder().import_cache(cache).build_unchecked();
         assert!(config.import_cache().is_some());
     }
 
@@ -4629,9 +4652,7 @@ severity = "Warning"
 
     #[test]
     fn test_builder_unknown_rule_rejected() {
-        let result = LintConfig::builder()
-            .disable_rule("FAKE-001")
-            .build();
+        let result = LintConfig::builder().disable_rule("FAKE-001").build();
         assert!(result.is_err());
         match result.unwrap_err() {
             ConfigError::ValidationFailed(warnings) => {
@@ -4650,7 +4671,11 @@ severity = "Warning"
         assert!(result.is_err());
         match result.unwrap_err() {
             ConfigError::ValidationFailed(warnings) => {
-                assert!(warnings.len() >= 2, "Expected at least 2 warnings, got {}", warnings.len());
+                assert!(
+                    warnings.len() >= 2,
+                    "Expected at least 2 warnings, got {}",
+                    warnings.len()
+                );
             }
             other => panic!("Expected ValidationFailed, got: {:?}", other),
         }
@@ -4670,9 +4695,7 @@ severity = "Warning"
 
     #[test]
     fn test_builder_empty_exclude() {
-        let config = LintConfig::builder()
-            .exclude(vec![])
-            .build_unchecked();
+        let config = LintConfig::builder().exclude(vec![]).build_unchecked();
         assert!(config.exclude().is_empty());
     }
 
