@@ -24,8 +24,5 @@ pub use detection::detect_file_type;
 pub use types::FileType;
 
 // New public API
-pub use detection::{
-    DOCUMENTATION_DIRECTORIES, EXCLUDED_FILENAMES, EXCLUDED_PARENT_DIRECTORIES,
-};
+pub use detection::{DOCUMENTATION_DIRECTORIES, EXCLUDED_FILENAMES, EXCLUDED_PARENT_DIRECTORIES};
 pub use detector::{BuiltinDetector, FileTypeDetector, FileTypeDetectorChain};
-
