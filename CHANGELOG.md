@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **RUSTSEC advisory tracking** - Documented process for reviewing ignored security advisories with `docs/RUSTSEC-ADVISORIES.md` tracking document, monthly review checklist in `MONTHLY-REVIEW.md`, and pre-release checks in `RELEASING.md` (closes #346)
 - **Structured rule metadata in diagnostics** - All diagnostic outputs (JSON, SARIF, MCP, LSP, CLI) now include optional metadata fields: category, rule_severity, and applies_to_tool. Metadata is automatically populated from rules.json at build time
 - **Plugin architecture**: `ValidatorProvider` trait enables external validator registration
 - **Builder pattern**: `ValidatorRegistry::builder()` for ergonomic registry construction with `with_defaults()`, `with_provider()`, `without_validator()`
