@@ -297,6 +297,9 @@ pub enum ValidationError {
 pub enum ConfigError {
     #[error("Invalid exclude pattern: {pattern} ({message})")]
     InvalidExcludePattern { pattern: String, message: String },
+
+    #[error("Failed to parse configuration")]
+    ParseError(#[from] anyhow::Error),
 }
 
 /// Core error type hierarchy
@@ -313,10 +316,10 @@ pub enum CoreError {
 }
 
 impl CoreError {
-    /// Extract file-level errors from a validation error context.
+    /// Extract file-level errors from this error.
     ///
-    /// This is useful when a project validation fails at the file level,
-    /// allowing callers to access individual file errors for detailed reporting.
+    /// Returns a vector containing the FileError if this is a File variant,
+    /// or an empty vector for other error types.
     pub fn source_diagnostics(&self) -> Vec<&FileError> {
         match self {
             CoreError::File(e) => vec![e],

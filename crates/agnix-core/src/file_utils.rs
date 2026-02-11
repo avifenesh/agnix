@@ -43,10 +43,10 @@ pub const DEFAULT_MAX_FILE_SIZE: u64 = 1_048_576;
 ///
 /// # Errors
 ///
-/// Returns `FileError::Symlink` if the path is a symlink.
-/// Returns `FileError::NotRegular` if the path is not a regular file.
-/// Returns `FileError::TooBig` if the file exceeds the size limit.
-/// Returns `FileError::Read` for other I/O errors.
+/// Returns `CoreError::File(FileError::Symlink)` if the path is a symlink.
+/// Returns `CoreError::File(FileError::NotRegular)` if the path is not a regular file.
+/// Returns `CoreError::File(FileError::TooBig)` if the file exceeds the size limit.
+/// Returns `CoreError::File(FileError::Read)` for other I/O errors.
 pub fn safe_read_file(path: &Path) -> LintResult<String> {
     safe_read_file_with_limit(path, DEFAULT_MAX_FILE_SIZE)
 }
@@ -60,9 +60,9 @@ pub fn safe_read_file(path: &Path) -> LintResult<String> {
 ///
 /// # Errors
 ///
-/// Returns `FileError::Symlink` if the path is a symlink.
-/// Returns `FileError::NotRegular` if the path is not a regular file.
-/// Returns `FileError::Write` for other I/O errors.
+/// Returns `CoreError::File(FileError::Symlink)` if the path is a symlink.
+/// Returns `CoreError::File(FileError::NotRegular)` if the path is not a regular file.
+/// Returns `CoreError::File(FileError::Write)` for other I/O errors.
 pub fn safe_write_file(path: &Path, content: &str) -> LintResult<()> {
     let metadata = fs::symlink_metadata(path).map_err(|e| {
         CoreError::File(FileError::Write {
