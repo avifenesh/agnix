@@ -56,6 +56,7 @@ impl FileType {
     ///
     /// This is the inverse of checking for [`FileType::Unknown`] and should
     /// be preferred over `file_type != FileType::Unknown` for clarity.
+    #[must_use]
     pub fn is_validatable(self) -> bool {
         !matches!(self, FileType::Unknown)
     }

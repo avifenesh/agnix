@@ -90,8 +90,10 @@ pub(crate) fn is_documentation_directory(path: &Path) -> bool {
     false
 }
 
-fn is_excluded_filename(name_lower: &str) -> bool {
-    EXCLUDED_FILENAMES.contains(&name_lower)
+fn is_excluded_filename(name: &str) -> bool {
+    EXCLUDED_FILENAMES
+        .iter()
+        .any(|&excl| excl.eq_ignore_ascii_case(name))
 }
 
 fn is_excluded_parent(parent: Option<&str>) -> bool {
@@ -182,7 +184,7 @@ pub fn detect_file_type(path: &Path) -> FileType {
                 // Exclude common project files that are not agent configurations.
                 // These files commonly contain HTML, @mentions, and cross-platform
                 // references that would produce false positives if validated.
-                if is_excluded_filename(&name.to_ascii_lowercase()) {
+                if is_excluded_filename(name) {
                     FileType::Unknown
                 } else if is_documentation_directory(path) {
                     // Markdown files in documentation directories are not agent configs
@@ -404,6 +406,110 @@ mod tests {
         assert_eq!(
             detect_file_type(Path::new("project/custom.md")),
             FileType::GenericMarkdown
+        );
+    }
+
+    #[test]
+    fn detect_hooks() {
+        assert_eq!(
+            detect_file_type(Path::new("settings.json")),
+            FileType::Hooks
+        );
+        assert_eq!(
+            detect_file_type(Path::new("settings.local.json")),
+            FileType::Hooks
+        );
+    }
+
+    #[test]
+    fn detect_plugin() {
+        assert_eq!(
+            detect_file_type(Path::new("plugin.json")),
+            FileType::Plugin
+        );
+    }
+
+    #[test]
+    fn detect_claude_rule() {
+        assert_eq!(
+            detect_file_type(Path::new(".claude/rules/custom.md")),
+            FileType::ClaudeRule
+        );
+    }
+
+    #[test]
+    fn detect_cursor_rule() {
+        assert_eq!(
+            detect_file_type(Path::new(".cursor/rules/custom.mdc")),
+            FileType::CursorRule
+        );
+    }
+
+    #[test]
+    fn detect_cursor_rules_legacy() {
+        assert_eq!(
+            detect_file_type(Path::new(".cursorrules")),
+            FileType::CursorRulesLegacy
+        );
+        assert_eq!(
+            detect_file_type(Path::new(".cursorrules.md")),
+            FileType::CursorRulesLegacy
+        );
+    }
+
+    #[test]
+    fn detect_cline_rules() {
+        assert_eq!(
+            detect_file_type(Path::new(".clinerules")),
+            FileType::ClineRules
+        );
+    }
+
+    #[test]
+    fn detect_cline_rules_folder() {
+        assert_eq!(
+            detect_file_type(Path::new(".clinerules/custom.md")),
+            FileType::ClineRulesFolder
+        );
+    }
+
+    #[test]
+    fn detect_opencode_config() {
+        assert_eq!(
+            detect_file_type(Path::new("opencode.json")),
+            FileType::OpenCodeConfig
+        );
+    }
+
+    #[test]
+    fn detect_gemini_md() {
+        assert_eq!(
+            detect_file_type(Path::new("GEMINI.md")),
+            FileType::GeminiMd
+        );
+        assert_eq!(
+            detect_file_type(Path::new("GEMINI.local.md")),
+            FileType::GeminiMd
+        );
+    }
+
+    #[test]
+    fn detect_codex_config() {
+        assert_eq!(
+            detect_file_type(Path::new(".codex/config.toml")),
+            FileType::CodexConfig
+        );
+    }
+
+    #[test]
+    fn detect_excluded_filename_case_insensitive() {
+        assert_eq!(
+            detect_file_type(Path::new("project/README.md")),
+            FileType::Unknown
+        );
+        assert_eq!(
+            detect_file_type(Path::new("project/Readme.md")),
+            FileType::Unknown
         );
     }
 

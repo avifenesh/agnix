@@ -123,6 +123,7 @@ impl FileTypeDetectorChain {
     ///
     /// Returns `None` if no detector matched (only possible with an empty
     /// chain or a chain where every detector deferred).
+    #[must_use]
     pub fn detect(&self, path: &Path) -> Option<FileType> {
         for detector in &self.detectors {
             if let Some(ft) = detector.detect(path) {
@@ -133,11 +134,13 @@ impl FileTypeDetectorChain {
     }
 
     /// Return the number of detectors in the chain.
+    #[must_use]
     pub fn len(&self) -> usize {
         self.detectors.len()
     }
 
     /// Return `true` if the chain contains no detectors.
+    #[must_use]
     pub fn is_empty(&self) -> bool {
         self.detectors.is_empty()
     }
@@ -291,6 +294,15 @@ mod tests {
             chain.detect(Path::new("anything")),
             Some(FileType::Skill)
         );
+    }
+
+    // ---- Default impl ----
+
+    #[test]
+    fn default_chain_is_empty() {
+        let chain = FileTypeDetectorChain::default();
+        assert!(chain.is_empty());
+        assert_eq!(chain.detect(Path::new("SKILL.md")), None);
     }
 
     // ---- Send + Sync bounds ----
