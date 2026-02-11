@@ -84,7 +84,7 @@ pub(crate) mod span_utils;
 pub mod validation;
 
 pub use config::{ConfigWarning, FilesConfig, LintConfig, generate_schema};
-pub use diagnostics::{Diagnostic, DiagnosticLevel, Fix, LintError, LintResult};
+pub use diagnostics::{Diagnostic, DiagnosticLevel, Fix, LintError, LintResult, RuleMetadata};
 pub use file_types::{FileType, detect_file_type};
 pub use fixes::{FixResult, apply_fixes, apply_fixes_with_fs};
 pub use fs::{FileSystem, MockFileSystem, RealFileSystem};

@@ -51,6 +51,23 @@ pub struct ReportingDescriptor {
     pub short_description: Message,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub help_uri: Option<String>,
+    /// Custom properties bag for rule metadata (SARIF 2.1.0 extension point).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub properties: Option<ReportingDescriptorProperties>,
+}
+
+/// Properties bag for a reporting descriptor, carrying rule metadata.
+#[derive(Debug, Clone, Serialize)]
+pub struct ReportingDescriptorProperties {
+    /// Rule category (e.g., "agent-skills").
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub category: Option<String>,
+    /// Rule severity from the rules catalog (e.g., "HIGH").
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub severity: Option<String>,
+    /// Tool this rule applies to (e.g., "claude-code").
+    #[serde(rename = "appliesToTool", skip_serializing_if = "Option::is_none")]
+    pub applies_to_tool: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -114,15 +131,27 @@ static RULES: LazyLock<Vec<ReportingDescriptor>> = LazyLock::new(|| {
     // Rules loaded from knowledge-base/rules.json at compile time via build.rs
     RULES_DATA
         .iter()
-        .map(|(id, desc)| ReportingDescriptor {
-            id: id.to_string(),
-            short_description: Message {
-                text: desc.to_string(),
-            },
-            help_uri: Some(format!(
-                "https://avifenesh.github.io/agnix/docs/rules/generated/{}",
-                id.to_lowercase()
-            )),
+        .map(|(id, desc)| {
+            let properties =
+                agnix_rules::get_rule_metadata(id).map(|(category, severity, tool)| {
+                    ReportingDescriptorProperties {
+                        category: (!category.is_empty()).then_some(category.to_string()),
+                        severity: (!severity.is_empty()).then_some(severity.to_string()),
+                        applies_to_tool: (!tool.is_empty()).then_some(tool.to_string()),
+                    }
+                });
+
+            ReportingDescriptor {
+                id: id.to_string(),
+                short_description: Message {
+                    text: desc.to_string(),
+                },
+                help_uri: Some(format!(
+                    "https://avifenesh.github.io/agnix/docs/rules/generated/{}",
+                    id.to_lowercase()
+                )),
+                properties,
+            }
         })
         .collect()
 });
@@ -342,6 +371,7 @@ mod tests {
             suggestion: None,
             fixes: vec![],
             assumption: None,
+            metadata: None,
         };
         let sarif = diagnostics_to_sarif(&[diag], Path::new("/project"));
         assert_eq!(sarif.runs[0].results[0].level, "note");
@@ -422,6 +452,49 @@ mod tests {
     }
 
     #[test]
+    fn test_rules_have_properties_with_metadata() {
+        let sarif = diagnostics_to_sarif(&[], Path::new("."));
+        let rules = &sarif.runs[0].tool.driver.rules;
+
+        // Find AS-001 - should have properties
+        let as001 = rules.iter().find(|r| r.id == "AS-001");
+        assert!(as001.is_some(), "AS-001 should exist in SARIF rules");
+        let props = as001.unwrap().properties.as_ref();
+        assert!(props.is_some(), "AS-001 should have properties");
+        let props = props.unwrap();
+        assert_eq!(props.category, Some("agent-skills".to_string()));
+        assert_eq!(props.severity, Some("HIGH".to_string()));
+        // AS-001 is generic
+        assert!(props.applies_to_tool.is_none());
+    }
+
+    #[test]
+    fn test_tool_specific_rule_has_tool_in_properties() {
+        let sarif = diagnostics_to_sarif(&[], Path::new("."));
+        let rules = &sarif.runs[0].tool.driver.rules;
+
+        let cc_hk_001 = rules.iter().find(|r| r.id == "CC-HK-001");
+        assert!(cc_hk_001.is_some());
+        let props = cc_hk_001.unwrap().properties.as_ref().unwrap();
+        assert_eq!(props.applies_to_tool, Some("claude-code".to_string()));
+    }
+
+    #[test]
+    fn test_sarif_properties_serialize_correctly() {
+        let sarif = diagnostics_to_sarif(&[], Path::new("."));
+        let json = serde_json::to_string_pretty(&sarif).unwrap();
+        // The JSON should contain "properties" with "category"
+        assert!(
+            json.contains("\"properties\""),
+            "SARIF JSON should contain properties"
+        );
+        assert!(
+            json.contains("\"category\""),
+            "SARIF properties should contain category"
+        );
+    }
+
+    #[test]
     fn test_zero_line_column_clamped_to_one() {
         // SARIF 2.1.0 requires 1-based positions, so 0 values must be clamped
         let diag = Diagnostic {
@@ -434,6 +507,7 @@ mod tests {
             suggestion: None,
             fixes: vec![],
             assumption: None,
+            metadata: None,
         };
 
         let sarif = diagnostics_to_sarif(&[diag], Path::new("/project"));

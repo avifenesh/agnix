@@ -40,6 +40,16 @@ pub struct JsonDiagnostic {
     /// Optional assumption note for version-aware validation.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub assumption: Option<String>,
+    /// Rule category from the rules catalog (e.g., "agent-skills").
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub category: Option<String>,
+    /// Rule severity from the rules catalog (e.g., "HIGH", "MEDIUM", "LOW").
+    /// Named `rule_severity` to avoid confusion with the `level` field.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub rule_severity: Option<String>,
+    /// Tool this rule specifically applies to (e.g., "claude-code").
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub applies_to_tool: Option<String>,
 }
 
 /// Summary counts by diagnostic level.
@@ -99,6 +109,12 @@ pub fn diagnostics_to_json(
                 message: diag.message.clone(),
                 suggestion: diag.suggestion.clone(),
                 assumption: diag.assumption.clone(),
+                category: diag.metadata.as_ref().map(|m| m.category.clone()),
+                rule_severity: diag.metadata.as_ref().map(|m| m.severity.clone()),
+                applies_to_tool: diag
+                    .metadata
+                    .as_ref()
+                    .and_then(|m| m.applies_to_tool.clone()),
             }
         })
         .collect();
@@ -208,6 +224,7 @@ mod tests {
                 suggestion: None,
                 fixes: vec![],
                 assumption: None,
+                metadata: None,
             },
         ];
 
@@ -276,6 +293,73 @@ mod tests {
         assert!(json_str.contains("\"files_checked\""));
         assert!(json_str.contains("\"diagnostics\""));
         assert!(json_str.contains("\"summary\""));
+    }
+
+    #[test]
+    fn test_metadata_included_for_known_rule() {
+        let diag = Diagnostic::error(
+            PathBuf::from("/p/test.md"),
+            1,
+            1,
+            "AS-001",
+            "Missing frontmatter",
+        );
+        let output = diagnostics_to_json(&[diag], Path::new("/p"), 1);
+        let json_diag = &output.diagnostics[0];
+        assert_eq!(json_diag.category, Some("agent-skills".to_string()));
+        assert_eq!(json_diag.rule_severity, Some("HIGH".to_string()));
+        // AS-001 is generic, so applies_to_tool should be None
+        assert!(json_diag.applies_to_tool.is_none());
+    }
+
+    #[test]
+    fn test_metadata_tool_included_for_tool_specific_rule() {
+        let diag = Diagnostic::error(
+            PathBuf::from("/p/test.md"),
+            1,
+            1,
+            "CC-HK-001",
+            "Invalid hook",
+        );
+        let output = diagnostics_to_json(&[diag], Path::new("/p"), 1);
+        let json_diag = &output.diagnostics[0];
+        assert!(json_diag.category.is_some());
+        assert_eq!(json_diag.applies_to_tool, Some("claude-code".to_string()));
+    }
+
+    #[test]
+    fn test_metadata_omitted_for_unknown_rule() {
+        let diag = Diagnostic {
+            level: DiagnosticLevel::Error,
+            message: "Unknown".to_string(),
+            file: PathBuf::from("/p/test.md"),
+            line: 1,
+            column: 1,
+            rule: "UNKNOWN-999".to_string(),
+            suggestion: None,
+            fixes: vec![],
+            assumption: None,
+            metadata: None,
+        };
+        let output = diagnostics_to_json(&[diag], Path::new("/p"), 1);
+        let json_diag = &output.diagnostics[0];
+        assert!(json_diag.category.is_none());
+        assert!(json_diag.rule_severity.is_none());
+        assert!(json_diag.applies_to_tool.is_none());
+
+        // Verify the JSON serialization omits the fields
+        let json_str = serde_json::to_string(&output).unwrap();
+        // For this diagnostic, the metadata fields should not appear
+        let parsed: serde_json::Value = serde_json::from_str(&json_str).unwrap();
+        let diag_obj = &parsed["diagnostics"][0];
+        assert!(
+            diag_obj.get("category").is_none(),
+            "category should be omitted when None"
+        );
+        assert!(
+            diag_obj.get("rule_severity").is_none(),
+            "rule_severity should be omitted when None"
+        );
     }
 
     #[test]

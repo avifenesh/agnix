@@ -172,6 +172,7 @@ fn diagnostic_fields_are_accessible() {
         suggestion: Some(String::from("try this")),
         fixes: vec![],
         assumption: None,
+        metadata: None,
     };
 
     // Read back all fields to verify accessibility

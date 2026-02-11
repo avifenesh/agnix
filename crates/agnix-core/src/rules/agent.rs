@@ -3233,4 +3233,53 @@ Agent instructions"#;
             "Suggestion should mention YAML frontmatter syntax"
         );
     }
+
+    // ===== Integration Test: Metadata Auto-Population =====
+
+    #[test]
+    fn test_validator_produces_diagnostics_with_metadata() {
+        // Integration test to verify that AgentValidator produces diagnostics
+        // with metadata fields auto-populated from agnix-rules.
+        let content = r#"---
+description: A test agent
+---
+Agent instructions"#;
+
+        let diagnostics = validate(content);
+
+        // Should trigger CC-AG-001 (missing name)
+        let cc_ag_001: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-AG-001")
+            .collect();
+
+        assert_eq!(
+            cc_ag_001.len(),
+            1,
+            "Should produce exactly one CC-AG-001 diagnostic"
+        );
+
+        let diag = &cc_ag_001[0];
+
+        // Verify metadata is auto-populated
+        assert!(
+            diag.metadata.is_some(),
+            "Diagnostic should have metadata auto-populated"
+        );
+
+        let meta = diag.metadata.as_ref().unwrap();
+        assert_eq!(
+            meta.category, "claude-agents",
+            "CC-AG-001 should have category 'claude-agents'"
+        );
+        assert_eq!(
+            meta.severity, "HIGH",
+            "CC-AG-001 should have severity 'HIGH'"
+        );
+        assert_eq!(
+            meta.applies_to_tool,
+            Some("claude-code".to_string()),
+            "CC-AG-001 should apply to 'claude-code'"
+        );
+    }
 }

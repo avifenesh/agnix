@@ -170,12 +170,15 @@ agnix --format json . > results.json
   "diagnostics": [
     {
       "level": "error",
-      "rule": "AS-004",
-      "file": "SKILL.md",
-      "line": 3,
+      "rule": "CC-SK-001",
+      "file": ".claude/skills/my-skill/SKILL.md",
+      "line": 10,
       "column": 1,
-      "message": "Invalid name 'Review-Code'",
-      "suggestion": "Use lowercase letters and hyphens only"
+      "message": "Invalid model 'claude-opus-5'",
+      "suggestion": "Use one of the valid model values: claude-3-5-sonnet, claude-3-opus, claude-3-haiku",
+      "category": "claude-code-skills",
+      "rule_severity": "HIGH",
+      "applies_to_tool": "claude-code"
     }
   ],
   "summary": {
@@ -185,6 +188,8 @@ agnix --format json . > results.json
   }
 }
 ```
+
+Note: category, rule_severity, and applies_to_tool are optional fields included when rule metadata is present.
 
 ### SARIF
 

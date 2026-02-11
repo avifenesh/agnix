@@ -27,6 +27,7 @@ mod diagnostic_mapper_tests {
             suggestion: None,
             fixes: vec![],
             assumption: None,
+            metadata: None,
         }
     }
 
@@ -275,6 +276,7 @@ mod did_change_tests {
             suggestion: None,
             fixes,
             assumption: None,
+            metadata: None,
         };
 
         assert_eq!(diag.fixes.len(), 2);
@@ -300,6 +302,7 @@ mod did_change_tests {
                 safe: true,
             }],
             assumption: None,
+            metadata: None,
         };
 
         let diag_without_fixes = Diagnostic {
@@ -312,6 +315,7 @@ mod did_change_tests {
             suggestion: None,
             fixes: vec![],
             assumption: None,
+            metadata: None,
         };
 
         assert!(diag_with_fixes.has_fixes());

@@ -1,4 +1,4 @@
-//! Diagnostic types and error reporting
+//! Diagnostic types and error reporting for lint results
 
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
@@ -7,7 +7,7 @@ use thiserror::Error;
 pub type LintResult<T> = Result<T, LintError>;
 
 /// An automatic fix for a diagnostic
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Fix {
     /// Byte offset start (inclusive)
     pub start_byte: usize,
@@ -77,6 +77,23 @@ impl Fix {
     }
 }
 
+/// Structured metadata about the rule that triggered a diagnostic.
+///
+/// Populated automatically from `agnix-rules` build-time data when using
+/// the `Diagnostic::error()`, `warning()`, or `info()` constructors, or
+/// manually via `Diagnostic::with_metadata()`.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct RuleMetadata {
+    /// Rule category (e.g., "agent-skills", "claude-code-hooks").
+    pub category: String,
+    /// Rule severity from the rules catalog (e.g., "HIGH", "MEDIUM", "LOW").
+    pub severity: String,
+    /// Tool this rule specifically applies to (e.g., "claude-code", "cursor").
+    /// `None` for generic rules that apply to all tools.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub applies_to_tool: Option<String>,
+}
+
 /// A diagnostic message from the linter
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Diagnostic {
@@ -98,6 +115,13 @@ pub struct Diagnostic {
     /// validation.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub assumption: Option<String>,
+    /// Structured metadata about the rule (category, severity, tool).
+    ///
+    /// Auto-populated from `agnix-rules` at construction time when using the
+    /// `error()`, `warning()`, or `info()` constructors. Can also be set
+    /// manually via `with_metadata()`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub metadata: Option<RuleMetadata>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
@@ -105,6 +129,15 @@ pub enum DiagnosticLevel {
     Error,
     Warning,
     Info,
+}
+
+/// Build a `RuleMetadata` from the compile-time rules catalog.
+fn lookup_rule_metadata(rule_id: &str) -> Option<RuleMetadata> {
+    agnix_rules::get_rule_metadata(rule_id).map(|(category, severity, tool)| RuleMetadata {
+        category: category.to_string(),
+        severity: severity.to_string(),
+        applies_to_tool: (!tool.is_empty()).then_some(tool.to_string()),
+    })
 }
 
 impl Diagnostic {
@@ -115,6 +148,7 @@ impl Diagnostic {
         rule: &str,
         message: impl Into<String>,
     ) -> Self {
+        let metadata = lookup_rule_metadata(rule);
         Self {
             level: DiagnosticLevel::Error,
             message: message.into(),
@@ -125,6 +159,7 @@ impl Diagnostic {
             suggestion: None,
             fixes: Vec::new(),
             assumption: None,
+            metadata,
         }
     }
 
@@ -135,6 +170,7 @@ impl Diagnostic {
         rule: &str,
         message: impl Into<String>,
     ) -> Self {
+        let metadata = lookup_rule_metadata(rule);
         Self {
             level: DiagnosticLevel::Warning,
             message: message.into(),
@@ -145,6 +181,7 @@ impl Diagnostic {
             suggestion: None,
             fixes: Vec::new(),
             assumption: None,
+            metadata,
         }
     }
 
@@ -155,6 +192,7 @@ impl Diagnostic {
         rule: &str,
         message: impl Into<String>,
     ) -> Self {
+        let metadata = lookup_rule_metadata(rule);
         Self {
             level: DiagnosticLevel::Info,
             message: message.into(),
@@ -165,6 +203,7 @@ impl Diagnostic {
             suggestion: None,
             fixes: Vec::new(),
             assumption: None,
+            metadata,
         }
     }
 
@@ -191,6 +230,12 @@ impl Diagnostic {
     /// Add multiple automatic fixes to this diagnostic
     pub fn with_fixes(mut self, fixes: impl IntoIterator<Item = Fix>) -> Self {
         self.fixes.extend(fixes);
+        self
+    }
+
+    /// Set structured rule metadata on this diagnostic
+    pub fn with_metadata(mut self, metadata: RuleMetadata) -> Self {
+        self.metadata = Some(metadata);
         self
     }
 
@@ -248,6 +293,198 @@ pub enum LintError {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    // ===== Auto-populate metadata tests =====
+
+    #[test]
+    fn test_error_auto_populates_metadata_for_known_rule() {
+        let diag = Diagnostic::error(PathBuf::from("test.md"), 1, 1, "AS-001", "Test");
+        assert!(
+            diag.metadata.is_some(),
+            "Metadata should be auto-populated for known rule AS-001"
+        );
+        let meta = diag.metadata.unwrap();
+        assert_eq!(meta.category, "agent-skills");
+        assert_eq!(meta.severity, "HIGH");
+        assert!(
+            meta.applies_to_tool.is_none(),
+            "AS-001 is generic, should have no tool"
+        );
+    }
+
+    #[test]
+    fn test_warning_auto_populates_metadata() {
+        let diag = Diagnostic::warning(PathBuf::from("test.md"), 1, 1, "CC-HK-001", "Test");
+        assert!(diag.metadata.is_some());
+        let meta = diag.metadata.unwrap();
+        assert_eq!(meta.applies_to_tool, Some("claude-code".to_string()));
+    }
+
+    #[test]
+    fn test_info_auto_populates_metadata() {
+        let diag = Diagnostic::info(PathBuf::from("test.md"), 1, 1, "AS-001", "Test");
+        assert!(diag.metadata.is_some());
+    }
+
+    #[test]
+    fn test_unknown_rule_has_no_metadata() {
+        let diag = Diagnostic::error(PathBuf::from("test.md"), 1, 1, "UNKNOWN-999", "Test");
+        assert!(
+            diag.metadata.is_none(),
+            "Unknown rules should not have metadata"
+        );
+    }
+
+    #[test]
+    fn test_lookup_rule_metadata_empty_string() {
+        let meta = lookup_rule_metadata("");
+        assert!(meta.is_none(), "Empty string should return None");
+    }
+
+    #[test]
+    fn test_lookup_rule_metadata_special_characters() {
+        let meta = lookup_rule_metadata("@#$%^&*()");
+        assert!(
+            meta.is_none(),
+            "Rule ID with special characters should return None"
+        );
+    }
+
+    // ===== Builder method tests =====
+
+    #[test]
+    fn test_with_metadata_builder() {
+        let meta = RuleMetadata {
+            category: "custom".to_string(),
+            severity: "LOW".to_string(),
+            applies_to_tool: Some("my-tool".to_string()),
+        };
+        let diag = Diagnostic::error(PathBuf::from("test.md"), 1, 1, "UNKNOWN-999", "Test")
+            .with_metadata(meta.clone());
+        assert_eq!(diag.metadata, Some(meta));
+    }
+
+    #[test]
+    fn test_with_metadata_overrides_auto_populated() {
+        let diag = Diagnostic::error(PathBuf::from("test.md"), 1, 1, "AS-001", "Test");
+        assert!(diag.metadata.is_some());
+
+        let custom_meta = RuleMetadata {
+            category: "custom".to_string(),
+            severity: "LOW".to_string(),
+            applies_to_tool: None,
+        };
+        let diag = diag.with_metadata(custom_meta.clone());
+        assert_eq!(diag.metadata, Some(custom_meta));
+    }
+
+    // ===== Serde roundtrip tests =====
+
+    #[test]
+    fn test_rule_metadata_serde_roundtrip() {
+        let meta = RuleMetadata {
+            category: "agent-skills".to_string(),
+            severity: "HIGH".to_string(),
+            applies_to_tool: Some("claude-code".to_string()),
+        };
+        let json = serde_json::to_string(&meta).unwrap();
+        let deserialized: RuleMetadata = serde_json::from_str(&json).unwrap();
+        assert_eq!(meta, deserialized);
+    }
+
+    #[test]
+    fn test_rule_metadata_serde_none_tool_omitted() {
+        let meta = RuleMetadata {
+            category: "agent-skills".to_string(),
+            severity: "HIGH".to_string(),
+            applies_to_tool: None,
+        };
+        let json = serde_json::to_string(&meta).unwrap();
+        assert!(
+            !json.contains("applies_to_tool"),
+            "None tool should be omitted via skip_serializing_if"
+        );
+    }
+
+    #[test]
+    fn test_diagnostic_serde_roundtrip_with_metadata() {
+        let diag = Diagnostic::error(PathBuf::from("test.md"), 10, 5, "AS-001", "Test error");
+        let json = serde_json::to_string(&diag).unwrap();
+        let deserialized: Diagnostic = serde_json::from_str(&json).unwrap();
+        assert_eq!(deserialized.metadata, diag.metadata);
+        assert_eq!(deserialized.rule, "AS-001");
+    }
+
+    #[test]
+    fn test_diagnostic_serde_roundtrip_without_metadata() {
+        let diag = Diagnostic {
+            level: DiagnosticLevel::Error,
+            message: "Test".to_string(),
+            file: PathBuf::from("test.md"),
+            line: 1,
+            column: 1,
+            rule: "UNKNOWN".to_string(),
+            suggestion: None,
+            fixes: Vec::new(),
+            assumption: None,
+            metadata: None,
+        };
+        let json = serde_json::to_string(&diag).unwrap();
+        assert!(
+            !json.contains("metadata"),
+            "None metadata should be omitted"
+        );
+        let deserialized: Diagnostic = serde_json::from_str(&json).unwrap();
+        assert!(deserialized.metadata.is_none());
+    }
+
+    #[test]
+    fn test_diagnostic_deserialize_without_metadata_field() {
+        // Simulate old JSON that doesn't have the metadata field at all
+        let json = r#"{
+            "level": "Error",
+            "message": "Test",
+            "file": "test.md",
+            "line": 1,
+            "column": 1,
+            "rule": "AS-001",
+            "fixes": []
+        }"#;
+        let diag: Diagnostic = serde_json::from_str(json).unwrap();
+        assert!(
+            diag.metadata.is_none(),
+            "Missing metadata field should deserialize as None"
+        );
+    }
+
+    #[test]
+    fn test_diagnostic_manual_metadata_serde_roundtrip() {
+        let manual_metadata = RuleMetadata {
+            category: "custom-category".to_string(),
+            severity: "MEDIUM".to_string(),
+            applies_to_tool: Some("custom-tool".to_string()),
+        };
+
+        let diag = Diagnostic::error(
+            PathBuf::from("test.md"),
+            5,
+            10,
+            "CUSTOM-001",
+            "Custom error",
+        )
+        .with_metadata(manual_metadata.clone());
+
+        // Serialize to JSON
+        let json = serde_json::to_string(&diag).unwrap();
+
+        // Deserialize back
+        let deserialized: Diagnostic = serde_json::from_str(&json).unwrap();
+
+        // Verify metadata is preserved
+        assert_eq!(deserialized.metadata, Some(manual_metadata));
+        assert_eq!(deserialized.rule, "CUSTOM-001");
+        assert_eq!(deserialized.message, "Custom error");
+    }
 
     // ===== Fix::is_insertion() tests =====
 

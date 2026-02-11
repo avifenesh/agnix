@@ -328,6 +328,7 @@ fn diagnostic_serde_roundtrip_preserves_all_fields() {
             },
         ],
         assumption: Some("Assuming Claude Code >= 1.0.0".to_string()),
+        metadata: None,
     };
 
     let json = serde_json::to_string(&original).unwrap();

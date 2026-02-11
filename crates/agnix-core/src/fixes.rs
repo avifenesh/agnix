@@ -164,6 +164,7 @@ mod tests {
             suggestion: None,
             fixes,
             assumption: None,
+            metadata: None,
         }
     }
 
@@ -333,6 +334,7 @@ mod tests {
             suggestion: None,
             fixes: Vec::new(),
             assumption: None,
+            metadata: None,
         }];
 
         let results = apply_fixes(&diagnostics, false, false).unwrap();
@@ -542,6 +544,7 @@ mod tests {
             suggestion: None,
             fixes: Vec::new(),
             assumption: None,
+            metadata: None,
         }];
 
         let results =

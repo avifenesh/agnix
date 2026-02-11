@@ -277,6 +277,7 @@ mod output_format_tests {
             suggestion: Some("Fix this".to_string()),
             fixes: vec![],
             assumption: None,
+            metadata: None,
         };
 
         let json = serde_json::to_string(&diagnostic);
@@ -310,6 +311,7 @@ mod output_format_tests {
                 safe: true,
             }],
             assumption: None,
+            metadata: None,
         };
 
         // Diagnostic should be fixable
