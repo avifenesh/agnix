@@ -21,7 +21,7 @@
 //! **Future Enhancement**: Consider adding explicit depth tracking if memory
 //! profiling reveals issues with pathological YAML structures.
 
-use crate::diagnostics::{LintResult, ValidationError};
+use crate::diagnostics::{CoreError, LintResult, ValidationError};
 use serde::de::DeserializeOwned;
 
 /// Parse YAML frontmatter from markdown content
@@ -40,8 +40,8 @@ use serde::de::DeserializeOwned;
 /// internal protections. See module documentation for details.
 pub fn parse_frontmatter<T: DeserializeOwned>(content: &str) -> LintResult<(T, String)> {
     let parts = split_frontmatter(content);
-    let parsed: T =
-        serde_yaml::from_str(&parts.frontmatter).map_err(|e| ValidationError::Other(e.into()))?;
+    let parsed: T = serde_yaml::from_str(&parts.frontmatter)
+        .map_err(|e| CoreError::Validation(ValidationError::Other(e.into())))?;
     Ok((parsed, parts.body.trim_start().to_string()))
 }
 

@@ -340,13 +340,6 @@ impl CoreError {
 // Backward compatibility: LintError is now an alias for CoreError
 pub type LintError = CoreError;
 
-// Manual From implementations for backward compatibility with existing error construction
-impl From<std::io::Error> for CoreError {
-    fn from(err: std::io::Error) -> Self {
-        CoreError::Validation(ValidationError::Other(err.into()))
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
