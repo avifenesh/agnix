@@ -181,7 +181,8 @@ pub fn resolve_file_type(path: &Path, config: &LintConfig) -> FileType {
     }
 
     // Compile patterns on-demand for single-file validation.
-    // Invalid patterns are silently skipped (validated at config load time).
+    // Invalid patterns are silently skipped here; use LintConfigBuilder::build()
+    // or LintConfig::validate() at config load time if strict validation is desired.
     let compiled = compile_files_config(files);
     resolve_with_compiled(path, config.root_dir().map(|p| p.as_path()), &compiled)
 }
@@ -652,8 +653,8 @@ pub fn validate_project_with_registry(
     let exclude_patterns = Arc::new(exclude_patterns);
 
     // Pre-compile files config patterns once for the parallel walk.
-    // Invalid patterns are treated as non-fatal to align with LintConfig::validate()
-    // Invalid patterns are silently skipped (validated at config load time).
+    // Invalid patterns are silently skipped here; use LintConfigBuilder::build()
+    // or LintConfig::validate() at config load time if strict validation is desired.
     let compiled_files = Arc::new(compile_files_config(config.files_config()));
 
     let root_path = root_dir.clone();

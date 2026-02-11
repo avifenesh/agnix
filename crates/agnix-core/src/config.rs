@@ -156,11 +156,16 @@ impl std::fmt::Display for ConfigError {
                 write!(f, "path traversal in pattern '{}'", pattern)
             }
             ConfigError::ValidationFailed(warnings) => {
-                write!(
-                    f,
-                    "configuration validation failed with {} warning(s)",
-                    warnings.len()
-                )
+                if warnings.is_empty() {
+                    write!(f, "configuration validation failed with 0 warning(s)")
+                } else {
+                    write!(
+                        f,
+                        "configuration validation failed with {} warning(s): {}",
+                        warnings.len(),
+                        warnings[0].message
+                    )
+                }
             }
         }
     }
@@ -687,6 +692,9 @@ pub enum TargetTool {
 /// Uses the `&mut Self` return pattern (consistent with [`ValidatorRegistryBuilder`])
 /// for chaining setter calls, with a terminal `build()` that validates and returns
 /// `Result<LintConfig, ConfigError>`.
+///
+/// **Note:** `build()` and `build_unchecked()` drain the builder's state.
+/// A second call will produce a default config. Create a new builder if needed.
 ///
 /// # Examples
 ///
