@@ -15,7 +15,7 @@
 //! is limited to reading unexpected content, and (3) eliminating TOCTOU
 //! entirely would require platform-specific APIs (O_NOFOLLOW, etc.).
 
-use crate::diagnostics::{LintError, LintResult};
+use crate::diagnostics::{CoreError, FileError, LintResult};
 use std::fs;
 use std::fs::OpenOptions;
 use std::io::{self, Write};
@@ -43,10 +43,10 @@ pub const DEFAULT_MAX_FILE_SIZE: u64 = 1_048_576;
 ///
 /// # Errors
 ///
-/// Returns `LintError::FileSymlink` if the path is a symlink.
-/// Returns `LintError::FileNotRegular` if the path is not a regular file.
-/// Returns `LintError::FileTooBig` if the file exceeds the size limit.
-/// Returns `LintError::FileRead` for other I/O errors.
+/// Returns `FileError::Symlink` if the path is a symlink.
+/// Returns `FileError::NotRegular` if the path is not a regular file.
+/// Returns `FileError::TooBig` if the file exceeds the size limit.
+/// Returns `FileError::Read` for other I/O errors.
 pub fn safe_read_file(path: &Path) -> LintResult<String> {
     safe_read_file_with_limit(path, DEFAULT_MAX_FILE_SIZE)
 }
@@ -60,31 +60,35 @@ pub fn safe_read_file(path: &Path) -> LintResult<String> {
 ///
 /// # Errors
 ///
-/// Returns `LintError::FileSymlink` if the path is a symlink.
-/// Returns `LintError::FileNotRegular` if the path is not a regular file.
-/// Returns `LintError::FileWrite` for other I/O errors.
+/// Returns `FileError::Symlink` if the path is a symlink.
+/// Returns `FileError::NotRegular` if the path is not a regular file.
+/// Returns `FileError::Write` for other I/O errors.
 pub fn safe_write_file(path: &Path, content: &str) -> LintResult<()> {
-    let metadata = fs::symlink_metadata(path).map_err(|e| LintError::FileWrite {
-        path: path.to_path_buf(),
-        source: e,
+    let metadata = fs::symlink_metadata(path).map_err(|e| {
+        CoreError::File(FileError::Write {
+            path: path.to_path_buf(),
+            source: e,
+        })
     })?;
 
     if metadata.file_type().is_symlink() {
-        return Err(LintError::FileSymlink {
+        return Err(CoreError::File(FileError::Symlink {
             path: path.to_path_buf(),
-        });
+        }));
     }
 
     if !metadata.is_file() {
-        return Err(LintError::FileNotRegular {
+        return Err(CoreError::File(FileError::NotRegular {
             path: path.to_path_buf(),
-        });
+        }));
     }
 
     let permissions = metadata.permissions();
-    let parent = path.parent().ok_or_else(|| LintError::FileWrite {
-        path: path.to_path_buf(),
-        source: io::Error::other("Missing parent directory"),
+    let parent = path.parent().ok_or_else(|| {
+        CoreError::File(FileError::Write {
+            path: path.to_path_buf(),
+            source: io::Error::other("Missing parent directory"),
+        })
     })?;
     // file_name() is None for paths like "/", ".", "..", or empty; fall back to "file"
     let file_name = path
@@ -118,10 +122,10 @@ pub fn safe_write_file(path: &Path, content: &str) -> LintResult<()> {
                     continue;
                 }
                 Err(e) => {
-                    return Err(LintError::FileWrite {
+                    return Err(CoreError::File(FileError::Write {
                         path: path.to_path_buf(),
                         source: e,
-                    });
+                    }));
                 }
             }
         }
@@ -129,44 +133,52 @@ pub fn safe_write_file(path: &Path, content: &str) -> LintResult<()> {
 
     temp_file
         .write_all(content.as_bytes())
-        .map_err(|e| LintError::FileWrite {
+        .map_err(|e| {
+            CoreError::File(FileError::Write {
+                path: path.to_path_buf(),
+                source: e,
+            })
+        })?;
+    temp_file.sync_all().map_err(|e| {
+        CoreError::File(FileError::Write {
             path: path.to_path_buf(),
             source: e,
-        })?;
-    temp_file.sync_all().map_err(|e| LintError::FileWrite {
-        path: path.to_path_buf(),
-        source: e,
+        })
     })?;
     drop(temp_file);
 
-    fs::set_permissions(&temp_path, permissions).map_err(|e| LintError::FileWrite {
-        path: path.to_path_buf(),
-        source: e,
+    fs::set_permissions(&temp_path, permissions).map_err(|e| {
+        CoreError::File(FileError::Write {
+            path: path.to_path_buf(),
+            source: e,
+        })
     })?;
 
-    let recheck = fs::symlink_metadata(path).map_err(|e| LintError::FileWrite {
-        path: path.to_path_buf(),
-        source: e,
+    let recheck = fs::symlink_metadata(path).map_err(|e| {
+        CoreError::File(FileError::Write {
+            path: path.to_path_buf(),
+            source: e,
+        })
     })?;
     if recheck.file_type().is_symlink() {
         let _ = fs::remove_file(&temp_path);
-        return Err(LintError::FileSymlink {
+        return Err(CoreError::File(FileError::Symlink {
             path: path.to_path_buf(),
-        });
+        }));
     }
     if !recheck.is_file() {
         let _ = fs::remove_file(&temp_path);
-        return Err(LintError::FileNotRegular {
+        return Err(CoreError::File(FileError::NotRegular {
             path: path.to_path_buf(),
-        });
+        }));
     }
 
     fs::rename(&temp_path, path).map_err(|e| {
         let _ = fs::remove_file(&temp_path);
-        LintError::FileWrite {
+        CoreError::File(FileError::Write {
             path: path.to_path_buf(),
             source: e,
-        }
+        })
     })
 }
 
@@ -179,39 +191,43 @@ pub fn safe_write_file(path: &Path, content: &str) -> LintResult<()> {
 pub fn safe_read_file_with_limit(path: &Path, max_size: u64) -> LintResult<String> {
     // Use symlink_metadata to get metadata WITHOUT following symlinks
     // This is the key difference from fs::metadata() which follows symlinks
-    let metadata = fs::symlink_metadata(path).map_err(|e| LintError::FileRead {
-        path: path.to_path_buf(),
-        source: e,
+    let metadata = fs::symlink_metadata(path).map_err(|e| {
+        CoreError::File(FileError::Read {
+            path: path.to_path_buf(),
+            source: e,
+        })
     })?;
 
     // Reject symlinks for security (prevents path traversal)
     if metadata.file_type().is_symlink() {
-        return Err(LintError::FileSymlink {
+        return Err(CoreError::File(FileError::Symlink {
             path: path.to_path_buf(),
-        });
+        }));
     }
 
     // Reject non-regular files (prevents hangs on FIFOs, reads from devices)
     if !metadata.is_file() {
-        return Err(LintError::FileNotRegular {
+        return Err(CoreError::File(FileError::NotRegular {
             path: path.to_path_buf(),
-        });
+        }));
     }
 
     // Check file size (prevents DoS via large files)
     let size = metadata.len();
     if size > max_size {
-        return Err(LintError::FileTooBig {
+        return Err(CoreError::File(FileError::TooBig {
             path: path.to_path_buf(),
             size,
             limit: max_size,
-        });
+        }));
     }
 
     // Read the file
-    fs::read_to_string(path).map_err(|e| LintError::FileRead {
-        path: path.to_path_buf(),
-        source: e,
+    fs::read_to_string(path).map_err(|e| {
+        CoreError::File(FileError::Read {
+            path: path.to_path_buf(),
+            source: e,
+        })
     })
 }
 
@@ -266,7 +282,7 @@ mod tests {
         assert!(result.is_err());
 
         match result.unwrap_err() {
-            LintError::FileTooBig { size, limit, .. } => {
+            CoreError::File(FileError::TooBig { size, limit, .. }) => {
                 assert_eq!(size, 1024);
                 assert_eq!(limit, 512);
             }
@@ -298,7 +314,7 @@ mod tests {
         // File is one byte over - should fail
         let result = safe_read_file_with_limit(&file_path, 512);
         assert!(result.is_err());
-        assert!(matches!(result.unwrap_err(), LintError::FileTooBig { .. }));
+        assert!(matches!(result.unwrap_err(), CoreError::File(FileError::TooBig { .. })));
     }
 
     #[test]
@@ -336,7 +352,7 @@ mod tests {
         let result = safe_read_file(&file_path);
         assert!(result.is_err(), "File over 1 MiB should be rejected");
         match result.unwrap_err() {
-            LintError::FileTooBig { size, limit, .. } => {
+            CoreError::File(FileError::TooBig { size, limit, .. }) => {
                 assert_eq!(size, DEFAULT_MAX_FILE_SIZE + 1);
                 assert_eq!(limit, DEFAULT_MAX_FILE_SIZE);
             }
@@ -403,7 +419,7 @@ mod tests {
         let result = safe_read_file(temp.path());
         assert!(result.is_err());
         match result.unwrap_err() {
-            LintError::FileNotRegular { path } => {
+            CoreError::File(FileError::NotRegular { path }) => {
                 assert_eq!(path, temp.path());
             }
             other => panic!("Expected FileNotRegular for directory, got {:?}", other),
@@ -429,7 +445,7 @@ mod tests {
             assert!(result.is_err());
 
             match result.unwrap_err() {
-                LintError::FileSymlink { path } => {
+                CoreError::File(FileError::Symlink { path }) => {
                     assert_eq!(path, link_path);
                 }
                 other => panic!("Expected FileSymlink error, got {:?}", other),
@@ -447,7 +463,7 @@ mod tests {
 
             let result = safe_read_file(&link_path);
             assert!(result.is_err());
-            assert!(matches!(result.unwrap_err(), LintError::FileSymlink { .. }));
+            assert!(matches!(result.unwrap_err(), CoreError::File(FileError::Symlink { .. })));
         }
 
         #[test]
@@ -461,7 +477,7 @@ mod tests {
             let result = safe_read_file(&link_path);
             assert!(result.is_err());
             // Dangling symlink is still a symlink
-            assert!(matches!(result.unwrap_err(), LintError::FileSymlink { .. }));
+            assert!(matches!(result.unwrap_err(), CoreError::File(FileError::Symlink { .. })));
         }
 
         #[test]
@@ -475,7 +491,7 @@ mod tests {
 
             let result = safe_write_file(&link_path, "new content");
             assert!(result.is_err());
-            assert!(matches!(result.unwrap_err(), LintError::FileSymlink { .. }));
+            assert!(matches!(result.unwrap_err(), CoreError::File(FileError::Symlink { .. })));
         }
     }
 
@@ -497,7 +513,7 @@ mod tests {
             if symlink_file(&target_path, &link_path).is_ok() {
                 let result = safe_read_file(&link_path);
                 assert!(result.is_err());
-                assert!(matches!(result.unwrap_err(), LintError::FileSymlink { .. }));
+                assert!(matches!(result.unwrap_err(), CoreError::File(FileError::Symlink { .. })));
             }
             // If symlink creation fails due to privileges, skip the test
         }
@@ -531,6 +547,6 @@ mod tests {
         // Verify symlink is rejected at check time
         let result = safe_read_file(&link_path);
         assert!(result.is_err());
-        assert!(matches!(result.unwrap_err(), LintError::FileSymlink { .. }));
+        assert!(matches!(result.unwrap_err(), CoreError::File(FileError::Symlink { .. })));
     }
 }

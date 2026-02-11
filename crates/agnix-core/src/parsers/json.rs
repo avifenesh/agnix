@@ -5,12 +5,12 @@
 //! JSON parsing is handled by serde_json which is memory-safe and handles
 //! malformed input gracefully (returns errors instead of panicking).
 
-use crate::diagnostics::{LintError, LintResult};
+use crate::diagnostics::{LintResult, ValidationError};
 use serde::de::DeserializeOwned;
 
 /// Parse JSON config file
 pub fn parse_json_config<T: DeserializeOwned>(content: &str) -> LintResult<T> {
-    let parsed: T = serde_json::from_str(content).map_err(|e| LintError::Other(e.into()))?;
+    let parsed: T = serde_json::from_str(content).map_err(|e| ValidationError::Other(e.into()))?;
     Ok(parsed)
 }
 

@@ -5,6 +5,7 @@ use std::path::PathBuf;
 use thiserror::Error;
 
 pub type LintResult<T> = Result<T, LintError>;
+pub type CoreResult<T> = Result<T, CoreError>;
 
 /// An automatic fix for a diagnostic
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -250,44 +251,100 @@ impl Diagnostic {
     }
 }
 
-/// Linter errors
+/// File operation errors
 #[derive(Error, Debug)]
-pub enum LintError {
+pub enum FileError {
     #[error("Failed to read file: {path}")]
-    FileRead {
+    Read {
         path: PathBuf,
         #[source]
         source: std::io::Error,
     },
 
     #[error("Failed to write file: {path}")]
-    FileWrite {
+    Write {
         path: PathBuf,
         #[source]
         source: std::io::Error,
     },
 
     #[error("Refusing to read symlink: {path}")]
-    FileSymlink { path: PathBuf },
+    Symlink { path: PathBuf },
 
     #[error("File too large: {path} ({size} bytes, limit {limit} bytes)")]
-    FileTooBig {
+    TooBig {
         path: PathBuf,
         size: u64,
         limit: u64,
     },
 
     #[error("Not a regular file: {path}")]
-    FileNotRegular { path: PathBuf },
+    NotRegular { path: PathBuf },
+}
 
-    #[error("Invalid exclude pattern: {pattern} ({message})")]
-    InvalidExcludePattern { pattern: String, message: String },
-
+/// Validation errors
+#[derive(Error, Debug)]
+pub enum ValidationError {
     #[error("Too many files to validate: {count} files found, limit is {limit}")]
     TooManyFiles { count: usize, limit: usize },
 
     #[error(transparent)]
-    Other(anyhow::Error),
+    Other(#[from] anyhow::Error),
+}
+
+/// Configuration errors
+#[derive(Error, Debug)]
+pub enum ConfigError {
+    #[error("Invalid exclude pattern: {pattern} ({message})")]
+    InvalidExcludePattern { pattern: String, message: String },
+}
+
+/// Core error type hierarchy
+#[derive(Error, Debug)]
+pub enum CoreError {
+    #[error(transparent)]
+    File(#[from] FileError),
+
+    #[error(transparent)]
+    Validation(#[from] ValidationError),
+
+    #[error(transparent)]
+    Config(#[from] ConfigError),
+}
+
+impl CoreError {
+    /// Extract file-level errors from a validation error context.
+    ///
+    /// This is useful when a project validation fails at the file level,
+    /// allowing callers to access individual file errors for detailed reporting.
+    pub fn source_diagnostics(&self) -> Vec<&FileError> {
+        match self {
+            CoreError::File(e) => vec![e],
+            _ => vec![],
+        }
+    }
+
+    /// Get the path associated with this error, if any.
+    pub fn path(&self) -> Option<&PathBuf> {
+        match self {
+            CoreError::File(FileError::Read { path, .. })
+            | CoreError::File(FileError::Write { path, .. })
+            | CoreError::File(FileError::Symlink { path })
+            | CoreError::File(FileError::TooBig { path, .. })
+            | CoreError::File(FileError::NotRegular { path }) => Some(path),
+            _ => None,
+        }
+    }
+}
+
+// Backward compatibility: LintError is now an alias for CoreError
+pub type LintError = CoreError;
+
+// Manual From implementations for backward compatibility with existing error construction
+impl From<std::io::Error> for CoreError {
+    fn from(err: std::io::Error) -> Self {
+        CoreError::Validation(ValidationError::Other(err.into()))
+    }
 }
 
 #[cfg(test)]

@@ -51,7 +51,7 @@
 //! assert!(mock_fs.exists(Path::new("/test/file.txt")));
 //! ```
 
-use crate::diagnostics::{LintError, LintResult};
+use crate::diagnostics::{CoreError, FileError, LintResult};
 use std::collections::HashMap;
 use std::fs::Metadata;
 use std::io;
@@ -419,19 +419,21 @@ impl FileSystem for MockFileSystem {
 
         let entry = entries
             .get(&path_normalized)
-            .ok_or_else(|| LintError::FileRead {
-                path: path.to_path_buf(),
-                source: io::Error::new(io::ErrorKind::NotFound, "file not found"),
+            .ok_or_else(|| {
+                CoreError::File(FileError::Read {
+                    path: path.to_path_buf(),
+                    source: io::Error::new(io::ErrorKind::NotFound, "file not found"),
+                })
             })?;
 
         match entry {
             MockEntry::File { content } => Ok(content.clone()),
-            MockEntry::Directory => Err(LintError::FileNotRegular {
+            MockEntry::Directory => Err(CoreError::File(FileError::NotRegular {
                 path: path.to_path_buf(),
-            }),
-            MockEntry::Symlink { .. } => Err(LintError::FileSymlink {
+            })),
+            MockEntry::Symlink { .. } => Err(CoreError::File(FileError::Symlink {
                 path: path.to_path_buf(),
-            }),
+            })),
         }
     }
 
@@ -451,18 +453,18 @@ impl FileSystem for MockFileSystem {
                 );
                 Ok(())
             }
-            Some(MockEntry::Directory) => Err(LintError::FileNotRegular {
+            Some(MockEntry::Directory) => Err(CoreError::File(FileError::NotRegular {
                 path: path.to_path_buf(),
-            }),
-            Some(MockEntry::Symlink { .. }) => Err(LintError::FileSymlink {
+            })),
+            Some(MockEntry::Symlink { .. }) => Err(CoreError::File(FileError::Symlink {
                 path: path.to_path_buf(),
-            }),
+            })),
             None => {
                 // File doesn't exist - error like safe_write_file
-                Err(LintError::FileWrite {
+                Err(CoreError::File(FileError::Write {
                     path: path.to_path_buf(),
                     source: io::Error::new(io::ErrorKind::NotFound, "file not found"),
-                })
+                }))
             }
         }
     }
@@ -632,7 +634,7 @@ mod tests {
         fs.add_dir("/test/dir");
 
         let result = fs.read_to_string(Path::new("/test/dir"));
-        assert!(matches!(result, Err(LintError::FileNotRegular { .. })));
+        assert!(matches!(result, Err(CoreError::File(FileError::NotRegular { .. }))));
     }
 
     #[test]
@@ -662,7 +664,7 @@ mod tests {
         let fs = MockFileSystem::new();
 
         let result = fs.write(Path::new("/test/file.txt"), "content");
-        assert!(matches!(result, Err(LintError::FileWrite { .. })));
+        assert!(matches!(result, Err(CoreError::File(FileError::Write { .. }))));
     }
 
     #[test]

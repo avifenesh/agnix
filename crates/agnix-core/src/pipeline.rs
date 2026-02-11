@@ -9,7 +9,7 @@ use rayon::prelude::*;
 use rust_i18n::t;
 
 use crate::config::LintConfig;
-use crate::diagnostics::{Diagnostic, LintError, LintResult};
+use crate::diagnostics::{ConfigError, CoreError, Diagnostic, LintResult, ValidationError};
 use crate::file_types::{FileType, detect_file_type};
 use crate::file_utils;
 use crate::registry::ValidatorRegistry;
@@ -267,9 +267,11 @@ fn compile_exclude_patterns(excludes: &[String]) -> LintResult<Vec<ExcludePatter
             };
             let allow_probe = dir_only_prefix.is_some() || glob_str.contains("**");
             let compiled =
-                glob::Pattern::new(&glob_str).map_err(|e| LintError::InvalidExcludePattern {
-                    pattern: pattern.clone(),
-                    message: e.to_string(),
+                glob::Pattern::new(&glob_str).map_err(|e| {
+                    CoreError::Config(ConfigError::InvalidExcludePattern {
+                        pattern: pattern.clone(),
+                        message: e.to_string(),
+                    })
                 })?;
             Ok(ExcludePattern {
                 pattern: compiled,
@@ -587,10 +589,10 @@ pub fn validate_project_rules(root: &Path, config: &LintConfig) -> LintResult<Ve
         // Enforce file count limit to prevent unbounded traversal
         if let Some(limit) = max_files {
             if files_seen >= limit {
-                return Err(LintError::TooManyFiles {
+                return Err(CoreError::Validation(ValidationError::TooManyFiles {
                     count: files_seen,
                     limit,
-                });
+                }));
             }
         }
         let file_path = entry.path().to_path_buf();
@@ -783,10 +785,10 @@ pub fn validate_project_with_registry(
     // Check if limit was exceeded and return error
     if limit_exceeded.load(Ordering::Relaxed) {
         if let Some(limit) = max_files {
-            return Err(LintError::TooManyFiles {
+            return Err(CoreError::Validation(ValidationError::TooManyFiles {
                 count: files_checked.load(Ordering::Relaxed),
                 limit,
-            });
+            }));
         }
     }
 
@@ -915,7 +917,7 @@ mod tests {
         let result = compile_exclude_patterns(&vec!["[".to_string()]);
         assert!(matches!(
             result,
-            Err(LintError::InvalidExcludePattern { .. })
+            Err(CoreError::Config(ConfigError::InvalidExcludePattern { .. }))
         ));
     }
 }
