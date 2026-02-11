@@ -647,11 +647,11 @@ fn validator_metadata_callable_on_dyn_validator() {
 // ============================================================================
 
 #[test]
-fn file_type_detector_trait_is_importable() {
-    // FileTypeDetector is a trait - verify it can be used as trait bound
-    fn _assert_detector_trait(_: &dyn agnix_core::FileTypeDetector) {}
-    fn _assert_detector_send_sync<T: Send + Sync>() {}
-    _assert_detector_send_sync::<agnix_core::file_types::BuiltinDetector>();
+fn builtin_detector_is_send_sync() {
+    // Trait importability already tested in public_types_are_importable (line 42).
+    // Here we check BuiltinDetector's Send + Sync bounds.
+    assert_send::<agnix_core::file_types::BuiltinDetector>();
+    assert_sync::<agnix_core::file_types::BuiltinDetector>();
 }
 
 #[test]
