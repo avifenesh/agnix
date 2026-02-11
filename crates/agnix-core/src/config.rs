@@ -767,6 +767,146 @@ impl LintConfig {
         self.runtime.fs = fs;
     }
 
+    // =========================================================================
+    // Serializable Field Getters
+    // =========================================================================
+
+    /// Get the severity level threshold.
+    #[inline]
+    pub fn severity(&self) -> SeverityLevel {
+        self.severity
+    }
+
+    /// Get the rules configuration.
+    #[inline]
+    pub fn rules(&self) -> &RuleConfig {
+        &self.rules
+    }
+
+    /// Get the exclude patterns.
+    #[inline]
+    pub fn exclude(&self) -> &[String] {
+        &self.exclude
+    }
+
+    /// Get the target tool.
+    #[inline]
+    pub fn target(&self) -> TargetTool {
+        self.target
+    }
+
+    /// Get the tools list.
+    #[inline]
+    pub fn tools(&self) -> &[String] {
+        &self.tools
+    }
+
+    /// Get the tool versions configuration.
+    #[inline]
+    pub fn tool_versions(&self) -> &ToolVersions {
+        &self.tool_versions
+    }
+
+    /// Get the spec revisions configuration.
+    #[inline]
+    pub fn spec_revisions(&self) -> &SpecRevisions {
+        &self.spec_revisions
+    }
+
+    /// Get the files configuration.
+    #[inline]
+    pub fn files_config(&self) -> &FilesConfig {
+        &self.files
+    }
+
+    /// Get the locale, if set.
+    #[inline]
+    pub fn locale(&self) -> Option<&str> {
+        self.locale.as_deref()
+    }
+
+    /// Get the maximum number of files to validate.
+    #[inline]
+    pub fn max_files_to_validate(&self) -> Option<usize> {
+        self.max_files_to_validate
+    }
+
+    /// Get the raw `mcp_protocol_version` field value (without fallback logic).
+    ///
+    /// For the resolved version with fallback, use [`get_mcp_protocol_version()`](Self::get_mcp_protocol_version).
+    #[inline]
+    pub fn mcp_protocol_version_raw(&self) -> Option<&str> {
+        self.mcp_protocol_version.as_deref()
+    }
+
+    // =========================================================================
+    // Serializable Field Setters
+    // =========================================================================
+
+    /// Set the severity level threshold.
+    pub fn set_severity(&mut self, severity: SeverityLevel) {
+        self.severity = severity;
+    }
+
+    /// Set the target tool.
+    pub fn set_target(&mut self, target: TargetTool) {
+        self.target = target;
+    }
+
+    /// Set the tools list.
+    pub fn set_tools(&mut self, tools: Vec<String>) {
+        self.tools = tools;
+    }
+
+    /// Get a mutable reference to the tools list.
+    pub fn tools_mut(&mut self) -> &mut Vec<String> {
+        &mut self.tools
+    }
+
+    /// Set the exclude patterns.
+    pub fn set_exclude(&mut self, exclude: Vec<String>) {
+        self.exclude = exclude;
+    }
+
+    /// Set the locale.
+    pub fn set_locale(&mut self, locale: Option<String>) {
+        self.locale = locale;
+    }
+
+    /// Set the maximum number of files to validate.
+    pub fn set_max_files_to_validate(&mut self, max: Option<usize>) {
+        self.max_files_to_validate = max;
+    }
+
+    /// Set the MCP protocol version (deprecated field).
+    pub fn set_mcp_protocol_version(&mut self, version: Option<String>) {
+        self.mcp_protocol_version = version;
+    }
+
+    /// Get a mutable reference to the rules configuration.
+    pub fn rules_mut(&mut self) -> &mut RuleConfig {
+        &mut self.rules
+    }
+
+    /// Get a mutable reference to the tool versions configuration.
+    pub fn tool_versions_mut(&mut self) -> &mut ToolVersions {
+        &mut self.tool_versions
+    }
+
+    /// Get a mutable reference to the spec revisions configuration.
+    pub fn spec_revisions_mut(&mut self) -> &mut SpecRevisions {
+        &mut self.spec_revisions
+    }
+
+    /// Get a mutable reference to the files configuration.
+    pub fn files_mut(&mut self) -> &mut FilesConfig {
+        &mut self.files
+    }
+
+    // =========================================================================
+    // Derived / Computed Accessors
+    // =========================================================================
+
     /// Get the expected MCP protocol version
     ///
     /// Priority: spec_revisions.mcp_protocol > mcp_protocol_version > default
