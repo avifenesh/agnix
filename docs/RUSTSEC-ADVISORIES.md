@@ -79,6 +79,9 @@ cargo update
 # Run cargo audit without ignores to see current status
 cargo audit
 
+# Run cargo deny to check advisories (validates deny.toml ignores)
+cargo deny check advisories
+
 # Check if any of the ignored advisories have been resolved
 cargo tree -i instant      # Check if notify still depends on instant
 cargo tree -i bincode      # Check if iai-callgrind still depends on vulnerable bincode

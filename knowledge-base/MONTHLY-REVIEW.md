@@ -107,6 +107,7 @@ Review ignored RUSTSEC advisories and check if they can be removed:
   - Risk level: Low (dev-only dependency, not in release binaries)
 
 - [ ] Run `cargo audit` without ignores to see current advisory status
+- [ ] Run `cargo deny check advisories` to validate ignores in `deny.toml`
 - [ ] Check for new advisories that need to be addressed or documented
 - [ ] Update relevant tracking issues with current status
 
