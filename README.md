@@ -52,7 +52,10 @@ Found 1 error, 1 warning
 hint: Run with --fix to apply fixes
 ```
 
-<https://github.com/avifenesh/agnix/raw/refs/heads/main/assets/demo.mp4>
+
+https://github.com/user-attachments/assets/09f55427-1d10-4398-aad4-ae0799f495a8
+
+
 
 ## Install
 
