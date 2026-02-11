@@ -67,7 +67,7 @@ tests/fixtures/     # Test cases by category
 - `config.rs` - LintConfig, LintConfigBuilder, ConfigError, ToolVersions, SpecRevisions
 - `diagnostics.rs` - Diagnostic, Fix, DiagnosticLevel
 - `eval.rs` - Rule efficacy evaluation (precision/recall/F1)
-- `file_types.rs` - FileType enum and detect_file_type()
+- `file_types/` - FileType enum, detect_file_type(), FileTypeDetector trait, FileTypeDetectorChain
 - `file_utils.rs` - Safe file I/O (symlink rejection, size limits)
 - `fixes.rs` - Auto-fix application engine
 - `fs.rs` - FileSystem trait abstraction (RealFileSystem, MockFileSystem)
@@ -97,6 +97,22 @@ impl ValidatorRegistry {
     pub fn builder() -> ValidatorRegistryBuilder;
     pub fn with_defaults() -> Self;
     pub fn disable_validator(&mut self, name: impl Into<String>);
+}
+
+// Extensible file type detection (chain-of-responsibility)
+pub trait FileTypeDetector: Send + Sync {
+    fn detect(&self, path: &Path) -> Option<FileType>;
+    fn name(&self) -> &str { /* default: short type name */ }
+}
+
+pub struct FileTypeDetectorChain { /* ... */ }
+
+impl FileTypeDetectorChain {
+    pub fn new() -> Self;
+    pub fn with_builtin() -> Self;
+    pub fn prepend(self, detector: impl FileTypeDetector + 'static) -> Self;
+    pub fn push(self, detector: impl FileTypeDetector + 'static) -> Self;
+    pub fn detect(&self, path: &Path) -> Option<FileType>;
 }
 
 // Validated config construction (fields are private)
