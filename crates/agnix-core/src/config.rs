@@ -456,6 +456,16 @@ fn default_max_files() -> Option<usize> {
     Some(DEFAULT_MAX_FILES)
 }
 
+/// Check if a normalized (forward-slash) path pattern contains path traversal.
+///
+/// Catches `../`, `..` at the start, `/..` at the end, and standalone `..`.
+fn has_path_traversal(normalized: &str) -> bool {
+    normalized == ".."
+        || normalized.starts_with("../")
+        || normalized.contains("/../")
+        || normalized.ends_with("/..")
+}
+
 impl Default for LintConfig {
     fn default() -> Self {
         Self {
@@ -704,7 +714,9 @@ pub struct LintConfigBuilder {
 
 impl LintConfigBuilder {
     /// Create a new builder with all fields unset (defaults will be applied at build time).
-    pub fn new() -> Self {
+    ///
+    /// Prefer [`LintConfig::builder()`] over calling this directly.
+    fn new() -> Self {
         Self {
             severity: None,
             rules: None,
@@ -825,25 +837,33 @@ impl LintConfigBuilder {
     /// running validation.
     ///
     /// Returns `Err(ConfigError)` if:
-    /// - An exclude pattern contains invalid glob syntax
-    /// - An exclude pattern attempts path traversal (`../`)
+    /// - A glob pattern (in exclude or files config) has invalid syntax
+    /// - A glob pattern attempts path traversal (`../`)
     /// - Configuration validation produces warnings (promoted to errors)
     pub fn build(&mut self) -> Result<LintConfig, ConfigError> {
         let config = self.build_inner();
 
-        // Validate exclude patterns for glob syntax and path traversal
-        for pattern in &config.exclude {
-            let normalized = pattern.replace('\\', "/");
-            if let Err(e) = glob::Pattern::new(&normalized) {
-                return Err(ConfigError::InvalidGlobPattern {
-                    pattern: pattern.clone(),
-                    error: e.to_string(),
-                });
-            }
-            if normalized.contains("../") {
-                return Err(ConfigError::PathTraversal {
-                    pattern: pattern.clone(),
-                });
+        // Validate all glob pattern lists: exclude + files config
+        let pattern_lists: &[(&str, &[String])] = &[
+            ("exclude", &config.exclude),
+            ("files.include_as_memory", &config.files.include_as_memory),
+            ("files.include_as_generic", &config.files.include_as_generic),
+            ("files.exclude", &config.files.exclude),
+        ];
+        for &(field, patterns) in pattern_lists {
+            for pattern in patterns {
+                let normalized = pattern.replace('\\', "/");
+                if let Err(e) = glob::Pattern::new(&normalized) {
+                    return Err(ConfigError::InvalidGlobPattern {
+                        pattern: pattern.clone(),
+                        error: format!("{} (in {})", e, field),
+                    });
+                }
+                if has_path_traversal(&normalized) {
+                    return Err(ConfigError::PathTraversal {
+                        pattern: pattern.clone(),
+                    });
+                }
             }
         }
 
@@ -870,17 +890,21 @@ impl LintConfigBuilder {
 
         let mut rules = self.rules.take().unwrap_or(defaults.rules);
 
-        // Apply convenience disabled_rules/disabled_validators
+        // Apply convenience disabled_rules/disabled_validators (dedup via HashSet)
         if !self.disabled_rules.is_empty() {
+            let mut seen: std::collections::HashSet<String> =
+                rules.disabled_rules.iter().cloned().collect();
             for rule in self.disabled_rules.drain(..) {
-                if !rules.disabled_rules.contains(&rule) {
+                if seen.insert(rule.clone()) {
                     rules.disabled_rules.push(rule);
                 }
             }
         }
         if !self.disabled_validators.is_empty() {
+            let mut seen: std::collections::HashSet<String> =
+                rules.disabled_validators.iter().cloned().collect();
             for name in self.disabled_validators.drain(..) {
-                if !rules.disabled_validators.contains(&name) {
+                if seen.insert(name.clone()) {
                     rules.disabled_validators.push(name);
                 }
             }
@@ -1135,6 +1159,9 @@ impl LintConfig {
     }
 
     /// Set the exclude patterns.
+    ///
+    /// Note: This does not validate the patterns. Call [`validate()`](Self::validate)
+    /// after using this if validation is needed.
     pub fn set_exclude(&mut self, exclude: Vec<String>) {
         self.exclude = exclude;
     }
@@ -1170,6 +1197,9 @@ impl LintConfig {
     }
 
     /// Get a mutable reference to the files configuration.
+    ///
+    /// Note: Mutations bypass builder validation. Call [`validate()`](Self::validate)
+    /// after modifying if validation is needed.
     pub fn files_mut(&mut self) -> &mut FilesConfig {
         &mut self.files
     }
@@ -1181,6 +1211,7 @@ impl LintConfig {
     /// Get the expected MCP protocol version
     ///
     /// Priority: spec_revisions.mcp_protocol > mcp_protocol_version > default
+    #[inline]
     pub fn get_mcp_protocol_version(&self) -> &str {
         self.spec_revisions
             .mcp_protocol
@@ -1190,16 +1221,19 @@ impl LintConfig {
     }
 
     /// Check if MCP protocol revision is explicitly pinned
+    #[inline]
     pub fn is_mcp_revision_pinned(&self) -> bool {
         self.spec_revisions.mcp_protocol.is_some() || self.mcp_protocol_version.is_some()
     }
 
     /// Check if Claude Code version is explicitly pinned
+    #[inline]
     pub fn is_claude_code_version_pinned(&self) -> bool {
         self.tool_versions.claude_code.is_some()
     }
 
     /// Get the pinned Claude Code version, if any
+    #[inline]
     pub fn get_claude_code_version(&self) -> Option<&str> {
         self.tool_versions.claude_code.as_deref()
     }
@@ -1377,7 +1411,7 @@ impl LintConfig {
                     });
                 }
                 // Reject path traversal patterns
-                if normalized.contains("../") {
+                if has_path_traversal(&normalized) {
                     warnings.push(ConfigWarning {
                         field: field.to_string(),
                         message: t!(
@@ -4499,5 +4533,181 @@ severity = "Warning"
         let err = ConfigError::ValidationFailed(warnings);
         let msg = err.to_string();
         assert!(msg.contains("1 warning(s)"));
+    }
+
+    #[test]
+    fn test_builder_tool_versions() {
+        let tv = ToolVersions {
+            claude_code: Some("1.2.3".to_string()),
+            ..ToolVersions::default()
+        };
+        let config = LintConfig::builder()
+            .tool_versions(tv.clone())
+            .build_unchecked();
+        assert_eq!(config.tool_versions().claude_code, tv.claude_code);
+    }
+
+    #[test]
+    fn test_builder_spec_revisions() {
+        let sr = SpecRevisions {
+            mcp_protocol: Some("2025-03-26".to_string()),
+            ..SpecRevisions::default()
+        };
+        let config = LintConfig::builder()
+            .spec_revisions(sr.clone())
+            .build_unchecked();
+        assert_eq!(config.spec_revisions().mcp_protocol, sr.mcp_protocol);
+    }
+
+    #[test]
+    fn test_builder_rules() {
+        let mut rules = RuleConfig::default();
+        rules.skills = false;
+        rules.hooks = false;
+        let config = LintConfig::builder().rules(rules).build_unchecked();
+        assert!(!config.rules().skills);
+        assert!(!config.rules().hooks);
+    }
+
+    #[test]
+    fn test_builder_import_cache() {
+        let cache = crate::parsers::ImportCache::default();
+        let config = LintConfig::builder()
+            .import_cache(cache)
+            .build_unchecked();
+        assert!(config.import_cache().is_some());
+    }
+
+    #[test]
+    fn test_builder_fs() {
+        use crate::fs::MockFileSystem;
+        let fs = Arc::new(MockFileSystem::new());
+        let config = LintConfig::builder().fs(fs).build_unchecked();
+        // Verify fs was set (we can't directly compare Arc<dyn FileSystem>,
+        // but if it compiled and didn't panic, the builder method works)
+        let _ = config.fs();
+    }
+
+    #[test]
+    fn test_builder_files_include_invalid_glob_rejected() {
+        let files = FilesConfig {
+            include_as_memory: vec!["[invalid".to_string()],
+            ..FilesConfig::default()
+        };
+        let result = LintConfig::builder().files(files).build();
+        assert!(result.is_err());
+        match result.unwrap_err() {
+            ConfigError::InvalidGlobPattern { pattern, error } => {
+                assert_eq!(pattern, "[invalid");
+                assert!(error.contains("files.include_as_memory"));
+            }
+            other => panic!("Expected InvalidGlobPattern, got: {:?}", other),
+        }
+    }
+
+    #[test]
+    fn test_builder_files_include_path_traversal_rejected() {
+        let files = FilesConfig {
+            include_as_generic: vec!["../secret.md".to_string()],
+            ..FilesConfig::default()
+        };
+        let result = LintConfig::builder().files(files).build();
+        assert!(result.is_err());
+        match result.unwrap_err() {
+            ConfigError::PathTraversal { pattern } => {
+                assert_eq!(pattern, "../secret.md");
+            }
+            other => panic!("Expected PathTraversal, got: {:?}", other),
+        }
+    }
+
+    #[test]
+    fn test_builder_unknown_tool_rejected() {
+        let result = LintConfig::builder()
+            .tools(vec!["fake-tool".to_string()])
+            .build();
+        assert!(result.is_err());
+        match result.unwrap_err() {
+            ConfigError::ValidationFailed(warnings) => {
+                assert!(warnings.iter().any(|w| w.field == "tools"));
+            }
+            other => panic!("Expected ValidationFailed, got: {:?}", other),
+        }
+    }
+
+    #[test]
+    fn test_builder_unknown_rule_rejected() {
+        let result = LintConfig::builder()
+            .disable_rule("FAKE-001")
+            .build();
+        assert!(result.is_err());
+        match result.unwrap_err() {
+            ConfigError::ValidationFailed(warnings) => {
+                assert!(warnings.iter().any(|w| w.field == "rules.disabled_rules"));
+            }
+            other => panic!("Expected ValidationFailed, got: {:?}", other),
+        }
+    }
+
+    #[test]
+    fn test_builder_multiple_validation_errors() {
+        let result = LintConfig::builder()
+            .tools(vec!["fake-tool".to_string()])
+            .disable_rule("FAKE-001")
+            .build();
+        assert!(result.is_err());
+        match result.unwrap_err() {
+            ConfigError::ValidationFailed(warnings) => {
+                assert!(warnings.len() >= 2, "Expected at least 2 warnings, got {}", warnings.len());
+            }
+            other => panic!("Expected ValidationFailed, got: {:?}", other),
+        }
+    }
+
+    #[test]
+    fn test_builder_reuse_after_build() {
+        let mut builder = LintConfig::builder();
+        builder.severity(SeverityLevel::Error);
+        let config1 = builder.build_unchecked();
+        assert_eq!(config1.severity(), SeverityLevel::Error);
+
+        // After build, builder state is drained - building again gives defaults
+        let config2 = builder.build_unchecked();
+        assert_eq!(config2.severity(), SeverityLevel::Warning);
+    }
+
+    #[test]
+    fn test_builder_empty_exclude() {
+        let config = LintConfig::builder()
+            .exclude(vec![])
+            .build_unchecked();
+        assert!(config.exclude().is_empty());
+    }
+
+    #[test]
+    fn test_path_traversal_edge_cases() {
+        // ".." alone
+        let result = LintConfig::builder()
+            .exclude(vec!["..".to_string()])
+            .build();
+        assert!(matches!(result, Err(ConfigError::PathTraversal { .. })));
+
+        // "foo/../bar"
+        let result = LintConfig::builder()
+            .exclude(vec!["foo/../bar".to_string()])
+            .build();
+        assert!(matches!(result, Err(ConfigError::PathTraversal { .. })));
+
+        // "foo/.."
+        let result = LintConfig::builder()
+            .exclude(vec!["foo/..".to_string()])
+            .build();
+        assert!(matches!(result, Err(ConfigError::PathTraversal { .. })));
+
+        // "..foo" is NOT path traversal (just a name starting with ..)
+        let result = LintConfig::builder()
+            .exclude(vec!["..foo".to_string()])
+            .build_unchecked();
+        assert_eq!(result.exclude(), &["..foo".to_string()]);
     }
 }

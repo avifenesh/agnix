@@ -458,7 +458,7 @@ fn validator_name_accessible_from_outside_crate() {
 #[test]
 fn builder_accessible_from_outside_crate() {
     // Verify the builder type and ConfigError are exported
-    let config: agnix_core::LintConfig = agnix_core::LintConfigBuilder::new().build().unwrap();
+    let config: agnix_core::LintConfig = agnix_core::LintConfig::builder().build().unwrap();
     assert_eq!(config.severity(), agnix_core::LintConfig::default().severity());
 }
 
