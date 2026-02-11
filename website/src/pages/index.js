@@ -232,6 +232,26 @@ function TerminalDemo() {
   /* eslint-enable react/jsx-no-comment-textnodes */
 }
 
+function EditorDemo() {
+  return (
+    <RevealSection className={styles.editorDemo}>
+      <div className="container">
+        <Heading as="h2" className={styles.sectionTitle}>
+          See it in your editor
+        </Heading>
+        <div className={styles.editorDemoFrame}>
+          <img
+            src="/agnix/img/demo.gif"
+            alt="agnix real-time validation in VS Code"
+            className={styles.editorDemoGif}
+            loading="lazy"
+          />
+        </div>
+      </div>
+    </RevealSection>
+  );
+}
+
 function Feature({title, description, icon}) {
   return (
     <div className={styles.featureCard}>
@@ -334,6 +354,7 @@ export default function Home() {
       <HeroBanner />
       <main>
         <TerminalDemo />
+        <EditorDemo />
         <Features />
         <SupportedTools />
         <Stats />

@@ -53,8 +53,7 @@ hint: Run with --fix to apply fixes
 ```
 
 <p align="center">
-  <img src="assets/vscode-validation.png" alt="VS Code validation" width="49%">
-  <img src="editors/jetbrains/assets/jetbrains-validation.png" alt="JetBrains validation" width="49%">
+  <img src="assets/demo.gif" alt="agnix real-time validation in VS Code" width="720">
 </p>
 
 ## Install
