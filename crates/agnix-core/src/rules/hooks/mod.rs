@@ -13,9 +13,24 @@ mod helpers;
 use helpers::*;
 
 const RULE_IDS: &[&str] = &[
-    "CC-HK-001", "CC-HK-002", "CC-HK-003", "CC-HK-004", "CC-HK-005", "CC-HK-006", "CC-HK-007",
-    "CC-HK-008", "CC-HK-009", "CC-HK-010", "CC-HK-011", "CC-HK-012", "CC-HK-013", "CC-HK-014",
-    "CC-HK-015", "CC-HK-016", "CC-HK-017", "CC-HK-018",
+    "CC-HK-001",
+    "CC-HK-002",
+    "CC-HK-003",
+    "CC-HK-004",
+    "CC-HK-005",
+    "CC-HK-006",
+    "CC-HK-007",
+    "CC-HK-008",
+    "CC-HK-009",
+    "CC-HK-010",
+    "CC-HK-011",
+    "CC-HK-012",
+    "CC-HK-013",
+    "CC-HK-014",
+    "CC-HK-015",
+    "CC-HK-016",
+    "CC-HK-017",
+    "CC-HK-018",
 ];
 
 pub struct HooksValidator;

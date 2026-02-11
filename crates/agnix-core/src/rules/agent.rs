@@ -90,8 +90,19 @@ const KNOWN_AGENT_TOOLS: &[&str] = &[
 ];
 
 const RULE_IDS: &[&str] = &[
-    "CC-AG-001", "CC-AG-002", "CC-AG-003", "CC-AG-004", "CC-AG-005", "CC-AG-006", "CC-AG-007",
-    "CC-AG-008", "CC-AG-009", "CC-AG-010", "CC-AG-011", "CC-AG-012", "CC-AG-013",
+    "CC-AG-001",
+    "CC-AG-002",
+    "CC-AG-003",
+    "CC-AG-004",
+    "CC-AG-005",
+    "CC-AG-006",
+    "CC-AG-007",
+    "CC-AG-008",
+    "CC-AG-009",
+    "CC-AG-010",
+    "CC-AG-011",
+    "CC-AG-012",
+    "CC-AG-013",
 ];
 
 pub struct AgentValidator;

@@ -19,7 +19,13 @@ use rust_i18n::t;
 use std::collections::{HashMap, HashSet};
 use std::path::{Component, Path, PathBuf};
 
-const RULE_IDS: &[&str] = &["CC-MEM-001", "CC-MEM-002", "CC-MEM-003", "REF-001", "REF-002"];
+const RULE_IDS: &[&str] = &[
+    "CC-MEM-001",
+    "CC-MEM-002",
+    "CC-MEM-003",
+    "REF-001",
+    "REF-002",
+];
 
 pub struct ImportsValidator;
 

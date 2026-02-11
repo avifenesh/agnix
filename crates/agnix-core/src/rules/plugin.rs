@@ -12,8 +12,16 @@ use rust_i18n::t;
 use std::path::Path;
 
 const RULE_IDS: &[&str] = &[
-    "CC-PL-001", "CC-PL-002", "CC-PL-003", "CC-PL-004", "CC-PL-005", "CC-PL-006", "CC-PL-007",
-    "CC-PL-008", "CC-PL-009", "CC-PL-010",
+    "CC-PL-001",
+    "CC-PL-002",
+    "CC-PL-003",
+    "CC-PL-004",
+    "CC-PL-005",
+    "CC-PL-006",
+    "CC-PL-007",
+    "CC-PL-008",
+    "CC-PL-009",
+    "CC-PL-010",
 ];
 
 pub struct PluginValidator;
