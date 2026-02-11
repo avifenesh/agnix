@@ -33,7 +33,7 @@ similar = "2"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 notify = { version = "8", features = ["macos_fsevent"] }
-notify-debouncer-mini = "0.5"
+notify-debouncer-mini = "0.7"
 ctrlc = "3"
 dirs = "5"
 rust-i18n = { workspace = true }
