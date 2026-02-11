@@ -36,7 +36,7 @@ agnix [OPTIONS] [PATH]
 ### Output formats
 
 - **text** -- Human-readable terminal output with colors
-- **json** -- Machine-readable JSON array of diagnostics
+- **json** -- Machine-readable JSON array of diagnostics with optional metadata fields (category, rule_severity, applies_to_tool)
 - **sarif** -- SARIF format for GitHub Code Scanning integration
 
 ## MCP server

@@ -175,7 +175,10 @@ agnix --format json . > results.json
       "line": 3,
       "column": 1,
       "message": "Invalid name 'Review-Code'",
-      "suggestion": "Use lowercase letters and hyphens only"
+      "suggestion": "Use lowercase letters and hyphens only",
+      "category": "agent-skills",
+      "rule_severity": "HIGH",
+      "applies_to_tool": "claude-code"
     }
   ],
   "summary": {
@@ -185,6 +188,8 @@ agnix --format json . > results.json
   }
 }
 ```
+
+Note: category, rule_severity, and applies_to_tool are optional fields included when rule metadata is present.
 
 ### SARIF
 
