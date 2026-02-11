@@ -16,9 +16,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Validator disabling**: `disabled_validators` config field in `[rules]` section to disable validators by name at runtime
 - **Validator naming**: `Validator::name()` method for programmatic identification of validators
 - **Validator introspection**: `Validator::metadata()` method returns rule IDs and descriptions for runtime validator inspection
+- **Hierarchical error types** - New `CoreError` enum with `File(FileError)`, `Validation(ValidationError)`, `Config(ConfigError)` variants provides structured error information. Helper methods `path()` and `source_diagnostics()` enable better error introspection. `LintError` remains as type alias for backward compatibility
 
 ### Changed
 - **Refactoring**: Split `crates/agnix-core/src/lib.rs` into focused modules: `file_types.rs`, `registry.rs`, `pipeline.rs`
+- **Error handling**: Replaced flat `LintError` enum with hierarchical `CoreError` structure, preserving error context through conversion layers. Binary crates (CLI, LSP, MCP) gain automatic `anyhow::Error` conversion via thiserror
 
 ### Fixed
 - i18n diagnostic messages now display properly translated text instead of raw key paths when installed via `cargo install` (fixes #341)
