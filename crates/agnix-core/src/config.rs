@@ -4167,4 +4167,337 @@ severity = "Warning"
             warnings2
         );
     }
+
+    // =========================================================================
+    // LintConfigBuilder tests
+    // =========================================================================
+
+    #[test]
+    fn test_builder_default_matches_default() {
+        let from_builder = LintConfig::builder().build().unwrap();
+        let from_default = LintConfig::default();
+
+        assert_eq!(from_builder.severity(), from_default.severity());
+        assert_eq!(from_builder.target(), from_default.target());
+        assert_eq!(from_builder.tools(), from_default.tools());
+        assert_eq!(from_builder.exclude(), from_default.exclude());
+        assert_eq!(from_builder.locale(), from_default.locale());
+        assert_eq!(
+            from_builder.max_files_to_validate(),
+            from_default.max_files_to_validate()
+        );
+        assert_eq!(
+            from_builder.rules().disabled_rules,
+            from_default.rules().disabled_rules
+        );
+        assert_eq!(
+            from_builder.rules().disabled_validators,
+            from_default.rules().disabled_validators
+        );
+    }
+
+    #[test]
+    fn test_builder_custom_severity() {
+        let config = LintConfig::builder()
+            .severity(SeverityLevel::Error)
+            .build()
+            .unwrap();
+
+        assert_eq!(config.severity(), SeverityLevel::Error);
+    }
+
+    #[test]
+    fn test_builder_custom_target() {
+        // target is deprecated, so build() validates and rejects it;
+        // use build_unchecked() to test the setter works
+        let config = LintConfig::builder()
+            .target(TargetTool::ClaudeCode)
+            .build_unchecked();
+
+        assert_eq!(config.target(), TargetTool::ClaudeCode);
+    }
+
+    #[test]
+    fn test_builder_deprecated_target_rejected_by_build() {
+        let result = LintConfig::builder()
+            .target(TargetTool::ClaudeCode)
+            .build();
+
+        assert!(result.is_err());
+        match result.unwrap_err() {
+            ConfigError::ValidationFailed(warnings) => {
+                assert!(warnings.iter().any(|w| w.field == "target"));
+            }
+            other => panic!("Expected ValidationFailed, got: {:?}", other),
+        }
+    }
+
+    #[test]
+    fn test_builder_custom_tools() {
+        let config = LintConfig::builder()
+            .tools(vec!["claude-code".to_string(), "cursor".to_string()])
+            .build()
+            .unwrap();
+
+        assert_eq!(config.tools(), &["claude-code", "cursor"]);
+    }
+
+    #[test]
+    fn test_builder_custom_exclude() {
+        let config = LintConfig::builder()
+            .exclude(vec!["node_modules/**".to_string(), ".git/**".to_string()])
+            .build()
+            .unwrap();
+
+        assert_eq!(
+            config.exclude(),
+            &["node_modules/**".to_string(), ".git/**".to_string()]
+        );
+    }
+
+    #[test]
+    fn test_builder_invalid_glob_returns_error() {
+        let result = LintConfig::builder()
+            .exclude(vec!["[invalid".to_string()])
+            .build();
+
+        assert!(result.is_err());
+        match result.unwrap_err() {
+            ConfigError::InvalidGlobPattern { pattern, .. } => {
+                assert_eq!(pattern, "[invalid");
+            }
+            other => panic!("Expected InvalidGlobPattern, got: {:?}", other),
+        }
+    }
+
+    #[test]
+    fn test_builder_path_traversal_returns_error() {
+        let result = LintConfig::builder()
+            .exclude(vec!["../secret/**".to_string()])
+            .build();
+
+        assert!(result.is_err());
+        match result.unwrap_err() {
+            ConfigError::PathTraversal { pattern } => {
+                assert_eq!(pattern, "../secret/**");
+            }
+            other => panic!("Expected PathTraversal, got: {:?}", other),
+        }
+    }
+
+    #[test]
+    fn test_builder_disable_rule() {
+        let config = LintConfig::builder()
+            .disable_rule("AS-001")
+            .disable_rule("PE-003")
+            .build()
+            .unwrap();
+
+        assert!(config.rules().disabled_rules.contains(&"AS-001".to_string()));
+        assert!(config.rules().disabled_rules.contains(&"PE-003".to_string()));
+        assert!(!config.is_rule_enabled("AS-001"));
+        assert!(!config.is_rule_enabled("PE-003"));
+    }
+
+    #[test]
+    fn test_builder_disable_validator() {
+        let config = LintConfig::builder()
+            .disable_validator("XmlValidator")
+            .build()
+            .unwrap();
+
+        assert!(
+            config
+                .rules()
+                .disabled_validators
+                .contains(&"XmlValidator".to_string())
+        );
+    }
+
+    #[test]
+    fn test_builder_chaining() {
+        // Uses build_unchecked() because target is a deprecated field
+        let config = LintConfig::builder()
+            .severity(SeverityLevel::Error)
+            .target(TargetTool::Cursor)
+            .tools(vec!["cursor".to_string()])
+            .locale(Some("es".to_string()))
+            .max_files_to_validate(Some(50))
+            .disable_rule("PE-003")
+            .build_unchecked();
+
+        assert_eq!(config.severity(), SeverityLevel::Error);
+        assert_eq!(config.target(), TargetTool::Cursor);
+        assert_eq!(config.tools(), &["cursor"]);
+        assert_eq!(config.locale(), Some("es"));
+        assert_eq!(config.max_files_to_validate(), Some(50));
+        assert!(config.rules().disabled_rules.contains(&"PE-003".to_string()));
+    }
+
+    #[test]
+    fn test_builder_build_unchecked_skips_validation() {
+        // build_unchecked allows invalid patterns that build() would reject
+        let config = LintConfig::builder()
+            .exclude(vec!["[invalid".to_string()])
+            .build_unchecked();
+
+        assert_eq!(config.exclude(), &["[invalid".to_string()]);
+    }
+
+    #[test]
+    fn test_builder_root_dir() {
+        let config = LintConfig::builder()
+            .root_dir(PathBuf::from("/my/project"))
+            .build()
+            .unwrap();
+
+        assert_eq!(config.root_dir(), Some(&PathBuf::from("/my/project")));
+    }
+
+    #[test]
+    fn test_builder_locale_none() {
+        let config = LintConfig::builder()
+            .locale(None)
+            .build()
+            .unwrap();
+
+        assert!(config.locale().is_none());
+    }
+
+    #[test]
+    fn test_builder_locale_some() {
+        let config = LintConfig::builder()
+            .locale(Some("fr".to_string()))
+            .build()
+            .unwrap();
+
+        assert_eq!(config.locale(), Some("fr"));
+    }
+
+    #[test]
+    fn test_builder_mcp_protocol_version() {
+        // mcp_protocol_version is deprecated, so use build_unchecked()
+        let config = LintConfig::builder()
+            .mcp_protocol_version(Some("2024-11-05".to_string()))
+            .build_unchecked();
+
+        assert_eq!(config.mcp_protocol_version_raw(), Some("2024-11-05"));
+    }
+
+    #[test]
+    fn test_builder_deprecated_mcp_protocol_rejected_by_build() {
+        let result = LintConfig::builder()
+            .mcp_protocol_version(Some("2024-11-05".to_string()))
+            .build();
+
+        assert!(result.is_err());
+        match result.unwrap_err() {
+            ConfigError::ValidationFailed(warnings) => {
+                assert!(warnings.iter().any(|w| w.field == "mcp_protocol_version"));
+            }
+            other => panic!("Expected ValidationFailed, got: {:?}", other),
+        }
+    }
+
+    #[test]
+    fn test_builder_files_config() {
+        let files = FilesConfig {
+            include_as_memory: vec!["memory.md".to_string()],
+            include_as_generic: vec!["generic.md".to_string()],
+            exclude: vec!["drafts/**".to_string()],
+        };
+
+        let config = LintConfig::builder()
+            .files(files.clone())
+            .build()
+            .unwrap();
+
+        assert_eq!(config.files_config().include_as_memory, files.include_as_memory);
+        assert_eq!(config.files_config().include_as_generic, files.include_as_generic);
+        assert_eq!(config.files_config().exclude, files.exclude);
+    }
+
+    #[test]
+    fn test_builder_duplicate_disable_rule_deduplicates() {
+        let config = LintConfig::builder()
+            .disable_rule("AS-001")
+            .disable_rule("AS-001")
+            .build()
+            .unwrap();
+
+        let count = config
+            .rules()
+            .disabled_rules
+            .iter()
+            .filter(|r| *r == "AS-001")
+            .count();
+        assert_eq!(count, 1, "Duplicate disable_rule should be deduplicated");
+    }
+
+    #[test]
+    fn test_builder_duplicate_disable_validator_deduplicates() {
+        let config = LintConfig::builder()
+            .disable_validator("XmlValidator")
+            .disable_validator("XmlValidator")
+            .build()
+            .unwrap();
+
+        let count = config
+            .rules()
+            .disabled_validators
+            .iter()
+            .filter(|v| *v == "XmlValidator")
+            .count();
+        assert_eq!(count, 1, "Duplicate disable_validator should be deduplicated");
+    }
+
+    #[test]
+    fn test_builder_backslash_exclude_normalized() {
+        // Windows-style path separators should be accepted
+        let result = LintConfig::builder()
+            .exclude(vec!["node_modules\\**".to_string()])
+            .build();
+
+        // Glob validation normalizes backslashes to forward slashes
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_builder_path_traversal_with_backslash() {
+        let result = LintConfig::builder()
+            .exclude(vec!["..\\secret\\**".to_string()])
+            .build();
+
+        assert!(result.is_err());
+        match result.unwrap_err() {
+            ConfigError::PathTraversal { .. } => {}
+            other => panic!("Expected PathTraversal, got: {:?}", other),
+        }
+    }
+
+    #[test]
+    fn test_config_error_display() {
+        let err = ConfigError::InvalidGlobPattern {
+            pattern: "[bad".to_string(),
+            error: "unclosed bracket".to_string(),
+        };
+        let msg = err.to_string();
+        assert!(msg.contains("[bad"));
+        assert!(msg.contains("unclosed bracket"));
+
+        let err = ConfigError::PathTraversal {
+            pattern: "../etc/passwd".to_string(),
+        };
+        let msg = err.to_string();
+        assert!(msg.contains("../etc/passwd"));
+
+        let warnings = vec![ConfigWarning {
+            field: "test".to_string(),
+            message: "bad config".to_string(),
+            suggestion: None,
+        }];
+        let err = ConfigError::ValidationFailed(warnings);
+        let msg = err.to_string();
+        assert!(msg.contains("1 warning(s)"));
+    }
 }

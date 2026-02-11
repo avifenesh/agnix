@@ -450,3 +450,100 @@ fn validator_name_accessible_from_outside_crate() {
         assert!(name.is_ascii());
     }
 }
+
+// ============================================================================
+// LintConfigBuilder cross-crate tests
+// ============================================================================
+
+#[test]
+fn builder_accessible_from_outside_crate() {
+    // Verify the builder type and ConfigError are exported
+    let config: agnix_core::LintConfig = agnix_core::LintConfigBuilder::new().build().unwrap();
+    assert_eq!(config.severity(), agnix_core::LintConfig::default().severity());
+}
+
+#[test]
+fn builder_via_lint_config_factory() {
+    // target is deprecated so build() would reject it; use build_unchecked()
+    let config = agnix_core::LintConfig::builder()
+        .target(agnix_core::config::TargetTool::ClaudeCode)
+        .tools(vec!["claude-code".to_string()])
+        .build_unchecked();
+
+    assert_eq!(config.target(), agnix_core::config::TargetTool::ClaudeCode);
+    assert_eq!(config.tools(), &["claude-code"]);
+}
+
+#[test]
+fn builder_with_root_dir_used_by_validate_project() {
+    let dir = tempfile::tempdir().unwrap();
+    let config = agnix_core::LintConfig::builder()
+        .root_dir(dir.path().to_path_buf())
+        .build()
+        .unwrap();
+
+    let result = agnix_core::validate_project(dir.path(), &config);
+    assert!(result.is_ok());
+}
+
+#[test]
+fn builder_invalid_glob_returns_config_error() {
+    let result = agnix_core::LintConfig::builder()
+        .exclude(vec!["[bad-pattern".to_string()])
+        .build();
+
+    assert!(result.is_err());
+    let err = result.unwrap_err();
+    let msg = err.to_string();
+    assert!(msg.contains("[bad-pattern"), "Error should mention the pattern: {}", msg);
+}
+
+#[test]
+fn builder_path_traversal_returns_config_error() {
+    let result = agnix_core::LintConfig::builder()
+        .exclude(vec!["../secret/**".to_string()])
+        .build();
+
+    assert!(result.is_err());
+    let err = result.unwrap_err();
+    let msg = err.to_string();
+    assert!(msg.contains("../secret/**"), "Error should mention the pattern: {}", msg);
+}
+
+#[test]
+fn builder_disable_rule_affects_validation() {
+    let config = agnix_core::LintConfig::builder()
+        .disable_rule("AS-001")
+        .build()
+        .unwrap();
+
+    assert!(!config.is_rule_enabled("AS-001"));
+    // Other rules should still be enabled
+    assert!(config.is_rule_enabled("AS-004"));
+}
+
+#[test]
+fn builder_disable_validator_accessible() {
+    let config = agnix_core::LintConfig::builder()
+        .disable_validator("XmlValidator")
+        .build()
+        .unwrap();
+
+    assert!(config.rules().disabled_validators.contains(&"XmlValidator".to_string()));
+}
+
+#[test]
+fn builder_build_unchecked_allows_invalid_patterns() {
+    let config = agnix_core::LintConfig::builder()
+        .exclude(vec!["[invalid".to_string()])
+        .build_unchecked();
+
+    assert_eq!(config.exclude(), &["[invalid".to_string()]);
+}
+
+#[test]
+fn config_error_is_std_error() {
+    // Verify ConfigError implements std::error::Error
+    fn assert_error<T: std::error::Error>() {}
+    assert_error::<agnix_core::ConfigError>();
+}
