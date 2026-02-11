@@ -3626,8 +3626,14 @@ fn test_validate_project_rules_disabled_rules() {
     std::fs::write(sub.join("AGENTS.md"), "# Sub").unwrap();
 
     let mut config = LintConfig::default();
-    config.rules_mut().disabled_rules.push("AGM-006".to_string());
-    config.rules_mut().disabled_rules.push("VER-001".to_string());
+    config
+        .rules_mut()
+        .disabled_rules
+        .push("AGM-006".to_string());
+    config
+        .rules_mut()
+        .disabled_rules
+        .push("VER-001".to_string());
 
     let diagnostics = validate_project_rules(temp_dir.path(), &config).unwrap();
     assert!(

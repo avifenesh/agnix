@@ -850,5 +850,8 @@ fn test_vscode_files_merge_overrides() {
         vec!["old-generic.md".to_string()]
     );
     // exclude added
-    assert_eq!(lint_config.files_config().exclude, vec!["drafts/**".to_string()]);
+    assert_eq!(
+        lint_config.files_config().exclude,
+        vec!["drafts/**".to_string()]
+    );
 }

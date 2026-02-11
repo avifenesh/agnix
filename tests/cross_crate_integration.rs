@@ -459,7 +459,10 @@ fn validator_name_accessible_from_outside_crate() {
 fn builder_accessible_from_outside_crate() {
     // Verify the builder type and ConfigError are exported
     let config: agnix_core::LintConfig = agnix_core::LintConfig::builder().build().unwrap();
-    assert_eq!(config.severity(), agnix_core::LintConfig::default().severity());
+    assert_eq!(
+        config.severity(),
+        agnix_core::LintConfig::default().severity()
+    );
 }
 
 #[test]
@@ -495,7 +498,11 @@ fn builder_invalid_glob_returns_config_error() {
     assert!(result.is_err());
     let err = result.unwrap_err();
     let msg = err.to_string();
-    assert!(msg.contains("[bad-pattern"), "Error should mention the pattern: {}", msg);
+    assert!(
+        msg.contains("[bad-pattern"),
+        "Error should mention the pattern: {}",
+        msg
+    );
 }
 
 #[test]
@@ -507,7 +514,11 @@ fn builder_path_traversal_returns_config_error() {
     assert!(result.is_err());
     let err = result.unwrap_err();
     let msg = err.to_string();
-    assert!(msg.contains("../secret/**"), "Error should mention the pattern: {}", msg);
+    assert!(
+        msg.contains("../secret/**"),
+        "Error should mention the pattern: {}",
+        msg
+    );
 }
 
 #[test]
@@ -529,7 +540,12 @@ fn builder_disable_validator_accessible() {
         .build()
         .unwrap();
 
-    assert!(config.rules().disabled_validators.contains(&"XmlValidator".to_string()));
+    assert!(
+        config
+            .rules()
+            .disabled_validators
+            .contains(&"XmlValidator".to_string())
+    );
 }
 
 #[test]
