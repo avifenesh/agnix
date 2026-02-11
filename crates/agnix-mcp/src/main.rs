@@ -282,11 +282,11 @@ fn apply_tool_selection(
 ) -> Result<(), McpError> {
     let parsed_tools = parse_tools(tools)?;
     if parsed_tools.is_empty() {
-        config.tools.clear();
-        config.target = parse_target(target);
+        config.tools_mut().clear();
+        config.set_target(parse_target(target));
     } else {
-        config.target = agnix_core::config::TargetTool::Generic;
-        config.tools = parsed_tools;
+        config.set_target(agnix_core::config::TargetTool::Generic);
+        config.set_tools(parsed_tools);
     }
 
     Ok(())
@@ -565,8 +565,8 @@ mod tests {
         )
         .expect("empty tools should fall back to target");
 
-        assert!(config.tools.is_empty());
-        assert_eq!(config.target, TargetTool::Cursor);
+        assert!(config.tools().is_empty());
+        assert_eq!(config.target(), TargetTool::Cursor);
     }
 
     #[test]
@@ -575,8 +575,8 @@ mod tests {
         apply_tool_selection(&mut config, None, Some("claude-code".to_string()))
             .expect("missing tools should fall back to target");
 
-        assert!(config.tools.is_empty());
-        assert_eq!(config.target, TargetTool::ClaudeCode);
+        assert!(config.tools().is_empty());
+        assert_eq!(config.target(), TargetTool::ClaudeCode);
     }
 
     #[test]
@@ -589,14 +589,14 @@ mod tests {
         )
         .expect("empty list should fall back to target");
 
-        assert!(config.tools.is_empty());
-        assert_eq!(config.target, TargetTool::Codex);
+        assert!(config.tools().is_empty());
+        assert_eq!(config.target(), TargetTool::Codex);
     }
 
     #[test]
     fn test_apply_tool_selection_clears_existing_tools_on_fallback() {
         let mut config = LintConfig::default();
-        config.tools = vec!["cursor".to_string()];
+        config.set_tools(vec!["cursor".to_string()]);
 
         apply_tool_selection(
             &mut config,
@@ -605,14 +605,14 @@ mod tests {
         )
         .expect("empty tools should trigger fallback and clear stale tools");
 
-        assert!(config.tools.is_empty());
-        assert_eq!(config.target, TargetTool::ClaudeCode);
+        assert!(config.tools().is_empty());
+        assert_eq!(config.target(), TargetTool::ClaudeCode);
     }
 
     #[test]
     fn test_apply_tool_selection_prefers_tools_over_target() {
         let mut config = LintConfig::default();
-        config.target = TargetTool::Cursor;
+        config.set_target(TargetTool::Cursor);
         apply_tool_selection(
             &mut config,
             Some(ToolsInput::Csv("claude-code,cursor".to_string())),
@@ -620,9 +620,9 @@ mod tests {
         )
         .expect("valid tools should override target");
 
-        assert_eq!(config.tools, vec!["claude-code", "cursor"]);
+        assert_eq!(config.tools(), &["claude-code", "cursor"]);
         // target remains default; tools array drives filtering precedence in core.
-        assert_eq!(config.target, TargetTool::Generic);
+        assert_eq!(config.target(), TargetTool::Generic);
     }
 
     #[test]
@@ -634,8 +634,8 @@ mod tests {
             Some("claude-code".to_string()),
         );
         assert!(result.is_err());
-        assert!(config.tools.is_empty());
-        assert_eq!(config.target, TargetTool::Generic);
+        assert!(config.tools().is_empty());
+        assert_eq!(config.target(), TargetTool::Generic);
     }
 
     #[test]

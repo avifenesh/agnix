@@ -85,7 +85,7 @@ impl Validator for McpValidator {
         let mut diagnostics = Vec::new();
 
         // Early return if MCP category is disabled
-        if !config.rules.mcp {
+        if !config.rules().mcp {
             return diagnostics;
         }
 
@@ -1049,7 +1049,7 @@ mod tests {
     #[test]
     fn test_config_disabled_mcp_category() {
         let mut config = LintConfig::default();
-        config.rules.mcp = false;
+        config.rules_mut().mcp = false;
 
         let content = r#"{"jsonrpc": "1.0"}"#;
         let diagnostics = validate_with_config(content, &config);
@@ -1059,7 +1059,7 @@ mod tests {
     #[test]
     fn test_config_disabled_specific_rule() {
         let mut config = LintConfig::default();
-        config.rules.disabled_rules = vec!["MCP-001".to_string()];
+        config.rules_mut().disabled_rules = vec!["MCP-001".to_string()];
 
         let content = r#"{"jsonrpc": "1.0"}"#;
         let diagnostics = validate_with_config(content, &config);
@@ -1205,7 +1205,7 @@ mod tests {
     #[test]
     fn test_mcp_008_custom_expected_version() {
         let mut config = LintConfig::default();
-        config.mcp_protocol_version = Some("2024-11-05".to_string());
+        config.set_mcp_protocol_version(Some("2024-11-05".to_string()));
 
         // This should now match
         let content = r#"{
@@ -1221,7 +1221,7 @@ mod tests {
     #[test]
     fn test_mcp_008_disabled_rule() {
         let mut config = LintConfig::default();
-        config.rules.disabled_rules = vec!["MCP-008".to_string()];
+        config.rules_mut().disabled_rules = vec!["MCP-008".to_string()];
 
         let content = r#"{
             "jsonrpc": "2.0",
@@ -1280,8 +1280,8 @@ mod tests {
     fn test_mcp_008_assumption_when_version_not_pinned() {
         // Create a config where mcp is NOT pinned
         let mut config = LintConfig::default();
-        config.mcp_protocol_version = None;
-        config.spec_revisions.mcp_protocol = None;
+        config.set_mcp_protocol_version(None);
+        config.spec_revisions_mut().mcp_protocol = None;
         assert!(!config.is_mcp_revision_pinned());
 
         let content = r#"{
@@ -1310,7 +1310,7 @@ mod tests {
     #[test]
     fn test_mcp_008_no_assumption_when_version_pinned_via_spec_revisions() {
         let mut config = LintConfig::default();
-        config.spec_revisions.mcp_protocol = Some("2025-06-18".to_string());
+        config.spec_revisions_mut().mcp_protocol = Some("2025-06-18".to_string());
         assert!(config.is_mcp_revision_pinned());
 
         let content = r#"{
@@ -1335,7 +1335,7 @@ mod tests {
     #[test]
     fn test_mcp_008_no_assumption_when_version_pinned_via_legacy() {
         let mut config = LintConfig::default();
-        config.mcp_protocol_version = Some("2025-06-18".to_string());
+        config.set_mcp_protocol_version(Some("2025-06-18".to_string()));
         assert!(config.is_mcp_revision_pinned());
 
         let content = r#"{
@@ -1360,8 +1360,8 @@ mod tests {
     #[test]
     fn test_mcp_008_response_assumption_when_version_not_pinned() {
         let mut config = LintConfig::default();
-        config.mcp_protocol_version = None;
-        config.spec_revisions.mcp_protocol = None;
+        config.set_mcp_protocol_version(None);
+        config.spec_revisions_mut().mcp_protocol = None;
 
         let content = r#"{
             "jsonrpc": "2.0",
@@ -1420,7 +1420,7 @@ mod tests {
     #[test]
     fn test_mcp_007_disabled() {
         let mut config = LintConfig::default();
-        config.rules.disabled_rules = vec!["MCP-007".to_string()];
+        config.rules_mut().disabled_rules = vec!["MCP-007".to_string()];
 
         let content = r#"{ invalid }"#;
         let validator = McpValidator;
@@ -1515,7 +1515,7 @@ mod tests {
 
         for rule in rules {
             let mut config = LintConfig::default();
-            config.rules.disabled_rules = vec![rule.to_string()];
+            config.rules_mut().disabled_rules = vec![rule.to_string()];
 
             // Use content that would trigger the rule
             let content = match rule {

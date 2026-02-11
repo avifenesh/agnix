@@ -559,7 +559,7 @@ applyTo: "**/*.rs"
     #[test]
     fn test_config_disabled_copilot_category() {
         let mut config = LintConfig::default();
-        config.rules.copilot = false;
+        config.rules_mut().copilot = false;
 
         let content = "";
         let diagnostics = validate_scoped_with_config(content, &config);
@@ -574,7 +574,7 @@ applyTo: "**/*.rs"
     #[test]
     fn test_config_disabled_specific_rule() {
         let mut config = LintConfig::default();
-        config.rules.disabled_rules = vec!["COP-001".to_string()];
+        config.rules_mut().disabled_rules = vec!["COP-001".to_string()];
 
         let content = "";
         let diagnostics = validate_scoped_with_config(content, &config);
@@ -735,7 +735,7 @@ Body"#;
 
         for rule in rules {
             let mut config = LintConfig::default();
-            config.rules.disabled_rules = vec![rule.to_string()];
+            config.rules_mut().disabled_rules = vec![rule.to_string()];
 
             // Content and path that could trigger each rule
             let (content, path): (&str, &str) = match rule {
@@ -964,7 +964,7 @@ excludeAgent: "invalid-agent"
     #[test]
     fn test_cop_006_disabled() {
         let mut config = LintConfig::default();
-        config.rules.disabled_rules = vec!["COP-006".to_string()];
+        config.rules_mut().disabled_rules = vec!["COP-006".to_string()];
 
         let diagnostics = validate_global_with_config(&make_long_content(), &config);
         let cop_006: Vec<_> = diagnostics.iter().filter(|d| d.rule == "COP-006").collect();

@@ -394,7 +394,7 @@ unknownKey: value
     #[test]
     fn test_config_disabled_memory_category() {
         let mut config = LintConfig::default();
-        config.rules.memory = false;
+        config.rules_mut().memory = false;
 
         let content = r#"---
 unknownKey: value
@@ -413,7 +413,7 @@ paths:
 
         for rule in rules {
             let mut config = LintConfig::default();
-            config.rules.disabled_rules = vec![rule.to_string()];
+            config.rules_mut().disabled_rules = vec![rule.to_string()];
 
             let content = r#"---
 unknownKey: value

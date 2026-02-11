@@ -67,7 +67,7 @@ impl Validator for ImportsValidator {
         let mut diagnostics = Vec::new();
 
         // Check both new category flag and legacy flag for backward compatibility
-        if !config.rules.imports || !config.rules.import_references {
+        if !config.rules().imports || !config.rules().import_references {
             return diagnostics;
         }
 
@@ -603,7 +603,7 @@ mod tests {
     #[test]
     fn test_config_disabled_imports_category() {
         let mut config = LintConfig::default();
-        config.rules.imports = false;
+        config.rules_mut().imports = false;
 
         let content = "@nonexistent-file.md";
         let validator = ImportsValidator;
@@ -615,7 +615,7 @@ mod tests {
     #[test]
     fn test_legacy_import_references_flag() {
         let mut config = LintConfig::default();
-        config.rules.import_references = false;
+        config.rules_mut().import_references = false;
 
         let content = "@nonexistent-file.md";
         let validator = ImportsValidator;
@@ -754,7 +754,10 @@ mod tests {
         fs::write(&file_path, "See @missing.md").unwrap();
 
         let mut config = LintConfig::default();
-        config.rules.disabled_rules.push("REF-001".to_string());
+        config
+            .rules_mut()
+            .disabled_rules
+            .push("REF-001".to_string());
 
         let validator = ImportsValidator;
         let diagnostics = validator.validate(&file_path, "See @missing.md", &config);
@@ -769,9 +772,18 @@ mod tests {
         fs::write(&file_path, "See @missing.md").unwrap();
 
         let mut config = LintConfig::default();
-        config.rules.disabled_rules.push("CC-MEM-001".to_string());
-        config.rules.disabled_rules.push("CC-MEM-002".to_string());
-        config.rules.disabled_rules.push("CC-MEM-003".to_string());
+        config
+            .rules_mut()
+            .disabled_rules
+            .push("CC-MEM-001".to_string());
+        config
+            .rules_mut()
+            .disabled_rules
+            .push("CC-MEM-002".to_string());
+        config
+            .rules_mut()
+            .disabled_rules
+            .push("CC-MEM-003".to_string());
 
         let validator = ImportsValidator;
         let diagnostics = validator.validate(&file_path, "See @missing.md", &config);
@@ -786,7 +798,10 @@ mod tests {
         fs::write(&file_path, "See @missing.md").unwrap();
 
         let mut config = LintConfig::default();
-        config.rules.disabled_rules.push("REF-001".to_string());
+        config
+            .rules_mut()
+            .disabled_rules
+            .push("REF-001".to_string());
 
         let validator = ImportsValidator;
         let diagnostics = validator.validate(&file_path, "See @missing.md", &config);
@@ -968,7 +983,7 @@ mod tests {
         fs::write(&file_path, "See @missing.md").unwrap();
 
         let mut config = LintConfig::default();
-        config.rules.disabled_rules = vec!["REF-001".to_string()];
+        config.rules_mut().disabled_rules = vec!["REF-001".to_string()];
 
         let validator = ImportsValidator;
         let diagnostics = validator.validate(&file_path, "See @missing.md", &config);
@@ -1107,7 +1122,7 @@ mod tests {
         fs::write(&file_path, "See [guide](missing.md) for more.").unwrap();
 
         let mut config = LintConfig::default();
-        config.rules.disabled_rules = vec!["REF-002".to_string()];
+        config.rules_mut().disabled_rules = vec!["REF-002".to_string()];
 
         let validator = ImportsValidator;
         let diagnostics =
@@ -1123,7 +1138,7 @@ mod tests {
         fs::write(&file_path, "See [guide](missing.md) for more.").unwrap();
 
         let mut config = LintConfig::default();
-        config.rules.imports = false;
+        config.rules_mut().imports = false;
 
         let validator = ImportsValidator;
         let diagnostics =

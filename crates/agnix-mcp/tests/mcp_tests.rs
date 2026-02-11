@@ -208,7 +208,7 @@ mod validation_tests {
         let skill_path = temp.path().join("SKILL.md");
 
         let mut config = LintConfig::default();
-        config.target = agnix_core::config::TargetTool::ClaudeCode;
+        config.set_target(agnix_core::config::TargetTool::ClaudeCode);
         let result = validate_file(&skill_path, &config);
 
         assert!(result.is_ok());
@@ -217,8 +217,8 @@ mod validation_tests {
     #[test]
     fn test_tools_array_overrides_target_semantics_in_core_filtering() {
         let mut config = LintConfig::default();
-        config.target = agnix_core::config::TargetTool::Codex;
-        config.tools = vec!["claude-code".to_string(), "cursor".to_string()];
+        config.set_target(agnix_core::config::TargetTool::Codex);
+        config.set_tools(vec!["claude-code".to_string(), "cursor".to_string()]);
 
         // CC-* rules do not apply to codex target alone, but they do apply when tools include claude-code.
         assert!(config.is_rule_enabled("CC-AG-001"));
