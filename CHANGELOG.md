@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-02-11
+
 ### Added
 - **Builder pattern for LintConfig**: `LintConfig::builder()` with validation on `build()`. All serializable fields are now private with getter/setter methods. `ConfigError` enum for build-time validation failures. Runtime state (`root_dir`, `import_cache`) moved into `RuntimeContext`
 - **RUSTSEC advisory tracking** - Documented process for reviewing ignored security advisories with `docs/RUSTSEC-ADVISORIES.md` tracking document, monthly review checklist in `MONTHLY-REVIEW.md`, and pre-release checks in `RELEASING.md` (closes #346)
@@ -17,26 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Validator naming**: `Validator::name()` method for programmatic identification of validators
 - **Validator introspection**: `Validator::metadata()` method returns rule IDs and descriptions for runtime validator inspection
 - **Hierarchical error types** - New `CoreError` enum with `File(FileError)`, `Validation(ValidationError)`, `Config(ConfigError)` variants provides structured error information. Helper methods `path()` and `source_diagnostics()` enable better error introspection. `LintError` remains as type alias for backward compatibility
-
-### Changed
-- **Refactoring**: Extracted `file_types.rs` into extensible `file_types/` module directory with `FileTypeDetector` trait, `FileTypeDetectorChain`, named constants, `Display` impl, and `is_validatable()` method (#349)
-- **Refactoring**: Split `crates/agnix-core/src/lib.rs` into focused modules: `file_types.rs`, `registry.rs`, `pipeline.rs`
-- **Error handling**: Replaced flat `LintError` enum with hierarchical `CoreError` structure, preserving error context through conversion layers. Binary crates (CLI, LSP, MCP) gain automatic `anyhow::Error` conversion via thiserror
-
-### Fixed
-- i18n diagnostic messages now display properly translated text instead of raw key paths when installed via `cargo install` (fixes #341)
-- CI locale-sync check prevents locale files from drifting across crates
-- CC-AG-009, CC-AG-010, CC-SK-008 false positives for `Skill`, `StatusBarMessageTool`, `TaskOutput` tools and MCP server tools with `mcp__<server>__<tool>` format (fixes #342)
-- **Performance**: Replaced Mutex-based path collection with rayon fold/reduce in parallel validation, eliminating lock contention
-- **Performance**: Reduced string allocations in `normalize_rel_path`, `detect_file_type`, and project-level checks
-- **Code quality**: Merged duplicate `resolve_config_path` functions in CLI
-- **Code quality**: Improved regex error messages in hooks validator
-- **Code quality**: Added panic-safe `EnvGuard` for telemetry test isolation
-- **Code quality**: Added panic logging in markdown parser instead of silent failure
-- **CI**: Pinned `huacnlee/zed-extension-action` to SHA, pinned cargo tool versions
-- **CI**: Moved `CARGO_REGISTRY_TOKEN` from CLI args to env vars in release workflow
-
-### Added
 - **Backward-compatibility policy** documenting public vs. internal API surface with three stability tiers (CONTRIBUTING.md)
 - **Cross-crate API contract tests** ensuring stable interfaces between agnix-core, agnix-rules, and downstream crates (CLI, LSP, MCP)
 - **Feature flags policy** documenting when and how to use feature flags
@@ -51,6 +33,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **70+ new tests** covering diagnostics, config versions, LSP backend, MCP errors, parsers, schemas, span_utils, eval edge cases
 
 ### Changed
+- **Refactoring**: Extracted `file_types.rs` into extensible `file_types/` module directory with `FileTypeDetector` trait, `FileTypeDetectorChain`, named constants, `Display` impl, and `is_validatable()` method (#349)
+- **Refactoring**: Split `crates/agnix-core/src/lib.rs` into focused modules: `file_types.rs`, `registry.rs`, `pipeline.rs`
+- **Error handling**: Replaced flat `LintError` enum with hierarchical `CoreError` structure, preserving error context through conversion layers. Binary crates (CLI, LSP, MCP) gain automatic `anyhow::Error` conversion via thiserror
 - All rule documentation links now point to website (`avifenesh.github.io/agnix`) instead of GitHub `VALIDATION-RULES.md`
 - README overhauled to focused landing page with punchy value prop and website links
 - **API (BREAKING)**: Made `parsers` module internal and moved `#[doc(hidden)]` re-exports to `__internal` module (closes #350)
@@ -59,6 +44,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **API**: Added stability tier documentation (Stable/Unstable/Internal) to all public modules
 - **API**: Added metadata fields to `ValidationResult`: `validation_time_ms` and `validator_factories_registered`
 - **API**: Use saturating cast for validation timing (prevents u128 truncation to u64)
+
+### Fixed
+- i18n diagnostic messages now display properly translated text instead of raw key paths when installed via `cargo install` (fixes #341)
+- CI locale-sync check prevents locale files from drifting across crates
+- CC-AG-009, CC-AG-010, CC-SK-008 false positives for `Skill`, `StatusBarMessageTool`, `TaskOutput` tools and MCP server tools with `mcp__<server>__<tool>` format (fixes #342)
+- **Performance**: Replaced Mutex-based path collection with rayon fold/reduce in parallel validation, eliminating lock contention
+- **Performance**: Reduced string allocations in `normalize_rel_path`, `detect_file_type`, and project-level checks
+- **Code quality**: Merged duplicate `resolve_config_path` functions in CLI
+- **Code quality**: Improved regex error messages in hooks validator
+- **Code quality**: Added panic-safe `EnvGuard` for telemetry test isolation
+- **Code quality**: Added panic logging in markdown parser instead of silent failure
+- **CI**: Pinned `huacnlee/zed-extension-action` to SHA, pinned cargo tool versions
+- **CI**: Moved `CARGO_REGISTRY_TOKEN` from CLI args to env vars in release workflow
 
 ## [0.10.2] - 2026-02-08
 
