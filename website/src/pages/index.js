@@ -247,7 +247,7 @@ function EditorDemo() {
             muted
             playsInline
           >
-            <source src="/agnix/img/demo.mp4" type="video/mp4" />
+            <source src="https://github.com/user-attachments/assets/72d5fe7c-476f-46ea-be64-5785cf6d5600" type="video/mp4" />
           </video>
         </div>
       </div>
