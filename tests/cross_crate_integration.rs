@@ -475,7 +475,7 @@ fn builder_via_lint_config_factory() {
 }
 
 #[test]
-fn builder_with_root_dir_used_by_validate_project() {
+fn builder_config_works_with_validate_project() {
     let dir = tempfile::tempdir().unwrap();
     let config = agnix_core::LintConfig::builder()
         .root_dir(dir.path().to_path_buf())

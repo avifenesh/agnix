@@ -558,7 +558,7 @@ mod tests {
         vscode_config.merge_into_lint_config(&mut lint_config);
 
         assert_eq!(
-            lint_config.tool_versions_mut().claude_code,
+            lint_config.tool_versions().claude_code,
             Some("1.0.0".to_string())
         );
         assert_eq!(lint_config.tool_versions().codex, Some("0.1.0".to_string()));

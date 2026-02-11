@@ -99,10 +99,10 @@ impl ValidatorRegistry {
 }
 
 // Validated config construction (fields are private)
+// Usage: LintConfig::builder().severity(Error).tools(vec![...]).build()?
 pub struct LintConfigBuilder { /* ... */ }
 
 impl LintConfigBuilder {
-    pub fn new() -> Self;
     pub fn severity(&mut self, s: SeverityLevel) -> &mut Self;
     pub fn target(&mut self, t: TargetTool) -> &mut Self;
     pub fn tools(&mut self, t: Vec<String>) -> &mut Self;
@@ -113,7 +113,9 @@ impl LintConfigBuilder {
     pub fn build_unchecked(&mut self) -> LintConfig;
 }
 
-// Also available via: LintConfig::builder()
+impl LintConfig {
+    pub fn builder() -> LintConfigBuilder;
+}
 ```
 
 ### Validation Flow

@@ -587,7 +587,7 @@ impl LanguageServer for Backend {
                     match agnix_core::LintConfig::load(&config_path) {
                         Ok(loaded_config) => {
                             // Apply config-specified locale if present
-                            if let Some(ref config_locale) = loaded_config.locale {
+                            if let Some(config_locale) = loaded_config.locale() {
                                 crate::locale::init_from_config(config_locale);
                             }
                             let mut config_with_root = loaded_config;
