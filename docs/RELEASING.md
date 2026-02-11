@@ -124,6 +124,33 @@ After release, verify at https://agentskills.io that:
 
 ## Versioning Policy
 
-- **Patch** (0.X.Y): Bug fixes, false positive/negative improvements, message quality
-- **Minor** (0.X.0): New rules, new file type support, new validators
-- **Major** (X.0.0): Breaking changes to config format, CLI interface, or rule IDs
+See also: [Backward-Compatibility Policy](../CONTRIBUTING.md#backward-compatibility-policy) for the full stability tier definitions.
+
+### Patch Release (0.X.Y)
+
+No API changes. Examples:
+
+- Bug fixes, false positive/negative improvements, diagnostic message quality
+- Performance improvements with no public API change
+- Documentation updates
+
+### Minor Release (0.X.0)
+
+Additive changes only to Public/Stable tier. Examples:
+
+- New validation rules (e.g., adding CC-SK-016)
+- New `FileType` enum variants
+- New public functions or types
+- New optional fields with `#[serde(default)]` on existing structs
+- Changes to Public/Unstable modules (`authoring`, `eval`, `parsers`, `i18n`, `validation`)
+
+### Major Release (X.0.0)
+
+Breaking changes to Public/Stable tier. Examples:
+
+- Removing or renaming a public type or function
+- Changing a function signature (parameter types, return type)
+- Removing enum variants or struct fields
+- Changing `.agnix.toml` config format in an incompatible way
+- Changing CLI interface in an incompatible way
+- Renaming or removing rule IDs

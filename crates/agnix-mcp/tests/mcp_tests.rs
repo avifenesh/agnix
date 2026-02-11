@@ -178,6 +178,31 @@ mod validation_tests {
     }
 
     #[test]
+    fn test_validate_nonexistent_project_path() {
+        let config = LintConfig::default();
+        let temp = tempfile::TempDir::new().unwrap();
+        let missing = temp.path().join("nonexistent_subdir");
+        let result = validate_project(&missing, &config);
+
+        assert!(result.is_ok());
+        let validation = result.unwrap();
+        assert_eq!(
+            validation.files_checked, 0,
+            "Non-existent project path should find no files"
+        );
+    }
+
+    #[test]
+    fn test_validate_empty_path_string() {
+        let config = LintConfig::default();
+        let result = validate_file(std::path::Path::new(""), &config);
+
+        // Empty path resolves to FileType::Unknown, and validate_file returns
+        // Ok(vec![]) for unknown file types without reading the file.
+        assert!(result.is_ok(), "Empty path should not panic: {:?}", result);
+    }
+
+    #[test]
     fn test_validate_with_target_claude_code() {
         let temp = create_temp_project();
         let skill_path = temp.path().join("SKILL.md");
@@ -208,8 +233,8 @@ mod rules_tests {
 
     #[test]
     fn test_rules_count() {
-        // Should have 155 rules
-        assert_eq!(agnix_rules::rule_count(), 155);
+        // Should have 156 rules
+        assert_eq!(agnix_rules::rule_count(), 156);
     }
 
     #[test]

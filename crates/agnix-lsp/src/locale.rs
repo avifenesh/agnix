@@ -58,6 +58,12 @@ fn detect_locale() -> String {
     "en".to_string()
 }
 
+/// Mutex to serialize tests that modify the process-global locale.
+/// Rust tests run in parallel by default, and `rust_i18n::set_locale()` is process-wide,
+/// so concurrent modifications cause flaky failures.
+#[cfg(test)]
+pub(crate) static LOCALE_MUTEX: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -100,12 +106,14 @@ mod tests {
 
     #[test]
     fn test_init_from_env_does_not_panic() {
+        let _guard = LOCALE_MUTEX.lock().unwrap();
         // Just ensure it doesn't panic with whatever environment is set
         init_from_env();
     }
 
     #[test]
     fn test_init_from_config_supported_and_unsupported() {
+        let _guard = LOCALE_MUTEX.lock().unwrap();
         // Ensure known starting state
         set_locale("en");
 

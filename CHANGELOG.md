@@ -9,12 +9,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **Structured rule metadata in diagnostics** - All diagnostic outputs (JSON, SARIF, MCP, LSP, CLI) now include optional metadata fields: category, rule_severity, and applies_to_tool. Metadata is automatically populated from rules.json at build time
+- **Plugin architecture**: `ValidatorProvider` trait enables external validator registration
+- **Builder pattern**: `ValidatorRegistry::builder()` for ergonomic registry construction with `with_defaults()`, `with_provider()`, `without_validator()`
+- **Validator disabling**: `disabled_validators` config field in `[rules]` section to disable validators by name at runtime
+- **Validator naming**: `Validator::name()` method for programmatic identification of validators
+
+### Changed
+- **Refactoring**: Split `crates/agnix-core/src/lib.rs` into focused modules: `file_types.rs`, `registry.rs`, `pipeline.rs`
+
+### Fixed
+- i18n diagnostic messages now display properly translated text instead of raw key paths when installed via `cargo install` (fixes #341)
+- CI locale-sync check prevents locale files from drifting across crates
+- CC-AG-009, CC-AG-010, CC-SK-008 false positives for `Skill`, `StatusBarMessageTool`, `TaskOutput` tools and MCP server tools with `mcp__<server>__<tool>` format (fixes #342)
+- **Performance**: Replaced Mutex-based path collection with rayon fold/reduce in parallel validation, eliminating lock contention
+- **Performance**: Reduced string allocations in `normalize_rel_path`, `detect_file_type`, and project-level checks
+- **Code quality**: Merged duplicate `resolve_config_path` functions in CLI
+- **Code quality**: Improved regex error messages in hooks validator
+- **Code quality**: Added panic-safe `EnvGuard` for telemetry test isolation
+- **Code quality**: Added panic logging in markdown parser instead of silent failure
+- **CI**: Pinned `huacnlee/zed-extension-action` to SHA, pinned cargo tool versions
+- **CI**: Moved `CARGO_REGISTRY_TOKEN` from CLI args to env vars in release workflow
+
+### Added
+- **Backward-compatibility policy** documenting public vs. internal API surface with three stability tiers (CONTRIBUTING.md)
+- **Cross-crate API contract tests** ensuring stable interfaces between agnix-core, agnix-rules, and downstream crates (CLI, LSP, MCP)
+- **Feature flags policy** documenting when and how to use feature flags
 - **Clickable rule links in IDEs** - LSP diagnostics now include `code_description` so rule codes (e.g. AS-001) link to per-rule website docs
 - **Explicit code action kinds** - LSP advertises QUICKFIX capability for more reliable quick-fix surfacing
+- **Per-rule examples for all 155 rules** - Each rule now has specific good/bad examples in `rules.json` and on the website, replacing generic category-level stubs
+- **LSP project-level validation** - `validate_project_rules()` public API for workspace-wide rules (AGM-006, XP-004/005/006, VER-001)
+- **LSP lifecycle integration** - project-level diagnostics on workspace open, file save, config change
+- **VS Code `validateWorkspace`** - now triggers `agnix.validateProjectRules` executeCommand
+- **Dependabot** config for automated cargo and GitHub Actions dependency updates
+- **MSRV** defined as Rust 1.91 (latest stable), tested in CI matrix
+- **70+ new tests** covering diagnostics, config versions, LSP backend, MCP errors, parsers, schemas, span_utils, eval edge cases
 
 ### Changed
 - All rule documentation links now point to website (`avifenesh.github.io/agnix`) instead of GitHub `VALIDATION-RULES.md`
 - README overhauled to focused landing page with punchy value prop and website links
+- **API (BREAKING)**: Made `parsers` module internal and moved `#[doc(hidden)]` re-exports to `__internal` module (closes #350)
+- **API (BREAKING)**: Marked `ValidationResult` as `#[non_exhaustive]` - use `ValidationResult::new()` or `..` in patterns
+- **API (BREAKING)**: Renamed `ValidationResult.rules_checked` to `validator_factories_registered` for accuracy
+- **API**: Added stability tier documentation (Stable/Unstable/Internal) to all public modules
+- **API**: Added metadata fields to `ValidationResult`: `validation_time_ms` and `validator_factories_registered`
+- **API**: Use saturating cast for validation timing (prevents u128 truncation to u64)
 
 ## [0.10.2] - 2026-02-08
 
@@ -455,7 +493,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Quick-fix code actions from Fix objects
   - Hover documentation for frontmatter fields
   - Document content caching for performance
-  - Supports all 155 agnix validation rules with severity mapping
+  - Supports all 156 agnix validation rules with severity mapping
 
   - Workspace boundary validation for security (prevents path traversal)
   - Config caching optimization for performance
@@ -471,7 +509,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Case-insensitive tool name matching
   - Takes precedence over legacy `target` field for flexibility
 - VS Code extension with full LSP integration (#22)
-  - Real-time diagnostics for all 155 validation rules
+  - Real-time diagnostics for all 156 validation rules
 
   - Status bar indicator showing agnix validation status
   - Syntax highlighting for SKILL.md YAML frontmatter

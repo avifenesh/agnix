@@ -6,9 +6,10 @@
 db-path = "~/.cargo/advisory-db"
 db-urls = ["https://github.com/rustsec/advisory-db"]
 # Temporary ignore for unmaintained crates (tracked in #227)
+# Review these periodically - tracked in #346
 ignore = [
-    "RUSTSEC-2024-0384", # instant (via notify) - waiting for notify update
-    "RUSTSEC-2025-0141", # bincode (via iai-callgrind) - dev dependency only
+    "RUSTSEC-2024-0384", # instant (via notify) - tracking: waiting for notify 7.0 release
+    "RUSTSEC-2025-0141", # bincode (via iai-callgrind) - dev-only dependency, low risk
 ]
 
 [licenses]

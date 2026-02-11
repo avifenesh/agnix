@@ -38,7 +38,15 @@ pub const MAX_REGEX_INPUT_SIZE: usize = 65536; // 64KB
 /// extraction functions (`extract_xml_tags`, `extract_markdown_links`).
 pub fn extract_imports(content: &str) -> Vec<Import> {
     // Catch upstream parser panics (e.g., pulldown-cmark bugs) gracefully
-    panic::catch_unwind(AssertUnwindSafe(|| extract_imports_inner(content))).unwrap_or_default()
+    match panic::catch_unwind(AssertUnwindSafe(|| extract_imports_inner(content))) {
+        Ok(v) => v,
+        Err(_) => {
+            eprintln!(
+                "warning: pulldown-cmark panicked during import extraction, returning empty result"
+            );
+            Default::default()
+        }
+    }
 }
 
 fn extract_imports_inner(content: &str) -> Vec<Import> {
@@ -75,7 +83,15 @@ pub fn extract_xml_tags(content: &str) -> Vec<XmlTag> {
     }
 
     // Catch upstream parser panics (e.g., pulldown-cmark bugs) gracefully
-    panic::catch_unwind(AssertUnwindSafe(|| extract_xml_tags_inner(content))).unwrap_or_default()
+    match panic::catch_unwind(AssertUnwindSafe(|| extract_xml_tags_inner(content))) {
+        Ok(v) => v,
+        Err(_) => {
+            eprintln!(
+                "warning: pulldown-cmark panicked during XML tag extraction, returning empty result"
+            );
+            Default::default()
+        }
+    }
 }
 
 fn extract_xml_tags_inner(content: &str) -> Vec<XmlTag> {
@@ -111,8 +127,15 @@ fn extract_xml_tags_inner(content: &str) -> Vec<XmlTag> {
 /// extraction (`extract_xml_tags`).
 pub fn extract_markdown_links(content: &str) -> Vec<MarkdownLink> {
     // Catch upstream parser panics (e.g., pulldown-cmark bugs) gracefully
-    panic::catch_unwind(AssertUnwindSafe(|| extract_markdown_links_inner(content)))
-        .unwrap_or_default()
+    match panic::catch_unwind(AssertUnwindSafe(|| extract_markdown_links_inner(content))) {
+        Ok(v) => v,
+        Err(_) => {
+            eprintln!(
+                "warning: pulldown-cmark panicked during link extraction, returning empty result"
+            );
+            Default::default()
+        }
+    }
 }
 
 fn extract_markdown_links_inner(content: &str) -> Vec<MarkdownLink> {
@@ -1004,6 +1027,35 @@ mod tests {
         assert!(!is_probable_import_path("username"));
         assert!(!is_probable_import_path("MashTimeBot"));
         assert!(!is_probable_import_path("import"));
+    }
+
+    #[test]
+    fn test_xml_extraction_with_emoji_in_tag_content() {
+        // Emoji in content between tags should not affect tag extraction
+        let content = "<example>\u{1f525} fire content \u{1f680}</example>";
+        let tags = extract_xml_tags(content);
+        assert_eq!(tags.len(), 2);
+        assert_eq!(tags[0].name, "example");
+        assert!(!tags[0].is_closing);
+        assert_eq!(tags[1].name, "example");
+        assert!(tags[1].is_closing);
+        let errors = check_xml_balance(&tags);
+        assert!(
+            errors.is_empty(),
+            "Emoji in tag content should not cause balance errors"
+        );
+    }
+
+    #[test]
+    fn test_xml_extraction_with_emoji_adjacent_to_tags() {
+        // Emoji characters adjacent to tags should not break parsing
+        let content = "\u{1f4dd}<note>text</note>\u{2705}";
+        let tags = extract_xml_tags(content);
+        assert_eq!(tags.len(), 2);
+        assert_eq!(tags[0].name, "note");
+        assert_eq!(tags[1].name, "note");
+        let errors = check_xml_balance(&tags);
+        assert!(errors.is_empty());
     }
 }
 

@@ -254,7 +254,7 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 **Source**: code.claude.com/docs/en/skills
 
 <a id="cc-sk-007"></a>
-### CC-SK-007 [HIGH] Unrestricted Bash
+### CC-SK-007 [MEDIUM] Unrestricted Bash
 **Requirement**: Bash in allowed-tools SHOULD be scoped
 **Detection**: `allowed_tools.contains("Bash") && !allowed_tools.contains("Bash(")`
 **Fix**: [AUTO-FIX] Replace unrestricted Bash with scoped version (e.g., `Bash(git:*)`)
@@ -263,8 +263,8 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 <a id="cc-sk-008"></a>
 ### CC-SK-008 [HIGH] Unknown Tool Name
 **Requirement**: Tool names MUST match Claude Code tools
-**Known Tools**: Bash, Read, Write, Edit, Grep, Glob, Task, WebFetch, AskUserQuestion, etc.
-**Detection**: Check against tool list
+**Known Tools**: Bash, Read, Write, Edit, Grep, Glob, Task, WebFetch, WebSearch, AskUserQuestion, TodoRead, TodoWrite, MultiTool, NotebookEdit, EnterPlanMode, ExitPlanMode, Skill, StatusBarMessageTool, TaskOutput
+**Detection**: Check against tool list; MCP tools with lowercase `mcp__<server>__<tool>` format are accepted (case-sensitive prefix)
 **Fix**: Suggest closest match
 **Source**: code.claude.com/docs/en/settings
 
@@ -583,14 +583,14 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 <a id="cc-ag-009"></a>
 ### CC-AG-009 [HIGH] Invalid Tool Name in Tools List
 **Requirement**: Tool names in `tools` MUST match known Claude Code tools
-**Detection**: Check each tool name against known tools list
+**Detection**: Check each tool name against known tools list; MCP tools with lowercase `mcp__<server>__<tool>` format are accepted (case-sensitive prefix)
 **Fix**: Use a known Claude Code tool name
 **Source**: code.claude.com/docs/en/sub-agents
 
 <a id="cc-ag-010"></a>
 ### CC-AG-010 [HIGH] Invalid Tool Name in DisallowedTools
 **Requirement**: Tool names in `disallowedTools` MUST match known Claude Code tools
-**Detection**: Check each disallowed tool name against known tools list
+**Detection**: Check each disallowed tool name against known tools list; MCP tools with lowercase `mcp__<server>__<tool>` format are accepted (case-sensitive prefix)
 **Fix**: Use a known Claude Code tool name
 **Source**: code.claude.com/docs/en/sub-agents
 
@@ -920,21 +920,21 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 ## GITHUB COPILOT RULES
 
 <a id="cop-001"></a>
-### COP-001 [HIGH] Empty Instruction File
+### COP-001 [HIGH] Empty Copilot Instruction File
 **Requirement**: Copilot instruction files MUST have non-empty content
 **Detection**: `content.trim().is_empty()` after stripping frontmatter
 **Fix**: Add meaningful instructions
 **Source**: docs.github.com/en/copilot/customizing-copilot
 
 <a id="cop-002"></a>
-### COP-002 [HIGH] Invalid Frontmatter
+### COP-002 [HIGH] Invalid Frontmatter in Scoped Instructions
 **Requirement**: Scoped instruction files (.github/instructions/*.instructions.md) MUST have valid YAML frontmatter with `applyTo` field
 **Detection**: Parse YAML between `---` markers, check for `applyTo` key
 **Fix**: Auto-fix (unsafe) -- insert template frontmatter with applyTo field (missing frontmatter only)
 **Source**: docs.github.com/en/copilot/customizing-copilot
 
 <a id="cop-003"></a>
-### COP-003 [HIGH] Invalid Glob Pattern
+### COP-003 [HIGH] Invalid Glob Pattern in applyTo
 **Requirement**: `applyTo` field MUST contain valid glob patterns
 **Detection**: Attempt to parse as glob pattern
 **Fix**: Correct the glob syntax
@@ -1107,6 +1107,14 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 
 ## CODEX CLI RULES
 
+<a id="cdx-000"></a>
+### CDX-000 [HIGH] TOML Parse Error
+**Requirement**: Codex config.toml files MUST have valid TOML syntax
+**Detection**: Attempt to parse as TOML; report parse errors with line/column
+**Fix**: Correct the TOML syntax
+**Source**: github.com/openai/codex
+
+
 <a id="cdx-001"></a>
 ### CDX-001 [HIGH] Invalid Approval Mode
 **Requirement**: The `approvalMode` field in `.codex/config.toml` MUST be `"suggest"`, `"auto-edit"`, or `"full-auto"`
@@ -1223,7 +1231,7 @@ agent: reviewer
 **Source**: multi-platform research
 
 <a id="xp-002"></a>
-### XP-002 [HIGH] AGENTS.md Platform Compatibility
+### XP-002 [MEDIUM] AGENTS.md Platform Compatibility
 **Requirement**: AGENTS.md is a widely-adopted standard used by multiple platforms
 **Supported Platforms**:
 - Codex CLI (OpenAI)
@@ -1237,7 +1245,7 @@ agent: reviewer
 **Source**: developers.openai.com/codex/guides/agents-md, opencode.ai/docs/rules, docs.cursor.com/en/context, docs.cline.bot/features/custom-instructions, github.com/github/docs/changelog/2025-06-17-github-copilot-coding-agent-now-supports-agents-md-custom-instructions
 
 <a id="xp-003"></a>
-### XP-003 [HIGH] Hard-Coded Platform Paths
+### XP-003 [MEDIUM] Hard-Coded Platform Paths
 **Requirement**: Paths SHOULD use environment variables
 **Detection**: Check for `.claude/`, `.opencode/` in configs
 **Fix**: Use `$CLAUDE_PROJECT_DIR` or equivalent
@@ -1412,7 +1420,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | Category | Total Rules | HIGH | MEDIUM | LOW | Auto-Fixable |
 |----------|-------------|------|--------|-----|--------------|
 | Agent Skills | 16 | 14 | 2 | 0 | 5 |
-| Claude Skills | 15 | 12 | 3 | 0 | 9 |
+| Claude Skills | 15 | 11 | 4 | 0 | 9 |
 | Claude Hooks | 18 | 13 | 4 | 1 | 7 |
 | Claude Agents | 13 | 12 | 1 | 0 | 4 |
 | Claude Memory | 12 | 8 | 4 | 0 | 3 |
@@ -1423,12 +1431,12 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | Cline | 3 | 2 | 1 | 0 | 1 |
 | OpenCode | 3 | 3 | 0 | 0 | 1 |
 | Gemini CLI | 3 | 1 | 2 | 0 | 0 |
-| Codex CLI | 3 | 2 | 1 | 0 | 2 |
+| Codex CLI | 4 | 3 | 1 | 0 | 2 |
 | MCP | 12 | 10 | 2 | 0 | 4 |
 | XML | 3 | 3 | 0 | 0 | 3 |
 | References | 2 | 2 | 0 | 0 | 0 |
 | Prompt Eng | 4 | 0 | 4 | 0 | 0 |
-| Cross-Platform | 7 | 4 | 2 | 1 | 0 |
+| Cross-Platform | 7 | 2 | 4 | 1 | 0 |
 | Cursor Skills | 1 | 0 | 1 | 0 | 1 |
 | Cline Skills | 1 | 0 | 1 | 0 | 1 |
 | Copilot Skills | 1 | 0 | 1 | 0 | 1 |
@@ -1439,7 +1447,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | Amp Skills | 1 | 0 | 1 | 0 | 1 |
 | Roo Code Skills | 1 | 0 | 1 | 0 | 1 |
 | Version Awareness | 1 | 0 | 0 | 1 | 0 |
-| **TOTAL** | **155** | **103** | **49** | **3** | **57** |
+| **TOTAL** | **156** | **101** | **52** | **3** | **57** |
 
 
 ---
@@ -1469,9 +1477,8 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 
 ---
 
-**Total Coverage**: 155 validation rules across 28 categories
+**Total Coverage**: 156 validation rules across 28 categories
 
 **Knowledge Base**: 11,036 lines, 320KB, 75+ sources
 **Certainty**: 103 HIGH, 49 MEDIUM, 3 LOW
 **Auto-Fixable**: 57 rules (37%)
-

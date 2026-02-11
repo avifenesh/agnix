@@ -1,6 +1,6 @@
 //! Rule parity integration tests.
 //!
-//! Ensures all 155 rules from knowledge-base/rules.json are:
+//! Ensures all rules from knowledge-base/rules.json are:
 
 //! 1. Registered in SARIF output (sarif.rs)
 //! 2. Implemented in agnix-core/src/rules/*.rs
@@ -209,13 +209,17 @@ fn extract_implemented_rule_ids() -> BTreeSet<String> {
     let rules_dir = core_src.join("rules");
     scan_rules_recursive(&rules_dir, &re, &valid_prefixes, &mut rule_ids);
 
-    // Also scan lib.rs for project-level rules (e.g., AGM-006)
-    extract_from_file(
-        &core_src.join("lib.rs"),
-        &re,
-        &valid_prefixes,
-        &mut rule_ids,
-    );
+    // Also scan top-level .rs files for project-level rules (e.g., AGM-006
+    // in pipeline.rs, VER-001, XP-004/005/006).
+    for entry in fs::read_dir(&core_src)
+        .unwrap_or_else(|e| panic!("Failed to read core src dir {}: {}", core_src.display(), e))
+    {
+        let entry = entry.expect("Failed to read directory entry");
+        let path = entry.path();
+        if path.extension().is_some_and(|ext| ext == "rs") {
+            extract_from_file(&path, &re, &valid_prefixes, &mut rule_ids);
+        }
+    }
 
     rule_ids
 }
@@ -462,12 +466,13 @@ fn test_rules_json_integrity() {
         rules_index.rules.len()
     );
 
-    // Check total count matches expected
+    // Check total count matches compiled rule registry
     assert_eq!(
         rules_index.rules.len(),
-        155,
-        "Expected 155 rules in rules.json, found {}",
-        rules_index.rules.len()
+        agnix_rules::rule_count(),
+        "Expected {} rules in rules.json, found {}",
+        agnix_rules::rule_count(),
+        rules_index.rules.len(),
     );
 
     // Check no duplicate IDs
@@ -571,13 +576,14 @@ fn test_rules_json_matches_validation_rules_md() {
 fn test_sarif_rule_count() {
     let sarif_rules = extract_sarif_rule_ids();
 
-    // SARIF should have exactly 155 rules to match rules.json
-
+    let rules_index = load_rules_json();
+    // SARIF should have exactly the same number of rules as rules.json.
     assert_eq!(
         sarif_rules.len(),
-        155,
-        "SARIF should have 155 rules, found {}. Missing or extra rules detected.",
-        sarif_rules.len()
+        rules_index.total_rules,
+        "SARIF should have {} rules, found {}. Missing or extra rules detected.",
+        rules_index.total_rules,
+        sarif_rules.len(),
     );
 }
 

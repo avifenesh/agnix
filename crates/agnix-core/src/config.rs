@@ -578,6 +578,13 @@ pub struct RuleConfig {
         description = "List of rule IDs to explicitly disable (e.g., [\"CC-AG-001\", \"AS-005\"])"
     )]
     pub disabled_rules: Vec<String>,
+
+    /// Explicitly disabled validators by name (e.g., ["XmlValidator", "PromptValidator"])
+    #[serde(default)]
+    #[schemars(
+        description = "List of validator names to disable (e.g., [\"XmlValidator\", \"PromptValidator\"])"
+    )]
+    pub disabled_validators: Vec<String>,
 }
 
 impl Default for RuleConfig {
@@ -605,6 +612,7 @@ impl Default for RuleConfig {
             xml_balance: true,
             import_references: true,
             disabled_rules: Vec::new(),
+            disabled_validators: Vec::new(),
         }
     }
 }
@@ -1961,6 +1969,155 @@ copilot = "1.0.0"
         assert_eq!(config.tool_versions.copilot, Some("1.0.0".to_string()));
     }
 
+    // ===== Tool Versions: Pre-release, Build Metadata, Invalid Semver =====
+
+    #[test]
+    fn test_tool_versions_prerelease_version() {
+        let toml_str = r#"
+severity = "Warning"
+target = "Generic"
+exclude = []
+
+[rules]
+
+[tool_versions]
+claude_code = "1.0.0-rc1"
+codex = "0.2.0-beta.3"
+"#;
+
+        let config: LintConfig = toml::from_str(toml_str).unwrap();
+        assert_eq!(
+            config.tool_versions.claude_code,
+            Some("1.0.0-rc1".to_string())
+        );
+        assert_eq!(config.tool_versions.codex, Some("0.2.0-beta.3".to_string()));
+        // Pre-release strings are valid semver, confirm they parse
+        assert!(semver::Version::parse("1.0.0-rc1").is_ok());
+        assert!(semver::Version::parse("0.2.0-beta.3").is_ok());
+    }
+
+    #[test]
+    fn test_tool_versions_build_metadata() {
+        let toml_str = r#"
+severity = "Warning"
+target = "Generic"
+exclude = []
+
+[rules]
+
+[tool_versions]
+claude_code = "1.0.0+build123"
+cursor = "0.45.0+20250101"
+"#;
+
+        let config: LintConfig = toml::from_str(toml_str).unwrap();
+        assert_eq!(
+            config.tool_versions.claude_code,
+            Some("1.0.0+build123".to_string())
+        );
+        assert_eq!(
+            config.tool_versions.cursor,
+            Some("0.45.0+20250101".to_string())
+        );
+        // Build metadata is valid semver
+        assert!(semver::Version::parse("1.0.0+build123").is_ok());
+        assert!(semver::Version::parse("0.45.0+20250101").is_ok());
+    }
+
+    #[test]
+    fn test_tool_versions_prerelease_with_build_metadata() {
+        let toml_str = r#"
+severity = "Warning"
+target = "Generic"
+exclude = []
+
+[rules]
+
+[tool_versions]
+copilot = "2.0.0-alpha.1+build456"
+"#;
+
+        let config: LintConfig = toml::from_str(toml_str).unwrap();
+        assert_eq!(
+            config.tool_versions.copilot,
+            Some("2.0.0-alpha.1+build456".to_string())
+        );
+        assert!(semver::Version::parse("2.0.0-alpha.1+build456").is_ok());
+    }
+
+    #[test]
+    fn test_invalid_semver_rejected_by_parser() {
+        // ToolVersions stores strings (no validation at deserialization time),
+        // but the semver crate correctly rejects invalid formats
+        let invalid_versions = vec![
+            "not-a-version",
+            "1.0",
+            "1",
+            "v1.0.0",
+            "1.0.0.0",
+            "",
+            "abc",
+            "1.0.0-",
+            "1.0.0+",
+        ];
+
+        for v in &invalid_versions {
+            assert!(
+                semver::Version::parse(v).is_err(),
+                "Expected '{}' to be rejected as invalid semver",
+                v
+            );
+        }
+    }
+
+    #[test]
+    fn test_valid_semver_accepted_by_parser() {
+        let valid_versions = vec![
+            "0.0.0",
+            "1.0.0",
+            "99.99.99",
+            "1.0.0-alpha",
+            "1.0.0-alpha.1",
+            "1.0.0-0.3.7",
+            "1.0.0-x.7.z.92",
+            "1.0.0+build",
+            "1.0.0+build.123",
+            "1.0.0-beta+exp.sha.5114f85",
+        ];
+
+        for v in &valid_versions {
+            assert!(
+                semver::Version::parse(v).is_ok(),
+                "Expected '{}' to be accepted as valid semver",
+                v
+            );
+        }
+    }
+
+    #[test]
+    fn test_tool_versions_invalid_string_still_deserializes() {
+        // ToolVersions fields are plain strings, so invalid semver still deserializes
+        // (validation happens at usage time, not parse time)
+        let toml_str = r#"
+severity = "Warning"
+target = "Generic"
+exclude = []
+
+[rules]
+
+[tool_versions]
+claude_code = "not-valid-semver"
+"#;
+
+        let config: LintConfig = toml::from_str(toml_str).unwrap();
+        assert_eq!(
+            config.tool_versions.claude_code,
+            Some("not-valid-semver".to_string())
+        );
+        // But semver parsing would fail
+        assert!(semver::Version::parse("not-valid-semver").is_err());
+    }
+
     // ===== Spec Revisions Tests =====
 
     #[test]
@@ -2436,6 +2593,41 @@ disabled_rules = ["CC-MEM-006"]
         assert!(!config.is_rule_enabled("CC-MEM-006"));
         // exclude should use default
         assert!(config.exclude.contains(&"node_modules/**".to_string()));
+    }
+
+    // ===== Disabled Validators TOML Deserialization =====
+
+    #[test]
+    fn test_disabled_validators_toml_deserialization() {
+        let toml_str = r#"
+[rules]
+disabled_validators = ["XmlValidator", "PromptValidator"]
+"#;
+        let config: LintConfig = toml::from_str(toml_str).unwrap();
+        assert_eq!(
+            config.rules.disabled_validators,
+            vec!["XmlValidator", "PromptValidator"]
+        );
+    }
+
+    #[test]
+    fn test_disabled_validators_defaults_to_empty() {
+        let toml_str = r#"
+[rules]
+skills = true
+"#;
+        let config: LintConfig = toml::from_str(toml_str).unwrap();
+        assert!(config.rules.disabled_validators.is_empty());
+    }
+
+    #[test]
+    fn test_disabled_validators_empty_array() {
+        let toml_str = r#"
+[rules]
+disabled_validators = []
+"#;
+        let config: LintConfig = toml::from_str(toml_str).unwrap();
+        assert!(config.rules.disabled_validators.is_empty());
     }
 
     // ===== Disabled Rules Edge Cases =====

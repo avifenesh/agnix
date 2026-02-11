@@ -36,7 +36,10 @@ const TOOL_ALIASES: &[(&str, &str)] =
 
 const COMPAT_TOOL_NAMES: &[&str] = &["generic", "codex"];
 
-/// Input for validate_file tool
+/// Input for validate_file tool.
+///
+/// The `path` field accepts absolute or relative paths. Path safety is enforced
+/// downstream by `safe_read_file()` (symlink rejection, size limits).
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 #[schemars(description = "Input for validating a single agent configuration file")]
 pub struct ValidateFileInput {
@@ -328,7 +331,7 @@ fn make_invalid_params(msg: String) -> McpError {
 /// Agnix MCP Server - validates AI agent configurations
 ///
 /// Provides tools to validate SKILL.md, CLAUDE.md, AGENTS.md, hooks,
-/// MCP configs, and more against 155 rules.
+/// MCP configs, and more against 156 rules.
 
 #[derive(Debug, Clone)]
 pub struct AgnixServer {
@@ -399,7 +402,7 @@ impl AgnixServer {
 
     /// Get all available validation rules
     #[tool(
-        description = "List all 155 validation rules available in agnix. Returns rule IDs and names organized by category (AS-* Agent Skills, CC-* Claude Code, MCP-* Model Context Protocol, COP-* Copilot, CUR-* Cursor, etc.)."
+        description = "List all 156 validation rules available in agnix. Returns rule IDs and names organized by category (AS-* Agent Skills, CC-* Claude Code, MCP-* Model Context Protocol, COP-* Copilot, CUR-* Cursor, etc.)."
     )]
     async fn get_rules(&self) -> Result<CallToolResult, McpError> {
         let rules: Vec<RuleInfo> = agnix_rules::RULES_DATA
@@ -462,11 +465,11 @@ impl ServerHandler for AgnixServer {
             instructions: Some(
                 "Agnix - AI agent configuration linter.\n\n\
                  Validates SKILL.md, CLAUDE.md, AGENTS.md, hooks, MCP configs, \
-                 Cursor rules, and more against 155 rules.\n\n\
+                 Cursor rules, and more against 156 rules.\n\n\
                  Tools:\n\
                  - validate_project: Validate all agent configs in a directory\n\
                  - validate_file: Validate a single config file\n\
-                 - get_rules: List all 155 validation rules\n\
+                 - get_rules: List all 156 validation rules\n\
                  - get_rule_docs: Get details about a specific rule\n\n\
                  Preferred input: tools (CSV string or array)\n\
                  Legacy fallback: target\n\

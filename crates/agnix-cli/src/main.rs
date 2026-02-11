@@ -1,7 +1,7 @@
 #![allow(clippy::collapsible_if, clippy::let_and_return)]
 //! agnix CLI - The nginx of agent configs
 
-rust_i18n::i18n!("../../locales", fallback = "en");
+rust_i18n::i18n!("locales", fallback = "en");
 
 mod json;
 mod locale;
@@ -243,7 +243,7 @@ fn main() {
     // Load config early for watch mode to apply config-based locale
     // Watch mode doesn't allow format or fix flags, so we can safely load config here
     if cli.watch {
-        let config_path = resolve_config_path(&cli.path, &cli);
+        let config_path = resolve_config_path(&cli.path, cli.config.as_ref());
         let (config, _) = LintConfig::load_or_default(config_path.as_ref());
 
         // Re-initialize locale if config specifies one and no --locale flag was given
@@ -312,7 +312,7 @@ fn validate_command(path: &Path, cli: &Cli) -> anyhow::Result<()> {
         });
     }
 
-    let config_path = resolve_config_path(path, cli);
+    let config_path = resolve_config_path(path, cli.config.as_ref());
     tracing::debug!(config_path = ?config_path, "Resolved config path");
 
     let (mut config, config_warning) = LintConfig::load_or_default(config_path.as_ref());
@@ -398,6 +398,7 @@ fn validate_command(path: &Path, cli: &Cli) -> anyhow::Result<()> {
     let ValidationResult {
         diagnostics,
         files_checked,
+        ..
     } = validate_project(path, &config)?;
 
     // Restore user locale after validation so stderr messages use their language
@@ -646,6 +647,7 @@ fn validate_command(path: &Path, cli: &Cli) -> anyhow::Result<()> {
             let ValidationResult {
                 diagnostics: post_fix_diagnostics,
                 files_checked: _,
+                ..
             } = validate_project(path, &config)?;
 
             (final_errors, final_warnings) = count_errors_warnings(&post_fix_diagnostics);
@@ -676,11 +678,7 @@ fn run_single_validation(
     target: TargetArg,
     config_override: Option<&PathBuf>,
 ) -> anyhow::Result<bool> {
-    let config_path = if let Some(c) = config_override {
-        Some(c.clone())
-    } else {
-        resolve_config_path_simple(path)
-    };
+    let config_path = resolve_config_path(path, config_override);
 
     let (mut config, config_warning) = LintConfig::load_or_default(config_path.as_ref());
 
@@ -693,6 +691,7 @@ fn run_single_validation(
     let ValidationResult {
         diagnostics,
         files_checked: _,
+        ..
     } = validate_project(path, &config)?;
 
     println!("{} {}", t!("cli.validating").cyan().bold(), path.display());
@@ -760,30 +759,8 @@ fn run_single_validation(
     Ok(errors > 0 || (strict && warnings > 0))
 }
 
-fn resolve_config_path_simple(path: &Path) -> Option<PathBuf> {
-    let mut candidates = Vec::new();
-    if path.is_dir() {
-        candidates.push(path.to_path_buf());
-    } else if let Some(parent) = path.parent() {
-        candidates.push(parent.to_path_buf());
-    }
-
-    if let Ok(cwd) = env::current_dir() {
-        candidates.push(cwd);
-    }
-
-    for dir in candidates {
-        let candidate = dir.join(".agnix.toml");
-        if candidate.exists() {
-            return Some(candidate);
-        }
-    }
-
-    None
-}
-
-fn resolve_config_path(path: &Path, cli: &Cli) -> Option<PathBuf> {
-    if let Some(config) = &cli.config {
+fn resolve_config_path(path: &Path, config_override: Option<&PathBuf>) -> Option<PathBuf> {
+    if let Some(config) = config_override {
         return Some(config.clone());
     }
 

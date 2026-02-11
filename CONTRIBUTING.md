@@ -84,7 +84,7 @@ Step-by-step process for adding a new validation rule:
    - `agents_md.rs` -- project-level validator with cross-file analysis
    - `skill/mod.rs` and `hooks/mod.rs` -- complex validators split into focused `helpers.rs` and `tests.rs` modules
 
-4. **Register in `ValidatorRegistry`** -- Add the validator factory to the appropriate `FileType` in `crates/agnix-core/src/rules/mod.rs`.
+4. **Register in `ValidatorRegistry`** -- Add the validator factory to the `DEFAULTS` constant in `crates/agnix-core/src/registry.rs`. It will be included automatically via `ValidatorRegistry::with_defaults()`. External validators can use `ValidatorProvider` trait instead.
 
 5. **Add test fixtures** -- Create test files in `tests/fixtures/` matching the validator's expected file type detection patterns. Fixtures should cover both valid and invalid configs.
 
@@ -136,6 +136,51 @@ We welcome community input through several channels:
 2. **Add tests** - Every feature/fix must have tests
 3. **Wait for CI** - The claude workflow is the major quality gate
 4. **Get review approval** - At least one approval required
+
+## Backward-Compatibility Policy
+
+agnix follows a stability policy to protect downstream consumers (CLI, LSP, MCP, editor extensions) from accidental API breakage.
+
+### Stability Tiers
+
+| Tier | Scope | Contract |
+|------|-------|----------|
+| **Public/Stable** | Re-exported types at `agnix_core` root (`LintConfig`, `Diagnostic`, `DiagnosticLevel`, `Fix`, `LintError`, `LintResult`, `ValidationResult`, `FileType`, `ValidatorRegistry`, `ValidatorFactory`, `Validator` trait, `FileSystem` trait, `MockFileSystem`, `RealFileSystem`, `FixResult`, `ConfigWarning`, `FilesConfig`, `generate_schema`) and all `agnix_rules` public items (`RULES_DATA`, `VALID_TOOLS`, `TOOL_RULE_PREFIXES`, `rule_count`, `get_rule_name`, `valid_tools`, `normalize_tool_name`, etc.) | Breaking changes require a minor version bump (pre-1.0) or major version bump (post-1.0) with advance notice in CHANGELOG.md |
+| **Public/Unstable** | Accessible public modules that may change between minor versions: `authoring`, `eval`, `i18n`, `validation` | May change with a minor version bump; consumers should pin exact versions if depending on these |
+| **Internal** | Private modules not accessible outside the crate: `parsers`, `rules`, `schemas`, `file_utils`, `regex_util`, `span_utils` | May change freely in any release |
+
+### What Constitutes a Breaking Change
+
+The following changes to **Public/Stable** items are considered breaking:
+
+- Removing a public type, function, or constant
+- Changing a public function signature (parameter types, return type)
+- Changing a struct field type or removing a field
+- Removing an enum variant
+- Changing a trait method signature or adding a required method without a default
+
+### What is Non-Breaking
+
+These changes are safe to make in any release:
+
+- Adding new enum variants (this may break exhaustive matches; consumers should use wildcard `_` arms to stay forward-compatible)
+- Adding new optional struct fields with `#[serde(default)]`
+- Adding new public functions, types, or modules
+- Adding new validators to `ValidatorRegistry::with_defaults()`
+- Adding new rules to `agnix_rules`
+- Adding new trait methods with default implementations
+
+### Feature Flags
+
+agnix-core intentionally has no feature flags. It is a focused validation library with no optional heavyweight dependencies. Only the CLI crate (`agnix-cli`) has a `telemetry` feature flag for opt-in analytics.
+
+When to add feature flags in the future:
+- If a new dependency adds significant compile time or binary size
+- If a feature is truly optional and not needed by most consumers
+
+### Pre-1.0 Caveat
+
+While agnix is below version 1.0, this policy is followed in good faith. Minor versions may occasionally contain breaking changes when necessary, but these will always be documented in CHANGELOG.md with migration instructions.
 
 ## Commit Messages
 

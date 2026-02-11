@@ -34,6 +34,15 @@ CATEGORY_LABELS: Dict[str, str] = {
     "gemini-cli": "Gemini CLI",
     "opencode": "OpenCode",
     "version-awareness": "Version Awareness",
+    "cursor-skills": "Cursor Skills",
+    "cline-skills": "Cline Skills",
+    "copilot-skills": "Copilot Skills",
+    "codex-skills": "Codex Skills",
+    "opencode-skills": "OpenCode Skills",
+    "windsurf-skills": "Windsurf Skills",
+    "kiro-skills": "Kiro Skills",
+    "amp-skills": "Amp Skills",
+    "roo-code-skills": "Roo Code Skills",
 }
 
 TEMPLATES: Dict[str, Dict[str, str]] = {
@@ -112,6 +121,35 @@ TEMPLATES: Dict[str, Dict[str, str]] = {
         "valid": """Declare supported version range and degrade gracefully outside the range.\n""",
         "lang": "markdown",
     },
+    "cline": {
+        "invalid": "# Rules\n",
+        "valid": "# Project Rules\n\nFollow coding standards and write tests.\n",
+        "lang": "markdown",
+    },
+    "codex": {
+        "invalid": "",
+        "valid": "[model]\nmodel = \"o4-mini\"\n",
+        "lang": "toml",
+    },
+    "gemini-cli": {
+        "invalid": "# Gemini\n",
+        "valid": "# Gemini Instructions\n\nFollow project coding standards.\n",
+        "lang": "markdown",
+    },
+    "opencode": {
+        "invalid": "{}",
+        "valid": """{"model": "claude-sonnet-4-5-20250929", "share": "manual"}\n""",
+        "lang": "json",
+    },
+    "cline-skills": {"invalid": "", "valid": "", "lang": "markdown"},
+    "codex-skills": {"invalid": "", "valid": "", "lang": "markdown"},
+    "copilot-skills": {"invalid": "", "valid": "", "lang": "markdown"},
+    "cursor-skills": {"invalid": "", "valid": "", "lang": "markdown"},
+    "opencode-skills": {"invalid": "", "valid": "", "lang": "markdown"},
+    "windsurf-skills": {"invalid": "", "valid": "", "lang": "markdown"},
+    "kiro-skills": {"invalid": "", "valid": "", "lang": "markdown"},
+    "amp-skills": {"invalid": "", "valid": "", "lang": "markdown"},
+    "roo-code-skills": {"invalid": "", "valid": "", "lang": "markdown"},
 }
 
 
@@ -151,9 +189,14 @@ def render_rule(rule: dict) -> str:
     tests = evidence.get("tests", {})
 
     template = TEMPLATES.get(category, DEFAULT_TEMPLATE)
-    invalid = template["invalid"]
-    valid = template["valid"]
+    # Prefer per-rule examples from rules.json; fall back to category template.
+    # Normalize so each example ends with exactly one trailing newline.
+    invalid = (rule.get("bad_example") or template["invalid"]).rstrip("\n") + "\n"
+    valid = (rule.get("good_example") or template["valid"]).rstrip("\n") + "\n"
     lang = template["lang"]
+
+    # Use longer fence when examples contain triple backticks to avoid breakout
+    fence = "````" if ("```" in invalid or "```" in valid) else "```"
 
     sources = "\n".join(
         f"- {url}" for url in evidence.get("source_urls", [])
@@ -226,17 +269,17 @@ keywords: [{keywords}]
 
 ## Examples
 
-The following examples are illustrative snippets for this rule category.
+The following examples demonstrate what triggers this rule and how to fix it.
 
 ### Invalid
 
-```{lang}
-{invalid}```
+{fence}{lang}
+{invalid}{fence}
 
 ### Valid
 
-```{lang}
-{valid}```
+{fence}{lang}
+{valid}{fence}
 """
 
 

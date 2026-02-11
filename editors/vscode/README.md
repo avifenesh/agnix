@@ -3,7 +3,7 @@
 Real-time validation for AI agent configuration files in VS Code.
 Install from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=avifenesh.agnix).
 
-**155 rules** | **Real-time diagnostics** | **Auto-fix** | **Completion** | **Multi-tool support**
+**156 rules** | **Real-time diagnostics** | **Auto-fix** | **Completion** | **Multi-tool support**
 
 
 ## Features
@@ -11,7 +11,7 @@ Install from the [VS Code Marketplace](https://marketplace.visualstudio.com/item
 - **Real-time validation** - Diagnostics as you type
 - **Context-aware completions** - Frontmatter keys, values, and snippets
 - **JSON Schema validation and autocomplete for `.agnix.toml` config files**
-- **Validates 155 rules** - From official specs and best practices
+- **Validates 156 rules** - From official specs and best practices
 
 - **Diagnostics panel** - Sidebar tree view of all issues by file
 - **CodeLens** - Rule info shown inline above problematic lines
@@ -41,11 +41,11 @@ Access via Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`):
 | Command | Shortcut | Description |
 |---------|----------|-------------|
 | `agnix: Validate Current File` | `Ctrl+Shift+V` | Validate active file |
-| `agnix: Validate Workspace` | - | Validate all agent configs |
+| `agnix: Validate Workspace` | - | Validate all agent configs including project-level rules (AGM-006, XP-004/005/006, VER-001) |
 | `agnix: Fix All Issues in File` | `Ctrl+Shift+.` | Apply all available fixes |
 | `agnix: Preview Fixes` | - | Browse fixes with diff preview |
 | `agnix: Fix All Safe Issues` | `Ctrl+Alt+.` | Apply only safe fixes |
-| `agnix: Show All Rules` | - | Browse 155 rules by category |
+| `agnix: Show All Rules` | - | Browse 156 rules by category |
 
 | `agnix: Show Rule Documentation` | - | Open docs for a rule (via CodeLens) |
 | `agnix: Ignore Rule in Project` | - | Add rule to `.agnix.toml` disabled list |

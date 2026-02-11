@@ -43,7 +43,7 @@ fn find_tool_location(content: &str, tool_index: usize) -> (usize, usize) {
         // Find the opening bracket of the array
         if let Some(bracket_pos) = after_tools.find('[') {
             let after_bracket = &after_tools[bracket_pos + 1..];
-            let mut brace_count = 0;
+            let mut brace_count: usize = 0;
             let mut tool_count = 0;
             let mut in_string = false;
             let mut prev_char = ' ';
@@ -68,7 +68,7 @@ fn find_tool_location(content: &str, tool_index: usize) -> (usize, usize) {
                         }
                         brace_count += 1;
                     } else if c == '}' {
-                        brace_count -= 1;
+                        brace_count = brace_count.saturating_sub(1);
                     }
                 }
                 prev_char = c;

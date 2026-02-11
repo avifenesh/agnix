@@ -68,6 +68,7 @@ Supported LSP capabilities:
 - `textDocument/codeAction` -- auto-fix suggestions
 - `textDocument/hover` -- rule documentation on hover
 - `workspace/didChangeConfiguration` -- runtime config updates
+- `workspace/executeCommand` -- project-level validation (`agnix.validateProjectRules` command)
 
 ## References
 

@@ -86,6 +86,7 @@ pub fn safe_write_file(path: &Path, content: &str) -> LintResult<()> {
         path: path.to_path_buf(),
         source: io::Error::other("Missing parent directory"),
     })?;
+    // file_name() is None for paths like "/", ".", "..", or empty; fall back to "file"
     let file_name = path
         .file_name()
         .and_then(|name| name.to_str())
@@ -392,6 +393,21 @@ mod tests {
         let result = safe_write_file(&file_path, "content");
         assert!(result.is_err());
         assert!(matches!(result.unwrap_err(), LintError::FileWrite { .. }));
+    }
+
+    #[test]
+    fn test_safe_read_file_on_directory_returns_not_regular() {
+        // Verify that reading a directory path returns FileNotRegular,
+        // not a confusing I/O error about "Is a directory"
+        let temp = TempDir::new().unwrap();
+        let result = safe_read_file(temp.path());
+        assert!(result.is_err());
+        match result.unwrap_err() {
+            LintError::FileNotRegular { path } => {
+                assert_eq!(path, temp.path());
+            }
+            other => panic!("Expected FileNotRegular for directory, got {:?}", other),
+        }
     }
 
     // Symlink tests - only run on Unix-like systems where symlinks are common

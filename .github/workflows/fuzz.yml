@@ -44,7 +44,7 @@ jobs:
           toolchain: nightly
 
       - name: Install cargo-fuzz
-        run: cargo install cargo-fuzz
+        run: cargo install cargo-fuzz --version 0.13.1
 
       - name: Determine fuzzing duration
         id: duration

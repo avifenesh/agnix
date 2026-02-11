@@ -14,7 +14,7 @@
 
 The linter for your AI coding stack -- skills, hooks, memory, plugins, MCP, and agent configs. CLI, LSP server, and IDE plugins for Claude Code, Cursor, GitHub Copilot, Codex CLI, and more.
 
-**155 validation rules** | **Auto-fix** | **[VS Code](https://marketplace.visualstudio.com/items?itemName=avifenesh.agnix) + [JetBrains](https://plugins.jetbrains.com/plugin/30087-agnix) + Neovim + Zed** | **GitHub Action**
+**156 validation rules** | **Auto-fix** | **[VS Code](https://marketplace.visualstudio.com/items?itemName=avifenesh.agnix) + [JetBrains](https://plugins.jetbrains.com/plugin/30087-agnix) + Neovim + Zed** | **GitHub Action**
 
 <p align="center">
   <a href="https://avifenesh.github.io/agnix/"><img src="https://img.shields.io/badge/Docs-Website-0A7E8C?style=for-the-badge" alt="Website"></a>
@@ -32,7 +32,7 @@ The linter for your AI coding stack -- skills, hooks, memory, plugins, MCP, and 
 
 **Bad patterns get amplified.** AI assistants don't ignore wrong configs -- they [learn from them](https://www.augmentcode.com/guides/enterprise-coding-standards-12-rules-for-ai-ready-teams).
 
-agnix catches all of this. 155 rules derived from official specs, research papers, and real-world testing. Auto-fix included.
+agnix catches all of this. 156 rules derived from official specs, research papers, and real-world testing. Auto-fix included.
 
 ## Quick Start
 
@@ -102,7 +102,7 @@ agnix --strict .     # Strict mode (warnings = errors)
 agnix --target claude-code .  # Target specific tool
 ```
 
-[Full CLI reference](https://avifenesh.github.io/agnix/docs/configuration) | [All 155 rules](https://avifenesh.github.io/agnix/docs/rules)
+[Full CLI reference](https://avifenesh.github.io/agnix/docs/configuration) | [All 156 rules](https://avifenesh.github.io/agnix/docs/rules)
 
 ## Supported Tools
 

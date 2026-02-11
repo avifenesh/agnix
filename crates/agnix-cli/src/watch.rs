@@ -77,6 +77,7 @@ fn is_relevant_file(path: &Path) -> bool {
             | "settings.local.json"
             | "plugin.json"
             | "copilot-instructions.md"
+        | ".agnix.toml"
     ) || extension == "mcp"
         || filename.ends_with(".mcp.json")
         || filename.ends_with(".mdc")
@@ -93,4 +94,5 @@ fn is_relevant_file(path: &Path) -> bool {
 fn clear_screen() {
     // ANSI escape code to clear screen and move cursor to top
     print!("\x1B[2J\x1B[1;1H");
+    let _ = std::io::Write::flush(&mut std::io::stdout());
 }

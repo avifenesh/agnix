@@ -1,6 +1,6 @@
 # agnix Technical Reference
 
-> Linter for agent configs. 155 rules across 28 categories.
+> Linter for agent configs. 156 rules across 28 categories.
 
 
 ## What agnix Validates
@@ -23,7 +23,7 @@
 | Cline | .clinerules, .clinerules/*.md | 3 |
 | OpenCode | opencode.json | 3 |
 | Gemini CLI | GEMINI.md, GEMINI.local.md | 3 |
-| Codex CLI | .codex/config.toml | 3 |
+| Codex CLI | .codex/config.toml | 4 |
 | Version Awareness | .agnix.toml | 1 |
 | Cursor Skills | .cursor/skills/*/SKILL.md | 1 |
 | Cline Skills | .cline/skills/*/SKILL.md | 1 |
@@ -49,7 +49,7 @@ agnix/
 │   ├── agnix-lsp/      # LSP server
 │   └── agnix-mcp/      # MCP server
 ├── editors/            # Neovim, VS Code, JetBrains, Zed integrations
-├── knowledge-base/     # 155 rules documented
+├── knowledge-base/     # 156 rules documented
 
 ├── scripts/            # Build/dev automation scripts
 ├── website/            # Docusaurus documentation website
@@ -67,6 +67,22 @@ The validation process follows these steps:
 5. **Result Sorting** - Deterministic ordering by severity (errors first) then file path
 
 This architecture ensures fast validation on large projects while maintaining consistent, reproducible output.
+
+### Project-Level Validation
+
+Cross-file validation rules (AGM-006, XP-004/005/006, VER-001) require analysis across multiple files to detect:
+
+- **AGM-006**: Nested AGENTS.md hierarchies across different directories
+- **XP-004 to XP-006**: Conflicting build commands, tool constraints, and instruction layers across CLAUDE.md, AGENTS.md, Cursor rules, and Copilot files
+- **VER-001**: Missing or incomplete version pinning in .agnix.toml
+
+Project-level validation runs:
+- On workspace open (LSP `initialized` event)
+- After any configuration change (LSP `didChangeConfiguration`)
+- After file save events (LSP `didSave`)
+- Explicitly via `agnix.validateProjectRules` LSP command (VS Code `Validate Workspace`)
+
+Results are published to all affected files as diagnostics, ensuring users see context-aware feedback for cross-file issues.
 
 ### File Type Resolution
 
@@ -206,6 +222,9 @@ import_references = true
 
 # Disable specific rules by ID
 disabled_rules = []  # e.g., ["CC-AG-001", "AS-005"]
+
+# Disable entire validators by name
+disabled_validators = []  # e.g., ["XmlValidator", "ImportsValidator"]
 
 exclude = ["node_modules/**", ".git/**", "target/**"]
 ```

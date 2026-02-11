@@ -292,7 +292,7 @@ fn bench_registry_caching(c: &mut Criterion) {
 
 /// Benchmark frontmatter parsing speed.
 fn bench_frontmatter_parsing(c: &mut Criterion) {
-    use agnix_core::parsers::frontmatter::split_frontmatter;
+    use agnix_core::__internal::split_frontmatter;
 
     let small_frontmatter = "---\nname: test\n---\nBody";
 

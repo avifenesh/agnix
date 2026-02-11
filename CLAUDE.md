@@ -54,7 +54,7 @@ editors/
 ├── vscode/         # VS Code extension
 ├── jetbrains/      # JetBrains IDE plugin
 └── zed/            # Zed extension
-knowledge-base/     # 155 rules, 75+ sources, rules.json
+knowledge-base/     # 156 rules, 75+ sources, rules.json
 
 tests/fixtures/     # Test cases by category
 ```
@@ -67,9 +67,12 @@ tests/fixtures/     # Test cases by category
 - `config.rs` - LintConfig, ToolVersions, SpecRevisions
 - `diagnostics.rs` - Diagnostic, Fix, DiagnosticLevel
 - `eval.rs` - Rule efficacy evaluation (precision/recall/F1)
+- `file_types.rs` - FileType enum and detect_file_type()
 - `file_utils.rs` - Safe file I/O (symlink rejection, size limits)
 - `fixes.rs` - Auto-fix application engine
 - `fs.rs` - FileSystem trait abstraction (RealFileSystem, MockFileSystem)
+- `pipeline.rs` - ValidationResult, validate_project(), validate_file()
+- `registry.rs` - ValidatorRegistry, ValidatorRegistryBuilder, ValidatorProvider, factory functions
 
 ### Key Abstractions
 
@@ -77,11 +80,22 @@ tests/fixtures/     # Test cases by category
 // Primary extension point
 pub trait Validator {
     fn validate(&self, path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic>;
+    fn name(&self) -> &'static str { /* default: short type name */ }
 }
 
-// Multiple validators per FileType via factory pattern
-pub struct ValidatorRegistry {
-    validators: HashMap<FileType, Vec<ValidatorFactory>>
+// Plugin architecture for extensibility
+pub trait ValidatorProvider: Send + Sync {
+    fn name(&self) -> &str { /* default: short type name */ }
+    fn validators(&self) -> Vec<(FileType, ValidatorFactory)>;
+}
+
+// Registry with builder pattern and runtime filtering
+pub struct ValidatorRegistry { /* ... */ }
+
+impl ValidatorRegistry {
+    pub fn builder() -> ValidatorRegistryBuilder;
+    pub fn with_defaults() -> Self;
+    pub fn disable_validator(&mut self, name: impl Into<String>);
 }
 ```
 
@@ -116,7 +130,7 @@ cargo run --bin agnix-mcp   # Run MCP server
 
 ## Rules Reference
 
-155 rules defined in `knowledge-base/rules.json` (source of truth)
+156 rules defined in `knowledge-base/rules.json` (source of truth)
 
 
 Human-readable docs: `knowledge-base/VALIDATION-RULES.md`
@@ -128,9 +142,9 @@ Format: `[CATEGORY]-[NUMBER]` (AS-004, CC-HK-001, etc.)
 ## Current State
 
 - v0.10.0 - Production-ready with full validation pipeline
-- 155 validation rules across 19 validators
+- 156 validation rules across 19 validators
 
-- 2400+ passing tests
+- 2600+ passing tests
 - LSP + MCP servers with VS Code extension
 - See GitHub issues for roadmap
 

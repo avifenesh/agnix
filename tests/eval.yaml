@@ -20,7 +20,7 @@ cases:
     description: "Windows path separator triggers AS-014"
 
   - file: fixtures/invalid/skills/invalid-name/SKILL.md
-    expected: [AS-004]
+    expected: [AS-004, XP-SK-001]
     description: "Invalid skill name (underscores) triggers AS-004"
 
   - file: fixtures/invalid/skills/deploy-prod/SKILL.md
@@ -29,26 +29,26 @@ cases:
 
   - file: fixtures/invalid/skills/unknown-tool/SKILL.md
     expected: [CC-SK-008]
-    description: "Unknown tool triggers CC-SK-008 (invalid model in file)"
+    description: "Unknown tool triggers CC-SK-008 (unknown tool names)"
 
   - file: fixtures/invalid/skills/invalid-model/SKILL.md
-    expected: [CC-SK-001]
+    expected: [CC-SK-001, XP-SK-001]
     description: "Invalid model file has bad name, triggers CC-SK-001"
 
   - file: fixtures/invalid/skills/invalid-context/SKILL.md
-    expected: [CC-SK-002]
+    expected: [CC-SK-002, XP-SK-001]
     description: "Invalid context triggers CC-SK-002"
 
   - file: fixtures/invalid/skills/invalid-agent/SKILL.md
-    expected: [CC-SK-005]
+    expected: [CC-SK-005, XP-SK-001]
     description: "Invalid agent triggers CC-SK-005"
 
   - file: fixtures/invalid/skills/context-without-agent/SKILL.md
-    expected: [CC-SK-003]
+    expected: [CC-SK-003, CC-SK-013, XP-SK-001]
     description: "Context fork without agent triggers CC-SK-003"
 
   - file: fixtures/invalid/skills/agent-without-context/SKILL.md
-    expected: [CC-SK-004]
+    expected: [CC-SK-004, XP-SK-001]
     description: "Agent without context fork triggers CC-SK-004"
 
   - file: fixtures/valid/skills/code-review/SKILL.md
@@ -56,8 +56,8 @@ cases:
     description: "Valid skill should have no errors"
 
   - file: fixtures/valid/skills/with-context-agent/SKILL.md
-    expected: []
-    description: "Valid skill with context and agent should have no errors"
+    expected: [XP-SK-001]
+    description: "Valid skill with context and agent triggers XP-SK-001 (not in client-specific dir)"
 
   # ===== MCP Rules (MCP-*) =====
 
