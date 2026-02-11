@@ -324,10 +324,7 @@ mod tests {
         let output = diagnostics_to_json(&[diag], Path::new("/p"), 1);
         let json_diag = &output.diagnostics[0];
         assert!(json_diag.category.is_some());
-        assert_eq!(
-            json_diag.applies_to_tool,
-            Some("claude-code".to_string())
-        );
+        assert_eq!(json_diag.applies_to_tool, Some("claude-code".to_string()));
     }
 
     #[test]

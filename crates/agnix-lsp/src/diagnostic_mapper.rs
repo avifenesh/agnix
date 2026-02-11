@@ -365,14 +365,8 @@ mod tests {
             make_fix(10, 15, "world", "Another fix", false),
         ];
 
-        let diag = make_diagnostic_with_fixes(
-            DiagnosticLevel::Error,
-            "Error",
-            1,
-            1,
-            "AS-001",
-            fixes,
-        );
+        let diag =
+            make_diagnostic_with_fixes(DiagnosticLevel::Error, "Error", 1, 1, "AS-001", fixes);
 
         let serialized = serialize_diagnostic_data(&diag);
         assert!(serialized.is_some());

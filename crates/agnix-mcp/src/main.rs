@@ -151,10 +151,7 @@ impl From<&Diagnostic> for DiagnosticOutput {
             fixable: !d.fixes.is_empty(),
             category: d.metadata.as_ref().map(|m| m.category.clone()),
             rule_severity: d.metadata.as_ref().map(|m| m.severity.clone()),
-            applies_to_tool: d
-                .metadata
-                .as_ref()
-                .and_then(|m| m.applies_to_tool.clone()),
+            applies_to_tool: d.metadata.as_ref().and_then(|m| m.applies_to_tool.clone()),
         }
     }
 }

@@ -465,8 +465,14 @@ mod tests {
             applies_to_tool: Some("custom-tool".to_string()),
         };
 
-        let diag = Diagnostic::error(PathBuf::from("test.md"), 5, 10, "CUSTOM-001", "Custom error")
-            .with_metadata(manual_metadata.clone());
+        let diag = Diagnostic::error(
+            PathBuf::from("test.md"),
+            5,
+            10,
+            "CUSTOM-001",
+            "Custom error",
+        )
+        .with_metadata(manual_metadata.clone());
 
         // Serialize to JSON
         let json = serde_json::to_string(&diag).unwrap();
