@@ -11,7 +11,7 @@
 use crate::{
     config::LintConfig,
     diagnostics::Diagnostic,
-    rules::Validator,
+    rules::{Validator, ValidatorMetadata},
     schemas::agents_md::{
         MarkdownIssueType, WINDSURF_CHAR_LIMIT, check_character_limit, check_markdown_validity,
         check_project_context, check_section_headers, find_unguarded_platform_features,
@@ -20,9 +20,18 @@ use crate::{
 use rust_i18n::t;
 use std::path::Path;
 
+const RULE_IDS: &[&str] = &["AGM-001", "AGM-002", "AGM-003", "AGM-004", "AGM-005"];
+
 pub struct AgentsMdValidator;
 
 impl Validator for AgentsMdValidator {
+    fn metadata(&self) -> ValidatorMetadata {
+        ValidatorMetadata {
+            name: self.name(),
+            rule_ids: RULE_IDS,
+        }
+    }
+
     fn validate(&self, path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic> {
         let mut diagnostics = Vec::new();
 

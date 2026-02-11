@@ -15,7 +15,7 @@ use crate::{
     FileType,
     config::LintConfig,
     diagnostics::{Diagnostic, Fix},
-    rules::Validator,
+    rules::{Validator, ValidatorMetadata},
     schemas::cursor::{
         ParsedMdcFrontmatter, is_body_empty, is_content_empty, parse_mdc_frontmatter,
         validate_glob_pattern,
@@ -23,6 +23,11 @@ use crate::{
 };
 use rust_i18n::t;
 use std::path::Path;
+
+const RULE_IDS: &[&str] = &[
+    "CUR-001", "CUR-002", "CUR-003", "CUR-004", "CUR-005", "CUR-006", "CUR-007", "CUR-008",
+    "CUR-009",
+];
 
 pub struct CursorValidator;
 
@@ -94,6 +99,13 @@ fn find_yaml_quoted_value_range(
 }
 
 impl Validator for CursorValidator {
+    fn metadata(&self) -> ValidatorMetadata {
+        ValidatorMetadata {
+            name: self.name(),
+            rule_ids: RULE_IDS,
+        }
+    }
+
     fn validate(&self, path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic> {
         let mut diagnostics = Vec::new();
 

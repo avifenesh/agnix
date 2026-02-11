@@ -8,7 +8,7 @@
 use crate::{
     config::LintConfig,
     diagnostics::Diagnostic,
-    rules::Validator,
+    rules::{Validator, ValidatorMetadata},
     schemas::cross_platform::{
         check_markdown_structure, find_claude_specific_features, find_hard_coded_paths,
     },
@@ -16,9 +16,18 @@ use crate::{
 use rust_i18n::t;
 use std::path::Path;
 
+const RULE_IDS: &[&str] = &["XP-001", "XP-002", "XP-003"];
+
 pub struct CrossPlatformValidator;
 
 impl Validator for CrossPlatformValidator {
+    fn metadata(&self) -> ValidatorMetadata {
+        ValidatorMetadata {
+            name: self.name(),
+            rule_ids: RULE_IDS,
+        }
+    }
+
     fn validate(&self, path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic> {
         let mut diagnostics = Vec::new();
 

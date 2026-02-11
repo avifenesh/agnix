@@ -8,7 +8,7 @@
 use crate::{
     config::LintConfig,
     diagnostics::{Diagnostic, Fix},
-    rules::Validator,
+    rules::{Validator, ValidatorMetadata},
     schemas::opencode::{
         VALID_SHARE_MODES, is_glob_pattern, parse_opencode_json, validate_glob_pattern,
     },
@@ -18,9 +18,18 @@ use std::path::Path;
 
 use crate::rules::{find_closest_value, find_unique_json_string_value_span};
 
+const RULE_IDS: &[&str] = &["OC-001", "OC-002", "OC-003"];
+
 pub struct OpenCodeValidator;
 
 impl Validator for OpenCodeValidator {
+    fn metadata(&self) -> ValidatorMetadata {
+        ValidatorMetadata {
+            name: self.name(),
+            rule_ids: RULE_IDS,
+        }
+    }
+
     fn validate(&self, path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic> {
         let mut diagnostics = Vec::new();
 

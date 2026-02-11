@@ -12,11 +12,15 @@ use crate::{
     FileType,
     config::LintConfig,
     diagnostics::{Diagnostic, Fix},
-    rules::Validator,
+    rules::{Validator, ValidatorMetadata},
     schemas::copilot::{is_body_empty, is_content_empty, parse_frontmatter, validate_glob_pattern},
 };
 use rust_i18n::t;
 use std::path::Path;
+
+const RULE_IDS: &[&str] = &[
+    "COP-001", "COP-002", "COP-003", "COP-004", "COP-005", "COP-006",
+];
 
 pub struct CopilotValidator;
 
@@ -46,6 +50,13 @@ fn line_byte_range(content: &str, line_number: usize) -> Option<(usize, usize)> 
 }
 
 impl Validator for CopilotValidator {
+    fn metadata(&self) -> ValidatorMetadata {
+        ValidatorMetadata {
+            name: self.name(),
+            rule_ids: RULE_IDS,
+        }
+    }
+
     fn validate(&self, path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic> {
         let mut diagnostics = Vec::new();
 

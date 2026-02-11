@@ -3795,6 +3795,177 @@ fn test_validator_names_are_ascii_and_nonempty() {
 }
 
 // ============================================================================
+// Validator metadata() tests
+// ============================================================================
+
+#[test]
+fn test_all_validators_have_nonempty_rule_ids() {
+    let registry = ValidatorRegistry::with_defaults();
+
+    let file_types = [
+        FileType::Skill,
+        FileType::ClaudeMd,
+        FileType::Agent,
+        FileType::Hooks,
+        FileType::Plugin,
+        FileType::Mcp,
+        FileType::Copilot,
+        FileType::CopilotScoped,
+        FileType::ClaudeRule,
+        FileType::CursorRule,
+        FileType::CursorRulesLegacy,
+        FileType::ClineRules,
+        FileType::ClineRulesFolder,
+        FileType::OpenCodeConfig,
+        FileType::GeminiMd,
+        FileType::CodexConfig,
+        FileType::GenericMarkdown,
+    ];
+
+    for file_type in file_types {
+        let validators = registry.validators_for(file_type);
+        for v in &validators {
+            let meta = v.metadata();
+            assert!(
+                !meta.rule_ids.is_empty(),
+                "Validator '{}' (file_type={:?}) should have at least one rule ID",
+                meta.name,
+                file_type,
+            );
+        }
+    }
+}
+
+#[test]
+fn test_metadata_name_matches_name_method() {
+    let registry = ValidatorRegistry::with_defaults();
+
+    let file_types = [
+        FileType::Skill,
+        FileType::ClaudeMd,
+        FileType::Agent,
+        FileType::Hooks,
+        FileType::Plugin,
+        FileType::Mcp,
+        FileType::Copilot,
+        FileType::CopilotScoped,
+        FileType::ClaudeRule,
+        FileType::CursorRule,
+        FileType::CursorRulesLegacy,
+        FileType::ClineRules,
+        FileType::ClineRulesFolder,
+        FileType::OpenCodeConfig,
+        FileType::GeminiMd,
+        FileType::CodexConfig,
+        FileType::GenericMarkdown,
+    ];
+
+    for file_type in file_types {
+        let validators = registry.validators_for(file_type);
+        for v in &validators {
+            let meta = v.metadata();
+            assert_eq!(
+                meta.name,
+                v.name(),
+                "metadata().name should match name() for validator '{}'",
+                v.name(),
+            );
+        }
+    }
+}
+
+#[test]
+fn test_metadata_rule_ids_are_well_formed() {
+    let registry = ValidatorRegistry::with_defaults();
+
+    let file_types = [
+        FileType::Skill,
+        FileType::ClaudeMd,
+        FileType::Agent,
+        FileType::Hooks,
+        FileType::Plugin,
+        FileType::Mcp,
+        FileType::Copilot,
+        FileType::CopilotScoped,
+        FileType::ClaudeRule,
+        FileType::CursorRule,
+        FileType::CursorRulesLegacy,
+        FileType::ClineRules,
+        FileType::ClineRulesFolder,
+        FileType::OpenCodeConfig,
+        FileType::GeminiMd,
+        FileType::CodexConfig,
+        FileType::GenericMarkdown,
+    ];
+
+    let rule_id_pattern = regex::Regex::new(r"^[A-Z]{1,6}-[A-Z]{0,4}-?\d{1,3}$").unwrap();
+
+    for file_type in file_types {
+        let validators = registry.validators_for(file_type);
+        for v in &validators {
+            let meta = v.metadata();
+            for rule_id in meta.rule_ids {
+                assert!(
+                    rule_id_pattern.is_match(rule_id),
+                    "Rule ID '{}' from validator '{}' does not match expected pattern",
+                    rule_id,
+                    meta.name,
+                );
+            }
+        }
+    }
+}
+
+#[test]
+fn test_no_duplicate_rule_ids_across_validators() {
+    use std::collections::HashMap;
+
+    let registry = ValidatorRegistry::with_defaults();
+
+    let file_types = [
+        FileType::Skill,
+        FileType::ClaudeMd,
+        FileType::Agent,
+        FileType::Hooks,
+        FileType::Plugin,
+        FileType::Mcp,
+        FileType::Copilot,
+        FileType::CopilotScoped,
+        FileType::ClaudeRule,
+        FileType::CursorRule,
+        FileType::CursorRulesLegacy,
+        FileType::ClineRules,
+        FileType::ClineRulesFolder,
+        FileType::OpenCodeConfig,
+        FileType::GeminiMd,
+        FileType::CodexConfig,
+        FileType::GenericMarkdown,
+    ];
+
+    // Collect all rule_id -> validator_name mappings
+    let mut rule_owners: HashMap<&str, &str> = HashMap::new();
+
+    for file_type in file_types {
+        let validators = registry.validators_for(file_type);
+        for v in &validators {
+            let meta = v.metadata();
+            for rule_id in meta.rule_ids {
+                if let Some(existing_owner) = rule_owners.get(rule_id) {
+                    // Same validator registered for multiple file types is OK
+                    assert_eq!(
+                        *existing_owner, meta.name,
+                        "Rule ID '{}' claimed by both '{}' and '{}'",
+                        rule_id, existing_owner, meta.name,
+                    );
+                } else {
+                    rule_owners.insert(rule_id, meta.name);
+                }
+            }
+        }
+    }
+}
+
+// ============================================================================
 // disabled_validators config integration tests
 // ============================================================================
 

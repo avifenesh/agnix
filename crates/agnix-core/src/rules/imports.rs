@@ -13,11 +13,13 @@ use crate::{
     fs::FileSystem,
     parsers::markdown::{extract_imports, extract_markdown_links},
     parsers::{Import, ImportCache},
-    rules::Validator,
+    rules::{Validator, ValidatorMetadata},
 };
 use rust_i18n::t;
 use std::collections::{HashMap, HashSet};
 use std::path::{Component, Path, PathBuf};
+
+const RULE_IDS: &[&str] = &["CC-MEM-001", "CC-MEM-002", "CC-MEM-003", "REF-001", "REF-002"];
 
 pub struct ImportsValidator;
 
@@ -63,6 +65,13 @@ fn strip_fragment(url: &str) -> &str {
 }
 
 impl Validator for ImportsValidator {
+    fn metadata(&self) -> ValidatorMetadata {
+        ValidatorMetadata {
+            name: self.name(),
+            rule_ids: RULE_IDS,
+        }
+    }
+
     fn validate(&self, path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic> {
         let mut diagnostics = Vec::new();
 

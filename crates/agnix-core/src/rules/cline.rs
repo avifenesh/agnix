@@ -9,11 +9,13 @@ use crate::{
     FileType,
     config::LintConfig,
     diagnostics::{Diagnostic, Fix},
-    rules::Validator,
+    rules::{Validator, ValidatorMetadata},
     schemas::cline::{is_body_empty, is_content_empty, parse_frontmatter, validate_glob_pattern},
 };
 use rust_i18n::t;
 use std::path::Path;
+
+const RULE_IDS: &[&str] = &["CLN-001", "CLN-002", "CLN-003"];
 
 pub struct ClineValidator;
 
@@ -43,6 +45,13 @@ fn line_byte_range(content: &str, line_number: usize) -> Option<(usize, usize)> 
 }
 
 impl Validator for ClineValidator {
+    fn metadata(&self) -> ValidatorMetadata {
+        ValidatorMetadata {
+            name: self.name(),
+            rule_ids: RULE_IDS,
+        }
+    }
+
     fn validate(&self, path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic> {
         let mut diagnostics = Vec::new();
 

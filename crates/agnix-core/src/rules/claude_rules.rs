@@ -7,11 +7,13 @@
 use crate::{
     config::LintConfig,
     diagnostics::{Diagnostic, Fix},
-    rules::Validator,
+    rules::{Validator, ValidatorMetadata},
     schemas::claude_rules::{parse_frontmatter, validate_glob_pattern},
 };
 use rust_i18n::t;
 use std::path::Path;
+
+const RULE_IDS: &[&str] = &["CC-MEM-011", "CC-MEM-012"];
 
 pub struct ClaudeRulesValidator;
 
@@ -41,6 +43,13 @@ fn line_byte_range(content: &str, line_number: usize) -> Option<(usize, usize)> 
 }
 
 impl Validator for ClaudeRulesValidator {
+    fn metadata(&self) -> ValidatorMetadata {
+        ValidatorMetadata {
+            name: self.name(),
+            rule_ids: RULE_IDS,
+        }
+    }
+
     fn validate(&self, path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic> {
         let mut diagnostics = Vec::new();
 

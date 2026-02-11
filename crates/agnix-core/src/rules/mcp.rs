@@ -3,7 +3,7 @@
 use crate::{
     config::LintConfig,
     diagnostics::{Diagnostic, Fix},
-    rules::Validator,
+    rules::{Validator, ValidatorMetadata},
     schemas::mcp::{
         McpConfigSchema, McpServerConfig, McpToolSchema, VALID_MCP_SERVER_TYPES,
         extract_request_protocol_version, extract_response_protocol_version, is_initialize_message,
@@ -78,9 +78,21 @@ fn find_tool_location(content: &str, tool_index: usize) -> (usize, usize) {
     (1, 0)
 }
 
+const RULE_IDS: &[&str] = &[
+    "MCP-001", "MCP-002", "MCP-003", "MCP-004", "MCP-005", "MCP-006", "MCP-007", "MCP-008",
+    "MCP-009", "MCP-010", "MCP-011", "MCP-012",
+];
+
 pub struct McpValidator;
 
 impl Validator for McpValidator {
+    fn metadata(&self) -> ValidatorMetadata {
+        ValidatorMetadata {
+            name: self.name(),
+            rule_ids: RULE_IDS,
+        }
+    }
+
     fn validate(&self, path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic> {
         let mut diagnostics = Vec::new();
 
