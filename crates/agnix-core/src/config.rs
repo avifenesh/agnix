@@ -890,24 +890,16 @@ impl LintConfigBuilder {
 
         let mut rules = self.rules.take().unwrap_or(defaults.rules);
 
-        // Apply convenience disabled_rules/disabled_validators (dedup via HashSet)
+        // Apply convenience disabled_rules/disabled_validators (dedup via append+retain)
         if !self.disabled_rules.is_empty() {
-            let mut seen: std::collections::HashSet<String> =
-                rules.disabled_rules.iter().cloned().collect();
-            for rule in self.disabled_rules.drain(..) {
-                if seen.insert(rule.clone()) {
-                    rules.disabled_rules.push(rule);
-                }
-            }
+            rules.disabled_rules.append(&mut self.disabled_rules);
+            let mut seen = std::collections::HashSet::new();
+            rules.disabled_rules.retain(|r| seen.insert(r.clone()));
         }
         if !self.disabled_validators.is_empty() {
-            let mut seen: std::collections::HashSet<String> =
-                rules.disabled_validators.iter().cloned().collect();
-            for name in self.disabled_validators.drain(..) {
-                if seen.insert(name.clone()) {
-                    rules.disabled_validators.push(name);
-                }
-            }
+            rules.disabled_validators.append(&mut self.disabled_validators);
+            let mut seen = std::collections::HashSet::new();
+            rules.disabled_validators.retain(|v| seen.insert(v.clone()));
         }
 
         let mut config = LintConfig {
