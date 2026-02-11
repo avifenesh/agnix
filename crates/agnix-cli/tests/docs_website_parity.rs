@@ -265,7 +265,7 @@ fn docs_site_has_search_and_versioning_configuration() {
     let workflow = fs::read_to_string(&workflow_path)
         .unwrap_or_else(|e| panic!("Failed to read {}: {}", workflow_path.display(), e));
     assert!(
-        workflow.contains("rhysd/actionlint@62dc61a45fc95efe8c800af7a557ab0b9165d63b"),
+        workflow.contains("rhysd/actionlint@0933c147c9d6587653d45fdcb4c497c57a65f9af"),
         "docs-site workflow is missing pinned actionlint step in {}",
         workflow_path.display()
     );

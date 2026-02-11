@@ -98,8 +98,8 @@ fn public_functions_compile_with_expected_signatures() {
         bool,
     ) -> agnix_core::LintResult<Vec<agnix_core::FixResult>> = agnix_core::apply_fixes;
 
-    // generate_schema() -> schemars::schema::RootSchema
-    let _: fn() -> schemars::schema::RootSchema = agnix_core::generate_schema;
+    // generate_schema() -> schemars::Schema
+    let _: fn() -> schemars::Schema = agnix_core::generate_schema;
 }
 
 // ============================================================================

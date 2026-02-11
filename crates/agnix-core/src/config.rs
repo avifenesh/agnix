@@ -1486,7 +1486,7 @@ pub struct ConfigWarning {
 /// let json = serde_json::to_string_pretty(&schema).unwrap();
 /// println!("{}", json);
 /// ```
-pub fn generate_schema() -> schemars::schema::RootSchema {
+pub fn generate_schema() -> schemars::Schema {
     schemars::schema_for!(LintConfig)
 }
 

@@ -138,7 +138,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y valgrind
       - name: Install iai-callgrind-runner
         run: |
-          cargo install iai-callgrind-runner --version 0.14.2
+          cargo install iai-callgrind-runner --version 0.16.1
       - name: Run iai-callgrind benchmarks
         run: cargo bench --bench iai_validation --package agnix-core
         # iai-callgrind measures instruction counts (100% deterministic)

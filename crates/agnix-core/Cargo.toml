@@ -26,14 +26,14 @@ rayon.workspace = true
 dirs = "5"
 semver = "1"
 toml = "0.8"
-schemars = { version = "0.8", features = ["derive"] }
+schemars = "1"
 rust-i18n = { workspace = true }
 
 [dev-dependencies]
 tempfile = "3"
 proptest = "1"
 criterion = { version = "0.5", features = ["html_reports"] }
-iai-callgrind = "0.14"
+iai-callgrind = "0.16"
 tracking-allocator = "0.4"
 
 [[bench]]
