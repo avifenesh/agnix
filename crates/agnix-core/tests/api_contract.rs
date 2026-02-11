@@ -39,10 +39,14 @@ fn public_types_are_importable() {
     // Trait objects
     fn _assert_validator_trait(_: &dyn agnix_core::Validator) {}
     fn _assert_filesystem_trait(_: &dyn agnix_core::FileSystem) {}
+    fn _assert_file_type_detector_trait(_: &dyn agnix_core::FileTypeDetector) {}
 
     // FileSystem implementations
     let _ = std::any::type_name::<agnix_core::MockFileSystem>();
     let _ = std::any::type_name::<agnix_core::RealFileSystem>();
+
+    // FileTypeDetectorChain (new in file_types module extraction)
+    let _ = std::any::type_name::<agnix_core::FileTypeDetectorChain>();
 }
 
 // ============================================================================
@@ -142,6 +146,25 @@ fn file_type_implements_required_traits() {
     assert_hash::<agnix_core::FileType>();
     assert_clone::<agnix_core::FileType>();
     assert_copy::<agnix_core::FileType>();
+}
+
+fn assert_display<T: std::fmt::Display>() {}
+
+#[test]
+fn file_type_implements_display() {
+    assert_display::<agnix_core::FileType>();
+
+    // Spot-check a few variants
+    assert_eq!(agnix_core::FileType::Skill.to_string(), "Skill");
+    assert_eq!(agnix_core::FileType::Unknown.to_string(), "Unknown");
+}
+
+#[test]
+fn file_type_is_validatable_contract() {
+    // Unknown is not validatable; all others are
+    assert!(!agnix_core::FileType::Unknown.is_validatable());
+    assert!(agnix_core::FileType::Skill.is_validatable());
+    assert!(agnix_core::FileType::GenericMarkdown.is_validatable());
 }
 
 #[test]
@@ -279,7 +302,12 @@ fn public_modules_are_accessible() {
     let _ = std::any::type_name::<agnix_core::fixes::FixResult>();
     let _ = std::any::type_name::<agnix_core::fs::RealFileSystem>();
 
-    // Public/Unstable modules
+    // Public/Unstable modules -- file_types
+    let _ = std::any::type_name::<agnix_core::file_types::FileType>();
+    let _ = std::any::type_name::<agnix_core::file_types::BuiltinDetector>();
+    let _ = std::any::type_name::<agnix_core::file_types::FileTypeDetectorChain>();
+
+    // Public/Unstable modules -- eval
     let _ = std::any::type_name::<agnix_core::eval::EvalCase>();
     let _ = std::any::type_name::<agnix_core::eval::EvalFormat>();
     let _ = std::any::type_name::<agnix_core::eval::EvalResult>();
@@ -612,4 +640,59 @@ fn validator_metadata_callable_on_dyn_validator() {
     let meta = v.metadata();
     assert!(!meta.name.is_empty());
     assert!(!meta.rule_ids.is_empty());
+}
+
+// ============================================================================
+// FileTypeDetector trait contract
+// ============================================================================
+
+#[test]
+fn file_type_detector_trait_is_importable() {
+    // FileTypeDetector is a trait - verify it can be used as trait bound
+    fn _assert_detector_trait(_: &dyn agnix_core::FileTypeDetector) {}
+    fn _assert_detector_send_sync<T: Send + Sync>() {}
+    _assert_detector_send_sync::<agnix_core::file_types::BuiltinDetector>();
+}
+
+#[test]
+fn file_type_detector_chain_api() {
+    use std::path::Path;
+
+    // Constructors
+    let empty = agnix_core::FileTypeDetectorChain::new();
+    assert!(empty.is_empty());
+    assert_eq!(empty.len(), 0);
+    assert_eq!(empty.detect(Path::new("anything")), None);
+
+    // with_builtin()
+    let builtin = agnix_core::FileTypeDetectorChain::with_builtin();
+    assert_eq!(builtin.len(), 1);
+    assert_eq!(
+        builtin.detect(Path::new("SKILL.md")),
+        Some(agnix_core::FileType::Skill)
+    );
+}
+
+#[test]
+fn file_type_detector_chain_is_send_sync() {
+    assert_send::<agnix_core::FileTypeDetectorChain>();
+    assert_sync::<agnix_core::FileTypeDetectorChain>();
+}
+
+#[test]
+fn file_types_submodule_constants_are_accessible() {
+    // Named constants exported from file_types module
+    assert!(!agnix_core::file_types::DOCUMENTATION_DIRECTORIES.is_empty());
+    assert!(!agnix_core::file_types::EXCLUDED_FILENAMES.is_empty());
+    assert!(!agnix_core::file_types::EXCLUDED_PARENT_DIRECTORIES.is_empty());
+}
+
+#[test]
+fn file_types_detect_file_type_accessible_via_submodule() {
+    use std::path::Path;
+
+    // detect_file_type is re-exported both at crate root and in file_types submodule
+    let via_root = agnix_core::detect_file_type(Path::new("SKILL.md"));
+    let via_submodule = agnix_core::file_types::detect_file_type(Path::new("SKILL.md"));
+    assert_eq!(via_root, via_submodule);
 }
