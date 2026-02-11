@@ -264,7 +264,7 @@ mod tests {
     fn test_nonexistent_file_returns_error() {
         let result = safe_read_file(Path::new("/nonexistent/path/file.txt"));
         assert!(result.is_err());
-        assert!(matches!(result.unwrap_err(), LintError::FileRead { .. }));
+        assert!(matches!(result.unwrap_err(), CoreError::File(FileError::Read { .. })));
     }
 
     #[test]
@@ -370,8 +370,8 @@ mod tests {
         assert!(result.is_err());
         assert!(matches!(
             result.unwrap_err(),
-            LintError::FileNotRegular { .. }
-        ));
+            CoreError::File(FileError::NotRegular { .. }
+        )));
     }
 
     #[test]
@@ -397,8 +397,8 @@ mod tests {
         assert!(result.is_err());
         assert!(matches!(
             result.unwrap_err(),
-            LintError::FileNotRegular { .. }
-        ));
+            CoreError::File(FileError::NotRegular { .. }
+        )));
     }
 
     #[test]
@@ -408,7 +408,7 @@ mod tests {
 
         let result = safe_write_file(&file_path, "content");
         assert!(result.is_err());
-        assert!(matches!(result.unwrap_err(), LintError::FileWrite { .. }));
+        assert!(matches!(result.unwrap_err(), CoreError::File(FileError::Write { .. })));
     }
 
     #[test]

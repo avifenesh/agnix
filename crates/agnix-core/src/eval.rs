@@ -4,7 +4,7 @@
 //! validation rules by comparing expected vs actual diagnostics against labeled
 //! test cases.
 
-use crate::{Diagnostic, LintConfig, LintError, file_utils::safe_read_file, validate_file};
+use crate::{CoreError, Diagnostic, FileError, LintConfig, file_utils::safe_read_file, validate_file};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
@@ -312,7 +312,7 @@ pub enum EvalError {
     Read {
         path: PathBuf,
         #[source]
-        source: LintError,
+        source: CoreError,
     },
 
     #[error("Failed to read file: {path}")]
@@ -825,7 +825,7 @@ cases:
         assert!(result.is_err());
         match result {
             Err(EvalError::Read { source, .. }) => {
-                assert!(matches!(source, LintError::FileTooBig { .. }));
+                assert!(matches!(source, CoreError::File(FileError::TooBig { .. })));
             }
             _ => panic!("Expected EvalError::Read"),
         }

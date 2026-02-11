@@ -644,7 +644,7 @@ mod tests {
         fs.add_symlink("/test/link.txt", "/test/file.txt");
 
         let result = fs.read_to_string(Path::new("/test/link.txt"));
-        assert!(matches!(result, Err(LintError::FileSymlink { .. })));
+        assert!(matches!(result, Err(CoreError::File(FileError::Symlink { .. }))));
     }
 
     #[test]
@@ -946,7 +946,7 @@ mod tests {
             let result = fs.read_to_string(&link);
 
             assert!(result.is_err());
-            assert!(matches!(result.unwrap_err(), LintError::FileSymlink { .. }));
+            assert!(matches!(result.unwrap_err(), CoreError::File(FileError::Symlink { .. })));
         }
 
         #[test]
@@ -982,7 +982,7 @@ mod tests {
 
             // Should reject as symlink (caught before we try to read nonexistent target)
             assert!(result.is_err());
-            assert!(matches!(result.unwrap_err(), LintError::FileSymlink { .. }));
+            assert!(matches!(result.unwrap_err(), CoreError::File(FileError::Symlink { .. })));
         }
 
         #[test]
