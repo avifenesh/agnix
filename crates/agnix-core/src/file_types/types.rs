@@ -64,7 +64,7 @@ impl FileType {
 
 impl fmt::Display for FileType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let name = match self {
+        f.write_str(match self {
             FileType::Skill => "Skill",
             FileType::ClaudeMd => "ClaudeMd",
             FileType::Agent => "Agent",
@@ -83,8 +83,7 @@ impl fmt::Display for FileType {
             FileType::CodexConfig => "CodexConfig",
             FileType::GenericMarkdown => "GenericMarkdown",
             FileType::Unknown => "Unknown",
-        };
-        f.write_str(name)
+        })
     }
 }
 

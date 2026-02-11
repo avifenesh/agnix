@@ -71,7 +71,7 @@ pub const EXCLUDED_PARENT_DIRECTORIES: &[&str] =
 /// is unlikely to contain agent configuration files. This prevents
 /// false positives from XML tags, broken links, and cross-platform
 /// references in project documentation.
-pub(crate) fn is_documentation_directory(path: &Path) -> bool {
+fn is_documentation_directory(path: &Path) -> bool {
     for component in path.components() {
         if let std::path::Component::Normal(name) = component {
             if let Some(name_str) = name.to_str() {

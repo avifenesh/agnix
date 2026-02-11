@@ -112,6 +112,11 @@ impl FileTypeDetectorChain {
 
     /// Add a detector to the **end** of the chain (lowest priority).
     ///
+    /// **Note:** When used with [`with_builtin`](Self::with_builtin), pushed
+    /// detectors will never run because [`BuiltinDetector`] always returns
+    /// `Some`. Use [`prepend`](Self::prepend) to override the built-in logic.
+    /// `push` is useful when building chains from [`new`](Self::new).
+    ///
     /// Consumes and returns `self` for builder-style chaining.
     pub fn push(mut self, detector: impl FileTypeDetector + 'static) -> Self {
         self.detectors.push(Box::new(detector));
@@ -148,7 +153,7 @@ impl FileTypeDetectorChain {
 
 impl Default for FileTypeDetectorChain {
     fn default() -> Self {
-        Self::new()
+        Self::with_builtin()
     }
 }
 
@@ -281,10 +286,10 @@ mod tests {
     // ---- Default impl ----
 
     #[test]
-    fn default_chain_is_empty() {
+    fn default_chain_has_builtin() {
         let chain = FileTypeDetectorChain::default();
-        assert!(chain.is_empty());
-        assert_eq!(chain.detect(Path::new("SKILL.md")), None);
+        assert!(!chain.is_empty());
+        assert_eq!(chain.detect(Path::new("SKILL.md")), Some(FileType::Skill));
     }
 
     // ---- Send + Sync bounds ----
