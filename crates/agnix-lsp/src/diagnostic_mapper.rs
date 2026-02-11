@@ -1,29 +1,61 @@
 //! Maps agnix-core diagnostics to LSP diagnostics.
 
-use agnix_core::{Diagnostic, DiagnosticLevel, Fix};
+use agnix_core::{Diagnostic, DiagnosticLevel, Fix, RuleMetadata};
 use rust_i18n::t;
+use serde::{Deserialize, Serialize};
 use serde_json::Value as JsonValue;
 use tower_lsp::lsp_types::{
     CodeDescription, Diagnostic as LspDiagnostic, DiagnosticSeverity, NumberOrString, Position,
     Range, Url,
 };
 
-/// Serialize fixes to JSON for storage in diagnostic.data.
+/// Structured payload for `diagnostic.data`, carrying fixes and metadata.
 ///
-/// Returns None if there are no fixes, to avoid cluttering diagnostics.
-fn serialize_fixes(fixes: &[Fix]) -> Option<JsonValue> {
-    if fixes.is_empty() {
-        return None;
-    }
-    serde_json::to_value(fixes).ok()
+/// Serialized as `{ "fixes": [...], "metadata": {...} }`.
+/// When deserializing, the old format (a plain array of `Fix`) is also
+/// accepted for backward compatibility.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DiagnosticData {
+    /// Fixes available for this diagnostic.
+    pub fixes: Vec<Fix>,
+    /// Structured rule metadata (category, severity, tool).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub metadata: Option<RuleMetadata>,
 }
 
-/// Deserialize fixes from diagnostic.data.
+/// Serialize fixes and metadata to JSON for storage in `diagnostic.data`.
 ///
-/// Returns an empty vector if data is None or invalid.
+/// Returns `None` if there are no fixes and no metadata, to avoid cluttering
+/// diagnostics.
+fn serialize_diagnostic_data(diag: &Diagnostic) -> Option<JsonValue> {
+    let has_fixes = !diag.fixes.is_empty();
+    let has_metadata = diag.metadata.is_some();
+    if !has_fixes && !has_metadata {
+        return None;
+    }
+    let data = DiagnosticData {
+        fixes: diag.fixes.clone(),
+        metadata: diag.metadata.clone(),
+    };
+    serde_json::to_value(data).ok()
+}
+
+/// Deserialize fixes from `diagnostic.data`.
+///
+/// Handles both the new object format (`{ "fixes": [...] }`) and the legacy
+/// plain-array format for backward compatibility.
+///
+/// Returns an empty vector if data is `None` or invalid.
 pub fn deserialize_fixes(data: Option<&JsonValue>) -> Vec<Fix> {
-    data.and_then(|v| serde_json::from_value(v.clone()).ok())
-        .unwrap_or_default()
+    let Some(v) = data else {
+        return Vec::new();
+    };
+    // New format: { "fixes": [...], "metadata": {...} }
+    if let Ok(diag_data) = serde_json::from_value::<DiagnosticData>(v.clone()) {
+        return diag_data.fixes;
+    }
+    // Legacy format: plain array of Fix
+    serde_json::from_value::<Vec<Fix>>(v.clone()).unwrap_or_default()
 }
 
 /// Convert an agnix-core diagnostic to an LSP diagnostic.
@@ -55,7 +87,7 @@ pub fn to_lsp_diagnostic(diag: &Diagnostic) -> LspDiagnostic {
         diag.message.clone()
     };
 
-    let data = serialize_fixes(&diag.fixes);
+    let data = serialize_diagnostic_data(diag);
 
     let code_description = Url::parse(&format!(
         "https://avifenesh.github.io/agnix/docs/rules/generated/{}",
@@ -333,7 +365,16 @@ mod tests {
             make_fix(10, 15, "world", "Another fix", false),
         ];
 
-        let serialized = serialize_fixes(&fixes);
+        let diag = make_diagnostic_with_fixes(
+            DiagnosticLevel::Error,
+            "Error",
+            1,
+            1,
+            "AS-001",
+            fixes,
+        );
+
+        let serialized = serialize_diagnostic_data(&diag);
         assert!(serialized.is_some());
 
         let deserialized = deserialize_fixes(serialized.as_ref());
@@ -361,9 +402,52 @@ mod tests {
     }
 
     #[test]
-    fn test_serialize_empty_fixes() {
-        let fixes: Vec<Fix> = vec![];
-        let serialized = serialize_fixes(&fixes);
+    fn test_serialize_empty_diag_no_data() {
+        let diag = make_diagnostic(DiagnosticLevel::Error, "Error", 1, 1, "AS-001", None);
+        let serialized = serialize_diagnostic_data(&diag);
         assert!(serialized.is_none());
+    }
+
+    #[test]
+    fn test_deserialize_fixes_legacy_array_format() {
+        // Legacy format: plain array of Fix objects
+        let fixes = vec![make_fix(0, 5, "hello", "Replace text", true)];
+        let legacy_data = serde_json::to_value(&fixes).unwrap();
+        let deserialized = deserialize_fixes(Some(&legacy_data));
+        assert_eq!(deserialized.len(), 1);
+        assert_eq!(deserialized[0].replacement, "hello");
+    }
+
+    #[test]
+    fn test_deserialize_fixes_new_object_format() {
+        // New format: { "fixes": [...], "metadata": {...} }
+        let data = DiagnosticData {
+            fixes: vec![make_fix(0, 5, "hello", "Replace text", true)],
+            metadata: Some(RuleMetadata {
+                category: "agent-skills".to_string(),
+                severity: "HIGH".to_string(),
+                applies_to_tool: None,
+            }),
+        };
+        let serialized = serde_json::to_value(&data).unwrap();
+        let deserialized = deserialize_fixes(Some(&serialized));
+        assert_eq!(deserialized.len(), 1);
+        assert_eq!(deserialized[0].replacement, "hello");
+    }
+
+    #[test]
+    fn test_diagnostic_with_metadata_has_data() {
+        use agnix_core::RuleMetadata;
+
+        let mut diag = make_diagnostic(DiagnosticLevel::Error, "Error", 1, 1, "AS-001", None);
+        diag.metadata = Some(RuleMetadata {
+            category: "agent-skills".to_string(),
+            severity: "HIGH".to_string(),
+            applies_to_tool: None,
+        });
+
+        let lsp_diag = to_lsp_diagnostic(&diag);
+        // Even with no fixes, metadata means data should be present
+        assert!(lsp_diag.data.is_some());
     }
 }

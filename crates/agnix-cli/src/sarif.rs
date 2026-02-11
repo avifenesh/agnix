@@ -51,6 +51,23 @@ pub struct ReportingDescriptor {
     pub short_description: Message,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub help_uri: Option<String>,
+    /// Custom properties bag for rule metadata (SARIF 2.1.0 extension point).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub properties: Option<ReportingDescriptorProperties>,
+}
+
+/// Properties bag for a reporting descriptor, carrying rule metadata.
+#[derive(Debug, Clone, Serialize)]
+pub struct ReportingDescriptorProperties {
+    /// Rule category (e.g., "agent-skills").
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub category: Option<String>,
+    /// Rule severity from the rules catalog (e.g., "HIGH").
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub severity: Option<String>,
+    /// Tool this rule applies to (e.g., "claude-code").
+    #[serde(rename = "appliesToTool", skip_serializing_if = "Option::is_none")]
+    pub applies_to_tool: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -114,15 +131,39 @@ static RULES: LazyLock<Vec<ReportingDescriptor>> = LazyLock::new(|| {
     // Rules loaded from knowledge-base/rules.json at compile time via build.rs
     RULES_DATA
         .iter()
-        .map(|(id, desc)| ReportingDescriptor {
-            id: id.to_string(),
-            short_description: Message {
-                text: desc.to_string(),
-            },
-            help_uri: Some(format!(
-                "https://avifenesh.github.io/agnix/docs/rules/generated/{}",
-                id.to_lowercase()
-            )),
+        .map(|(id, desc)| {
+            let properties =
+                agnix_rules::get_rule_metadata(id).map(|(category, severity, tool)| {
+                    ReportingDescriptorProperties {
+                        category: if category.is_empty() {
+                            None
+                        } else {
+                            Some(category.to_string())
+                        },
+                        severity: if severity.is_empty() {
+                            None
+                        } else {
+                            Some(severity.to_string())
+                        },
+                        applies_to_tool: if tool.is_empty() {
+                            None
+                        } else {
+                            Some(tool.to_string())
+                        },
+                    }
+                });
+
+            ReportingDescriptor {
+                id: id.to_string(),
+                short_description: Message {
+                    text: desc.to_string(),
+                },
+                help_uri: Some(format!(
+                    "https://avifenesh.github.io/agnix/docs/rules/generated/{}",
+                    id.to_lowercase()
+                )),
+                properties,
+            }
         })
         .collect()
 });

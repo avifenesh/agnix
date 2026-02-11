@@ -40,6 +40,16 @@ pub struct JsonDiagnostic {
     /// Optional assumption note for version-aware validation.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub assumption: Option<String>,
+    /// Rule category from the rules catalog (e.g., "agent-skills").
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub category: Option<String>,
+    /// Rule severity from the rules catalog (e.g., "HIGH", "MEDIUM", "LOW").
+    /// Named `rule_severity` to avoid confusion with the `level` field.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub rule_severity: Option<String>,
+    /// Tool this rule specifically applies to (e.g., "claude-code").
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub applies_to_tool: Option<String>,
 }
 
 /// Summary counts by diagnostic level.
@@ -99,6 +109,12 @@ pub fn diagnostics_to_json(
                 message: diag.message.clone(),
                 suggestion: diag.suggestion.clone(),
                 assumption: diag.assumption.clone(),
+                category: diag.metadata.as_ref().map(|m| m.category.clone()),
+                rule_severity: diag.metadata.as_ref().map(|m| m.severity.clone()),
+                applies_to_tool: diag
+                    .metadata
+                    .as_ref()
+                    .and_then(|m| m.applies_to_tool.clone()),
             }
         })
         .collect();

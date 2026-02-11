@@ -118,6 +118,16 @@ struct DiagnosticOutput {
     suggestion: Option<String>,
     /// Whether this issue can be auto-fixed
     fixable: bool,
+    /// Rule category from the rules catalog (e.g., "agent-skills")
+    #[serde(skip_serializing_if = "Option::is_none")]
+    category: Option<String>,
+    /// Rule severity from the rules catalog (e.g., "HIGH", "MEDIUM", "LOW").
+    /// Named `rule_severity` to avoid confusion with the `level` field.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    rule_severity: Option<String>,
+    /// Tool this rule specifically applies to (e.g., "claude-code")
+    #[serde(skip_serializing_if = "Option::is_none")]
+    applies_to_tool: Option<String>,
 }
 
 impl From<&Diagnostic> for DiagnosticOutput {
@@ -136,6 +146,12 @@ impl From<&Diagnostic> for DiagnosticOutput {
             message: d.message.clone(),
             suggestion: d.suggestion.clone(),
             fixable: !d.fixes.is_empty(),
+            category: d.metadata.as_ref().map(|m| m.category.clone()),
+            rule_severity: d.metadata.as_ref().map(|m| m.severity.clone()),
+            applies_to_tool: d
+                .metadata
+                .as_ref()
+                .and_then(|m| m.applies_to_tool.clone()),
         }
     }
 }
