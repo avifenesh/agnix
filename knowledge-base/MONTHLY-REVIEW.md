@@ -108,7 +108,7 @@ Review ignored RUSTSEC advisories and check if they can be removed:
 
 - [ ] Run `cargo audit` without ignores to see current advisory status
 - [ ] Check for new advisories that need to be addressed or documented
-- [ ] Update tracking issue #346 with current status
+- [ ] Update relevant tracking issues with current status
 
 ---
 

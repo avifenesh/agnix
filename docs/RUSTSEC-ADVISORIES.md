@@ -87,7 +87,7 @@ cargo tree -i bincode      # Check if iai-callgrind still depends on vulnerable 
 # 1. Remove the advisory ID from deny.toml [advisories] ignore list
 # 2. Remove the --ignore flag from .github/workflows/security.yml
 # 3. Update this document to mark the advisory as resolved
-# 4. Close or update issue #346
+# 4. Close or update the related tracking issue
 ```
 
 ## Adding New Advisory Ignores
