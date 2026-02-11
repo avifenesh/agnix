@@ -47,6 +47,12 @@ cargo run --bin agnix -- eval tests/eval.yaml
 
 # Self-lint (agnix validates its own config)
 cargo run --bin agnix -- .
+
+# Review RUSTSEC advisories (see deny.toml for currently ignored advisories)
+# Check if ignored advisories can be removed:
+# - RUSTSEC-2024-0384: instant (via notify) - waiting for notify 7.0
+# - RUSTSEC-2025-0141: bincode (via iai-callgrind) - dev-only, low risk
+cargo audit
 ```
 
 ## Creating a GitHub Release
