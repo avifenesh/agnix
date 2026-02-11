@@ -52,10 +52,7 @@ Found 1 error, 1 warning
 hint: Run with --fix to apply fixes
 ```
 
-<p align="center">
-  <video src="https://github.com/avifenesh/agnix/releases/download/v0.11.1/demo.mp4" width="720">
-  </video>
-</p>
+<https://github.com/avifenesh/agnix/raw/refs/heads/main/assets/demo.mp4>
 
 ## Install
 
