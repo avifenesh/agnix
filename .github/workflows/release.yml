@@ -58,11 +58,11 @@ jobs:
 
       - name: Build release binary
         if: ${{ !matrix.cross }}
-        run: cargo build --release --target ${{ matrix.target }}
+        run: cargo build --release --target ${{ matrix.target }} -p agnix-cli -p agnix-lsp -p agnix-mcp
 
       - name: Build release binary (cross)
         if: matrix.cross
-        run: cross build --release --target ${{ matrix.target }}
+        run: cross build --release --target ${{ matrix.target }} -p agnix-cli -p agnix-lsp -p agnix-mcp
 
       - name: Create CLI archive (Unix)
         if: runner.os != 'Windows'
