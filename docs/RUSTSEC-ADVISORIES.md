@@ -2,7 +2,7 @@
 
 This document tracks RUSTSEC security advisories that are currently ignored in the project and explains why they are ignored and when they should be reviewed.
 
-Related: [Issue #346](https://github.com/avifenesh/agnix/issues/346)
+Related: [Issue #346](https://github.com/avifenesh/agnix/issues/346) (this tracking system resolves that issue)
 
 ## Currently Ignored Advisories
 
@@ -64,9 +64,9 @@ Related: [Issue #346](https://github.com/avifenesh/agnix/issues/346)
 
 These advisories should be reviewed:
 
-1. **Monthly** as part of the [Monthly Review](../knowledge-base/MONTHLY-REVIEW.md) process
-2. **Before each release** as part of the [Pre-release Checks](RELEASING.md#pre-release-checks)
-3. **When running `cargo update`** to check if dependencies have been updated
+1. **Before each release** as part of the [Pre-release Checks](RELEASING.md#pre-release-checks) (highest priority)
+2. **When running `cargo update`** to check if dependencies have been updated (opportunistic)
+3. **Monthly** as part of the [Monthly Review](../knowledge-base/MONTHLY-REVIEW.md) process (regular cadence)
 
 ### Review Process
 
@@ -83,8 +83,8 @@ cargo audit
 cargo deny check advisories
 
 # Check if any of the ignored advisories have been resolved
-cargo tree -i instant      # Check if notify still depends on instant
-cargo tree -i bincode      # Check if iai-callgrind still depends on vulnerable bincode
+cargo tree -i instant -e normal      # Check if notify still depends on instant (normal deps only)
+cargo tree -i bincode -e dev         # Check if iai-callgrind still depends on bincode (dev deps)
 
 # If a dependency has been updated and no longer triggers the advisory:
 # 1. Remove the advisory ID from deny.toml [advisories] ignore list
@@ -114,6 +114,42 @@ If a new advisory needs to be temporarily ignored:
 4. **Create or update tracking issue** with the advisory details
 
 5. **Set a reminder** to review the advisory in the next monthly review
+
+### Template for New Advisory
+
+Copy this template when adding a new ignored advisory:
+
+```markdown
+### RUSTSEC-YYYY-NNNN — `crate-name` (via `parent-crate`)
+
+**Status**: [One sentence describing current state]
+
+**Details**:
+- [Why is this advisory triggered?]
+- [What is the dependency chain?]
+- [What is the plan to resolve?]
+
+**Risk Level**: [High/Medium/Low]
+- [Justify the risk level]
+- [Describe exposure/impact]
+- [Note any mitigations]
+
+**Action Items**:
+- [What should be monitored?]
+- [What triggers removal?]
+- [Where to remove the ignore?]
+
+**References**:
+- Advisory: https://rustsec.org/advisories/RUSTSEC-YYYY-NNNN
+- Upstream tracker: [link]
+```
+
+## Future Automation
+
+The review process could be partially automated:
+- A scheduled CI job could run `cargo tree -i instant -e normal` and `cargo tree -i bincode -e dev` weekly
+- Results could be posted as a comment on the tracking issue
+- Manual review would still be required to decide when to remove ignores
 
 ## Resolved Advisories
 

@@ -109,6 +109,7 @@ Review ignored RUSTSEC advisories and check if they can be removed:
 - [ ] Run `cargo audit` without ignores to see current advisory status
 - [ ] Run `cargo deny check advisories` to validate ignores in `deny.toml`
 - [ ] Check for new advisories that need to be addressed or documented
+- [ ] Update `docs/RUSTSEC-ADVISORIES.md` with current status or move to "Resolved Advisories" section
 - [ ] Update relevant tracking issues with current status
 
 ---
