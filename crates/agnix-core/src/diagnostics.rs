@@ -1,4 +1,4 @@
-//! Diagnostic types and error reporting
+//! Diagnostic types and error reporting for lint results
 
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
