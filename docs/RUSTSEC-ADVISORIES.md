@@ -24,8 +24,8 @@ Related: [Issue #346](https://github.com/avifenesh/agnix/issues/346)
 - Monitor `notify` releases for version 7.0
 - Once `notify` 7.0 is available, update the dependency
 - Remove this advisory ignore from:
-  - `deny.toml` (line 11)
-  - `.github/workflows/security.yml` (line 49)
+  - `deny.toml` in the `[advisories]` ignore list
+  - `.github/workflows/security.yml` in the `cargo audit` command
 
 **References**:
 - Advisory: https://rustsec.org/advisories/RUSTSEC-2024-0384
@@ -51,8 +51,8 @@ Related: [Issue #346](https://github.com/avifenesh/agnix/issues/346)
 - Monitor `iai-callgrind` updates for a version that uses a patched `bincode`
 - Check periodically if `iai-callgrind` has switched to a different serialization library
 - Remove this advisory ignore from:
-  - `deny.toml` (line 12)
-  - `.github/workflows/security.yml` (line 49)
+  - `deny.toml` in the `[advisories]` ignore list
+  - `.github/workflows/security.yml` in the `cargo audit` command
 
 **References**:
 - Advisory: https://rustsec.org/advisories/RUSTSEC-2025-0141
