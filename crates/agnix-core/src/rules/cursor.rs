@@ -718,7 +718,7 @@ description: Modern format
     #[test]
     fn test_config_disabled_cursor_category() {
         let mut config = LintConfig::default();
-        config.rules.cursor = false;
+        config.rules_mut().cursor = false;
 
         let content = "";
         let diagnostics = validate_mdc_with_config(content, &config);
@@ -733,7 +733,7 @@ description: Modern format
     #[test]
     fn test_config_disabled_specific_rule() {
         let mut config = LintConfig::default();
-        config.rules.disabled_rules = vec!["CUR-001".to_string()];
+        config.rules_mut().disabled_rules = vec!["CUR-001".to_string()];
 
         let content = "";
         let diagnostics = validate_mdc_with_config(content, &config);
@@ -911,7 +911,7 @@ Body"#;
 
         for rule in rules {
             let mut config = LintConfig::default();
-            config.rules.disabled_rules = vec![rule.to_string()];
+            config.rules_mut().disabled_rules = vec![rule.to_string()];
 
             // Content that could trigger each rule
             let (content, path) = match rule {

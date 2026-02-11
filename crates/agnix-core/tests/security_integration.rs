@@ -32,7 +32,7 @@ fn test_file_count_limit_enforcement() {
 
     // Set a limit of 10 files
     let mut config = LintConfig::default();
-    config.max_files_to_validate = Some(10);
+    config.set_max_files_to_validate(Some(10));
 
     let result = validate_project(temp.path(), &config);
 
@@ -49,7 +49,7 @@ fn test_file_count_limit_enforcement() {
 #[test]
 fn test_default_file_count_limit() {
     let config = LintConfig::default();
-    assert_eq!(config.max_files_to_validate, Some(10_000));
+    assert_eq!(config.max_files_to_validate(), Some(10_000));
 }
 
 // ============================================================================

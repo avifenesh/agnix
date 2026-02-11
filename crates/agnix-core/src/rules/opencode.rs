@@ -449,7 +449,7 @@ mod tests {
     #[test]
     fn test_config_disabled_opencode_category() {
         let mut config = LintConfig::default();
-        config.rules.opencode = false;
+        config.rules_mut().opencode = false;
 
         let diagnostics = validate_with_config(r#"{"share": "invalid"}"#, &config);
         let oc_rules: Vec<_> = diagnostics
@@ -462,7 +462,7 @@ mod tests {
     #[test]
     fn test_config_disabled_specific_rule() {
         let mut config = LintConfig::default();
-        config.rules.disabled_rules = vec!["OC-001".to_string()];
+        config.rules_mut().disabled_rules = vec!["OC-001".to_string()];
 
         let diagnostics = validate_with_config(r#"{"share": "invalid"}"#, &config);
         let oc_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "OC-001").collect();
@@ -475,7 +475,7 @@ mod tests {
 
         for rule in rules {
             let mut config = LintConfig::default();
-            config.rules.disabled_rules = vec![rule.to_string()];
+            config.rules_mut().disabled_rules = vec![rule.to_string()];
 
             let content = match rule {
                 "OC-001" => r#"{"share": "invalid"}"#,

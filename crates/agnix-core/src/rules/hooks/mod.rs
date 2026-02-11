@@ -366,7 +366,7 @@ impl Validator for HooksValidator {
     fn validate(&self, path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic> {
         let mut diagnostics = Vec::new();
 
-        if !config.rules.hooks {
+        if !config.rules().hooks {
             return diagnostics;
         }
 

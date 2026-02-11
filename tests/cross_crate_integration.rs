@@ -199,7 +199,7 @@ fn lsp_authoring_hover_doc_accessible() {
 #[test]
 fn mcp_validate_file_with_target_tool_config() {
     let mut config = agnix_core::LintConfig::default();
-    config.tools = vec!["claude-code".to_string()];
+    config.set_tools(vec!["claude-code".to_string()]);
 
     let dir = tempfile::tempdir().unwrap();
     let result = agnix_core::validate_project(dir.path(), &config);
@@ -433,10 +433,10 @@ fn custom_provider_from_outside_crate() {
 #[test]
 fn disabled_validators_config_accessible_from_outside_crate() {
     let mut config = agnix_core::LintConfig::default();
-    assert!(config.rules.disabled_validators.is_empty());
+    assert!(config.rules().disabled_validators.is_empty());
 
-    config.rules.disabled_validators = vec!["XmlValidator".to_string()];
-    assert_eq!(config.rules.disabled_validators.len(), 1);
+    config.rules_mut().disabled_validators = vec!["XmlValidator".to_string()];
+    assert_eq!(config.rules().disabled_validators.len(), 1);
 }
 
 #[test]

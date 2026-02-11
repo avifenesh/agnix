@@ -17,7 +17,7 @@ impl Validator for PluginValidator {
     fn validate(&self, path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic> {
         let mut diagnostics = Vec::new();
 
-        if !config.rules.plugins {
+        if !config.rules().plugins {
             return diagnostics;
         }
 
@@ -659,7 +659,7 @@ mod tests {
         write_plugin(&plugin_path, r#"{ invalid }"#);
 
         let mut config = LintConfig::default();
-        config.rules.disabled_rules = vec!["CC-PL-006".to_string()];
+        config.rules_mut().disabled_rules = vec!["CC-PL-006".to_string()];
 
         let validator = PluginValidator;
         let diagnostics = validator.validate(
@@ -702,7 +702,7 @@ mod tests {
         );
 
         let mut config = LintConfig::default();
-        config.rules.disabled_rules = vec!["CC-PL-001".to_string()];
+        config.rules_mut().disabled_rules = vec!["CC-PL-001".to_string()];
 
         let validator = PluginValidator;
         let diagnostics = validator.validate(
@@ -831,7 +831,7 @@ mod tests {
         write_plugin(&plugin_path, r#"{ invalid json }"#);
 
         let mut config = LintConfig::default();
-        config.rules.plugins = false;
+        config.rules_mut().plugins = false;
 
         let validator = PluginValidator;
         let diagnostics = validator.validate(
@@ -996,7 +996,7 @@ mod tests {
         );
 
         let mut config = LintConfig::default();
-        config.rules.disabled_rules = vec!["CC-PL-007".to_string()];
+        config.rules_mut().disabled_rules = vec!["CC-PL-007".to_string()];
 
         let validator = PluginValidator;
         let diagnostics = validator.validate(
@@ -1077,7 +1077,7 @@ mod tests {
         );
 
         let mut config = LintConfig::default();
-        config.rules.disabled_rules = vec!["CC-PL-008".to_string()];
+        config.rules_mut().disabled_rules = vec!["CC-PL-008".to_string()];
 
         let validator = PluginValidator;
         let diagnostics = validator.validate(
@@ -1215,7 +1215,7 @@ mod tests {
         );
 
         let mut config = LintConfig::default();
-        config.rules.disabled_rules = vec!["CC-PL-009".to_string()];
+        config.rules_mut().disabled_rules = vec!["CC-PL-009".to_string()];
 
         let validator = PluginValidator;
         let diagnostics = validator.validate(
@@ -1353,7 +1353,7 @@ mod tests {
         );
 
         let mut config = LintConfig::default();
-        config.rules.disabled_rules = vec!["CC-PL-010".to_string()];
+        config.rules_mut().disabled_rules = vec!["CC-PL-010".to_string()];
 
         let validator = PluginValidator;
         let diagnostics = validator.validate(

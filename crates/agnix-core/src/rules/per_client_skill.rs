@@ -691,7 +691,7 @@ mod tests {
     fn test_disabled_rule_not_fired() {
         let content = make_skill("name: my-skill\ndescription: A test\nmodel: opus", "Body");
         let mut config = LintConfig::default();
-        config.rules.disabled_rules = vec!["CR-SK-001".to_string()];
+        config.rules_mut().disabled_rules = vec!["CR-SK-001".to_string()];
         let validator = PerClientSkillValidator;
         let diags = validator.validate(
             Path::new(".cursor/skills/my-skill/SKILL.md"),

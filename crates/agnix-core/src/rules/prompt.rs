@@ -318,7 +318,7 @@ You should follow the style guide.
     #[test]
     fn test_config_disabled_prompt_engineering_category() {
         let mut config = LintConfig::default();
-        config.rules.prompt_engineering = false;
+        config.rules_mut().prompt_engineering = false;
 
         let content = r#"# Critical Rules
 You should do X.
@@ -339,7 +339,7 @@ Usually do Y.
     #[test]
     fn test_config_disabled_specific_rule() {
         let mut config = LintConfig::default();
-        config.rules.disabled_rules = vec!["PE-003".to_string()];
+        config.rules_mut().disabled_rules = vec!["PE-003".to_string()];
 
         let content = r#"# Critical Rules
 You should do X.
@@ -466,7 +466,7 @@ This is not a critical section.
     #[test]
     fn test_config_disabled_pe_001_only() {
         let mut config = LintConfig::default();
-        config.rules.disabled_rules = vec!["PE-001".to_string()];
+        config.rules_mut().disabled_rules = vec!["PE-001".to_string()];
 
         let mut lines: Vec<String> = (0..20).map(|i| format!("Line {}", i)).collect();
         lines[10] = "This is critical information.".to_string();
@@ -492,7 +492,7 @@ This is not a critical section.
     #[test]
     fn test_config_disabled_multiple_pe_rules() {
         let mut config = LintConfig::default();
-        config.rules.disabled_rules = vec!["PE-001".to_string(), "PE-004".to_string()];
+        config.rules_mut().disabled_rules = vec!["PE-001".to_string(), "PE-004".to_string()];
 
         let mut lines: Vec<String> = (0..20).map(|i| format!("Line {}", i)).collect();
         lines[10] = "This is critical information.".to_string();
@@ -655,7 +655,7 @@ This is not a critical section.
 
         for rule in rules {
             let mut config = LintConfig::default();
-            config.rules.disabled_rules = vec![rule.to_string()];
+            config.rules_mut().disabled_rules = vec![rule.to_string()];
 
             // Content that could trigger each rule
             let mut lines: Vec<String> = (0..20).map(|i| format!("Line {}", i)).collect();

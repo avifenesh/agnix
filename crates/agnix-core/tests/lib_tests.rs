@@ -429,7 +429,7 @@ fn test_validate_project_empty_dir() {
 
     // Disable VER-001 since we're testing an empty project
     let mut config = LintConfig::default();
-    config.rules.disabled_rules = vec!["VER-001".to_string()];
+    config.rules_mut().disabled_rules = vec!["VER-001".to_string()];
     let result = validate_project(temp.path(), &config).unwrap();
 
     assert!(result.diagnostics.is_empty());
@@ -1116,7 +1116,7 @@ fn test_agm_006_disabled() {
     .unwrap();
 
     let mut config = LintConfig::default();
-    config.rules.disabled_rules = vec!["AGM-006".to_string()];
+    config.rules_mut().disabled_rules = vec!["AGM-006".to_string()];
     let result = validate_project(temp.path(), &config).unwrap();
 
     // Should not detect AGM-006 when disabled
@@ -1415,7 +1415,7 @@ fn test_xp_004_disabled_rule() {
     .unwrap();
 
     let mut config = LintConfig::default();
-    config.rules.disabled_rules = vec!["XP-004".to_string()];
+    config.rules_mut().disabled_rules = vec!["XP-004".to_string()];
     let result = validate_project(temp.path(), &config).unwrap();
 
     let xp_004: Vec<_> = result
@@ -1445,7 +1445,7 @@ fn test_xp_005_disabled_rule() {
     .unwrap();
 
     let mut config = LintConfig::default();
-    config.rules.disabled_rules = vec!["XP-005".to_string()];
+    config.rules_mut().disabled_rules = vec!["XP-005".to_string()];
     let result = validate_project(temp.path(), &config).unwrap();
 
     let xp_005: Vec<_> = result
@@ -1474,7 +1474,7 @@ fn test_xp_006_disabled_rule() {
     .unwrap();
 
     let mut config = LintConfig::default();
-    config.rules.disabled_rules = vec!["XP-006".to_string()];
+    config.rules_mut().disabled_rules = vec!["XP-006".to_string()];
     let result = validate_project(temp.path(), &config).unwrap();
 
     let xp_006: Vec<_> = result
@@ -1610,7 +1610,7 @@ fn test_ver_001_no_warning_when_tool_version_pinned() {
     std::fs::write(temp.path().join("CLAUDE.md"), "# Project\n\nInstructions.").unwrap();
 
     let mut config = LintConfig::default();
-    config.tool_versions.claude_code = Some("2.1.3".to_string());
+    config.tool_versions_mut().claude_code = Some("2.1.3".to_string());
     let result = validate_project(temp.path(), &config).unwrap();
 
     let ver_001: Vec<_> = result
@@ -1631,7 +1631,7 @@ fn test_ver_001_no_warning_when_spec_revision_pinned() {
     std::fs::write(temp.path().join("CLAUDE.md"), "# Project\n\nInstructions.").unwrap();
 
     let mut config = LintConfig::default();
-    config.spec_revisions.mcp_protocol = Some("2025-06-18".to_string());
+    config.spec_revisions_mut().mcp_protocol = Some("2025-06-18".to_string());
     let result = validate_project(temp.path(), &config).unwrap();
 
     let ver_001: Vec<_> = result
@@ -1652,7 +1652,7 @@ fn test_ver_001_disabled_rule() {
     std::fs::write(temp.path().join("CLAUDE.md"), "# Project\n\nInstructions.").unwrap();
 
     let mut config = LintConfig::default();
-    config.rules.disabled_rules = vec!["VER-001".to_string()];
+    config.rules_mut().disabled_rules = vec!["VER-001".to_string()];
     let result = validate_project(temp.path(), &config).unwrap();
 
     let ver_001: Vec<_> = result
@@ -2698,7 +2698,7 @@ fn test_exclude_patterns_with_absolute_path() {
     .unwrap();
 
     let mut config = LintConfig::default();
-    config.exclude = vec!["target/**".to_string()];
+    config.set_exclude(vec!["target/**".to_string()]);
 
     // Use absolute path (canonicalize returns absolute path)
     let abs_path = std::fs::canonicalize(temp.path()).unwrap();
@@ -2738,7 +2738,7 @@ fn test_exclude_patterns_with_relative_path() {
     .unwrap();
 
     let mut config = LintConfig::default();
-    config.exclude = vec!["node_modules/**".to_string()];
+    config.set_exclude(vec!["node_modules/**".to_string()]);
 
     // Use temp.path() directly to validate exclude pattern handling
     let result = validate_project(temp.path(), &config).unwrap();
@@ -2771,7 +2771,7 @@ fn test_exclude_patterns_nested_directories() {
 
     let mut config = LintConfig::default();
     // Use ** prefix to match at any level
-    config.exclude = vec!["**/target/**".to_string()];
+    config.set_exclude(vec!["**/target/**".to_string()]);
 
     let abs_path = std::fs::canonicalize(temp.path()).unwrap();
     let result = validate_project(&abs_path, &config).unwrap();
@@ -2815,7 +2815,7 @@ fn test_files_checked_with_no_diagnostics() {
 
     // Disable VER-001 since we're testing for zero diagnostics on valid files
     let mut config = LintConfig::default();
-    config.rules.disabled_rules = vec!["VER-001".to_string()];
+    config.rules_mut().disabled_rules = vec!["VER-001".to_string()];
     let result = validate_project(temp.path(), &config).unwrap();
 
     // Should have counted exactly the two valid skill files
@@ -3029,7 +3029,7 @@ fn test_file_count_limit_enforced() {
 
     // Set a limit of 10 files
     let mut config = LintConfig::default();
-    config.max_files_to_validate = Some(10);
+    config.set_max_files_to_validate(Some(10));
 
     let result = validate_project(temp.path(), &config);
 
@@ -3055,7 +3055,7 @@ fn test_file_count_limit_not_exceeded() {
 
     // Set a limit of 10 files
     let mut config = LintConfig::default();
-    config.max_files_to_validate = Some(10);
+    config.set_max_files_to_validate(Some(10));
 
     let result = validate_project(temp.path(), &config);
 
@@ -3078,7 +3078,7 @@ fn test_file_count_limit_disabled() {
 
     // Disable the limit
     let mut config = LintConfig::default();
-    config.max_files_to_validate = None;
+    config.set_max_files_to_validate(None);
 
     let result = validate_project(temp.path(), &config);
 
@@ -3094,7 +3094,7 @@ fn test_file_count_limit_disabled() {
 fn test_default_file_count_limit() {
     let config = LintConfig::default();
     assert_eq!(
-        config.max_files_to_validate,
+        config.max_files_to_validate(),
         Some(config::DEFAULT_MAX_FILES)
     );
     assert_eq!(config::DEFAULT_MAX_FILES, 10_000);
@@ -3112,7 +3112,7 @@ fn test_file_count_concurrent_validation() {
 
     // Set a limit that allows all files
     let mut config = LintConfig::default();
-    config.max_files_to_validate = Some(25);
+    config.set_max_files_to_validate(Some(25));
 
     let result = validate_project(temp.path(), &config);
 
@@ -3208,7 +3208,7 @@ fn test_resolve_file_type_no_config_falls_through() {
 #[test]
 fn test_resolve_file_type_include_as_memory() {
     let mut config = LintConfig::default();
-    config.files.include_as_memory = vec!["docs/ai-rules/*.md".to_string()];
+    config.files_mut().include_as_memory = vec!["docs/ai-rules/*.md".to_string()];
     config.set_root_dir(PathBuf::from("/project"));
 
     // File matching the pattern -> ClaudeMd
@@ -3227,7 +3227,7 @@ fn test_resolve_file_type_include_as_memory() {
 #[test]
 fn test_resolve_file_type_include_as_generic() {
     let mut config = LintConfig::default();
-    config.files.include_as_generic = vec!["internal/*.md".to_string()];
+    config.files_mut().include_as_generic = vec!["internal/*.md".to_string()];
     config.set_root_dir(PathBuf::from("/project"));
 
     assert_eq!(
@@ -3239,7 +3239,7 @@ fn test_resolve_file_type_include_as_generic() {
 #[test]
 fn test_resolve_file_type_exclude() {
     let mut config = LintConfig::default();
-    config.files.exclude = vec!["generated/**".to_string()];
+    config.files_mut().exclude = vec!["generated/**".to_string()];
     config.set_root_dir(PathBuf::from("/project"));
 
     // CLAUDE.md in generated/ -> excluded (Unknown)
@@ -3258,8 +3258,8 @@ fn test_resolve_file_type_exclude() {
 #[test]
 fn test_resolve_file_type_priority_exclude_over_include() {
     let mut config = LintConfig::default();
-    config.files.include_as_memory = vec!["docs/**/*.md".to_string()];
-    config.files.exclude = vec!["docs/drafts/**".to_string()];
+    config.files_mut().include_as_memory = vec!["docs/**/*.md".to_string()];
+    config.files_mut().exclude = vec!["docs/drafts/**".to_string()];
     config.set_root_dir(PathBuf::from("/project"));
 
     // In docs/ but also in drafts/ -> exclude wins
@@ -3278,8 +3278,8 @@ fn test_resolve_file_type_priority_exclude_over_include() {
 #[test]
 fn test_resolve_file_type_priority_memory_over_generic() {
     let mut config = LintConfig::default();
-    config.files.include_as_memory = vec!["rules/*.md".to_string()];
-    config.files.include_as_generic = vec!["rules/*.md".to_string()]; // overlapping
+    config.files_mut().include_as_memory = vec!["rules/*.md".to_string()];
+    config.files_mut().include_as_generic = vec!["rules/*.md".to_string()]; // overlapping
     config.set_root_dir(PathBuf::from("/project"));
 
     // When both match, memory takes priority
@@ -3292,7 +3292,7 @@ fn test_resolve_file_type_priority_memory_over_generic() {
 #[test]
 fn test_resolve_file_type_no_root_dir_uses_filename() {
     let mut config = LintConfig::default();
-    config.files.include_as_memory = vec!["INSTRUCTIONS.md".to_string()];
+    config.files_mut().include_as_memory = vec!["INSTRUCTIONS.md".to_string()];
     // No root_dir set
 
     assert_eq!(
@@ -3304,7 +3304,7 @@ fn test_resolve_file_type_no_root_dir_uses_filename() {
 #[test]
 fn test_resolve_file_type_non_matching_files_fall_through() {
     let mut config = LintConfig::default();
-    config.files.include_as_memory = vec!["custom/*.md".to_string()];
+    config.files_mut().include_as_memory = vec!["custom/*.md".to_string()];
     config.set_root_dir(PathBuf::from("/project"));
 
     // Regular SKILL.md still detected normally
@@ -3323,7 +3323,7 @@ fn test_resolve_file_type_non_matching_files_fall_through() {
 #[test]
 fn test_resolve_file_type_exclude_overrides_builtin() {
     let mut config = LintConfig::default();
-    config.files.exclude = vec!["vendor/CLAUDE.md".to_string()];
+    config.files_mut().exclude = vec!["vendor/CLAUDE.md".to_string()];
     config.set_root_dir(PathBuf::from("/project"));
 
     // CLAUDE.md in vendor/ is excluded even though it would normally be ClaudeMd
@@ -3336,7 +3336,7 @@ fn test_resolve_file_type_exclude_overrides_builtin() {
 #[test]
 fn test_resolve_file_type_backslash_normalization() {
     let mut config = LintConfig::default();
-    config.files.include_as_memory = vec!["docs\\ai-rules\\*.md".to_string()];
+    config.files_mut().include_as_memory = vec!["docs\\ai-rules\\*.md".to_string()];
     config.set_root_dir(PathBuf::from("/project"));
 
     // Backslashes in patterns are normalized to forward slashes
@@ -3349,7 +3349,7 @@ fn test_resolve_file_type_backslash_normalization() {
 #[test]
 fn test_resolve_file_type_invalid_pattern_falls_back() {
     let mut config = LintConfig::default();
-    config.files.include_as_memory = vec!["[invalid".to_string()];
+    config.files_mut().include_as_memory = vec!["[invalid".to_string()];
 
     // Invalid pattern should fall back to detect_file_type
     assert_eq!(
@@ -3385,7 +3385,7 @@ fn test_validate_project_with_files_config_include() {
 
     // With include_as_memory config, it should be validated as ClaudeMd
     let mut config = LintConfig::default();
-    config.files.include_as_memory = vec!["custom-rules/*.md".to_string()];
+    config.files_mut().include_as_memory = vec!["custom-rules/*.md".to_string()];
 
     let result = validate_project(root, &config).unwrap();
     // Should have checked the file (it's now ClaudeMd, not just GenericMarkdown)
@@ -3432,7 +3432,7 @@ fn test_validate_project_with_files_config_exclude() {
 
     // With exclude config
     let mut config = LintConfig::default();
-    config.files.exclude = vec!["vendor/**".to_string()];
+    config.files_mut().exclude = vec!["vendor/**".to_string()];
 
     let result = validate_project(root, &config).unwrap();
     // Only the root CLAUDE.md should be checked, not vendor/CLAUDE.md
@@ -3452,7 +3452,7 @@ fn test_validate_project_with_invalid_files_pattern() {
     std::fs::write(root.join("CLAUDE.md"), "# Project\n").unwrap();
 
     let mut config = LintConfig::default();
-    config.files.include_as_memory = vec!["[invalid".to_string()];
+    config.files_mut().include_as_memory = vec!["[invalid".to_string()];
 
     // Invalid patterns degrade gracefully: validation proceeds with no
     // file overrides applied (consistent with LintConfig::validate() which
@@ -3476,7 +3476,7 @@ fn test_validate_file_respects_files_config_exclude() {
 
     // With exclude config, the file should be skipped entirely
     let mut config = LintConfig::default();
-    config.files.exclude = vec!["CLAUDE.md".to_string()];
+    config.files_mut().exclude = vec!["CLAUDE.md".to_string()];
     config.set_root_dir(root.to_path_buf());
 
     let registry = ValidatorRegistry::with_defaults();
@@ -3494,7 +3494,7 @@ fn test_resolve_file_type_glob_separator_behavior() {
     // `dir/*.md` should match `dir/file.md` but NOT `dir/sub/file.md`.
     // `dir/**/*.md` should match `dir/sub/file.md`.
     let mut config = LintConfig::default();
-    config.files.include_as_memory = vec!["dir/*.md".to_string()];
+    config.files_mut().include_as_memory = vec!["dir/*.md".to_string()];
     config.set_root_dir(PathBuf::from("/project"));
 
     // Single-level match: dir/*.md matches dir/file.md
@@ -3513,7 +3513,7 @@ fn test_resolve_file_type_glob_separator_behavior() {
 
     // With ** pattern, multi-level should match
     let mut config2 = LintConfig::default();
-    config2.files.include_as_memory = vec!["dir/**/*.md".to_string()];
+    config2.files_mut().include_as_memory = vec!["dir/**/*.md".to_string()];
     config2.set_root_dir(PathBuf::from("/project"));
 
     assert_eq!(
@@ -3528,7 +3528,7 @@ fn test_resolve_file_type_case_sensitive() {
     // Patterns are case-sensitive (FILES_MATCH_OPTIONS.case_sensitive = true).
     // "DEVELOPER.md" should match "DEVELOPER.md" but NOT "developer.md".
     let mut config = LintConfig::default();
-    config.files.include_as_memory = vec!["DEVELOPER.md".to_string()];
+    config.files_mut().include_as_memory = vec!["DEVELOPER.md".to_string()];
     config.set_root_dir(PathBuf::from("/project"));
 
     assert_eq!(
@@ -3547,7 +3547,7 @@ fn test_resolve_file_type_case_sensitive() {
 fn test_resolve_file_type_double_star_recursive() {
     // "instructions/**/*.md" should match files at arbitrary nesting depth.
     let mut config = LintConfig::default();
-    config.files.include_as_memory = vec!["instructions/**/*.md".to_string()];
+    config.files_mut().include_as_memory = vec!["instructions/**/*.md".to_string()];
     config.set_root_dir(PathBuf::from("/project"));
 
     assert_eq!(
@@ -3626,8 +3626,8 @@ fn test_validate_project_rules_disabled_rules() {
     std::fs::write(sub.join("AGENTS.md"), "# Sub").unwrap();
 
     let mut config = LintConfig::default();
-    config.rules.disabled_rules.push("AGM-006".to_string());
-    config.rules.disabled_rules.push("VER-001".to_string());
+    config.rules_mut().disabled_rules.push("AGM-006".to_string());
+    config.rules_mut().disabled_rules.push("VER-001".to_string());
 
     let diagnostics = validate_project_rules(temp_dir.path(), &config).unwrap();
     assert!(
@@ -3812,7 +3812,7 @@ fn test_disabled_validators_config_filters_in_validate_file() {
 
     // With XmlValidator disabled, XML-001 should not appear
     let mut config_disabled = LintConfig::default();
-    config_disabled.rules.disabled_validators = vec!["XmlValidator".to_string()];
+    config_disabled.rules_mut().disabled_validators = vec!["XmlValidator".to_string()];
     let diags_disabled = validate_file(&claude_md, &config_disabled).unwrap();
     let xml_diags_disabled: Vec<_> = diags_disabled
         .iter()
@@ -3851,7 +3851,7 @@ fn test_disabled_validators_config_filters_in_validate_project() {
 
     // With XmlValidator disabled
     let mut config_disabled = LintConfig::default();
-    config_disabled.rules.disabled_validators = vec!["XmlValidator".to_string()];
+    config_disabled.rules_mut().disabled_validators = vec!["XmlValidator".to_string()];
     let result_disabled = validate_project(temp_dir.path(), &config_disabled).unwrap();
     let xml_diags_disabled: Vec<_> = result_disabled
         .diagnostics

@@ -609,7 +609,7 @@ mod tests {
     #[test]
     fn test_config_disabled_codex_category() {
         let mut config = LintConfig::default();
-        config.rules.codex = false;
+        config.rules_mut().codex = false;
 
         let diagnostics = validate_config_with_config("approvalMode = \"invalid\"", &config);
         let cdx_rules: Vec<_> = diagnostics
@@ -622,7 +622,7 @@ mod tests {
     #[test]
     fn test_config_disabled_specific_rule() {
         let mut config = LintConfig::default();
-        config.rules.disabled_rules = vec!["CDX-001".to_string()];
+        config.rules_mut().disabled_rules = vec!["CDX-001".to_string()];
 
         let diagnostics = validate_config_with_config("approvalMode = \"invalid\"", &config);
         let cdx_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CDX-001").collect();
@@ -635,7 +635,7 @@ mod tests {
 
         for rule in rules {
             let mut config = LintConfig::default();
-            config.rules.disabled_rules = vec![rule.to_string()];
+            config.rules_mut().disabled_rules = vec![rule.to_string()];
 
             let (content, path): (&str, &str) = match rule {
                 "CDX-001" => ("approvalMode = \"invalid\"", ".codex/config.toml"),

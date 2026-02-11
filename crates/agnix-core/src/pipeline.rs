@@ -172,23 +172,24 @@ fn resolve_with_compiled(
 /// When no `[files]` patterns are configured, this is equivalent to
 /// calling `detect_file_type(path)` directly.
 pub fn resolve_file_type(path: &Path, config: &LintConfig) -> FileType {
-    if config.files.include_as_memory.is_empty()
-        && config.files.include_as_generic.is_empty()
-        && config.files.exclude.is_empty()
+    let files = config.files_config();
+    if files.include_as_memory.is_empty()
+        && files.include_as_generic.is_empty()
+        && files.exclude.is_empty()
     {
         return detect_file_type(path);
     }
 
     // Compile patterns on-demand for single-file validation.
     // Invalid patterns are silently skipped (validated at config load time).
-    let compiled = compile_files_config(&config.files);
+    let compiled = compile_files_config(files);
     resolve_with_compiled(path, config.root_dir().map(|p| p.as_path()), &compiled)
 }
 
 /// Validate a single file
 pub fn validate_file(path: &Path, config: &LintConfig) -> LintResult<Vec<Diagnostic>> {
     let mut registry = ValidatorRegistry::with_defaults();
-    for name in &config.rules.disabled_validators {
+    for name in &config.rules().disabled_validators {
         registry.disable_validator(name);
     }
     validate_file_with_registry(path, config, &registry)
@@ -234,7 +235,7 @@ fn validate_file_with_type(
 /// Main entry point for validating a project
 pub fn validate_project(path: &Path, config: &LintConfig) -> LintResult<ValidationResult> {
     let mut registry = ValidatorRegistry::with_defaults();
-    for name in &config.rules.disabled_validators {
+    for name in &config.rules().disabled_validators {
         registry.disable_validator(name);
     }
     validate_project_with_registry(path, config, &registry)
@@ -503,12 +504,12 @@ fn run_project_level_checks(
     // VER-001: Warn when no tool/spec versions are explicitly pinned
     if config.is_rule_enabled("VER-001") {
         let has_any_version_pinned = config.is_claude_code_version_pinned()
-            || config.tool_versions.codex.is_some()
-            || config.tool_versions.cursor.is_some()
-            || config.tool_versions.copilot.is_some()
+            || config.tool_versions().codex.is_some()
+            || config.tool_versions().cursor.is_some()
+            || config.tool_versions().copilot.is_some()
             || config.is_mcp_revision_pinned()
-            || config.spec_revisions.agent_skills_spec.is_some()
-            || config.spec_revisions.agents_md_spec.is_some();
+            || config.spec_revisions().agent_skills_spec.is_some()
+            || config.spec_revisions().agents_md_spec.is_some();
 
         if !has_any_version_pinned {
             // Use .agnix.toml path or project root as the file reference
@@ -547,14 +548,14 @@ pub fn validate_project_rules(root: &Path, config: &LintConfig) -> LintResult<Ve
     config.set_root_dir(root_dir.clone());
 
     // Pre-compile exclude patterns once (Arc for filter_entry 'static bound)
-    let exclude_patterns = Arc::new(compile_exclude_patterns(&config.exclude)?);
+    let exclude_patterns = Arc::new(compile_exclude_patterns(config.exclude())?);
 
     let walk_root = std::fs::canonicalize(root).unwrap_or_else(|_| root.to_path_buf());
     let root_path = root_dir.clone();
 
     let mut agents_md_paths: Vec<PathBuf> = Vec::new();
     let mut instruction_file_paths: Vec<PathBuf> = Vec::new();
-    let max_files = config.max_files_to_validate;
+    let max_files = config.max_files_to_validate();
 
     // Walk directory tree collecting only paths relevant to project-level checks.
     // No per-file validation is performed -- this walk is lightweight.
@@ -647,13 +648,13 @@ pub fn validate_project_with_registry(
     config.set_import_cache(import_cache);
 
     // Pre-compile exclude patterns once (avoids N+1 pattern compilation)
-    let exclude_patterns = compile_exclude_patterns(&config.exclude)?;
+    let exclude_patterns = compile_exclude_patterns(config.exclude())?;
     let exclude_patterns = Arc::new(exclude_patterns);
 
     // Pre-compile files config patterns once for the parallel walk.
     // Invalid patterns are treated as non-fatal to align with LintConfig::validate()
     // Invalid patterns are silently skipped (validated at config load time).
-    let compiled_files = Arc::new(compile_files_config(&config.files));
+    let compiled_files = Arc::new(compile_files_config(config.files_config()));
 
     let root_path = root_dir.clone();
 
@@ -667,7 +668,7 @@ pub fn validate_project_with_registry(
     let limit_exceeded = Arc::new(AtomicBool::new(false));
 
     // Get the file limit from config (None means no limit)
-    let max_files = config.max_files_to_validate;
+    let max_files = config.max_files_to_validate();
 
     // Stream file walk directly into parallel validation (no intermediate Vec)
     // Note: hidden(false) includes .github, .codex, .claude, .cursor directories

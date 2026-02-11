@@ -361,22 +361,22 @@ impl RuleFilter for DefaultRuleFilter<'_> {
 pub struct LintConfig {
     /// Severity level threshold
     #[schemars(description = "Minimum severity level to report (Error, Warning, Info)")]
-    pub severity: SeverityLevel,
+    severity: SeverityLevel,
 
     /// Rules to enable/disable
     #[schemars(description = "Configuration for enabling/disabling validation rules by category")]
-    pub rules: RuleConfig,
+    rules: RuleConfig,
 
     /// Paths to exclude
     #[schemars(
         description = "Glob patterns for paths to exclude from validation (e.g., [\"node_modules/**\", \"dist/**\"])"
     )]
-    pub exclude: Vec<String>,
+    exclude: Vec<String>,
 
     /// Target tool (claude-code, cursor, codex, generic)
     /// Deprecated: Use `tools` array instead for multi-tool support
     #[schemars(description = "Target tool for validation (deprecated: use 'tools' array instead)")]
-    pub target: TargetTool,
+    target: TargetTool,
 
     /// Tools to validate for (e.g., ["claude-code", "cursor"])
     /// When specified, agnix automatically enables rules for these tools
@@ -386,31 +386,31 @@ pub struct LintConfig {
     #[schemars(
         description = "Tools to validate for. Valid values: \"claude-code\", \"cursor\", \"codex\", \"copilot\", \"github-copilot\", \"cline\", \"opencode\", \"gemini-cli\", \"generic\""
     )]
-    pub tools: Vec<String>,
+    tools: Vec<String>,
 
     /// Expected MCP protocol version for validation (MCP-008)
     /// Deprecated: Use spec_revisions.mcp_protocol instead
     #[schemars(
         description = "Expected MCP protocol version (deprecated: use spec_revisions.mcp_protocol instead)"
     )]
-    pub mcp_protocol_version: Option<String>,
+    mcp_protocol_version: Option<String>,
 
     /// Tool version pinning for version-aware validation
     #[serde(default)]
     #[schemars(description = "Pin specific tool versions for version-aware validation")]
-    pub tool_versions: ToolVersions,
+    tool_versions: ToolVersions,
 
     /// Specification revision pinning for version-aware validation
     #[serde(default)]
     #[schemars(description = "Pin specific specification revisions for revision-aware validation")]
-    pub spec_revisions: SpecRevisions,
+    spec_revisions: SpecRevisions,
 
     /// File inclusion/exclusion configuration for non-standard agent files
     #[serde(default)]
     #[schemars(
         description = "File inclusion/exclusion configuration for non-standard agent files"
     )]
-    pub files: FilesConfig,
+    files: FilesConfig,
 
     /// Output locale for translated messages (e.g., "en", "es", "zh-CN").
     /// When not set, the CLI locale detection is used.
@@ -418,7 +418,7 @@ pub struct LintConfig {
     #[schemars(
         description = "Output locale for translated messages (e.g., \"en\", \"es\", \"zh-CN\")"
     )]
-    pub locale: Option<String>,
+    locale: Option<String>,
 
     /// Maximum number of files to validate before stopping.
     ///
@@ -428,7 +428,7 @@ pub struct LintConfig {
     ///
     /// Default: 10,000 files. Set to `None` to disable the limit (not recommended).
     #[serde(default = "default_max_files")]
-    pub max_files_to_validate: Option<usize>,
+    max_files_to_validate: Option<usize>,
 
     /// Internal runtime context for validation operations (not serialized).
     ///

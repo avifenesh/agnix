@@ -1508,7 +1508,7 @@ Body"#;
 #[test]
 fn test_config_disabled_skills_category() {
     let mut config = LintConfig::default();
-    config.rules.skills = false;
+    config.rules_mut().skills = false;
 
     let content = r#"---
 name: -bad-name
@@ -1530,7 +1530,7 @@ Body"#;
 #[test]
 fn test_config_disabled_specific_skill_rule() {
     let mut config = LintConfig::default();
-    config.rules.disabled_rules = vec!["AS-005".to_string()];
+    config.rules_mut().disabled_rules = vec!["AS-005".to_string()];
 
     let content = r#"---
 name: -bad-name
@@ -1555,7 +1555,7 @@ fn test_config_cursor_target_disables_cc_sk_rules() {
     use crate::config::TargetTool;
 
     let mut config = LintConfig::default();
-    config.target = TargetTool::Cursor;
+    config.set_target(TargetTool::Cursor);
 
     let content = r#"---
 name: deploy-prod
@@ -1583,7 +1583,7 @@ fn test_config_claude_code_target_enables_cc_sk_rules() {
     use crate::config::TargetTool;
 
     let mut config = LintConfig::default();
-    config.target = TargetTool::ClaudeCode;
+    config.set_target(TargetTool::ClaudeCode);
 
     let content = r#"---
 name: deploy-prod
@@ -2148,7 +2148,7 @@ Body content"#;
 #[test]
 fn test_as_016_disabled() {
     let mut config = LintConfig::default();
-    config.rules.disabled_rules = vec!["AS-016".to_string()];
+    config.rules_mut().disabled_rules = vec!["AS-016".to_string()];
 
     let content = r#"---
 name: test
