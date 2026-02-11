@@ -54,7 +54,10 @@ pub mod diagnostics;
 ///
 /// **Stability: unstable** -- interface may change on minor releases.
 pub mod eval;
-mod file_types;
+/// File type detection and extensible detector chain.
+///
+/// **Stability: unstable** -- interface may change on minor releases.
+pub mod file_types;
 mod file_utils;
 /// Auto-fix application engine.
 ///
@@ -89,6 +92,7 @@ pub use diagnostics::{
     LintResult, RuleMetadata, ValidationError,
 };
 pub use file_types::{FileType, detect_file_type};
+pub use file_types::{FileTypeDetector, FileTypeDetectorChain};
 pub use fixes::{FixResult, apply_fixes, apply_fixes_with_fs};
 pub use fs::{FileSystem, MockFileSystem, RealFileSystem};
 pub use pipeline::{
