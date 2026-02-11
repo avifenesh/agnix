@@ -95,6 +95,12 @@ We use multiple layers of dependency verification:
 3. **Dependabot**: Automatic security updates
 4. **CodeQL**: Static analysis for Rust code
 
+### RUSTSEC Advisory Tracking
+
+Some RUSTSEC advisories are temporarily ignored due to waiting for upstream fixes or because they affect dev-only dependencies. These are tracked and reviewed periodically.
+
+For details on currently ignored advisories and the review process, see [RUSTSEC-ADVISORIES.md](docs/RUSTSEC-ADVISORIES.md).
+
 ## Safe Error Handling Patterns
 
 The codebase follows these patterns to maintain security:
