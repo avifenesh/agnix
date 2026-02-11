@@ -52,10 +52,7 @@ Found 1 error, 1 warning
 hint: Run with --fix to apply fixes
 ```
 
-
-https://github.com/user-attachments/assets/09f55427-1d10-4398-aad4-ae0799f495a8
-
-
+https://github.com/user-attachments/assets/72d5fe7c-476f-46ea-be64-5785cf6d5600
 
 ## Install
 
