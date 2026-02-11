@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.11.1] - 2026-02-11
+
+### Fixed
+- **CI**: Release workflow now explicitly builds binary crates (`-p agnix-cli -p agnix-lsp -p agnix-mcp`) to prevent cache-related build skips
+- **CI**: Release version check now reads from `[workspace.package]` instead of root `[package]` section
+
 ## [0.11.0] - 2026-02-11
 
 ### Added
