@@ -459,6 +459,49 @@ mod tests {
     }
 
     #[test]
+    fn test_rules_have_properties_with_metadata() {
+        let sarif = diagnostics_to_sarif(&[], Path::new("."));
+        let rules = &sarif.runs[0].tool.driver.rules;
+
+        // Find AS-001 - should have properties
+        let as001 = rules.iter().find(|r| r.id == "AS-001");
+        assert!(as001.is_some(), "AS-001 should exist in SARIF rules");
+        let props = as001.unwrap().properties.as_ref();
+        assert!(props.is_some(), "AS-001 should have properties");
+        let props = props.unwrap();
+        assert_eq!(props.category, Some("agent-skills".to_string()));
+        assert_eq!(props.severity, Some("HIGH".to_string()));
+        // AS-001 is generic
+        assert!(props.applies_to_tool.is_none());
+    }
+
+    #[test]
+    fn test_tool_specific_rule_has_tool_in_properties() {
+        let sarif = diagnostics_to_sarif(&[], Path::new("."));
+        let rules = &sarif.runs[0].tool.driver.rules;
+
+        let cc_hk_001 = rules.iter().find(|r| r.id == "CC-HK-001");
+        assert!(cc_hk_001.is_some());
+        let props = cc_hk_001.unwrap().properties.as_ref().unwrap();
+        assert_eq!(props.applies_to_tool, Some("claude-code".to_string()));
+    }
+
+    #[test]
+    fn test_sarif_properties_serialize_correctly() {
+        let sarif = diagnostics_to_sarif(&[], Path::new("."));
+        let json = serde_json::to_string_pretty(&sarif).unwrap();
+        // The JSON should contain "properties" with "category"
+        assert!(
+            json.contains("\"properties\""),
+            "SARIF JSON should contain properties"
+        );
+        assert!(
+            json.contains("\"category\""),
+            "SARIF properties should contain category"
+        );
+    }
+
+    #[test]
     fn test_zero_line_column_clamped_to_one() {
         // SARIF 2.1.0 requires 1-based positions, so 0 values must be clamped
         let diag = Diagnostic {
