@@ -3209,7 +3209,7 @@ fn test_resolve_file_type_no_config_falls_through() {
 fn test_resolve_file_type_include_as_memory() {
     let mut config = LintConfig::default();
     config.files.include_as_memory = vec!["docs/ai-rules/*.md".to_string()];
-    config.root_dir = Some(PathBuf::from("/project"));
+    config.set_root_dir(PathBuf::from("/project"));
 
     // File matching the pattern -> ClaudeMd
     assert_eq!(
@@ -3228,7 +3228,7 @@ fn test_resolve_file_type_include_as_memory() {
 fn test_resolve_file_type_include_as_generic() {
     let mut config = LintConfig::default();
     config.files.include_as_generic = vec!["internal/*.md".to_string()];
-    config.root_dir = Some(PathBuf::from("/project"));
+    config.set_root_dir(PathBuf::from("/project"));
 
     assert_eq!(
         resolve_file_type(Path::new("/project/internal/notes.md"), &config),
@@ -3240,7 +3240,7 @@ fn test_resolve_file_type_include_as_generic() {
 fn test_resolve_file_type_exclude() {
     let mut config = LintConfig::default();
     config.files.exclude = vec!["generated/**".to_string()];
-    config.root_dir = Some(PathBuf::from("/project"));
+    config.set_root_dir(PathBuf::from("/project"));
 
     // CLAUDE.md in generated/ -> excluded (Unknown)
     assert_eq!(
@@ -3260,7 +3260,7 @@ fn test_resolve_file_type_priority_exclude_over_include() {
     let mut config = LintConfig::default();
     config.files.include_as_memory = vec!["docs/**/*.md".to_string()];
     config.files.exclude = vec!["docs/drafts/**".to_string()];
-    config.root_dir = Some(PathBuf::from("/project"));
+    config.set_root_dir(PathBuf::from("/project"));
 
     // In docs/ but also in drafts/ -> exclude wins
     assert_eq!(
@@ -3280,7 +3280,7 @@ fn test_resolve_file_type_priority_memory_over_generic() {
     let mut config = LintConfig::default();
     config.files.include_as_memory = vec!["rules/*.md".to_string()];
     config.files.include_as_generic = vec!["rules/*.md".to_string()]; // overlapping
-    config.root_dir = Some(PathBuf::from("/project"));
+    config.set_root_dir(PathBuf::from("/project"));
 
     // When both match, memory takes priority
     assert_eq!(
@@ -3305,7 +3305,7 @@ fn test_resolve_file_type_no_root_dir_uses_filename() {
 fn test_resolve_file_type_non_matching_files_fall_through() {
     let mut config = LintConfig::default();
     config.files.include_as_memory = vec!["custom/*.md".to_string()];
-    config.root_dir = Some(PathBuf::from("/project"));
+    config.set_root_dir(PathBuf::from("/project"));
 
     // Regular SKILL.md still detected normally
     assert_eq!(
@@ -3324,7 +3324,7 @@ fn test_resolve_file_type_non_matching_files_fall_through() {
 fn test_resolve_file_type_exclude_overrides_builtin() {
     let mut config = LintConfig::default();
     config.files.exclude = vec!["vendor/CLAUDE.md".to_string()];
-    config.root_dir = Some(PathBuf::from("/project"));
+    config.set_root_dir(PathBuf::from("/project"));
 
     // CLAUDE.md in vendor/ is excluded even though it would normally be ClaudeMd
     assert_eq!(
@@ -3337,7 +3337,7 @@ fn test_resolve_file_type_exclude_overrides_builtin() {
 fn test_resolve_file_type_backslash_normalization() {
     let mut config = LintConfig::default();
     config.files.include_as_memory = vec!["docs\\ai-rules\\*.md".to_string()];
-    config.root_dir = Some(PathBuf::from("/project"));
+    config.set_root_dir(PathBuf::from("/project"));
 
     // Backslashes in patterns are normalized to forward slashes
     assert_eq!(
@@ -3477,7 +3477,7 @@ fn test_validate_file_respects_files_config_exclude() {
     // With exclude config, the file should be skipped entirely
     let mut config = LintConfig::default();
     config.files.exclude = vec!["CLAUDE.md".to_string()];
-    config.root_dir = Some(root.to_path_buf());
+    config.set_root_dir(root.to_path_buf());
 
     let registry = ValidatorRegistry::with_defaults();
     let diagnostics = validate_file_with_registry(&claude_file, &config, &registry).unwrap();
@@ -3495,7 +3495,7 @@ fn test_resolve_file_type_glob_separator_behavior() {
     // `dir/**/*.md` should match `dir/sub/file.md`.
     let mut config = LintConfig::default();
     config.files.include_as_memory = vec!["dir/*.md".to_string()];
-    config.root_dir = Some(PathBuf::from("/project"));
+    config.set_root_dir(PathBuf::from("/project"));
 
     // Single-level match: dir/*.md matches dir/file.md
     assert_eq!(
@@ -3514,7 +3514,7 @@ fn test_resolve_file_type_glob_separator_behavior() {
     // With ** pattern, multi-level should match
     let mut config2 = LintConfig::default();
     config2.files.include_as_memory = vec!["dir/**/*.md".to_string()];
-    config2.root_dir = Some(PathBuf::from("/project"));
+    config2.set_root_dir(PathBuf::from("/project"));
 
     assert_eq!(
         resolve_file_type(Path::new("/project/dir/sub/file.md"), &config2),
@@ -3529,7 +3529,7 @@ fn test_resolve_file_type_case_sensitive() {
     // "DEVELOPER.md" should match "DEVELOPER.md" but NOT "developer.md".
     let mut config = LintConfig::default();
     config.files.include_as_memory = vec!["DEVELOPER.md".to_string()];
-    config.root_dir = Some(PathBuf::from("/project"));
+    config.set_root_dir(PathBuf::from("/project"));
 
     assert_eq!(
         resolve_file_type(Path::new("/project/DEVELOPER.md"), &config),
@@ -3548,7 +3548,7 @@ fn test_resolve_file_type_double_star_recursive() {
     // "instructions/**/*.md" should match files at arbitrary nesting depth.
     let mut config = LintConfig::default();
     config.files.include_as_memory = vec!["instructions/**/*.md".to_string()];
-    config.root_dir = Some(PathBuf::from("/project"));
+    config.set_root_dir(PathBuf::from("/project"));
 
     assert_eq!(
         resolve_file_type(Path::new("/project/instructions/sub/deep/file.md"), &config),

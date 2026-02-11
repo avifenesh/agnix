@@ -591,7 +591,7 @@ impl LanguageServer for Backend {
                                 crate::locale::init_from_config(config_locale);
                             }
                             let mut config_with_root = loaded_config;
-                            config_with_root.root_dir = Some(root_path.clone());
+                            config_with_root.set_root_dir(root_path.clone());
                             *self.config.write().await = Arc::new(config_with_root);
                         }
                         Err(e) => {
@@ -823,7 +823,7 @@ impl LanguageServer for Backend {
             vscode_config.merge_into_lint_config(&mut new_config);
             // Set root_dir from workspace_root for glob pattern matching
             if let Some(ref root) = *self.workspace_root.read().await {
-                new_config.root_dir = Some(root.clone());
+                new_config.set_root_dir(root.clone());
             }
             *config_guard = Arc::new(new_config);
         }

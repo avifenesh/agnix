@@ -182,7 +182,7 @@ pub fn resolve_file_type(path: &Path, config: &LintConfig) -> FileType {
     // Compile patterns on-demand for single-file validation.
     // Invalid patterns are silently skipped (validated at config load time).
     let compiled = compile_files_config(&config.files);
-    resolve_with_compiled(path, config.root_dir.as_deref(), &compiled)
+    resolve_with_compiled(path, config.root_dir().map(|p| p.as_path()), &compiled)
 }
 
 /// Validate a single file
