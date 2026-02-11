@@ -240,12 +240,15 @@ function EditorDemo() {
           See it in your editor
         </Heading>
         <div className={styles.editorDemoFrame}>
-          <img
-            src="/agnix/img/demo.gif"
-            alt="agnix real-time validation in VS Code"
+          <video
             className={styles.editorDemoGif}
-            loading="lazy"
-          />
+            autoPlay
+            loop
+            muted
+            playsInline
+          >
+            <source src="/agnix/img/demo.mp4" type="video/mp4" />
+          </video>
         </div>
       </div>
     </RevealSection>

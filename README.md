@@ -53,7 +53,8 @@ hint: Run with --fix to apply fixes
 ```
 
 <p align="center">
-  <img src="assets/demo.gif" alt="agnix real-time validation in VS Code" width="720">
+  <video src="https://github.com/avifenesh/agnix/releases/download/v0.11.1/demo.mp4" width="720">
+  </video>
 </p>
 
 ## Install
