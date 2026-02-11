@@ -10,8 +10,8 @@ use serde::de::DeserializeOwned;
 
 /// Parse JSON config file
 pub fn parse_json_config<T: DeserializeOwned>(content: &str) -> LintResult<T> {
-    let parsed: T =
-        serde_json::from_str(content).map_err(|e| CoreError::Validation(ValidationError::Other(e.into())))?;
+    let parsed: T = serde_json::from_str(content)
+        .map_err(|e| CoreError::Validation(ValidationError::Other(e.into())))?;
     Ok(parsed)
 }
 

@@ -131,14 +131,12 @@ pub fn safe_write_file(path: &Path, content: &str) -> LintResult<()> {
         }
     };
 
-    temp_file
-        .write_all(content.as_bytes())
-        .map_err(|e| {
-            CoreError::File(FileError::Write {
-                path: path.to_path_buf(),
-                source: e,
-            })
-        })?;
+    temp_file.write_all(content.as_bytes()).map_err(|e| {
+        CoreError::File(FileError::Write {
+            path: path.to_path_buf(),
+            source: e,
+        })
+    })?;
     temp_file.sync_all().map_err(|e| {
         CoreError::File(FileError::Write {
             path: path.to_path_buf(),
@@ -264,7 +262,10 @@ mod tests {
     fn test_nonexistent_file_returns_error() {
         let result = safe_read_file(Path::new("/nonexistent/path/file.txt"));
         assert!(result.is_err());
-        assert!(matches!(result.unwrap_err(), CoreError::File(FileError::Read { .. })));
+        assert!(matches!(
+            result.unwrap_err(),
+            CoreError::File(FileError::Read { .. })
+        ));
     }
 
     #[test]
@@ -314,7 +315,10 @@ mod tests {
         // File is one byte over - should fail
         let result = safe_read_file_with_limit(&file_path, 512);
         assert!(result.is_err());
-        assert!(matches!(result.unwrap_err(), CoreError::File(FileError::TooBig { .. })));
+        assert!(matches!(
+            result.unwrap_err(),
+            CoreError::File(FileError::TooBig { .. })
+        ));
     }
 
     #[test]
@@ -370,8 +374,8 @@ mod tests {
         assert!(result.is_err());
         assert!(matches!(
             result.unwrap_err(),
-            CoreError::File(FileError::NotRegular { .. }
-        )));
+            CoreError::File(FileError::NotRegular { .. })
+        ));
     }
 
     #[test]
@@ -397,8 +401,8 @@ mod tests {
         assert!(result.is_err());
         assert!(matches!(
             result.unwrap_err(),
-            CoreError::File(FileError::NotRegular { .. }
-        )));
+            CoreError::File(FileError::NotRegular { .. })
+        ));
     }
 
     #[test]
@@ -408,7 +412,10 @@ mod tests {
 
         let result = safe_write_file(&file_path, "content");
         assert!(result.is_err());
-        assert!(matches!(result.unwrap_err(), CoreError::File(FileError::Write { .. })));
+        assert!(matches!(
+            result.unwrap_err(),
+            CoreError::File(FileError::Write { .. })
+        ));
     }
 
     #[test]
@@ -463,7 +470,10 @@ mod tests {
 
             let result = safe_read_file(&link_path);
             assert!(result.is_err());
-            assert!(matches!(result.unwrap_err(), CoreError::File(FileError::Symlink { .. })));
+            assert!(matches!(
+                result.unwrap_err(),
+                CoreError::File(FileError::Symlink { .. })
+            ));
         }
 
         #[test]
@@ -477,7 +487,10 @@ mod tests {
             let result = safe_read_file(&link_path);
             assert!(result.is_err());
             // Dangling symlink is still a symlink
-            assert!(matches!(result.unwrap_err(), CoreError::File(FileError::Symlink { .. })));
+            assert!(matches!(
+                result.unwrap_err(),
+                CoreError::File(FileError::Symlink { .. })
+            ));
         }
 
         #[test]
@@ -491,7 +504,10 @@ mod tests {
 
             let result = safe_write_file(&link_path, "new content");
             assert!(result.is_err());
-            assert!(matches!(result.unwrap_err(), CoreError::File(FileError::Symlink { .. })));
+            assert!(matches!(
+                result.unwrap_err(),
+                CoreError::File(FileError::Symlink { .. })
+            ));
         }
     }
 
@@ -513,7 +529,10 @@ mod tests {
             if symlink_file(&target_path, &link_path).is_ok() {
                 let result = safe_read_file(&link_path);
                 assert!(result.is_err());
-                assert!(matches!(result.unwrap_err(), CoreError::File(FileError::Symlink { .. })));
+                assert!(matches!(
+                    result.unwrap_err(),
+                    CoreError::File(FileError::Symlink { .. })
+                ));
             }
             // If symlink creation fails due to privileges, skip the test
         }
@@ -547,6 +566,9 @@ mod tests {
         // Verify symlink is rejected at check time
         let result = safe_read_file(&link_path);
         assert!(result.is_err());
-        assert!(matches!(result.unwrap_err(), CoreError::File(FileError::Symlink { .. })));
+        assert!(matches!(
+            result.unwrap_err(),
+            CoreError::File(FileError::Symlink { .. })
+        ));
     }
 }

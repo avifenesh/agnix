@@ -266,13 +266,12 @@ fn compile_exclude_patterns(excludes: &[String]) -> LintResult<Vec<ExcludePatter
                 (normalized.clone(), None)
             };
             let allow_probe = dir_only_prefix.is_some() || glob_str.contains("**");
-            let compiled =
-                glob::Pattern::new(&glob_str).map_err(|e| {
-                    CoreError::Config(ConfigError::InvalidExcludePattern {
-                        pattern: pattern.clone(),
-                        message: e.to_string(),
-                    })
-                })?;
+            let compiled = glob::Pattern::new(&glob_str).map_err(|e| {
+                CoreError::Config(ConfigError::InvalidExcludePattern {
+                    pattern: pattern.clone(),
+                    message: e.to_string(),
+                })
+            })?;
             Ok(ExcludePattern {
                 pattern: compiled,
                 dir_only_prefix,

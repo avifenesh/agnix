@@ -4,7 +4,9 @@
 //! validation rules by comparing expected vs actual diagnostics against labeled
 //! test cases.
 
-use crate::{CoreError, Diagnostic, FileError, LintConfig, file_utils::safe_read_file, validate_file};
+use crate::{CoreError, Diagnostic, LintConfig, file_utils::safe_read_file, validate_file};
+#[cfg(test)]
+use crate::FileError;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
