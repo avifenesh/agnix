@@ -41,8 +41,6 @@ pub struct BuiltinDetector;
 impl FileTypeDetector for BuiltinDetector {
     fn detect(&self, path: &Path) -> Option<FileType> {
         let ft = detect_file_type(path);
-        // The builtin always returns *something*, even Unknown.
-        // Wrap it in Some so the chain terminates.
         Some(ft)
     }
 
@@ -180,6 +178,14 @@ mod tests {
         assert_eq!(BuiltinDetector.name(), "BuiltinDetector");
     }
 
+    #[test]
+    fn builtin_detector_always_returns_some() {
+        let d = BuiltinDetector;
+        assert!(d.detect(Path::new("anything.txt")).is_some());
+        assert!(d.detect(Path::new("")).is_some());
+        assert!(d.detect(Path::new("../../weird/path")).is_some());
+    }
+
     // ---- FileTypeDetectorChain ----
 
     #[test]
@@ -233,7 +239,6 @@ mod tests {
         let chain = FileTypeDetectorChain::with_builtin().prepend(AlwaysMcp);
         assert_eq!(chain.len(), 2);
 
-        // AlwaysMcp overrides everything
         assert_eq!(
             chain.detect(Path::new("SKILL.md")),
             Some(FileType::Mcp)
@@ -245,7 +250,6 @@ mod tests {
         let chain = FileTypeDetectorChain::with_builtin().push(AlwaysMcp);
         assert_eq!(chain.len(), 2);
 
-        // Builtin matches first for SKILL.md
         assert_eq!(
             chain.detect(Path::new("SKILL.md")),
             Some(FileType::Skill)
@@ -258,7 +262,6 @@ mod tests {
             .push(NeverMatch)
             .push(AlwaysMcp);
 
-        // NeverMatch defers, AlwaysMcp catches
         assert_eq!(
             chain.detect(Path::new("anything")),
             Some(FileType::Mcp)
@@ -280,12 +283,10 @@ mod tests {
             }
         }
 
-        // Prepend order: AlwaysMcp first, then ReturnSkill before it
         let chain = FileTypeDetectorChain::new()
             .push(AlwaysMcp)
             .prepend(ReturnSkill);
 
-        // ReturnSkill is at front, so Skill wins
         assert_eq!(
             chain.detect(Path::new("anything")),
             Some(FileType::Skill)

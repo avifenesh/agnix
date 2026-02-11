@@ -90,14 +90,10 @@ pub(crate) fn is_documentation_directory(path: &Path) -> bool {
     false
 }
 
-/// Returns true if the lowercase filename matches any entry in
-/// [`EXCLUDED_FILENAMES`].
 fn is_excluded_filename(name_lower: &str) -> bool {
     EXCLUDED_FILENAMES.contains(&name_lower)
 }
 
-/// Returns true if the parent directory matches any entry in
-/// [`EXCLUDED_PARENT_DIRECTORIES`] (case-insensitive).
 fn is_excluded_parent(parent: Option<&str>) -> bool {
     parent.is_some_and(|p| {
         EXCLUDED_PARENT_DIRECTORIES
