@@ -37,7 +37,7 @@ jobs:
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - name: Lint workflow files
-        uses: rhysd/actionlint@62dc61a45fc95efe8c800af7a557ab0b9165d63b # v1.7.1
+        uses: rhysd/actionlint@0933c147c9d6587653d45fdcb4c497c57a65f9af # v1.7.10
         with:
           args: .github/workflows/docs-site.yml
       - uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
