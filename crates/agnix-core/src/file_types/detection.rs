@@ -60,11 +60,8 @@ pub const EXCLUDED_FILENAMES: &[&str] = &[
 
 /// Parent directory names (case-insensitive) that cause a `.md` file to be
 /// classified as [`FileType::Unknown`] rather than [`FileType::GenericMarkdown`].
-pub const EXCLUDED_PARENT_DIRECTORIES: &[&str] = &[
-    ".github",
-    "issue_template",
-    "pull_request_template",
-];
+pub const EXCLUDED_PARENT_DIRECTORIES: &[&str] =
+    &[".github", "issue_template", "pull_request_template"];
 
 // ============================================================================
 // Detection helpers
@@ -318,10 +315,7 @@ mod tests {
 
     #[test]
     fn detect_mcp_variants() {
-        assert_eq!(
-            detect_file_type(Path::new("mcp.json")),
-            FileType::Mcp
-        );
+        assert_eq!(detect_file_type(Path::new("mcp.json")), FileType::Mcp);
         assert_eq!(
             detect_file_type(Path::new("server.mcp.json")),
             FileType::Mcp
@@ -423,10 +417,7 @@ mod tests {
 
     #[test]
     fn detect_plugin() {
-        assert_eq!(
-            detect_file_type(Path::new("plugin.json")),
-            FileType::Plugin
-        );
+        assert_eq!(detect_file_type(Path::new("plugin.json")), FileType::Plugin);
     }
 
     #[test]
@@ -483,10 +474,7 @@ mod tests {
 
     #[test]
     fn detect_gemini_md() {
-        assert_eq!(
-            detect_file_type(Path::new("GEMINI.md")),
-            FileType::GeminiMd
-        );
+        assert_eq!(detect_file_type(Path::new("GEMINI.md")), FileType::GeminiMd);
         assert_eq!(
             detect_file_type(Path::new("GEMINI.local.md")),
             FileType::GeminiMd

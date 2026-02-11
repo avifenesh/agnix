@@ -208,14 +208,8 @@ mod tests {
     #[test]
     fn with_builtin_falls_back_correctly() {
         let chain = FileTypeDetectorChain::with_builtin();
-        assert_eq!(
-            chain.detect(Path::new("SKILL.md")),
-            Some(FileType::Skill)
-        );
-        assert_eq!(
-            chain.detect(Path::new("main.rs")),
-            Some(FileType::Unknown)
-        );
+        assert_eq!(chain.detect(Path::new("SKILL.md")), Some(FileType::Skill));
+        assert_eq!(chain.detect(Path::new("main.rs")), Some(FileType::Unknown));
     }
 
     // ---- Custom detector priority ----
@@ -242,10 +236,7 @@ mod tests {
         let chain = FileTypeDetectorChain::with_builtin().prepend(AlwaysMcp);
         assert_eq!(chain.len(), 2);
 
-        assert_eq!(
-            chain.detect(Path::new("SKILL.md")),
-            Some(FileType::Mcp)
-        );
+        assert_eq!(chain.detect(Path::new("SKILL.md")), Some(FileType::Mcp));
     }
 
     #[test]
@@ -253,10 +244,7 @@ mod tests {
         let chain = FileTypeDetectorChain::with_builtin().push(AlwaysMcp);
         assert_eq!(chain.len(), 2);
 
-        assert_eq!(
-            chain.detect(Path::new("SKILL.md")),
-            Some(FileType::Skill)
-        );
+        assert_eq!(chain.detect(Path::new("SKILL.md")), Some(FileType::Skill));
     }
 
     #[test]
@@ -265,10 +253,7 @@ mod tests {
             .push(NeverMatch)
             .push(AlwaysMcp);
 
-        assert_eq!(
-            chain.detect(Path::new("anything")),
-            Some(FileType::Mcp)
-        );
+        assert_eq!(chain.detect(Path::new("anything")), Some(FileType::Mcp));
     }
 
     #[test]
@@ -290,10 +275,7 @@ mod tests {
             .push(AlwaysMcp)
             .prepend(ReturnSkill);
 
-        assert_eq!(
-            chain.detect(Path::new("anything")),
-            Some(FileType::Skill)
-        );
+        assert_eq!(chain.detect(Path::new("anything")), Some(FileType::Skill));
     }
 
     // ---- Default impl ----
