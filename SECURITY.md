@@ -101,7 +101,7 @@ Some RUSTSEC advisories are temporarily ignored due to waiting for upstream fixe
 
 For details on currently ignored advisories and the review process, see [RUSTSEC-ADVISORIES.md](docs/RUSTSEC-ADVISORIES.md).
 
----
+## Safe Error Handling Patterns
 
 The codebase follows these patterns to maintain security:
 
