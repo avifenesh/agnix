@@ -421,7 +421,7 @@ Use environment variables for all platform-specific settings.
     #[test]
     fn test_config_disabled_cross_platform_category() {
         let mut config = LintConfig::default();
-        config.rules.cross_platform = false;
+        config.rules_mut().cross_platform = false;
 
         let content = r#"---
 context: fork
@@ -442,7 +442,7 @@ Check .claude/settings.json"#;
     #[test]
     fn test_config_disabled_specific_rule() {
         let mut config = LintConfig::default();
-        config.rules.disabled_rules = vec!["XP-001".to_string()];
+        config.rules_mut().disabled_rules = vec!["XP-001".to_string()];
 
         let content = r#"---
 context: fork
@@ -466,7 +466,7 @@ Body"#;
     fn test_xp_rules_not_target_specific() {
         // XP-* rules should apply to all targets (not just Claude Code)
         let mut config = LintConfig::default();
-        config.target = TargetTool::Cursor;
+        config.set_target(TargetTool::Cursor);
 
         // Cursor target should still have XP-* rules enabled
         assert!(config.is_rule_enabled("XP-001"));
@@ -766,7 +766,7 @@ Use context: fork for subagents.
 
         for rule in rules {
             let mut config = LintConfig::default();
-            config.rules.disabled_rules = vec![rule.to_string()];
+            config.rules_mut().disabled_rules = vec![rule.to_string()];
 
             // Content that could trigger each rule
             let content = r#"# Project

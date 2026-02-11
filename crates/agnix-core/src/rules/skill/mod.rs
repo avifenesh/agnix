@@ -1242,7 +1242,7 @@ fn is_valid_skill_tool_name(tool: &str) -> bool {
 
 impl Validator for SkillValidator {
     fn validate(&self, path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic> {
-        if !config.rules.frontmatter_validation {
+        if !config.rules().frontmatter_validation {
             return Vec::new();
         }
 

@@ -248,7 +248,7 @@ fn main() {
 
         // Re-initialize locale if config specifies one and no --locale flag was given
         if cli.locale.is_none() {
-            if let Some(ref config_locale) = config.locale {
+            if let Some(config_locale) = config.locale() {
                 locale::init(None, Some(config_locale));
             }
         }
@@ -319,7 +319,7 @@ fn validate_command(path: &Path, cli: &Cli) -> anyhow::Result<()> {
 
     // Re-initialize locale if config specifies one and no --locale flag was given
     if cli.locale.is_none() {
-        if let Some(ref config_locale) = config.locale {
+        if let Some(config_locale) = config.locale() {
             locale::init(None, Some(config_locale));
         }
     }
@@ -329,7 +329,7 @@ fn validate_command(path: &Path, cli: &Cli) -> anyhow::Result<()> {
         eprintln!("{} {}", t!("cli.warning_label").yellow().bold(), warning);
         eprintln!();
     }
-    config.target = cli.target.into();
+    config.set_target(cli.target.into());
 
     // Validate config semantics and display warnings (only for text output)
     if matches!(cli.format, OutputFormat::Text) {
@@ -358,7 +358,7 @@ fn validate_command(path: &Path, cli: &Cli) -> anyhow::Result<()> {
                 "{} --max-files=0 disables file count protection. This may allow DoS via large projects.",
                 "Warning:".yellow().bold()
             );
-            config.max_files_to_validate = None;
+            config.set_max_files_to_validate(None);
         } else if max_files > 1_000_000 {
             // Warn on very high limits (>1M files is likely a mistake or attack)
             eprintln!(
@@ -366,9 +366,9 @@ fn validate_command(path: &Path, cli: &Cli) -> anyhow::Result<()> {
                 "Warning:".yellow().bold(),
                 max_files
             );
-            config.max_files_to_validate = Some(max_files);
+            config.set_max_files_to_validate(Some(max_files));
         } else {
-            config.max_files_to_validate = Some(max_files);
+            config.set_max_files_to_validate(Some(max_files));
         }
     }
     let should_fix = cli.fix || cli.fix_safe || cli.dry_run;
@@ -686,7 +686,7 @@ fn run_single_validation(
         eprintln!("{} {}", t!("cli.warning_label").yellow().bold(), warning);
         eprintln!();
     }
-    config.target = target.into();
+    config.set_target(target.into());
 
     let ValidationResult {
         diagnostics,

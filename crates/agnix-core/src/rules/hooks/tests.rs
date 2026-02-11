@@ -1906,7 +1906,7 @@ fn test_fixture_invalid_timeout() {
 #[test]
 fn test_config_disabled_hooks_category_returns_empty() {
     let mut config = LintConfig::default();
-    config.rules.hooks = false;
+    config.rules_mut().hooks = false;
 
     let content = r#"{
             "hooks": {
@@ -1934,7 +1934,7 @@ fn test_config_disabled_hooks_category_returns_empty() {
 #[test]
 fn test_config_disabled_specific_hook_rule() {
     let mut config = LintConfig::default();
-    config.rules.disabled_rules = vec!["CC-HK-006".to_string()];
+    config.rules_mut().disabled_rules = vec!["CC-HK-006".to_string()];
 
     let content = r#"{
             "hooks": {
@@ -1965,7 +1965,7 @@ fn test_config_cursor_target_disables_hooks_rules() {
     use crate::config::TargetTool;
 
     let mut config = LintConfig::default();
-    config.target = TargetTool::Cursor;
+    config.set_target(TargetTool::Cursor);
 
     let content = r#"{
             "hooks": {
@@ -1993,7 +1993,7 @@ fn test_config_cursor_target_disables_hooks_rules() {
 #[test]
 fn test_config_dangerous_pattern_disabled() {
     let mut config = LintConfig::default();
-    config.rules.disabled_rules = vec!["CC-HK-009".to_string()];
+    config.rules_mut().disabled_rules = vec!["CC-HK-009".to_string()];
 
     let content = r#"{
             "hooks": {
@@ -2058,7 +2058,7 @@ fn test_cc_hk_010_assumption_when_version_not_pinned() {
 #[test]
 fn test_cc_hk_010_no_assumption_when_version_pinned() {
     let mut config = LintConfig::default();
-    config.tool_versions.claude_code = Some("1.0.0".to_string());
+    config.tool_versions_mut().claude_code = Some("1.0.0".to_string());
     assert!(config.is_claude_code_version_pinned());
 
     let content = r#"{
@@ -2213,7 +2213,7 @@ fn test_cc_hk_012_valid_json_no_error() {
 #[test]
 fn test_cc_hk_012_disabled() {
     let mut config = LintConfig::default();
-    config.rules.disabled_rules = vec!["CC-HK-012".to_string()];
+    config.rules_mut().disabled_rules = vec!["CC-HK-012".to_string()];
 
     let content = r#"{ invalid json }"#;
     let validator = HooksValidator;

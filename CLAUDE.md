@@ -64,7 +64,7 @@ tests/fixtures/     # Test cases by category
 - `parsers/` - Frontmatter, JSON, Markdown parsing
 - `schemas/` - Type definitions (12 schemas: skill, hooks, agent, mcp, cline, etc.)
 - `rules/` - Validators implementing Validator trait (19 validators)
-- `config.rs` - LintConfig, ToolVersions, SpecRevisions
+- `config.rs` - LintConfig, LintConfigBuilder, ConfigError, ToolVersions, SpecRevisions
 - `diagnostics.rs` - Diagnostic, Fix, DiagnosticLevel
 - `eval.rs` - Rule efficacy evaluation (precision/recall/F1)
 - `file_types.rs` - FileType enum and detect_file_type()
@@ -96,6 +96,25 @@ impl ValidatorRegistry {
     pub fn builder() -> ValidatorRegistryBuilder;
     pub fn with_defaults() -> Self;
     pub fn disable_validator(&mut self, name: impl Into<String>);
+}
+
+// Validated config construction (fields are private)
+// Usage: LintConfig::builder().severity(Error).tools(vec![...]).build()?
+pub struct LintConfigBuilder { /* ... */ }
+
+impl LintConfigBuilder {
+    pub fn severity(&mut self, s: SeverityLevel) -> &mut Self;
+    pub fn target(&mut self, t: TargetTool) -> &mut Self;
+    pub fn tools(&mut self, t: Vec<String>) -> &mut Self;
+    pub fn exclude(&mut self, e: Vec<String>) -> &mut Self;
+    pub fn disable_rule(&mut self, id: impl Into<String>) -> &mut Self;
+    pub fn disable_validator(&mut self, name: impl Into<String>) -> &mut Self;
+    pub fn build(&mut self) -> Result<LintConfig, ConfigError>;
+    pub fn build_unchecked(&mut self) -> LintConfig;
+}
+
+impl LintConfig {
+    pub fn builder() -> LintConfigBuilder;
 }
 ```
 

@@ -855,7 +855,7 @@ fn test_is_tool_alias_case_sensitivity() {
     let aliases = ["Copilot", "COPILOT", "copilot"];
     for alias in aliases {
         let mut config = LintConfig::default();
-        config.tools = vec![alias.to_string()];
+        config.set_tools(vec![alias.to_string()]);
         assert!(
             config.is_rule_enabled("COP-001"),
             "Alias '{}' should match 'github-copilot' and enable COP-* rules",

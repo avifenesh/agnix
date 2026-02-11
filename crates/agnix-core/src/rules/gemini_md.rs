@@ -297,7 +297,7 @@ Run the CLI.
     #[test]
     fn test_config_disabled_gemini_md_category() {
         let mut config = LintConfig::default();
-        config.rules.gemini_md = false;
+        config.rules_mut().gemini_md = false;
 
         let content = r#"```unclosed
 Just text without headers."#;
@@ -313,7 +313,7 @@ Just text without headers."#;
     #[test]
     fn test_config_disabled_specific_rule() {
         let mut config = LintConfig::default();
-        config.rules.disabled_rules = vec!["GM-001".to_string()];
+        config.rules_mut().disabled_rules = vec!["GM-001".to_string()];
 
         let content = r#"# Project
 ```unclosed"#;
@@ -333,7 +333,7 @@ Just text without headers."#;
 
         for rule in rules {
             let mut config = LintConfig::default();
-            config.rules.disabled_rules = vec![rule.to_string()];
+            config.rules_mut().disabled_rules = vec![rule.to_string()];
 
             // Content that could trigger each rule
             let content = r#"```unclosed

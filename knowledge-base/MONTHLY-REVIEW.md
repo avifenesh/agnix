@@ -92,6 +92,26 @@ Spot-check for significant changes only. Do not invest significant time here.
 - [ ] Note any emerging config patterns across tools
 - [ ] Identify patterns that could benefit from new rules
 
+### Dependency Security (RUSTSEC Advisories)
+
+Review ignored RUSTSEC advisories and check if they can be removed:
+
+- [ ] **RUSTSEC-2024-0384** (`instant` via `notify`)
+  - Check if `notify` 7.0 has been released (drops `instant` dependency)
+  - If released, update `notify` and remove advisory ignore from `deny.toml` and `.github/workflows/security.yml`
+  - Risk level: Low (unmaintained but functionally correct)
+
+- [ ] **RUSTSEC-2025-0141** (`bincode` via `iai-callgrind`)
+  - Check if `iai-callgrind` has updated its `bincode` dependency
+  - If updated, remove advisory ignore from `deny.toml` and `.github/workflows/security.yml`
+  - Risk level: Low (dev-only dependency, not in release binaries)
+
+- [ ] Run `cargo audit` without ignores to see current advisory status
+- [ ] Run `cargo deny check advisories` to validate ignores in `deny.toml`
+- [ ] Check for new advisories that need to be addressed or documented
+- [ ] Update `docs/RUSTSEC-ADVISORIES.md` with current status or move to "Resolved Advisories" section
+- [ ] Update relevant tracking issues with current status
+
 ---
 
 ## Post-Review Actions

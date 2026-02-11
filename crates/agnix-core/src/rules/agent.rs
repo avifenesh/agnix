@@ -1697,7 +1697,7 @@ Agent instructions"#;
     #[test]
     fn test_config_disabled_agents_category_returns_empty() {
         let mut config = LintConfig::default();
-        config.rules.agents = false;
+        config.rules_mut().agents = false;
 
         let content = r#"---
 description: A test agent without name
@@ -1718,7 +1718,7 @@ Agent instructions"#;
     #[test]
     fn test_config_disabled_specific_rule() {
         let mut config = LintConfig::default();
-        config.rules.disabled_rules = vec!["CC-AG-001".to_string()];
+        config.rules_mut().disabled_rules = vec!["CC-AG-001".to_string()];
 
         // Agent missing both name and description
         let content = r#"---
@@ -1749,7 +1749,7 @@ Agent instructions"#;
         use crate::config::TargetTool;
 
         let mut config = LintConfig::default();
-        config.target = TargetTool::Cursor;
+        config.set_target(TargetTool::Cursor);
 
         let content = r#"---
 description: Agent without name
@@ -1772,7 +1772,7 @@ Agent instructions"#;
         use crate::config::TargetTool;
 
         let mut config = LintConfig::default();
-        config.target = TargetTool::ClaudeCode;
+        config.set_target(TargetTool::ClaudeCode);
 
         let content = r#"---
 description: Agent without name
@@ -2080,7 +2080,7 @@ Agent instructions"#;
     #[test]
     fn test_cc_ag_007_disabled() {
         let mut config = LintConfig::default();
-        config.rules.disabled_rules = vec!["CC-AG-007".to_string()];
+        config.rules_mut().disabled_rules = vec!["CC-AG-007".to_string()];
 
         let content = r#"---
 name: [invalid yaml

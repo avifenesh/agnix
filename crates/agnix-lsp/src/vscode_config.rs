@@ -209,40 +209,40 @@ impl VsCodeConfig {
         // Merge severity
         if let Some(ref severity) = self.severity {
             if let Some(level) = parse_severity(severity) {
-                config.severity = level;
+                config.set_severity(level);
             }
         }
 
         // Merge target
         if let Some(ref target) = self.target {
             if let Some(tool) = parse_target(target) {
-                config.target = tool;
+                config.set_target(tool);
             }
         }
 
         // Merge tools
         if let Some(ref tools) = self.tools {
-            config.tools = tools.clone();
+            config.set_tools(tools.clone());
         }
 
         // Merge rules
         if let Some(ref rules) = self.rules {
-            rules.merge_into_rule_config(&mut config.rules);
+            rules.merge_into_rule_config(config.rules_mut());
         }
 
         // Merge tool versions
         if let Some(ref versions) = self.versions {
-            versions.merge_into_tool_versions(&mut config.tool_versions);
+            versions.merge_into_tool_versions(config.tool_versions_mut());
         }
 
         // Merge spec revisions
         if let Some(ref specs) = self.specs {
-            specs.merge_into_spec_revisions(&mut config.spec_revisions);
+            specs.merge_into_spec_revisions(config.spec_revisions_mut());
         }
 
         // Merge files config
         if let Some(ref files) = self.files {
-            files.merge_into_files_config(&mut config.files);
+            files.merge_into_files_config(config.files_mut());
         }
 
         // Merge locale
@@ -252,11 +252,11 @@ impl VsCodeConfig {
         if let Some(ref locale_opt) = self.locale {
             match locale_opt {
                 Some(locale) => {
-                    config.locale = Some(locale.clone());
+                    config.set_locale(Some(locale.clone()));
                     crate::locale::init_from_config(locale);
                 }
                 None => {
-                    config.locale = None;
+                    config.set_locale(None);
                     crate::locale::init_from_env();
                 }
             }
@@ -493,8 +493,8 @@ mod tests {
     #[test]
     fn test_merge_into_lint_config_preserves_unspecified() {
         let mut lint_config = LintConfig::default();
-        lint_config.severity = SeverityLevel::Error;
-        lint_config.rules.skills = false;
+        lint_config.set_severity(SeverityLevel::Error);
+        lint_config.rules_mut().skills = false;
 
         // VS Code config only specifies hooks
         let vscode_config = VsCodeConfig {
@@ -508,19 +508,19 @@ mod tests {
         vscode_config.merge_into_lint_config(&mut lint_config);
 
         // Original values preserved
-        assert_eq!(lint_config.severity, SeverityLevel::Error);
-        assert!(!lint_config.rules.skills);
+        assert_eq!(lint_config.severity(), SeverityLevel::Error);
+        assert!(!lint_config.rules().skills);
 
         // New value applied
-        assert!(!lint_config.rules.hooks);
+        assert!(!lint_config.rules().hooks);
     }
 
     #[test]
     fn test_merge_into_lint_config_overrides() {
         let mut lint_config = LintConfig::default();
-        lint_config.severity = SeverityLevel::Warning;
-        lint_config.target = TargetTool::Generic;
-        lint_config.rules.skills = true;
+        lint_config.set_severity(SeverityLevel::Warning);
+        lint_config.set_target(TargetTool::Generic);
+        lint_config.rules_mut().skills = true;
 
         // VS Code config overrides everything
         let vscode_config = VsCodeConfig {
@@ -536,15 +536,15 @@ mod tests {
         vscode_config.merge_into_lint_config(&mut lint_config);
 
         // All values overridden
-        assert_eq!(lint_config.severity, SeverityLevel::Error);
-        assert_eq!(lint_config.target, TargetTool::ClaudeCode);
-        assert!(!lint_config.rules.skills);
+        assert_eq!(lint_config.severity(), SeverityLevel::Error);
+        assert_eq!(lint_config.target(), TargetTool::ClaudeCode);
+        assert!(!lint_config.rules().skills);
     }
 
     #[test]
     fn test_merge_versions() {
         let mut lint_config = LintConfig::default();
-        lint_config.tool_versions.claude_code = Some("0.9.0".to_string());
+        lint_config.tool_versions_mut().claude_code = Some("0.9.0".to_string());
 
         let vscode_config = VsCodeConfig {
             versions: Some(VsCodeVersions {
@@ -558,11 +558,11 @@ mod tests {
         vscode_config.merge_into_lint_config(&mut lint_config);
 
         assert_eq!(
-            lint_config.tool_versions.claude_code,
+            lint_config.tool_versions().claude_code,
             Some("1.0.0".to_string())
         );
-        assert_eq!(lint_config.tool_versions.codex, Some("0.1.0".to_string()));
-        assert!(lint_config.tool_versions.cursor.is_none()); // Not specified
+        assert_eq!(lint_config.tool_versions().codex, Some("0.1.0".to_string()));
+        assert!(lint_config.tool_versions().cursor.is_none()); // Not specified
     }
 
     #[test]
@@ -580,10 +580,10 @@ mod tests {
         vscode_config.merge_into_lint_config(&mut lint_config);
 
         assert_eq!(
-            lint_config.spec_revisions.mcp_protocol,
+            lint_config.spec_revisions().mcp_protocol,
             Some("2025-06-18".to_string())
         );
-        assert!(lint_config.spec_revisions.agent_skills_spec.is_none());
+        assert!(lint_config.spec_revisions().agent_skills_spec.is_none());
     }
 
     #[test]
@@ -606,7 +606,7 @@ mod tests {
     #[test]
     fn test_disabled_rules_merge() {
         let mut lint_config = LintConfig::default();
-        lint_config.rules.disabled_rules = vec!["AS-001".to_string()];
+        lint_config.rules_mut().disabled_rules = vec!["AS-001".to_string()];
 
         let vscode_config = VsCodeConfig {
             rules: Some(VsCodeRules {
@@ -620,7 +620,7 @@ mod tests {
 
         // VS Code config replaces (not appends) disabled_rules
         assert_eq!(
-            lint_config.rules.disabled_rules,
+            lint_config.rules().disabled_rules,
             vec!["PE-003".to_string(), "MCP-001".to_string()]
         );
     }
@@ -628,7 +628,7 @@ mod tests {
     #[test]
     fn test_tools_array_merge() {
         let mut lint_config = LintConfig::default();
-        lint_config.tools = vec!["generic".to_string()];
+        lint_config.set_tools(vec!["generic".to_string()]);
 
         let vscode_config = VsCodeConfig {
             tools: Some(vec!["claude-code".to_string(), "cursor".to_string()]),
@@ -638,8 +638,8 @@ mod tests {
         vscode_config.merge_into_lint_config(&mut lint_config);
 
         assert_eq!(
-            lint_config.tools,
-            vec!["claude-code".to_string(), "cursor".to_string()]
+            lint_config.tools(),
+            &["claude-code".to_string(), "cursor".to_string()]
         );
     }
 
@@ -650,7 +650,7 @@ mod tests {
         rust_i18n::set_locale("en");
 
         let mut lint_config = LintConfig::default();
-        assert!(lint_config.locale.is_none());
+        assert!(lint_config.locale().is_none());
 
         let vscode_config = VsCodeConfig {
             locale: Some(Some("es".to_string())),
@@ -659,7 +659,7 @@ mod tests {
 
         vscode_config.merge_into_lint_config(&mut lint_config);
 
-        assert_eq!(lint_config.locale, Some("es".to_string()));
+        assert_eq!(lint_config.locale(), Some("es"));
         assert_eq!(&*rust_i18n::locale(), "es");
 
         // Reset locale for other tests
@@ -673,7 +673,7 @@ mod tests {
         rust_i18n::set_locale("es");
 
         let mut lint_config = LintConfig::default();
-        lint_config.locale = Some("es".to_string());
+        lint_config.set_locale(Some("es".to_string()));
 
         // User sets locale to null in VS Code (revert to auto-detection)
         let vscode_config = VsCodeConfig {
@@ -684,7 +684,7 @@ mod tests {
         vscode_config.merge_into_lint_config(&mut lint_config);
 
         // Config locale should be cleared
-        assert!(lint_config.locale.is_none());
+        assert!(lint_config.locale().is_none());
 
         // Reset locale for other tests
         rust_i18n::set_locale("en");
@@ -693,7 +693,7 @@ mod tests {
     #[test]
     fn test_locale_not_set_preserves_existing() {
         let mut lint_config = LintConfig::default();
-        lint_config.locale = Some("zh-CN".to_string());
+        lint_config.set_locale(Some("zh-CN".to_string()));
 
         let vscode_config = VsCodeConfig {
             severity: Some("Error".to_string()),
@@ -703,7 +703,7 @@ mod tests {
         vscode_config.merge_into_lint_config(&mut lint_config);
 
         // locale not in VsCodeConfig, so existing value preserved
-        assert_eq!(lint_config.locale, Some("zh-CN".to_string()));
+        assert_eq!(lint_config.locale(), Some("zh-CN"));
     }
 }
 
@@ -711,8 +711,8 @@ mod tests {
 fn test_version_pin_clearing_with_null() {
     // Start with a config that has version pins from .agnix.toml
     let mut lint_config = LintConfig::default();
-    lint_config.tool_versions.claude_code = Some("0.9.0".to_string());
-    lint_config.tool_versions.codex = Some("0.5.0".to_string());
+    lint_config.tool_versions_mut().claude_code = Some("0.9.0".to_string());
+    lint_config.tool_versions_mut().codex = Some("0.5.0".to_string());
 
     // User explicitly sets claude_code to null in VS Code (clears pin)
     // but doesn't touch codex (preserves .agnix.toml value)
@@ -728,17 +728,17 @@ fn test_version_pin_clearing_with_null() {
     vscode_config.merge_into_lint_config(&mut lint_config);
 
     // claude_code should be cleared (None)
-    assert!(lint_config.tool_versions.claude_code.is_none());
+    assert!(lint_config.tool_versions().claude_code.is_none());
     // codex should still have the .agnix.toml value
-    assert_eq!(lint_config.tool_versions.codex, Some("0.5.0".to_string()));
+    assert_eq!(lint_config.tool_versions().codex, Some("0.5.0".to_string()));
 }
 
 #[test]
 fn test_spec_pin_clearing_with_null() {
     // Start with a config that has spec pins from .agnix.toml
     let mut lint_config = LintConfig::default();
-    lint_config.spec_revisions.mcp_protocol = Some("2025-01-01".to_string());
-    lint_config.spec_revisions.agent_skills_spec = Some("v1".to_string());
+    lint_config.spec_revisions_mut().mcp_protocol = Some("2025-01-01".to_string());
+    lint_config.spec_revisions_mut().agent_skills_spec = Some("v1".to_string());
 
     // User explicitly sets mcp_protocol to null (clears pin)
     // but doesn't touch agent_skills_spec (preserves .agnix.toml)
@@ -754,10 +754,10 @@ fn test_spec_pin_clearing_with_null() {
     vscode_config.merge_into_lint_config(&mut lint_config);
 
     // mcp_protocol should be cleared (None)
-    assert!(lint_config.spec_revisions.mcp_protocol.is_none());
+    assert!(lint_config.spec_revisions().mcp_protocol.is_none());
     // agent_skills_spec should still have the .agnix.toml value
     assert_eq!(
-        lint_config.spec_revisions.agent_skills_spec,
+        lint_config.spec_revisions().agent_skills_spec,
         Some("v1".to_string())
     );
 }
@@ -803,7 +803,7 @@ fn test_vscode_files_partial_deserialization() {
 #[test]
 fn test_vscode_files_not_set_preserves_existing() {
     let mut lint_config = LintConfig::default();
-    lint_config.files.include_as_memory = vec!["existing.md".to_string()];
+    lint_config.files_mut().include_as_memory = vec!["existing.md".to_string()];
 
     // VS Code config without files section
     let vscode_config = VsCodeConfig {
@@ -815,7 +815,7 @@ fn test_vscode_files_not_set_preserves_existing() {
 
     // Files config should be preserved
     assert_eq!(
-        lint_config.files.include_as_memory,
+        lint_config.files_config().include_as_memory,
         vec!["existing.md".to_string()]
     );
 }
@@ -825,8 +825,8 @@ fn test_vscode_files_not_set_preserves_existing() {
 #[test]
 fn test_vscode_files_merge_overrides() {
     let mut lint_config = LintConfig::default();
-    lint_config.files.include_as_memory = vec!["old.md".to_string()];
-    lint_config.files.include_as_generic = vec!["old-generic.md".to_string()];
+    lint_config.files_mut().include_as_memory = vec!["old.md".to_string()];
+    lint_config.files_mut().include_as_generic = vec!["old-generic.md".to_string()];
 
     let vscode_config = VsCodeConfig {
         files: Some(VsCodeFiles {
@@ -841,14 +841,17 @@ fn test_vscode_files_merge_overrides() {
 
     // include_as_memory overridden
     assert_eq!(
-        lint_config.files.include_as_memory,
+        lint_config.files_config().include_as_memory,
         vec!["new.md".to_string()]
     );
     // include_as_generic preserved (not in VS Code config)
     assert_eq!(
-        lint_config.files.include_as_generic,
+        lint_config.files_config().include_as_generic,
         vec!["old-generic.md".to_string()]
     );
     // exclude added
-    assert_eq!(lint_config.files.exclude, vec!["drafts/**".to_string()]);
+    assert_eq!(
+        lint_config.files_config().exclude,
+        vec!["drafts/**".to_string()]
+    );
 }

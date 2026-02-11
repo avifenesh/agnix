@@ -34,7 +34,7 @@ impl Validator for XmlValidator {
         let mut diagnostics = Vec::new();
 
         // Early return if XML category is disabled or legacy flag is disabled
-        if !config.rules.xml || !config.rules.xml_balance {
+        if !config.rules().xml || !config.rules().xml_balance {
             return diagnostics;
         }
 
@@ -171,7 +171,7 @@ mod tests {
     #[test]
     fn test_config_disabled_xml_category() {
         let mut config = LintConfig::default();
-        config.rules.xml = false;
+        config.rules_mut().xml = false;
 
         let content = "<example>test";
         let validator = XmlValidator;
@@ -183,7 +183,7 @@ mod tests {
     #[test]
     fn test_legacy_xml_balance_flag() {
         let mut config = LintConfig::default();
-        config.rules.xml_balance = false;
+        config.rules_mut().xml_balance = false;
 
         let content = "<example>test";
         let validator = XmlValidator;
@@ -239,7 +239,7 @@ mod tests {
     #[test]
     fn test_xml_001_can_be_disabled() {
         let mut config = LintConfig::default();
-        config.rules.disabled_rules = vec!["XML-001".to_string()];
+        config.rules_mut().disabled_rules = vec!["XML-001".to_string()];
 
         let content = "<example>test";
         let validator = XmlValidator;
@@ -251,7 +251,7 @@ mod tests {
     #[test]
     fn test_xml_002_can_be_disabled() {
         let mut config = LintConfig::default();
-        config.rules.disabled_rules = vec!["XML-002".to_string()];
+        config.rules_mut().disabled_rules = vec!["XML-002".to_string()];
 
         let content = "<outer><inner></outer></inner>";
         let validator = XmlValidator;
@@ -264,7 +264,7 @@ mod tests {
     #[test]
     fn test_xml_003_can_be_disabled() {
         let mut config = LintConfig::default();
-        config.rules.disabled_rules = vec!["XML-003".to_string()];
+        config.rules_mut().disabled_rules = vec!["XML-003".to_string()];
 
         let content = "</orphan>";
         let validator = XmlValidator;

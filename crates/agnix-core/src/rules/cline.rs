@@ -396,7 +396,7 @@ paths: "**/*.rs"
     #[test]
     fn test_config_disabled_cline_category() {
         let mut config = LintConfig::default();
-        config.rules.cline = false;
+        config.rules_mut().cline = false;
 
         let content = "";
         let diagnostics = validate_folder_with_config(content, &config);
@@ -411,7 +411,7 @@ paths: "**/*.rs"
     #[test]
     fn test_config_disabled_specific_rule() {
         let mut config = LintConfig::default();
-        config.rules.disabled_rules = vec!["CLN-001".to_string()];
+        config.rules_mut().disabled_rules = vec!["CLN-001".to_string()];
 
         let content = "";
         let diagnostics = validate_folder_with_config(content, &config);
@@ -466,7 +466,7 @@ Always use strict mode and explicit types.
 
         for rule in rules {
             let mut config = LintConfig::default();
-            config.rules.disabled_rules = vec![rule.to_string()];
+            config.rules_mut().disabled_rules = vec![rule.to_string()];
 
             let (content, path): (&str, &str) = match rule {
                 "CLN-001" => ("", ".clinerules"),

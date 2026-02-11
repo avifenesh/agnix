@@ -32,7 +32,7 @@ impl Validator for ClaudeMdValidator {
 
         // CC-MEM-005: Generic instructions detection
         // Also check legacy config flag for backward compatibility
-        if config.is_rule_enabled("CC-MEM-005") && config.rules.generic_instructions {
+        if config.is_rule_enabled("CC-MEM-005") && config.rules().generic_instructions {
             let generic_insts = find_generic_instructions(content);
             for inst in generic_insts {
                 diagnostics.push(
@@ -326,7 +326,7 @@ mod tests {
     #[test]
     fn test_config_disabled_memory_category() {
         let mut config = LintConfig::default();
-        config.rules.memory = false;
+        config.rules_mut().memory = false;
 
         let content = "Be helpful and accurate when responding.";
         let validator = ClaudeMdValidator;
@@ -339,7 +339,7 @@ mod tests {
     #[test]
     fn test_config_disabled_specific_rule() {
         let mut config = LintConfig::default();
-        config.rules.disabled_rules = vec!["CC-MEM-005".to_string()];
+        config.rules_mut().disabled_rules = vec!["CC-MEM-005".to_string()];
 
         let content = "Be helpful and accurate when responding.";
         let validator = ClaudeMdValidator;
@@ -354,7 +354,7 @@ mod tests {
         use crate::config::TargetTool;
 
         let mut config = LintConfig::default();
-        config.target = TargetTool::Cursor;
+        config.set_target(TargetTool::Cursor);
 
         let content = "Be helpful and accurate when responding.";
         let validator = ClaudeMdValidator;
@@ -367,7 +367,7 @@ mod tests {
     #[test]
     fn test_legacy_generic_instructions_flag() {
         let mut config = LintConfig::default();
-        config.rules.generic_instructions = false;
+        config.rules_mut().generic_instructions = false;
 
         let content = "Be helpful and accurate when responding.";
         let validator = ClaudeMdValidator;
@@ -644,7 +644,7 @@ You should consider this approach.
             + &"x".repeat(6100);
 
         let mut config = LintConfig::default();
-        config.rules.disabled_rules = vec![
+        config.rules_mut().disabled_rules = vec![
             "CC-MEM-004".to_string(),
             "CC-MEM-006".to_string(),
             "CC-MEM-007".to_string(),
@@ -1003,7 +1003,7 @@ You should consider this approach.
 
         for rule in rules {
             let mut config = LintConfig::default();
-            config.rules.disabled_rules = vec![rule.to_string()];
+            config.rules_mut().disabled_rules = vec![rule.to_string()];
 
             // Content that could trigger each rule
             let content = "# Critical Rules\n\nAlways follow best practices. Don't write bad code.\nRun /unknown-cmd.\nYou should do this.";
