@@ -208,6 +208,7 @@ mod tests {
                 suggestion: None,
                 fixes: vec![],
                 assumption: None,
+                metadata: None,
             },
         ];
 

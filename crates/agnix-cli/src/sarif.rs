@@ -337,6 +337,7 @@ mod tests {
             suggestion: None,
             fixes: vec![],
             assumption: None,
+            metadata: None,
         };
         let sarif = diagnostics_to_sarif(&[diag], Path::new("/project"));
         assert_eq!(sarif.runs[0].results[0].level, "note");
@@ -429,6 +430,7 @@ mod tests {
             suggestion: None,
             fixes: vec![],
             assumption: None,
+            metadata: None,
         };
 
         let sarif = diagnostics_to_sarif(&[diag], Path::new("/project"));

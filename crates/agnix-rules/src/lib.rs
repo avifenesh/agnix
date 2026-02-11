@@ -7,7 +7,7 @@
 //! # Usage
 //!
 //! ```
-//! use agnix_rules::{RULES_DATA, VALID_TOOLS, TOOL_RULE_PREFIXES};
+//! use agnix_rules::{RULES_DATA, RULES_METADATA, VALID_TOOLS, TOOL_RULE_PREFIXES};
 //!
 //! // RULES_DATA is a static array of (rule_id, rule_name) tuples
 //! for (id, name) in RULES_DATA {
@@ -66,6 +66,28 @@ pub fn authoring_families() -> &'static [&'static str] {
 /// Returns the raw authoring catalog JSON generated from rules.json.
 pub fn authoring_catalog_json() -> &'static str {
     AUTHORING_CATALOG_JSON
+}
+
+/// Looks up structured metadata for a rule by ID.
+///
+/// Returns `(category, severity, tool)` if found.
+/// The tool field is empty when the rule applies generically (no specific tool).
+///
+/// # Example
+/// ```
+/// use agnix_rules::get_rule_metadata;
+///
+/// let meta = get_rule_metadata("AS-001");
+/// assert!(meta.is_some());
+/// let (category, severity, _tool) = meta.unwrap();
+/// assert_eq!(category, "agent-skills");
+/// assert_eq!(severity, "HIGH");
+/// ```
+pub fn get_rule_metadata(id: &str) -> Option<(&'static str, &'static str, &'static str)> {
+    RULES_METADATA
+        .iter()
+        .find(|(rule_id, _, _, _)| *rule_id == id)
+        .map(|(_, category, severity, tool)| (*category, *severity, *tool))
 }
 
 /// Returns the tool name for a given rule ID prefix, if any.
@@ -170,6 +192,61 @@ mod tests {
         ids.sort();
         ids.dedup();
         assert_eq!(ids.len(), original_len, "Should have no duplicate rule IDs");
+    }
+
+    // ===== RULES_METADATA Tests =====
+
+    #[test]
+    #[allow(clippy::const_is_empty)]
+    fn test_rules_metadata_not_empty() {
+        assert!(
+            !RULES_METADATA.is_empty(),
+            "RULES_METADATA should not be empty"
+        );
+    }
+
+    #[test]
+    fn test_rules_metadata_same_length_as_rules_data() {
+        assert_eq!(
+            RULES_METADATA.len(),
+            RULES_DATA.len(),
+            "RULES_METADATA and RULES_DATA should have the same number of entries"
+        );
+    }
+
+    #[test]
+    fn test_get_rule_metadata_as_001() {
+        let meta = get_rule_metadata("AS-001");
+        assert!(meta.is_some(), "AS-001 should have metadata");
+        let (category, severity, _tool) = meta.unwrap();
+        assert_eq!(category, "agent-skills");
+        assert_eq!(severity, "HIGH");
+    }
+
+    #[test]
+    fn test_get_rule_metadata_cc_hk_001() {
+        let meta = get_rule_metadata("CC-HK-001");
+        assert!(meta.is_some(), "CC-HK-001 should have metadata");
+        let (category, severity, tool) = meta.unwrap();
+        assert!(!category.is_empty(), "category should not be empty");
+        assert!(!severity.is_empty(), "severity should not be empty");
+        assert_eq!(tool, "claude-code");
+    }
+
+    #[test]
+    fn test_get_rule_metadata_nonexistent() {
+        let meta = get_rule_metadata("NONEXISTENT-999");
+        assert!(meta.is_none(), "Nonexistent rule should return None");
+    }
+
+    #[test]
+    fn test_get_rule_metadata_tool_may_be_empty() {
+        // Rules like AS-001 have no specific tool
+        let meta = get_rule_metadata("AS-001");
+        assert!(meta.is_some());
+        let (_category, _severity, tool) = meta.unwrap();
+        // AS-001 applies generically (no tool), so tool should be empty
+        assert_eq!(tool, "", "AS-001 should have empty tool (generic rule)");
     }
 
     // ===== VALID_TOOLS Tests =====

@@ -77,6 +77,23 @@ impl Fix {
     }
 }
 
+/// Structured metadata about the rule that triggered a diagnostic.
+///
+/// Populated automatically from `agnix-rules` build-time data when using
+/// the `Diagnostic::error()`, `warning()`, or `info()` constructors, or
+/// manually via `Diagnostic::with_metadata()`.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct RuleMetadata {
+    /// Rule category (e.g., "agent-skills", "claude-code-hooks").
+    pub category: String,
+    /// Rule severity from the rules catalog (e.g., "HIGH", "MEDIUM", "LOW").
+    pub severity: String,
+    /// Tool this rule specifically applies to (e.g., "claude-code", "cursor").
+    /// `None` for generic rules that apply to all tools.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub applies_to_tool: Option<String>,
+}
+
 /// A diagnostic message from the linter
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Diagnostic {
@@ -98,6 +115,13 @@ pub struct Diagnostic {
     /// validation.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub assumption: Option<String>,
+    /// Structured metadata about the rule (category, severity, tool).
+    ///
+    /// Auto-populated from `agnix-rules` at construction time when using the
+    /// `error()`, `warning()`, or `info()` constructors. Can also be set
+    /// manually via `with_metadata()`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub metadata: Option<RuleMetadata>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
@@ -105,6 +129,19 @@ pub enum DiagnosticLevel {
     Error,
     Warning,
     Info,
+}
+
+/// Build a `RuleMetadata` from the compile-time rules catalog.
+fn lookup_rule_metadata(rule_id: &str) -> Option<RuleMetadata> {
+    agnix_rules::get_rule_metadata(rule_id).map(|(category, severity, tool)| RuleMetadata {
+        category: category.to_string(),
+        severity: severity.to_string(),
+        applies_to_tool: if tool.is_empty() {
+            None
+        } else {
+            Some(tool.to_string())
+        },
+    })
 }
 
 impl Diagnostic {
@@ -115,6 +152,7 @@ impl Diagnostic {
         rule: &str,
         message: impl Into<String>,
     ) -> Self {
+        let metadata = lookup_rule_metadata(rule);
         Self {
             level: DiagnosticLevel::Error,
             message: message.into(),
@@ -125,6 +163,7 @@ impl Diagnostic {
             suggestion: None,
             fixes: Vec::new(),
             assumption: None,
+            metadata,
         }
     }
 
@@ -135,6 +174,7 @@ impl Diagnostic {
         rule: &str,
         message: impl Into<String>,
     ) -> Self {
+        let metadata = lookup_rule_metadata(rule);
         Self {
             level: DiagnosticLevel::Warning,
             message: message.into(),
@@ -145,6 +185,7 @@ impl Diagnostic {
             suggestion: None,
             fixes: Vec::new(),
             assumption: None,
+            metadata,
         }
     }
 
@@ -155,6 +196,7 @@ impl Diagnostic {
         rule: &str,
         message: impl Into<String>,
     ) -> Self {
+        let metadata = lookup_rule_metadata(rule);
         Self {
             level: DiagnosticLevel::Info,
             message: message.into(),
@@ -165,6 +207,7 @@ impl Diagnostic {
             suggestion: None,
             fixes: Vec::new(),
             assumption: None,
+            metadata,
         }
     }
 
@@ -191,6 +234,12 @@ impl Diagnostic {
     /// Add multiple automatic fixes to this diagnostic
     pub fn with_fixes(mut self, fixes: impl IntoIterator<Item = Fix>) -> Self {
         self.fixes.extend(fixes);
+        self
+    }
+
+    /// Set structured rule metadata on this diagnostic
+    pub fn with_metadata(mut self, metadata: RuleMetadata) -> Self {
+        self.metadata = Some(metadata);
         self
     }
 

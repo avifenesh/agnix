@@ -165,6 +165,48 @@ fn main() {
     generated_code.push_str("];\n\n");
 
     // =========================================================================
+    // Generate RULES_METADATA: (id, category, severity, tool) tuples
+    // =========================================================================
+    generated_code.push_str("/// Rule metadata as (id, category, severity, tool) tuples.\n");
+    generated_code.push_str("/// \n");
+    generated_code.push_str(
+        "/// Provides structured metadata for each rule from knowledge-base/rules.json.\n",
+    );
+    generated_code
+        .push_str("/// The tool field is empty when the rule applies generically.\n");
+    generated_code.push_str("pub const RULES_METADATA: &[(&str, &str, &str, &str)] = &[\n");
+
+    for (idx, rule) in rules_array.iter().enumerate() {
+        let id = rule["id"]
+            .as_str()
+            .unwrap_or_else(|| panic!("rule[{}] must have string 'id' field", idx));
+        let category = rule
+            .get("category")
+            .and_then(|c| c.as_str())
+            .unwrap_or("");
+        let severity = rule
+            .get("severity")
+            .and_then(|s| s.as_str())
+            .unwrap_or("");
+        let tool = rule
+            .get("evidence")
+            .and_then(|e| e.get("applies_to"))
+            .and_then(|a| a.get("tool"))
+            .and_then(|t| t.as_str())
+            .unwrap_or("");
+
+        generated_code.push_str(&format!(
+            "    (\"{}\", \"{}\", \"{}\", \"{}\"),\n",
+            escape_str(id),
+            escape_str(category),
+            escape_str(severity),
+            escape_str(tool)
+        ));
+    }
+
+    generated_code.push_str("];\n\n");
+
+    // =========================================================================
     // Extract unique tools from evidence.applies_to.tool
     // =========================================================================
     let mut tools: BTreeSet<String> = BTreeSet::new();

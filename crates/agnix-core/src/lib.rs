@@ -50,7 +50,7 @@ use std::sync::Mutex;
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 
 pub use config::{ConfigWarning, FilesConfig, LintConfig, generate_schema};
-pub use diagnostics::{Diagnostic, DiagnosticLevel, Fix, LintError, LintResult};
+pub use diagnostics::{Diagnostic, DiagnosticLevel, Fix, LintError, LintResult, RuleMetadata};
 pub use fixes::{FixResult, apply_fixes, apply_fixes_with_fs};
 pub use fs::{FileSystem, MockFileSystem, RealFileSystem};
 pub use rules::Validator;

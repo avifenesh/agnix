@@ -114,6 +114,7 @@ mod tests {
             suggestion: suggestion.map(String::from),
             fixes: vec![],
             assumption: None,
+            metadata: None,
         }
     }
 
@@ -135,6 +136,7 @@ mod tests {
             suggestion: None,
             fixes,
             assumption: None,
+            metadata: None,
         }
     }
 
