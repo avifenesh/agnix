@@ -487,6 +487,91 @@ html[data-theme='dark'] .featureIcon {
   margin: 0;
 }
 
+/* === What It Catches === */
+
+.catches {
+  padding: 4rem 0;
+  background: var(--ag-surface-raised);
+}
+
+.catchGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.25rem;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.catchCard {
+  border: 1px solid var(--ag-border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  background: var(--ag-surface);
+  text-align: center;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.catchCard:hover {
+  border-color: var(--ifm-color-primary);
+  box-shadow: 0 4px 16px hsla(174, 55%, 28%, 0.08);
+}
+
+html[data-theme='dark'] .catchCard:hover {
+  box-shadow: 0 4px 16px hsla(174, 55%, 48%, 0.08);
+}
+
+.catchRule {
+  display: inline-block;
+  font-family: 'JetBrains Mono', var(--ifm-font-family-monospace);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--ifm-color-primary);
+  background: hsla(174, 55%, 28%, 0.08);
+  padding: 0.2rem 0.6rem;
+  border-radius: 6px;
+  margin-bottom: 0.75rem;
+}
+
+html[data-theme='dark'] .catchRule {
+  background: hsla(174, 55%, 48%, 0.1);
+}
+
+.catchIssue {
+  font-family: 'JetBrains Mono', var(--ifm-font-family-monospace);
+  font-size: 0.82rem;
+  color: #f87171;
+  margin-bottom: 0.5rem;
+  word-break: break-word;
+}
+
+.catchArrow {
+  color: var(--ifm-color-primary);
+  font-size: 1.25rem;
+  line-height: 1;
+  margin-bottom: 0.5rem;
+}
+
+.catchFix {
+  font-family: 'JetBrains Mono', var(--ifm-font-family-monospace);
+  font-size: 0.82rem;
+  color: #4ade80;
+  margin-bottom: 0.75rem;
+  word-break: break-word;
+}
+
+.catchImpact {
+  font-size: 0.85rem;
+  color: var(--ag-text-secondary);
+  line-height: 1.5;
+  margin: 0;
+}
+
+@media (max-width: 640px) {
+  .catchGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* === Supported Tools === */
 
 .tools {

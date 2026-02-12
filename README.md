@@ -12,12 +12,13 @@
   </p>
 </div>
 
-The linter for your AI coding stack -- skills, hooks, memory, plugins, MCP, and agent configs. CLI, LSP server, and IDE plugins for Claude Code, Cursor, GitHub Copilot, Codex CLI, and more.
+Catch broken agent configs before your AI tools silently ignore them. 156 rules for CLAUDE.md, SKILL.md, hooks, MCP, Cursor, Copilot, and more.
 
 **156 validation rules** | **Auto-fix** | **[VS Code](https://marketplace.visualstudio.com/items?itemName=avifenesh.agnix) + [JetBrains](https://plugins.jetbrains.com/plugin/30087-agnix) + Neovim + Zed** | **GitHub Action**
 
 <p align="center">
   <a href="https://avifenesh.github.io/agnix/"><img src="https://img.shields.io/badge/Docs-Website-0A7E8C?style=for-the-badge" alt="Website"></a>
+  <a href="https://dev.to/avifenesh/your-ai-agent-configs-are-probably-broken-and-you-dont-know-it-16n1"><img src="https://img.shields.io/badge/Blog-Post-0A0A0A?style=for-the-badge&logo=dev.to" alt="Blog Post"></a>
   <a href="https://marketplace.visualstudio.com/items?itemName=avifenesh.agnix"><img src="https://img.shields.io/badge/VS%20Code-Install-007ACC?style=for-the-badge" alt="Install VS Code Extension"></a>
   <a href="https://plugins.jetbrains.com/plugin/30087-agnix"><img src="https://img.shields.io/badge/JetBrains-Install-000000?style=for-the-badge" alt="Install JetBrains Plugin"></a>
 </p>
@@ -32,7 +33,7 @@ The linter for your AI coding stack -- skills, hooks, memory, plugins, MCP, and 
 
 **Bad patterns get amplified.** AI assistants don't ignore wrong configs -- they [learn from them](https://www.augmentcode.com/guides/enterprise-coding-standards-12-rules-for-ai-ready-teams).
 
-agnix catches all of this. 156 rules derived from official specs, research papers, and real-world testing. Auto-fix included.
+agnix validates all of it -- 156 rules sourced from official specs, academic research, and real-world breakage patterns. Auto-fix included.
 
 ## Quick Start
 
@@ -103,15 +104,15 @@ agnix --target claude-code .  # Target specific tool
 
 ## Supported Tools
 
-| Tool | Rules | Config Files |
-|------|-------|--------------|
-| [Agent Skills](https://agentskills.io) | AS-\*, CC-SK-\* | SKILL.md |
-| [Claude Code](https://docs.anthropic.com/en/docs/build-with-claude/claude-code) | CC-\* | CLAUDE.md, hooks, agents, plugins |
-| [GitHub Copilot](https://docs.github.com/en/copilot) | COP-\* | .github/copilot-instructions.md, .github/instructions/\*.instructions.md |
-| [Cursor](https://cursor.com) | CUR-\* | .cursor/rules/\*.mdc, .cursorrules |
-| [MCP](https://modelcontextprotocol.io) | MCP-\* | \*.mcp.json |
-| [AGENTS.md](https://agentsmd.org) | AGM-\*, XP-\* | AGENTS.md, AGENTS.local.md, AGENTS.override.md |
-| [Gemini CLI](https://github.com/google-gemini/gemini-cli) | GM-\* | GEMINI.md, GEMINI.local.md |
+| Tool | Rules | Count | Config Files |
+|------|-------|-------|--------------|
+| [Agent Skills](https://agentskills.io) | AS-\*, CC-SK-\* | 31 | SKILL.md |
+| [Claude Code](https://docs.anthropic.com/en/docs/build-with-claude/claude-code) | CC-\* | 53 | CLAUDE.md, hooks, agents, plugins |
+| [GitHub Copilot](https://docs.github.com/en/copilot) | COP-\* | 6 | .github/copilot-instructions.md, .github/instructions/\*.instructions.md |
+| [Cursor](https://cursor.com) | CUR-\* | 10 | .cursor/rules/\*.mdc, .cursorrules |
+| [MCP](https://modelcontextprotocol.io) | MCP-\* | 12 | \*.mcp.json |
+| [AGENTS.md](https://agentsmd.org) | AGM-\*, XP-\* | 13 | AGENTS.md, AGENTS.local.md, AGENTS.override.md |
+| [Gemini CLI](https://github.com/google-gemini/gemini-cli) | GM-\* | 3 | GEMINI.md, GEMINI.local.md |
 
 ## Contributing
 

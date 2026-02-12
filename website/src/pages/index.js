@@ -44,6 +44,33 @@ const features = [
   },
 ];
 
+const catches = [
+  {
+    rule: 'AS-004',
+    issue: "Skill name 'Review-Code'",
+    fix: "Renamed to 'review-code'",
+    impact: 'Your skill was invisible to the agent. Now it triggers.',
+  },
+  {
+    rule: 'CC-HK-009',
+    issue: "Hook runs 'rm -rf $DIR'",
+    fix: 'Flagged dangerous pattern',
+    impact: 'Hooks run automatically. This could delete your project.',
+  },
+  {
+    rule: 'CC-MEM-005',
+    issue: "'Be helpful and accurate' in CLAUDE.md",
+    fix: 'Removed generic instruction',
+    impact: 'Claude already knows this. It was wasting your context window.',
+  },
+  {
+    rule: 'XML-001',
+    issue: 'Unclosed <rules> tag in instructions',
+    fix: 'Auto-added closing </rules>',
+    impact: 'The agent was parsing your instructions incorrectly.',
+  },
+];
+
 const tools = [
   {name: 'Claude Code', config: 'CLAUDE.md, Skills, Hooks, Agents'},
   {name: 'Cursor', config: '.cursorrules, .cursor/rules/'},
@@ -60,8 +87,8 @@ const tools = [
 
 const stats = [
   {value: String(siteData.totalRules), label: 'rules'},
-  {value: '2300+', label: 'tests'},
-  {value: '10+', label: 'tools'},
+  {value: String(siteData.autofixCount), label: 'auto-fixable'},
+  {value: String(siteData.uniqueTools.length), label: 'tools'},
   {value: '5', label: 'editors'},
 ];
 
@@ -203,6 +230,10 @@ function HeroBanner() {
               Give it a star
             </a>
             {' '}&mdash; it helps other developers find agnix.
+            {' | '}
+            <a href="https://dev.to/avifenesh/your-ai-agent-configs-are-probably-broken-and-you-dont-know-it-16n1">
+              Read the blog post
+            </a>
           </p>
         </div>
       </div>
@@ -224,7 +255,7 @@ function TerminalDemo() {
             </div>
             <span className={styles.terminalTitle}>agnix</span>
           </div>
-          <pre className={styles.terminalBody}><code><span className={styles.tDim}>{'$ '}</span><span className={styles.tCmd}>{'npx agnix .'}</span>{'\n'}<span className={styles.tDim}>{'Validating: .'}</span>{'\n\n'}<span className={styles.tPath}>{'CLAUDE.md:15:1'}</span>{' '}<span className={styles.tWarn}>{'warning'}</span>{": Generic instruction 'Be helpful and accurate' "}<span className={styles.tTag}>{'[fixable]'}</span>{'\n'}<span className={styles.tDim}>{'  help: Remove generic instructions. Claude already knows this.'}</span>{'\n\n'}<span className={styles.tPath}>{'.claude/skills/review/SKILL.md:3:1'}</span>{' '}<span className={styles.tErr}>{'error'}</span>{": Invalid name 'Review-Code' "}<span className={styles.tTag}>{'[fixable]'}</span>{'\n'}<span className={styles.tDim}>{"  help: Use lowercase letters and hyphens only (e.g., 'code-review')"}</span>{'\n\n'}{'Found '}<span className={styles.tErr}>{'1 error'}</span>{', '}<span className={styles.tWarn}>{'1 warning'}</span>{'\n'}<span className={styles.tDim}>{'  2 issues are automatically fixable'}</span>{'\n\n'}<span className={styles.tHint}>{'hint:'}</span>{' Run with '}<span className={styles.tCmd}>{'--fix'}</span>{' to apply fixes'}</code></pre>
+          <pre className={styles.terminalBody}><code><span className={styles.tDim}>{'$ '}</span><span className={styles.tCmd}>{'npx agnix .'}</span>{'\n'}<span className={styles.tDim}>{'Validating: .'}</span>{'\n\n'}<span className={styles.tPath}>{'.claude/settings.json:8:3'}</span>{' '}<span className={styles.tErr}>{'error'}</span>{": Hook command contains dangerous pattern 'rm -rf' "}<span className={styles.tTag}>{'[CC-HK-009]'}</span>{'\n'}<span className={styles.tDim}>{'  help: Hooks run automatically -- destructive commands can cause data loss'}</span>{'\n\n'}<span className={styles.tPath}>{'.claude/skills/deploy/SKILL.md:1:1'}</span>{' '}<span className={styles.tErr}>{'error'}</span>{': Dangerous skill without safety flag '}<span className={styles.tTag}>{'[CC-SK-006]'}</span>{'\n'}<span className={styles.tDim}>{"  help: Add 'allowedTools' restrictions to prevent unrestricted access"}</span>{'\n\n'}<span className={styles.tPath}>{'CLAUDE.md:15:1'}</span>{' '}<span className={styles.tWarn}>{'warning'}</span>{": Generic instruction 'Be helpful and accurate' "}<span className={styles.tTag}>{'[fixable]'}</span>{'\n'}<span className={styles.tDim}>{'  help: Remove generic instructions. Claude already knows this.'}</span>{'\n\n'}{'Found '}<span className={styles.tErr}>{'2 errors'}</span>{', '}<span className={styles.tWarn}>{'1 warning'}</span>{'\n'}<span className={styles.tDim}>{'  1 issue is automatically fixable'}</span>{'\n\n'}<span className={styles.tHint}>{'hint:'}</span>{' Run with '}<span className={styles.tCmd}>{'--fix'}</span>{' to apply fixes'}</code></pre>
         </div>
       </div>
     </RevealSection>
@@ -272,6 +303,29 @@ function Features() {
         <div className={styles.featureGrid}>
           {features.map((props, idx) => (
             <Feature key={idx} {...props} />
+          ))}
+        </div>
+      </div>
+    </RevealSection>
+  );
+}
+
+function WhatItCatches() {
+  return (
+    <RevealSection className={styles.catches}>
+      <div className="container">
+        <Heading as="h2" className={styles.sectionTitle}>
+          What does agnix catch?
+        </Heading>
+        <div className={styles.catchGrid}>
+          {catches.map((item, idx) => (
+            <div key={idx} className={styles.catchCard}>
+              <div className={styles.catchRule}>{item.rule}</div>
+              <div className={styles.catchIssue}>{item.issue}</div>
+              <div className={styles.catchArrow}>&#8595;</div>
+              <div className={styles.catchFix}>{item.fix}</div>
+              <p className={styles.catchImpact}>{item.impact}</p>
+            </div>
           ))}
         </div>
       </div>
@@ -351,14 +405,15 @@ function BottomCta() {
 export default function Home() {
   return (
     <Layout
-      title="Agent Config Linter"
-      description={`Lint agent configurations before they break your workflow. ${siteData.totalRules} validation rules for Claude Code, Cursor, Copilot, Cline, MCP, and more.`}
+      title="Lint AI Agent Configurations | Validate CLAUDE.md, Skills, Hooks, MCP"
+      description={`Catch broken agent configs before your AI tools silently ignore them. ${siteData.totalRules} validation rules for Claude Code, Cursor, Copilot, Cline, MCP, and more.`}
     >
       <HeroBanner />
       <main>
         <TerminalDemo />
         <EditorDemo />
         <Features />
+        <WhatItCatches />
         <SupportedTools />
         <Stats />
         <BottomCta />
