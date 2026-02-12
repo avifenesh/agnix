@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "start": "docusaurus start",
+    "start": "npm run build:wasm && docusaurus start",
     "build": "npm run build:wasm && npm run generate:rules && docusaurus build",
     "build:wasm": "wasm-pack build ../crates/agnix-wasm --target web --out-dir ../../website/src/wasm --out-name agnix_wasm",
     "serve": "docusaurus serve",

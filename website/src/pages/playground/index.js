@@ -52,6 +52,7 @@ disallowedTools:
 
 Review code and suggest improvements.
 `,
+  // Intentionally unsafe hook config to demonstrate agnix validation rules
   '.claude/settings.json': `{
   "hooks": {
     "OnBeforeTool": [
@@ -182,6 +183,7 @@ function PlaygroundInner() {
   const [fileType, setFileType] = useState('');
   const [wasmReady, setWasmReady] = useState(false);
   const [wasmError, setWasmError] = useState(/** @type {string | null} */ (null));
+  const [validationError, setValidationError] = useState(/** @type {string | null} */ (null));
   const [loading, setLoading] = useState(true);
   const wasmRef = useRef(/** @type {any} */ (null));
   const editorRef = useRef(/** @type {HTMLDivElement | null} */ (null));
@@ -341,6 +343,7 @@ function PlaygroundInner() {
         if (result && result.diagnostics) {
           setDiagnostics(result.diagnostics);
           setFileType(result.file_type || '');
+          setValidationError(null);
 
           // Map diagnostics to CodeMirror lint format
           const v = viewRef.current;
@@ -367,7 +370,7 @@ function PlaygroundInner() {
           }
         }
       } catch (err) {
-        console.error('Validation error:', err);
+        setValidationError(String(err));
       }
     }, 300);
 
@@ -596,7 +599,19 @@ function PlaygroundInner() {
                 </span>
               </div>
               <div className={styles.diagnosticsList} aria-live="polite" aria-atomic="false">
-                {diagnostics.length === 0 && wasmReady ? (
+                {validationError ? (
+                  <div className={styles.emptyState}>
+                    <div className={styles.emptyStateIcon} style={{background: 'hsla(0, 80%, 55%, 0.08)', color: '#ef4444'}}>
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="10" />
+                        <line x1="15" y1="9" x2="9" y2="15" />
+                        <line x1="9" y1="9" x2="15" y2="15" />
+                      </svg>
+                    </div>
+                    <div className={styles.emptyStateText} style={{color: '#ef4444'}}>Validation error</div>
+                    <p className={styles.emptyStateHint}>{validationError}</p>
+                  </div>
+                ) : diagnostics.length === 0 && wasmReady ? (
                   <div className={styles.emptyState}>
                     <div className={styles.emptyStateIcon}>
                       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

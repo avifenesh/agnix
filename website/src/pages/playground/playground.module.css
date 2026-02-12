@@ -218,6 +218,11 @@ html[data-theme='dark'] .presetButton:hover {
   background: hsla(174, 55%, 48%, 0.08);
 }
 
+.presetButton:focus-visible {
+  outline: 2px solid var(--ifm-color-primary);
+  outline-offset: 2px;
+}
+
 .presetButtonActive {
   border-color: var(--ifm-color-primary);
   background: hsla(174, 55%, 28%, 0.08);
@@ -616,6 +621,11 @@ html[data-theme='dark'] .diagnostic[data-level='info'] {
   box-shadow: 0 2px 6px hsla(174, 55%, 28%, 0.12);
 }
 
+.fixButton:focus-visible {
+  outline: 2px solid var(--ifm-color-primary);
+  outline-offset: 2px;
+}
+
 html[data-theme='dark'] .fixButton {
   background: hsla(174, 55%, 48%, 0.08);
 }
@@ -646,6 +656,11 @@ html[data-theme='dark'] .fixButton:hover {
   background: var(--ifm-color-primary-dark);
   transform: translateY(-1px);
   box-shadow: 0 2px 8px hsla(174, 55%, 28%, 0.25);
+}
+
+.fixAllButton:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
 }
 
 html[data-theme='dark'] .fixAllButton:hover {
