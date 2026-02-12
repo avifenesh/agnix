@@ -4,16 +4,24 @@
   "private": true,
   "scripts": {
     "start": "docusaurus start",
-    "build": "npm run generate:rules && docusaurus build",
+    "build": "npm run build:wasm && npm run generate:rules && docusaurus build",
+    "build:wasm": "wasm-pack build ../crates/agnix-wasm --target web --out-dir ../../website/src/wasm --out-name agnix_wasm",
     "serve": "docusaurus serve",
     "generate:rules": "python3 ../scripts/generate-docs-rules.py",
     "version:cut": "docusaurus docs:version"
   },
   "dependencies": {
+    "@codemirror/lang-json": "^6.0.1",
+    "@codemirror/lang-markdown": "^6.3.1",
+    "@codemirror/lang-yaml": "^6.1.2",
+    "@codemirror/state": "^6.5.0",
+    "@codemirror/theme-one-dark": "^6.1.2",
+    "@codemirror/view": "^6.36.0",
     "@docusaurus/core": "3.8.1",
     "@docusaurus/preset-classic": "3.8.1",
     "@easyops-cn/docusaurus-search-local": "0.49.0",
     "clsx": "2.1.1",
+    "codemirror": "^6.0.1",
     "react": "18.3.1",
     "react-dom": "18.3.1"
   }

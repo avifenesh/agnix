@@ -98,6 +98,14 @@ fn public_functions_compile_with_expected_signatures() {
     let _: fn(&Path, &agnix_core::LintConfig) -> agnix_core::FileType =
         agnix_core::resolve_file_type;
 
+    // validate_content(path, content, config, registry) -> Vec<Diagnostic>
+    let _: fn(
+        &Path,
+        &str,
+        &agnix_core::LintConfig,
+        &agnix_core::ValidatorRegistry,
+    ) -> Vec<agnix_core::Diagnostic> = agnix_core::validate_content;
+
     // apply_fixes(diagnostics, dry_run, safe_only) -> LintResult<Vec<FixResult>>
     let _: fn(
         &[agnix_core::Diagnostic],
