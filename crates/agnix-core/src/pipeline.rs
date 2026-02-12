@@ -266,9 +266,13 @@ pub fn validate_content(
     }
 
     let validators = registry.validators_for(file_type);
+    let disabled = &config.rules().disabled_validators;
     let mut diagnostics = Vec::new();
 
     for validator in validators {
+        if disabled.iter().any(|name| name == validator.name()) {
+            continue;
+        }
         diagnostics.extend(validator.validate(path, content, config));
     }
 

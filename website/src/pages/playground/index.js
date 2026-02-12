@@ -407,6 +407,13 @@ function PlaygroundInner() {
         }
       } catch (err) {
         setValidationError(String(err));
+        setDiagnostics([]);
+        setFileType('');
+        const v = viewRef.current;
+        if (lintSetRef.current) {
+          lintSetRef.current([]);
+          if (v) v.dispatch({});
+        }
       }
     }, 300);
 
@@ -460,14 +467,14 @@ function PlaygroundInner() {
     [utf8ByteToStringIndex],
   );
 
-  // Apply all safe fixes (sorted in reverse order to preserve byte offsets)
+  // Apply all safe fixes in a single dispatch (ascending order for CodeMirror)
   const applyAllFixes = useCallback(() => {
     const v = viewRef.current;
     if (!v) return;
     const text = v.state.doc.toString();
     const allFixes = diagnostics
       .flatMap((d) => d.fixes.filter((f) => f.safe))
-      .sort((a, b) => b.start_byte - a.start_byte);
+      .sort((a, b) => a.start_byte - b.start_byte);
     if (allFixes.length === 0) return;
     const changes = allFixes.map((fix) => {
       const from = utf8ByteToStringIndex(text, fix.start_byte);

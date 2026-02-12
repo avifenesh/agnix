@@ -105,6 +105,9 @@ pub fn validate(filename: &str, content: &str, tool: Option<String>) -> JsValue 
     if let Some(ref tool_name) = tool {
         builder.tools(vec![tool_name.clone()]);
     }
+    // Use `build_unchecked()` to bypass tool-name validation so the WASM
+    // playground can accept newer/unknown tools without a core library update.
+    // Only `tools` is set on the builder, which cannot produce unsafe config.
     let config = builder.build_unchecked();
 
     let diagnostics = validate_content(path, content, &config, &REGISTRY);
