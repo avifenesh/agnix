@@ -900,7 +900,10 @@ mod validate_content_tests {
         let path = Path::new("CLAUDE.md");
         let content = "<unclosed>";
         let diags = validate_content(path, content, &config, &registry);
-        assert!(!diags.is_empty(), "Should find diagnostics for unclosed XML tag");
+        assert!(
+            !diags.is_empty(),
+            "Should find diagnostics for unclosed XML tag"
+        );
     }
 
     #[test]
@@ -909,7 +912,10 @@ mod validate_content_tests {
         let registry = ValidatorRegistry::with_defaults();
         let path = Path::new("main.rs");
         let diags = validate_content(path, "", &config, &registry);
-        assert!(diags.is_empty(), "Unknown file type should produce no diagnostics");
+        assert!(
+            diags.is_empty(),
+            "Unknown file type should produce no diagnostics"
+        );
     }
 
     #[test]

@@ -110,7 +110,10 @@ pub fn validate(filename: &str, content: &str, tool: Option<String>) -> JsValue 
     let diagnostics = validate_content(path, content, &config, &REGISTRY);
 
     let response = ValidationResponse {
-        diagnostics: diagnostics.iter().map(WasmDiagnostic::from_diagnostic).collect(),
+        diagnostics: diagnostics
+            .iter()
+            .map(WasmDiagnostic::from_diagnostic)
+            .collect(),
         file_type: detect_file_type(path).to_string(),
     };
 
