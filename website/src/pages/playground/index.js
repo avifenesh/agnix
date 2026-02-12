@@ -202,15 +202,20 @@ function PlaygroundInner() {
     return () => clearTimeout(timer);
   }, [filename]);
 
-  // Convert a UTF-8 byte offset to a JavaScript string index.
-  // Needed because Rust fix offsets are UTF-8 bytes, but CodeMirror uses JS string indices.
+  // Convert a UTF-8 byte offset to a JavaScript string index (UTF-16).
+  // Iterates by code point to correctly handle characters outside BMP
+  // (emoji, CJK supplementary) which are surrogate pairs in JS strings.
   const utf8ByteToStringIndex = useCallback((str, byteOffset) => {
-    const encoder = new TextEncoder();
     let bytes = 0;
-    for (let i = 0; i < str.length; i++) {
-      const charBytes = encoder.encode(str[i]).length;
-      if (bytes + charBytes > byteOffset) return i;
-      bytes += charBytes;
+    let i = 0;
+    while (i < str.length) {
+      const cp = str.codePointAt(i);
+      // UTF-8 byte length of this code point
+      const cpBytes = cp <= 0x7f ? 1 : cp <= 0x7ff ? 2 : cp <= 0xffff ? 3 : 4;
+      if (bytes + cpBytes > byteOffset) return i;
+      bytes += cpBytes;
+      // Advance by 2 string indices for surrogate pairs (code points > 0xFFFF)
+      i += cp > 0xffff ? 2 : 1;
     }
     return str.length;
   }, []);
@@ -316,6 +321,37 @@ function PlaygroundInner() {
       });
 
       viewRef.current = view;
+
+      // Re-run validation so inline diagnostics appear in the new editor
+      if (wasmReady && wasmRef.current && lintSetRef.current) {
+        try {
+          const result = wasmRef.current.validate(
+            filename,
+            contentRef.current,
+            tool || undefined,
+          );
+          if (result && result.diagnostics) {
+            const doc = view.state.doc;
+            const cmDiags = result.diagnostics.map((d) => {
+              const line = Math.max(1, Math.min(d.line, doc.lines));
+              const lineObj = doc.line(line);
+              const from = lineObj.from + Math.max(0, (d.column || 1) - 1);
+              const to = lineObj.to;
+              const severity =
+                d.level === 'error' ? 'error' :
+                d.level === 'warning' ? 'warning' : 'info';
+              return {
+                from: Math.min(from, doc.length),
+                to: Math.min(to, doc.length),
+                severity,
+                message: `[${d.rule}] ${d.message}`,
+              };
+            });
+            lintSetRef.current(cmDiags);
+            view.dispatch({});
+          }
+        } catch (_) { /* validation will re-run on next content change */ }
+      }
     }
 
     setup();
