@@ -11,7 +11,10 @@ fn validate_returns_diagnostics_for_claude_md() {
     let diagnostics = js_sys::Reflect::get(&result, &JsValue::from_str("diagnostics")).unwrap();
     assert!(js_sys::Array::is_array(&diagnostics));
     let arr = js_sys::Array::from(&diagnostics);
-    assert!(arr.length() > 0, "Should find issues in content with unclosed XML tag");
+    assert!(
+        arr.length() > 0,
+        "Should find issues in content with unclosed XML tag"
+    );
 }
 
 #[wasm_bindgen_test]
@@ -20,7 +23,11 @@ fn validate_returns_empty_for_unknown_type() {
     assert!(!result.is_null());
     let diagnostics = js_sys::Reflect::get(&result, &JsValue::from_str("diagnostics")).unwrap();
     let arr = js_sys::Array::from(&diagnostics);
-    assert_eq!(arr.length(), 0, "Unknown file type should produce no diagnostics");
+    assert_eq!(
+        arr.length(),
+        0,
+        "Unknown file type should produce no diagnostics"
+    );
 }
 
 #[wasm_bindgen_test]
@@ -42,7 +49,11 @@ fn validate_rejects_oversized_content() {
     let result = agnix_wasm::validate("CLAUDE.md", &big, None);
     let diagnostics = js_sys::Reflect::get(&result, &JsValue::from_str("diagnostics")).unwrap();
     let arr = js_sys::Array::from(&diagnostics);
-    assert_eq!(arr.length(), 0, "Oversized content should return empty diagnostics");
+    assert_eq!(
+        arr.length(),
+        0,
+        "Oversized content should return empty diagnostics"
+    );
 }
 
 #[wasm_bindgen_test]
