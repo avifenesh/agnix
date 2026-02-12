@@ -1,18 +1,29 @@
 //! Validation pipeline: file and project validation.
 
+#[cfg(feature = "filesystem")]
 use std::collections::HashMap;
-use std::path::{Path, PathBuf};
+use std::path::Path;
+#[cfg(feature = "filesystem")]
+use std::path::PathBuf;
+#[cfg(feature = "filesystem")]
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 
+#[cfg(feature = "filesystem")]
 use rayon::iter::ParallelBridge;
+#[cfg(feature = "filesystem")]
 use rayon::prelude::*;
+#[cfg(feature = "filesystem")]
 use rust_i18n::t;
 
 use crate::config::LintConfig;
-use crate::diagnostics::{ConfigError, CoreError, Diagnostic, LintResult, ValidationError};
+use crate::diagnostics::Diagnostic;
+#[cfg(feature = "filesystem")]
+use crate::diagnostics::{ConfigError, CoreError, LintResult, ValidationError};
 use crate::file_types::{FileType, detect_file_type};
+#[cfg(feature = "filesystem")]
 use crate::file_utils;
 use crate::registry::ValidatorRegistry;
+#[cfg(feature = "filesystem")]
 use crate::schemas;
 
 /// Result of validating a project, including diagnostics and metadata.
@@ -188,6 +199,7 @@ pub fn resolve_file_type(path: &Path, config: &LintConfig) -> FileType {
 }
 
 /// Validate a single file
+#[cfg(feature = "filesystem")]
 pub fn validate_file(path: &Path, config: &LintConfig) -> LintResult<Vec<Diagnostic>> {
     let mut registry = ValidatorRegistry::with_defaults();
     for name in &config.rules().disabled_validators {
@@ -197,6 +209,7 @@ pub fn validate_file(path: &Path, config: &LintConfig) -> LintResult<Vec<Diagnos
 }
 
 /// Validate a single file with a custom validator registry
+#[cfg(feature = "filesystem")]
 pub fn validate_file_with_registry(
     path: &Path,
     config: &LintConfig,
@@ -211,6 +224,7 @@ pub fn validate_file_with_registry(
 /// This avoids re-compiling `[files]` glob patterns when the file type has
 /// already been determined (e.g. in `validate_project_with_registry` where
 /// patterns are pre-compiled for the entire walk).
+#[cfg(feature = "filesystem")]
 fn validate_file_with_type(
     path: &Path,
     file_type: FileType,
@@ -233,7 +247,40 @@ fn validate_file_with_type(
     Ok(diagnostics)
 }
 
+/// Validate in-memory content for a given path.
+///
+/// This function performs no filesystem I/O -- the content is provided directly.
+/// File type is resolved from the path using [`resolve_file_type`], then all
+/// matching validators are run against the content.
+///
+/// Returns an empty `Vec` if the file type is unknown.
+pub fn validate_content(
+    path: &Path,
+    content: &str,
+    config: &LintConfig,
+    registry: &ValidatorRegistry,
+) -> Vec<Diagnostic> {
+    let file_type = resolve_file_type(path, config);
+    if file_type == FileType::Unknown {
+        return vec![];
+    }
+
+    let validators = registry.validators_for(file_type);
+    let disabled = &config.rules().disabled_validators;
+    let mut diagnostics = Vec::new();
+
+    for validator in validators {
+        if disabled.iter().any(|name| name == validator.name()) {
+            continue;
+        }
+        diagnostics.extend(validator.validate(path, content, config));
+    }
+
+    diagnostics
+}
+
 /// Main entry point for validating a project
+#[cfg(feature = "filesystem")]
 pub fn validate_project(path: &Path, config: &LintConfig) -> LintResult<ValidationResult> {
     let mut registry = ValidatorRegistry::with_defaults();
     for name in &config.rules().disabled_validators {
@@ -242,6 +289,7 @@ pub fn validate_project(path: &Path, config: &LintConfig) -> LintResult<Validati
     validate_project_with_registry(path, config, &registry)
 }
 
+#[cfg(feature = "filesystem")]
 struct ExcludePattern {
     pattern: glob::Pattern,
     dir_only_prefix: Option<String>,
@@ -257,6 +305,7 @@ fn normalize_rel_path(entry_path: &Path, root: &Path) -> String {
     }
 }
 
+#[cfg(feature = "filesystem")]
 fn compile_exclude_patterns(excludes: &[String]) -> LintResult<Vec<ExcludePattern>> {
     excludes
         .iter()
@@ -283,6 +332,7 @@ fn compile_exclude_patterns(excludes: &[String]) -> LintResult<Vec<ExcludePatter
         .collect()
 }
 
+#[cfg(feature = "filesystem")]
 fn should_prune_dir(rel_dir: &str, exclude_patterns: &[ExcludePattern]) -> bool {
     if rel_dir.is_empty() {
         return false;
@@ -295,6 +345,7 @@ fn should_prune_dir(rel_dir: &str, exclude_patterns: &[ExcludePattern]) -> bool 
         .any(|p| p.pattern.matches(rel_dir) || (p.allow_probe && p.pattern.matches(&probe)))
 }
 
+#[cfg(feature = "filesystem")]
 fn is_excluded_file(path_str: &str, exclude_patterns: &[ExcludePattern]) -> bool {
     exclude_patterns
         .iter()
@@ -312,6 +363,7 @@ fn is_excluded_file(path_str: &str, exclude_patterns: &[ExcludePattern]) -> bool
 ///
 /// Both `agents_md_paths` and `instruction_file_paths` must be pre-sorted
 /// for deterministic output ordering.
+#[cfg(feature = "filesystem")]
 fn run_project_level_checks(
     agents_md_paths: &[PathBuf],
     instruction_file_paths: &[PathBuf],
@@ -541,6 +593,7 @@ fn run_project_level_checks(
 /// Designed for the LSP server to provide project-level diagnostics that
 /// require workspace-wide analysis, without the overhead of full per-file
 /// validation (which the LSP handles incrementally via `did_open`/`did_change`).
+#[cfg(feature = "filesystem")]
 pub fn validate_project_rules(root: &Path, config: &LintConfig) -> LintResult<Vec<Diagnostic>> {
     use ignore::WalkBuilder;
     use std::sync::Arc;
@@ -627,6 +680,7 @@ pub fn validate_project_rules(root: &Path, config: &LintConfig) -> LintResult<Ve
 }
 
 /// Main entry point for validating a project with a custom validator registry
+#[cfg(feature = "filesystem")]
 pub fn validate_project_with_registry(
     path: &Path,
     config: &LintConfig,
@@ -827,6 +881,7 @@ pub fn validate_project_with_registry(
         .with_validator_factories_registered(validator_factories_registered))
 }
 
+#[cfg(feature = "filesystem")]
 fn resolve_validation_root(path: &Path) -> PathBuf {
     let candidate = if path.is_file() {
         path.parent().unwrap_or(Path::new("."))
@@ -837,6 +892,63 @@ fn resolve_validation_root(path: &Path) -> PathBuf {
 }
 
 #[cfg(test)]
+mod validate_content_tests {
+    use super::*;
+    use crate::config::LintConfig;
+    use crate::registry::ValidatorRegistry;
+
+    #[test]
+    fn returns_diagnostics_for_known_file_type() {
+        let config = LintConfig::default();
+        let registry = ValidatorRegistry::with_defaults();
+        let path = Path::new("CLAUDE.md");
+        let content = "<unclosed>";
+        let diags = validate_content(path, content, &config, &registry);
+        assert!(
+            !diags.is_empty(),
+            "Should find diagnostics for unclosed XML tag"
+        );
+    }
+
+    #[test]
+    fn returns_empty_for_unknown_file_type() {
+        let config = LintConfig::default();
+        let registry = ValidatorRegistry::with_defaults();
+        let path = Path::new("main.rs");
+        let diags = validate_content(path, "", &config, &registry);
+        assert!(
+            diags.is_empty(),
+            "Unknown file type should produce no diagnostics"
+        );
+    }
+
+    #[test]
+    fn returns_empty_for_empty_content_with_known_type() {
+        let config = LintConfig::default();
+        let registry = ValidatorRegistry::with_defaults();
+        let path = Path::new("CLAUDE.md");
+        let diags = validate_content(path, "", &config, &registry);
+        // Empty CLAUDE.md is valid (no content to violate rules).
+        assert!(
+            diags.is_empty(),
+            "Empty content for a known file type should not produce diagnostics"
+        );
+    }
+
+    #[test]
+    fn respects_tool_filter() {
+        let config = LintConfig::builder()
+            .tools(vec!["cursor".to_string()])
+            .build_unchecked();
+        let registry = ValidatorRegistry::with_defaults();
+        let path = Path::new("CLAUDE.md");
+        let content = "# Project\n\nSome instructions.";
+        // Should not panic with tool filter
+        let _ = validate_content(path, content, &config, &registry);
+    }
+}
+
+#[cfg(all(test, feature = "filesystem"))]
 mod tests {
     use super::*;
 

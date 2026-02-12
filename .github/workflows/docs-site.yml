@@ -9,6 +9,9 @@ on:
       - 'scripts/generate-docs-rules.py'
       - '.github/workflows/docs-site.yml'
       - 'crates/agnix-cli/tests/docs_website_parity.rs'
+      - 'crates/agnix-wasm/**'
+      - 'crates/agnix-core/**'
+      - 'crates/agnix-rules/**'
   push:
     branches: [main]
     paths:
@@ -17,6 +20,9 @@ on:
       - 'scripts/generate-docs-rules.py'
       - '.github/workflows/docs-site.yml'
       - 'crates/agnix-cli/tests/docs_website_parity.rs'
+      - 'crates/agnix-wasm/**'
+      - 'crates/agnix-core/**'
+      - 'crates/agnix-rules/**'
   workflow_dispatch:
 
 permissions:
@@ -46,6 +52,14 @@ jobs:
           cache: 'npm'
           cache-dependency-path: 'website/package-lock.json'
       - uses: dtolnay/rust-toolchain@4be9e76fd7c4901c61fb841f559994984270fce7 # stable
+        with:
+          targets: wasm32-unknown-unknown
+      - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2
+        with:
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+      - uses: taiki-e/install-action@650c5ca14212efbbf3e580844b04bdccf68dac31 # v2
+        with:
+          tool: wasm-pack@0.13.1
       - name: Install website dependencies
         run: npm --prefix website ci
       - name: Generate rule docs and build site

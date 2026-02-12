@@ -456,6 +456,7 @@ fn get_imports_for_file(
 
 fn resolve_import_path(import_path: &str, base_dir: &Path) -> PathBuf {
     if import_path.starts_with("~/") || import_path.starts_with("~\\") {
+        #[cfg(feature = "filesystem")]
         if let Some(home) = dirs::home_dir() {
             return home.join(&import_path[2..]);
         }

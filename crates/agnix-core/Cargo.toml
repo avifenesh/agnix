@@ -11,6 +11,10 @@ readme = "README.md"
 keywords = ["agent", "linter", "validation", "mcp", "skills"]
 categories = ["development-tools", "parser-implementations"]
 
+[features]
+default = ["filesystem"]
+filesystem = ["dep:rayon", "dep:ignore", "dep:dirs"]
+
 [dependencies]
 agnix-rules.workspace = true
 serde.workspace = true
@@ -20,10 +24,10 @@ thiserror.workspace = true
 anyhow.workspace = true
 pulldown-cmark.workspace = true
 regex.workspace = true
-ignore.workspace = true
+ignore = { workspace = true, optional = true }
 glob.workspace = true
-rayon.workspace = true
-dirs = "5"
+rayon = { workspace = true, optional = true }
+dirs = { version = "5", optional = true }
 semver = "1"
 toml = "0.8"
 schemars = "1"

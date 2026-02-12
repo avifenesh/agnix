@@ -12,7 +12,7 @@ members = [
     "crates/agnix-cli",
     "crates/agnix-lsp",
     "crates/agnix-mcp",
-    # "crates/agnix-wasm", # Coming later
+    "crates/agnix-wasm",
 ]
 exclude = [
     "editors/zed", # Standalone WASM crate, not part of workspace

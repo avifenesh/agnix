@@ -53,6 +53,7 @@ pub mod diagnostics;
 /// Rule efficacy evaluation (precision/recall/F1).
 ///
 /// **Stability: unstable** -- interface may change on minor releases.
+#[cfg(feature = "filesystem")]
 pub mod eval;
 /// File type detection and extensible detector chain.
 ///
@@ -95,9 +96,11 @@ pub use file_types::{FileType, detect_file_type};
 pub use file_types::{FileTypeDetector, FileTypeDetectorChain};
 pub use fixes::{FixResult, apply_fixes, apply_fixes_with_fs};
 pub use fs::{FileSystem, MockFileSystem, RealFileSystem};
+pub use pipeline::{ValidationResult, resolve_file_type, validate_content};
+#[cfg(feature = "filesystem")]
 pub use pipeline::{
-    ValidationResult, resolve_file_type, validate_file, validate_file_with_registry,
-    validate_project, validate_project_rules, validate_project_with_registry,
+    validate_file, validate_file_with_registry, validate_project, validate_project_rules,
+    validate_project_with_registry,
 };
 pub use registry::{
     ValidatorFactory, ValidatorProvider, ValidatorRegistry, ValidatorRegistryBuilder,

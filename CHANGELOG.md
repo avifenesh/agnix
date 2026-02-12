@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **`agnix-wasm` crate**: New WebAssembly bindings for the validation engine, enabling browser-based validation without a server
+- **`validate_content()` API**: New pure function in `agnix-core` for validating content strings without filesystem I/O
+- **`filesystem` feature flag**: `agnix-core` now gates filesystem-dependent code (`rayon`, `ignore`, `dirs`) behind a `filesystem` feature (enabled by default), allowing WASM compilation with `default-features = false`
+- **Web playground UI polish**: Teal gradient background, staggered animations, panel shadows, focus glow, SVG icons, active preset state, empty state with checkmark, loading spinner, `prefers-reduced-motion` support
+- **Inline editor diagnostics**: Red/yellow/teal wavy underlines via `@codemirror/lint`, gutter markers, hover tooltips with rule ID and message
+- **Auto-fix in playground**: WASM now exposes `Fix` data; per-diagnostic "Fix" buttons and "Fix all" button apply replacements directly in the editor
+- **New playground presets**: AGENTS.md, `.claude/agents/reviewer.md`, `plugin.json`; enriched `.claude/settings.json` hooks preset
+
+### Fixed
+- **Playground editor not initializing**: `loading` state was missing from CodeMirror `useEffect` dependency array, so the editor never mounted after WASM loaded
+- **Blue flash on playground load**: Changed editor pane background from `--ag-code-bg` to neutral `--ag-surface-raised`
+
 ## [0.11.1] - 2026-02-11
 
 ### Fixed

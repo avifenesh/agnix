@@ -92,6 +92,7 @@ const config = {
         highlightSearchTermsOnTargetPage: true,
       },
     ],
+    require.resolve('./plugins/wasm-plugin'),
   ],
 
   themeConfig: {
@@ -137,6 +138,11 @@ const config = {
           type: 'docsVersionDropdown',
           position: 'left',
           dropdownActiveClassDisabled: true,
+        },
+        {
+          to: '/playground',
+          label: 'Playground',
+          position: 'left',
         },
         {
           label: 'Editors',
