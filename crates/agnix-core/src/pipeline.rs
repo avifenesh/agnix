@@ -924,9 +924,11 @@ mod validate_content_tests {
         let registry = ValidatorRegistry::with_defaults();
         let path = Path::new("CLAUDE.md");
         let diags = validate_content(path, "", &config, &registry);
-        // Empty CLAUDE.md is valid (no content to violate rules)
-        // Just verify it doesn't panic
-        let _ = diags;
+        // Empty CLAUDE.md is valid (no content to violate rules).
+        assert!(
+            diags.is_empty(),
+            "Empty content for a known file type should not produce diagnostics"
+        );
     }
 
     #[test]

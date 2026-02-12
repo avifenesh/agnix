@@ -342,11 +342,11 @@ html[data-theme='dark'] .editorPane:focus-within {
 
 /* Lint gutter markers */
 .editor :global(.cm-lint-marker-error) {
-  content: none;
+  display: none;
 }
 
 .editor :global(.cm-lint-marker-warning) {
-  content: none;
+  display: none;
 }
 
 /* Lint tooltip */

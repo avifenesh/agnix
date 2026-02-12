@@ -173,6 +173,7 @@ function PlaygroundInner() {
   const colorMode = useTheme();
 
   const [filename, setFilename] = useState(DEFAULT_FILENAME);
+  const [editorFilename, setEditorFilename] = useState(DEFAULT_FILENAME);
   const [tool, setTool] = useState('');
   const [content, setContent] = useState(PRESETS[DEFAULT_FILENAME]);
   const [diagnostics, setDiagnostics] = useState(
@@ -192,6 +193,25 @@ function PlaygroundInner() {
   useEffect(() => {
     contentRef.current = content;
   }, [content]);
+
+  // Debounce filename changes to avoid recreating editor on every keystroke
+  useEffect(() => {
+    const timer = setTimeout(() => setEditorFilename(filename), 500);
+    return () => clearTimeout(timer);
+  }, [filename]);
+
+  // Convert a UTF-8 byte offset to a JavaScript string index.
+  // Needed because Rust fix offsets are UTF-8 bytes, but CodeMirror uses JS string indices.
+  const utf8ByteToStringIndex = useCallback((str, byteOffset) => {
+    const encoder = new TextEncoder();
+    let bytes = 0;
+    for (let i = 0; i < str.length; i++) {
+      const charBytes = encoder.encode(str[i]).length;
+      if (bytes + charBytes > byteOffset) return i;
+      bytes += charBytes;
+    }
+    return str.length;
+  }, []);
 
   // Load WASM module
   useEffect(() => {
@@ -229,25 +249,23 @@ function PlaygroundInner() {
       const {oneDark} = await import('@codemirror/theme-one-dark');
       const {markdown} = await import('@codemirror/lang-markdown');
       const {json} = await import('@codemirror/lang-json');
-      const {yaml} = await import('@codemirror/lang-yaml');
       const {linter, lintGutter} = await import('@codemirror/lint');
 
       // Pick language mode based on filename
-      const isJson = filename.endsWith('.json');
-      const isToml = filename.endsWith('.toml');
-      const lang = isJson ? json() : isToml ? yaml() : markdown();
+      const isJson = editorFilename.endsWith('.json');
+      const lang = isJson ? json() : markdown();
 
       // External lint source: we push diagnostics from the validation effect
-      /** @type {any[]} */
-      let pendingDiagnostics = [];
+      /** @type {any[] | null} */
+      let pendingDiagnostics = null;
       /** @type {((v: any) => void) | null} */
       let resolveNext = null;
 
       const agnixLinter = linter(
         () => new Promise((resolve) => {
-          if (pendingDiagnostics.length > 0) {
+          if (pendingDiagnostics !== null) {
             resolve(pendingDiagnostics);
-            pendingDiagnostics = [];
+            pendingDiagnostics = null;
           } else {
             resolveNext = resolve;
           }
@@ -307,7 +325,7 @@ function PlaygroundInner() {
     // `loading` is needed because editorRef.current is only in the DOM
     // after WASM loads (loading=false), so the effect must re-run then.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [colorMode, filename, loading]);
+  }, [colorMode, editorFilename, loading]);
 
   // Run validation (debounced) and push inline diagnostics to CodeMirror
   useEffect(() => {
@@ -376,6 +394,7 @@ function PlaygroundInner() {
   const handlePreset = useCallback(
     (name) => {
       setFilename(name);
+      setEditorFilename(name);
       setContent(PRESETS[name]);
       if (viewRef.current) {
         const v = viewRef.current;
@@ -392,37 +411,38 @@ function PlaygroundInner() {
     (/** @type {WasmFix} */ fix) => {
       const v = viewRef.current;
       if (!v) return;
-      const docLen = v.state.doc.length;
-      const from = Math.min(fix.start_byte, docLen);
-      const to = Math.min(fix.end_byte, docLen);
+      const text = v.state.doc.toString();
+      const from = utf8ByteToStringIndex(text, fix.start_byte);
+      const to = utf8ByteToStringIndex(text, fix.end_byte);
       v.dispatch({
         changes: {from, to, insert: fix.replacement},
       });
     },
-    [],
+    [utf8ByteToStringIndex],
   );
 
   // Apply all safe fixes (sorted in reverse order to preserve byte offsets)
   const applyAllFixes = useCallback(() => {
     const v = viewRef.current;
     if (!v) return;
+    const text = v.state.doc.toString();
     const allFixes = diagnostics
       .flatMap((d) => d.fixes.filter((f) => f.safe))
       .sort((a, b) => b.start_byte - a.start_byte);
     if (allFixes.length === 0) return;
-    // Apply in reverse order so earlier offsets stay valid
-    for (const fix of allFixes) {
-      const docLen = v.state.doc.length;
-      const from = Math.min(fix.start_byte, docLen);
-      const to = Math.min(fix.end_byte, docLen);
-      v.dispatch({
-        changes: {from, to, insert: fix.replacement},
-      });
-    }
-  }, [diagnostics]);
+    const changes = allFixes.map((fix) => {
+      const from = utf8ByteToStringIndex(text, fix.start_byte);
+      const to = utf8ByteToStringIndex(text, fix.end_byte);
+      return {from, to, insert: fix.replacement};
+    });
+    v.dispatch({changes});
+  }, [diagnostics, utf8ByteToStringIndex]);
 
   const fixableCount = useMemo(() => {
-    return diagnostics.filter((d) => d.fixes.some((f) => f.safe)).length;
+    return diagnostics.reduce(
+      (count, d) => count + d.fixes.filter((f) => f.safe).length,
+      0,
+    );
   }, [diagnostics]);
 
   return (
