@@ -19,6 +19,7 @@
   <a href="https://avifenesh.github.io/agnix/"><img src="https://img.shields.io/badge/Docs-Website-2563EB?style=for-the-badge" alt="Website"></a>
   <a href="https://avifenesh.github.io/agnix/playground"><img src="https://img.shields.io/badge/Try_it-Playground-E91E63?style=for-the-badge" alt="Playground"></a>
   <a href="https://dev.to/avifenesh/your-ai-agent-configs-are-probably-broken-and-you-dont-know-it-16n1"><img src="https://img.shields.io/badge/Blog-Post-0A0A0A?style=for-the-badge&logo=dev.to" alt="Blog Post"></a>
+  <a href="https://x.com/avi_fenesh"><img src="https://img.shields.io/badge/Follow-@avi__fenesh-1DA1F2?style=for-the-badge&logo=x&logoColor=white" alt="Follow on X"></a>
 </p>
 
 ## Why agnix?
@@ -127,6 +128,5 @@ MIT OR Apache-2.0
 ---
 
 <p align="center">
-  <a href="https://github.com/avifenesh/agnix/stargazers">Star this repo</a> to help other developers find agnix.<br>
-  Follow <a href="https://x.com/avi_fenesh">@avi_fenesh</a> on X for live updates and new releases.
+  <a href="https://github.com/avifenesh/agnix/stargazers">Star this repo</a> to help other developers find agnix.
 </p>
