@@ -3,11 +3,11 @@
   <h1>agnix</h1>
   <p><strong>Lint agent configurations before they break your workflow</strong></p>
   <p>
-    <a href="https://www.npmjs.com/package/agnix"><img src="https://img.shields.io/npm/v/agnix.svg?color=0A7E8C" alt="npm"></a>
-    <a href="https://crates.io/crates/agnix-cli"><img src="https://img.shields.io/crates/v/agnix-cli.svg?color=0A7E8C" alt="Crates.io"></a>
+    <a href="https://www.npmjs.com/package/agnix"><img src="https://img.shields.io/npm/v/agnix.svg?color=3C873A" alt="npm"></a>
+    <a href="https://crates.io/crates/agnix-cli"><img src="https://img.shields.io/crates/v/agnix-cli.svg?color=E57324" alt="Crates.io"></a>
     <a href="https://github.com/avifenesh/agnix/releases"><img src="https://img.shields.io/github/v/release/avifenesh/agnix?color=0A7E8C" alt="Release"></a>
     <a href="https://github.com/avifenesh/agnix/actions/workflows/ci.yml"><img src="https://github.com/avifenesh/agnix/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-    <a href="LICENSE-MIT"><img src="https://img.shields.io/badge/license-MIT%2FApache--2.0-0A7E8C.svg" alt="License"></a>
+    <a href="LICENSE-MIT"><img src="https://img.shields.io/badge/license-MIT%2FApache--2.0-64748B.svg" alt="License"></a>
   </p>
 </div>
 
@@ -16,9 +16,9 @@ Catch broken agent configs before your AI tools silently ignore them. 156 rules 
 <p align="center"><strong>Auto-fix</strong> | <strong>GitHub Action</strong> | <strong><a href="https://marketplace.visualstudio.com/items?itemName=avifenesh.agnix">VS Code</a> + <a href="https://plugins.jetbrains.com/plugin/30087-agnix">JetBrains</a> + <a href="https://github.com/avifenesh/agnix.nvim">Neovim</a> + <a href="https://github.com/avifenesh/agnix/tree/main/editors/zed">Zed</a></strong></p>
 
 <p align="center">
-  <a href="https://avifenesh.github.io/agnix/"><img src="https://img.shields.io/badge/Docs-Website-0A7E8C?style=for-the-badge" alt="Website"></a>
-  <a href="https://avifenesh.github.io/agnix/playground"><img src="https://img.shields.io/badge/Try_it-Playground-0A7E8C?style=for-the-badge" alt="Playground"></a>
-  <a href="https://dev.to/avifenesh/your-ai-agent-configs-are-probably-broken-and-you-dont-know-it-16n1"><img src="https://img.shields.io/badge/Blog-Post-0A7E8C?style=for-the-badge&logo=dev.to" alt="Blog Post"></a>
+  <a href="https://avifenesh.github.io/agnix/"><img src="https://img.shields.io/badge/Docs-Website-2563EB?style=for-the-badge" alt="Website"></a>
+  <a href="https://avifenesh.github.io/agnix/playground"><img src="https://img.shields.io/badge/Try_it-Playground-E91E63?style=for-the-badge" alt="Playground"></a>
+  <a href="https://dev.to/avifenesh/your-ai-agent-configs-are-probably-broken-and-you-dont-know-it-16n1"><img src="https://img.shields.io/badge/Blog-Post-0A0A0A?style=for-the-badge&logo=dev.to" alt="Blog Post"></a>
 </p>
 
 ## Why agnix?
