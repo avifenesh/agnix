@@ -144,7 +144,7 @@ knowledge-base/
 ### Surprising Discoveries
 
 1. **AGENTS.md is supported by multiple tools** - but not universal (XP-002)
-2. **Prompt hooks restricted** - Not supported on SessionStart, SessionEnd, Notification, SubagentStart, PreCompact, TeammateIdle (CC-HK-002)
+2. **Prompt hooks restricted** - Not supported on Setup, SessionStart, SessionEnd, Notification, SubagentStart, PreCompact, TeammateIdle (CC-HK-002)
 3. **Windows paths break skills** - Must use `/` even on Windows (AS-014)
 4. **No defense against prompt injection** - Unsolved problem (MCP security)
 

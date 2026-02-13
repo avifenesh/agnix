@@ -2589,6 +2589,7 @@ fn test_cc_hk_002_prompt_disallowed_events() {
 #[test]
 fn test_cc_hk_002_agent_disallowed_events() {
     let agent_disallowed = [
+        "Setup",
         "SessionStart",
         "SessionEnd",
         "Notification",

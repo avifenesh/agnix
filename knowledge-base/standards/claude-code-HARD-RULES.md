@@ -205,7 +205,7 @@
 
 **Hook Type**: `"prompt"`
 
-**SUPPORTED FOR**: `PreToolUse`, `PostToolUse`, `PostToolUseFailure`, `PermissionRequest`, `UserPromptSubmit`, `Stop`, `SubagentStop`, and `TaskCompleted`. NOT supported on `SessionStart`, `SessionEnd`, `Notification`, `SubagentStart`, `PreCompact`, or `TeammateIdle`
+**SUPPORTED FOR**: `PreToolUse`, `PostToolUse`, `PostToolUseFailure`, `PermissionRequest`, `UserPromptSubmit`, `Stop`, `SubagentStop`, and `TaskCompleted`. NOT supported on `Setup`, `SessionStart`, `SessionEnd`, `Notification`, `SubagentStart`, `PreCompact`, or `TeammateIdle`
 
 **Response Schema** (LLM must return):
 
