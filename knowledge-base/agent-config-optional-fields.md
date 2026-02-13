@@ -118,7 +118,7 @@ The `` !`command` `` syntax runs shell commands before skill content is sent. Cu
 | `Stop` | (no matcher) | Yes | Yes | CC-HK-001, CC-HK-002 |
 | `PreCompact` | `manual`, `auto` | No | No | CC-HK-001 |
 | `SessionEnd` | `clear`, `logout`, `prompt_input_exit`, `bypass_permissions_disabled`, `other` | No | No | CC-HK-001 |
-| `Setup` | (documented in code) | - | - | CC-HK-001 |
+| `Setup` | (documented in code) | No | No | CC-HK-001 |
 
 ### Complete Hook Handler Fields
 

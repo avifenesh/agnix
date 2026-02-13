@@ -310,6 +310,7 @@ mod tests {
         assert!(!HooksSchema::is_prompt_event("SubagentStart"));
         assert!(!HooksSchema::is_prompt_event("PreCompact"));
         assert!(!HooksSchema::is_prompt_event("TeammateIdle"));
+        assert!(!HooksSchema::is_prompt_event("Setup"));
     }
 
     #[test]
