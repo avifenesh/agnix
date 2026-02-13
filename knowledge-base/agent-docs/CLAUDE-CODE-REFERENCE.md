@@ -53,7 +53,7 @@ Hooks fire in this sequence:
 Execute bash commands with full stdin/stdout control.
 
 **Prompt Hooks** (`type: "prompt"`):
-Use LLM evaluation for intelligent, context-aware decisions. Currently only supported for `Stop` and `SubagentStop` events.
+Use LLM evaluation for intelligent, context-aware decisions. Supported on `PreToolUse`, `PostToolUse`, `PostToolUseFailure`, `PermissionRequest`, `UserPromptSubmit`, `Stop`, `SubagentStop`, and `TaskCompleted`.
 
 ### 1.3 Configuration Structure
 

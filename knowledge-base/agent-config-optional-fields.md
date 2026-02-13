@@ -105,20 +105,20 @@ The `` !`command` `` syntax runs shell commands before skill content is sent. Cu
 | Event | Matcher Input | Can Block? | Supports Prompt? | agnix Rule |
 |-------|--------------|------------|------------------|------------|
 | `SessionStart` | `startup`, `resume`, `clear`, `compact` | No | No | CC-HK-001 |
-| `UserPromptSubmit` | (no matcher) | Yes (exit 2) | No | CC-HK-001 |
+| `UserPromptSubmit` | (no matcher) | Yes (exit 2) | Yes | CC-HK-001 |
 | `PreToolUse` | tool name | Yes | Yes | CC-HK-001, CC-HK-003 |
 | `PermissionRequest` | tool name | Yes | Yes | CC-HK-001 |
 | `PostToolUse` | tool name | No | Yes | CC-HK-001 |
-| `PostToolUseFailure` | tool name | No | No | CC-HK-001 |
+| `PostToolUseFailure` | tool name | No | Yes | CC-HK-001 |
 | `Notification` | `permission_prompt`, `idle_prompt`, `auth_success`, `elicitation_dialog` | No | No | CC-HK-001 |
 | `SubagentStart` | agent type name | No | No | CC-HK-001 |
 | `SubagentStop` | agent type name | Yes | Yes | CC-HK-001 |
+| `TeammateIdle` | (no matcher) | Yes (exit 2) | No | CC-HK-001 |
+| `TaskCompleted` | (no matcher) | Yes (exit 2) | Yes | CC-HK-001 |
 | `Stop` | (no matcher) | Yes | Yes | CC-HK-001, CC-HK-002 |
 | `PreCompact` | `manual`, `auto` | No | No | CC-HK-001 |
 | `SessionEnd` | `clear`, `logout`, `prompt_input_exit`, `bypass_permissions_disabled`, `other` | No | No | CC-HK-001 |
-| `Setup` | (documented in code) | - | - | CC-HK-001 |
-| `TeammateIdle` | (no matcher) | No | No | CC-HK-001 |
-| `TaskCompleted` | (no matcher) | No | No | CC-HK-001 |
+| `Setup` | (documented in code) | No | No | CC-HK-001 |
 
 ### Complete Hook Handler Fields
 

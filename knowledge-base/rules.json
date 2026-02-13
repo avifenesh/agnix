@@ -936,7 +936,7 @@
         "autofix": false
       },
       "good_example": "{\n  \"hooks\": {\n    \"Stop\": [\n      {\n        \"hooks\": [\n          { \"type\": \"prompt\", \"prompt\": \"Summarize the session\", \"timeout\": 30 }\n        ]\n      }\n    ]\n  }\n}",
-      "bad_example": "{\n  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Bash\",\n        \"hooks\": [\n          { \"type\": \"prompt\", \"prompt\": \"Check this tool call\", \"timeout\": 30 }\n        ]\n      }\n    ]\n  }\n}"
+      "bad_example": "{\n  \"hooks\": {\n    \"SessionStart\": [\n      {\n        \"hooks\": [\n          { \"type\": \"prompt\", \"prompt\": \"Check session start\", \"timeout\": 30 }\n        ]\n      }\n    ]\n  }\n}"
     },
     {
       "id": "CC-HK-003",

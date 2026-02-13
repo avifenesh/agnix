@@ -398,9 +398,10 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 
 <a id="cc-hk-002"></a>
 ### CC-HK-002 [HIGH] Prompt Hook on Wrong Event
-**Requirement**: `type: "prompt"` ONLY for Stop and SubagentStop
-**Detection**: `hook.type == "prompt" && !["Stop", "SubagentStop"].contains(event)`
-**Fix**: Change to `type: "command"` or use Stop/SubagentStop
+**Requirement**: `type: "prompt"` or `type: "agent"` only on supported events
+**Supported**: PreToolUse, PostToolUse, PostToolUseFailure, PermissionRequest, UserPromptSubmit, Stop, SubagentStop, TaskCompleted
+**Detection**: `hook.type in ["prompt", "agent"] && !PROMPT_EVENTS.contains(event)`
+**Fix**: Change to `type: "command"` for unsupported events
 **Source**: code.claude.com/docs/en/hooks
 
 <a id="cc-hk-003"></a>

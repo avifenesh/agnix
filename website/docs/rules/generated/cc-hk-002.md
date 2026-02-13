@@ -40,11 +40,10 @@ The following examples demonstrate what triggers this rule and how to fix it.
 ```json
 {
   "hooks": {
-    "PreToolUse": [
+    "SessionStart": [
       {
-        "matcher": "Bash",
         "hooks": [
-          { "type": "prompt", "prompt": "Check this tool call", "timeout": 30 }
+          { "type": "prompt", "prompt": "Check session start", "timeout": 30 }
         ]
       }
     ]
