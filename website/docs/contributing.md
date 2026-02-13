@@ -1,6 +1,6 @@
 ---
 title: Contributing
-description: "How to contribute to agnix -- report bugs, request rules, improve docs, or write code."
+description: "How to contribute to agnix -report bugs, request rules, improve docs, or write code."
 ---
 
 # Contributing
@@ -45,5 +45,5 @@ This website assembles and links that content for navigation and search.
 
 ## References
 
-- [CONTRIBUTING.md](https://github.com/avifenesh/agnix/blob/main/CONTRIBUTING.md) -- full contribution guidelines
-- [SECURITY.md](https://github.com/avifenesh/agnix/blob/main/SECURITY.md) -- security policy
+- [CONTRIBUTING.md](https://github.com/avifenesh/agnix/blob/main/CONTRIBUTING.md) -full contribution guidelines
+- [SECURITY.md](https://github.com/avifenesh/agnix/blob/main/SECURITY.md) -security policy

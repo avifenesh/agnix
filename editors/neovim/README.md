@@ -85,53 +85,53 @@ Copy the `editors/neovim/` directory contents to:
 
 ```lua
 require('agnix').setup({
-  -- Path to agnix-lsp binary (nil = auto-detect)
+  -Path to agnix-lsp binary (nil = auto-detect)
   cmd = nil,
 
-  -- Neovim filetypes that may contain agnix files
+  -Neovim filetypes that may contain agnix files
   filetypes = { 'markdown', 'json' },
 
-  -- Markers for project root detection
+  -Markers for project root detection
   root_markers = { '.git', '.agnix.toml', 'CLAUDE.md', 'AGENTS.md' },
 
-  -- Start LSP automatically when opening a matching file
+  -Start LSP automatically when opening a matching file
   autostart = true,
 
-  -- Callback when LSP attaches to a buffer
+  -Callback when LSP attaches to a buffer
   on_attach = function(client, bufnr)
-    -- Add buffer-local keymaps, etc.
+    -Add buffer-local keymaps, etc.
   end,
 
-  -- LSP settings sent to the server
+  -LSP settings sent to the server
   settings = {
-    -- Minimum severity: 'Error', 'Warning', 'Info'
+    -Minimum severity: 'Error', 'Warning', 'Info'
     severity = nil,
 
-    -- Target tool: 'Generic', 'ClaudeCode', 'Cursor', 'Codex'
+    -Target tool: 'Generic', 'ClaudeCode', 'Cursor', 'Codex'
     target = nil,
 
-    -- Tools to validate for
+    -Tools to validate for
     tools = nil,
 
-    -- Rule category toggles
+    -Rule category toggles
     rules = {
-      skills = nil,           -- AS-*, CC-SK-*
-      hooks = nil,            -- CC-HK-*
-      agents = nil,           -- CC-AG-*
-      memory = nil,           -- CC-MEM-*
-      plugins = nil,          -- CC-PL-*
-      xml = nil,              -- XML-*
-      mcp = nil,              -- MCP-*
-      imports = nil,          -- REF-*
-      cross_platform = nil,   -- XP-*
-      agents_md = nil,        -- AGM-*
-      copilot = nil,          -- COP-*
-      cursor = nil,           -- CUR-*
-      prompt_engineering = nil, -- PE-*
-      disabled_rules = nil,   -- List of rule IDs to disable
+      skills = nil,           -AS-*, CC-SK-*
+      hooks = nil,            -CC-HK-*
+      agents = nil,           -CC-AG-*
+      memory = nil,           -CC-MEM-*
+      plugins = nil,          -CC-PL-*
+      xml = nil,              -XML-*
+      mcp = nil,              -MCP-*
+      imports = nil,          -REF-*
+      cross_platform = nil,   -XP-*
+      agents_md = nil,        -AGM-*
+      copilot = nil,          -COP-*
+      cursor = nil,           -CUR-*
+      prompt_engineering = nil, -PE-*
+      disabled_rules = nil,   -List of rule IDs to disable
     },
 
-    -- Tool version pins
+    -Tool version pins
     versions = {
       claude_code = nil,
       codex = nil,
@@ -139,7 +139,7 @@ require('agnix').setup({
       copilot = nil,
     },
 
-    -- Specification revision pins
+    -Specification revision pins
     specs = {
       mcp_protocol = nil,
       agent_skills_spec = nil,
@@ -147,10 +147,10 @@ require('agnix').setup({
     },
   },
 
-  -- Log level: 'trace', 'debug', 'info', 'warn', 'error'
+  -Log level: 'trace', 'debug', 'info', 'warn', 'error'
   log_level = 'warn',
 
-  -- Telescope integration
+  -Telescope integration
   telescope = { enable = true },
 })
 ```
@@ -179,8 +179,8 @@ require('telescope').load_extension('agnix')
 ```
 
 Then use:
-- `:Telescope agnix rules` -- Browse rule categories
-- `:Telescope agnix diagnostics` -- View agnix diagnostics
+- `:Telescope agnix rules` -Browse rule categories
+- `:Telescope agnix diagnostics` -View agnix diagnostics
 
 ## Supported File Types
 

@@ -17,7 +17,7 @@ Provides real-time validation of AI agent configuration files (CLAUDE.md, AGENTS
 
 - [Zed](https://zed.dev/) editor
 
-The extension automatically downloads the `agnix-lsp` binary -- no manual installation needed.
+The extension automatically downloads the `agnix-lsp` binary -no manual installation needed.
 
 ## Installation
 

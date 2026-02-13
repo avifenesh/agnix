@@ -32,11 +32,11 @@ Catch broken agent configs before your AI tools silently ignore them. 156 rules 
 
 **Multi-tool stacks fail silently.** Cursor + Claude Code + Copilot each want different formats. A config that works in one tool [breaks in another](https://arnav.tech/beyond-copilot-cursor-and-claude-code-the-unbundled-coding-ai-tools-stack).
 
-**Bad patterns get amplified.** AI assistants don't ignore wrong configs -- they [learn from them](https://www.augmentcode.com/guides/enterprise-coding-standards-12-rules-for-ai-ready-teams).
+**Bad patterns get amplified.** AI assistants don't ignore wrong configs -they [learn from them](https://www.augmentcode.com/guides/enterprise-coding-standards-12-rules-for-ai-ready-teams).
 
-agnix validates all of it -- 156 rules sourced from official specs, academic research, and real-world breakage patterns. Auto-fix included.
+agnix validates all of it -156 rules sourced from official specs, academic research, and real-world breakage patterns. Auto-fix included.
 
-> **Want to try it first?** [Open the playground](https://avifenesh.github.io/agnix/playground) -- paste any agent config, see diagnostics instantly. No install, runs in your browser.
+> **Want to try it first?** [Open the playground](https://avifenesh.github.io/agnix/playground) -paste any agent config, see diagnostics instantly. No install, runs in your browser.
 
 ## Quick Start
 

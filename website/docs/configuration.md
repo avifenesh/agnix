@@ -1,6 +1,6 @@
 ---
 title: Configuration
-description: "Configure agnix with .agnix.toml -- target tools, disable rules, set output format, and more."
+description: "Configure agnix with .agnix.toml -target tools, disable rules, set output format, and more."
 ---
 
 # Configuration

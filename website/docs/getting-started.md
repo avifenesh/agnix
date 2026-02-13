@@ -6,7 +6,7 @@ description: "Install agnix and validate your agent configuration files in under
 # Getting Started
 
 :::tip No install needed?
-[Try the playground](/playground) -- paste your config and see diagnostics instantly, right in your browser.
+[Try the playground](/playground) -paste your config and see diagnostics instantly, right in your browser.
 :::
 
 ## 1. Run agnix
@@ -70,7 +70,7 @@ agnix --target copilot .
 
 ## Next steps
 
-- [Configuration](./configuration.md) -- customize rules with `.agnix.toml`
-- [Rules Reference](./rules/index.md) -- browse all 156 rules
-- [Editor Integration](./editor-integration.md) -- get diagnostics in your editor
-- [Troubleshooting](./troubleshooting.md) -- common issues and fixes
+- [Configuration](./configuration.md) -customize rules with `.agnix.toml`
+- [Rules Reference](./rules/index.md) -browse all 156 rules
+- [Editor Integration](./editor-integration.md) -get diagnostics in your editor
+- [Troubleshooting](./troubleshooting.md) -common issues and fixes
