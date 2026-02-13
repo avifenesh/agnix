@@ -154,13 +154,13 @@ impl Validator for ClineValidator {
             }
         }
 
-        // CLN-004: Scalar paths value (WARNING) - Cline ignores scalar strings
+        // CLN-004: Scalar paths value (ERROR) - Cline ignores scalar strings
         if config.is_rule_enabled("CLN-004") {
             if let Some(ref schema) = parsed.schema {
                 if let Some(ref paths_field) = schema.paths {
                     if let Some(pattern) = paths_field.as_scalar() {
                         let line = parsed.paths_line.unwrap_or(parsed.start_line + 1);
-                        let mut diagnostic = Diagnostic::warning(
+                        let mut diagnostic = Diagnostic::error(
                             path.to_path_buf(),
                             line,
                             0,
@@ -171,7 +171,7 @@ impl Validator for ClineValidator {
 
                         // Auto-fix: convert scalar to array
                         if let Some((start, end)) = line_byte_range(content, line) {
-                            let escaped = pattern.replace('"', "\\\"");
+                            let escaped = pattern.replace('\\', "\\\\").replace('"', "\\\"");
                             let fix_text = format!("paths:\n  - \"{}\"\n", escaped);
                             diagnostic = diagnostic.with_fix(Fix::replace(
                                 start,
@@ -524,7 +524,7 @@ unknownKey: value
         }
     }
 
-    // ===== CLN-004: Scalar Paths Warning =====
+    // ===== CLN-004: Scalar Paths Error =====
 
     #[test]
     fn test_cln_004_scalar_paths_warns() {
@@ -532,7 +532,7 @@ unknownKey: value
         let diagnostics = validate_folder(content);
         let cln_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CLN-004").collect();
         assert_eq!(cln_004.len(), 1);
-        assert_eq!(cln_004[0].level, DiagnosticLevel::Warning);
+        assert_eq!(cln_004[0].level, DiagnosticLevel::Error);
         assert!(cln_004[0].message.contains("scalar"));
     }
 
