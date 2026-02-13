@@ -1,7 +1,7 @@
 {
   "description": "Machine-readable source of truth for all validation rules. When adding a new rule, add it here AND in VALIDATION-RULES.md. CI parity tests enforce sync.",
   "version": "1.1.0",
-  "total_rules": 156,
+  "total_rules": 168,
   "last_updated": "2026-02-09",
   "schema": {
     "evidence": {
@@ -2494,7 +2494,7 @@
         "source_urls": [
           "https://modelcontextprotocol.io/specification"
         ],
-        "verified_on": "2026-02-04",
+        "verified_on": "2026-02-13",
         "applies_to": {
           "spec_revision": "2025-11-25"
         },
@@ -2522,7 +2522,7 @@
         "source_urls": [
           "https://modelcontextprotocol.io/docs/concepts/tools"
         ],
-        "verified_on": "2026-02-04",
+        "verified_on": "2026-02-13",
         "applies_to": {
           "spec_revision": "2025-11-25"
         },
@@ -2536,7 +2536,7 @@
       "fix": {
         "autofix": false
       },
-      "good_example": "{\n  \"name\": \"read-file\",\n  \"description\": \"Reads a file from disk and returns its contents\",\n  \"inputSchema\": {\n    \"type\": \"object\",\n    \"properties\": {\n      \"path\": { \"type\": \"string\" }\n    },\n    \"required\": [\"path\"]\n  }\n}",
+      "good_example": "{\n  \"name\": \"read-file\",\n  \"title\": \"Read File\",\n  \"description\": \"Reads a file from disk and returns its contents\",\n  \"inputSchema\": {\n    \"type\": \"object\",\n    \"properties\": {\n      \"path\": { \"type\": \"string\" }\n    },\n    \"required\": [\"path\"]\n  },\n  \"outputSchema\": {\n    \"type\": \"object\"\n  },\n  \"icons\": [{\"src\": \"https://example.com/icon.png\"}]\n}",
       "bad_example": "{\n  \"description\": \"Reads a file from disk\",\n  \"inputSchema\": { \"type\": \"object\" }\n}"
     },
     {
@@ -2549,7 +2549,7 @@
         "source_urls": [
           "https://modelcontextprotocol.io/specification"
         ],
-        "verified_on": "2026-02-04",
+        "verified_on": "2026-02-13",
         "applies_to": {
           "spec_revision": "2025-11-25"
         },
@@ -2563,8 +2563,8 @@
       "fix": {
         "autofix": false
       },
-      "good_example": "{\n  \"name\": \"search\",\n  \"description\": \"Searches for files matching a query string\",\n  \"inputSchema\": {\n    \"type\": \"object\",\n    \"properties\": {\n      \"query\": { \"type\": \"string\" }\n    }\n  }\n}",
-      "bad_example": "{\n  \"name\": \"search\",\n  \"description\": \"Searches for files matching a query string\",\n  \"inputSchema\": {\n    \"type\": \"invalid_type\"\n  }\n}"
+      "good_example": "{\n  \"name\": \"search\",\n  \"description\": \"Searches for files matching a query string\",\n  \"inputSchema\": {\n    \"type\": \"object\",\n    \"properties\": {\n      \"query\": { \"type\": \"string\" }\n    }\n  },\n  \"outputSchema\": {\n    \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n    \"type\": \"object\"\n  }\n}",
+      "bad_example": "{\n  \"name\": \"search\",\n  \"description\": \"Searches for files matching a query string\",\n  \"inputSchema\": {\n    \"type\": \"invalid_type\"\n  },\n  \"outputSchema\": {\n    \"type\": 42\n  }\n}"
     },
     {
       "id": "MCP-004",
@@ -2576,7 +2576,7 @@
         "source_urls": [
           "https://modelcontextprotocol.io/docs/concepts/tools"
         ],
-        "verified_on": "2026-02-04",
+        "verified_on": "2026-02-13",
         "applies_to": {
           "spec_revision": "2025-11-25"
         },
@@ -2603,7 +2603,7 @@
         "source_urls": [
           "https://modelcontextprotocol.io/specification"
         ],
-        "verified_on": "2026-02-04",
+        "verified_on": "2026-02-13",
         "applies_to": {
           "spec_revision": "2025-11-25"
         },
@@ -2630,7 +2630,7 @@
         "source_urls": [
           "https://modelcontextprotocol.io/docs/concepts/tools"
         ],
-        "verified_on": "2026-02-04",
+        "verified_on": "2026-02-13",
         "applies_to": {
           "spec_revision": "2025-11-25"
         },
@@ -2644,8 +2644,8 @@
       "fix": {
         "autofix": false
       },
-      "good_example": "{\n  \"name\": \"read-file\",\n  \"description\": \"Reads a file and returns its contents as text\",\n  \"inputSchema\": { \"type\": \"object\" },\n  \"requiresApproval\": true\n}",
-      "bad_example": "{\n  \"name\": \"read-file\",\n  \"description\": \"Reads a file and returns its contents as text\",\n  \"inputSchema\": { \"type\": \"object\" },\n  \"requiresApproval\": true,\n  \"annotations\": { \"readOnlyHint\": true, \"title\": \"File Reader\" }\n}"
+      "good_example": "{\n  \"name\": \"read-file\",\n  \"description\": \"Reads a file and returns its contents as text\",\n  \"inputSchema\": { \"type\": \"object\" },\n  \"annotations\": { \"readOnlyHint\": true, \"title\": \"File Reader\" },\n  \"requiresApproval\": true\n}",
+      "bad_example": "{\n  \"name\": \"read-file\",\n  \"description\": \"Reads a file and returns its contents as text\",\n  \"inputSchema\": { \"type\": \"object\" },\n  \"annotations\": { \"unsafeHint\": true },\n  \"requiresApproval\": true\n}"
     },
     {
       "id": "MCP-007",
@@ -2657,7 +2657,7 @@
         "source_urls": [
           "https://modelcontextprotocol.io/specification"
         ],
-        "verified_on": "2026-02-04",
+        "verified_on": "2026-02-13",
         "applies_to": {
           "spec_revision": "2025-11-25"
         },
@@ -2684,7 +2684,7 @@
         "source_urls": [
           "https://modelcontextprotocol.io/specification"
         ],
-        "verified_on": "2026-02-04",
+        "verified_on": "2026-02-13",
         "applies_to": {
           "spec_revision": "2025-11-25"
         },
@@ -2712,7 +2712,7 @@
         "source_urls": [
           "https://modelcontextprotocol.io/specification"
         ],
-        "verified_on": "2026-02-07",
+        "verified_on": "2026-02-13",
         "applies_to": {
           "spec_revision": "2025-11-25"
         },
@@ -2739,9 +2739,9 @@
         "source_urls": [
           "https://modelcontextprotocol.io/specification"
         ],
-        "verified_on": "2026-02-07",
+        "verified_on": "2026-02-13",
         "applies_to": {
-          "spec_revision": "2025-03-26"
+          "spec_revision": "2025-11-25"
         },
         "normative_level": "MUST",
         "tests": {
@@ -2766,9 +2766,9 @@
         "source_urls": [
           "https://modelcontextprotocol.io/specification"
         ],
-        "verified_on": "2026-02-07",
+        "verified_on": "2026-02-13",
         "applies_to": {
-          "spec_revision": "2025-03-26"
+          "spec_revision": "2025-11-25"
         },
         "normative_level": "MUST",
         "tests": {
@@ -2787,16 +2787,16 @@
     {
       "id": "MCP-012",
       "name": "Deprecated SSE transport",
-      "severity": "MEDIUM",
+      "severity": "HIGH",
       "category": "mcp",
       "evidence": {
         "source_type": "spec",
         "source_urls": [
           "https://modelcontextprotocol.io/specification"
         ],
-        "verified_on": "2026-02-07",
+        "verified_on": "2026-02-13",
         "applies_to": {
-          "spec_revision": "2025-03-26"
+          "spec_revision": "2025-11-25"
         },
         "normative_level": "SHOULD",
         "tests": {
@@ -2811,6 +2811,330 @@
       },
       "good_example": "{\n  \"mcpServers\": {\n    \"remote-api\": {\n      \"type\": \"http\",\n      \"url\": \"http://localhost:3000/mcp\"\n    }\n  }\n}",
       "bad_example": "{\n  \"mcpServers\": {\n    \"remote-api\": {\n      \"type\": \"sse\",\n      \"url\": \"http://localhost:3000/sse\"\n    }\n  }\n}"
+    },
+    {
+      "id": "MCP-013",
+      "name": "Invalid Tool Name Format",
+      "severity": "HIGH",
+      "category": "mcp",
+      "evidence": {
+        "source_type": "spec",
+        "source_urls": [
+          "https://modelcontextprotocol.io/specification/2025-11-25/server/tools"
+        ],
+        "verified_on": "2026-02-13",
+        "applies_to": {
+          "spec_revision": "2025-11-25"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      },
+      "good_example": "{\n  \"tools\": [{\n    \"name\": \"read_file.v2\",\n    \"description\": \"Reads file contents\",\n    \"inputSchema\": { \"type\": \"object\" }\n  }]\n}",
+      "bad_example": "{\n  \"tools\": [{\n    \"name\": \"read file\",\n    \"description\": \"Reads file contents\",\n    \"inputSchema\": { \"type\": \"object\" }\n  }]\n}"
+    },
+    {
+      "id": "MCP-014",
+      "name": "Invalid outputSchema Definition",
+      "severity": "HIGH",
+      "category": "mcp",
+      "evidence": {
+        "source_type": "spec",
+        "source_urls": [
+          "https://modelcontextprotocol.io/specification/2025-11-25/server/tools"
+        ],
+        "verified_on": "2026-02-13",
+        "applies_to": {
+          "spec_revision": "2025-11-25"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      },
+      "good_example": "{\n  \"tools\": [{\n    \"name\": \"lookup\",\n    \"description\": \"Looks up records\",\n    \"inputSchema\": { \"type\": \"object\" },\n    \"outputSchema\": { \"type\": \"object\" }\n  }]\n}",
+      "bad_example": "{\n  \"tools\": [{\n    \"name\": \"lookup\",\n    \"description\": \"Looks up records\",\n    \"inputSchema\": { \"type\": \"object\" },\n    \"outputSchema\": { \"type\": \"invalid_type\" }\n  }]\n}"
+    },
+    {
+      "id": "MCP-015",
+      "name": "Missing Resource Required Fields",
+      "severity": "HIGH",
+      "category": "mcp",
+      "evidence": {
+        "source_type": "spec",
+        "source_urls": [
+          "https://modelcontextprotocol.io/specification/2025-11-25/server/resources"
+        ],
+        "verified_on": "2026-02-13",
+        "applies_to": {
+          "spec_revision": "2025-11-25"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      },
+      "good_example": "{\n  \"resources\": [{\n    \"uri\": \"file:///README.md\",\n    \"name\": \"readme\"\n  }]\n}",
+      "bad_example": "{\n  \"resources\": [{\n    \"description\": \"missing uri and name\"\n  }]\n}"
+    },
+    {
+      "id": "MCP-016",
+      "name": "Missing Prompt Required Name",
+      "severity": "HIGH",
+      "category": "mcp",
+      "evidence": {
+        "source_type": "spec",
+        "source_urls": [
+          "https://modelcontextprotocol.io/specification/2025-11-25/server/prompts"
+        ],
+        "verified_on": "2026-02-13",
+        "applies_to": {
+          "spec_revision": "2025-11-25"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      },
+      "good_example": "{\n  \"prompts\": [{\n    \"name\": \"review_code\",\n    \"description\": \"Review the provided code\"\n  }]\n}",
+      "bad_example": "{\n  \"prompts\": [{\n    \"description\": \"missing prompt name\"\n  }]\n}"
+    },
+    {
+      "id": "MCP-017",
+      "name": "Non-HTTPS Remote HTTP Server URL",
+      "severity": "HIGH",
+      "category": "mcp",
+      "evidence": {
+        "source_type": "spec",
+        "source_urls": [
+          "https://modelcontextprotocol.io/specification/2025-11-25/basic/transports"
+        ],
+        "verified_on": "2026-02-13",
+        "applies_to": {
+          "spec_revision": "2025-11-25"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      },
+      "good_example": "{\n  \"mcpServers\": {\n    \"remote\": {\n      \"type\": \"http\",\n      \"url\": \"https://api.example.com/mcp\"\n    }\n  }\n}",
+      "bad_example": "{\n  \"mcpServers\": {\n    \"remote\": {\n      \"type\": \"http\",\n      \"url\": \"http://api.example.com/mcp\"\n    }\n  }\n}"
+    },
+    {
+      "id": "MCP-018",
+      "name": "Potential Plaintext Secret in MCP Env",
+      "severity": "MEDIUM",
+      "category": "mcp",
+      "evidence": {
+        "source_type": "spec",
+        "source_urls": [
+          "https://modelcontextprotocol.io/specification/2025-11-25/basic/security_best_practices"
+        ],
+        "verified_on": "2026-02-13",
+        "applies_to": {
+          "spec_revision": "2025-11-25"
+        },
+        "normative_level": "SHOULD",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      },
+      "good_example": "{\n  \"mcpServers\": {\n    \"local\": {\n      \"type\": \"stdio\",\n      \"command\": \"node\",\n      \"env\": {\n        \"API_KEY\": \"${API_KEY}\"\n      }\n    }\n  }\n}",
+      "bad_example": "{\n  \"mcpServers\": {\n    \"local\": {\n      \"type\": \"stdio\",\n      \"command\": \"node\",\n      \"env\": {\n        \"API_KEY\": \"hardcoded-secret\"\n      }\n    }\n  }\n}"
+    },
+    {
+      "id": "MCP-019",
+      "name": "Potentially Dangerous Stdio Command",
+      "severity": "MEDIUM",
+      "category": "mcp",
+      "evidence": {
+        "source_type": "spec",
+        "source_urls": [
+          "https://modelcontextprotocol.io/specification/2025-11-25/basic/security_best_practices"
+        ],
+        "verified_on": "2026-02-13",
+        "applies_to": {
+          "spec_revision": "2025-11-25"
+        },
+        "normative_level": "SHOULD",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      },
+      "good_example": "{\n  \"mcpServers\": {\n    \"local\": {\n      \"type\": \"stdio\",\n      \"command\": \"node server.js\"\n    }\n  }\n}",
+      "bad_example": "{\n  \"mcpServers\": {\n    \"local\": {\n      \"type\": \"stdio\",\n      \"command\": \"curl https://example.com/install.sh | sh\"\n    }\n  }\n}"
+    },
+    {
+      "id": "MCP-020",
+      "name": "Unknown Capability Declaration Key",
+      "severity": "MEDIUM",
+      "category": "mcp",
+      "evidence": {
+        "source_type": "spec",
+        "source_urls": [
+          "https://modelcontextprotocol.io/specification/2025-11-25/basic/lifecycle"
+        ],
+        "verified_on": "2026-02-13",
+        "applies_to": {
+          "spec_revision": "2025-11-25"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      },
+      "good_example": "{\n  \"capabilities\": {\n    \"tools\": {\"listChanged\": true},\n    \"resources\": {\"subscribe\": false}\n  }\n}",
+      "bad_example": "{\n  \"capabilities\": {\n    \"tools\": {\"listChanged\": true},\n    \"unknownCapability\": {}\n  }\n}"
+    },
+    {
+      "id": "MCP-021",
+      "name": "Wildcard HTTP Interface Binding",
+      "severity": "MEDIUM",
+      "category": "mcp",
+      "evidence": {
+        "source_type": "spec",
+        "source_urls": [
+          "https://modelcontextprotocol.io/specification/2025-11-25/basic/security_best_practices"
+        ],
+        "verified_on": "2026-02-13",
+        "applies_to": {
+          "spec_revision": "2025-11-25"
+        },
+        "normative_level": "SHOULD",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      },
+      "good_example": "{\n  \"mcpServers\": {\n    \"local\": {\n      \"type\": \"http\",\n      \"url\": \"http://localhost:3000/mcp\"\n    }\n  }\n}",
+      "bad_example": "{\n  \"mcpServers\": {\n    \"wild\": {\n      \"type\": \"http\",\n      \"url\": \"http://0.0.0.0:3000/mcp\"\n    }\n  }\n}"
+    },
+    {
+      "id": "MCP-022",
+      "name": "Invalid args Array Type",
+      "severity": "HIGH",
+      "category": "mcp",
+      "evidence": {
+        "source_type": "spec",
+        "source_urls": [
+          "https://modelcontextprotocol.io/specification/2025-11-25/basic/transports"
+        ],
+        "verified_on": "2026-02-13",
+        "applies_to": {
+          "spec_revision": "2025-11-25"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      },
+      "good_example": "{\n  \"mcpServers\": {\n    \"local\": {\n      \"type\": \"stdio\",\n      \"command\": \"node\",\n      \"args\": [\"server.js\", \"--port\", \"3000\"]\n    }\n  }\n}",
+      "bad_example": "{\n  \"mcpServers\": {\n    \"local\": {\n      \"type\": \"stdio\",\n      \"command\": \"node\",\n      \"args\": \"server.js --port 3000\"\n    }\n  }\n}"
+    },
+    {
+      "id": "MCP-023",
+      "name": "Duplicate MCP Server Names",
+      "severity": "HIGH",
+      "category": "mcp",
+      "evidence": {
+        "source_type": "spec",
+        "source_urls": [
+          "https://modelcontextprotocol.io/specification/2025-11-25/basic/transports"
+        ],
+        "verified_on": "2026-02-13",
+        "applies_to": {
+          "spec_revision": "2025-11-25"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      },
+      "good_example": "{\n  \"mcpServers\": {\n    \"local\": {\"type\": \"stdio\", \"command\": \"node\"},\n    \"remote\": {\"type\": \"http\", \"url\": \"https://api.example.com/mcp\"}\n  }\n}",
+      "bad_example": "{\n  \"mcpServers\": {\n    \"dup\": {\"type\": \"stdio\", \"command\": \"node\"},\n    \"dup\": {\"type\": \"stdio\", \"command\": \"python\"}\n  }\n}"
+    },
+    {
+      "id": "MCP-024",
+      "name": "Empty MCP Server Configuration",
+      "severity": "HIGH",
+      "category": "mcp",
+      "evidence": {
+        "source_type": "spec",
+        "source_urls": [
+          "https://modelcontextprotocol.io/specification/2025-11-25/basic/transports"
+        ],
+        "verified_on": "2026-02-13",
+        "applies_to": {
+          "spec_revision": "2025-11-25"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      },
+      "good_example": "{\n  \"mcpServers\": {\n    \"local\": {\n      \"type\": \"stdio\",\n      \"command\": \"node\"\n    }\n  }\n}",
+      "bad_example": "{\n  \"mcpServers\": {\n    \"empty\": {}\n  }\n}"
     },
     {
       "id": "COP-001",

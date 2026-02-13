@@ -1,6 +1,6 @@
 # agnix Technical Reference
 
-> Linter for agent configs. 156 rules across 28 categories.
+> Linter for agent configs. 168 rules across 28 categories.
 
 
 ## What agnix Validates
@@ -15,7 +15,7 @@
 | Plugins | plugin.json | 10 |
 | Prompt Engineering | CLAUDE.md, AGENTS.md | 4 |
 | Cross-Platform | AGENTS.md | 7 |
-| MCP | tool definitions | 12 |
+| MCP | tool definitions | 24 |
 | XML | all .md files | 3 |
 | References | @imports | 2 |
 | GitHub Copilot | .github/copilot-instructions.md, .github/instructions/*.instructions.md | 6 |
@@ -50,7 +50,7 @@ agnix/
 │   ├── agnix-mcp/      # MCP server
 │   └── agnix-wasm/     # WebAssembly bindings
 ├── editors/            # Neovim, VS Code, JetBrains, Zed integrations
-├── knowledge-base/     # 156 rules documented
+├── knowledge-base/     # 168 rules documented
 
 ├── scripts/            # Build/dev automation scripts
 ├── website/            # Docusaurus documentation website
@@ -358,3 +358,4 @@ Instruction counts directly correlate with wall-clock time but without noise fro
 - **macOS x86**: Full support for both iai-callgrind and Criterion
 - **macOS ARM**: Valgrind support is experimental; use Criterion for local development
 - **Windows**: No Valgrind support; use Criterion only (CI runs iai on Linux)
+

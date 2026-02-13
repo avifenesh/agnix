@@ -1880,6 +1880,33 @@ fn test_validate_fixtures_directory() {
         "Expected MCP-006 from untrusted-annotations.mcp.json fixture"
     );
 
+    // New MCP expansion fixtures (MCP-013..MCP-024)
+    let new_mcp_expectations = [
+        ("MCP-013", "invalid-tool-name"),
+        ("MCP-014", "invalid-output-schema"),
+        ("MCP-015", "missing-resource-required-fields"),
+        ("MCP-016", "missing-prompt-name"),
+        ("MCP-017", "insecure-http-server"),
+        ("MCP-018", "plaintext-env-secret"),
+        ("MCP-019", "dangerous-stdio-command"),
+        ("MCP-020", "invalid-capability-key"),
+        ("MCP-021", "wildcard-http-binding"),
+        ("MCP-022", "invalid-args-type"),
+        ("MCP-023", "duplicate-server-names"),
+        ("MCP-024", "empty-server-config"),
+    ];
+
+    for (rule, file_part) in new_mcp_expectations {
+        assert!(
+            mcp_diagnostics
+                .iter()
+                .any(|d| d.rule == rule && d.file.to_string_lossy().contains(file_part)),
+            "Expected {} from {}.mcp.json fixture",
+            rule,
+            file_part
+        );
+    }
+
     // Verify AGM, XP, REF, and XML fixtures trigger expected rules
     let expectations = [
         (

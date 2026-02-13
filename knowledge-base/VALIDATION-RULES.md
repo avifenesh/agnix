@@ -79,7 +79,7 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
   "evidence": {
     "source_type": "spec",
     "source_urls": ["https://modelcontextprotocol.io/specification"],
-    "verified_on": "2026-02-04",
+    "verified_on": "2026-02-13",
     "applies_to": { "spec_revision": "2025-11-25" },
     "normative_level": "MUST",
     "tests": { "unit": true, "fixtures": true, "e2e": false }
@@ -839,15 +839,15 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 <a id="mcp-002"></a>
 ### MCP-002 [HIGH] Missing Required Tool Field
 **Requirement**: Tool MUST have `name`, `description`, `inputSchema`
-**Detection**: Parse tool definition, check fields
+**Detection**: Parse tool definition, check required fields while allowing optional `title`, `outputSchema`, and `icons`
 **Fix**: Add missing fields
 **Source**: modelcontextprotocol.io/docs/concepts/tools
 
 <a id="mcp-003"></a>
 ### MCP-003 [HIGH] Invalid JSON Schema
-**Requirement**: inputSchema MUST be valid JSON Schema
-**Detection**: Validate against JSON Schema spec
-**Fix**: Show schema errors
+**Requirement**: `inputSchema` MUST be valid JSON Schema (JSON Schema 2020-12 compatible)
+**Detection**: Validate schema structure and field types
+**Fix**: Correct JSON Schema structure errors
 **Source**: modelcontextprotocol.io/specification
 
 <a id="mcp-004"></a>
@@ -866,9 +866,9 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 
 <a id="mcp-006"></a>
 ### MCP-006 [HIGH] Untrusted Annotations
-**Requirement**: Tool annotations MUST be considered untrusted unless from trusted server
-**Detection**: Check server trust level
-**Fix**: Add validation layer
+**Requirement**: Tool annotations MUST be treated as untrusted and annotation keys SHOULD use known hint names (`readOnlyHint`, `destructiveHint`, `idempotentHint`, `openWorldHint`, `title`)
+**Detection**: Warn when annotations are present and when unknown annotation keys are used
+**Fix**: Restrict annotation keys to known spec hint names
 **Source**: modelcontextprotocol.io/docs/concepts/tools
 
 <a id="mcp-007"></a>
@@ -881,7 +881,7 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 <a id="mcp-008"></a>
 ### MCP-008 [MEDIUM] Protocol Version Mismatch
 **Requirement**: MCP initialize messages SHOULD use the expected protocol version
-**Detection**: Check `protocolVersion` field in initialize request params or response result against configured expected version (default: "2025-11-25")
+**Detection**: Check `protocolVersion` field in initialize request params or response result against configured expected version (default: `2025-11-25`)
 **Fix**: Update protocolVersion to match expected version, or configure `mcp_protocol_version` in agnix config to match your target version
 **Note**: This is a warning (not error) because MCP allows version negotiation between client and server
 **Source**: modelcontextprotocol.io/specification (Protocol Versioning)
@@ -909,12 +909,96 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 **Source**: modelcontextprotocol.io/specification
 
 <a id="mcp-012"></a>
-### MCP-012 [MEDIUM] Deprecated SSE transport
+### MCP-012 [HIGH] Deprecated SSE transport
 **Requirement**: SSE transport SHOULD be replaced with Streamable HTTP
 **Detection**: Server entry has `type: "sse"`
 **Fix**: Change `type` from `"sse"` to `"http"` (unsafe: server may not support Streamable HTTP)
-**Note**: This is a warning because SSE still works but is deprecated in favor of Streamable HTTP
+**Note**: Raised to high severity because SSE is deprecated and behind current transport guidance
 **Source**: modelcontextprotocol.io/specification
+
+<a id="mcp-013"></a>
+### MCP-013 [HIGH] Invalid Tool Name Format
+**Requirement**: Tool name MUST be 1-128 chars and match `[a-zA-Z0-9_.-]+`
+**Detection**: Check `tools[].name` length and allowed characters
+**Fix**: Rename tool to a compliant identifier
+**Source**: modelcontextprotocol.io/specification/2025-11-25/server/tools
+
+<a id="mcp-014"></a>
+### MCP-014 [HIGH] Invalid outputSchema Definition
+**Requirement**: `outputSchema` MUST be valid JSON Schema when provided
+**Detection**: Validate `tools[].outputSchema` object structure/types
+**Fix**: Correct `outputSchema` to valid JSON Schema
+**Source**: modelcontextprotocol.io/specification/2025-11-25/server/tools
+
+<a id="mcp-015"></a>
+### MCP-015 [HIGH] Missing Resource Required Fields
+**Requirement**: Resource definitions MUST include `uri` and `name`
+**Detection**: Check each `resources[]` entry for missing/empty `uri` or `name`
+**Fix**: Add required fields
+**Source**: modelcontextprotocol.io/specification/2025-11-25/server/resources
+
+<a id="mcp-016"></a>
+### MCP-016 [HIGH] Missing Prompt Required Name
+**Requirement**: Prompt definitions MUST include `name`
+**Detection**: Check each `prompts[]` entry for missing/empty `name`
+**Fix**: Add non-empty `name`
+**Source**: modelcontextprotocol.io/specification/2025-11-25/server/prompts
+
+<a id="mcp-017"></a>
+### MCP-017 [HIGH] Non-HTTPS Remote HTTP Server URL
+**Requirement**: Non-localhost HTTP MCP endpoints MUST use HTTPS
+**Detection**: For `type: "http"`, flag `http://` URLs when host is not localhost/loopback
+**Fix**: Change remote MCP URL to `https://`
+**Source**: modelcontextprotocol.io/specification/2025-11-25/basic/transports
+
+<a id="mcp-018"></a>
+### MCP-018 [MEDIUM] Potential Plaintext Secret in MCP Env
+**Requirement**: Secret-like env vars SHOULD avoid plaintext values
+**Detection**: In stdio server `env`, flag keys matching `API_KEY`, `SECRET`, `TOKEN`, `PASSWORD` with non-empty literal values
+**Fix**: Use runtime secret injection or env indirection
+**Source**: modelcontextprotocol.io/specification/2025-11-25/basic/security_best_practices
+
+<a id="mcp-019"></a>
+### MCP-019 [MEDIUM] Potentially Dangerous Stdio Command
+**Requirement**: Stdio server commands SHOULD avoid risky shell patterns
+**Detection**: Flag patterns like `curl|sh`, `wget|sh`, `sudo rm`, and simple exfiltration command signatures
+**Fix**: Replace with audited, explicit command execution flow
+**Source**: modelcontextprotocol.io/specification/2025-11-25/basic/security_best_practices
+
+<a id="mcp-020"></a>
+### MCP-020 [MEDIUM] Unknown Capability Declaration Key
+**Requirement**: Capability keys MUST come from the spec-defined set
+**Detection**: Validate keys under `capabilities` against known list
+**Fix**: Remove or rename unknown capability keys
+**Source**: modelcontextprotocol.io/specification/2025-11-25/basic/lifecycle
+
+<a id="mcp-021"></a>
+### MCP-021 [MEDIUM] Wildcard HTTP Interface Binding
+**Requirement**: HTTP servers SHOULD avoid wildcard/all-interface binds by default
+**Detection**: Flag `http://0.0.0.0...` and IPv6 wildcard binds
+**Fix**: Prefer localhost binding unless remote exposure is required
+**Source**: modelcontextprotocol.io/specification/2025-11-25/basic/security_best_practices
+
+<a id="mcp-022"></a>
+### MCP-022 [HIGH] Invalid args Array Type
+**Requirement**: `args` MUST be an array of strings when present
+**Detection**: Validate `mcpServers.*.args` type and element types
+**Fix**: Convert to array of string arguments
+**Source**: modelcontextprotocol.io/specification/2025-11-25/basic/transports
+
+<a id="mcp-023"></a>
+### MCP-023 [HIGH] Duplicate MCP Server Names
+**Requirement**: `mcpServers` keys MUST be unique
+**Detection**: Scan raw JSON for duplicate keys inside `mcpServers`
+**Fix**: Rename duplicate server entries
+**Source**: modelcontextprotocol.io/specification/2025-11-25/basic/transports
+
+<a id="mcp-024"></a>
+### MCP-024 [HIGH] Empty MCP Server Configuration
+**Requirement**: Each MCP server entry MUST define meaningful config fields
+**Detection**: Flag empty objects in `mcpServers`
+**Fix**: Add at least one meaningful field (`type`, `command`, `url`, `args`, `env`)
+**Source**: modelcontextprotocol.io/specification/2025-11-25/basic/transports
 
 ---
 
@@ -1433,7 +1517,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | OpenCode | 3 | 3 | 0 | 0 | 1 |
 | Gemini CLI | 3 | 1 | 2 | 0 | 0 |
 | Codex CLI | 4 | 3 | 1 | 0 | 2 |
-| MCP | 12 | 10 | 2 | 0 | 4 |
+| MCP | 24 | 19 | 5 | 0 | 4 |
 | XML | 3 | 3 | 0 | 0 | 3 |
 | References | 2 | 2 | 0 | 0 | 0 |
 | Prompt Eng | 4 | 0 | 4 | 0 | 0 |
@@ -1448,7 +1532,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | Amp Skills | 1 | 0 | 1 | 0 | 1 |
 | Roo Code Skills | 1 | 0 | 1 | 0 | 1 |
 | Version Awareness | 1 | 0 | 0 | 1 | 0 |
-| **TOTAL** | **156** | **101** | **52** | **3** | **57** |
+| **TOTAL** | **168** | **110** | **55** | **3** | **57** |
 
 
 ---
@@ -1478,7 +1562,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 
 ---
 
-**Total Coverage**: 156 validation rules across 28 categories
+**Total Coverage**: 168 validation rules across 28 categories
 
 **Knowledge Base**: 11,036 lines, 320KB, 75+ sources
 **Certainty**: 103 HIGH, 49 MEDIUM, 3 LOW

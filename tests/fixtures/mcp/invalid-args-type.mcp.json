@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "local": {
+      "type": "stdio",
+      "command": "node",
+      "args": "--port 3000"
+    }
+  }
+}

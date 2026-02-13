@@ -3,11 +3,36 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
+/// Known MCP tool annotation hint keys from spec.
+pub const VALID_MCP_ANNOTATION_HINTS: &[&str] = &[
+    "readOnlyHint",
+    "destructiveHint",
+    "idempotentHint",
+    "openWorldHint",
+    "title",
+];
+
+/// Known MCP capability keys from spec.
+pub const VALID_MCP_CAPABILITY_KEYS: &[&str] = &[
+    "tools",
+    "resources",
+    "prompts",
+    "logging",
+    "roots",
+    "sampling",
+    "elicitation",
+    "completions",
+    "experimental",
+];
+
 /// MCP tool definition schema
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct McpToolSchema {
     /// Required: tool name
     pub name: Option<String>,
+
+    /// Optional: human-readable display name
+    pub title: Option<String>,
 
     /// Required: tool description
     pub description: Option<String>,
@@ -15,6 +40,13 @@ pub struct McpToolSchema {
     /// Required: JSON Schema for input parameters
     #[serde(rename = "inputSchema")]
     pub input_schema: Option<serde_json::Value>,
+
+    /// Optional: JSON Schema for structured outputs
+    #[serde(rename = "outputSchema")]
+    pub output_schema: Option<serde_json::Value>,
+
+    /// Optional: icon metadata (tooling-specific representation)
+    pub icons: Option<serde_json::Value>,
 
     /// Optional: annotations (should be treated as untrusted)
     #[serde(default)]
@@ -26,6 +58,79 @@ pub struct McpToolSchema {
 
     /// Optional: confirmation field for consent
     pub confirmation: Option<String>,
+}
+
+/// MCP resource definition schema
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct McpResourceSchema {
+    /// Required: RFC3986 URI identifier
+    pub uri: Option<String>,
+
+    /// Required: resource name
+    pub name: Option<String>,
+
+    /// Optional: human-readable display name
+    pub title: Option<String>,
+
+    /// Optional: resource description
+    pub description: Option<String>,
+
+    /// Optional: MIME type
+    #[serde(rename = "mimeType")]
+    pub mime_type: Option<String>,
+
+    /// Optional: size metadata
+    pub size: Option<serde_json::Value>,
+
+    /// Optional: resource annotations
+    #[serde(default)]
+    pub annotations: Option<HashMap<String, serde_json::Value>>,
+}
+
+/// MCP resource read content schema
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct McpResourceContentSchema {
+    /// Required: resource URI
+    pub uri: Option<String>,
+
+    /// Required: MIME type
+    #[serde(rename = "mimeType")]
+    pub mime_type: Option<String>,
+
+    /// Optional: text content
+    pub text: Option<String>,
+
+    /// Optional: base64 blob content
+    pub blob: Option<String>,
+}
+
+/// MCP prompt argument schema
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct McpPromptArgumentSchema {
+    /// Required: argument name
+    pub name: Option<String>,
+
+    /// Optional: argument description
+    pub description: Option<String>,
+
+    /// Optional: required flag
+    pub required: Option<bool>,
+}
+
+/// MCP prompt definition schema
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct McpPromptSchema {
+    /// Required: prompt name
+    pub name: Option<String>,
+
+    /// Optional: prompt description
+    pub description: Option<String>,
+
+    /// Optional: prompt display title
+    pub title: Option<String>,
+
+    /// Optional: arguments definition (validated in rule layer)
+    pub arguments: Option<serde_json::Value>,
 }
 
 /// MCP JSON-RPC message schema
@@ -65,7 +170,7 @@ pub struct McpServerConfig {
 
     /// Command arguments
     #[serde(default)]
-    pub args: Option<Vec<String>>,
+    pub args: Option<serde_json::Value>,
 
     /// Environment variables
     #[serde(default)]
@@ -84,6 +189,15 @@ pub struct McpConfigSchema {
 
     /// Tools array (for tool definition files)
     pub tools: Option<Vec<McpToolSchema>>,
+
+    /// Resources array (for resources/list payloads)
+    pub resources: Option<Vec<McpResourceSchema>>,
+
+    /// Prompts array (for prompts/list payloads)
+    pub prompts: Option<Vec<McpPromptSchema>>,
+
+    /// Capability map (for initialize payloads)
+    pub capabilities: Option<HashMap<String, serde_json::Value>>,
 
     /// JSON-RPC version (for message files)
     pub jsonrpc: Option<String>,
@@ -283,6 +397,9 @@ mod tests {
             name: Some("test-tool".to_string()),
             description: Some("A test tool".to_string()),
             input_schema: Some(json!({"type": "object"})),
+            title: None,
+            output_schema: None,
+            icons: None,
             annotations: None,
             requires_approval: None,
             confirmation: None,
@@ -296,6 +413,9 @@ mod tests {
             name: None,
             description: Some("A test tool".to_string()),
             input_schema: Some(json!({"type": "object"})),
+            title: None,
+            output_schema: None,
+            icons: None,
             annotations: None,
             requires_approval: None,
             confirmation: None,
@@ -309,6 +429,9 @@ mod tests {
             name: Some("".to_string()),
             description: Some("A test tool".to_string()),
             input_schema: Some(json!({"type": "object"})),
+            title: None,
+            output_schema: None,
+            icons: None,
             annotations: None,
             requires_approval: None,
             confirmation: None,
@@ -322,6 +445,9 @@ mod tests {
             name: Some("test".to_string()),
             description: Some("This is a meaningful description".to_string()),
             input_schema: None,
+            title: None,
+            output_schema: None,
+            icons: None,
             annotations: None,
             requires_approval: None,
             confirmation: None,
@@ -335,6 +461,9 @@ mod tests {
             name: Some("test".to_string()),
             description: Some("Short".to_string()),
             input_schema: None,
+            title: None,
+            output_schema: None,
+            icons: None,
             annotations: None,
             requires_approval: None,
             confirmation: None,
@@ -348,6 +477,9 @@ mod tests {
             name: Some("test".to_string()),
             description: None,
             input_schema: None,
+            title: None,
+            output_schema: None,
+            icons: None,
             annotations: None,
             requires_approval: Some(true),
             confirmation: None,
@@ -362,6 +494,9 @@ mod tests {
             name: Some("test".to_string()),
             description: None,
             input_schema: None,
+            title: None,
+            output_schema: None,
+            icons: None,
             annotations: None,
             requires_approval: Some(false),
             confirmation: None,
@@ -375,6 +510,9 @@ mod tests {
             name: Some("test".to_string()),
             description: None,
             input_schema: None,
+            title: None,
+            output_schema: None,
+            icons: None,
             annotations: None,
             requires_approval: None,
             confirmation: Some("Are you sure?".to_string()),
@@ -389,6 +527,9 @@ mod tests {
             name: Some("test".to_string()),
             description: None,
             input_schema: None,
+            title: None,
+            output_schema: None,
+            icons: None,
             annotations: None,
             requires_approval: None,
             confirmation: Some("".to_string()),
@@ -403,6 +544,9 @@ mod tests {
             name: Some("test".to_string()),
             description: None,
             input_schema: None,
+            title: None,
+            output_schema: None,
+            icons: None,
             annotations: None,
             requires_approval: None,
             confirmation: Some("   ".to_string()),
