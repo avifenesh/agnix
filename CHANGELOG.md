@@ -825,7 +825,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - CC-PL-001: Validates plugin.json is in .claude-plugin/ directory
   - CC-PL-002: Detects misplaced components (skills/agents/hooks) inside .claude-plugin/
   - CC-PL-003: Validates version uses semver format (X.Y.Z)
-  - CC-PL-004: Validates required fields (name, description, version)
+  - CC-PL-004: Validates required field (name) and recommended fields (description, version)
   - CC-PL-005: Validates name field is not empty
 - Path traversal protection with MAX_TRAVERSAL_DEPTH limit
 - 47 comprehensive tests for plugin validation (234 total tests)
