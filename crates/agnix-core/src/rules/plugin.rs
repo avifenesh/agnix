@@ -104,8 +104,8 @@ impl Validator for PluginValidator {
 
         if config.is_rule_enabled("CC-PL-004") {
             check_required_field(&raw_value, "name", path, diagnostics.as_mut());
-            check_required_field(&raw_value, "description", path, diagnostics.as_mut());
-            check_required_field(&raw_value, "version", path, diagnostics.as_mut());
+            check_recommended_field(&raw_value, "description", path, diagnostics.as_mut());
+            check_recommended_field(&raw_value, "version", path, diagnostics.as_mut());
         }
 
         if config.is_rule_enabled("CC-PL-005") {
@@ -234,18 +234,20 @@ impl Validator for PluginValidator {
         };
 
         if config.is_rule_enabled("CC-PL-003") {
-            let version = schema.version.trim();
-            if !version.is_empty() && !is_valid_semver(version) {
-                diagnostics.push(
-                    Diagnostic::error(
-                        path.to_path_buf(),
-                        1,
-                        0,
-                        "CC-PL-003",
-                        t!("rules.cc_pl_003.message", version = schema.version.as_str()),
-                    )
-                    .with_suggestion(t!("rules.cc_pl_003.suggestion")),
-                );
+            if let Some(ref version) = schema.version {
+                let trimmed = version.trim();
+                if !trimmed.is_empty() && !is_valid_semver(trimmed) {
+                    diagnostics.push(
+                        Diagnostic::error(
+                            path.to_path_buf(),
+                            1,
+                            0,
+                            "CC-PL-003",
+                            t!("rules.cc_pl_003.message", version = version.as_str()),
+                        )
+                        .with_suggestion(t!("rules.cc_pl_003.suggestion")),
+                    );
+                }
             }
         }
 
@@ -274,6 +276,31 @@ fn check_required_field(
                 t!("rules.cc_pl_004.message", field = field),
             )
             .with_suggestion(t!("rules.cc_pl_004.suggestion", field = field)),
+        );
+    }
+}
+
+fn check_recommended_field(
+    value: &serde_json::Value,
+    field: &str,
+    path: &Path,
+    diagnostics: &mut Vec<Diagnostic>,
+) {
+    let missing = match value.get(field) {
+        Some(v) => !v.is_string() || v.as_str().map(|s| s.trim().is_empty()).unwrap_or(true),
+        None => true,
+    };
+
+    if missing {
+        diagnostics.push(
+            Diagnostic::warning(
+                path.to_path_buf(),
+                1,
+                0,
+                "CC-PL-004",
+                t!("rules.cc_pl_004_recommended.message", field = field),
+            )
+            .with_suggestion(t!("rules.cc_pl_004_recommended.suggestion", field = field)),
         );
     }
 }

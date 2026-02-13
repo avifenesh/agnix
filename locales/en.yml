@@ -551,6 +551,9 @@ rules:
   cc_pl_004:
     message: "Missing required field: %{field}"
     suggestion: "Add '%{field}' field to plugin.json"
+  cc_pl_004_recommended:
+    message: "Missing recommended field: %{field}"
+    suggestion: "Consider adding '%{field}' field to plugin.json"
   cc_pl_005:
     message: "Plugin name must not be empty"
     suggestion: "Set a non-empty plugin name"

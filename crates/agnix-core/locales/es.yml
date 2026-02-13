@@ -466,6 +466,9 @@ rules:
   cc_pl_004:
     message: "Falta campo requerido: %{field}"
     suggestion: "Agrega el campo '%{field}' a plugin.json"
+  cc_pl_004_recommended:
+    message: "Falta campo recomendado: %{field}"
+    suggestion: "Considera agregar el campo '%{field}' a plugin.json"
   cc_pl_005:
     message: "El nombre del plugin no debe estar vacio"
     suggestion: "Establece un nombre de plugin no vacio"

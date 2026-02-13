@@ -8,11 +8,15 @@ pub struct PluginSchema {
     /// Required: plugin name
     pub name: String,
 
-    /// Required: description
-    pub description: String,
+    /// Recommended: description
+    #[serde(default)]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description: Option<String>,
 
-    /// Required: version (semver)
-    pub version: String,
+    /// Recommended: version (semver)
+    #[serde(default)]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub version: Option<String>,
 
     /// Optional: author info
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -48,13 +52,15 @@ pub struct AuthorInfo {
 impl PluginSchema {
     /// Validate semver format
     pub fn validate_version(&self) -> Result<(), String> {
-        semver::Version::parse(&self.version).map_err(|e| {
-            format!(
-                "Invalid semver format '{}': {}",
-                self.version,
-                e.to_string().to_lowercase()
-            )
-        })?;
+        if let Some(ref version) = self.version {
+            semver::Version::parse(version).map_err(|e| {
+                format!(
+                    "Invalid semver format '{}': {}",
+                    version,
+                    e.to_string().to_lowercase()
+                )
+            })?;
+        }
         Ok(())
     }
 
@@ -66,8 +72,10 @@ impl PluginSchema {
             errors.push("Plugin name cannot be empty".to_string());
         }
 
-        if self.description.is_empty() {
-            errors.push("Plugin description cannot be empty".to_string());
+        if let Some(ref description) = self.description {
+            if description.is_empty() {
+                errors.push("Plugin description cannot be empty".to_string());
+            }
         }
 
         if let Err(e) = self.validate_version() {

@@ -466,6 +466,9 @@ rules:
   cc_pl_004:
     message: "缺少必需字段: %{field}"
     suggestion: "在 plugin.json 中添加 '%{field}' 字段"
+  cc_pl_004_recommended:
+    message: "缺少推荐字段: %{field}"
+    suggestion: "建议在 plugin.json 中添加 '%{field}' 字段"
   cc_pl_005:
     message: "插件名称不能为空"
     suggestion: "设置非空的插件名称"

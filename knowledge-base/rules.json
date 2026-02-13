@@ -2295,7 +2295,7 @@
     },
     {
       "id": "CC-PL-004",
-      "name": "Missing Required Plugin Field",
+      "name": "Missing Required/Recommended Plugin Field",
       "severity": "HIGH",
       "category": "claude-plugins",
       "evidence": {
@@ -2318,7 +2318,7 @@
         "autofix": false
       },
       "good_example": "{\n  \"name\": \"my-plugin\",\n  \"description\": \"A useful plugin\",\n  \"version\": \"1.0.0\"\n}",
-      "bad_example": "{\n  \"name\": \"my-plugin\"\n}"
+      "bad_example": "{}"
     },
     {
       "id": "CC-PL-005",
