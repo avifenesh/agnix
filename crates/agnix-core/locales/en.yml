@@ -474,6 +474,10 @@ rules:
   cln_003:
     message: "Unknown frontmatter key '%{key}' in Cline rules file"
     suggestion: "Remove unknown key '%{key}'. Only 'paths' is a recognized frontmatter key."
+  cln_004:
+    message: "Cline ignores scalar paths values - use a YAML array instead"
+    suggestion: "Change paths to array format: paths:\n  - \"%{pattern}\""
+    fix: "Convert scalar paths to array format"
 
   # --- Gemini CLI (gemini_md.rs) ---
   gm_001:

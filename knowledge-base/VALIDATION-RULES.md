@@ -1043,16 +1043,23 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 <a id="cln-002"></a>
 ### CLN-002 [HIGH] Invalid Paths Glob in Cline Rules
 **Requirement**: `paths` field in `.clinerules/*.md` frontmatter MUST contain valid glob patterns
-**Detection**: Parse YAML frontmatter, extract `paths` field, validate each glob pattern
+**Detection**: Parse YAML frontmatter, extract `paths` array field, validate each glob pattern in the array
 **Fix**: No auto-fix (glob patterns must be manually corrected)
-**Source**: docs.cline.bot/improving-your-workflow/cline-rules
+**Source**: docs.cline.bot/features/cline-rules
 
 <a id="cln-003"></a>
 ### CLN-003 [MEDIUM] Unknown Frontmatter Key in Cline Rules
 **Requirement**: Frontmatter in `.clinerules/*.md` files SHOULD only use documented keys (`paths`)
 **Detection**: Parse YAML frontmatter, check all keys against allowlist
 **Fix**: [AUTO-FIX unsafe] Remove unknown frontmatter keys
-**Source**: docs.cline.bot/improving-your-workflow/cline-rules
+**Source**: docs.cline.bot/features/cline-rules
+
+<a id="cln-004"></a>
+### CLN-004 [HIGH] Scalar Paths in Cline Rules
+**Requirement**: `paths` field in `.clinerules/*.md` frontmatter MUST be a YAML array, not a scalar string
+**Detection**: Parse YAML frontmatter, check if `paths` is a scalar string (Cline silently ignores scalar values)
+**Fix**: [AUTO-FIX safe] Convert scalar paths to array format
+**Source**: docs.cline.bot/features/cline-rules
 
 ---
 
@@ -1429,7 +1436,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | Claude Plugins | 10 | 8 | 2 | 0 | 2 |
 | GitHub Copilot | 6 | 4 | 2 | 0 | 3 |
 | Cursor | 9 | 4 | 5 | 0 | 4 |
-| Cline | 3 | 2 | 1 | 0 | 1 |
+| Cline | 4 | 3 | 1 | 0 | 2 |
 | OpenCode | 3 | 3 | 0 | 0 | 1 |
 | Gemini CLI | 3 | 1 | 2 | 0 | 0 |
 | Codex CLI | 4 | 3 | 1 | 0 | 2 |
@@ -1448,7 +1455,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | Amp Skills | 1 | 0 | 1 | 0 | 1 |
 | Roo Code Skills | 1 | 0 | 1 | 0 | 1 |
 | Version Awareness | 1 | 0 | 0 | 1 | 0 |
-| **TOTAL** | **156** | **101** | **52** | **3** | **57** |
+| **TOTAL** | **157** | **102** | **52** | **3** | **58** |
 
 
 ---
@@ -1478,8 +1485,8 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 
 ---
 
-**Total Coverage**: 156 validation rules across 28 categories
+**Total Coverage**: 157 validation rules across 28 categories
 
 **Knowledge Base**: 11,036 lines, 320KB, 75+ sources
-**Certainty**: 103 HIGH, 49 MEDIUM, 3 LOW
-**Auto-Fixable**: 57 rules (37%)
+**Certainty**: 102 HIGH, 52 MEDIUM, 3 LOW
+**Auto-Fixable**: 58 rules (37%)

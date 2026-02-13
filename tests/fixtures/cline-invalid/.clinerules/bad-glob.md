@@ -1,5 +1,6 @@
 ---
-paths: "[unclosed"
+paths:
+  - "[unclosed"
 ---
 # Bad Glob Test
 
