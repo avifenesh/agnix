@@ -146,8 +146,8 @@ rules:
     message: "Prompt/agent hook at %{location} is not supported on '%{event}' events"
     suggestion: "Prompt/agent hooks work on PreToolUse, PostToolUse, PostToolUseFailure, PermissionRequest, UserPromptSubmit, Stop, SubagentStop, and TaskCompleted. Use 'type': 'command' for other events"
   cc_hk_003:
-    message: "Tool event '%{event}' at %{location} requires a matcher field"
-    suggestion: "Add 'matcher': '*' for all tools or specify a tool name"
+    message: "Tool event '%{event}' at %{location} has no matcher field; omitting it matches all tools"
+    suggestion: "Consider adding a 'matcher' field to target specific tools (e.g., 'Bash', 'Read')"
   cc_hk_004:
     message: "Non-tool event '%{event}' at %{location} must not have a matcher field"
     suggestion: "Remove the 'matcher' field"

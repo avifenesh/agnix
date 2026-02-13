@@ -126,7 +126,7 @@ impl HooksSchema {
         "SessionEnd",
     ];
 
-    /// Events that require a matcher field (tool-related events)
+    /// Events that support a matcher field (tool-related events)
     pub const TOOL_EVENTS: &'static [&'static str] = &[
         "PreToolUse",
         "PermissionRequest",
@@ -146,7 +146,7 @@ impl HooksSchema {
         "TaskCompleted",
     ];
 
-    /// Check if an event is a tool event (requires matcher)
+    /// Check if an event is a tool event (supports matcher)
     pub fn is_tool_event(event: &str) -> bool {
         Self::TOOL_EVENTS.contains(&event)
     }
