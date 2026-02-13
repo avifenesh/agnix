@@ -229,6 +229,9 @@ fn fix_fields_are_accessible() {
         replacement: String::from("new text"),
         description: String::from("replace old text"),
         safe: true,
+        confidence: None,
+        group: None,
+        depends_on: None,
     };
 
     // Read back all fields
@@ -237,6 +240,9 @@ fn fix_fields_are_accessible() {
     let _: &String = &fix.replacement;
     let _: &String = &fix.description;
     let _: bool = fix.safe;
+    let _: Option<f32> = fix.confidence;
+    let _: Option<String> = fix.group;
+    let _: Option<String> = fix.depends_on;
 }
 
 // ============================================================================

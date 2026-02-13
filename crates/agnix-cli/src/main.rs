@@ -15,10 +15,11 @@ mod watch;
 use telemetry_stub as telemetry;
 
 use agnix_core::{
-    ValidationResult, apply_fixes,
+    ValidationResult, apply_fixes_with_options,
     config::{LintConfig, TargetTool},
-    diagnostics::{Diagnostic, DiagnosticLevel},
+    diagnostics::{Diagnostic, DiagnosticLevel, FixConfidenceTier},
     eval::{EvalFormat, evaluate_manifest_file},
+    fixes::{FixApplyMode, FixApplyOptions},
     generate_schema, validate_project,
 };
 use clap::{Parser, Subcommand, ValueEnum};
@@ -93,7 +94,7 @@ struct Cli {
     #[arg(short, long)]
     verbose: bool,
 
-    /// Apply automatic fixes
+    /// Apply automatic fixes (HIGH and MEDIUM confidence)
     #[arg(long, group = "fix_mode")]
     fix: bool,
 
@@ -102,8 +103,16 @@ struct Cli {
     dry_run: bool,
 
     /// Only apply safe (HIGH certainty) fixes (implies --fix)
-    #[arg(long)]
+    #[arg(long, group = "fix_mode")]
     fix_safe: bool,
+
+    /// Apply all fixes, including LOW-confidence ones
+    #[arg(long, group = "fix_mode")]
+    fix_unsafe: bool,
+
+    /// Show proposed fixes inline in text output
+    #[arg(long)]
+    show_fixes: bool,
 
     /// Output format (text, json, or sarif)
     #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
@@ -295,7 +304,7 @@ fn validate_command(path: &Path, cli: &Cli) -> anyhow::Result<()> {
         if !matches!(cli.format, OutputFormat::Text) {
             return Err(anyhow::anyhow!("{}", t!("cli.watch_error_text_only")));
         }
-        let should_fix = cli.fix || cli.fix_safe || cli.dry_run;
+        let should_fix = cli.fix || cli.fix_safe || cli.fix_unsafe || cli.dry_run;
         if should_fix {
             return Err(anyhow::anyhow!("{}", t!("cli.watch_error_fix")));
         }
@@ -371,7 +380,7 @@ fn validate_command(path: &Path, cli: &Cli) -> anyhow::Result<()> {
             config.set_max_files_to_validate(Some(max_files));
         }
     }
-    let should_fix = cli.fix || cli.fix_safe || cli.dry_run;
+    let should_fix = cli.fix || cli.fix_safe || cli.fix_unsafe || cli.dry_run;
     if should_fix && !matches!(cli.format, OutputFormat::Text) {
         return Err(anyhow::anyhow!("{}", t!("cli.fix_error_text_only")));
     }
@@ -512,17 +521,31 @@ fn validate_command(path: &Path, cli: &Cli) -> anyhow::Result<()> {
             if let Some(assumption) = &diag.assumption {
                 println!("  {} {}", t!("cli.note_label").yellow(), assumption);
             }
+        }
+
+        if cli.verbose || cli.show_fixes {
             for fix in &diag.fixes {
-                let safety = if fix.safe {
-                    t!("cli.safe")
+                let tier = confidence_tier_label(fix.confidence_tier());
+                let confidence_pct = (fix.confidence_score() * 100.0).round() as i32;
+                let mut qualifiers = Vec::new();
+                if let Some(group) = fix.group.as_deref() {
+                    qualifiers.push(format!("group={group}"));
+                }
+                if let Some(depends_on) = fix.depends_on.as_deref() {
+                    qualifiers.push(format!("depends_on={depends_on}"));
+                }
+                let qualifier_text = if qualifiers.is_empty() {
+                    String::new()
                 } else {
-                    t!("cli.unsafe")
+                    format!(" [{}]", qualifiers.join(", "))
                 };
                 println!(
-                    "  {} {} ({})",
+                    "  {} {} ({} {}%){}",
                     t!("cli.fix_label").green(),
                     fix.description,
-                    safety
+                    tier,
+                    confidence_pct,
+                    qualifier_text
                 );
             }
         }
@@ -571,29 +594,30 @@ fn validate_command(path: &Path, cli: &Cli) -> anyhow::Result<()> {
     let mut final_errors = errors;
     let mut final_warnings = warnings;
 
-    // --fix-safe implies --fix
     if should_fix {
+        let apply_mode = resolve_fix_mode(cli);
         println!();
-        let mode = if cli.dry_run {
+        let action_mode = if cli.dry_run {
             t!("cli.preview")
         } else {
             t!("cli.applying")
         };
-        let safe_mode = if cli.fix_safe {
-            t!("cli.safe_only")
-        } else {
-            "".into()
+        let confidence_mode: String = match apply_mode {
+            FixApplyMode::SafeOnly => t!("cli.safe_only").to_string(),
+            FixApplyMode::SafeAndMedium => " (safe + medium)".to_string(),
+            FixApplyMode::All => " (all confidence levels)".to_string(),
         };
         println!(
             "{}",
             t!(
                 "cli.applying_fixes",
-                mode = mode.cyan().bold(),
-                safe_mode = safe_mode
+                mode = action_mode.cyan().bold(),
+                safe_mode = confidence_mode
             )
         );
 
-        let results = apply_fixes(&diagnostics, cli.dry_run, cli.fix_safe)?;
+        let results =
+            apply_fixes_with_options(&diagnostics, FixApplyOptions::new(cli.dry_run, apply_mode))?;
 
         if results.is_empty() {
             println!("{}", t!("cli.no_fixes"));
@@ -657,7 +681,10 @@ fn validate_command(path: &Path, cli: &Cli) -> anyhow::Result<()> {
         println!(
             "{} {}",
             t!("cli.hint_label").cyan(),
-            t!("cli.hint_run_fix", flag = "--fix".bold())
+            t!(
+                "cli.hint_run_fix",
+                flag = "--fix / --fix-safe / --fix-unsafe".bold()
+            )
         );
     }
 
@@ -783,6 +810,54 @@ fn resolve_config_path(path: &Path, config_override: Option<&PathBuf>) -> Option
     }
 
     None
+}
+
+fn resolve_fix_mode(cli: &Cli) -> FixApplyMode {
+    if cli.fix_safe {
+        FixApplyMode::SafeOnly
+    } else if cli.fix_unsafe {
+        FixApplyMode::All
+    } else {
+        // Default for --fix and --dry-run.
+        FixApplyMode::SafeAndMedium
+    }
+}
+
+#[cfg(test)]
+mod resolve_fix_mode_tests {
+    use super::*;
+
+    #[test]
+    fn fix_safe_selects_safe_only_mode() {
+        let cli = Cli::parse_from(["agnix", "--fix-safe"]);
+        assert_eq!(resolve_fix_mode(&cli), FixApplyMode::SafeOnly);
+    }
+
+    #[test]
+    fn fix_unsafe_selects_all_mode() {
+        let cli = Cli::parse_from(["agnix", "--fix-unsafe"]);
+        assert_eq!(resolve_fix_mode(&cli), FixApplyMode::All);
+    }
+
+    #[test]
+    fn fix_selects_safe_and_medium_mode() {
+        let cli = Cli::parse_from(["agnix", "--fix"]);
+        assert_eq!(resolve_fix_mode(&cli), FixApplyMode::SafeAndMedium);
+    }
+
+    #[test]
+    fn dry_run_selects_safe_and_medium_mode() {
+        let cli = Cli::parse_from(["agnix", "--dry-run"]);
+        assert_eq!(resolve_fix_mode(&cli), FixApplyMode::SafeAndMedium);
+    }
+}
+
+fn confidence_tier_label(tier: FixConfidenceTier) -> &'static str {
+    match tier {
+        FixConfidenceTier::High => "HIGH",
+        FixConfidenceTier::Medium => "MEDIUM",
+        FixConfidenceTier::Low => "LOW",
+    }
 }
 
 fn show_diff(original: &str, fixed: &str) {

@@ -1,10 +1,34 @@
 //! Fix application engine for automatic corrections
 
-use crate::diagnostics::{Diagnostic, Fix, LintResult};
+use crate::diagnostics::{Diagnostic, FIX_CONFIDENCE_MEDIUM_THRESHOLD, Fix, LintResult};
 use crate::fs::{FileSystem, RealFileSystem};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 use std::sync::Arc;
+
+/// Confidence filter for selecting autofixes.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FixApplyMode {
+    /// Apply only HIGH-confidence fixes (`>= 0.95`).
+    SafeOnly,
+    /// Apply HIGH and MEDIUM-confidence fixes (`>= 0.75`).
+    SafeAndMedium,
+    /// Apply all fixes (including LOW confidence).
+    All,
+}
+
+/// Options for autofix application.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct FixApplyOptions {
+    pub dry_run: bool,
+    pub mode: FixApplyMode,
+}
+
+impl FixApplyOptions {
+    pub fn new(dry_run: bool, mode: FixApplyMode) -> Self {
+        Self { dry_run, mode }
+    }
+}
 
 /// Result of applying fixes to a file
 #[derive(Debug, Clone)]
@@ -40,7 +64,14 @@ pub fn apply_fixes(
     dry_run: bool,
     safe_only: bool,
 ) -> LintResult<Vec<FixResult>> {
-    apply_fixes_with_fs(diagnostics, dry_run, safe_only, None)
+    let mode = if safe_only {
+        FixApplyMode::SafeOnly
+    } else {
+        // Backwards-compatible behavior for this stable API:
+        // when `safe_only=false`, apply all fixes.
+        FixApplyMode::All
+    };
+    apply_fixes_with_options(diagnostics, FixApplyOptions::new(dry_run, mode))
 }
 
 /// Apply fixes from diagnostics to files with optional FileSystem abstraction
@@ -59,6 +90,28 @@ pub fn apply_fixes_with_fs(
     safe_only: bool,
     fs: Option<Arc<dyn FileSystem>>,
 ) -> LintResult<Vec<FixResult>> {
+    let mode = if safe_only {
+        FixApplyMode::SafeOnly
+    } else {
+        FixApplyMode::All
+    };
+    apply_fixes_with_fs_options(diagnostics, FixApplyOptions::new(dry_run, mode), fs)
+}
+
+/// Apply fixes using explicit options.
+pub fn apply_fixes_with_options(
+    diagnostics: &[Diagnostic],
+    options: FixApplyOptions,
+) -> LintResult<Vec<FixResult>> {
+    apply_fixes_with_fs_options(diagnostics, options, None)
+}
+
+/// Apply fixes using explicit options and an optional file system abstraction.
+pub fn apply_fixes_with_fs_options(
+    diagnostics: &[Diagnostic],
+    options: FixApplyOptions,
+    fs: Option<Arc<dyn FileSystem>>,
+) -> LintResult<Vec<FixResult>> {
     let fs = fs.unwrap_or_else(|| Arc::new(RealFileSystem));
 
     // Group diagnostics by file
@@ -74,11 +127,7 @@ pub fn apply_fixes_with_fs(
     for (path, file_diagnostics) in by_file {
         let original = fs.read_to_string(&path)?;
 
-        let mut fixes: Vec<&Fix> = file_diagnostics
-            .iter()
-            .flat_map(|d| &d.fixes)
-            .filter(|f| !safe_only || f.safe)
-            .collect();
+        let mut fixes = select_fixes(&file_diagnostics, options.mode);
 
         if fixes.is_empty() {
             continue;
@@ -90,7 +139,7 @@ pub fn apply_fixes_with_fs(
         let (fixed, applied) = apply_fixes_to_content(&original, &fixes);
 
         if fixed != original {
-            if !dry_run {
+            if !options.dry_run {
                 fs.write(&path, &fixed)?;
             }
 
@@ -114,8 +163,17 @@ fn apply_fixes_to_content(content: &str, fixes: &[&Fix]) -> (String, Vec<String>
     let mut result = content.to_string();
     let mut applied = Vec::new();
     let mut last_start = usize::MAX;
+    let (planned_groups, planned_descriptions) = planned_dependency_keys(content, fixes);
 
     for fix in fixes {
+        if let Some(depends_on) = fix.depends_on.as_deref() {
+            let satisfied =
+                planned_groups.contains(depends_on) || planned_descriptions.contains(depends_on);
+            if !satisfied {
+                continue;
+            }
+        }
+
         // Check end_byte > start_byte first (more fundamental invariant)
         if fix.end_byte < fix.start_byte {
             // Log: Invalid fix range (end before start)
@@ -146,6 +204,99 @@ fn apply_fixes_to_content(content: &str, fixes: &[&Fix]) -> (String, Vec<String>
     applied.reverse();
 
     (result, applied)
+}
+
+fn select_fixes<'a>(file_diagnostics: &'a [&'a Diagnostic], mode: FixApplyMode) -> Vec<&'a Fix> {
+    let candidates: Vec<&Fix> = file_diagnostics
+        .iter()
+        .flat_map(|d| d.fixes.iter())
+        .filter(|fix| should_apply_by_mode(fix, mode))
+        .collect();
+
+    let dependency_resolved = resolve_dependency_candidates(candidates);
+    select_group_alternatives(dependency_resolved)
+}
+
+fn should_apply_by_mode(fix: &Fix, mode: FixApplyMode) -> bool {
+    match mode {
+        FixApplyMode::SafeOnly => fix.is_safe(),
+        FixApplyMode::SafeAndMedium => fix.confidence_score() >= FIX_CONFIDENCE_MEDIUM_THRESHOLD,
+        FixApplyMode::All => true,
+    }
+}
+
+fn resolve_dependency_candidates<'a>(mut fixes: Vec<&'a Fix>) -> Vec<&'a Fix> {
+    loop {
+        let groups: HashSet<&str> = fixes.iter().filter_map(|f| f.group.as_deref()).collect();
+        let descriptions: HashSet<&str> = fixes.iter().map(|f| f.description.as_str()).collect();
+        let before = fixes.len();
+
+        fixes.retain(|fix| match fix.depends_on.as_deref() {
+            Some(depends_on) => groups.contains(depends_on) || descriptions.contains(depends_on),
+            None => true,
+        });
+
+        if fixes.len() == before {
+            return fixes;
+        }
+    }
+}
+
+fn select_group_alternatives<'a>(fixes: Vec<&'a Fix>) -> Vec<&'a Fix> {
+    let mut selected_groups: HashSet<&str> = HashSet::new();
+    let mut selected = Vec::new();
+
+    for fix in fixes {
+        if let Some(group) = fix.group.as_deref() {
+            if selected_groups.contains(group) {
+                continue;
+            }
+            selected_groups.insert(group);
+        }
+
+        selected.push(fix);
+    }
+
+    selected
+}
+
+fn planned_dependency_keys<'a>(
+    content: &str,
+    fixes: &[&'a Fix],
+) -> (HashSet<&'a str>, HashSet<&'a str>) {
+    let mut groups = HashSet::new();
+    let mut descriptions = HashSet::new();
+    let mut last_start = usize::MAX;
+
+    for fix in fixes {
+        if !is_fix_range_applicable(content, fix) {
+            continue;
+        }
+
+        if fix.end_byte > last_start {
+            continue;
+        }
+
+        descriptions.insert(fix.description.as_str());
+        if let Some(group) = fix.group.as_deref() {
+            groups.insert(group);
+        }
+        last_start = fix.start_byte;
+    }
+
+    (groups, descriptions)
+}
+
+fn is_fix_range_applicable(content: &str, fix: &Fix) -> bool {
+    if fix.end_byte < fix.start_byte {
+        return false;
+    }
+
+    if fix.start_byte > content.len() || fix.end_byte > content.len() {
+        return false;
+    }
+
+    content.is_char_boundary(fix.start_byte) && content.is_char_boundary(fix.end_byte)
 }
 
 #[cfg(test)]
@@ -258,6 +409,171 @@ mod tests {
         assert_eq!(results.len(), 1);
         assert_eq!(results[0].fixed, "name: safe-name");
         assert_eq!(results[0].applied.len(), 1);
+    }
+
+    #[test]
+    fn test_fix_mode_safe_and_medium_filters_low() {
+        let temp = tempfile::TempDir::new().unwrap();
+        let path = temp.path().join("test.md");
+        std::fs::write(&path, "abcdef").unwrap();
+
+        let diagnostics = vec![make_diagnostic(
+            path.to_str().unwrap(),
+            vec![
+                Fix::replace_with_confidence(0, 1, "A", "high", 0.99),
+                Fix::replace_with_confidence(1, 2, "B", "medium", 0.80),
+                Fix::replace_with_confidence(2, 3, "C", "low", 0.20),
+            ],
+        )];
+
+        let results = apply_fixes_with_options(
+            &diagnostics,
+            FixApplyOptions::new(false, FixApplyMode::SafeAndMedium),
+        )
+        .unwrap();
+
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0].fixed, "ABcdef");
+        assert_eq!(results[0].applied, vec!["high", "medium"]);
+    }
+
+    #[test]
+    fn test_fix_mode_safe_only_applies_high_only() {
+        let temp = tempfile::TempDir::new().unwrap();
+        let path = temp.path().join("test.md");
+        std::fs::write(&path, "abcdef").unwrap();
+
+        let diagnostics = vec![make_diagnostic(
+            path.to_str().unwrap(),
+            vec![
+                Fix::replace_with_confidence(0, 1, "A", "high", 0.99),
+                Fix::replace_with_confidence(1, 2, "B", "medium", 0.80),
+                Fix::replace_with_confidence(2, 3, "C", "low", 0.20),
+            ],
+        )];
+
+        let results = apply_fixes_with_options(
+            &diagnostics,
+            FixApplyOptions::new(false, FixApplyMode::SafeOnly),
+        )
+        .unwrap();
+
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0].fixed, "Abcdef");
+        assert_eq!(results[0].applied, vec!["high"]);
+    }
+
+    #[test]
+    fn test_fix_group_applies_first_alternative_only() {
+        let content = "hello";
+        let first = Fix::insert(5, "!", "first", true).with_group("punctuation");
+        let second = Fix::insert(5, "?", "second", true).with_group("punctuation");
+
+        // Keep source order to confirm first alternative wins.
+        let fixes = vec![&first, &second];
+        let (fixed, applied) = apply_fixes_to_content(content, &fixes);
+
+        // Engine-level group handling happens before this function, so emulate selection.
+        let diagnostic = make_diagnostic(
+            "x.md",
+            vec![
+                Fix::insert(5, "!", "first", true).with_group("punctuation"),
+                Fix::insert(5, "?", "second", true).with_group("punctuation"),
+            ],
+        );
+        let diagnostics = [&diagnostic];
+        let selected = select_fixes(&diagnostics, FixApplyMode::All);
+        let mut refs = selected;
+        refs.sort_by(|a, b| b.start_byte.cmp(&a.start_byte));
+        let (selected_fixed, selected_applied) = apply_fixes_to_content(content, &refs);
+
+        assert_eq!(fixed, "hello?!");
+        assert_eq!(applied.len(), 2);
+        assert_eq!(selected_fixed, "hello!");
+        assert_eq!(selected_applied, vec!["first"]);
+    }
+
+    #[test]
+    fn test_fix_dependency_requires_predecessor() {
+        let content = "foo bar";
+        let prerequisite = Fix::replace(4, 7, "BAR", "normalize-tail", true).with_group("step1");
+        let dependent = Fix::replace(0, 3, "FOO", "normalize-head", true).with_dependency("step1");
+        let orphan = Fix::replace(0, 3, "XXX", "orphan", true).with_dependency("missing");
+
+        let mut refs = vec![&prerequisite, &dependent];
+        refs.sort_by(|a, b| b.start_byte.cmp(&a.start_byte));
+        let (fixed, applied) = apply_fixes_to_content(content, &refs);
+        assert_eq!(fixed, "FOO BAR");
+        assert_eq!(applied, vec!["normalize-head", "normalize-tail"]);
+
+        let mut orphan_refs = vec![&orphan];
+        orphan_refs.sort_by(|a, b| b.start_byte.cmp(&a.start_byte));
+        let (orphan_fixed, orphan_applied) = apply_fixes_to_content(content, &orphan_refs);
+        assert_eq!(orphan_fixed, content);
+        assert!(orphan_applied.is_empty());
+    }
+
+    #[test]
+    fn test_fix_dependency_not_order_sensitive() {
+        let content = "foo bar";
+        let prerequisite = Fix::replace(0, 3, "FOO", "normalize-head", true).with_group("step1");
+        let dependent = Fix::replace(4, 7, "BAR", "normalize-tail", true).with_dependency("step1");
+
+        // Descending sort puts dependent first, but dependency should still be satisfied.
+        let mut refs = vec![&prerequisite, &dependent];
+        refs.sort_by(|a, b| b.start_byte.cmp(&a.start_byte));
+        let (fixed, applied) = apply_fixes_to_content(content, &refs);
+
+        assert_eq!(fixed, "FOO BAR");
+        assert_eq!(applied, vec!["normalize-head", "normalize-tail"]);
+    }
+
+    #[test]
+    fn test_fix_dependency_can_reference_description() {
+        let content = "foo bar";
+        let prerequisite = Fix::replace(0, 3, "FOO", "normalize-head", true);
+        let dependent =
+            Fix::replace(4, 7, "BAR", "normalize-tail", true).with_dependency("normalize-head");
+
+        let mut refs = vec![&prerequisite, &dependent];
+        refs.sort_by(|a, b| b.start_byte.cmp(&a.start_byte));
+        let (fixed, applied) = apply_fixes_to_content(content, &refs);
+
+        assert_eq!(fixed, "FOO BAR");
+        assert_eq!(applied, vec!["normalize-head", "normalize-tail"]);
+    }
+
+    #[test]
+    fn test_fix_dependency_skips_when_prerequisite_would_be_invalid() {
+        let content = "foo bar";
+        let prerequisite =
+            Fix::replace(10, 11, "X", "invalid-prerequisite", true).with_group("step1");
+        let dependent = Fix::replace(4, 7, "BAR", "normalize-tail", true).with_dependency("step1");
+
+        let mut refs = vec![&prerequisite, &dependent];
+        refs.sort_by(|a, b| b.start_byte.cmp(&a.start_byte));
+        let (fixed, applied) = apply_fixes_to_content(content, &refs);
+
+        assert_eq!(fixed, content);
+        assert!(applied.is_empty());
+    }
+
+    #[test]
+    fn test_fix_group_falls_back_when_first_candidate_is_removed() {
+        let diagnostic = make_diagnostic(
+            "x.md",
+            vec![
+                Fix::insert(5, "!", "first", true)
+                    .with_group("punctuation")
+                    .with_dependency("missing"),
+                Fix::insert(5, "?", "second", true).with_group("punctuation"),
+            ],
+        );
+        let diagnostics = [&diagnostic];
+        let selected = select_fixes(&diagnostics, FixApplyMode::All);
+
+        assert_eq!(selected.len(), 1);
+        assert_eq!(selected[0].description, "second");
     }
 
     #[test]
@@ -682,6 +998,9 @@ mod tests {
             replacement: "X".to_string(),
             description: "Invalid fix".to_string(),
             safe: true,
+            confidence: Some(1.0),
+            group: None,
+            depends_on: None,
         };
 
         let (result, applied) = apply_fixes_to_content(content, &[&fix]);

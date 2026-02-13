@@ -142,7 +142,7 @@ fn test_format_sarif_produces_valid_json() {
 #[test]
 fn test_fix_flags_rejected_for_json_and_sarif() {
     let formats = ["json", "sarif"];
-    let flags = ["--fix", "--dry-run", "--fix-safe"];
+    let flags = ["--fix", "--dry-run", "--fix-safe", "--fix-unsafe"];
 
     for format in formats {
         for flag in flags {
@@ -1057,6 +1057,57 @@ fn test_fix_safe_exit_code() {
         !stdout.is_empty() || stderr.is_empty(),
         "--fix-safe flag should be recognized and run fix mode, got stderr: {}",
         stderr
+    );
+}
+
+#[test]
+fn test_fix_unsafe_flag_recognized() {
+    let mut cmd = agnix();
+    let output = cmd
+        .arg("tests/fixtures/invalid/skills/unknown-tool")
+        .arg("--fix-unsafe")
+        .output()
+        .unwrap();
+
+    // This fixture still has remaining diagnostics, so non-zero is expected.
+    // The key assertion is that clap does not reject the flag as unknown.
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(
+        !stderr.contains("unexpected argument '--fix-unsafe'"),
+        "--fix-unsafe should be accepted by the CLI, got stderr: {}",
+        stderr
+    );
+}
+
+#[test]
+fn test_show_fixes_displays_fixes_without_verbose() {
+    use std::fs;
+    use std::io::Write;
+
+    let temp_dir = tempfile::tempdir().unwrap();
+    let skills_dir = temp_dir.path().join("skills").join("show-fixes");
+    fs::create_dir_all(&skills_dir).unwrap();
+
+    let skill_path = skills_dir.join("SKILL.md");
+    let mut file = fs::File::create(&skill_path).unwrap();
+    writeln!(
+        file,
+        "---\nname: Invalid_Name\ndescription: use when testing\n---\nSome content"
+    )
+    .unwrap();
+
+    let mut cmd = agnix();
+    let output = cmd
+        .arg(temp_dir.path())
+        .arg("--show-fixes")
+        .output()
+        .unwrap();
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(
+        stdout.to_lowercase().contains("fix:"),
+        "--show-fixes should print inline fix descriptions, got:\n{}",
+        stdout
     );
 }
 

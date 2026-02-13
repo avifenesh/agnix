@@ -94,7 +94,10 @@ pub use diagnostics::{
 };
 pub use file_types::{FileType, detect_file_type};
 pub use file_types::{FileTypeDetector, FileTypeDetectorChain};
-pub use fixes::{FixResult, apply_fixes, apply_fixes_with_fs};
+pub use fixes::{
+    FixApplyMode, FixApplyOptions, FixResult, apply_fixes, apply_fixes_with_fs,
+    apply_fixes_with_fs_options, apply_fixes_with_options,
+};
 pub use fs::{FileSystem, MockFileSystem, RealFileSystem};
 pub use pipeline::{ValidationResult, resolve_file_type, validate_content};
 #[cfg(feature = "filesystem")]
