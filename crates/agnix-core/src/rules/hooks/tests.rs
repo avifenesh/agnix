@@ -1353,6 +1353,35 @@ fn test_cc_hk_001_case_fix_taskcompleted() {
 }
 
 #[test]
+fn test_cc_hk_001_typo_teammate_partial_match() {
+    // "Teammate" partially matches "TeammateIdle" - should produce unsafe fix
+    let content = r#"{
+            "hooks": {
+                "Teammate": [
+                    {
+                        "hooks": [
+                            { "type": "command", "command": "echo idle" }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+    let diagnostics = validate(content);
+    let cc_hk_001: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-001")
+        .collect();
+
+    assert_eq!(cc_hk_001.len(), 1);
+    assert!(cc_hk_001[0].has_fixes());
+
+    let fix = &cc_hk_001[0].fixes[0];
+    assert!(!fix.safe); // Partial match is not safe
+    assert_eq!(fix.replacement, "\"TeammateIdle\"");
+}
+
+#[test]
 fn test_cc_hk_001_typo_fix_not_safe() {
     // "tool" partially matches "PreToolUse"
     let content = r#"{
@@ -2528,6 +2557,37 @@ fn test_cc_hk_002_prompt_disallowed_events() {
             hk_002.len(),
             1,
             "Prompt on '{}' should be invalid but didn't get CC-HK-002",
+            event
+        );
+    }
+}
+
+#[test]
+fn test_cc_hk_002_agent_hook_on_new_events() {
+    // Agent hooks have the same event restriction as prompt hooks (CC-HK-002)
+    for event in ["TeammateIdle", "TaskCompleted"] {
+        let content = format!(
+            r#"{{
+                    "hooks": {{
+                        "{}": [
+                            {{
+                                "hooks": [{{ "type": "agent", "agent": "test-agent" }}]
+                            }}
+                        ]
+                    }}
+                }}"#,
+            event
+        );
+
+        let diagnostics = validate(&content);
+        let hk_002: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-HK-002")
+            .collect();
+        assert_eq!(
+            hk_002.len(),
+            1,
+            "Agent hook on '{}' should trigger CC-HK-002",
             event
         );
     }
