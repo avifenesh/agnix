@@ -163,7 +163,7 @@ pub struct VsCodeVersions {
 #[derive(Debug, Default, Clone, Deserialize, Serialize)]
 #[serde(default)]
 pub struct VsCodeSpecs {
-    /// MCP protocol version (e.g., "2025-06-18")
+    /// MCP protocol version (e.g., "2025-11-25")
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub mcp_protocol: Option<Option<String>>,
 
@@ -423,7 +423,7 @@ mod tests {
                 "copilot": "1.2.0"
             },
             "specs": {
-                "mcp_protocol": "2025-06-18",
+                "mcp_protocol": "2025-11-25",
                 "agent_skills_spec": "1.0",
                 "agents_md_spec": "1.0"
             }
@@ -451,7 +451,7 @@ mod tests {
         assert_eq!(versions.claude_code, Some(Some("1.0.0".to_string())));
 
         let specs = config.specs.expect("specs should be present");
-        assert_eq!(specs.mcp_protocol, Some(Some("2025-06-18".to_string())));
+        assert_eq!(specs.mcp_protocol, Some(Some("2025-11-25".to_string())));
     }
 
     #[test]
@@ -571,7 +571,7 @@ mod tests {
 
         let vscode_config = VsCodeConfig {
             specs: Some(VsCodeSpecs {
-                mcp_protocol: Some(Some("2025-06-18".to_string())),
+                mcp_protocol: Some(Some("2025-11-25".to_string())),
                 ..Default::default()
             }),
             ..Default::default()
@@ -581,7 +581,7 @@ mod tests {
 
         assert_eq!(
             lint_config.spec_revisions().mcp_protocol,
-            Some("2025-06-18".to_string())
+            Some("2025-11-25".to_string())
         );
         assert!(lint_config.spec_revisions().agent_skills_spec.is_none());
     }

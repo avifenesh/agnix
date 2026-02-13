@@ -118,12 +118,12 @@ impl HooksSchema {
         "Stop",
         "SubagentStart",
         "SubagentStop",
+        "TeammateIdle",
+        "TaskCompleted",
         "PreCompact",
         "Setup",
         "SessionStart",
         "SessionEnd",
-        "TeammateIdle",
-        "TaskCompleted",
     ];
 
     /// Events that require a matcher field (tool-related events)
@@ -134,8 +134,17 @@ impl HooksSchema {
         "PostToolUseFailure",
     ];
 
-    /// Events that support prompt hooks (Stop and SubagentStop only)
-    pub const PROMPT_EVENTS: &'static [&'static str] = &["Stop", "SubagentStop"];
+    /// Events that support prompt/agent hooks
+    pub const PROMPT_EVENTS: &'static [&'static str] = &[
+        "PreToolUse",
+        "PostToolUse",
+        "PostToolUseFailure",
+        "PermissionRequest",
+        "UserPromptSubmit",
+        "Stop",
+        "SubagentStop",
+        "TaskCompleted",
+    ];
 
     /// Check if an event is a tool event (requires matcher)
     pub fn is_tool_event(event: &str) -> bool {
@@ -284,9 +293,24 @@ mod tests {
 
     #[test]
     fn test_is_prompt_event() {
+        // All 8 events that support prompt/agent hooks
+        assert!(HooksSchema::is_prompt_event("PreToolUse"));
+        assert!(HooksSchema::is_prompt_event("PostToolUse"));
+        assert!(HooksSchema::is_prompt_event("PostToolUseFailure"));
+        assert!(HooksSchema::is_prompt_event("PermissionRequest"));
+        assert!(HooksSchema::is_prompt_event("UserPromptSubmit"));
         assert!(HooksSchema::is_prompt_event("Stop"));
         assert!(HooksSchema::is_prompt_event("SubagentStop"));
-        assert!(!HooksSchema::is_prompt_event("PreToolUse"));
+        assert!(HooksSchema::is_prompt_event("TaskCompleted"));
+
+        // Events that do NOT support prompt/agent hooks
+        assert!(!HooksSchema::is_prompt_event("SessionStart"));
+        assert!(!HooksSchema::is_prompt_event("SessionEnd"));
+        assert!(!HooksSchema::is_prompt_event("Notification"));
+        assert!(!HooksSchema::is_prompt_event("SubagentStart"));
+        assert!(!HooksSchema::is_prompt_event("PreCompact"));
+        assert!(!HooksSchema::is_prompt_event("TeammateIdle"));
+        assert!(!HooksSchema::is_prompt_event("Setup"));
     }
 
     #[test]

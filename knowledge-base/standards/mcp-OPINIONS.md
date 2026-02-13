@@ -1,7 +1,7 @@
 # MCP Protocol - Best Practices & Opinions
 
-**Protocol Version**: 2025-06-18
-**Last Updated**: 2026-01-31
+**Protocol Version**: 2025-11-25
+**Last Updated**: 2026-02-13
 **Nature**: Opinionated Recommendations (SHOULD/MAY/RECOMMENDED)
 
 This document collects best practices, design recommendations, and opinionated guidance for implementing Model Context Protocol servers and clients. These are not hard requirements but represent community wisdom and design patterns.
@@ -105,7 +105,7 @@ Examples:
 - queue://rabbitmq/exchange/orders/messages
 ```
 
-**Source**: [Resources - Common URI Schemes](https://modelcontextprotocol.io/specification/2025-06-18/server/resources#common-uri-schemes)
+**Source**: [Resources - Common URI Schemes](https://modelcontextprotocol.io/specification/2025-11-25/server/resources#common-uri-schemes)
 
 **Rationale**: Well-structured URIs are self-documenting and enable pattern-based discovery
 
@@ -236,7 +236,7 @@ Examples:
 - ✅ Examples help LLM understand format
 - ✅ `additionalProperties: false` catches errors
 
-**Source**: Patterns from [Tools Specification](https://modelcontextprotocol.io/specification/2025-06-18/server/tools)
+**Source**: Patterns from [Tools Specification](https://modelcontextprotocol.io/specification/2025-11-25/server/tools)
 
 **Rationale**: Rich schemas enable LLMs to use tools correctly without trial-and-error
 
@@ -284,7 +284,7 @@ Examples:
 4. **Use consistent formatting** → Always ISO 8601 for dates, etc.
 5. **Mark required fields** → Clients can depend on these always being present
 
-**Source**: [Tools - Output Schema](https://modelcontextprotocol.io/specification/2025-06-18/server/tools#output-schema)
+**Source**: [Tools - Output Schema](https://modelcontextprotocol.io/specification/2025-11-25/server/tools#output-schema)
 
 ---
 
@@ -406,7 +406,7 @@ TEMPLATE: [What it is] [optional: format/constraints] [optional: examples]
 }
 ```
 
-**Source**: [Tools - Error Handling](https://modelcontextprotocol.io/specification/2025-06-18/server/tools#error-handling)
+**Source**: [Tools - Error Handling](https://modelcontextprotocol.io/specification/2025-11-25/server/tools#error-handling)
 
 **Rationale**: Good error messages reduce debugging time and improve LLM's ability to self-correct
 
@@ -436,7 +436,7 @@ TEMPLATE: [What it is] [optional: format/constraints] [optional: examples]
 }
 ```
 
-**Source**: [Resources - Pagination](https://modelcontextprotocol.io/specification/2025-06-18/server/utilities/pagination)
+**Source**: [Resources - Pagination](https://modelcontextprotocol.io/specification/2025-11-25/server/utilities/pagination)
 
 ---
 
@@ -629,7 +629,7 @@ database://user_orders_view
 }
 ```
 
-**Source**: [Resources - Resource Templates](https://modelcontextprotocol.io/specification/2025-06-18/server/resources#resource-templates)
+**Source**: [Resources - Resource Templates](https://modelcontextprotocol.io/specification/2025-11-25/server/resources#resource-templates)
 
 ---
 
@@ -665,7 +665,7 @@ database://user_orders_view
    - Always ISO 8601 format
    - Include timezone (prefer UTC)
 
-**Source**: [Resources - Annotations](https://modelcontextprotocol.io/specification/2025-06-18/server/resources#annotations)
+**Source**: [Resources - Annotations](https://modelcontextprotocol.io/specification/2025-11-25/server/resources#annotations)
 
 ---
 
@@ -770,7 +770,7 @@ def check_permissions(user, resource):
         raise PermissionError("Unauthorized")
 ```
 
-**Source**: [Tools - Security Considerations](https://modelcontextprotocol.io/specification/2025-06-18/server/tools#security-considerations)
+**Source**: [Tools - Security Considerations](https://modelcontextprotocol.io/specification/2025-11-25/server/tools#security-considerations)
 
 ---
 
@@ -841,7 +841,7 @@ def validate_file_uri(uri):
     return real_path
 ```
 
-**Source**: [Resources - Security Considerations](https://modelcontextprotocol.io/specification/2025-06-18/server/resources#security-considerations)
+**Source**: [Resources - Security Considerations](https://modelcontextprotocol.io/specification/2025-11-25/server/resources#security-considerations)
 
 ---
 
@@ -1046,7 +1046,7 @@ def call_tool(name, args):
 ✅ Email sent successfully at 10:30 AM
 ```
 
-**Source**: [Tools - User Interaction Model](https://modelcontextprotocol.io/specification/2025-06-18/server/tools#user-interaction-model)
+**Source**: [Tools - User Interaction Model](https://modelcontextprotocol.io/specification/2025-11-25/server/tools#user-interaction-model)
 
 ---
 
@@ -1076,7 +1076,7 @@ def call_tool(name, args):
 [Select All] [Clear] [Add Selected]
 ```
 
-**Source**: [Resources - User Interaction Model](https://modelcontextprotocol.io/specification/2025-06-18/server/resources#user-interaction-model)
+**Source**: [Resources - User Interaction Model](https://modelcontextprotocol.io/specification/2025-11-25/server/resources#user-interaction-model)
 
 ---
 
@@ -1101,7 +1101,7 @@ def call_tool(name, args):
 🐛 /debug_code - Debug code issues
 ```
 
-**Source**: [Prompts - User Interaction Model](https://modelcontextprotocol.io/specification/2025-06-18/server/prompts#user-interaction-model)
+**Source**: [Prompts - User Interaction Model](https://modelcontextprotocol.io/specification/2025-11-25/server/prompts#user-interaction-model)
 
 ---
 
@@ -1226,18 +1226,19 @@ def set_location(location):
 
 This document synthesizes best practices from:
 
-1. [MCP Specification 2025-06-18](https://modelcontextprotocol.io/specification/2025-06-18)
+1. [MCP Specification 2025-11-25](https://modelcontextprotocol.io/specification/2025-11-25)
 2. [Build Server Guide](https://modelcontextprotocol.io/docs/develop/build-server)
 3. [Build Client Guide](https://modelcontextprotocol.io/docs/develop/build-client)
 4. [Server Concepts](https://modelcontextprotocol.io/docs/learn/server-concepts)
 5. [Architecture Overview](https://modelcontextprotocol.io/docs/learn/architecture)
-6. [Tools Specification](https://modelcontextprotocol.io/specification/2025-06-18/server/tools)
-7. [Resources Specification](https://modelcontextprotocol.io/specification/2025-06-18/server/resources)
-8. [Prompts Specification](https://modelcontextprotocol.io/specification/2025-06-18/server/prompts)
+6. [Tools Specification](https://modelcontextprotocol.io/specification/2025-11-25/server/tools)
+7. [Resources Specification](https://modelcontextprotocol.io/specification/2025-11-25/server/resources)
+8. [Prompts Specification](https://modelcontextprotocol.io/specification/2025-11-25/server/prompts)
 9. [MCP Inspector](https://github.com/modelcontextprotocol/inspector)
 10. Community implementations and examples
 
 **Revision History**:
+- 2026-02-13: Updated all protocol version references from 2025-06-18 to 2025-11-25
 - 2026-01-31: Initial best practices compilation from protocol version 2025-06-18
 
 ---

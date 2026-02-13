@@ -188,13 +188,14 @@ if !VALID_EVENTS.contains(&event.as_str()) {
 
 ### 2. Prompt Hook on Wrong Event [HIGH]
 
-**Pattern**: `type: "prompt"` on non-Stop/SubagentStop event
+**Pattern**: `type: "prompt"` or `type: "agent"` on an unsupported event
 **Detection**:
 ```rust
-if hook.r#type == "prompt" && !["Stop", "SubagentStop"].contains(&event.as_str()) {
-    error!("Prompt hooks only supported for Stop and SubagentStop");
+if (hook.r#type == "prompt" || hook.r#type == "agent") && !PROMPT_EVENTS.contains(&event.as_str()) {
+    error!("Prompt/agent hooks not supported on this event");
 }
 ```
+**Supported events**: PreToolUse, PostToolUse, PostToolUseFailure, PermissionRequest, UserPromptSubmit, Stop, SubagentStop, TaskCompleted
 
 ### 3. Missing Matcher [HIGH]
 

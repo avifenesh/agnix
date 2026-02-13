@@ -243,7 +243,7 @@
         "agnix.specs.mcpProtocol": {
           "type": ["string", "null"],
           "default": null,
-          "description": "MCP protocol version pin (e.g., \"2025-06-18\")",
+          "description": "MCP protocol version pin (e.g., \"2025-11-25\")",
           "scope": "resource"
         },
         "agnix.specs.agentSkills": {

@@ -796,14 +796,14 @@ fn test_fixture_invalid_event() {
 // ===== CC-HK-002 Tests: Prompt Hook on Wrong Event =====
 
 #[test]
-fn test_cc_hk_002_prompt_on_pretooluse() {
+fn test_cc_hk_002_prompt_on_pretooluse_ok() {
     let content = r#"{
             "hooks": {
                 "PreToolUse": [
                     {
                         "matcher": "Bash",
                         "hooks": [
-                            { "type": "prompt", "prompt": "not allowed here" }
+                            { "type": "prompt", "prompt": "allowed here" }
                         ]
                     }
                 ]
@@ -816,13 +816,7 @@ fn test_cc_hk_002_prompt_on_pretooluse() {
         .filter(|d| d.rule == "CC-HK-002")
         .collect();
 
-    assert_eq!(cc_hk_002.len(), 1);
-    assert_eq!(cc_hk_002[0].level, DiagnosticLevel::Error);
-    assert!(
-        cc_hk_002[0]
-            .message
-            .contains("only allowed for Stop and SubagentStop")
-    );
+    assert_eq!(cc_hk_002.len(), 0);
 }
 
 #[test]
@@ -846,6 +840,8 @@ fn test_cc_hk_002_prompt_on_session_start() {
         .collect();
 
     assert_eq!(cc_hk_002.len(), 1);
+    assert_eq!(cc_hk_002[0].level, DiagnosticLevel::Error);
+    assert!(cc_hk_002[0].message.contains("not supported on"));
 }
 
 #[test]
@@ -904,7 +900,7 @@ fn test_fixture_prompt_on_wrong_event() {
         .iter()
         .filter(|d| d.rule == "CC-HK-002")
         .collect();
-    // PreToolUse and SessionStart should trigger errors, Stop and SubagentStop should not
+    // SessionStart and Notification should trigger errors, Stop and PreToolUse should not
     assert_eq!(cc_hk_002.len(), 2);
 }
 
@@ -2494,6 +2490,11 @@ fn test_cc_hk_004_non_tool_events_reject_matcher() {
 fn test_cc_hk_002_prompt_allowed_events() {
     // Must match HooksSchema::PROMPT_EVENTS constant
     let prompt_allowed = HooksSchema::PROMPT_EVENTS;
+    assert_eq!(
+        prompt_allowed.len(),
+        8,
+        "Expected exactly 8 prompt-allowed events"
+    );
 
     for event in prompt_allowed {
         let content = format!(
@@ -2523,14 +2524,38 @@ fn test_cc_hk_002_prompt_allowed_events() {
 }
 
 #[test]
+fn test_cc_hk_002_prompt_on_task_completed_ok() {
+    let content = r#"{
+            "hooks": {
+                "TaskCompleted": [
+                    {
+                        "hooks": [
+                            { "type": "prompt", "prompt": "verify task completion" }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+    let diagnostics = validate(content);
+    let cc_hk_002: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-002")
+        .collect();
+
+    assert_eq!(cc_hk_002.len(), 0);
+}
+
+#[test]
 fn test_cc_hk_002_prompt_disallowed_events() {
     let prompt_disallowed = [
-        "PreToolUse",
-        "PostToolUse",
         "SessionStart",
-        "PermissionRequest",
+        "SessionEnd",
+        "Notification",
+        "SubagentStart",
+        "PreCompact",
+        "Setup",
         "TeammateIdle",
-        "TaskCompleted",
     ];
 
     for event in prompt_disallowed {
@@ -2539,7 +2564,6 @@ fn test_cc_hk_002_prompt_disallowed_events() {
                     "hooks": {{
                         "{}": [
                             {{
-                                "matcher": "Bash",
                                 "hooks": [{{ "type": "prompt", "prompt": "Test" }}]
                             }}
                         ]
@@ -2563,15 +2587,24 @@ fn test_cc_hk_002_prompt_disallowed_events() {
 }
 
 #[test]
-fn test_cc_hk_002_agent_hook_on_new_events() {
-    // Agent hooks have the same event restriction as prompt hooks (CC-HK-002)
-    for event in ["TeammateIdle", "TaskCompleted"] {
+fn test_cc_hk_002_agent_disallowed_events() {
+    let agent_disallowed = [
+        "Setup",
+        "SessionStart",
+        "SessionEnd",
+        "Notification",
+        "SubagentStart",
+        "PreCompact",
+        "TeammateIdle",
+    ];
+
+    for event in agent_disallowed {
         let content = format!(
             r#"{{
                     "hooks": {{
                         "{}": [
                             {{
-                                "hooks": [{{ "type": "agent", "agent": "test-agent" }}]
+                                "hooks": [{{ "type": "agent", "prompt": "Test $ARGUMENTS" }}]
                             }}
                         ]
                     }}
@@ -2587,7 +2620,7 @@ fn test_cc_hk_002_agent_hook_on_new_events() {
         assert_eq!(
             hk_002.len(),
             1,
-            "Agent hook on '{}' should trigger CC-HK-002",
+            "Agent on '{}' should be invalid but didn't get CC-HK-002",
             event
         );
     }
@@ -3243,7 +3276,7 @@ fn test_agent_hook_on_stop_valid() {
 }
 
 #[test]
-fn test_agent_hook_on_pretooluse_wrong_event() {
+fn test_agent_hook_on_pretooluse_ok() {
     let content = r#"{
             "hooks": {
                 "PreToolUse": [
@@ -3258,12 +3291,8 @@ fn test_agent_hook_on_pretooluse_wrong_event() {
         }"#;
 
     let diagnostics = validate(content);
-    // Should trigger CC-HK-002 (agent not allowed on PreToolUse)
-    let cc_hk_002: Vec<_> = diagnostics
-        .iter()
-        .filter(|d| d.rule == "CC-HK-002")
-        .collect();
-    assert_eq!(cc_hk_002.len(), 1);
+    // Agent hooks are allowed on PreToolUse
+    assert!(!diagnostics.iter().any(|d| d.rule == "CC-HK-002"));
 }
 
 #[test]

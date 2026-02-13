@@ -290,7 +290,7 @@ fn test_mcp_rules_enabled_by_default() {
 #[test]
 fn test_default_mcp_protocol_version() {
     let config = LintConfig::default();
-    assert_eq!(config.get_mcp_protocol_version(), "2025-06-18");
+    assert_eq!(config.get_mcp_protocol_version(), "2025-11-25");
 }
 
 #[test]
@@ -305,7 +305,7 @@ fn test_mcp_protocol_version_none_fallback() {
     let mut config = LintConfig::default();
     config.mcp_protocol_version = None;
     // Should fall back to default when None
-    assert_eq!(config.get_mcp_protocol_version(), "2025-06-18");
+    assert_eq!(config.get_mcp_protocol_version(), "2025-11-25");
 }
 
 #[test]
@@ -335,7 +335,7 @@ exclude = []
 "#;
 
     let config: LintConfig = toml::from_str(toml_str).unwrap();
-    assert_eq!(config.get_mcp_protocol_version(), "2025-06-18");
+    assert_eq!(config.get_mcp_protocol_version(), "2025-11-25");
 }
 
 // ===== Cross-Platform Category Tests =====
@@ -1143,11 +1143,11 @@ mcp_protocol_version = "2024-11-05"
 [rules]
 
 [spec_revisions]
-mcp_protocol = "2025-06-18"
+mcp_protocol = "2025-11-25"
 "#;
 
     let config: LintConfig = toml::from_str(toml_str).unwrap();
-    assert_eq!(config.get_mcp_protocol_version(), "2025-06-18");
+    assert_eq!(config.get_mcp_protocol_version(), "2025-11-25");
 }
 
 #[test]
@@ -1232,7 +1232,7 @@ exclude = []
     // mcp_protocol_version is None when not specified, so is_mcp_revision_pinned returns false
     assert!(!config.is_mcp_revision_pinned());
     // get_mcp_protocol_version still returns default value
-    assert_eq!(config.get_mcp_protocol_version(), "2025-06-18");
+    assert_eq!(config.get_mcp_protocol_version(), "2025-11-25");
 }
 
 #[test]
@@ -1244,7 +1244,7 @@ fn test_is_mcp_revision_pinned_with_none_mcp_protocol_version() {
 
     assert!(!config.is_mcp_revision_pinned());
     // Should still return default
-    assert_eq!(config.get_mcp_protocol_version(), "2025-06-18");
+    assert_eq!(config.get_mcp_protocol_version(), "2025-11-25");
 }
 
 // ===== Tools Array Tests =====
@@ -2198,7 +2198,7 @@ fn test_serde_roundtrip_preserves_all_public_fields() {
     config.exclude = vec!["custom/**".to_string()];
     config.mcp_protocol_version = Some("2024-11-05".to_string());
     config.tool_versions.claude_code = Some("1.0.0".to_string());
-    config.spec_revisions.mcp_protocol = Some("2025-06-18".to_string());
+    config.spec_revisions.mcp_protocol = Some("2025-11-25".to_string());
     config.rules.skills = false;
     config.rules.disabled_rules = vec!["MCP-001".to_string()];
 
@@ -2226,7 +2226,7 @@ fn test_serde_roundtrip_preserves_all_public_fields() {
     );
     assert_eq!(
         deserialized.spec_revisions.mcp_protocol,
-        Some("2025-06-18".to_string())
+        Some("2025-11-25".to_string())
     );
     assert!(!deserialized.rules.skills);
     assert_eq!(deserialized.rules.disabled_rules, vec!["MCP-001"]);

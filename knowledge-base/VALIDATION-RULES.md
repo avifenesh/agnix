@@ -61,7 +61,7 @@ The `applies_to` object specifies when a rule is relevant:
   "applies_to": {
     "tool": "claude-code",       // Optional: specific tool
     "version_range": ">=1.0.0", // Optional: semver range
-    "spec_revision": "2025-06-18" // Optional: spec version
+    "spec_revision": "2025-11-25" // Optional: spec version
   }
 }
 ```
@@ -80,7 +80,7 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
     "source_type": "spec",
     "source_urls": ["https://modelcontextprotocol.io/specification"],
     "verified_on": "2026-02-04",
-    "applies_to": { "spec_revision": "2025-06-18" },
+    "applies_to": { "spec_revision": "2025-11-25" },
     "normative_level": "MUST",
     "tests": { "unit": true, "fixtures": true, "e2e": false }
   }
@@ -398,9 +398,10 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 
 <a id="cc-hk-002"></a>
 ### CC-HK-002 [HIGH] Prompt Hook on Wrong Event
-**Requirement**: `type: "prompt"` ONLY for Stop and SubagentStop
-**Detection**: `hook.type == "prompt" && !["Stop", "SubagentStop"].contains(event)`
-**Fix**: Change to `type: "command"` or use Stop/SubagentStop
+**Requirement**: `type: "prompt"` or `type: "agent"` only on supported events
+**Supported**: PreToolUse, PostToolUse, PostToolUseFailure, PermissionRequest, UserPromptSubmit, Stop, SubagentStop, TaskCompleted
+**Detection**: `hook.type in ["prompt", "agent"] && !PROMPT_EVENTS.contains(event)`
+**Fix**: Change to `type: "command"` for unsupported events
 **Source**: code.claude.com/docs/en/hooks
 
 <a id="cc-hk-003"></a>
@@ -880,11 +881,11 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 <a id="mcp-008"></a>
 ### MCP-008 [MEDIUM] Protocol Version Mismatch
 **Requirement**: MCP initialize messages SHOULD use the expected protocol version
-**Detection**: Check `protocolVersion` field in initialize request params or response result against configured expected version (default: "2025-06-18")
+**Detection**: Check `protocolVersion` field in initialize request params or response result against configured expected version (default: "2025-11-25")
 **Fix**: Update protocolVersion to match expected version, or configure `mcp_protocol_version` in agnix config to match your target version
 **Note**: This is a warning (not error) because MCP allows version negotiation between client and server
 **Source**: modelcontextprotocol.io/specification (Protocol Versioning)
-**Version-Aware**: When MCP protocol version is not pinned in `.agnix.toml [spec_revisions]`, an assumption note is added indicating default protocol version is being used. Pin the version with `mcp_protocol = "2025-06-18"` for explicit control.
+**Version-Aware**: When MCP protocol version is not pinned in `.agnix.toml [spec_revisions]`, an assumption note is added indicating default protocol version is being used. Pin the version with `mcp_protocol = "2025-11-25"` for explicit control.
 
 <a id="mcp-009"></a>
 ### MCP-009 [HIGH] Missing command for stdio server
@@ -1300,7 +1301,7 @@ agent: reviewer
 claude_code = "2.1.3"
 
 [spec_revisions]
-mcp_protocol = "2025-06-18"
+mcp_protocol = "2025-11-25"
 ```
 **Source**: Best practice for reproducible validation
 
