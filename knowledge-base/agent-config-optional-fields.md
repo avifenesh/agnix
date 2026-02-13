@@ -13,7 +13,7 @@
 
 ## TL;DR
 
-- Claude Code has the richest configuration surface: skills (11 frontmatter fields + hooks), agents (8+ frontmatter fields including new `memory` field), hooks (13 events, 3 handler types, `async`/`once`/`statusMessage` fields), and plugins (13+ manifest fields including `lspServers`/`outputStyles`)
+- Claude Code has the richest configuration surface: skills (11 frontmatter fields + hooks), agents (8+ frontmatter fields including new `memory` field), hooks (15 events, 3 handler types, `async`/`once`/`statusMessage` fields), and plugins (13+ manifest fields including `lspServers`/`outputStyles`)
 - GitHub Copilot added `excludeAgent` frontmatter field for scoped instructions (not yet validated by agnix)
 - Cursor has only 3 frontmatter fields but agnix could validate the `alwaysApply` + `globs` mutual exclusivity pattern
 - Cline supports a `paths` frontmatter field in `.clinerules/*.md` files (not yet validated by agnix)
@@ -117,6 +117,8 @@ The `` !`command` `` syntax runs shell commands before skill content is sent. Cu
 | `PreCompact` | `manual`, `auto` | No | No | CC-HK-001 |
 | `SessionEnd` | `clear`, `logout`, `prompt_input_exit`, `bypass_permissions_disabled`, `other` | No | No | CC-HK-001 |
 | `Setup` | (documented in code) | - | - | CC-HK-001 |
+| `TeammateIdle` | (no matcher) | No | No | CC-HK-001 |
+| `TaskCompleted` | (no matcher) | No | No | CC-HK-001 |
 
 ### Complete Hook Handler Fields
 

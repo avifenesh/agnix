@@ -1297,6 +1297,91 @@ fn test_cc_hk_001_case_fix_has_safe_fix() {
 }
 
 #[test]
+fn test_cc_hk_001_case_fix_teammateidle() {
+    let content = r#"{
+            "hooks": {
+                "teammateidle": [
+                    {
+                        "hooks": [
+                            { "type": "command", "command": "echo idle" }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+    let diagnostics = validate(content);
+    let cc_hk_001: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-001")
+        .collect();
+
+    assert_eq!(cc_hk_001.len(), 1);
+    assert!(cc_hk_001[0].has_fixes());
+
+    let fix = &cc_hk_001[0].fixes[0];
+    assert!(fix.safe); // Case-only fix is safe
+    assert_eq!(fix.replacement, "\"TeammateIdle\"");
+}
+
+#[test]
+fn test_cc_hk_001_case_fix_taskcompleted() {
+    let content = r#"{
+            "hooks": {
+                "taskcompleted": [
+                    {
+                        "hooks": [
+                            { "type": "command", "command": "echo done" }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+    let diagnostics = validate(content);
+    let cc_hk_001: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-001")
+        .collect();
+
+    assert_eq!(cc_hk_001.len(), 1);
+    assert!(cc_hk_001[0].has_fixes());
+
+    let fix = &cc_hk_001[0].fixes[0];
+    assert!(fix.safe); // Case-only fix is safe
+    assert_eq!(fix.replacement, "\"TaskCompleted\"");
+}
+
+#[test]
+fn test_cc_hk_001_typo_teammate_partial_match() {
+    // "Teammate" partially matches "TeammateIdle" - should produce unsafe fix
+    let content = r#"{
+            "hooks": {
+                "Teammate": [
+                    {
+                        "hooks": [
+                            { "type": "command", "command": "echo idle" }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+    let diagnostics = validate(content);
+    let cc_hk_001: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-001")
+        .collect();
+
+    assert_eq!(cc_hk_001.len(), 1);
+    assert!(cc_hk_001[0].has_fixes());
+
+    let fix = &cc_hk_001[0].fixes[0];
+    assert!(!fix.safe); // Partial match is not safe
+    assert_eq!(fix.replacement, "\"TeammateIdle\"");
+}
+
+#[test]
 fn test_cc_hk_001_typo_fix_not_safe() {
     // "tool" partially matches "PreToolUse"
     let content = r#"{
@@ -2269,7 +2354,13 @@ fn test_cc_hk_001_all_valid_events() {
     // Tool events that require matcher
     let tool_events = ["PreToolUse", "PostToolUse", "PermissionRequest"];
     // Non-tool events that don't require matcher
-    let non_tool_events = ["Stop", "SubagentStop", "SessionStart"];
+    let non_tool_events = [
+        "Stop",
+        "SubagentStop",
+        "SessionStart",
+        "TeammateIdle",
+        "TaskCompleted",
+    ];
 
     // Test tool events WITH matcher (should be valid)
     for event in tool_events {
@@ -2363,7 +2454,12 @@ fn test_cc_hk_003_all_tool_events_require_matcher() {
 #[test]
 fn test_cc_hk_004_non_tool_events_reject_matcher() {
     // Stop and UserPromptSubmit are handled by CC-HK-018 instead
-    let non_tool_events = ["SubagentStop", "SessionStart"];
+    let non_tool_events = [
+        "SubagentStop",
+        "SessionStart",
+        "TeammateIdle",
+        "TaskCompleted",
+    ];
 
     for event in non_tool_events {
         let content = format!(
@@ -2433,6 +2529,8 @@ fn test_cc_hk_002_prompt_disallowed_events() {
         "PostToolUse",
         "SessionStart",
         "PermissionRequest",
+        "TeammateIdle",
+        "TaskCompleted",
     ];
 
     for event in prompt_disallowed {
@@ -2459,6 +2557,37 @@ fn test_cc_hk_002_prompt_disallowed_events() {
             hk_002.len(),
             1,
             "Prompt on '{}' should be invalid but didn't get CC-HK-002",
+            event
+        );
+    }
+}
+
+#[test]
+fn test_cc_hk_002_agent_hook_on_new_events() {
+    // Agent hooks have the same event restriction as prompt hooks (CC-HK-002)
+    for event in ["TeammateIdle", "TaskCompleted"] {
+        let content = format!(
+            r#"{{
+                    "hooks": {{
+                        "{}": [
+                            {{
+                                "hooks": [{{ "type": "agent", "agent": "test-agent" }}]
+                            }}
+                        ]
+                    }}
+                }}"#,
+            event
+        );
+
+        let diagnostics = validate(&content);
+        let hk_002: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-HK-002")
+            .collect();
+        assert_eq!(
+            hk_002.len(),
+            1,
+            "Agent hook on '{}' should trigger CC-HK-002",
             event
         );
     }

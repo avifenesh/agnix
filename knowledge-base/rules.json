@@ -893,7 +893,7 @@
         "source_urls": [
           "https://code.claude.com/docs/en/hooks"
         ],
-        "verified_on": "2026-02-04",
+        "verified_on": "2026-02-13",
         "applies_to": {
           "tool": "claude-code"
         },
