@@ -53,7 +53,7 @@ pub struct AppliesTo {
     /// Semver version range (e.g., ">=1.0.0")
     #[serde(default)]
     pub version_range: Option<String>,
-    /// Specification revision (e.g., "1.0", "2025-06-18")
+    /// Specification revision (e.g., "1.0", "2025-11-25")
     #[serde(default)]
     pub spec_revision: Option<String>,
 }

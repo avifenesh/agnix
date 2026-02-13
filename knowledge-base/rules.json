@@ -2496,7 +2496,7 @@
         ],
         "verified_on": "2026-02-04",
         "applies_to": {
-          "spec_revision": "2025-06-18"
+          "spec_revision": "2025-11-25"
         },
         "normative_level": "MUST",
         "tests": {
@@ -2524,7 +2524,7 @@
         ],
         "verified_on": "2026-02-04",
         "applies_to": {
-          "spec_revision": "2025-06-18"
+          "spec_revision": "2025-11-25"
         },
         "normative_level": "MUST",
         "tests": {
@@ -2551,7 +2551,7 @@
         ],
         "verified_on": "2026-02-04",
         "applies_to": {
-          "spec_revision": "2025-06-18"
+          "spec_revision": "2025-11-25"
         },
         "normative_level": "MUST",
         "tests": {
@@ -2578,7 +2578,7 @@
         ],
         "verified_on": "2026-02-04",
         "applies_to": {
-          "spec_revision": "2025-06-18"
+          "spec_revision": "2025-11-25"
         },
         "normative_level": "SHOULD",
         "tests": {
@@ -2605,7 +2605,7 @@
         ],
         "verified_on": "2026-02-04",
         "applies_to": {
-          "spec_revision": "2025-06-18"
+          "spec_revision": "2025-11-25"
         },
         "normative_level": "SHOULD",
         "tests": {
@@ -2632,7 +2632,7 @@
         ],
         "verified_on": "2026-02-04",
         "applies_to": {
-          "spec_revision": "2025-06-18"
+          "spec_revision": "2025-11-25"
         },
         "normative_level": "MUST",
         "tests": {
@@ -2659,7 +2659,7 @@
         ],
         "verified_on": "2026-02-04",
         "applies_to": {
-          "spec_revision": "2025-06-18"
+          "spec_revision": "2025-11-25"
         },
         "normative_level": "MUST",
         "tests": {
@@ -2686,7 +2686,7 @@
         ],
         "verified_on": "2026-02-04",
         "applies_to": {
-          "spec_revision": "2025-06-18"
+          "spec_revision": "2025-11-25"
         },
         "normative_level": "SHOULD",
         "tests": {
@@ -2699,7 +2699,7 @@
         "autofix": true,
         "fix_safety": "unsafe"
       },
-      "good_example": "{\n  \"jsonrpc\": \"2.0\",\n  \"method\": \"initialize\",\n  \"id\": 1,\n  \"params\": {\n    \"protocolVersion\": \"2025-06-18\",\n    \"clientInfo\": { \"name\": \"my-client\", \"version\": \"1.0.0\" }\n  }\n}",
+      "good_example": "{\n  \"jsonrpc\": \"2.0\",\n  \"method\": \"initialize\",\n  \"id\": 1,\n  \"params\": {\n    \"protocolVersion\": \"2025-11-25\",\n    \"clientInfo\": { \"name\": \"my-client\", \"version\": \"1.0.0\" }\n  }\n}",
       "bad_example": "{\n  \"jsonrpc\": \"2.0\",\n  \"method\": \"initialize\",\n  \"id\": 1,\n  \"params\": {\n    \"protocolVersion\": \"2024-11-05\",\n    \"clientInfo\": { \"name\": \"my-client\", \"version\": \"1.0.0\" }\n  }\n}"
     },
     {
@@ -2714,7 +2714,7 @@
         ],
         "verified_on": "2026-02-07",
         "applies_to": {
-          "spec_revision": "2025-06-18"
+          "spec_revision": "2025-11-25"
         },
         "normative_level": "MUST",
         "tests": {
@@ -4952,9 +4952,9 @@
               "MCP-008"
             ],
             "values": [
-              "2025-06-18"
+              "2025-11-25"
             ],
-            "snippet": "\"protocolVersion\": \"2025-06-18\""
+            "snippet": "\"protocolVersion\": \"2025-11-25\""
           },
           {
             "key": "method",
@@ -5124,7 +5124,7 @@
         "snippets": [
           {
             "label": "MCP initialize request",
-            "body": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 1,\n  \"method\": \"initialize\",\n  \"params\": {\n    \"protocolVersion\": \"2025-06-18\"\n  }\n}",
+            "body": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 1,\n  \"method\": \"initialize\",\n  \"params\": {\n    \"protocolVersion\": \"2025-11-25\"\n  }\n}",
             "docs": "Initialize request scaffold.",
             "rules": [
               "MCP-001",

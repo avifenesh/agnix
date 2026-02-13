@@ -253,7 +253,7 @@
           ]
         },
         "mcp_protocol": {
-          "description": "MCP protocol version for revision-specific validation (e.g., \"2025-06-18\", \"2024-11-05\")",
+          "description": "MCP protocol version for revision-specific validation (e.g., \"2025-11-25\", \"2024-11-05\")",
           "default": null,
           "type": [
             "string",

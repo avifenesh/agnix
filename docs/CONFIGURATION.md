@@ -71,7 +71,7 @@ disabled_rules = ["CC-MEM-006", "PE-003"]
 # cursor = "0.45.0"
 
 [spec_revisions]
-# mcp_protocol = "2025-06-18"
+# mcp_protocol = "2025-11-25"
 
 # File inclusion/exclusion for non-standard agent files
 [files]

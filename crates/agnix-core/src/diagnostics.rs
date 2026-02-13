@@ -894,7 +894,7 @@ mod tests {
         let diag = Diagnostic::error(PathBuf::from("d.md"), 10, 5, "MCP-001", "mcp error")
             .with_suggestion("fix it")
             .with_fix(Fix::replace(0, 5, "fixed", "auto fix", true))
-            .with_assumption("Assuming MCP protocol 2025-06-18");
+            .with_assumption("Assuming MCP protocol 2025-11-25");
 
         assert_eq!(diag.suggestion, Some("fix it".to_string()));
         assert_eq!(diag.fixes.len(), 1);

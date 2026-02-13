@@ -128,7 +128,7 @@ Pin specification revisions. All default to `null` (use latest).
 
 | Setting | Example | Description |
 |---------|---------|-------------|
-| `agnix.specs.mcpProtocol` | `"2025-06-18"` | MCP protocol version |
+| `agnix.specs.mcpProtocol` | `"2025-11-25"` | MCP protocol version |
 | `agnix.specs.agentSkills` | `"1.0"` | Agent Skills spec revision |
 | `agnix.specs.agentsMd` | `"1.0"` | AGENTS.md spec revision |
 
