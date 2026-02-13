@@ -12,7 +12,7 @@
 
 ## Critical Rules
 
-1. **Rust workspace** - agnix-rules (data), agnix-core (lib), agnix-cli/agnix-lsp/agnix-mcp (binaries)
+1. **Rust workspace** - agnix-rules (data), agnix-core (lib), agnix-cli/agnix-lsp/agnix-mcp (binaries), agnix-wasm (WASM bindings)
 2. **rules.json is source of truth** - `knowledge-base/rules.json` is the machine-readable source of truth. When adding a new rule, add it to BOTH `rules.json` AND `VALIDATION-RULES.md`. CI parity tests enforce this.
 3. **Plain text output** - No emojis, no ASCII art
 4. **Certainty filtering** - HIGH (>95%), MEDIUM (75-95%), LOW (<75%)
@@ -38,7 +38,8 @@ agnix-core (validation engine)
     ↓
 ├── agnix-cli (command-line interface)
 ├── agnix-lsp (language server protocol)
-└── agnix-mcp (MCP server)
+├── agnix-mcp (MCP server)
+└── agnix-wasm (WebAssembly bindings)
 ```
 
 ### Project Layout
@@ -49,7 +50,8 @@ crates/
 ├── agnix-core/     # Core: parsers, schemas, validators, diagnostics
 ├── agnix-cli/      # CLI binary (clap)
 ├── agnix-lsp/      # LSP server (tower-lsp, tokio)
-└── agnix-mcp/      # MCP server (rmcp)
+├── agnix-mcp/      # MCP server (rmcp)
+└── agnix-wasm/     # WASM bindings for browser/runtime integrations
 editors/
 ├── neovim/         # Neovim plugin
 ├── vscode/         # VS Code extension
