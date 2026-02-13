@@ -952,6 +952,8 @@ fn test_cc_hk_003_missing_matcher_permission_request() {
         .collect();
 
     assert_eq!(cc_hk_003.len(), 1);
+    assert_eq!(cc_hk_003[0].level, DiagnosticLevel::Info);
+    assert!(cc_hk_003[0].message.contains("has no matcher"));
 }
 
 #[test]
@@ -975,6 +977,8 @@ fn test_cc_hk_003_missing_matcher_posttooluse() {
         .collect();
 
     assert_eq!(cc_hk_003.len(), 1);
+    assert_eq!(cc_hk_003[0].level, DiagnosticLevel::Info);
+    assert!(cc_hk_003[0].message.contains("has no matcher"));
 }
 
 #[test]
@@ -1012,6 +1016,10 @@ fn test_fixture_missing_matcher() {
         .collect();
     // All 4 tool events without matchers
     assert_eq!(cc_hk_003.len(), 4);
+    assert!(
+        cc_hk_003.iter().all(|d| d.level == DiagnosticLevel::Info),
+        "All CC-HK-003 diagnostics should be Info level"
+    );
 }
 
 // ===== CC-HK-004 Tests: Matcher on Non-Tool Event =====
@@ -2442,6 +2450,12 @@ fn test_cc_hk_003_all_tool_events_hint_matcher() {
             hk_003.len(),
             1,
             "Event '{}' without matcher should get CC-HK-003 hint",
+            event
+        );
+        assert_eq!(
+            hk_003[0].level,
+            DiagnosticLevel::Info,
+            "Event '{}' CC-HK-003 should be Info level",
             event
         );
     }
