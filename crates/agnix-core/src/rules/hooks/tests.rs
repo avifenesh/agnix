@@ -982,6 +982,31 @@ fn test_cc_hk_003_missing_matcher_posttooluse() {
 }
 
 #[test]
+fn test_cc_hk_003_missing_matcher_posttoolusefailure() {
+    let content = r#"{
+            "hooks": {
+                "PostToolUseFailure": [
+                    {
+                        "hooks": [
+                            { "type": "command", "command": "echo 'test'" }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+    let diagnostics = validate(content);
+    let cc_hk_003: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-003")
+        .collect();
+
+    assert_eq!(cc_hk_003.len(), 1);
+    assert_eq!(cc_hk_003[0].level, DiagnosticLevel::Info);
+    assert!(cc_hk_003[0].message.contains("has no matcher"));
+}
+
+#[test]
 fn test_cc_hk_003_with_matcher_ok() {
     let content = r#"{
             "hooks": {
