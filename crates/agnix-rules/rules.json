@@ -4697,7 +4697,8 @@
               "acceptEdits",
               "dontAsk",
               "bypassPermissions",
-              "plan"
+              "plan",
+              "delegate"
             ],
             "snippet": "permissionMode: default"
           },

@@ -61,6 +61,7 @@ const VALID_PERMISSION_MODES: &[&str] = &[
     "dontAsk",
     "bypassPermissions",
     "plan",
+    "delegate",
 ];
 
 /// Valid memory scopes per CC-AG-008
@@ -1212,6 +1213,24 @@ Agent instructions"#;
 name: my-agent
 description: A test agent
 permissionMode: plan
+---
+Agent instructions"#;
+
+        let diagnostics = validate(content);
+        let cc_ag_004: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-AG-004")
+            .collect();
+
+        assert_eq!(cc_ag_004.len(), 0);
+    }
+
+    #[test]
+    fn test_cc_ag_004_valid_permission_mode_delegate() {
+        let content = r#"---
+name: my-agent
+description: A test agent
+permissionMode: delegate
 ---
 Agent instructions"#;
 
@@ -2949,7 +2968,7 @@ Agent instructions"#;
 
     #[test]
     fn test_cc_ag_012_other_modes_no_warning() {
-        for mode in &["default", "acceptEdits", "dontAsk", "plan"] {
+        for mode in &["default", "acceptEdits", "dontAsk", "plan", "delegate"] {
             let content = format!(
                 "---\nname: test\ndescription: Test agent\npermissionMode: {}\n---\nBody",
                 mode
