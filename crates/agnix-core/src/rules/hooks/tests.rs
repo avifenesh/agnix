@@ -2490,6 +2490,11 @@ fn test_cc_hk_004_non_tool_events_reject_matcher() {
 fn test_cc_hk_002_prompt_allowed_events() {
     // Must match HooksSchema::PROMPT_EVENTS constant
     let prompt_allowed = HooksSchema::PROMPT_EVENTS;
+    assert_eq!(
+        prompt_allowed.len(),
+        8,
+        "Expected exactly 8 prompt-allowed events"
+    );
 
     for event in prompt_allowed {
         let content = format!(
@@ -2519,6 +2524,29 @@ fn test_cc_hk_002_prompt_allowed_events() {
 }
 
 #[test]
+fn test_cc_hk_002_prompt_on_task_completed_ok() {
+    let content = r#"{
+            "hooks": {
+                "TaskCompleted": [
+                    {
+                        "hooks": [
+                            { "type": "prompt", "prompt": "verify task completion" }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+    let diagnostics = validate(content);
+    let cc_hk_002: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-002")
+        .collect();
+
+    assert_eq!(cc_hk_002.len(), 0);
+}
+
+#[test]
 fn test_cc_hk_002_prompt_disallowed_events() {
     let prompt_disallowed = [
         "SessionStart",
@@ -2536,7 +2564,6 @@ fn test_cc_hk_002_prompt_disallowed_events() {
                     "hooks": {{
                         "{}": [
                             {{
-                                "matcher": "Bash",
                                 "hooks": [{{ "type": "prompt", "prompt": "Test" }}]
                             }}
                         ]
@@ -2560,15 +2587,23 @@ fn test_cc_hk_002_prompt_disallowed_events() {
 }
 
 #[test]
-fn test_cc_hk_002_agent_hook_on_new_events() {
-    // Agent hooks have the same event restriction as prompt hooks (CC-HK-002)
-    for event in ["TeammateIdle", "TaskCompleted"] {
+fn test_cc_hk_002_agent_disallowed_events() {
+    let agent_disallowed = [
+        "SessionStart",
+        "SessionEnd",
+        "Notification",
+        "SubagentStart",
+        "PreCompact",
+        "TeammateIdle",
+    ];
+
+    for event in agent_disallowed {
         let content = format!(
             r#"{{
                     "hooks": {{
                         "{}": [
                             {{
-                                "hooks": [{{ "type": "agent", "agent": "test-agent" }}]
+                                "hooks": [{{ "type": "agent", "prompt": "Test $ARGUMENTS" }}]
                             }}
                         ]
                     }}
@@ -2584,7 +2619,7 @@ fn test_cc_hk_002_agent_hook_on_new_events() {
         assert_eq!(
             hk_002.len(),
             1,
-            "Agent hook on '{}' should trigger CC-HK-002",
+            "Agent on '{}' should be invalid but didn't get CC-HK-002",
             event
         );
     }
