@@ -35,21 +35,20 @@ For details, see the
 
 ## Neovim
 
-Use the Neovim plugin with your LSP client (nvim-lspconfig, mason, etc.):
+Install with lazy.nvim:
 
 ```lua
--- With nvim-lspconfig
-require('lspconfig').agnix.setup{}
+{ "avifenesh/agnix.nvim" }
 ```
 
-Install the LSP binary:
+Then in your config:
 
-```bash
-cargo install agnix-lsp
+```lua
+require('agnix').setup()
 ```
 
-For full setup instructions, see the
-[Neovim plugin README](https://github.com/avifenesh/agnix/tree/main/editors/neovim).
+The plugin auto-detects and downloads the `agnix-lsp` binary. For full setup instructions, see the
+[agnix.nvim README](https://github.com/avifenesh/agnix.nvim).
 
 ## Zed
 
