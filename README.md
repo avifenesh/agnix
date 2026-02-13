@@ -11,7 +11,7 @@
   </p>
 </div>
 
-Catch broken agent configs before your AI tools silently ignore them. 156 rules for CLAUDE.md, SKILL.md, hooks, MCP, Cursor, Copilot, and more.
+<p align="center">Catch broken agent configs before your AI tools silently ignore them.<br>156 rules for Claude Code, Codex CLI, OpenCode, Cursor, Copilot, CLAUDE.md, SKILL.md, hooks, MCP, and more.</p>
 
 <p align="center"><strong>Auto-fix</strong> | <strong>GitHub Action</strong> | <strong><a href="https://marketplace.visualstudio.com/items?itemName=avifenesh.agnix">VS Code</a> + <a href="https://plugins.jetbrains.com/plugin/30087-agnix">JetBrains</a> + <a href="https://github.com/avifenesh/agnix.nvim">Neovim</a> + <a href="https://github.com/avifenesh/agnix/tree/main/editors/zed">Zed</a></strong></p>
 
