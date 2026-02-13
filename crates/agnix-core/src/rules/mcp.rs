@@ -1,24 +1,106 @@
-//! MCP (Model Context Protocol) validation (MCP-001 to MCP-012)
+//! MCP (Model Context Protocol) validation (MCP-001 to MCP-024)
 
 use crate::{
     config::LintConfig,
     diagnostics::{Diagnostic, Fix},
     rules::{Validator, ValidatorMetadata},
     schemas::mcp::{
-        McpConfigSchema, McpServerConfig, McpToolSchema, VALID_MCP_SERVER_TYPES,
-        extract_request_protocol_version, extract_response_protocol_version, is_initialize_message,
-        is_initialize_response, validate_json_schema_structure,
+        McpServerConfig, McpToolSchema, VALID_MCP_ANNOTATION_HINTS, VALID_MCP_CAPABILITY_KEYS,
+        VALID_MCP_SERVER_TYPES, extract_request_protocol_version,
+        extract_response_protocol_version, is_initialize_message, is_initialize_response,
+        validate_json_schema_structure,
     },
 };
 use rust_i18n::t;
 use std::path::Path;
 
+fn skip_ascii_whitespace(content: &str, mut idx: usize) -> usize {
+    let bytes = content.as_bytes();
+    while idx < bytes.len() && bytes[idx].is_ascii_whitespace() {
+        idx += 1;
+    }
+    idx
+}
+
+fn is_inside_json_string(content: &str, offset: usize) -> bool {
+    let bytes = content.as_bytes();
+    let mut idx = 0usize;
+    let mut in_string = false;
+    let mut escaped = false;
+
+    while idx < offset.min(bytes.len()) {
+        let ch = bytes[idx];
+        if in_string {
+            if escaped {
+                escaped = false;
+            } else if ch == b'\\' {
+                escaped = true;
+            } else if ch == b'"' {
+                in_string = false;
+            }
+        } else if ch == b'"' {
+            in_string = true;
+        }
+        idx += 1;
+    }
+
+    in_string
+}
+
+fn find_json_key_position(content: &str, key: &str) -> Option<usize> {
+    let pattern = format!("\"{}\"", key);
+    let mut search_from = 0usize;
+    let bytes = content.as_bytes();
+
+    while let Some(rel) = content[search_from..].find(&pattern) {
+        let pos = search_from + rel;
+        if !is_inside_json_string(content, pos) {
+            let idx = skip_ascii_whitespace(content, pos + pattern.len());
+            if idx < bytes.len() && bytes[idx] == b':' {
+                return Some(pos);
+            }
+        }
+        search_from = pos + pattern.len();
+    }
+
+    None
+}
+
+fn find_json_array_start_for_key(content: &str, key: &str) -> Option<usize> {
+    let key_pos = find_json_key_position(content, key)?;
+    let bytes = content.as_bytes();
+    let mut idx = skip_ascii_whitespace(content, key_pos + key.len() + 2);
+    if idx >= bytes.len() || bytes[idx] != b':' {
+        return None;
+    }
+    idx = skip_ascii_whitespace(content, idx + 1);
+    if idx >= bytes.len() || bytes[idx] != b'[' {
+        return None;
+    }
+    Some(idx)
+}
+
+fn find_json_object_start_for_key(content: &str, key: &str) -> Option<usize> {
+    let key_pos = find_json_key_position(content, key)?;
+    let bytes = content.as_bytes();
+    let mut idx = skip_ascii_whitespace(content, key_pos + key.len() + 2);
+    if idx >= bytes.len() || bytes[idx] != b':' {
+        return None;
+    }
+    idx = skip_ascii_whitespace(content, idx + 1);
+    if idx >= bytes.len() || bytes[idx] != b'{' {
+        return None;
+    }
+    Some(idx)
+}
+
 /// Find the line number (1-based) of a JSON field in the raw content
 /// Returns (line, column) or (1, 0) if not found
 fn find_json_field_location(content: &str, field_name: &str) -> (usize, usize) {
-    // Search for "field_name": pattern
     let pattern = format!("\"{}\"", field_name);
-    if let Some(pos) = content.find(&pattern) {
+    if let Some(pos) =
+        find_json_key_position(content, field_name).or_else(|| content.find(&pattern))
+    {
         let line = content[..pos].matches('\n').count() + 1;
         let last_newline = content[..pos].rfind('\n').map(|p| p + 1).unwrap_or(0);
         let col = pos - last_newline;
@@ -35,52 +117,122 @@ fn find_unique_json_scalar_value_span(content: &str, key: &str) -> Option<(usize
 
 use super::find_unique_json_string_value_span;
 
-/// Find the line number of a tool in a tools array (0-indexed)
-fn find_tool_location(content: &str, tool_index: usize) -> (usize, usize) {
-    // Find "tools" first, then count opening braces
-    if let Some(tools_pos) = content.find("\"tools\"") {
-        let after_tools = &content[tools_pos..];
-        // Find the opening bracket of the array
-        if let Some(bracket_pos) = after_tools.find('[') {
-            let after_bracket = &after_tools[bracket_pos + 1..];
-            let mut brace_count: usize = 0;
-            let mut tool_count = 0;
-            let mut in_string = false;
-            let mut prev_char = ' ';
-
-            for (i, c) in after_bracket.char_indices() {
-                if c == '"' && prev_char != '\\' {
-                    in_string = !in_string;
-                }
-                if !in_string {
-                    if c == '{' {
-                        if brace_count == 0 {
-                            if tool_count == tool_index {
-                                // Found our tool - calculate line/col
-                                let abs_pos = tools_pos + bracket_pos + 1 + i;
-                                let line = content[..abs_pos].matches('\n').count() + 1;
-                                let last_newline =
-                                    content[..abs_pos].rfind('\n').map(|p| p + 1).unwrap_or(0);
-                                let col = abs_pos - last_newline;
-                                return (line, col);
-                            }
-                            tool_count += 1;
-                        }
-                        brace_count += 1;
-                    } else if c == '}' {
-                        brace_count = brace_count.saturating_sub(1);
-                    }
-                }
-                prev_char = c;
-            }
+fn compute_line_starts(content: &str) -> Vec<usize> {
+    let mut starts = vec![0];
+    for (idx, b) in content.bytes().enumerate() {
+        if b == b'\n' {
+            starts.push(idx + 1);
         }
     }
-    (1, 0)
+    starts
+}
+
+fn line_col_at(offset: usize, line_starts: &[usize]) -> (usize, usize) {
+    let mut low = 0usize;
+    let mut high = line_starts.len();
+    while low + 1 < high {
+        let mid = (low + high) / 2;
+        if line_starts[mid] <= offset {
+            low = mid;
+        } else {
+            high = mid;
+        }
+    }
+    let line_start = line_starts[low];
+    (low + 1, offset.saturating_sub(line_start))
+}
+
+/// Collect object spans for entries in the first `tools` array.
+/// Spans are byte offsets `(start, end)` for each object entry.
+fn collect_tools_array_object_spans(content: &str) -> Vec<(usize, usize)> {
+    let Some(array_pos) = find_json_array_start_for_key(content, "tools") else {
+        return Vec::new();
+    };
+
+    let mut spans = Vec::new();
+    let array_start = array_pos + 1;
+    let mut in_string = false;
+    let mut escaped = false;
+    let mut brace_depth = 0usize;
+    let mut current_start: Option<usize> = None;
+
+    for (rel_idx, ch) in content[array_start..].char_indices() {
+        let abs_idx = array_start + rel_idx;
+
+        if in_string {
+            if escaped {
+                escaped = false;
+                continue;
+            }
+            if ch == '\\' {
+                escaped = true;
+                continue;
+            }
+            if ch == '"' {
+                in_string = false;
+            }
+            continue;
+        }
+
+        match ch {
+            '"' => in_string = true,
+            '{' => {
+                if brace_depth == 0 {
+                    current_start = Some(abs_idx);
+                }
+                brace_depth += 1;
+            }
+            '}' => {
+                brace_depth = brace_depth.saturating_sub(1);
+                if brace_depth == 0
+                    && let Some(start) = current_start.take()
+                {
+                    spans.push((start, abs_idx + ch.len_utf8()));
+                }
+            }
+            ']' if brace_depth == 0 => break,
+            _ => {}
+        }
+    }
+
+    spans
+}
+
+fn tool_location_from_span(
+    tool_spans: &[(usize, usize)],
+    tool_index: usize,
+    line_starts: &[usize],
+) -> Option<(usize, usize)> {
+    tool_spans
+        .get(tool_index)
+        .map(|(start, _)| line_col_at(*start, line_starts))
+}
+
+fn find_json_field_location_in_span(
+    content: &str,
+    field_name: &str,
+    span: (usize, usize),
+    line_starts: &[usize],
+) -> Option<(usize, usize)> {
+    let (start, end) = span;
+    if start >= end
+        || end > content.len()
+        || !content.is_char_boundary(start)
+        || !content.is_char_boundary(end)
+    {
+        return None;
+    }
+
+    let pattern = format!("\"{}\"", field_name);
+    content[start..end]
+        .find(&pattern)
+        .map(|rel| line_col_at(start + rel, line_starts))
 }
 
 const RULE_IDS: &[&str] = &[
     "MCP-001", "MCP-002", "MCP-003", "MCP-004", "MCP-005", "MCP-006", "MCP-007", "MCP-008",
-    "MCP-009", "MCP-010", "MCP-011", "MCP-012",
+    "MCP-009", "MCP-010", "MCP-011", "MCP-012", "MCP-013", "MCP-014", "MCP-015", "MCP-016",
+    "MCP-017", "MCP-018", "MCP-019", "MCP-020", "MCP-021", "MCP-022", "MCP-023", "MCP-024",
 ];
 
 pub struct McpValidator;
@@ -131,33 +283,47 @@ impl Validator for McpValidator {
             validate_protocol_version(&raw_value, path, content, config, &mut diagnostics);
         }
 
-        // Try to parse as MCP config schema
-        let mcp_config: McpConfigSchema = match serde_json::from_value(raw_value.clone()) {
-            Ok(config) => config,
-            Err(_) => {
-                // Not a standard MCP config, may be a tools array or single tool
-                // Continue with raw value validation
-                McpConfigSchema {
-                    mcp_servers: None,
-                    tools: None,
-                    jsonrpc: None,
-                }
-            }
-        };
+        let line_starts = compute_line_starts(content);
+        let tool_spans = collect_tools_array_object_spans(content);
 
         // Get tools array from various locations (also reports parse errors for invalid entries)
-        let tools = extract_tools(&raw_value, &mcp_config, path, content, &mut diagnostics);
+        let tools = extract_tools(
+            &raw_value,
+            path,
+            &mut diagnostics,
+            &tool_spans,
+            &line_starts,
+        );
 
         // Validate each successfully parsed tool
         for (idx, tool) in tools.iter().enumerate() {
-            validate_tool(tool, path, content, config, &mut diagnostics, idx);
+            validate_tool(
+                tool,
+                path,
+                config,
+                &mut diagnostics,
+                ToolLookupContext {
+                    content,
+                    line_starts: &line_starts,
+                    tool_span: tool_spans.get(idx).copied(),
+                    tool_index: idx,
+                },
+            );
         }
 
-        // Validate MCP server configurations (MCP-009 to MCP-012)
-        if let Some(servers) = &mcp_config.mcp_servers {
-            for (name, server) in servers {
-                validate_server(name, server, path, content, config, &mut diagnostics);
-            }
+        // Validate resource and prompt schema requirements.
+        validate_resource_definitions(&raw_value, path, content, config, &mut diagnostics);
+        validate_prompt_definitions(&raw_value, path, content, config, &mut diagnostics);
+
+        // Validate capability keys and duplicate server names.
+        validate_capability_keys(&raw_value, path, content, config, &mut diagnostics);
+        if config.is_rule_enabled("MCP-023") {
+            validate_duplicate_server_names(path, content, &mut diagnostics);
+        }
+
+        // Validate MCP server configurations (MCP-009 to MCP-012, MCP-024)
+        for (name, server) in extract_mcp_servers(&raw_value) {
+            validate_server(&name, &server, path, content, config, &mut diagnostics);
         }
 
         diagnostics
@@ -167,27 +333,22 @@ impl Validator for McpValidator {
 /// Extract tools from various MCP config formats, reporting parse errors for invalid entries
 fn extract_tools(
     raw_value: &serde_json::Value,
-    config: &McpConfigSchema,
     path: &Path,
-    content: &str,
     diagnostics: &mut Vec<Diagnostic>,
+    tool_spans: &[(usize, usize)],
+    line_starts: &[usize],
 ) -> Vec<McpToolSchema> {
     let mut tools = Vec::new();
 
-    // Check for tools array in config (preferred source as it's already parsed)
-    if let Some(config_tools) = &config.tools {
-        tools.extend(config_tools.clone());
-        return tools; // Return early to avoid duplication
-    }
-
-    // Check for tools array at root level (fallback if config parsing didn't get them)
     if let Some(arr) = raw_value.get("tools").and_then(|v| v.as_array()) {
+        // Check for tools array at root level
         for (idx, tool_val) in arr.iter().enumerate() {
             match serde_json::from_value::<McpToolSchema>(tool_val.clone()) {
                 Ok(tool) => tools.push(tool),
                 Err(e) => {
                     // Report invalid tool entries instead of silently skipping
-                    let (line, col) = find_tool_location(content, idx);
+                    let (line, col) =
+                        tool_location_from_span(tool_spans, idx, line_starts).unwrap_or((1, 0));
                     diagnostics.push(
                         Diagnostic::error(
                             path.to_path_buf(),
@@ -201,16 +362,48 @@ fn extract_tools(
                 }
             }
         }
-        if !tools.is_empty() || !arr.is_empty() {
-            return tools; // Return early (even if some failed to parse)
+    }
+
+    // tools/list response shape: {"result": {"tools": [...]}}
+    if let Some(arr) = raw_value
+        .get("result")
+        .and_then(|v| v.get("tools"))
+        .and_then(|v| v.as_array())
+    {
+        let start = tools.len();
+        for (idx, tool_val) in arr.iter().enumerate() {
+            match serde_json::from_value::<McpToolSchema>(tool_val.clone()) {
+                Ok(tool) => tools.push(tool),
+                Err(e) => {
+                    let (line, col) = tool_location_from_span(tool_spans, start + idx, line_starts)
+                        .unwrap_or((1, 0));
+                    diagnostics.push(
+                        Diagnostic::error(
+                            path.to_path_buf(),
+                            line,
+                            col,
+                            "mcp::invalid_tool",
+                            t!("rules.invalid_tool", num = idx + 1, error = e.to_string()),
+                        )
+                        .with_suggestion(t!("rules.invalid_tool_suggestion")),
+                    );
+                }
+            }
         }
+    }
+
+    if !tools.is_empty() {
+        return tools;
     }
 
     // Check if root is a single tool definition (has name OR inputSchema OR description)
     // This allows detecting incomplete tools for validation
     let has_tool_fields = raw_value.get("name").is_some()
         || raw_value.get("inputSchema").is_some()
-        || raw_value.get("description").is_some();
+        || raw_value.get("description").is_some()
+        || raw_value.get("title").is_some()
+        || raw_value.get("outputSchema").is_some()
+        || raw_value.get("icons").is_some();
 
     if has_tool_fields {
         match serde_json::from_value::<McpToolSchema>(raw_value.clone()) {
@@ -231,6 +424,304 @@ fn extract_tools(
     }
 
     tools
+}
+
+fn extract_mcp_servers(raw_value: &serde_json::Value) -> Vec<(String, McpServerConfig)> {
+    let Some(servers_obj) = raw_value.get("mcpServers").and_then(|v| v.as_object()) else {
+        return Vec::new();
+    };
+
+    servers_obj
+        .iter()
+        .map(|(name, server_value)| {
+            let server = serde_json::from_value::<McpServerConfig>(server_value.clone())
+                .unwrap_or_else(|_| parse_mcp_server_lenient(server_value));
+            (name.clone(), server)
+        })
+        .collect()
+}
+
+fn parse_mcp_server_lenient(value: &serde_json::Value) -> McpServerConfig {
+    let Some(obj) = value.as_object() else {
+        return McpServerConfig {
+            server_type: None,
+            command: None,
+            args: None,
+            env: None,
+            url: None,
+        };
+    };
+
+    McpServerConfig {
+        server_type: obj
+            .get("type")
+            .and_then(|v| v.as_str())
+            .map(ToOwned::to_owned),
+        command: obj.get("command").cloned(),
+        args: obj.get("args").cloned(),
+        env: parse_env_lenient(obj.get("env")),
+        url: obj
+            .get("url")
+            .and_then(|v| v.as_str())
+            .map(ToOwned::to_owned),
+    }
+}
+
+fn parse_env_lenient(
+    env_value: Option<&serde_json::Value>,
+) -> Option<std::collections::HashMap<String, String>> {
+    let env_obj = env_value.and_then(|v| v.as_object())?;
+
+    let env = env_obj
+        .iter()
+        .filter_map(|(key, value)| {
+            if value.is_null() {
+                None
+            } else {
+                Some((
+                    key.clone(),
+                    value
+                        .as_str()
+                        .map(ToOwned::to_owned)
+                        .unwrap_or_else(|| value.to_string()),
+                ))
+            }
+        })
+        .collect();
+
+    Some(env)
+}
+
+fn iter_root_or_result_array<'a>(
+    value: &'a serde_json::Value,
+    key: &str,
+) -> Vec<&'a Vec<serde_json::Value>> {
+    let mut arrays = Vec::new();
+    if let Some(arr) = value.get(key).and_then(|v| v.as_array()) {
+        arrays.push(arr);
+    }
+    if let Some(arr) = value
+        .get("result")
+        .and_then(|v| v.get(key))
+        .and_then(|v| v.as_array())
+    {
+        arrays.push(arr);
+    }
+    arrays
+}
+
+fn is_non_empty_string(value: Option<&serde_json::Value>) -> bool {
+    value
+        .and_then(|v| v.as_str())
+        .is_some_and(|s| !s.trim().is_empty())
+}
+
+fn validate_resource_definitions(
+    value: &serde_json::Value,
+    path: &Path,
+    content: &str,
+    config: &LintConfig,
+    diagnostics: &mut Vec<Diagnostic>,
+) {
+    for resources in iter_root_or_result_array(value, "resources") {
+        for (idx, resource) in resources.iter().enumerate() {
+            let Some(obj) = resource.as_object() else {
+                continue;
+            };
+
+            let resource_prefix = format!("Resource #{}: ", idx + 1);
+            if config.is_rule_enabled("MCP-015") {
+                if !is_non_empty_string(obj.get("uri")) {
+                    let (line, col) = find_json_field_location(content, "resources");
+                    diagnostics.push(
+                        Diagnostic::error(
+                            path.to_path_buf(),
+                            line,
+                            col,
+                            "MCP-015",
+                            format!("{}missing required field 'uri'", resource_prefix),
+                        )
+                        .with_suggestion("Add a non-empty URI to the resource definition"),
+                    );
+                }
+                if !is_non_empty_string(obj.get("name")) {
+                    let (line, col) = find_json_field_location(content, "resources");
+                    diagnostics.push(
+                        Diagnostic::error(
+                            path.to_path_buf(),
+                            line,
+                            col,
+                            "MCP-015",
+                            format!("{}missing required field 'name'", resource_prefix),
+                        )
+                        .with_suggestion("Add a non-empty name to the resource definition"),
+                    );
+                }
+            }
+        }
+    }
+}
+
+fn validate_prompt_definitions(
+    value: &serde_json::Value,
+    path: &Path,
+    content: &str,
+    config: &LintConfig,
+    diagnostics: &mut Vec<Diagnostic>,
+) {
+    for prompts in iter_root_or_result_array(value, "prompts") {
+        for (idx, prompt) in prompts.iter().enumerate() {
+            let Some(obj) = prompt.as_object() else {
+                continue;
+            };
+
+            let prompt_prefix = format!("Prompt #{}: ", idx + 1);
+            let (line, col) = find_json_field_location(content, "prompts");
+
+            if config.is_rule_enabled("MCP-016") && !is_non_empty_string(obj.get("name")) {
+                diagnostics.push(
+                    Diagnostic::error(
+                        path.to_path_buf(),
+                        line,
+                        col,
+                        "MCP-016",
+                        format!("{}missing required field 'name'", prompt_prefix.as_str()),
+                    )
+                    .with_suggestion("Add a non-empty prompt name"),
+                );
+            }
+        }
+    }
+}
+
+fn validate_capability_keys(
+    value: &serde_json::Value,
+    path: &Path,
+    content: &str,
+    config: &LintConfig,
+    diagnostics: &mut Vec<Diagnostic>,
+) {
+    if !config.is_rule_enabled("MCP-020") {
+        return;
+    }
+
+    let Some(caps_obj) = value
+        .get("capabilities")
+        .and_then(|v| v.as_object())
+        .or_else(|| {
+            value
+                .get("result")
+                .and_then(|v| v.get("capabilities"))
+                .and_then(|v| v.as_object())
+        })
+    else {
+        return;
+    };
+
+    for key in caps_obj.keys() {
+        if !VALID_MCP_CAPABILITY_KEYS.contains(&key.as_str()) {
+            let (line, col) = find_json_field_location(content, key);
+            diagnostics.push(
+                Diagnostic::warning(
+                    path.to_path_buf(),
+                    line,
+                    col,
+                    "MCP-020",
+                    format!("Unknown capability key '{}'", key),
+                )
+                .with_suggestion("Use only capability keys defined by the MCP specification"),
+            );
+        }
+    }
+}
+
+fn validate_duplicate_server_names(path: &Path, content: &str, diagnostics: &mut Vec<Diagnostic>) {
+    for duplicate in collect_duplicate_mcp_server_names(content) {
+        let (line, col) = find_json_field_location(content, &duplicate);
+        diagnostics.push(
+            Diagnostic::error(
+                path.to_path_buf(),
+                line,
+                col,
+                "MCP-023",
+                format!("Duplicate MCP server name '{}'", duplicate),
+            )
+            .with_suggestion("Rename duplicate mcpServers keys so each server name is unique"),
+        );
+    }
+}
+
+fn collect_duplicate_mcp_server_names(content: &str) -> Vec<String> {
+    use std::collections::HashSet;
+
+    let bytes = content.as_bytes();
+    let Some(object_start) = find_json_object_start_for_key(content, "mcpServers") else {
+        return Vec::new();
+    };
+    let mut idx = object_start + 1;
+
+    let mut depth = 1usize;
+    let mut expecting_key = true;
+    let mut seen = HashSet::new();
+    let mut duplicates = HashSet::new();
+
+    while idx < bytes.len() && depth > 0 {
+        let ch = bytes[idx] as char;
+        if ch == '"' {
+            let (raw, next_idx) = read_json_string_literal(content, idx);
+            if depth == 1 && expecting_key {
+                if !seen.insert(raw.clone()) {
+                    duplicates.insert(raw);
+                }
+                expecting_key = false;
+            }
+            idx = next_idx;
+            continue;
+        }
+
+        match ch {
+            '{' | '[' => depth += 1,
+            '}' | ']' => {
+                depth = depth.saturating_sub(1);
+            }
+            ',' if depth == 1 => expecting_key = true,
+            _ => {}
+        }
+        idx += 1;
+    }
+
+    let mut result: Vec<String> = duplicates.into_iter().collect();
+    result.sort();
+    result
+}
+
+fn read_json_string_literal(content: &str, start_quote_idx: usize) -> (String, usize) {
+    let bytes = content.as_bytes();
+    let mut idx = start_quote_idx + 1;
+    let mut escaped = false;
+    let mut out = String::new();
+
+    while idx < bytes.len() {
+        let ch = bytes[idx] as char;
+        if escaped {
+            out.push(ch);
+            escaped = false;
+            idx += 1;
+            continue;
+        }
+        if ch == '\\' {
+            escaped = true;
+            idx += 1;
+            continue;
+        }
+        if ch == '"' {
+            return (out, idx + 1);
+        }
+        out.push(ch);
+        idx += 1;
+    }
+
+    (out, bytes.len())
 }
 
 /// MCP-001: Validate JSON-RPC version is "2.0"
@@ -403,21 +894,42 @@ fn validate_protocol_version(
 }
 
 /// Validate a single MCP tool
+struct ToolLookupContext<'a> {
+    content: &'a str,
+    line_starts: &'a [usize],
+    tool_span: Option<(usize, usize)>,
+    tool_index: usize,
+}
+
 fn validate_tool(
     tool: &McpToolSchema,
     path: &Path,
-    content: &str,
     config: &LintConfig,
     diagnostics: &mut Vec<Diagnostic>,
-    tool_index: usize,
+    lookup: ToolLookupContext<'_>,
 ) {
+    let ToolLookupContext {
+        content,
+        line_starts,
+        tool_span,
+        tool_index,
+    } = lookup;
+
     // Always include tool index for clarity, even for first tool
     let tool_prefix = format!("Tool #{}: ", tool_index + 1);
 
-    // Get base location for this tool
-    let tool_loc = find_tool_location(content, tool_index);
-    // Helper to find field within tool context (searches from beginning for single tools)
+    // Get base location for this tool (preferring a precomputed span).
+    let tool_loc = tool_span
+        .map(|(start, _)| line_col_at(start, line_starts))
+        .unwrap_or((1, 0));
+
+    // Find field location in the current tool span first, then fall back to global lookup.
     let find_field = |field: &str| -> (usize, usize) {
+        if let Some(span) = tool_span
+            && let Some(loc) = find_json_field_location_in_span(content, field, span, line_starts)
+        {
+            return loc;
+        }
         let (line, col) = find_json_field_location(content, field);
         if line > 1 || col > 0 {
             (line, col)
@@ -427,6 +939,34 @@ fn validate_tool(
     };
 
     let (has_name, has_desc, has_schema) = tool.has_required_fields();
+
+    // MCP-013: Tool name format validation.
+    if config.is_rule_enabled("MCP-013")
+        && let Some(name) = tool.name.as_deref().map(str::trim)
+        && !name.is_empty()
+    {
+        let valid_chars = name
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || matches!(c, '_' | '.' | '-'));
+        if name.len() > 128 || !valid_chars {
+            let (line, col) = find_field("name");
+            diagnostics.push(
+                Diagnostic::error(
+                    path.to_path_buf(),
+                    line,
+                    col,
+                    "MCP-013",
+                    format!(
+                        "{}invalid tool name '{}': expected 1-128 chars using [a-zA-Z0-9_.-]",
+                        tool_prefix, name
+                    ),
+                )
+                .with_suggestion(
+                    "Rename the tool to use only letters, numbers, underscore, dot, or hyphen",
+                ),
+            );
+        }
+    }
 
     // MCP-002: Missing required tool fields
     if config.is_rule_enabled("MCP-002") {
@@ -494,7 +1034,7 @@ fn validate_tool(
         }
     }
 
-    // MCP-003: Invalid JSON Schema
+    // MCP-003: Invalid inputSchema JSON Schema.
     if config.is_rule_enabled("MCP-003") {
         if let Some(schema) = &tool.input_schema {
             let (line, col) = find_field("inputSchema");
@@ -515,6 +1055,26 @@ fn validate_tool(
                     .with_suggestion(t!("rules.mcp_003.suggestion")),
                 );
             }
+        }
+    }
+
+    // MCP-014: Invalid outputSchema JSON Schema.
+    if config.is_rule_enabled("MCP-014")
+        && let Some(schema) = &tool.output_schema
+    {
+        let (line, col) = find_field("outputSchema");
+        let schema_errors = validate_json_schema_structure(schema);
+        for error in schema_errors {
+            diagnostics.push(
+                Diagnostic::error(
+                    path.to_path_buf(),
+                    line,
+                    col,
+                    "MCP-014",
+                    format!("{}invalid outputSchema: {}", tool_prefix, error),
+                )
+                .with_suggestion("Ensure outputSchema is a valid JSON Schema object"),
+            );
         }
     }
 
@@ -565,10 +1125,136 @@ fn validate_tool(
             )
             .with_suggestion(t!("rules.mcp_006.suggestion")),
         );
+
+        if let Some(annotations) = &tool.annotations {
+            let unknown_keys: Vec<_> = annotations
+                .keys()
+                .filter(|key| !VALID_MCP_ANNOTATION_HINTS.contains(&key.as_str()))
+                .cloned()
+                .collect();
+
+            if !unknown_keys.is_empty() {
+                diagnostics.push(
+                    Diagnostic::warning(
+                        path.to_path_buf(),
+                        line,
+                        col,
+                        "MCP-006",
+                        format!(
+                            "{}unknown annotation keys: {}",
+                            tool_prefix.as_str(),
+                            unknown_keys.join(", ")
+                        ),
+                    )
+                    .with_suggestion(
+                        "Use only standard annotation hints: readOnlyHint, destructiveHint, idempotentHint, openWorldHint, title",
+                    ),
+                );
+            }
+        }
     }
 }
 
-/// Validate a single MCP server configuration entry (MCP-009 to MCP-012)
+fn extract_http_host(url: &str) -> Option<String> {
+    let trimmed = url.trim();
+    let scheme_sep = trimmed.find("://")?;
+    let host_and_path = &trimmed[scheme_sep + 3..];
+    if host_and_path.is_empty() {
+        return None;
+    }
+    let host_port_end = host_and_path
+        .find(|c| ['/', '?', '#'].contains(&c))
+        .unwrap_or(host_and_path.len());
+    let host_port = &host_and_path[..host_port_end];
+    if host_port.is_empty() {
+        return None;
+    }
+
+    if host_port.starts_with('[') {
+        if let Some(end) = host_port.find(']') {
+            return Some(host_port[..=end].to_ascii_lowercase());
+        }
+        return None;
+    }
+
+    let host = host_port.split(':').next().unwrap_or(host_port);
+    Some(host.to_ascii_lowercase())
+}
+
+fn is_local_http_host(host: &str) -> bool {
+    matches!(host, "localhost" | "127.0.0.1" | "::1" | "[::1]")
+}
+
+fn is_wildcard_http_host(host: &str) -> bool {
+    matches!(host, "0.0.0.0" | "::" | "[::]" | "*")
+}
+
+fn command_value_as_string(command: &serde_json::Value) -> Option<String> {
+    match command {
+        serde_json::Value::String(value) => Some(value.clone()),
+        serde_json::Value::Array(values) => {
+            let parts: Vec<&str> = values
+                .iter()
+                .filter_map(serde_json::Value::as_str)
+                .collect();
+            if parts.is_empty() {
+                None
+            } else {
+                Some(parts.join(" "))
+            }
+        }
+        _ => None,
+    }
+}
+
+fn seems_plaintext_secret(value: &str) -> bool {
+    let trimmed = value.trim();
+    !trimmed.is_empty()
+        && !trimmed.starts_with("${")
+        && !trimmed.starts_with("$(")
+        && !trimmed.starts_with("{{")
+}
+
+fn is_dangerous_command(command: &str) -> bool {
+    let normalized = command.to_ascii_lowercase();
+    let has_remote_pipe = (normalized.contains("curl") || normalized.contains("wget"))
+        && normalized.contains('|')
+        && (normalized.contains("| sh")
+            || normalized.contains("|sh")
+            || normalized.contains("| bash")
+            || normalized.contains("|bash"));
+    let has_sudo_rm = normalized.contains("sudo rm");
+    let has_exfil_pattern = (normalized.contains("nc ") || normalized.contains("netcat "))
+        && (normalized.contains("/etc/")
+            || normalized.contains(".ssh")
+            || normalized.contains("token"));
+    has_remote_pipe || has_sudo_rm || has_exfil_pattern
+}
+
+fn has_meaningful_server_config(server: &McpServerConfig) -> bool {
+    let has_type = server
+        .server_type
+        .as_deref()
+        .is_some_and(|value| !value.trim().is_empty());
+    let has_command = server.command.as_ref().is_some_and(|value| match value {
+        serde_json::Value::String(command) => !command.trim().is_empty(),
+        serde_json::Value::Array(items) => !items.is_empty(),
+        serde_json::Value::Null => false,
+        _ => true,
+    });
+    let has_args = server
+        .args
+        .as_ref()
+        .is_some_and(|value| value.as_array().is_some_and(|arr| !arr.is_empty()));
+    let has_url = server
+        .url
+        .as_deref()
+        .is_some_and(|value| !value.trim().is_empty());
+    let has_env = server.env.as_ref().is_some_and(|env| !env.is_empty());
+    has_type || has_command || has_args || has_url || has_env
+}
+
+/// Validate a single MCP server configuration entry (MCP-009 to MCP-012, MCP-017 to MCP-022, MCP-024)
 fn validate_server(
     name: &str,
     server: &McpServerConfig,
@@ -646,6 +1332,30 @@ fn validate_server(
         }
     }
 
+    // MCP-022: args must be an array of strings when present.
+    if config.is_rule_enabled("MCP-022")
+        && let Some(args) = &server.args
+    {
+        let valid_args = args
+            .as_array()
+            .is_some_and(|arr| arr.iter().all(|item| item.is_string()));
+        if !valid_args {
+            diagnostics.push(
+                Diagnostic::error(
+                    path.to_path_buf(),
+                    line,
+                    col,
+                    "MCP-022",
+                    format!(
+                        "Server '{}' has invalid 'args' value: expected array of strings",
+                        name
+                    ),
+                )
+                .with_suggestion("Set args to an array of strings, e.g. [\"--port\", \"3000\"]"),
+            );
+        }
+    }
+
     // MCP-010: Missing url for http/sse server
     // Treat empty/whitespace-only URL as missing
     if config.is_rule_enabled("MCP-010") && ["http", "sse"].contains(&effective_type) {
@@ -668,9 +1378,103 @@ fn validate_server(
         }
     }
 
+    if config.is_rule_enabled("MCP-017")
+        && effective_type == "http"
+        && let Some(url) = server.url.as_deref()
+    {
+        let lower_url = url.trim().to_ascii_lowercase();
+        if lower_url.starts_with("http://")
+            && let Some(host) = extract_http_host(url)
+            && !is_local_http_host(&host)
+        {
+            diagnostics.push(
+                Diagnostic::error(
+                    path.to_path_buf(),
+                    line,
+                    col,
+                    "MCP-017",
+                    format!(
+                        "Server '{}' uses insecure HTTP URL '{}'; use HTTPS for non-localhost endpoints",
+                        name, url
+                    ),
+                )
+                .with_suggestion("Change the server URL to https:// for remote endpoints"),
+            );
+        }
+    }
+
+    if config.is_rule_enabled("MCP-021")
+        && effective_type == "http"
+        && let Some(url) = server.url.as_deref()
+        && let Some(host) = extract_http_host(url)
+        && is_wildcard_http_host(&host)
+    {
+        diagnostics.push(
+            Diagnostic::warning(
+                path.to_path_buf(),
+                line,
+                col,
+                "MCP-021",
+                format!(
+                    "Server '{}' binds HTTP to '{}', which exposes all interfaces",
+                    name, host
+                ),
+            )
+            .with_suggestion("Prefer localhost bindings unless remote network access is required"),
+        );
+    }
+
+    if effective_type == "stdio" {
+        if config.is_rule_enabled("MCP-018")
+            && let Some(env) = &server.env
+        {
+            for (env_key, env_value) in env {
+                let key_upper = env_key.to_ascii_uppercase();
+                let looks_sensitive = ["API_KEY", "SECRET", "TOKEN", "PASSWORD"]
+                    .iter()
+                    .any(|needle| key_upper.contains(needle));
+                if looks_sensitive && seems_plaintext_secret(env_value) {
+                    diagnostics.push(
+                        Diagnostic::warning(
+                            path.to_path_buf(),
+                            line,
+                            col,
+                            "MCP-018",
+                            format!(
+                                "Server '{}' defines potential plaintext secret in env var '{}'",
+                                name, env_key
+                            ),
+                        )
+                        .with_suggestion("Use secret injection from environment/runtime instead of hardcoded values"),
+                    );
+                }
+            }
+        }
+
+        if config.is_rule_enabled("MCP-019")
+            && let Some(command) = &server.command
+            && let Some(command_text) = command_value_as_string(command)
+            && is_dangerous_command(&command_text)
+        {
+            diagnostics.push(
+                Diagnostic::warning(
+                    path.to_path_buf(),
+                    line,
+                    col,
+                    "MCP-019",
+                    format!(
+                        "Server '{}' command appears dangerous: {}",
+                        name, command_text
+                    ),
+                )
+                .with_suggestion("Avoid remote shell pipes, destructive commands, and potential data exfiltration patterns"),
+            );
+        }
+    }
+
     // MCP-012: Deprecated SSE transport
     if config.is_rule_enabled("MCP-012") && effective_type == "sse" {
-        let mut diag = Diagnostic::warning(
+        let mut diag = Diagnostic::error(
             path.to_path_buf(),
             line,
             col,
@@ -692,6 +1496,21 @@ fn validate_server(
 
         diagnostics.push(diag);
     }
+
+    if config.is_rule_enabled("MCP-024") && !has_meaningful_server_config(server) {
+        diagnostics.push(
+            Diagnostic::error(
+                path.to_path_buf(),
+                line,
+                col,
+                "MCP-024",
+                format!("Server '{}' has an empty configuration object", name),
+            )
+            .with_suggestion(
+                "Define at least one meaningful field such as type, command, url, args, or env",
+            ),
+        );
+    }
 }
 
 #[cfg(test)]
@@ -710,6 +1529,52 @@ mod tests {
         let validator = McpValidator;
         let path = PathBuf::from("test.mcp.json");
         validator.validate(&path, content, config)
+    }
+
+    #[test]
+    fn test_find_json_key_position_ignores_string_literals() {
+        let content = r#"{
+            "note": "mention \"tools\" and \"mcpServers\" here only",
+            "tools": []
+        }"#;
+
+        let key_pos = find_json_key_position(content, "tools");
+        assert!(key_pos.is_some(), "Expected to find tools key position");
+        let pos = key_pos.unwrap();
+        assert_eq!(&content[pos..pos + "\"tools\"".len()], "\"tools\"");
+    }
+
+    #[test]
+    fn test_collect_tools_array_spans_with_embedded_tools_string() {
+        let content = r#"{
+            "note": "text with escaped token: \"tools\" and fake array marker [ ]",
+            "tools": [
+                {"name": "one", "description": "desc", "inputSchema": {"type": "object"}}
+            ]
+        }"#;
+
+        let spans = collect_tools_array_object_spans(content);
+        assert_eq!(spans.len(), 1);
+    }
+
+    #[test]
+    fn test_mcp_servers_validation_not_skipped_when_resources_are_malformed() {
+        let content = r#"{
+            "mcpServers": {
+                "broken-stdio": {
+                    "type": "stdio"
+                }
+            },
+            "resources": [
+                {"uri": 123, "name": "resource-name"}
+            ]
+        }"#;
+
+        let diagnostics = validate(content);
+        assert!(
+            diagnostics.iter().any(|d| d.rule == "MCP-009"),
+            "MCP-009 should still run even when resources has wrong field types"
+        );
     }
 
     // MCP-001 Tests
@@ -911,6 +1776,18 @@ mod tests {
         assert!(diagnostics.iter().any(|d| d.rule == "MCP-003"));
     }
 
+    #[test]
+    fn test_mcp_003_validates_output_schema() {
+        let content = r#"{
+            "name": "test-tool",
+            "description": "A test tool for testing",
+            "inputSchema": {"type": "object"},
+            "outputSchema": {"type": "not_a_real_type"}
+        }"#;
+        let diagnostics = validate(content);
+        assert!(diagnostics.iter().any(|d| d.rule == "MCP-014"));
+    }
+
     // MCP-004 Tests
     #[test]
     fn test_mcp_004_meaningful_description() {
@@ -1055,6 +1932,28 @@ mod tests {
         let diagnostics = validate(content);
         // Empty annotations don't trigger warning
         assert!(!diagnostics.iter().any(|d| d.rule == "MCP-006"));
+    }
+
+    #[test]
+    fn test_mcp_006_unknown_annotation_keys() {
+        let content = r#"{
+            "name": "test-tool",
+            "description": "A test tool for testing",
+            "inputSchema": {"type": "object"},
+            "annotations": {"dangerous": true, "readOnlyHint": true}
+        }"#;
+        let diagnostics = validate(content);
+        let mcp_006: Vec<_> = diagnostics.iter().filter(|d| d.rule == "MCP-006").collect();
+        assert!(
+            mcp_006
+                .iter()
+                .any(|d| d.message.contains("unknown annotation keys")),
+            "Expected MCP-006 warning for unknown annotation keys, got: {:?}",
+            mcp_006
+                .iter()
+                .map(|d| d.message.clone())
+                .collect::<Vec<_>>()
+        );
     }
 
     // Config wiring tests
@@ -1522,7 +2421,8 @@ mod tests {
     fn test_all_mcp_rules_can_be_disabled() {
         let rules = [
             "MCP-001", "MCP-002", "MCP-003", "MCP-004", "MCP-005", "MCP-006", "MCP-007", "MCP-008",
-            "MCP-009", "MCP-010", "MCP-011", "MCP-012",
+            "MCP-009", "MCP-010", "MCP-011", "MCP-012", "MCP-013", "MCP-014", "MCP-015", "MCP-016",
+            "MCP-017", "MCP-018", "MCP-019", "MCP-020", "MCP-021", "MCP-022", "MCP-023", "MCP-024",
         ];
 
         for rule in rules {
@@ -1537,6 +2437,34 @@ mod tests {
                 "MCP-010" => r#"{"mcpServers": {"s": {"type": "http"}}}"#,
                 "MCP-011" => r#"{"mcpServers": {"s": {"type": "invalid"}}}"#,
                 "MCP-012" => r#"{"mcpServers": {"s": {"type": "sse", "url": "http://x"}}}"#,
+                "MCP-013" => {
+                    r#"{"tools":[{"name":"bad tool","description":"desc with spaces","inputSchema":{"type":"object"}}]}"#
+                }
+                "MCP-014" => {
+                    r#"{"tools":[{"name":"valid-name","description":"A valid description","inputSchema":{"type":"object"},"outputSchema":{"type":"invalid_type"}}]}"#
+                }
+                "MCP-015" => r#"{"resources":[{"name":"missing-uri"}]}"#,
+                "MCP-016" => r#"{"prompts":[{"description":"missing name"}]}"#,
+                "MCP-017" => {
+                    r#"{"mcpServers":{"s":{"type":"http","url":"http://example.com/mcp"}}}"#
+                }
+                "MCP-018" => {
+                    r#"{"mcpServers":{"s":{"type":"stdio","command":"node","env":{"API_KEY":"plaintext"}}}}"#
+                }
+                "MCP-019" => {
+                    r#"{"mcpServers":{"s":{"type":"stdio","command":"curl https://example.com/install.sh | sh"}}}"#
+                }
+                "MCP-020" => r#"{"capabilities":{"unknownCap":{}}}"#,
+                "MCP-021" => {
+                    r#"{"mcpServers":{"s":{"type":"http","url":"http://0.0.0.0:3000/mcp"}}}"#
+                }
+                "MCP-022" => {
+                    r#"{"mcpServers":{"s":{"type":"stdio","command":"node","args":"--port 3000"}}}"#
+                }
+                "MCP-023" => {
+                    r#"{"mcpServers":{"dup":{"type":"stdio","command":"node"},"dup":{"type":"stdio","command":"node"}}}"#
+                }
+                "MCP-024" => r#"{"mcpServers":{"empty":{}}}"#,
                 _ => r#"{"tools": [{"name": "t"}]}"#,
             };
 
@@ -1915,7 +2843,7 @@ mod tests {
     // ===== MCP-012 Tests =====
 
     #[test]
-    fn test_mcp_012_sse_deprecated_warning() {
+    fn test_mcp_012_sse_deprecated_error() {
         let content = r#"{
             "mcpServers": {
                 "sse-server": {
@@ -1929,10 +2857,7 @@ mod tests {
         assert_eq!(mcp_012.len(), 1);
         assert!(mcp_012[0].message.contains("sse-server"));
         assert!(mcp_012[0].message.contains("deprecated"));
-        assert_eq!(
-            mcp_012[0].level,
-            crate::diagnostics::DiagnosticLevel::Warning
-        );
+        assert_eq!(mcp_012[0].level, crate::diagnostics::DiagnosticLevel::Error);
     }
 
     #[test]
@@ -1980,6 +2905,173 @@ mod tests {
         }"#;
         let diagnostics = validate(content);
         assert!(!diagnostics.iter().any(|d| d.rule == "MCP-012"));
+    }
+
+    // ===== MCP-013..MCP-024 Tests =====
+
+    #[test]
+    fn test_mcp_013_invalid_tool_name() {
+        let content = r#"{
+            "tools": [{
+                "name": "bad tool",
+                "description": "A valid description",
+                "inputSchema": {"type": "object"}
+            }]
+        }"#;
+        let diagnostics = validate(content);
+        assert!(diagnostics.iter().any(|d| d.rule == "MCP-013"));
+    }
+
+    #[test]
+    fn test_mcp_014_invalid_output_schema() {
+        let content = r#"{
+            "tools": [{
+                "name": "valid-tool",
+                "description": "A valid description",
+                "inputSchema": {"type": "object"},
+                "outputSchema": {"type": "invalid_type"}
+            }]
+        }"#;
+        let diagnostics = validate(content);
+        assert!(diagnostics.iter().any(|d| d.rule == "MCP-014"));
+    }
+
+    #[test]
+    fn test_mcp_015_resource_missing_required_fields() {
+        let content = r#"{
+            "resources": [{ "description": "missing uri and name" }]
+        }"#;
+        let diagnostics = validate(content);
+        assert!(diagnostics.iter().any(|d| d.rule == "MCP-015"));
+    }
+
+    #[test]
+    fn test_mcp_016_prompt_missing_name() {
+        let content = r#"{
+            "prompts": [{ "description": "missing name" }]
+        }"#;
+        let diagnostics = validate(content);
+        assert!(diagnostics.iter().any(|d| d.rule == "MCP-016"));
+    }
+
+    #[test]
+    fn test_mcp_017_http_remote_requires_https() {
+        let content = r#"{
+            "mcpServers": {
+                "remote-server": {
+                    "type": "http",
+                    "url": "http://example.com/mcp"
+                }
+            }
+        }"#;
+        let diagnostics = validate(content);
+        assert!(diagnostics.iter().any(|d| d.rule == "MCP-017"));
+    }
+
+    #[test]
+    fn test_mcp_018_env_plaintext_secret_warning() {
+        let content = r#"{
+            "mcpServers": {
+                "local-server": {
+                    "type": "stdio",
+                    "command": "node",
+                    "env": {"API_KEY": "plaintext-value"}
+                }
+            }
+        }"#;
+        let diagnostics = validate(content);
+        assert!(diagnostics.iter().any(|d| d.rule == "MCP-018"));
+    }
+
+    #[test]
+    fn test_mcp_019_dangerous_stdio_command_warning() {
+        let content = r#"{
+            "mcpServers": {
+                "local-server": {
+                    "type": "stdio",
+                    "command": "curl https://example.com/install.sh | sh"
+                }
+            }
+        }"#;
+        let diagnostics = validate(content);
+        assert!(diagnostics.iter().any(|d| d.rule == "MCP-019"));
+    }
+
+    #[test]
+    fn test_mcp_020_unknown_capability_key() {
+        let content = r#"{
+            "capabilities": {
+                "tools": { "listChanged": true },
+                "unknownCapability": {}
+            }
+        }"#;
+        let diagnostics = validate(content);
+        assert!(diagnostics.iter().any(|d| d.rule == "MCP-020"));
+    }
+
+    #[test]
+    fn test_mcp_021_wildcard_http_binding_warning() {
+        let content = r#"{
+            "mcpServers": {
+                "wildcard": {
+                    "type": "http",
+                    "url": "http://0.0.0.0:3000/mcp"
+                }
+            }
+        }"#;
+        let diagnostics = validate(content);
+        assert!(diagnostics.iter().any(|d| d.rule == "MCP-021"));
+    }
+
+    #[test]
+    fn test_mcp_022_args_must_be_array_of_strings() {
+        let content = r#"{
+            "mcpServers": {
+                "bad-args": {
+                    "type": "stdio",
+                    "command": "node",
+                    "args": "--port 3000"
+                }
+            }
+        }"#;
+        let diagnostics = validate(content);
+        assert!(diagnostics.iter().any(|d| d.rule == "MCP-022"));
+    }
+
+    #[test]
+    fn test_mcp_023_duplicate_server_names() {
+        let content = r#"{
+            "mcpServers": {
+                "dup": { "type": "stdio", "command": "node" },
+                "dup": { "type": "stdio", "command": "python" }
+            }
+        }"#;
+        let diagnostics = validate(content);
+        assert!(diagnostics.iter().any(|d| d.rule == "MCP-023"));
+    }
+
+    #[test]
+    fn test_mcp_023_duplicate_server_names_ignores_string_literal_mentions() {
+        let content = r#"{
+            "note": "string with \"mcpServers\": { \"dup\": {} }",
+            "mcpServers": {
+                "dup": { "type": "stdio", "command": "node" },
+                "dup": { "type": "stdio", "command": "python" }
+            }
+        }"#;
+        let diagnostics = validate(content);
+        assert!(diagnostics.iter().any(|d| d.rule == "MCP-023"));
+    }
+
+    #[test]
+    fn test_mcp_024_empty_server_configuration() {
+        let content = r#"{
+            "mcpServers": {
+                "empty": {}
+            }
+        }"#;
+        let diagnostics = validate(content);
+        assert!(diagnostics.iter().any(|d| d.rule == "MCP-024"));
     }
 
     // ===== Multiple servers test =====

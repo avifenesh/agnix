@@ -1,6 +1,6 @@
 # Rules Reference
 
-This section contains all `157` validation rules generated from `knowledge-base/rules.json`.
+This section contains all `169` validation rules generated from `knowledge-base/rules.json`.
 `58` rules have automatic fixes.
 
 | Rule | Name | Severity | Category | Auto-Fix |
@@ -106,7 +106,19 @@ This section contains all `157` validation rules generated from `knowledge-base/
 | [MCP-009](./generated/mcp-009.md) | Missing command for stdio server | HIGH | MCP | No |
 | [MCP-010](./generated/mcp-010.md) | Missing url for http/sse server | HIGH | MCP | No |
 | [MCP-011](./generated/mcp-011.md) | Invalid MCP server type | HIGH | MCP | Yes (unsafe) |
-| [MCP-012](./generated/mcp-012.md) | Deprecated SSE transport | MEDIUM | MCP | Yes (unsafe) |
+| [MCP-012](./generated/mcp-012.md) | Deprecated SSE transport | HIGH | MCP | Yes (unsafe) |
+| [MCP-013](./generated/mcp-013.md) | Invalid Tool Name Format | HIGH | MCP | No |
+| [MCP-014](./generated/mcp-014.md) | Invalid outputSchema Definition | HIGH | MCP | No |
+| [MCP-015](./generated/mcp-015.md) | Missing Resource Required Fields | HIGH | MCP | No |
+| [MCP-016](./generated/mcp-016.md) | Missing Prompt Required Name | HIGH | MCP | No |
+| [MCP-017](./generated/mcp-017.md) | Non-HTTPS Remote HTTP Server URL | HIGH | MCP | No |
+| [MCP-018](./generated/mcp-018.md) | Potential Plaintext Secret in MCP Env | MEDIUM | MCP | No |
+| [MCP-019](./generated/mcp-019.md) | Potentially Dangerous Stdio Command | MEDIUM | MCP | No |
+| [MCP-020](./generated/mcp-020.md) | Unknown Capability Declaration Key | MEDIUM | MCP | No |
+| [MCP-021](./generated/mcp-021.md) | Wildcard HTTP Interface Binding | MEDIUM | MCP | No |
+| [MCP-022](./generated/mcp-022.md) | Invalid args Array Type | HIGH | MCP | No |
+| [MCP-023](./generated/mcp-023.md) | Duplicate MCP Server Names | HIGH | MCP | No |
+| [MCP-024](./generated/mcp-024.md) | Empty MCP Server Configuration | HIGH | MCP | No |
 | [COP-001](./generated/cop-001.md) | Empty Copilot Instruction File | HIGH | GitHub Copilot | No |
 | [COP-002](./generated/cop-002.md) | Invalid Frontmatter in Scoped Instructions | HIGH | GitHub Copilot | Yes (unsafe) |
 | [COP-003](./generated/cop-003.md) | Invalid Glob Pattern in applyTo | HIGH | GitHub Copilot | No |

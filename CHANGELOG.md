@@ -17,10 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **New playground presets**: AGENTS.md, `.claude/agents/reviewer.md`, `plugin.json`; enriched `.claude/settings.json` hooks preset
 - **Backend revalidation regression tests**: Added coverage for `did_save` project-trigger revalidation and stale generation guard behavior in `agnix-lsp` backend tests
 - **Confidence-tiered autofix engine**: `Fix` metadata now supports confidence, alternative groups, and dependencies; CLI adds `--fix-unsafe` and `--show-fixes`; core exposes confidence-based `FixApplyMode`/`FixApplyOptions`
-- **CLN-004**: New rule warns when Cline `paths` field uses a scalar string instead of a YAML array (with safe auto-fix)
 
 ### Changed
-- **CLN-002**: Now validates `paths` as an array of glob patterns (previously accepted a single string)
 - **Docs**: Updated architecture references in README.md, SPEC.md, CLAUDE.md, and AGENTS.md to explicitly include the `agnix-wasm` workspace crate
 - **Core refactor**: Split oversized `crates/agnix-core/src/config.rs` into focused submodules (`builder`, `rule_filter`, `schema`, `tests`) while preserving the stable `config` API
 - **LSP refactor**: Split oversized `crates/agnix-lsp/src/backend.rs` into focused submodules (`events`, `helpers`, `revalidation`, `tests`) while preserving `Backend` behavior and public exports
@@ -32,7 +30,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Playground editor not initializing**: `loading` state was missing from CodeMirror `useEffect` dependency array, so the editor never mounted after WASM loaded
 - **Blue flash on playground load**: Changed editor pane background from `--ag-code-bg` to neutral `--ag-surface-raised`
 - **Autofix dependency/group edge cases**: Dependency checks now consider only structurally applicable fixes, and grouped alternatives now fall back correctly when an earlier candidate is eliminated
-- **CL-SK-001/RC-SK-001**: Corrected `source_urls` pointing to wrong documentation pages
 - **MCP-008**: Updated default MCP protocol version from `2025-06-18` to `2025-11-25` to align with the latest specification
 
 ## [0.11.1] - 2026-02-11
@@ -531,7 +528,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Quick-fix code actions from Fix objects
   - Hover documentation for frontmatter fields
   - Document content caching for performance
-  - Supports all 157 agnix validation rules with severity mapping
+  - Supports all 169 agnix validation rules with severity mapping
 
   - Workspace boundary validation for security (prevents path traversal)
   - Config caching optimization for performance
@@ -547,7 +544,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Case-insensitive tool name matching
   - Takes precedence over legacy `target` field for flexibility
 - VS Code extension with full LSP integration (#22)
-  - Real-time diagnostics for all 157 validation rules
+  - Real-time diagnostics for all 169 validation rules
 
   - Status bar indicator showing agnix validation status
   - Syntax highlighting for SKILL.md YAML frontmatter
@@ -904,3 +901,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Significant speed improvements on projects with many files
 - Maintains correctness with deterministic sorting of results
+
