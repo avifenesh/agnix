@@ -6,7 +6,6 @@ use crate::{
     config::LintConfig,
     diagnostics::{Diagnostic, Fix},
     rules::{Validator, ValidatorMetadata},
-    schemas::plugin::PluginSchema,
 };
 use rust_i18n::t;
 use std::path::Path;
@@ -226,15 +225,8 @@ impl Validator for PluginValidator {
             }
         }
 
-        let schema: PluginSchema = match serde_json::from_value(raw_value.clone()) {
-            Ok(schema) => schema,
-            Err(_) => {
-                return diagnostics;
-            }
-        };
-
         if config.is_rule_enabled("CC-PL-003") {
-            if let Some(ref version) = schema.version {
+            if let Some(version) = raw_value.get("version").and_then(|v| v.as_str()) {
                 let trimmed = version.trim();
                 if !trimmed.is_empty() && !is_valid_semver(trimmed) {
                     diagnostics.push(
@@ -243,7 +235,7 @@ impl Validator for PluginValidator {
                             1,
                             0,
                             "CC-PL-003",
-                            t!("rules.cc_pl_003.message", version = version.as_str()),
+                            t!("rules.cc_pl_003.message", version = version),
                         )
                         .with_suggestion(t!("rules.cc_pl_003.suggestion")),
                     );
@@ -1017,6 +1009,33 @@ mod tests {
         assert!(
             !diagnostics.iter().any(|d| d.rule == "CC-PL-003"),
             "CC-PL-003 should not fire when version is absent"
+        );
+    }
+
+    #[test]
+    fn test_cc_pl_003_fires_despite_non_string_description() {
+        let temp = TempDir::new().unwrap();
+        let plugin_path = temp.path().join(".claude-plugin").join("plugin.json");
+        write_plugin(
+            &plugin_path,
+            r#"{"name":"test","description":123,"version":"1.0"}"#,
+        );
+
+        let validator = PluginValidator;
+        let diagnostics = validator.validate(
+            &plugin_path,
+            &fs::read_to_string(&plugin_path).unwrap(),
+            &LintConfig::default(),
+        );
+
+        assert!(
+            diagnostics.iter().any(|d| d.rule == "CC-PL-003"),
+            "CC-PL-003 should fire for invalid semver even with non-string description"
+        );
+        assert!(
+            diagnostics.iter().any(|d| d.rule == "CC-PL-004"
+                && d.level == crate::diagnostics::DiagnosticLevel::Warning),
+            "CC-PL-004 warning should fire for non-string description"
         );
     }
 
