@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **New playground presets**: AGENTS.md, `.claude/agents/reviewer.md`, `plugin.json`; enriched `.claude/settings.json` hooks preset
 
 ### Fixed
+- **CC-AG-004**: Added `delegate` as a valid permission mode for Claude Code agents
 - **Playground editor not initializing**: `loading` state was missing from CodeMirror `useEffect` dependency array, so the editor never mounted after WASM loaded
 - **Blue flash on playground load**: Changed editor pane background from `--ag-code-bg` to neutral `--ag-surface-raised`
 
