@@ -80,7 +80,7 @@ The `` !`command` `` syntax runs shell commands before skill content is sent. Cu
 | `tools` | string/array | No | Comma-separated or array of tool names (Read, Grep, Glob, Bash, Edit, Write, Task, WebFetch, WebSearch, etc.) | inherits all | CC-AG-006 (conflict only) | Partial |
 | `disallowedTools` | array | No | Tool names to deny | none | CC-AG-006 (conflict only) | Partial |
 | `model` | string | No | `sonnet`, `opus`, `haiku`, `inherit` | `inherit` | CC-AG-003 | No |
-| `permissionMode` | string | No | `default`, `acceptEdits`, `dontAsk`, `bypassPermissions`, `plan` | inherits | CC-AG-004 | No |
+| `permissionMode` | string | No | `default`, `acceptEdits`, `dontAsk`, `bypassPermissions`, `plan`, `delegate` | inherits | CC-AG-004 | No |
 | `skills` | array | No | Skill names to preload | none | CC-AG-005 | No |
 | `hooks` | object | No | Same format as settings.json hooks | none | (none) | YES |
 | `memory` | string | No | `user`, `project`, `local` | none | (none) | YES |

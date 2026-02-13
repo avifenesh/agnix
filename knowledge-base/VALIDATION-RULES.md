@@ -547,7 +547,7 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 
 <a id="cc-ag-004"></a>
 ### CC-AG-004 [HIGH] Invalid Permission Mode
-**Requirement**: permissionMode MUST be: default, acceptEdits, dontAsk, bypassPermissions, plan
+**Requirement**: permissionMode MUST be: default, acceptEdits, dontAsk, bypassPermissions, plan, delegate
 **Detection**: `!VALID_MODES.contains(permission_mode)`
 **Fix**: Replace with valid value
 **Source**: code.claude.com/docs/en/sub-agents

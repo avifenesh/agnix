@@ -291,6 +291,7 @@
 | `dontAsk` | Auto-deny permission prompts (explicitly allowed tools still work) |
 | `bypassPermissions` | Skip ALL permission checks |
 | `plan` | Plan mode (read-only exploration) |
+| `delegate` | Delegate permission decisions to parent agent |
 
 **CRITICAL**: If parent uses `bypassPermissions`, subagent CANNOT override it.
 
