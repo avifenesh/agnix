@@ -124,8 +124,8 @@ rules:
     message: "%{location} 处的 prompt/agent hook 不支持 '%{event}' 事件"
     suggestion: "prompt/agent hook 适用于 PreToolUse、PostToolUse、PostToolUseFailure、PermissionRequest、UserPromptSubmit、Stop、SubagentStop 和 TaskCompleted。其他事件请使用 'type': 'command'"
   cc_hk_003:
-    message: "%{location} 处的工具事件 '%{event}' 需要 matcher 字段"
-    suggestion: "添加 'matcher': '*' 用于所有工具或指定工具名称"
+    message: "%{location} 处的工具事件 '%{event}' 没有 matcher 字段；省略该字段将匹配所有工具"
+    suggestion: "考虑添加 'matcher' 字段以针对特定工具（例如 'Bash'、'Read'）"
   cc_hk_004:
     message: "%{location} 处的非工具事件 '%{event}' 不能有 matcher 字段"
     suggestion: "删除 'matcher' 字段"

@@ -259,8 +259,8 @@ pub(super) fn validate_cc_hk_001_event_name(
     false
 }
 
-/// CC-HK-003: Missing matcher for tool events
-pub(super) fn validate_cc_hk_003_matcher_required(
+/// CC-HK-003: Matcher hint for tool events
+pub(super) fn validate_cc_hk_003_matcher_hint(
     event: &str,
     matcher: &Option<String>,
     matcher_idx: usize,
@@ -270,7 +270,7 @@ pub(super) fn validate_cc_hk_003_matcher_required(
     if HooksSchema::is_tool_event(event) && matcher.is_none() {
         let hook_location = format!("hooks.{}[{}]", event, matcher_idx);
         diagnostics.push(
-            Diagnostic::error(
+            Diagnostic::info(
                 path.to_path_buf(),
                 1,
                 0,

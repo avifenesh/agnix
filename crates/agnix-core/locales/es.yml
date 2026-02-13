@@ -124,8 +124,8 @@ rules:
     message: "Hook de prompt/agent en %{location} no es compatible con eventos '%{event}'"
     suggestion: "Los hooks de prompt/agent funcionan en PreToolUse, PostToolUse, PostToolUseFailure, PermissionRequest, UserPromptSubmit, Stop, SubagentStop y TaskCompleted. Use 'type': 'command' para otros eventos"
   cc_hk_003:
-    message: "El evento de herramienta '%{event}' en %{location} requiere un campo matcher"
-    suggestion: "Agrega 'matcher': '*' para todas las herramientas o especifica un nombre de herramienta"
+    message: "El evento de herramienta '%{event}' en %{location} no tiene campo matcher; omitirlo coincide con todas las herramientas"
+    suggestion: "Considera agregar un campo 'matcher' para dirigirse a herramientas especificas (ej., 'Bash', 'Read')"
   cc_hk_004:
     message: "El evento que no es de herramienta '%{event}' en %{location} no debe tener un campo matcher"
     suggestion: "Elimina el campo 'matcher'"

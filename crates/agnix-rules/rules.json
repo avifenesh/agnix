@@ -940,8 +940,8 @@
     },
     {
       "id": "CC-HK-003",
-      "name": "Missing Matcher for Tool Events",
-      "severity": "HIGH",
+      "name": "Matcher Hint for Tool Events",
+      "severity": "LOW",
       "category": "claude-hooks",
       "evidence": {
         "source_type": "vendor_docs",
@@ -952,7 +952,7 @@
         "applies_to": {
           "tool": "claude-code"
         },
-        "normative_level": "MUST",
+        "normative_level": "BEST_PRACTICE",
         "tests": {
           "unit": true,
           "fixtures": true,

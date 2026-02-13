@@ -405,10 +405,10 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 **Source**: code.claude.com/docs/en/hooks
 
 <a id="cc-hk-003"></a>
-### CC-HK-003 [HIGH] Missing Matcher for Tool Events
-**Requirement**: PreToolUse/PermissionRequest/PostToolUse REQUIRE matcher
-**Detection**: `["PreToolUse", "PermissionRequest", "PostToolUse"].contains(event) && matcher.is_none()`
-**Fix**: Add `"matcher": "*"` or specific tool
+### CC-HK-003 [LOW] Matcher Hint for Tool Events
+**Requirement**: Tool events support an optional matcher field; omitting it matches all tools
+**Detection**: `["PreToolUse", "PermissionRequest", "PostToolUse", "PostToolUseFailure"].contains(event) && matcher.is_none()`
+**Fix**: Consider adding `"matcher": "Bash"` or `"*"` to target specific tools
 **Source**: code.claude.com/docs/en/hooks
 
 <a id="cc-hk-004"></a>

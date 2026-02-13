@@ -1,17 +1,17 @@
 ---
 id: cc-hk-003
-title: "CC-HK-003: Missing Matcher for Tool Events - Claude Hooks"
+title: "CC-HK-003: Matcher Hint for Tool Events - Claude Hooks"
 sidebar_label: "CC-HK-003"
-description: "agnix rule CC-HK-003 checks for missing matcher for tool events in claude hooks files. Severity: HIGH. See examples and fix guidance."
-keywords: ["CC-HK-003", "missing matcher for tool events", "claude hooks", "validation", "agnix", "linter"]
+description: "agnix rule CC-HK-003 hints about missing matcher for tool events in claude hooks files. Severity: LOW. See examples and fix guidance."
+keywords: ["CC-HK-003", "matcher hint for tool events", "claude hooks", "validation", "agnix", "linter"]
 ---
 
 ## Summary
 
 - **Rule ID**: `CC-HK-003`
-- **Severity**: `HIGH`
+- **Severity**: `LOW`
 - **Category**: `Claude Hooks`
-- **Normative Level**: `MUST`
+- **Normative Level**: `BEST_PRACTICE`
 - **Auto-Fix**: `No`
 - **Verified On**: `2026-02-04`
 
