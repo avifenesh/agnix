@@ -1631,7 +1631,7 @@ fn test_ver_001_no_warning_when_spec_revision_pinned() {
     std::fs::write(temp.path().join("CLAUDE.md"), "# Project\n\nInstructions.").unwrap();
 
     let mut config = LintConfig::default();
-    config.spec_revisions_mut().mcp_protocol = Some("2025-06-18".to_string());
+    config.spec_revisions_mut().mcp_protocol = Some("2025-11-25".to_string());
     let result = validate_project(temp.path(), &config).unwrap();
 
     let ver_001: Vec<_> = result

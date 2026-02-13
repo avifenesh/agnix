@@ -1147,7 +1147,7 @@ mod tests {
             "method": "initialize",
             "id": 1,
             "params": {
-                "protocolVersion": "2025-06-18",
+                "protocolVersion": "2025-11-25",
                 "clientInfo": {"name": "test-client", "version": "1.0.0"}
             }
         }"#;
@@ -1174,7 +1174,7 @@ mod tests {
         assert_eq!(mcp_008.len(), 1);
         assert!(mcp_008[0].message.contains("Protocol version mismatch"));
         assert!(mcp_008[0].message.contains("2024-11-05"));
-        assert!(mcp_008[0].message.contains("2025-06-18"));
+        assert!(mcp_008[0].message.contains("2025-11-25"));
         assert!(
             !mcp_008[0].has_fixes(),
             "Unpinned protocol mismatch should be suggestion-only"
@@ -1187,7 +1187,7 @@ mod tests {
             "jsonrpc": "2.0",
             "id": 1,
             "result": {
-                "protocolVersion": "2025-06-18",
+                "protocolVersion": "2025-11-25",
                 "serverInfo": {"name": "test-server", "version": "1.0.0"}
             }
         }"#;
@@ -1322,7 +1322,7 @@ mod tests {
     #[test]
     fn test_mcp_008_no_assumption_when_version_pinned_via_spec_revisions() {
         let mut config = LintConfig::default();
-        config.spec_revisions_mut().mcp_protocol = Some("2025-06-18".to_string());
+        config.spec_revisions_mut().mcp_protocol = Some("2025-11-25".to_string());
         assert!(config.is_mcp_revision_pinned());
 
         let content = r#"{
@@ -1340,14 +1340,14 @@ mod tests {
         // Should NOT have an assumption note when version is pinned
         assert!(diag.assumption.is_none());
         assert!(diag.has_fixes(), "Pinned mismatch should emit auto-fix");
-        assert_eq!(diag.fixes[0].replacement, "2025-06-18");
+        assert_eq!(diag.fixes[0].replacement, "2025-11-25");
         assert!(!diag.fixes[0].safe);
     }
 
     #[test]
     fn test_mcp_008_no_assumption_when_version_pinned_via_legacy() {
         let mut config = LintConfig::default();
-        config.set_mcp_protocol_version(Some("2025-06-18".to_string()));
+        config.set_mcp_protocol_version(Some("2025-11-25".to_string()));
         assert!(config.is_mcp_revision_pinned());
 
         let content = r#"{
@@ -1365,7 +1365,7 @@ mod tests {
         // Should NOT have an assumption note when version is pinned via legacy field
         assert!(diag.assumption.is_none());
         assert!(diag.has_fixes(), "Pinned mismatch should emit auto-fix");
-        assert_eq!(diag.fixes[0].replacement, "2025-06-18");
+        assert_eq!(diag.fixes[0].replacement, "2025-11-25");
         assert!(!diag.fixes[0].safe);
     }
 

@@ -55,10 +55,10 @@ pub struct ToolVersions {
 /// rules. When not pinned, validators use the latest known revision.
 #[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
 pub struct SpecRevisions {
-    /// MCP protocol version (e.g., "2025-06-18", "2024-11-05")
+    /// MCP protocol version (e.g., "2025-11-25", "2024-11-05")
     #[serde(default)]
     #[schemars(
-        description = "MCP protocol version for revision-specific validation (e.g., \"2025-06-18\", \"2024-11-05\")"
+        description = "MCP protocol version for revision-specific validation (e.g., \"2025-11-25\", \"2024-11-05\")"
     )]
     pub mcp_protocol: Option<String>,
 

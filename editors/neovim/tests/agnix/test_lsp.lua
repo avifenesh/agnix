@@ -64,14 +64,14 @@ local function test_build_lsp_settings_with_specs()
   config.setup({
     settings = {
       specs = {
-        mcp_protocol = '2025-06-18',
+        mcp_protocol = '2025-11-25',
         agent_skills_spec = '1.0',
       },
     },
   })
   local settings = lsp.build_lsp_settings()
   assert(type(settings.specs) == 'table', 'specs should be present')
-  assert(settings.specs.mcp_protocol == '2025-06-18', 'mcp_protocol should be set')
+  assert(settings.specs.mcp_protocol == '2025-11-25', 'mcp_protocol should be set')
   assert(settings.specs.agent_skills_spec == '1.0', 'agent_skills_spec should be set')
   assert(settings.specs.agents_md_spec == nil, 'agents_md_spec should be absent')
   config.current = nil
@@ -93,7 +93,7 @@ local function test_build_lsp_settings_full()
         codex = '0.1.0',
       },
       specs = {
-        mcp_protocol = '2025-06-18',
+        mcp_protocol = '2025-11-25',
       },
     },
   })
@@ -105,7 +105,7 @@ local function test_build_lsp_settings_full()
   assert(settings.rules.skills == true, 'rules.skills should be true')
   assert(settings.rules.hooks == false, 'rules.hooks should be false')
   assert(settings.versions.claude_code == '1.0.0', 'versions.claude_code should be set')
-  assert(settings.specs.mcp_protocol == '2025-06-18', 'specs.mcp_protocol should be set')
+  assert(settings.specs.mcp_protocol == '2025-11-25', 'specs.mcp_protocol should be set')
   config.current = nil
 end
 

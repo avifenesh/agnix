@@ -1475,7 +1475,7 @@ async fn test_did_change_configuration_with_specs() {
 
     let settings = serde_json::json!({
         "specs": {
-            "mcp_protocol": "2025-06-18",
+            "mcp_protocol": "2025-11-25",
             "agent_skills_spec": "1.0",
             "agents_md_spec": "1.0"
         }

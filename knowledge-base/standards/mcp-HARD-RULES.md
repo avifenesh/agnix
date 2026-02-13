@@ -1,6 +1,6 @@
 # MCP Protocol - Hard Rules (Non-Negotiable)
 
-**Protocol Version**: 2025-06-18
+**Protocol Version**: 2025-11-25
 **Last Updated**: 2026-01-31
 **RFC Compliance**: BCP 14 [RFC2119] [RFC8174]
 
@@ -26,7 +26,7 @@ This document extracts the absolute, non-negotiable requirements from the Model 
 
 ## RFC Language Interpretation
 
-**Source**: [MCP Specification 2025-06-18](https://modelcontextprotocol.io/specification/2025-06-18)
+**Source**: [MCP Specification 2025-11-25](https://modelcontextprotocol.io/specification/2025-11-25)
 
 The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and "OPTIONAL" in MCP are to be interpreted as described in BCP 14 [RFC2119] [RFC8174] when, and only when, they appear in all capitals.
 
@@ -62,7 +62,7 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "S
 
 ### Initialization Phase
 
-**Source**: [Lifecycle - Initialization](https://modelcontextprotocol.io/specification/2025-06-18/basic/lifecycle)
+**Source**: [Lifecycle - Initialization](https://modelcontextprotocol.io/specification/2025-11-25/basic/lifecycle)
 
 #### Client Requirements (MUST):
 
@@ -83,7 +83,7 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "S
   "id": 1,
   "method": "initialize",
   "params": {
-    "protocolVersion": "2025-06-18",
+    "protocolVersion": "2025-11-25",
     "capabilities": {
       "roots": { "listChanged": true },
       "sampling": {},
@@ -112,7 +112,7 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "S
   "jsonrpc": "2.0",
   "id": 1,
   "result": {
-    "protocolVersion": "2025-06-18",
+    "protocolVersion": "2025-11-25",
     "capabilities": {
       "tools": { "listChanged": true },
       "resources": { "subscribe": true, "listChanged": true }
@@ -135,7 +135,7 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "S
 4. Client → If it doesn't support server's version, SHOULD disconnect
 5. HTTP Transport → Client MUST include `MCP-Protocol-Version: <protocol-version>` header on all subsequent HTTP requests
 
-**Source**: [Lifecycle - Version Negotiation](https://modelcontextprotocol.io/specification/2025-06-18/basic/lifecycle#version-negotiation)
+**Source**: [Lifecycle - Version Negotiation](https://modelcontextprotocol.io/specification/2025-11-25/basic/lifecycle#version-negotiation)
 
 **Why**: Prevents communication errors from incompatible protocol versions
 
@@ -159,13 +159,13 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "S
 | Client | `sampling` | Handle LLM sampling requests |
 | Client | `elicitation` | Handle user input requests |
 
-**Source**: [Lifecycle - Capability Negotiation](https://modelcontextprotocol.io/specification/2025-06-18/basic/lifecycle#capability-negotiation)
+**Source**: [Lifecycle - Capability Negotiation](https://modelcontextprotocol.io/specification/2025-11-25/basic/lifecycle#capability-negotiation)
 
 ---
 
 ## JSON-RPC 2.0 Compliance
 
-**Source**: [MCP Specification - Overview](https://modelcontextprotocol.io/specification/2025-06-18)
+**Source**: [MCP Specification - Overview](https://modelcontextprotocol.io/specification/2025-11-25)
 
 ### Message Format
 
@@ -230,7 +230,7 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "S
 
 ## Tool Definition Schema
 
-**Source**: [Tools Specification](https://modelcontextprotocol.io/specification/2025-06-18/server/tools)
+**Source**: [Tools Specification](https://modelcontextprotocol.io/specification/2025-11-25/server/tools)
 
 ### Tool Object Structure
 
@@ -280,7 +280,7 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "S
 }
 ```
 
-**Source**: [Tools - Capabilities](https://modelcontextprotocol.io/specification/2025-06-18/server/tools#capabilities)
+**Source**: [Tools - Capabilities](https://modelcontextprotocol.io/specification/2025-11-25/server/tools#capabilities)
 
 ### Tool Protocol Methods
 
@@ -335,7 +335,7 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "S
 6. Applications → SHOULD insert visual indicators when tools are invoked
 7. Applications → SHOULD present confirmation prompts for operations
 
-**Source**: [Tools - Security Considerations](https://modelcontextprotocol.io/specification/2025-06-18/server/tools#security-considerations)
+**Source**: [Tools - Security Considerations](https://modelcontextprotocol.io/specification/2025-11-25/server/tools#security-considerations)
 
 **Why**: Tools execute arbitrary code and can modify external systems
 
@@ -343,7 +343,7 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "S
 
 ## Resource Definition Schema
 
-**Source**: [Resources Specification](https://modelcontextprotocol.io/specification/2025-06-18/server/resources)
+**Source**: [Resources Specification](https://modelcontextprotocol.io/specification/2025-11-25/server/resources)
 
 ### Resource Object Structure
 
@@ -402,7 +402,7 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "S
 2. **file://** → MAY use XDG MIME types for non-regular files (e.g., `inode/directory`)
 3. **Custom URIs** → MUST be RFC3986 compliant
 
-**Source**: [Resources - Common URI Schemes](https://modelcontextprotocol.io/specification/2025-06-18/server/resources#common-uri-schemes)
+**Source**: [Resources - Common URI Schemes](https://modelcontextprotocol.io/specification/2025-11-25/server/resources#common-uri-schemes)
 
 ### Resource Capabilities Declaration
 
@@ -461,13 +461,13 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "S
 3. Binary data → MUST be properly encoded
 4. Resource permissions → SHOULD be checked before operations
 
-**Source**: [Resources - Security Considerations](https://modelcontextprotocol.io/specification/2025-06-18/server/resources#security-considerations)
+**Source**: [Resources - Security Considerations](https://modelcontextprotocol.io/specification/2025-11-25/server/resources#security-considerations)
 
 ---
 
 ## Prompt Definition Schema
 
-**Source**: [Prompts Specification](https://modelcontextprotocol.io/specification/2025-06-18/server/prompts)
+**Source**: [Prompts Specification](https://modelcontextprotocol.io/specification/2025-11-25/server/prompts)
 
 ### Prompt Object Structure
 
@@ -570,13 +570,13 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "S
 2. Implementations → MUST prevent injection attacks
 3. Implementations → MUST prevent unauthorized resource access
 
-**Source**: [Prompts - Security](https://modelcontextprotocol.io/specification/2025-06-18/server/prompts#security)
+**Source**: [Prompts - Security](https://modelcontextprotocol.io/specification/2025-11-25/server/prompts#security)
 
 ---
 
 ## Transport Layer Requirements
 
-**Source**: [Transports Specification](https://modelcontextprotocol.io/specification/2025-06-18/basic/transports)
+**Source**: [Transports Specification](https://modelcontextprotocol.io/specification/2025-11-25/basic/transports)
 
 ### General Transport Requirements
 
@@ -668,7 +668,7 @@ console.error("Server started")  # Writes to stderr
 2. Local servers → SHOULD bind only to localhost (127.0.0.1)
 3. Servers → SHOULD implement proper authentication
 
-**Source**: [Transports - Streamable HTTP](https://modelcontextprotocol.io/specification/2025-06-18/basic/transports#streamable-http)
+**Source**: [Transports - Streamable HTTP](https://modelcontextprotocol.io/specification/2025-11-25/basic/transports#streamable-http)
 
 **Why**: Prevents DNS rebinding attacks and ensures secure connections
 
@@ -687,7 +687,7 @@ console.error("Server started")  # Writes to stderr
 3. Users → MUST retain control over what actions are taken
 4. Implementors → SHOULD provide clear UIs for reviewing/authorizing activities
 
-**Source**: [Security Principles](https://modelcontextprotocol.io/specification/2025-06-18#security-and-trust--safety)
+**Source**: [Security Principles](https://modelcontextprotocol.io/specification/2025-11-25#security-and-trust--safety)
 
 **Why**: Users must understand and control AI actions
 
@@ -699,7 +699,7 @@ console.error("Server started")  # Writes to stderr
 2. Hosts → MUST NOT transmit resource data elsewhere without user consent
 3. User data → SHOULD be protected with appropriate access controls
 
-**Source**: [Security Principles - Data Privacy](https://modelcontextprotocol.io/specification/2025-06-18#security-and-trust--safety)
+**Source**: [Security Principles - Data Privacy](https://modelcontextprotocol.io/specification/2025-11-25#security-and-trust--safety)
 
 ### Tool Safety (MUST)
 
@@ -710,7 +710,7 @@ console.error("Server started")  # Writes to stderr
 3. Hosts → MUST obtain explicit user consent before invoking any tool
 4. Users → SHOULD understand what each tool does before authorizing
 
-**Source**: [Security Principles - Tool Safety](https://modelcontextprotocol.io/specification/2025-06-18#security-and-trust--safety)
+**Source**: [Security Principles - Tool Safety](https://modelcontextprotocol.io/specification/2025-11-25#security-and-trust--safety)
 
 **Why**: Tool descriptions could be malicious or misleading
 
@@ -735,13 +735,13 @@ console.error("Server started")  # Writes to stderr
 3. Clients → SHOULD log tool usage for audit purposes
 4. Implementations → SHOULD establish timeouts for all sent requests
 
-**Source**: [Tools - Security](https://modelcontextprotocol.io/specification/2025-06-18/server/tools#security-considerations), [Lifecycle - Timeouts](https://modelcontextprotocol.io/specification/2025-06-18/basic/lifecycle#timeouts)
+**Source**: [Tools - Security](https://modelcontextprotocol.io/specification/2025-11-25/server/tools#security-considerations), [Lifecycle - Timeouts](https://modelcontextprotocol.io/specification/2025-11-25/basic/lifecycle#timeouts)
 
 ---
 
 ## Error Handling
 
-**Source**: [Tools](https://modelcontextprotocol.io/specification/2025-06-18/server/tools), [Resources](https://modelcontextprotocol.io/specification/2025-06-18/server/resources), [Prompts](https://modelcontextprotocol.io/specification/2025-06-18/server/prompts)
+**Source**: [Tools](https://modelcontextprotocol.io/specification/2025-11-25/server/tools), [Resources](https://modelcontextprotocol.io/specification/2025-11-25/server/resources), [Prompts](https://modelcontextprotocol.io/specification/2025-11-25/server/prompts)
 
 ### Standard Error Codes
 
@@ -893,12 +893,12 @@ console.error("Status")        # Writes to stderr
   "jsonrpc": "2.0",
   "id": 1,
   "method": "initialize",
-  "params": { "protocolVersion": "2025-06-18", ... }
+  "params": { "protocolVersion": "2025-11-25", ... }
 }
 // Wait for response, send initialized notification, then send tools/list
 ```
 
-**Source**: [Lifecycle - Initialization](https://modelcontextprotocol.io/specification/2025-06-18/basic/lifecycle)
+**Source**: [Lifecycle - Initialization](https://modelcontextprotocol.io/specification/2025-11-25/basic/lifecycle)
 
 ---
 
@@ -1007,7 +1007,7 @@ def call_tool(name, arguments):
     return execute(arguments)
 ```
 
-**Source**: [Tools - Security](https://modelcontextprotocol.io/specification/2025-06-18/server/tools#security-considerations)
+**Source**: [Tools - Security](https://modelcontextprotocol.io/specification/2025-11-25/server/tools#security-considerations)
 
 ---
 
@@ -1106,11 +1106,11 @@ Content-Type: application/json
 **Correct Pattern**:
 ```http
 POST /mcp HTTP/1.1
-MCP-Protocol-Version: 2025-06-18
+MCP-Protocol-Version: 2025-11-25
 Content-Type: application/json
 ```
 
-**Source**: [Transports - Protocol Version Header](https://modelcontextprotocol.io/specification/2025-06-18/basic/transports#protocol-version-header)
+**Source**: [Transports - Protocol Version Header](https://modelcontextprotocol.io/specification/2025-11-25/basic/transports#protocol-version-header)
 
 ---
 
@@ -1162,12 +1162,12 @@ Content-Type: application/json
 
 This document synthesizes hard requirements from:
 
-1. [MCP Specification 2025-06-18](https://modelcontextprotocol.io/specification/2025-06-18)
-2. [Tools Specification](https://modelcontextprotocol.io/specification/2025-06-18/server/tools)
-3. [Resources Specification](https://modelcontextprotocol.io/specification/2025-06-18/server/resources)
-4. [Prompts Specification](https://modelcontextprotocol.io/specification/2025-06-18/server/prompts)
-5. [Lifecycle Management](https://modelcontextprotocol.io/specification/2025-06-18/basic/lifecycle)
-6. [Transports](https://modelcontextprotocol.io/specification/2025-06-18/basic/transports)
+1. [MCP Specification 2025-11-25](https://modelcontextprotocol.io/specification/2025-11-25)
+2. [Tools Specification](https://modelcontextprotocol.io/specification/2025-11-25/server/tools)
+3. [Resources Specification](https://modelcontextprotocol.io/specification/2025-11-25/server/resources)
+4. [Prompts Specification](https://modelcontextprotocol.io/specification/2025-11-25/server/prompts)
+5. [Lifecycle Management](https://modelcontextprotocol.io/specification/2025-11-25/basic/lifecycle)
+6. [Transports](https://modelcontextprotocol.io/specification/2025-11-25/basic/transports)
 7. [Architecture Overview](https://modelcontextprotocol.io/docs/learn/architecture)
 8. [Build Server Guide](https://modelcontextprotocol.io/docs/develop/build-server)
 9. [Build Client Guide](https://modelcontextprotocol.io/docs/develop/build-client)
@@ -1175,7 +1175,7 @@ This document synthesizes hard requirements from:
 11. [GitHub Specification Repository](https://github.com/modelcontextprotocol/specification)
 
 **Revision History**:
-- 2026-01-31: Initial comprehensive hard rules extraction from protocol version 2025-06-18
+- 2026-01-31: Initial comprehensive hard rules extraction from protocol version 2025-11-25
 
 ---
 

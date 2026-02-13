@@ -94,8 +94,8 @@ pub const VALID_JSON_SCHEMA_TYPES: &[&str] = &[
     "string", "number", "integer", "boolean", "object", "array", "null",
 ];
 
-/// Default MCP protocol version (latest stable per MCP spec 2025-06-18)
-pub const DEFAULT_MCP_PROTOCOL_VERSION: &str = "2025-06-18";
+/// Default MCP protocol version (latest stable per MCP spec 2025-11-25)
+pub const DEFAULT_MCP_PROTOCOL_VERSION: &str = "2025-11-25";
 
 /// MCP initialize request params
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -513,7 +513,7 @@ mod tests {
         let response = json!({
             "jsonrpc": "2.0",
             "id": 1,
-            "result": {"protocolVersion": "2025-06-18"}
+            "result": {"protocolVersion": "2025-11-25"}
         });
         assert!(super::is_initialize_response(&response));
 
@@ -552,11 +552,11 @@ mod tests {
         let response = json!({
             "jsonrpc": "2.0",
             "id": 1,
-            "result": {"protocolVersion": "2025-06-18"}
+            "result": {"protocolVersion": "2025-11-25"}
         });
         assert_eq!(
             super::extract_response_protocol_version(&response),
-            Some("2025-06-18".to_string())
+            Some("2025-11-25".to_string())
         );
 
         let no_version = json!({
@@ -569,6 +569,6 @@ mod tests {
 
     #[test]
     fn test_default_mcp_protocol_version_constant() {
-        assert_eq!(super::DEFAULT_MCP_PROTOCOL_VERSION, "2025-06-18");
+        assert_eq!(super::DEFAULT_MCP_PROTOCOL_VERSION, "2025-11-25");
     }
 }

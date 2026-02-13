@@ -16,4 +16,4 @@ claude_code = "1.0.0"
 cursor = "0.45.0"
 
 [spec_revisions]
-mcp_protocol = "2025-06-18"
+mcp_protocol = "2025-11-25"
