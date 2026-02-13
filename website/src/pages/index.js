@@ -376,6 +376,37 @@ function Stats() {
   );
 }
 
+function PlaygroundCta() {
+  return (
+    <RevealSection className={styles.playgroundCta}>
+      <div className="container">
+        <div className={styles.playgroundCtaInner}>
+          <div className={styles.playgroundCtaIcon}>
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+              <line x1="8" y1="21" x2="16" y2="21" />
+              <line x1="12" y1="17" x2="12" y2="21" />
+            </svg>
+          </div>
+          <Heading as="h2" className={styles.playgroundCtaTitle}>
+            Try it right now — no install needed
+          </Heading>
+          <p className={styles.playgroundCtaText}>
+            Paste your CLAUDE.md, SKILL.md, or any agent config and see diagnostics instantly.
+            Runs entirely in your browser via WebAssembly.
+          </p>
+          <Link
+            className={clsx('button button--lg', styles.ctaPrimary)}
+            to="/playground"
+          >
+            Open Playground
+          </Link>
+        </div>
+      </div>
+    </RevealSection>
+  );
+}
+
 function BottomCta() {
   return (
     <RevealSection className={styles.bottomCta}>
@@ -389,14 +420,22 @@ function BottomCta() {
           <CopyButton text={installCommand} />
         </div>
         <p className={styles.bottomCtaText}>
-          Zero install, zero config. Finds real issues in seconds.
+          Zero config. Finds real issues in seconds.
         </p>
-        <Link
-          className={clsx('button button--lg', styles.ctaPrimary)}
-          to="/docs/getting-started"
-        >
-          Read the docs
-        </Link>
+        <div className={styles.bottomCtaButtons}>
+          <Link
+            className={clsx('button button--lg', styles.ctaPrimary)}
+            to="/docs/getting-started"
+          >
+            Read the docs
+          </Link>
+          <Link
+            className={clsx('button button--lg', styles.ctaGithub)}
+            to="/playground"
+          >
+            Or try in your browser
+          </Link>
+        </div>
       </div>
     </RevealSection>
   );
@@ -412,6 +451,7 @@ export default function Home() {
       <main>
         <TerminalDemo />
         <EditorDemo />
+        <PlaygroundCta />
         <Features />
         <WhatItCatches />
         <SupportedTools />

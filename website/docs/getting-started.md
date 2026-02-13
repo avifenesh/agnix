@@ -5,6 +5,10 @@ description: "Install agnix and validate your agent configuration files in under
 
 # Getting Started
 
+:::tip No install needed?
+[Try the playground](/playground) -- paste your config and see diagnostics instantly, right in your browser.
+:::
+
 ## 1. Run agnix
 
 No installation needed. Use `npx` to run against your project:

@@ -181,6 +181,7 @@ const config = {
           title: 'Docs',
           items: [
             { label: 'Getting Started', to: '/docs/getting-started' },
+            { label: 'Playground', to: '/playground' },
             { label: 'Installation', to: '/docs/installation' },
             { label: 'Configuration', to: '/docs/configuration' },
             { label: 'Rules Reference', to: '/docs/rules' },

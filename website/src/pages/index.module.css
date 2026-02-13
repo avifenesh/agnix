@@ -722,6 +722,74 @@ html[data-theme='dark'] .stats::before {
   letter-spacing: 0.08em;
 }
 
+/* === Playground CTA === */
+
+.playgroundCta {
+  padding: 4rem 0;
+  background: var(--ag-surface-raised);
+  position: relative;
+  overflow: hidden;
+}
+
+.playgroundCta::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    hsla(174, 55%, 28%, 0.04) 0%,
+    transparent 40%,
+    hsla(174, 55%, 28%, 0.04) 100%
+  );
+  pointer-events: none;
+}
+
+html[data-theme='dark'] .playgroundCta::before {
+  background: linear-gradient(
+    135deg,
+    hsla(174, 55%, 48%, 0.06) 0%,
+    transparent 40%,
+    hsla(174, 55%, 48%, 0.06) 100%
+  );
+}
+
+.playgroundCtaInner {
+  position: relative;
+  text-align: center;
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+.playgroundCtaIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  background: hsla(174, 55%, 28%, 0.08);
+  color: var(--ifm-color-primary);
+  margin-bottom: 1.25rem;
+}
+
+html[data-theme='dark'] .playgroundCtaIcon {
+  background: hsla(174, 55%, 48%, 0.1);
+}
+
+.playgroundCtaTitle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.75rem;
+}
+
+.playgroundCtaText {
+  color: var(--ag-text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+}
+
 /* === Bottom CTA === */
 
 .bottomCta {
@@ -734,6 +802,13 @@ html[data-theme='dark'] .stats::before {
   color: var(--ag-text-secondary);
   font-size: 0.95rem;
   margin-bottom: 1.5rem;
+}
+
+.bottomCtaButtons {
+  display: flex;
+  gap: 0.875rem;
+  justify-content: center;
+  flex-wrap: wrap;
 }
 
 /* === Responsive === */

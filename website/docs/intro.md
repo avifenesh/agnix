@@ -17,10 +17,12 @@ npx agnix .
 - **Validates** configuration files against 156 rules derived from official specs and real-world testing
 - **Auto-fixes** common issues with `--fix`
 - **Integrates** with VS Code, Neovim, JetBrains, and Zed via the LSP server
+- **Runs in your browser** -- [try the playground](/playground) with zero install
 - **Outputs** in text, JSON, or SARIF for CI integration
 
 ## Next steps
 
+- [Playground](/playground) -- try it now, no install needed
 - [Getting Started](./getting-started.md) -- install and run in 60 seconds
 - [Rules Reference](./rules/index.md) -- browse all 156 validation rules
 - [Configuration](./configuration.md) -- customize with `.agnix.toml`
