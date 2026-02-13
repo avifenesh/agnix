@@ -99,10 +99,10 @@ struct Cli {
     fix: bool,
 
     /// Show what would be fixed without modifying files
-    #[arg(long, group = "fix_mode")]
+    #[arg(long)]
     dry_run: bool,
 
-    /// Only apply safe (HIGH certainty) fixes (implies --fix)
+    /// Apply only safe (HIGH certainty) fixes
     #[arg(long, group = "fix_mode")]
     fix_safe: bool,
 
@@ -849,6 +849,18 @@ mod resolve_fix_mode_tests {
     fn dry_run_selects_safe_and_medium_mode() {
         let cli = Cli::parse_from(["agnix", "--dry-run"]);
         assert_eq!(resolve_fix_mode(&cli), FixApplyMode::SafeAndMedium);
+    }
+
+    #[test]
+    fn dry_run_with_fix_safe_selects_safe_only_mode() {
+        let cli = Cli::parse_from(["agnix", "--dry-run", "--fix-safe"]);
+        assert_eq!(resolve_fix_mode(&cli), FixApplyMode::SafeOnly);
+    }
+
+    #[test]
+    fn dry_run_with_fix_unsafe_selects_all_mode() {
+        let cli = Cli::parse_from(["agnix", "--dry-run", "--fix-unsafe"]);
+        assert_eq!(resolve_fix_mode(&cli), FixApplyMode::All);
     }
 }
 

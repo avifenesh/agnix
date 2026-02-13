@@ -1080,6 +1080,42 @@ fn test_fix_unsafe_flag_recognized() {
 }
 
 #[test]
+fn test_dry_run_combines_with_fix_safe() {
+    let mut cmd = agnix();
+    let output = cmd
+        .arg("tests/fixtures/invalid/skills/unknown-tool")
+        .arg("--dry-run")
+        .arg("--fix-safe")
+        .output()
+        .unwrap();
+
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(
+        !stderr.contains("cannot be used with"),
+        "--dry-run should combine with --fix-safe, got stderr: {}",
+        stderr
+    );
+}
+
+#[test]
+fn test_dry_run_combines_with_fix_unsafe() {
+    let mut cmd = agnix();
+    let output = cmd
+        .arg("tests/fixtures/invalid/skills/unknown-tool")
+        .arg("--dry-run")
+        .arg("--fix-unsafe")
+        .output()
+        .unwrap();
+
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(
+        !stderr.contains("cannot be used with"),
+        "--dry-run should combine with --fix-unsafe, got stderr: {}",
+        stderr
+    );
+}
+
+#[test]
 fn test_show_fixes_displays_fixes_without_verbose() {
     use std::fs;
     use std::io::Write;

@@ -226,7 +226,8 @@ fn should_apply_by_mode(fix: &Fix, mode: FixApplyMode) -> bool {
 }
 
 fn resolve_dependency_candidates(mut fixes: Vec<&Fix>) -> Vec<&Fix> {
-    loop {
+    let max_iterations = fixes.len().saturating_add(1);
+    for _ in 0..max_iterations {
         let groups: HashSet<&str> = fixes.iter().filter_map(|f| f.group.as_deref()).collect();
         let descriptions: HashSet<&str> = fixes.iter().map(|f| f.description.as_str()).collect();
         let before = fixes.len();
@@ -237,9 +238,11 @@ fn resolve_dependency_candidates(mut fixes: Vec<&Fix>) -> Vec<&Fix> {
         });
 
         if fixes.len() == before {
-            return fixes;
+            break;
         }
     }
+
+    fixes
 }
 
 fn select_group_alternatives(fixes: Vec<&Fix>) -> Vec<&Fix> {

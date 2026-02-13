@@ -181,7 +181,7 @@ agnix .                    # Validate directory
 agnix --strict .           # Warnings = errors
 agnix --target claude-code # Claude-specific rules
 agnix --fix .              # Apply HIGH and MEDIUM confidence fixes
-agnix --dry-run .          # Preview HIGH and MEDIUM fixes without modifying files
+agnix --dry-run .          # Preview fixes without modifying files (respects fix mode flags)
 agnix --fix-safe .         # Only apply HIGH confidence fixes
 agnix --fix-unsafe .       # Apply all fixes, including LOW confidence
 agnix --show-fixes .       # Show inline proposed fix diffs in text output
