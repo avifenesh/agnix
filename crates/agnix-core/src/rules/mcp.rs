@@ -5,8 +5,8 @@ use crate::{
     diagnostics::{Diagnostic, Fix},
     rules::{Validator, ValidatorMetadata},
     schemas::mcp::{
-        McpConfigSchema, McpServerConfig, McpToolSchema, VALID_MCP_ANNOTATION_HINTS,
-        VALID_MCP_CAPABILITY_KEYS, VALID_MCP_SERVER_TYPES, extract_request_protocol_version,
+        McpServerConfig, McpToolSchema, VALID_MCP_ANNOTATION_HINTS, VALID_MCP_CAPABILITY_KEYS,
+        VALID_MCP_SERVER_TYPES, extract_request_protocol_version,
         extract_response_protocol_version, is_initialize_message, is_initialize_response,
         validate_json_schema_structure,
     },
@@ -14,12 +14,93 @@ use crate::{
 use rust_i18n::t;
 use std::path::Path;
 
+fn skip_ascii_whitespace(content: &str, mut idx: usize) -> usize {
+    let bytes = content.as_bytes();
+    while idx < bytes.len() && bytes[idx].is_ascii_whitespace() {
+        idx += 1;
+    }
+    idx
+}
+
+fn is_inside_json_string(content: &str, offset: usize) -> bool {
+    let bytes = content.as_bytes();
+    let mut idx = 0usize;
+    let mut in_string = false;
+    let mut escaped = false;
+
+    while idx < offset.min(bytes.len()) {
+        let ch = bytes[idx];
+        if in_string {
+            if escaped {
+                escaped = false;
+            } else if ch == b'\\' {
+                escaped = true;
+            } else if ch == b'"' {
+                in_string = false;
+            }
+        } else if ch == b'"' {
+            in_string = true;
+        }
+        idx += 1;
+    }
+
+    in_string
+}
+
+fn find_json_key_position(content: &str, key: &str) -> Option<usize> {
+    let pattern = format!("\"{}\"", key);
+    let mut search_from = 0usize;
+    let bytes = content.as_bytes();
+
+    while let Some(rel) = content[search_from..].find(&pattern) {
+        let pos = search_from + rel;
+        if !is_inside_json_string(content, pos) {
+            let idx = skip_ascii_whitespace(content, pos + pattern.len());
+            if idx < bytes.len() && bytes[idx] == b':' {
+                return Some(pos);
+            }
+        }
+        search_from = pos + pattern.len();
+    }
+
+    None
+}
+
+fn find_json_array_start_for_key(content: &str, key: &str) -> Option<usize> {
+    let key_pos = find_json_key_position(content, key)?;
+    let bytes = content.as_bytes();
+    let mut idx = skip_ascii_whitespace(content, key_pos + key.len() + 2);
+    if idx >= bytes.len() || bytes[idx] != b':' {
+        return None;
+    }
+    idx = skip_ascii_whitespace(content, idx + 1);
+    if idx >= bytes.len() || bytes[idx] != b'[' {
+        return None;
+    }
+    Some(idx)
+}
+
+fn find_json_object_start_for_key(content: &str, key: &str) -> Option<usize> {
+    let key_pos = find_json_key_position(content, key)?;
+    let bytes = content.as_bytes();
+    let mut idx = skip_ascii_whitespace(content, key_pos + key.len() + 2);
+    if idx >= bytes.len() || bytes[idx] != b':' {
+        return None;
+    }
+    idx = skip_ascii_whitespace(content, idx + 1);
+    if idx >= bytes.len() || bytes[idx] != b'{' {
+        return None;
+    }
+    Some(idx)
+}
+
 /// Find the line number (1-based) of a JSON field in the raw content
 /// Returns (line, column) or (1, 0) if not found
 fn find_json_field_location(content: &str, field_name: &str) -> (usize, usize) {
-    // Search for "field_name": pattern
     let pattern = format!("\"{}\"", field_name);
-    if let Some(pos) = content.find(&pattern) {
+    if let Some(pos) =
+        find_json_key_position(content, field_name).or_else(|| content.find(&pattern))
+    {
         let line = content[..pos].matches('\n').count() + 1;
         let last_newline = content[..pos].rfind('\n').map(|p| p + 1).unwrap_or(0);
         let col = pos - last_newline;
@@ -64,15 +145,12 @@ fn line_col_at(offset: usize, line_starts: &[usize]) -> (usize, usize) {
 /// Collect object spans for entries in the first `tools` array.
 /// Spans are byte offsets `(start, end)` for each object entry.
 fn collect_tools_array_object_spans(content: &str) -> Vec<(usize, usize)> {
-    let Some(tools_pos) = content.find("\"tools\"") else {
-        return Vec::new();
-    };
-    let Some(array_rel_pos) = content[tools_pos..].find('[') else {
+    let Some(array_pos) = find_json_array_start_for_key(content, "tools") else {
         return Vec::new();
     };
 
     let mut spans = Vec::new();
-    let array_start = tools_pos + array_rel_pos + 1;
+    let array_start = array_pos + 1;
     let mut in_string = false;
     let mut escaped = false;
     let mut brace_depth = 0usize;
@@ -205,30 +283,12 @@ impl Validator for McpValidator {
             validate_protocol_version(&raw_value, path, content, config, &mut diagnostics);
         }
 
-        // Try to parse as MCP config schema
-        let mcp_config: McpConfigSchema = match serde_json::from_value(raw_value.clone()) {
-            Ok(config) => config,
-            Err(_) => {
-                // Not a standard MCP config, may be a tools array or single tool
-                // Continue with raw value validation
-                McpConfigSchema {
-                    mcp_servers: None,
-                    tools: None,
-                    resources: None,
-                    prompts: None,
-                    capabilities: None,
-                    jsonrpc: None,
-                }
-            }
-        };
-
         let line_starts = compute_line_starts(content);
         let tool_spans = collect_tools_array_object_spans(content);
 
         // Get tools array from various locations (also reports parse errors for invalid entries)
         let tools = extract_tools(
             &raw_value,
-            &mcp_config,
             path,
             &mut diagnostics,
             &tool_spans,
@@ -262,10 +322,8 @@ impl Validator for McpValidator {
         }
 
         // Validate MCP server configurations (MCP-009 to MCP-012, MCP-024)
-        if let Some(servers) = &mcp_config.mcp_servers {
-            for (name, server) in servers {
-                validate_server(name, server, path, content, config, &mut diagnostics);
-            }
+        for (name, server) in extract_mcp_servers(&raw_value) {
+            validate_server(&name, &server, path, content, config, &mut diagnostics);
         }
 
         diagnostics
@@ -275,7 +333,6 @@ impl Validator for McpValidator {
 /// Extract tools from various MCP config formats, reporting parse errors for invalid entries
 fn extract_tools(
     raw_value: &serde_json::Value,
-    config: &McpConfigSchema,
     path: &Path,
     diagnostics: &mut Vec<Diagnostic>,
     tool_spans: &[(usize, usize)],
@@ -283,11 +340,8 @@ fn extract_tools(
 ) -> Vec<McpToolSchema> {
     let mut tools = Vec::new();
 
-    // Check for tools array in config (preferred source as it's already parsed)
-    if let Some(config_tools) = &config.tools {
-        tools.extend(config_tools.clone());
-    } else if let Some(arr) = raw_value.get("tools").and_then(|v| v.as_array()) {
-        // Check for tools array at root level (fallback if config parsing didn't get them)
+    if let Some(arr) = raw_value.get("tools").and_then(|v| v.as_array()) {
+        // Check for tools array at root level
         for (idx, tool_val) in arr.iter().enumerate() {
             match serde_json::from_value::<McpToolSchema>(tool_val.clone()) {
                 Ok(tool) => tools.push(tool),
@@ -370,6 +424,72 @@ fn extract_tools(
     }
 
     tools
+}
+
+fn extract_mcp_servers(raw_value: &serde_json::Value) -> Vec<(String, McpServerConfig)> {
+    let Some(servers_obj) = raw_value.get("mcpServers").and_then(|v| v.as_object()) else {
+        return Vec::new();
+    };
+
+    servers_obj
+        .iter()
+        .map(|(name, server_value)| {
+            let server = serde_json::from_value::<McpServerConfig>(server_value.clone())
+                .unwrap_or_else(|_| parse_mcp_server_lenient(server_value));
+            (name.clone(), server)
+        })
+        .collect()
+}
+
+fn parse_mcp_server_lenient(value: &serde_json::Value) -> McpServerConfig {
+    let Some(obj) = value.as_object() else {
+        return McpServerConfig {
+            server_type: None,
+            command: None,
+            args: None,
+            env: None,
+            url: None,
+        };
+    };
+
+    McpServerConfig {
+        server_type: obj
+            .get("type")
+            .and_then(|v| v.as_str())
+            .map(ToOwned::to_owned),
+        command: obj.get("command").cloned(),
+        args: obj.get("args").cloned(),
+        env: parse_env_lenient(obj.get("env")),
+        url: obj
+            .get("url")
+            .and_then(|v| v.as_str())
+            .map(ToOwned::to_owned),
+    }
+}
+
+fn parse_env_lenient(
+    env_value: Option<&serde_json::Value>,
+) -> Option<std::collections::HashMap<String, String>> {
+    let env_obj = env_value.and_then(|v| v.as_object())?;
+
+    let env = env_obj
+        .iter()
+        .filter_map(|(key, value)| {
+            if value.is_null() {
+                None
+            } else {
+                Some((
+                    key.clone(),
+                    value
+                        .as_str()
+                        .map(ToOwned::to_owned)
+                        .unwrap_or_else(|| value.to_string()),
+                ))
+            }
+        })
+        .collect();
+
+    Some(env)
 }
 
 fn iter_root_or_result_array<'a>(
@@ -534,24 +654,11 @@ fn validate_duplicate_server_names(path: &Path, content: &str, diagnostics: &mut
 fn collect_duplicate_mcp_server_names(content: &str) -> Vec<String> {
     use std::collections::HashSet;
 
-    let key_pos = match content.find("\"mcpServers\"") {
-        Some(pos) => pos,
-        None => return Vec::new(),
-    };
-    let colon_pos = match content[key_pos..].find(':') {
-        Some(pos) => key_pos + pos,
-        None => return Vec::new(),
-    };
-
     let bytes = content.as_bytes();
-    let mut idx = colon_pos + 1;
-    while idx < bytes.len() && bytes[idx].is_ascii_whitespace() {
-        idx += 1;
-    }
-    if idx >= bytes.len() || bytes[idx] != b'{' {
+    let Some(object_start) = find_json_object_start_for_key(content, "mcpServers") else {
         return Vec::new();
-    }
-    idx += 1;
+    };
+    let mut idx = object_start + 1;
 
     let mut depth = 1usize;
     let mut expecting_key = true;
@@ -1422,6 +1529,52 @@ mod tests {
         let validator = McpValidator;
         let path = PathBuf::from("test.mcp.json");
         validator.validate(&path, content, config)
+    }
+
+    #[test]
+    fn test_find_json_key_position_ignores_string_literals() {
+        let content = r#"{
+            "note": "mention \"tools\" and \"mcpServers\" here only",
+            "tools": []
+        }"#;
+
+        let key_pos = find_json_key_position(content, "tools");
+        assert!(key_pos.is_some(), "Expected to find tools key position");
+        let pos = key_pos.unwrap();
+        assert_eq!(&content[pos..pos + "\"tools\"".len()], "\"tools\"");
+    }
+
+    #[test]
+    fn test_collect_tools_array_spans_with_embedded_tools_string() {
+        let content = r#"{
+            "note": "text with escaped token: \"tools\" and fake array marker [ ]",
+            "tools": [
+                {"name": "one", "description": "desc", "inputSchema": {"type": "object"}}
+            ]
+        }"#;
+
+        let spans = collect_tools_array_object_spans(content);
+        assert_eq!(spans.len(), 1);
+    }
+
+    #[test]
+    fn test_mcp_servers_validation_not_skipped_when_resources_are_malformed() {
+        let content = r#"{
+            "mcpServers": {
+                "broken-stdio": {
+                    "type": "stdio"
+                }
+            },
+            "resources": [
+                {"uri": 123, "name": "resource-name"}
+            ]
+        }"#;
+
+        let diagnostics = validate(content);
+        assert!(
+            diagnostics.iter().any(|d| d.rule == "MCP-009"),
+            "MCP-009 should still run even when resources has wrong field types"
+        );
     }
 
     // MCP-001 Tests
@@ -2888,6 +3041,19 @@ mod tests {
     #[test]
     fn test_mcp_023_duplicate_server_names() {
         let content = r#"{
+            "mcpServers": {
+                "dup": { "type": "stdio", "command": "node" },
+                "dup": { "type": "stdio", "command": "python" }
+            }
+        }"#;
+        let diagnostics = validate(content);
+        assert!(diagnostics.iter().any(|d| d.rule == "MCP-023"));
+    }
+
+    #[test]
+    fn test_mcp_023_duplicate_server_names_ignores_string_literal_mentions() {
+        let content = r#"{
+            "note": "string with \"mcpServers\": { \"dup\": {} }",
             "mcpServers": {
                 "dup": { "type": "stdio", "command": "node" },
                 "dup": { "type": "stdio", "command": "python" }
