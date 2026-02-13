@@ -579,12 +579,20 @@ mod tests {
             &LintConfig::default(),
         );
 
-        assert!(diagnostics.iter().any(|d| d.rule == "CC-PL-004"));
+        let pl_004 = diagnostics
+            .iter()
+            .find(|d| d.rule == "CC-PL-004")
+            .expect("CC-PL-004 should be reported for empty version");
+        assert_eq!(
+            pl_004.level,
+            crate::diagnostics::DiagnosticLevel::Warning,
+            "Empty version should be a warning, not an error"
+        );
         assert!(!diagnostics.iter().any(|d| d.rule == "CC-PL-003"));
     }
 
     #[test]
-    fn test_cc_pl_004_missing_required_fields() {
+    fn test_cc_pl_004_missing_recommended_fields() {
         let temp = TempDir::new().unwrap();
         let plugin_path = temp.path().join(".claude-plugin").join("plugin.json");
         write_plugin(&plugin_path, r#"{"name":"test-plugin"}"#);
@@ -596,7 +604,18 @@ mod tests {
             &LintConfig::default(),
         );
 
-        assert!(diagnostics.iter().any(|d| d.rule == "CC-PL-004"));
+        let pl_004: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-PL-004")
+            .collect();
+        assert_eq!(pl_004.len(), 2, "Should warn for missing description and version");
+        for d in &pl_004 {
+            assert_eq!(
+                d.level,
+                crate::diagnostics::DiagnosticLevel::Warning,
+                "Missing description/version should be warnings, not errors"
+            );
+        }
     }
 
     #[test]
@@ -844,12 +863,79 @@ mod tests {
             &LintConfig::default(),
         );
 
-        let pl_004_errors: Vec<_> = diagnostics
+        let pl_004_warnings: Vec<_> = diagnostics
             .iter()
             .filter(|d| d.rule == "CC-PL-004")
             .collect();
-        // Both description and version are empty
-        assert_eq!(pl_004_errors.len(), 2);
+        // Both description and version are empty - reported as warnings
+        assert_eq!(pl_004_warnings.len(), 2);
+        for d in &pl_004_warnings {
+            assert_eq!(
+                d.level,
+                crate::diagnostics::DiagnosticLevel::Warning,
+                "Empty description/version should be warnings"
+            );
+        }
+    }
+
+    #[test]
+    fn test_cc_pl_004_missing_name_is_error() {
+        let temp = TempDir::new().unwrap();
+        let plugin_path = temp.path().join(".claude-plugin").join("plugin.json");
+        write_plugin(
+            &plugin_path,
+            r#"{"description":"d","version":"1.0.0"}"#,
+        );
+
+        let validator = PluginValidator;
+        let diagnostics = validator.validate(
+            &plugin_path,
+            &fs::read_to_string(&plugin_path).unwrap(),
+            &LintConfig::default(),
+        );
+
+        let name_error = diagnostics
+            .iter()
+            .find(|d| d.rule == "CC-PL-004" && d.level == crate::diagnostics::DiagnosticLevel::Error)
+            .expect("CC-PL-004 error should be reported for missing name");
+        assert!(
+            name_error.message.contains("name"),
+            "Error message should mention 'name'"
+        );
+    }
+
+    #[test]
+    fn test_cc_pl_004_only_name_present_no_errors() {
+        let temp = TempDir::new().unwrap();
+        let plugin_path = temp.path().join(".claude-plugin").join("plugin.json");
+        write_plugin(&plugin_path, r#"{"name":"test"}"#);
+
+        let validator = PluginValidator;
+        let diagnostics = validator.validate(
+            &plugin_path,
+            &fs::read_to_string(&plugin_path).unwrap(),
+            &LintConfig::default(),
+        );
+
+        // No CC-PL-004 errors - only warnings for missing description/version
+        assert!(
+            !diagnostics
+                .iter()
+                .any(|d| d.rule == "CC-PL-004"
+                    && d.level == crate::diagnostics::DiagnosticLevel::Error),
+            "With name present, there should be zero CC-PL-004 errors"
+        );
+
+        let warnings: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-PL-004"
+                && d.level == crate::diagnostics::DiagnosticLevel::Warning)
+            .collect();
+        assert_eq!(
+            warnings.len(),
+            2,
+            "Should have warnings for missing description and version"
+        );
     }
 
     #[test]

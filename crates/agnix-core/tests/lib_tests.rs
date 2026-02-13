@@ -695,7 +695,7 @@ fn test_validate_project_plugin_detection() {
     let plugin_dir = temp.path().join("my-plugin.claude-plugin");
     std::fs::create_dir_all(&plugin_dir).unwrap();
 
-    // Create plugin.json with a validation issue (missing description - CC-PL-004)
+    // Create plugin.json with a validation issue (missing recommended description - CC-PL-004 warning)
     std::fs::write(
         plugin_dir.join("plugin.json"),
         r#"{"name": "test-plugin", "version": "1.0.0"}"#,
@@ -705,7 +705,7 @@ fn test_validate_project_plugin_detection() {
     let config = LintConfig::default();
     let result = validate_project(temp.path(), &config).unwrap();
 
-    // Should detect the plugin.json and report CC-PL-004 for missing description
+    // Should detect the plugin.json and report CC-PL-004 warning for missing description
     let plugin_diagnostics: Vec<_> = result
         .diagnostics
         .iter()
@@ -719,7 +719,7 @@ fn test_validate_project_plugin_detection() {
 
     assert!(
         plugin_diagnostics.iter().any(|d| d.rule == "CC-PL-004"),
-        "Should report CC-PL-004 for missing description field"
+        "Should report CC-PL-004 for missing recommended description field"
     );
 }
 
