@@ -240,12 +240,14 @@ impl Validator for McpValidator {
             validate_tool(
                 tool,
                 path,
-                content,
                 config,
                 &mut diagnostics,
-                idx,
-                tool_spans.get(idx).copied(),
-                &line_starts,
+                ToolLookupContext {
+                    content,
+                    line_starts: &line_starts,
+                    tool_span: tool_spans.get(idx).copied(),
+                    tool_index: idx,
+                },
             );
         }
 
@@ -785,16 +787,27 @@ fn validate_protocol_version(
 }
 
 /// Validate a single MCP tool
+struct ToolLookupContext<'a> {
+    content: &'a str,
+    line_starts: &'a [usize],
+    tool_span: Option<(usize, usize)>,
+    tool_index: usize,
+}
+
 fn validate_tool(
     tool: &McpToolSchema,
     path: &Path,
-    content: &str,
     config: &LintConfig,
     diagnostics: &mut Vec<Diagnostic>,
-    tool_index: usize,
-    tool_span: Option<(usize, usize)>,
-    line_starts: &[usize],
+    lookup: ToolLookupContext<'_>,
 ) {
+    let ToolLookupContext {
+        content,
+        line_starts,
+        tool_span,
+        tool_index,
+    } = lookup;
+
     // Always include tool index for clarity, even for first tool
     let tool_prefix = format!("Tool #{}: ", tool_index + 1);
 
