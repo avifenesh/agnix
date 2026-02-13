@@ -26,6 +26,8 @@
 | `Setup` | `--init`, `--init-only`, or `--maintenance` flags | No |
 | `SessionEnd` | Session terminates | No |
 | `Notification` | Claude Code sends notifications | No |
+| `TeammateIdle` | Teammate becomes idle in shared session | No |
+| `TaskCompleted` | A task finishes execution | No |
 
 **CRITICAL**: These are the ONLY valid event names. Case-sensitive. Typos will fail silently.
 

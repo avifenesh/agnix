@@ -390,8 +390,8 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 
 <a id="cc-hk-001"></a>
 ### CC-HK-001 [HIGH] Invalid Hook Event
-**Requirement**: Event MUST be one of 12 valid names (case-sensitive)
-**Valid**: SessionStart, UserPromptSubmit, PreToolUse, PermissionRequest, PostToolUse, PostToolUseFailure, SubagentStart, SubagentStop, Stop, PreCompact, Setup, SessionEnd, Notification
+**Requirement**: Event MUST be one of 15 valid names (case-sensitive)
+**Valid**: SessionStart, UserPromptSubmit, PreToolUse, PermissionRequest, PostToolUse, PostToolUseFailure, SubagentStart, SubagentStop, Stop, PreCompact, Setup, SessionEnd, Notification, TeammateIdle, TaskCompleted
 **Detection**: `!VALID_EVENTS.contains(event)`
 **Fix**: [AUTO-FIX] Replace with closest matching valid event name
 **Source**: code.claude.com/docs/en/hooks

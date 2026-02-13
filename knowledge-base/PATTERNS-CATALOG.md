@@ -175,9 +175,10 @@ if content.contains("$ARGUMENTS") && frontmatter.argument_hint.is_none() {
 **Detection**:
 ```rust
 const VALID_EVENTS: &[&str] = &[
-    "SessionStart", "UserPromptSubmit", "PreToolUse", "PermissionRequest",
-    "PostToolUse", "SubagentStart", "SubagentStop", "Stop",
-    "PreCompact", "SessionEnd", "Notification"
+    "PreToolUse", "PermissionRequest", "PostToolUse", "PostToolUseFailure",
+    "Notification", "UserPromptSubmit", "Stop", "SubagentStart",
+    "SubagentStop", "PreCompact", "Setup", "SessionStart",
+    "SessionEnd", "TeammateIdle", "TaskCompleted",
 ];
 
 if !VALID_EVENTS.contains(&event.as_str()) {
