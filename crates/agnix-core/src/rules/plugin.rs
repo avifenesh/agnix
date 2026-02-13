@@ -607,7 +607,11 @@ mod tests {
             .iter()
             .filter(|d| d.rule == "CC-PL-004")
             .collect();
-        assert_eq!(pl_004.len(), 2, "Should warn for missing description and version");
+        assert_eq!(
+            pl_004.len(),
+            2,
+            "Should warn for missing description and version"
+        );
         for d in &pl_004 {
             assert_eq!(
                 d.level,
@@ -881,10 +885,7 @@ mod tests {
     fn test_cc_pl_004_missing_name_is_error() {
         let temp = TempDir::new().unwrap();
         let plugin_path = temp.path().join(".claude-plugin").join("plugin.json");
-        write_plugin(
-            &plugin_path,
-            r#"{"description":"d","version":"1.0.0"}"#,
-        );
+        write_plugin(&plugin_path, r#"{"description":"d","version":"1.0.0"}"#);
 
         let validator = PluginValidator;
         let diagnostics = validator.validate(
@@ -895,7 +896,9 @@ mod tests {
 
         let name_error = diagnostics
             .iter()
-            .find(|d| d.rule == "CC-PL-004" && d.level == crate::diagnostics::DiagnosticLevel::Error)
+            .find(|d| {
+                d.rule == "CC-PL-004" && d.level == crate::diagnostics::DiagnosticLevel::Error
+            })
             .expect("CC-PL-004 error should be reported for missing name");
         assert!(
             name_error.message.contains("name"),
@@ -927,8 +930,9 @@ mod tests {
 
         let warnings: Vec<_> = diagnostics
             .iter()
-            .filter(|d| d.rule == "CC-PL-004"
-                && d.level == crate::diagnostics::DiagnosticLevel::Warning)
+            .filter(|d| {
+                d.rule == "CC-PL-004" && d.level == crate::diagnostics::DiagnosticLevel::Warning
+            })
             .collect();
         assert_eq!(
             warnings.len(),
@@ -961,9 +965,9 @@ mod tests {
             &LintConfig::default(),
         );
 
-        let name_error = diagnostics
-            .iter()
-            .find(|d| d.rule == "CC-PL-004" && d.level == crate::diagnostics::DiagnosticLevel::Error);
+        let name_error = diagnostics.iter().find(|d| {
+            d.rule == "CC-PL-004" && d.level == crate::diagnostics::DiagnosticLevel::Error
+        });
         assert!(
             name_error.is_some(),
             "Non-string name should trigger CC-PL-004 error"
@@ -988,9 +992,15 @@ mod tests {
 
         let warnings: Vec<_> = diagnostics
             .iter()
-            .filter(|d| d.rule == "CC-PL-004" && d.level == crate::diagnostics::DiagnosticLevel::Warning)
+            .filter(|d| {
+                d.rule == "CC-PL-004" && d.level == crate::diagnostics::DiagnosticLevel::Warning
+            })
             .collect();
-        assert_eq!(warnings.len(), 2, "Non-string description and version should trigger warnings");
+        assert_eq!(
+            warnings.len(),
+            2,
+            "Non-string description and version should trigger warnings"
+        );
     }
 
     #[test]
@@ -1077,7 +1087,9 @@ mod tests {
 
         let warnings: Vec<_> = diagnostics
             .iter()
-            .filter(|d| d.rule == "CC-PL-004" && d.level == crate::diagnostics::DiagnosticLevel::Warning)
+            .filter(|d| {
+                d.rule == "CC-PL-004" && d.level == crate::diagnostics::DiagnosticLevel::Warning
+            })
             .collect();
         assert_eq!(
             warnings.len(),

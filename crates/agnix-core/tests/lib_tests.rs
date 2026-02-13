@@ -723,10 +723,8 @@ fn test_validate_project_plugin_detection() {
     );
 
     assert!(
-        plugin_diagnostics
-            .iter()
-            .any(|d| d.rule == "CC-PL-004"
-                && d.level == agnix_core::diagnostics::DiagnosticLevel::Warning),
+        plugin_diagnostics.iter().any(|d| d.rule == "CC-PL-004"
+            && d.level == agnix_core::diagnostics::DiagnosticLevel::Warning),
         "CC-PL-004 for missing description should be a warning, not an error"
     );
 }
