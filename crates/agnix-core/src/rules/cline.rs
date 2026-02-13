@@ -542,6 +542,22 @@ unknownKey: value
         assert_eq!(cln_004.len(), 1);
         assert!(cln_004[0].has_fixes(), "CLN-004 should have an auto-fix");
         assert!(cln_004[0].fixes[0].safe, "CLN-004 fix should be safe");
+        assert!(
+            cln_004[0].fixes[0].replacement.contains("- \"**/*.ts\""),
+            "Fix should convert scalar to array format, got: {}",
+            cln_004[0].fixes[0].replacement
+        );
+    }
+
+    #[test]
+    fn test_cln_004_empty_array_no_warning() {
+        let content = "---\npaths: []\n---\n# Instructions\n";
+        let diagnostics = validate_folder(content);
+        let cln_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CLN-004").collect();
+        assert!(
+            cln_004.is_empty(),
+            "Empty array should not trigger CLN-004"
+        );
     }
 
     // ===== File Type Detection =====
