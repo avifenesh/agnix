@@ -127,5 +127,6 @@ MIT OR Apache-2.0
 ---
 
 <p align="center">
-  <a href="https://github.com/avifenesh/agnix/stargazers">Star this repo</a> to help other developers find agnix.
+  <a href="https://github.com/avifenesh/agnix/stargazers">Star this repo</a> to help other developers find agnix.<br>
+  Follow <a href="https://x.com/avi_fenesh">@avi_fenesh</a> on X for live updates and new releases.
 </p>
