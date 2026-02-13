@@ -93,7 +93,7 @@ Authoritative sources monitored for changes that may affect validation rules.
 
 | Source | URL | What to Watch |
 |--------|-----|---------------|
-| awesome-slash | https://github.com/anthropics/awesome-slash | Pattern updates, new enhance plugins |
+| agentsys | https://github.com/anthropics/agentsys | Pattern updates, new enhance plugins |
 | MCP Servers Registry | https://github.com/modelcontextprotocol/servers | New server patterns, security advisories |
 | Stack Overflow AI Survey | https://survey.stackoverflow.co/2025/ai | Developer pain points, tool adoption trends |
 
@@ -187,7 +187,7 @@ Tracking community input that influences rule development, tool support decision
 | Date | Source | Feedback | Action Taken | Issue/PR |
 |------|--------|----------|-------------|----------|
 | 2026-01-15 | GitHub Issues | Skills invoke at 0% without explicit trigger phrases | Added AS-010 rule for missing trigger phrase detection; sourced from Vercel research | #14 |
-| 2026-01-20 | awesome-slash patterns | Enhance plugins identified 70 production-tested config patterns | Created PATTERNS-CATALOG.md; patterns informed CC-SK-007, CC-HK-009, CC-MEM-005 rules | #28 |
+| 2026-01-20 | agentsys patterns | Enhance plugins identified 70 production-tested config patterns | Created PATTERNS-CATALOG.md; patterns informed CC-SK-007, CC-HK-009, CC-MEM-005 rules | #28 |
 | 2026-02-01 | February 2026 monthly review | Coverage gap: no rules for Aider, Continue, Roo Code, Kiro CLI | Documented in tool inventory; awaiting community contributions via issue templates | #191 |
 | 2026-02-01 | README pain points | "Almost-right configs" and "skills don't auto-trigger" as top developer frustrations | Prioritized auto-fix for AS-004 (kebab-case), AS-010 (trigger phrase), CC-HK-001 (event name) | #45, #46 |
 | 2026-02-01 | Tool tier decisions | Community adoption data used to assign S/A/B/C/D/E tiers | Tier assignments documented in CLAUDE.md; spec-drift frequency matches tier priority | #107 |

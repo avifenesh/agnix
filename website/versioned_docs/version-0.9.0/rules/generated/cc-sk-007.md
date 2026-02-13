@@ -20,7 +20,7 @@ sidebar_label: "CC-SK-007"
 
 ## Evidence Sources
 
-- https://github.com/anthropics/awesome-slash
+- https://github.com/anthropics/agentsys
 
 ## Test Coverage Metadata
 

@@ -32,10 +32,10 @@ Codex CLI is OpenAI's terminal-based AI coding assistant with unique features:
 
 ## What Our Installer Does
 
-When user runs `awesome-slash` and selects Codex:
+When user runs `agentsys` and selects Codex:
 
 ```
-~/.awesome-slash/           # Full package copy
+~/.agentsys/           # Full package copy
 ~/.codex/skills/
 ├── deslop/SKILL.md
 ├── enhance/SKILL.md
@@ -51,12 +51,12 @@ When user runs `awesome-slash` and selects Codex:
 
 **MCP Configuration Added:**
 ```toml
-[mcp_servers.awesome-slash]
+[mcp_servers.agentsys]
 command = "node"
-args = ["~/.awesome-slash/mcp-server/index.js"]
+args = ["~/.agentsys/mcp-server/index.js"]
 
-[mcp_servers.awesome-slash.env]
-PLUGIN_ROOT = "~/.awesome-slash"
+[mcp_servers.agentsys.env]
+PLUGIN_ROOT = "~/.agentsys"
 AI_STATE_DIR = ".codex"
 ```
 
@@ -152,7 +152,7 @@ Codex uses `request_user_input` tool with a JSON schema:
 | Custom input | Always available | "Other" option |
 | Max questions | 4 | ~5 |
 
-### Implication for awesome-slash
+### Implication for agentsys
 
 Our `AskUserQuestion` format should work in Codex via the MCP server, but native Codex tools use `request_user_input`. The underlying AI model translates between formats.
 
@@ -213,7 +213,7 @@ description: Master workflow orchestrator  # No trigger phrases!
 | SKILL.md body | Core instructions | <500 lines (loaded on trigger) |
 | references/ | Detailed docs | Unlimited (loaded as needed) |
 
-**Note:** Some awesome-slash skills exceed 500 lines. Future improvement: split into references/.
+**Note:** Some agentsys skills exceed 500 lines. Future improvement: split into references/.
 
 ### Invoking Skills
 
@@ -295,12 +295,12 @@ When using Codex as MCP server:
 Configure MCP servers in `config.toml`:
 
 ```toml
-[mcp_servers.awesome-slash]
+[mcp_servers.agentsys]
 command = "node"
 args = ["/path/to/mcp-server/index.js"]
 
-[mcp_servers.awesome-slash.env]
-PLUGIN_ROOT = "/path/to/awesome-slash"
+[mcp_servers.agentsys.env]
+PLUGIN_ROOT = "/path/to/agentsys"
 AI_STATE_DIR = ".codex"
 ```
 
@@ -327,7 +327,7 @@ codex mcp remove my-server
 
 ### MCP Tools Available
 
-All 8 awesome-slash tools work in Codex:
+All 8 agentsys tools work in Codex:
 - `workflow_status` - Get current workflow state
 - `workflow_start` - Start new workflow
 - `workflow_resume` - Resume from checkpoint

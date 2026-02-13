@@ -13,7 +13,7 @@
 
 | **Understand a standard** | [standards/](#standards) - HARD-RULES files |
 | **Learn best practices** | [standards/](#standards) - OPINIONS files |
-| **Find patterns** | [PATTERNS-CATALOG.md](./PATTERNS-CATALOG.md) - 70 patterns from awesome-slash |
+| **Find patterns** | [PATTERNS-CATALOG.md](./PATTERNS-CATALOG.md) - 70 patterns from agentsys |
 | **Get platform context** | [agent-docs/](#agent-docs) - 10 reference docs |
 | **Cross-platform support** | [standards/multi-platform-HARD-RULES.md](./standards/multi-platform-HARD-RULES.md) |
 | **Find rule gaps** | [agent-config-optional-fields.md](./agent-config-optional-fields.md) - Optional field coverage gaps |
@@ -80,7 +80,7 @@ knowledge-base/
 | **Prompt Eng** | 15 | 16KB | 21KB | 4 rules |
 | **AGENTS.md** | 5 | - | - | 6 rules |
 | **Cursor** | 2 | - | - | 9 rules |
-| **awesome-slash** | 12 | - | - | 70 patterns |
+| **agentsys** | 12 | - | - | 70 patterns |
 | **Total** | **75+** | **117KB** | **160KB** | **156 rules** |
 
 
@@ -255,7 +255,7 @@ Update knowledge base when:
 - MCP protocol version change
 - Claude Code releases new features
 - New research published on prompt engineering
-- awesome-slash enhance patterns updated
+- agentsys enhance patterns updated
 
 ### Update Process
 

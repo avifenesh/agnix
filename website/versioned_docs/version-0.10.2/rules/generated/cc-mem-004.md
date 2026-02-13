@@ -23,7 +23,7 @@ keywords: ["CC-MEM-004", "invalid command reference", "claude memory", "validati
 
 ## Evidence Sources
 
-- https://github.com/anthropics/awesome-slash
+- https://github.com/anthropics/agentsys
 
 ## Test Coverage Metadata
 

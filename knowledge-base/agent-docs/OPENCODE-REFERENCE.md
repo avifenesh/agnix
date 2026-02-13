@@ -32,11 +32,11 @@ OpenCode has significant features Claude Code doesn't have:
 
 ## What Our Installer Does
 
-When user runs `awesome-slash` and selects OpenCode:
+When user runs `agentsys` and selects OpenCode:
 
 ```
-~/.awesome-slash/           # Full package copy
-~/.config/opencode/commands/awesome-slash/
+~/.agentsys/           # Full package copy
+~/.config/opencode/commands/agentsys/
 ├── deslop.md        # From plugins/deslop/commands/
 ├── enhance.md              # From plugins/enhance/commands/
 ├── next-task.md            # From plugins/next-task/commands/
@@ -53,11 +53,11 @@ When user runs `awesome-slash` and selects OpenCode:
 ```json
 {
   "mcp": {
-    "awesome-slash": {
+    "agentsys": {
       "type": "local",
-      "command": ["node", "~/.awesome-slash/mcp-server/index.js"],
+      "command": ["node", "~/.agentsys/mcp-server/index.js"],
       "environment": {
-        "PLUGIN_ROOT": "~/.awesome-slash",
+        "PLUGIN_ROOT": "~/.agentsys",
         "AI_STATE_DIR": ".opencode"
       },
       "enabled": true
@@ -166,7 +166,7 @@ Your selection: _
 }
 ```
 
-### Implication for awesome-slash
+### Implication for agentsys
 
 Our agents use `AskUserQuestion` which works in both platforms, but:
 - Claude Code: Beautiful checkbox UI
@@ -263,7 +263,7 @@ You are a senior code reviewer. Analyze code thoroughly...
 ```jsonc
 {
   "mcp": {
-    "awesome-slash": {
+    "agentsys": {
       "type": "local",
       "command": ["node", "/path/to/mcp-server/index.js"],
       "environment": { "PLUGIN_ROOT": "...", "AI_STATE_DIR": ".opencode" },
@@ -447,7 +447,7 @@ workflow_status
 ### Verify Commands
 
 ```bash
-# Should list awesome-slash commands
+# Should list agentsys commands
 /next-task
 /deslop
 /ship
@@ -867,7 +867,7 @@ OpenCode has a pub-sub event system for all operations.
 
 ## Global Thinking Model Configuration
 
-### Proposal for awesome-slash
+### Proposal for agentsys
 
 Add to user's `opencode.json`:
 

@@ -50,7 +50,7 @@ Each rule in `knowledge-base/rules.json` includes an `evidence` object that docu
 | `vendor_docs` | Vendor documentation | code.claude.com/docs, docs.github.com/copilot, docs.cursor.com |
 | `vendor_code` | Vendor source code | Reference implementations |
 | `paper` | Academic research | Liu et al. (2023) TACL, Wei et al. (2022) |
-| `community` | Community research | awesome-slash, multi-platform patterns |
+| `community` | Community research | agentsys, multi-platform patterns |
 
 ### Applicability Constraints
 
@@ -163,7 +163,7 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 **Requirement**: description SHOULD include "Use when" trigger
 **Detection**: `!description.to_lowercase().contains("use when")`
 **Fix**: [AUTO-FIX] Prepend "Use when user wants to " to description
-**Source**: awesome-slash/enhance-skills, platform.claude.com/docs
+**Source**: agentsys/enhance-skills, platform.claude.com/docs
 
 <a id="as-011"></a>
 ### AS-011 [HIGH] Compatibility Too Long
@@ -258,7 +258,7 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 **Requirement**: Bash in allowed-tools SHOULD be scoped
 **Detection**: `allowed_tools.contains("Bash") && !allowed_tools.contains("Bash(")`
 **Fix**: [AUTO-FIX] Replace unrestricted Bash with scoped version (e.g., `Bash(git:*)`)
-**Source**: awesome-slash/enhance-skills
+**Source**: agentsys/enhance-skills
 
 <a id="cc-sk-008"></a>
 ### CC-SK-008 [HIGH] Unknown Tool Name
@@ -451,7 +451,7 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 **Patterns**: `rm -rf`, `git reset --hard`, `drop database`, `curl.*|.*sh`
 **Detection**: Regex match against dangerous patterns
 **Fix**: Warn, suggest safer alternative
-**Source**: awesome-slash/enhance-hooks
+**Source**: agentsys/enhance-hooks
 
 <a id="cc-hk-010"></a>
 ### CC-HK-010 [MEDIUM] Timeout Policy
@@ -645,7 +645,7 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 **Requirement**: npm scripts referenced SHOULD exist in package.json
 **Detection**: Extract `npm run <script>`, check package.json
 **Fix**: Show available scripts
-**Source**: awesome-slash/enhance-claude-memory
+**Source**: agentsys/enhance-claude-memory
 
 <a id="cc-mem-005"></a>
 ### CC-MEM-005 [HIGH] Generic Instruction
@@ -653,7 +653,7 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 **Patterns**: `be helpful`, `be accurate`, `think step by step`, `be concise`
 **Detection**: Regex match against 8 generic patterns
 **Fix**: Remove line
-**Source**: awesome-slash/enhance-claude-memory, research papers
+**Source**: agentsys/enhance-claude-memory, research papers
 
 <a id="cc-mem-006"></a>
 ### CC-MEM-006 [HIGH] Negative Without Positive
@@ -688,7 +688,7 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 **Requirement**: CLAUDE.md SHOULD complement README, not duplicate
 **Detection**: Compare with README.md, check >40% overlap
 **Fix**: Remove duplicated sections
-**Source**: awesome-slash/enhance-claude-memory
+**Source**: agentsys/enhance-claude-memory
 
 <a id="cc-mem-011"></a>
 ### CC-MEM-011 [HIGH] Invalid Paths Glob in Rules
@@ -1468,7 +1468,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 - Zhao et al. (2021) - Few-shot calibration
 
 ### Production Code
-- awesome-slash/plugins/enhance/* (70 patterns, tested on 1000+ files)
+- agentsys/plugins/enhance/* (70 patterns, tested on 1000+ files)
 
 ### Community
 - 15+ platforms researched

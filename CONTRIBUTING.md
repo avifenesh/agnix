@@ -38,7 +38,7 @@ Each rule in `knowledge-base/rules.json` must include an `evidence` object docum
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `source_type` | enum | Classification of the source: `spec` (official specification), `vendor_docs` (vendor documentation), `vendor_code` (vendor source code), `paper` (academic research), `community` (community research such as awesome-slash) |
+| `source_type` | enum | Classification of the source: `spec` (official specification), `vendor_docs` (vendor documentation), `vendor_code` (vendor source code), `paper` (academic research), `community` (community research such as agentsys) |
 | `source_urls` | string[] | One or more URLs pointing to the authoritative documentation, specification, or research paper that supports this rule |
 | `verified_on` | string | ISO 8601 date (YYYY-MM-DD) when the source was last verified to be current |
 | `applies_to` | object | Applicability constraints: `tool` (specific tool name, e.g., "claude-code"), `version_range` (semver range, e.g., ">=1.0.0"), `spec_revision` (spec version date). Empty object `{}` means the rule applies universally |

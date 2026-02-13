@@ -88,7 +88,7 @@ Spot-check for significant changes only. Do not invest significant time here.
 
 ### New Config Patterns
 
-- [ ] Check awesome-slash for updated enhance patterns
+- [ ] Check agentsys for updated enhance patterns
 - [ ] Note any emerging config patterns across tools
 - [ ] Identify patterns that could benefit from new rules
 

@@ -1,6 +1,6 @@
 # Detection Patterns Catalog
 
-> Extracted from awesome-slash/plugins/enhance/* - production-tested patterns
+> Extracted from agentsys/plugins/enhance/* - production-tested patterns
 
 ## Pattern Statistics
 
@@ -551,10 +551,10 @@ for path in bad_paths {
 ## Pattern Sources
 
 All patterns extracted from:
-- `awesome-slash/plugins/enhance/skills/skills/SKILL.md`
-- `awesome-slash/plugins/enhance/skills/hooks/SKILL.md`
-- `awesome-slash/plugins/enhance/skills/claude-memory/SKILL.md`
-- `awesome-slash/plugins/enhance/skills/agent-prompts/SKILL.md`
-- `awesome-slash/plugins/enhance/skills/prompts/SKILL.md`
+- `agentsys/plugins/enhance/skills/skills/SKILL.md`
+- `agentsys/plugins/enhance/skills/hooks/SKILL.md`
+- `agentsys/plugins/enhance/skills/claude-memory/SKILL.md`
+- `agentsys/plugins/enhance/skills/agent-prompts/SKILL.md`
+- `agentsys/plugins/enhance/skills/prompts/SKILL.md`
 
 Production-tested across 1000+ files in real projects.

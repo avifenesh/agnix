@@ -7,7 +7,7 @@
 - [INDEX.md](./INDEX.md) - Master navigation and summaries
 - [VALIDATION-RULES.md](./VALIDATION-RULES.md) - 156 rules with detection logic
 
-- [PATTERNS-CATALOG.md](./PATTERNS-CATALOG.md) - 70 patterns from awesome-slash
+- [PATTERNS-CATALOG.md](./PATTERNS-CATALOG.md) - 70 patterns from agentsys
 - [standards/](./standards/) - HARD-RULES and OPINIONS by topic
 - [agent-docs/](./agent-docs/) - Platform references and research
 
@@ -32,4 +32,4 @@ knowledge-base/
 ---
 
 **Last Updated**: 2026-02-05
-**Pattern Source**: awesome-slash v3.6.1 (production-tested)
+**Pattern Source**: agentsys v3.6.1 (production-tested)

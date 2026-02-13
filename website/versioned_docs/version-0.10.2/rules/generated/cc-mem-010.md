@@ -23,7 +23,7 @@ keywords: ["CC-MEM-010", "readme duplication", "claude memory", "validation", "a
 
 ## Evidence Sources
 
-- https://github.com/anthropics/awesome-slash
+- https://github.com/anthropics/agentsys
 
 ## Test Coverage Metadata
 

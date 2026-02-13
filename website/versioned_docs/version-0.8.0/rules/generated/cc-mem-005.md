@@ -20,7 +20,7 @@ sidebar_label: "CC-MEM-005"
 
 ## Evidence Sources
 
-- https://github.com/anthropics/awesome-slash
+- https://github.com/anthropics/agentsys
 - https://arxiv.org/abs/2201.11903
 
 ## Test Coverage Metadata
