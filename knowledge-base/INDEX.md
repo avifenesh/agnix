@@ -90,7 +90,7 @@ knowledge-base/
 |----------|-------|------|--------|-----|----------|
 | Agent Skills | 16 | 14 | 2 | 0 | 5 |
 | Claude Skills | 15 | 11 | 4 | 0 | 7 |
-| Claude Hooks | 18 | 13 | 4 | 1 | 3 |
+| Claude Hooks | 18 | 12 | 4 | 2 | 3 |
 | Claude Agents | 13 | 12 | 1 | 0 | 2 |
 | Claude Memory | 12 | 8 | 4 | 0 | 3 |
 | AGENTS.md | 6 | 1 | 5 | 0 | 0 |
@@ -116,7 +116,7 @@ knowledge-base/
 | Kiro Skills | 1 | 0 | 1 | 0 | 1 |
 | Amp Skills | 1 | 0 | 1 | 0 | 1 |
 | Roo Code Skills | 1 | 0 | 1 | 0 | 1 |
-| **TOTAL** | **169** | **111** | **55** | **3** | **42** |
+| **TOTAL** | **169** | **110** | **55** | **4** | **42** |
 
 
 ---
