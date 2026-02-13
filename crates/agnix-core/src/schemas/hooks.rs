@@ -122,6 +122,8 @@ impl HooksSchema {
         "Setup",
         "SessionStart",
         "SessionEnd",
+        "TeammateIdle",
+        "TaskCompleted",
     ];
 
     /// Events that require a matcher field (tool-related events)
