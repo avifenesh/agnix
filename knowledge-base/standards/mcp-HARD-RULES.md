@@ -1,7 +1,7 @@
 # MCP Protocol - Hard Rules (Non-Negotiable)
 
 **Protocol Version**: 2025-11-25
-**Last Updated**: 2026-01-31
+**Last Updated**: 2026-02-13
 **RFC Compliance**: BCP 14 [RFC2119] [RFC8174]
 
 This document extracts the absolute, non-negotiable requirements from the Model Context Protocol specification. These are the MUST/MUST NOT rules that determine protocol compliance.
@@ -1175,7 +1175,8 @@ This document synthesizes hard requirements from:
 11. [GitHub Specification Repository](https://github.com/modelcontextprotocol/specification)
 
 **Revision History**:
-- 2026-01-31: Initial comprehensive hard rules extraction from protocol version 2025-11-25
+- 2026-02-13: Updated all protocol version references from 2025-06-18 to 2025-11-25
+- 2026-01-31: Initial comprehensive hard rules extraction from protocol version 2025-06-18
 
 ---
 

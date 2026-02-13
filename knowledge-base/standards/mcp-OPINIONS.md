@@ -1,7 +1,7 @@
 # MCP Protocol - Best Practices & Opinions
 
 **Protocol Version**: 2025-11-25
-**Last Updated**: 2026-01-31
+**Last Updated**: 2026-02-13
 **Nature**: Opinionated Recommendations (SHOULD/MAY/RECOMMENDED)
 
 This document collects best practices, design recommendations, and opinionated guidance for implementing Model Context Protocol servers and clients. These are not hard requirements but represent community wisdom and design patterns.
@@ -1238,7 +1238,8 @@ This document synthesizes best practices from:
 10. Community implementations and examples
 
 **Revision History**:
-- 2026-01-31: Initial best practices compilation from protocol version 2025-11-25
+- 2026-02-13: Updated all protocol version references from 2025-06-18 to 2025-11-25
+- 2026-01-31: Initial best practices compilation from protocol version 2025-06-18
 
 ---
 
