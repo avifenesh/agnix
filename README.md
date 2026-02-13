@@ -14,14 +14,12 @@
 
 Catch broken agent configs before your AI tools silently ignore them. 156 rules for CLAUDE.md, SKILL.md, hooks, MCP, Cursor, Copilot, and more.
 
-**156 validation rules** | **Auto-fix** | **[VS Code](https://marketplace.visualstudio.com/items?itemName=avifenesh.agnix) + [JetBrains](https://plugins.jetbrains.com/plugin/30087-agnix) + Neovim + Zed** | **GitHub Action**
+**Auto-fix** | **GitHub Action** | **[VS Code](https://marketplace.visualstudio.com/items?itemName=avifenesh.agnix) + [JetBrains](https://plugins.jetbrains.com/plugin/30087-agnix) + [Neovim](https://github.com/avifenesh/agnix.nvim) + [Zed](https://github.com/avifenesh/agnix/tree/main/editors/zed)**
 
 <p align="center">
   <a href="https://avifenesh.github.io/agnix/"><img src="https://img.shields.io/badge/Docs-Website-0A7E8C?style=for-the-badge" alt="Website"></a>
   <a href="https://avifenesh.github.io/agnix/playground"><img src="https://img.shields.io/badge/Try_it-Playground-0A7E8C?style=for-the-badge" alt="Playground"></a>
-  <a href="https://dev.to/avifenesh/your-ai-agent-configs-are-probably-broken-and-you-dont-know-it-16n1"><img src="https://img.shields.io/badge/Blog-Post-0A0A0A?style=for-the-badge&logo=dev.to" alt="Blog Post"></a>
-  <a href="https://marketplace.visualstudio.com/items?itemName=avifenesh.agnix"><img src="https://img.shields.io/badge/VS%20Code-Install-007ACC?style=for-the-badge" alt="Install VS Code Extension"></a>
-  <a href="https://plugins.jetbrains.com/plugin/30087-agnix"><img src="https://img.shields.io/badge/JetBrains-Install-000000?style=for-the-badge" alt="Install JetBrains Plugin"></a>
+  <a href="https://dev.to/avifenesh/your-ai-agent-configs-are-probably-broken-and-you-dont-know-it-16n1"><img src="https://img.shields.io/badge/Blog-Post-0A7E8C?style=for-the-badge&logo=dev.to" alt="Blog Post"></a>
 </p>
 
 ## Why agnix?
