@@ -41,6 +41,16 @@ pub struct LintConfigBuilder {
 }
 
 impl LintConfigBuilder {
+    fn append_and_dedup(target: &mut Vec<String>, source: &mut Vec<String>) {
+        if source.is_empty() {
+            return;
+        }
+
+        target.append(source);
+        let mut seen = std::collections::HashSet::new();
+        target.retain(|item| seen.insert(item.clone()));
+    }
+
     /// Create a new builder with all fields unset (defaults will be applied at build time).
     ///
     /// Prefer [`LintConfig::builder()`] over calling this directly.
@@ -218,19 +228,12 @@ impl LintConfigBuilder {
 
         let mut rules = self.rules.take().unwrap_or(defaults.rules);
 
-        // Apply convenience disabled_rules/disabled_validators (dedup via append+retain)
-        if !self.disabled_rules.is_empty() {
-            rules.disabled_rules.append(&mut self.disabled_rules);
-            let mut seen = std::collections::HashSet::new();
-            rules.disabled_rules.retain(|r| seen.insert(r.clone()));
-        }
-        if !self.disabled_validators.is_empty() {
-            rules
-                .disabled_validators
-                .append(&mut self.disabled_validators);
-            let mut seen = std::collections::HashSet::new();
-            rules.disabled_validators.retain(|v| seen.insert(v.clone()));
-        }
+        // Apply convenience disabled_rules/disabled_validators.
+        Self::append_and_dedup(&mut rules.disabled_rules, &mut self.disabled_rules);
+        Self::append_and_dedup(
+            &mut rules.disabled_validators,
+            &mut self.disabled_validators,
+        );
 
         let mut config = LintConfig {
             severity: self.severity.take().unwrap_or(defaults.severity),
