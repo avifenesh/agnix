@@ -1,17 +1,16 @@
 {
   "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Bash",
-        "hooks": [
-          { "type": "prompt", "prompt": "prompt hooks not allowed here" }
-        ]
-      }
-    ],
     "SessionStart": [
       {
         "hooks": [
-          { "type": "prompt", "prompt": "prompt hooks not allowed on SessionStart either" }
+          { "type": "prompt", "prompt": "prompt hooks not allowed on SessionStart" }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "hooks": [
+          { "type": "prompt", "prompt": "prompt hooks not allowed on Notification" }
         ]
       }
     ],
@@ -22,10 +21,11 @@
         ]
       }
     ],
-    "SubagentStop": [
+    "PreToolUse": [
       {
+        "matcher": "Bash",
         "hooks": [
-          { "type": "prompt", "prompt": "this is valid - prompt on SubagentStop is allowed" }
+          { "type": "prompt", "prompt": "this is valid - prompt on PreToolUse is allowed" }
         ]
       }
     ]
