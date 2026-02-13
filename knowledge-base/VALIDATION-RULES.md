@@ -777,9 +777,9 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 **Source**: code.claude.com/docs/en/plugins-reference
 
 <a id="cc-pl-004"></a>
-### CC-PL-004 [HIGH] Missing Required Plugin Field
-**Requirement**: plugin.json REQUIRES name, description, version
-**Detection**: Parse JSON, check required fields
+### CC-PL-004 [HIGH] Missing Required/Recommended Plugin Field
+**Requirement**: plugin.json REQUIRES name; description and version are RECOMMENDED
+**Detection**: Parse JSON, check required fields (error for name, warning for description/version)
 **Fix**: Add missing fields
 **Source**: code.claude.com/docs/en/plugins-reference
 

@@ -6,7 +6,6 @@ use crate::{
     config::LintConfig,
     diagnostics::{Diagnostic, Fix},
     rules::{Validator, ValidatorMetadata},
-    schemas::plugin::PluginSchema,
 };
 use rust_i18n::t;
 use std::path::Path;
@@ -104,8 +103,8 @@ impl Validator for PluginValidator {
 
         if config.is_rule_enabled("CC-PL-004") {
             check_required_field(&raw_value, "name", path, diagnostics.as_mut());
-            check_required_field(&raw_value, "description", path, diagnostics.as_mut());
-            check_required_field(&raw_value, "version", path, diagnostics.as_mut());
+            check_recommended_field(&raw_value, "description", path, diagnostics.as_mut());
+            check_recommended_field(&raw_value, "version", path, diagnostics.as_mut());
         }
 
         if config.is_rule_enabled("CC-PL-005") {
@@ -226,30 +225,32 @@ impl Validator for PluginValidator {
             }
         }
 
-        let schema: PluginSchema = match serde_json::from_value(raw_value.clone()) {
-            Ok(schema) => schema,
-            Err(_) => {
-                return diagnostics;
-            }
-        };
-
         if config.is_rule_enabled("CC-PL-003") {
-            let version = schema.version.trim();
-            if !version.is_empty() && !is_valid_semver(version) {
-                diagnostics.push(
-                    Diagnostic::error(
-                        path.to_path_buf(),
-                        1,
-                        0,
-                        "CC-PL-003",
-                        t!("rules.cc_pl_003.message", version = schema.version.as_str()),
-                    )
-                    .with_suggestion(t!("rules.cc_pl_003.suggestion")),
-                );
+            if let Some(version) = raw_value.get("version").and_then(|v| v.as_str()) {
+                let trimmed = version.trim();
+                if !trimmed.is_empty() && !is_valid_semver(trimmed) {
+                    diagnostics.push(
+                        Diagnostic::error(
+                            path.to_path_buf(),
+                            1,
+                            0,
+                            "CC-PL-003",
+                            t!("rules.cc_pl_003.message", version = version),
+                        )
+                        .with_suggestion(t!("rules.cc_pl_003.suggestion")),
+                    );
+                }
             }
         }
 
         diagnostics
+    }
+}
+
+fn is_field_missing(value: &serde_json::Value, field: &str) -> bool {
+    match value.get(field) {
+        Some(v) => !v.is_string() || v.as_str().map(|s| s.trim().is_empty()).unwrap_or(true),
+        None => true,
     }
 }
 
@@ -259,12 +260,7 @@ fn check_required_field(
     path: &Path,
     diagnostics: &mut Vec<Diagnostic>,
 ) {
-    let missing = match value.get(field) {
-        Some(v) => !v.is_string() || v.as_str().map(|s| s.trim().is_empty()).unwrap_or(true),
-        None => true,
-    };
-
-    if missing {
+    if is_field_missing(value, field) {
         diagnostics.push(
             Diagnostic::error(
                 path.to_path_buf(),
@@ -274,6 +270,26 @@ fn check_required_field(
                 t!("rules.cc_pl_004.message", field = field),
             )
             .with_suggestion(t!("rules.cc_pl_004.suggestion", field = field)),
+        );
+    }
+}
+
+fn check_recommended_field(
+    value: &serde_json::Value,
+    field: &str,
+    path: &Path,
+    diagnostics: &mut Vec<Diagnostic>,
+) {
+    if is_field_missing(value, field) {
+        diagnostics.push(
+            Diagnostic::warning(
+                path.to_path_buf(),
+                1,
+                0,
+                "CC-PL-004",
+                t!("rules.cc_pl_004_recommended.message", field = field),
+            )
+            .with_suggestion(t!("rules.cc_pl_004_recommended.suggestion", field = field)),
         );
     }
 }
@@ -552,12 +568,20 @@ mod tests {
             &LintConfig::default(),
         );
 
-        assert!(diagnostics.iter().any(|d| d.rule == "CC-PL-004"));
+        let pl_004 = diagnostics
+            .iter()
+            .find(|d| d.rule == "CC-PL-004")
+            .expect("CC-PL-004 should be reported for empty version");
+        assert_eq!(
+            pl_004.level,
+            crate::diagnostics::DiagnosticLevel::Warning,
+            "Empty version should be a warning, not an error"
+        );
         assert!(!diagnostics.iter().any(|d| d.rule == "CC-PL-003"));
     }
 
     #[test]
-    fn test_cc_pl_004_missing_required_fields() {
+    fn test_cc_pl_004_missing_recommended_fields() {
         let temp = TempDir::new().unwrap();
         let plugin_path = temp.path().join(".claude-plugin").join("plugin.json");
         write_plugin(&plugin_path, r#"{"name":"test-plugin"}"#);
@@ -569,7 +593,22 @@ mod tests {
             &LintConfig::default(),
         );
 
-        assert!(diagnostics.iter().any(|d| d.rule == "CC-PL-004"));
+        let pl_004: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-PL-004")
+            .collect();
+        assert_eq!(
+            pl_004.len(),
+            2,
+            "Should warn for missing description and version"
+        );
+        for d in &pl_004 {
+            assert_eq!(
+                d.level,
+                crate::diagnostics::DiagnosticLevel::Warning,
+                "Missing description/version should be warnings, not errors"
+            );
+        }
     }
 
     #[test]
@@ -817,12 +856,263 @@ mod tests {
             &LintConfig::default(),
         );
 
-        let pl_004_errors: Vec<_> = diagnostics
+        let pl_004_warnings: Vec<_> = diagnostics
             .iter()
             .filter(|d| d.rule == "CC-PL-004")
             .collect();
-        // Both description and version are empty
-        assert_eq!(pl_004_errors.len(), 2);
+        // Both description and version are empty - reported as warnings
+        assert_eq!(pl_004_warnings.len(), 2);
+        for d in &pl_004_warnings {
+            assert_eq!(
+                d.level,
+                crate::diagnostics::DiagnosticLevel::Warning,
+                "Empty description/version should be warnings"
+            );
+        }
+    }
+
+    #[test]
+    fn test_cc_pl_004_missing_name_is_error() {
+        let temp = TempDir::new().unwrap();
+        let plugin_path = temp.path().join(".claude-plugin").join("plugin.json");
+        write_plugin(&plugin_path, r#"{"description":"d","version":"1.0.0"}"#);
+
+        let validator = PluginValidator;
+        let diagnostics = validator.validate(
+            &plugin_path,
+            &fs::read_to_string(&plugin_path).unwrap(),
+            &LintConfig::default(),
+        );
+
+        let name_error = diagnostics
+            .iter()
+            .find(|d| {
+                d.rule == "CC-PL-004" && d.level == crate::diagnostics::DiagnosticLevel::Error
+            })
+            .expect("CC-PL-004 error should be reported for missing name");
+        assert!(
+            name_error.message.contains("name"),
+            "Error message should mention 'name'"
+        );
+    }
+
+    #[test]
+    fn test_cc_pl_004_only_name_present_no_errors() {
+        let temp = TempDir::new().unwrap();
+        let plugin_path = temp.path().join(".claude-plugin").join("plugin.json");
+        write_plugin(&plugin_path, r#"{"name":"test"}"#);
+
+        let validator = PluginValidator;
+        let diagnostics = validator.validate(
+            &plugin_path,
+            &fs::read_to_string(&plugin_path).unwrap(),
+            &LintConfig::default(),
+        );
+
+        // No CC-PL-004 errors - only warnings for missing description/version
+        assert!(
+            !diagnostics
+                .iter()
+                .any(|d| d.rule == "CC-PL-004"
+                    && d.level == crate::diagnostics::DiagnosticLevel::Error),
+            "With name present, there should be zero CC-PL-004 errors"
+        );
+
+        let warnings: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| {
+                d.rule == "CC-PL-004" && d.level == crate::diagnostics::DiagnosticLevel::Warning
+            })
+            .collect();
+        assert_eq!(
+            warnings.len(),
+            2,
+            "Should have warnings for missing description and version"
+        );
+        assert!(
+            warnings.iter().any(|d| d.message.contains("description")),
+            "Should mention 'description' in warning"
+        );
+        assert!(
+            warnings.iter().any(|d| d.message.contains("version")),
+            "Should mention 'version' in warning"
+        );
+    }
+
+    #[test]
+    fn test_cc_pl_004_non_string_name_is_error() {
+        let temp = TempDir::new().unwrap();
+        let plugin_path = temp.path().join(".claude-plugin").join("plugin.json");
+        write_plugin(
+            &plugin_path,
+            r#"{"name":123,"description":"desc","version":"1.0.0"}"#,
+        );
+
+        let validator = PluginValidator;
+        let diagnostics = validator.validate(
+            &plugin_path,
+            &fs::read_to_string(&plugin_path).unwrap(),
+            &LintConfig::default(),
+        );
+
+        let name_error = diagnostics.iter().find(|d| {
+            d.rule == "CC-PL-004" && d.level == crate::diagnostics::DiagnosticLevel::Error
+        });
+        assert!(
+            name_error.is_some(),
+            "Non-string name should trigger CC-PL-004 error"
+        );
+    }
+
+    #[test]
+    fn test_cc_pl_004_non_string_recommended_fields_are_warnings() {
+        let temp = TempDir::new().unwrap();
+        let plugin_path = temp.path().join(".claude-plugin").join("plugin.json");
+        write_plugin(
+            &plugin_path,
+            r#"{"name":"test","description":123,"version":true}"#,
+        );
+
+        let validator = PluginValidator;
+        let diagnostics = validator.validate(
+            &plugin_path,
+            &fs::read_to_string(&plugin_path).unwrap(),
+            &LintConfig::default(),
+        );
+
+        let warnings: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| {
+                d.rule == "CC-PL-004" && d.level == crate::diagnostics::DiagnosticLevel::Warning
+            })
+            .collect();
+        assert_eq!(
+            warnings.len(),
+            2,
+            "Non-string description and version should trigger warnings"
+        );
+    }
+
+    #[test]
+    fn test_cc_pl_003_skips_when_version_absent() {
+        let temp = TempDir::new().unwrap();
+        let plugin_path = temp.path().join(".claude-plugin").join("plugin.json");
+        write_plugin(&plugin_path, r#"{"name":"test"}"#);
+
+        let validator = PluginValidator;
+        let diagnostics = validator.validate(
+            &plugin_path,
+            &fs::read_to_string(&plugin_path).unwrap(),
+            &LintConfig::default(),
+        );
+
+        assert!(
+            !diagnostics.iter().any(|d| d.rule == "CC-PL-003"),
+            "CC-PL-003 should not fire when version is absent"
+        );
+    }
+
+    #[test]
+    fn test_cc_pl_003_fires_despite_non_string_description() {
+        let temp = TempDir::new().unwrap();
+        let plugin_path = temp.path().join(".claude-plugin").join("plugin.json");
+        write_plugin(
+            &plugin_path,
+            r#"{"name":"test","description":123,"version":"1.0"}"#,
+        );
+
+        let validator = PluginValidator;
+        let diagnostics = validator.validate(
+            &plugin_path,
+            &fs::read_to_string(&plugin_path).unwrap(),
+            &LintConfig::default(),
+        );
+
+        assert!(
+            diagnostics.iter().any(|d| d.rule == "CC-PL-003"),
+            "CC-PL-003 should fire for invalid semver even with non-string description"
+        );
+        assert!(
+            diagnostics.iter().any(|d| d.rule == "CC-PL-004"
+                && d.level == crate::diagnostics::DiagnosticLevel::Warning),
+            "CC-PL-004 warning should fire for non-string description"
+        );
+    }
+
+    #[test]
+    fn test_cc_pl_004_disabled_via_config() {
+        let temp = TempDir::new().unwrap();
+        let plugin_path = temp.path().join(".claude-plugin").join("plugin.json");
+        write_plugin(&plugin_path, r#"{}"#);
+
+        let mut config = LintConfig::default();
+        config.rules_mut().disabled_rules = vec!["CC-PL-004".to_string()];
+
+        let validator = PluginValidator;
+        let diagnostics = validator.validate(
+            &plugin_path,
+            &fs::read_to_string(&plugin_path).unwrap(),
+            &config,
+        );
+
+        assert!(
+            !diagnostics.iter().any(|d| d.rule == "CC-PL-004"),
+            "CC-PL-004 should not fire when disabled"
+        );
+    }
+
+    #[test]
+    fn test_cc_pl_004_whitespace_only_name_is_error() {
+        let temp = TempDir::new().unwrap();
+        let plugin_path = temp.path().join(".claude-plugin").join("plugin.json");
+        write_plugin(
+            &plugin_path,
+            r#"{"name":"   ","description":"desc","version":"1.0.0"}"#,
+        );
+
+        let validator = PluginValidator;
+        let diagnostics = validator.validate(
+            &plugin_path,
+            &fs::read_to_string(&plugin_path).unwrap(),
+            &LintConfig::default(),
+        );
+
+        assert!(
+            diagnostics
+                .iter()
+                .any(|d| d.rule == "CC-PL-004"
+                    && d.level == crate::diagnostics::DiagnosticLevel::Error),
+            "Whitespace-only name should trigger CC-PL-004 error"
+        );
+    }
+
+    #[test]
+    fn test_cc_pl_004_whitespace_only_recommended_fields() {
+        let temp = TempDir::new().unwrap();
+        let plugin_path = temp.path().join(".claude-plugin").join("plugin.json");
+        write_plugin(
+            &plugin_path,
+            r#"{"name":"test","description":"  ","version":"  "}"#,
+        );
+
+        let validator = PluginValidator;
+        let diagnostics = validator.validate(
+            &plugin_path,
+            &fs::read_to_string(&plugin_path).unwrap(),
+            &LintConfig::default(),
+        );
+
+        let warnings: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| {
+                d.rule == "CC-PL-004" && d.level == crate::diagnostics::DiagnosticLevel::Warning
+            })
+            .collect();
+        assert_eq!(
+            warnings.len(),
+            2,
+            "Whitespace-only description and version should trigger warnings"
+        );
     }
 
     #[test]
