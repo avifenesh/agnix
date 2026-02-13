@@ -119,6 +119,16 @@ agnix --target claude-code .  # Target specific tool
 | [AGENTS.md](https://agentsmd.org) | AGM-\*, XP-\* | 13 | AGENTS.md, AGENTS.local.md, AGENTS.override.md |
 | [Gemini CLI](https://github.com/google-gemini/gemini-cli) | GM-\* | 3 | GEMINI.md, GEMINI.local.md |
 
+## Architecture
+
+Rust workspace crates:
+- `agnix-rules` - rule metadata generated from `knowledge-base/rules.json`
+- `agnix-core` - shared validation engine library
+- `agnix-cli` - command-line interface binary
+- `agnix-lsp` - language server binary
+- `agnix-mcp` - MCP server binary
+- `agnix-wasm` - WebAssembly bindings for browser/runtime integrations
+
 ## Contributing
 
 Contributions welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for the development guide.

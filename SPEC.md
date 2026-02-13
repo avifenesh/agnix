@@ -47,7 +47,8 @@ agnix/
 │   │   └── rules/      # Validators
 │   ├── agnix-cli/      # CLI binary
 │   ├── agnix-lsp/      # LSP server
-│   └── agnix-mcp/      # MCP server
+│   ├── agnix-mcp/      # MCP server
+│   └── agnix-wasm/     # WebAssembly bindings
 ├── editors/            # Neovim, VS Code, JetBrains, Zed integrations
 ├── knowledge-base/     # 156 rules documented
 
