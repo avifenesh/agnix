@@ -392,6 +392,10 @@ rules:
   cln_003:
     message: "Clave de frontmatter desconocida '%{key}' en archivo de reglas de Cline"
     suggestion: "Elimina la clave desconocida '%{key}'. Solo 'paths' es una clave de frontmatter reconocida."
+  cln_004:
+    message: "Cline ignora valores escalares en paths - usa un arreglo YAML en su lugar"
+    suggestion: "Cambia paths a formato de arreglo: paths:\n  - \"%{pattern}\""
+    fix: "Convertir paths escalar a formato de arreglo"
 
   # --- Gemini CLI (gemini_md.rs) ---
   gm_001:

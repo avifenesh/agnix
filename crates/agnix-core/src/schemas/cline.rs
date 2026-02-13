@@ -13,12 +13,36 @@ use std::collections::HashSet;
 /// Known valid keys for .clinerules/*.md frontmatter
 const KNOWN_KEYS: &[&str] = &["paths"];
 
+/// Paths field can be a single string (scalar) or an array of strings.
+/// Cline expects an array - scalar values are silently ignored.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum PathsField {
+    Scalar(String),
+    Array(Vec<String>),
+}
+
+impl PathsField {
+    /// Returns true if this is a scalar string (not an array)
+    pub fn is_scalar(&self) -> bool {
+        matches!(self, PathsField::Scalar(_))
+    }
+
+    /// Get all patterns as a vector
+    pub fn patterns(&self) -> Vec<&str> {
+        match self {
+            PathsField::Scalar(s) => vec![s.as_str()],
+            PathsField::Array(v) => v.iter().map(|s| s.as_str()).collect(),
+        }
+    }
+}
+
 /// Frontmatter schema for Cline .clinerules/*.md files
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct ClineRuleSchema {
     /// Glob patterns specifying which files this rule applies to
     #[serde(default)]
-    pub paths: Option<String>,
+    pub paths: Option<PathsField>,
 }
 
 /// Result of parsing Cline rule file frontmatter
@@ -197,6 +221,27 @@ mod tests {
     #[test]
     fn test_parse_valid_frontmatter() {
         let content = r#"---
+paths:
+  - "**/*.ts"
+---
+# TypeScript Rules
+
+Use strict mode.
+"#;
+        let result = parse_frontmatter(content).unwrap();
+        assert!(result.schema.is_some());
+        let schema = result.schema.as_ref().unwrap();
+        assert!(schema.paths.is_some());
+        let paths = schema.paths.as_ref().unwrap();
+        assert!(!paths.is_scalar());
+        assert_eq!(paths.patterns(), vec!["**/*.ts"]);
+        assert!(result.parse_error.is_none());
+        assert!(result.body.contains("TypeScript Rules"));
+    }
+
+    #[test]
+    fn test_parse_scalar_paths() {
+        let content = r#"---
 paths: "**/*.ts"
 ---
 # TypeScript Rules
@@ -205,12 +250,55 @@ Use strict mode.
 "#;
         let result = parse_frontmatter(content).unwrap();
         assert!(result.schema.is_some());
-        assert_eq!(
-            result.schema.as_ref().unwrap().paths,
-            Some("**/*.ts".to_string())
-        );
-        assert!(result.parse_error.is_none());
-        assert!(result.body.contains("TypeScript Rules"));
+        let schema = result.schema.as_ref().unwrap();
+        assert!(schema.paths.is_some());
+        let paths = schema.paths.as_ref().unwrap();
+        assert!(paths.is_scalar());
+        assert_eq!(paths.patterns(), vec!["**/*.ts"]);
+    }
+
+    #[test]
+    fn test_parse_array_paths() {
+        let content = r#"---
+paths:
+  - "**/*.ts"
+  - "**/*.tsx"
+  - "src/**/*.js"
+---
+# Web Rules
+"#;
+        let result = parse_frontmatter(content).unwrap();
+        assert!(result.schema.is_some());
+        let schema = result.schema.as_ref().unwrap();
+        if let Some(PathsField::Array(patterns)) = &schema.paths {
+            assert_eq!(patterns.len(), 3);
+            assert!(patterns.contains(&"**/*.ts".to_string()));
+            assert!(patterns.contains(&"**/*.tsx".to_string()));
+            assert!(patterns.contains(&"src/**/*.js".to_string()));
+        } else {
+            panic!("Expected array paths");
+        }
+    }
+
+    #[test]
+    fn test_paths_field_is_scalar() {
+        let scalar = PathsField::Scalar("**/*.ts".to_string());
+        assert!(scalar.is_scalar());
+
+        let array = PathsField::Array(vec!["**/*.ts".to_string()]);
+        assert!(!array.is_scalar());
+    }
+
+    #[test]
+    fn test_paths_field_patterns() {
+        let scalar = PathsField::Scalar("**/*.ts".to_string());
+        assert_eq!(scalar.patterns(), vec!["**/*.ts"]);
+
+        let array = PathsField::Array(vec!["**/*.ts".to_string(), "**/*.tsx".to_string()]);
+        let patterns = array.patterns();
+        assert_eq!(patterns.len(), 2);
+        assert!(patterns.contains(&"**/*.ts"));
+        assert!(patterns.contains(&"**/*.tsx"));
     }
 
     #[test]
