@@ -1,5 +1,6 @@
 ---
-paths: "**/*.ts"
+paths:
+  - "**/*.ts"
 unknownKey: value
 anotherBadKey: 123
 ---

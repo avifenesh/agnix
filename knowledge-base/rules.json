@@ -1,7 +1,7 @@
 {
   "description": "Machine-readable source of truth for all validation rules. When adding a new rule, add it here AND in VALIDATION-RULES.md. CI parity tests enforce sync.",
   "version": "1.1.0",
-  "total_rules": 168,
+  "total_rules": 169,
   "last_updated": "2026-02-09",
   "schema": {
     "evidence": {
@@ -3599,8 +3599,8 @@
       "fix": {
         "autofix": false
       },
-      "good_example": "---\npaths: \"**/*.ts\"\n---\n# TypeScript Rules\n\nUse strict mode.",
-      "bad_example": "---\npaths: \"[unclosed\"\n---\n# TypeScript Rules\n\nUse strict mode."
+      "good_example": "---\npaths:\n  - \"**/*.ts\"\n---\n# TypeScript Rules\n\nUse strict mode.",
+      "bad_example": "---\npaths:\n  - \"[unclosed\"\n---\n# TypeScript Rules\n\nUse strict mode."
     },
     {
       "id": "CLN-003",
@@ -3627,8 +3627,36 @@
         "autofix": true,
         "fix_safety": "unsafe"
       },
-      "good_example": "---\npaths: \"**/*.ts\"\n---\n# TypeScript Rules\n\nUse strict mode.",
-      "bad_example": "---\npaths: \"**/*.ts\"\nunknownKey: some-value\n---\n# TypeScript Rules\n\nUse strict mode."
+      "good_example": "---\npaths:\n  - \"**/*.ts\"\n---\n# TypeScript Rules\n\nUse strict mode.",
+      "bad_example": "---\npaths:\n  - \"**/*.ts\"\nunknownKey: some-value\n---\n# TypeScript Rules\n\nUse strict mode."
+    },
+    {
+      "id": "CLN-004",
+      "name": "Scalar Paths in Cline Rules",
+      "severity": "HIGH",
+      "category": "cline",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://docs.cline.bot/features/cline-rules"
+        ],
+        "verified_on": "2026-02-13",
+        "applies_to": {
+          "tool": "cline"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": true,
+        "fix_safety": "safe"
+      },
+      "good_example": "---\npaths:\n  - \"**/*.ts\"\n---\n# TypeScript Rules\n\nUse strict mode.",
+      "bad_example": "---\npaths: \"**/*.ts\"\n---\n# TypeScript Rules\n\nUse strict mode."
     },
     {
       "id": "XML-001",

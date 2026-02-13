@@ -15,7 +15,7 @@ use crate::{
 use rust_i18n::t;
 use std::path::Path;
 
-const RULE_IDS: &[&str] = &["CLN-001", "CLN-002", "CLN-003"];
+const RULE_IDS: &[&str] = &["CLN-001", "CLN-002", "CLN-003", "CLN-004"];
 
 pub struct ClineValidator;
 
@@ -130,23 +130,59 @@ impl Validator for ClineValidator {
         // CLN-002: Invalid paths glob (ERROR)
         if config.is_rule_enabled("CLN-002") {
             if let Some(ref schema) = parsed.schema {
-                if let Some(ref paths_value) = schema.paths {
-                    let validation = validate_glob_pattern(paths_value);
-                    if !validation.valid {
-                        diagnostics.push(
-                            Diagnostic::error(
-                                path.to_path_buf(),
-                                parsed.paths_line.unwrap_or(parsed.start_line + 1),
-                                0,
-                                "CLN-002",
-                                t!(
-                                    "rules.cln_002.message",
-                                    pattern = paths_value.as_str(),
-                                    error = validation.error.unwrap_or_default()
-                                ),
-                            )
-                            .with_suggestion(t!("rules.cln_002.suggestion")),
-                        );
+                if let Some(ref paths_field) = schema.paths {
+                    for pattern in paths_field.patterns() {
+                        let validation = validate_glob_pattern(pattern);
+                        if !validation.valid {
+                            diagnostics.push(
+                                Diagnostic::error(
+                                    path.to_path_buf(),
+                                    parsed.paths_line.unwrap_or(parsed.start_line + 1),
+                                    0,
+                                    "CLN-002",
+                                    t!(
+                                        "rules.cln_002.message",
+                                        pattern = pattern,
+                                        error = validation.error.unwrap_or_default()
+                                    ),
+                                )
+                                .with_suggestion(t!("rules.cln_002.suggestion")),
+                            );
+                        }
+                    }
+                }
+            }
+        }
+
+        // CLN-004: Scalar paths value (ERROR) - Cline ignores scalar strings
+        if config.is_rule_enabled("CLN-004") {
+            if let Some(ref schema) = parsed.schema {
+                if let Some(ref paths_field) = schema.paths {
+                    if let Some(pattern) = paths_field.as_scalar() {
+                        let line = parsed.paths_line.unwrap_or(parsed.start_line + 1);
+                        let mut diagnostic = Diagnostic::error(
+                            path.to_path_buf(),
+                            line,
+                            0,
+                            "CLN-004",
+                            t!("rules.cln_004.message"),
+                        )
+                        .with_suggestion(t!("rules.cln_004.suggestion", pattern = pattern));
+
+                        // Auto-fix: convert scalar to array
+                        if let Some((start, end)) = line_byte_range(content, line) {
+                            let escaped = pattern.replace('\\', "\\\\").replace('"', "\\\"");
+                            let fix_text = format!("paths:\n  - \"{}\"\n", escaped);
+                            diagnostic = diagnostic.with_fix(Fix::replace(
+                                start,
+                                end,
+                                fix_text,
+                                t!("rules.cln_004.fix"),
+                                true,
+                            ));
+                        }
+
+                        diagnostics.push(diagnostic);
                     }
                 }
             }
@@ -244,10 +280,7 @@ mod tests {
 
     #[test]
     fn test_cln_001_empty_body_after_frontmatter() {
-        let content = r#"---
-paths: "**/*.ts"
----
-"#;
+        let content = "---\npaths:\n  - \"**/*.ts\"\n---\n";
         let diagnostics = validate_folder(content);
         let cln_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CLN-001").collect();
         assert_eq!(cln_001.len(), 1);
@@ -256,13 +289,7 @@ paths: "**/*.ts"
 
     #[test]
     fn test_cln_001_valid_folder_file() {
-        let content = r#"---
-paths: "**/*.ts"
----
-# TypeScript Rules
-
-Use strict mode.
-"#;
+        let content = "---\npaths:\n  - \"**/*.ts\"\n---\n# TypeScript Rules\n\nUse strict mode.\n";
         let diagnostics = validate_folder(content);
         let cln_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CLN-001").collect();
         assert!(cln_001.is_empty());
@@ -287,11 +314,7 @@ Use strict mode.
 
     #[test]
     fn test_cln_002_invalid_glob() {
-        let content = r#"---
-paths: "[unclosed"
----
-# Instructions
-"#;
+        let content = "---\npaths:\n  - \"[unclosed\"\n---\n# Instructions\n";
         let diagnostics = validate_folder(content);
         let cln_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CLN-002").collect();
         assert_eq!(cln_002.len(), 1);
@@ -304,14 +327,7 @@ paths: "[unclosed"
         let patterns = vec!["**/*.ts", "*.rs", "src/**/*.js", "tests/**/*.test.ts"];
 
         for pattern in patterns {
-            let content = format!(
-                r#"---
-paths: "{}"
----
-# Instructions
-"#,
-                pattern
-            );
+            let content = format!("---\npaths:\n  - \"{}\"\n---\n# Instructions\n", pattern);
             let diagnostics = validate_folder(&content);
             let cln_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CLN-002").collect();
             assert!(cln_002.is_empty(), "Pattern '{}' should be valid", pattern);
@@ -323,7 +339,7 @@ paths: "{}"
         let invalid_patterns = ["[invalid", "***", "**["];
 
         for pattern in invalid_patterns {
-            let content = format!("---\npaths: \"{}\"\n---\nBody", pattern);
+            let content = format!("---\npaths:\n  - \"{}\"\n---\nBody", pattern);
             let diagnostics = validate_folder(&content);
             let cln_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CLN-002").collect();
             assert!(
@@ -332,6 +348,31 @@ paths: "{}"
                 pattern
             );
         }
+    }
+
+    #[test]
+    fn test_cln_002_multiple_patterns_mixed() {
+        let content = "---\npaths:\n  - \"**/*.ts\"\n  - \"[invalid\"\n---\n# Instructions\n";
+        let diagnostics = validate_folder(content);
+        let cln_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CLN-002").collect();
+        assert_eq!(
+            cln_002.len(),
+            1,
+            "Only the invalid pattern should trigger CLN-002"
+        );
+        assert!(cln_002[0].message.contains("[invalid"));
+    }
+
+    #[test]
+    fn test_cln_002_multiple_invalid_patterns() {
+        let content = "---\npaths:\n  - \"[bad1\"\n  - \"**[bad2\"\n---\n# Instructions\n";
+        let diagnostics = validate_folder(content);
+        let cln_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CLN-002").collect();
+        assert_eq!(
+            cln_002.len(),
+            2,
+            "Both invalid patterns should trigger CLN-002"
+        );
     }
 
     #[test]
@@ -359,13 +400,7 @@ paths: "{}"
 
     #[test]
     fn test_cln_003_unknown_keys() {
-        let content = r#"---
-paths: "**/*.ts"
-unknownKey: value
-anotherBadKey: 123
----
-# Instructions
-"#;
+        let content = "---\npaths:\n  - \"**/*.ts\"\nunknownKey: value\nanotherBadKey: 123\n---\n# Instructions\n";
         let diagnostics = validate_folder(content);
         let cln_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CLN-003").collect();
         assert_eq!(cln_003.len(), 2);
@@ -382,11 +417,7 @@ anotherBadKey: 123
 
     #[test]
     fn test_cln_003_no_unknown_keys() {
-        let content = r#"---
-paths: "**/*.rs"
----
-# Instructions
-"#;
+        let content = "---\npaths:\n  - \"**/*.rs\"\n---\n# Instructions\n";
         let diagnostics = validate_folder(content);
         let cln_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CLN-003").collect();
         assert!(cln_003.is_empty());
@@ -452,26 +483,20 @@ unknownKey: value
 
     #[test]
     fn test_valid_folder_no_issues() {
-        let content = r#"---
-paths: "**/*.ts"
----
-# TypeScript Guidelines
-
-Always use strict mode and explicit types.
-"#;
+        let content = "---\npaths:\n  - \"**/*.ts\"\n---\n# TypeScript Guidelines\n\nAlways use strict mode and explicit types.\n";
         let diagnostics = validate_folder(content);
-        let errors: Vec<_> = diagnostics
-            .iter()
-            .filter(|d| d.level == DiagnosticLevel::Error)
-            .collect();
-        assert!(errors.is_empty(), "Expected no errors, got: {:?}", errors);
+        assert!(
+            diagnostics.is_empty(),
+            "Expected no diagnostics, got: {:?}",
+            diagnostics
+        );
     }
 
     // ===== All Rules Can Be Disabled =====
 
     #[test]
     fn test_all_cln_rules_can_be_disabled() {
-        let rules = ["CLN-001", "CLN-002", "CLN-003"];
+        let rules = ["CLN-001", "CLN-002", "CLN-003", "CLN-004"];
 
         for rule in rules {
             let mut config = LintConfig::default();
@@ -479,8 +504,12 @@ Always use strict mode and explicit types.
 
             let (content, path): (&str, &str) = match rule {
                 "CLN-001" => ("", ".clinerules"),
-                "CLN-002" => ("---\npaths: \"[invalid\"\n---\nBody", ".clinerules/test.md"),
+                "CLN-002" => (
+                    "---\npaths:\n  - \"[invalid\"\n---\nBody",
+                    ".clinerules/test.md",
+                ),
                 "CLN-003" => ("---\nunknown: value\n---\nBody", ".clinerules/test.md"),
+                "CLN-004" => ("---\npaths: \"**/*.ts\"\n---\nBody", ".clinerules/test.md"),
                 _ => unreachable!("Unknown rule: {rule}"),
             };
 
@@ -493,6 +522,49 @@ Always use strict mode and explicit types.
                 rule
             );
         }
+    }
+
+    // ===== CLN-004: Scalar Paths Error =====
+
+    #[test]
+    fn test_cln_004_scalar_paths_warns() {
+        let content = "---\npaths: \"**/*.ts\"\n---\n# Instructions\n";
+        let diagnostics = validate_folder(content);
+        let cln_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CLN-004").collect();
+        assert_eq!(cln_004.len(), 1);
+        assert_eq!(cln_004[0].level, DiagnosticLevel::Error);
+        assert!(cln_004[0].message.contains("scalar"));
+    }
+
+    #[test]
+    fn test_cln_004_array_paths_no_warning() {
+        let content = "---\npaths:\n  - \"**/*.ts\"\n---\n# Instructions\n";
+        let diagnostics = validate_folder(content);
+        let cln_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CLN-004").collect();
+        assert!(cln_004.is_empty());
+    }
+
+    #[test]
+    fn test_cln_004_has_autofix() {
+        let content = "---\npaths: \"**/*.ts\"\n---\n# Instructions\n";
+        let diagnostics = validate_folder(content);
+        let cln_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CLN-004").collect();
+        assert_eq!(cln_004.len(), 1);
+        assert!(cln_004[0].has_fixes(), "CLN-004 should have an auto-fix");
+        assert!(cln_004[0].fixes[0].safe, "CLN-004 fix should be safe");
+        assert!(
+            cln_004[0].fixes[0].replacement.contains("- \"**/*.ts\""),
+            "Fix should convert scalar to array format, got: {}",
+            cln_004[0].fixes[0].replacement
+        );
+    }
+
+    #[test]
+    fn test_cln_004_empty_array_no_warning() {
+        let content = "---\npaths: []\n---\n# Instructions\n";
+        let diagnostics = validate_folder(content);
+        let cln_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CLN-004").collect();
+        assert!(cln_004.is_empty(), "Empty array should not trigger CLN-004");
     }
 
     // ===== File Type Detection =====

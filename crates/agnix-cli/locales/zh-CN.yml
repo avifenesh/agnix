@@ -392,6 +392,10 @@ rules:
   cln_003:
     message: "Cline 规则文件中未知的 frontmatter 键 '%{key}'"
     suggestion: "删除未知键 '%{key}'。只有 'paths' 是已识别的 frontmatter 键。"
+  cln_004:
+    message: "Cline 会忽略标量 paths 值 - 请改用 YAML 数组"
+    suggestion: "将 paths 改为数组格式: paths:\n  - \"%{pattern}\""
+    fix: "将标量 paths 转换为数组格式"
 
   # --- Gemini CLI (gemini_md.rs) ---
   gm_001:
