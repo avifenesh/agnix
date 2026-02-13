@@ -314,6 +314,58 @@ model: sonnet
     // Validation should complete without error
 }
 
+/// Test did_save on a project-level trigger file starts project-level revalidation.
+#[tokio::test]
+async fn test_did_save_project_trigger_starts_project_revalidation() {
+    let (service, _socket) = LspService::new(Backend::new);
+
+    let temp_dir = tempfile::tempdir().unwrap();
+    let agents_path = temp_dir.path().join("AGENTS.md");
+    std::fs::write(&agents_path, "# Root AGENTS").unwrap();
+
+    let root_uri = Url::from_file_path(temp_dir.path()).unwrap();
+    service
+        .inner()
+        .initialize(InitializeParams {
+            root_uri: Some(root_uri),
+            ..Default::default()
+        })
+        .await
+        .unwrap();
+
+    let before = service
+        .inner()
+        .project_validation_generation
+        .load(Ordering::SeqCst);
+
+    let uri = Url::from_file_path(&agents_path).unwrap();
+    service
+        .inner()
+        .did_save(DidSaveTextDocumentParams {
+            text_document: TextDocumentIdentifier { uri },
+            text: None,
+        })
+        .await;
+
+    let mut observed_increment = false;
+    for _ in 0..40 {
+        let current = service
+            .inner()
+            .project_validation_generation
+            .load(Ordering::SeqCst);
+        if current > before {
+            observed_increment = true;
+            break;
+        }
+        tokio::time::sleep(std::time::Duration::from_millis(25)).await;
+    }
+
+    assert!(
+        observed_increment,
+        "did_save on AGENTS.md should trigger project-level revalidation"
+    );
+}
+
 /// Test did_close clears diagnostics.
 #[tokio::test]
 async fn test_did_close_clears_diagnostics() {
@@ -1885,6 +1937,89 @@ async fn test_project_diagnostics_cleared_on_rerun() {
         })
         .count();
     assert_eq!(agm006_count, 0, "AGM-006 should be cleared after fix");
+}
+
+/// Test stale generation guard returns early without mutating cached project diagnostics.
+#[tokio::test]
+async fn test_project_validation_stale_generation_returns_early() {
+    let (service, _socket) = LspService::new(Backend::new);
+    let backend = service.inner().clone();
+
+    let temp_dir = tempfile::tempdir().unwrap();
+
+    // Create two AGENTS.md files so project validation has work to do.
+    std::fs::write(temp_dir.path().join("AGENTS.md"), "# Root").unwrap();
+    let sub = temp_dir.path().join("sub");
+    std::fs::create_dir(&sub).unwrap();
+    std::fs::write(sub.join("AGENTS.md"), "# Sub").unwrap();
+
+    let root_uri = Url::from_file_path(temp_dir.path()).unwrap();
+    service
+        .inner()
+        .initialize(InitializeParams {
+            root_uri: Some(root_uri),
+            ..Default::default()
+        })
+        .await
+        .unwrap();
+
+    // Pre-populate cache so we can verify stale run does not overwrite it.
+    let sentinel_path = temp_dir.path().join("sentinel.md");
+    let sentinel_uri = Url::from_file_path(&sentinel_path).unwrap();
+    let sentinel_diag = Diagnostic {
+        range: Range {
+            start: Position {
+                line: 0,
+                character: 0,
+            },
+            end: Position {
+                line: 0,
+                character: 0,
+            },
+        },
+        severity: Some(DiagnosticSeverity::WARNING),
+        code: Some(NumberOrString::String("SENTINEL".to_string())),
+        code_description: None,
+        source: Some("agnix".to_string()),
+        message: "sentinel".to_string(),
+        related_information: None,
+        tags: None,
+        data: None,
+    };
+    {
+        let mut proj_diags = service.inner().project_level_diagnostics.write().await;
+        proj_diags.insert(sentinel_uri.clone(), vec![sentinel_diag]);
+    }
+    {
+        let mut proj_uris = service.inner().project_diagnostics_uris.write().await;
+        proj_uris.insert(sentinel_uri.clone());
+    }
+
+    // Continuously bump generation to force stale detection in the running validation.
+    let bump_backend = service.inner().clone();
+    let bump = tokio::spawn(async move {
+        for _ in 0..200 {
+            bump_backend
+                .project_validation_generation
+                .store(9_999, Ordering::SeqCst);
+            tokio::task::yield_now().await;
+        }
+    });
+
+    backend.validate_project_rules_and_publish().await;
+    bump.abort();
+
+    let proj_diags = service.inner().project_level_diagnostics.read().await;
+    assert!(
+        proj_diags.contains_key(&sentinel_uri),
+        "stale generation run should return before overwriting cached diagnostics"
+    );
+
+    let proj_uris = service.inner().project_diagnostics_uris.read().await;
+    assert!(
+        proj_uris.contains(&sentinel_uri),
+        "stale generation run should return before mutating cached URI set"
+    );
 }
 
 /// Test is_project_level_trigger for various file names.
