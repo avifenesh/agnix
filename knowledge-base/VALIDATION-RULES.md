@@ -1429,7 +1429,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 |----------|-------------|------|--------|-----|--------------|
 | Agent Skills | 16 | 14 | 2 | 0 | 5 |
 | Claude Skills | 15 | 11 | 4 | 0 | 9 |
-| Claude Hooks | 18 | 13 | 4 | 1 | 7 |
+| Claude Hooks | 18 | 12 | 4 | 2 | 7 |
 | Claude Agents | 13 | 12 | 1 | 0 | 4 |
 | Claude Memory | 12 | 8 | 4 | 0 | 3 |
 | AGENTS.md | 6 | 1 | 5 | 0 | 0 |
@@ -1455,7 +1455,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | Amp Skills | 1 | 0 | 1 | 0 | 1 |
 | Roo Code Skills | 1 | 0 | 1 | 0 | 1 |
 | Version Awareness | 1 | 0 | 0 | 1 | 0 |
-| **TOTAL** | **157** | **102** | **52** | **3** | **58** |
+| **TOTAL** | **157** | **101** | **52** | **4** | **58** |
 
 
 ---
