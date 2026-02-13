@@ -98,6 +98,9 @@ mod tests {
             replacement: replacement.to_string(),
             description: description.to_string(),
             safe,
+            confidence: None,
+            group: None,
+            depends_on: None,
         }
     }
 

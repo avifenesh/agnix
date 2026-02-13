@@ -318,6 +318,9 @@ fn diagnostic_serde_roundtrip_preserves_all_fields() {
                 replacement: "sonnet".to_string(),
                 description: "Replace with valid model".to_string(),
                 safe: true,
+                confidence: None,
+                group: None,
+                depends_on: None,
             },
             agnix_core::Fix {
                 start_byte: 200,
@@ -325,6 +328,9 @@ fn diagnostic_serde_roundtrip_preserves_all_fields() {
                 replacement: String::new(),
                 description: "Remove deprecated field".to_string(),
                 safe: false,
+                confidence: None,
+                group: None,
+                depends_on: None,
             },
         ],
         assumption: Some("Assuming Claude Code >= 1.0.0".to_string()),
@@ -359,6 +365,9 @@ fn fix_serde_roundtrip_preserves_all_fields() {
         replacement: "replacement text".to_string(),
         description: "fix the thing".to_string(),
         safe: false,
+        confidence: None,
+        group: None,
+        depends_on: None,
     };
 
     let json = serde_json::to_string(&original).unwrap();

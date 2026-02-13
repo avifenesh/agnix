@@ -31,6 +31,106 @@ fn skip_whitespace(content: &[u8], pos: usize) -> usize {
     i
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[allow(dead_code)]
+pub(crate) enum StructuredFieldFormat {
+    Json,
+    Yaml,
+}
+
+/// Build a formatted field insertion line for JSON/YAML objects based on local indentation.
+///
+/// This helper is intended for autofix generation where a field needs to be inserted before a
+/// closing brace or at a known object insertion point while keeping consistent indentation.
+///
+/// `insertion_byte` should point at the target insertion location in `content`.
+#[allow(dead_code)]
+pub(crate) fn build_structured_field_insertion(
+    content: &str,
+    insertion_byte: usize,
+    key: &str,
+    value: &str,
+    format: StructuredFieldFormat,
+    trailing_separator: bool,
+) -> Option<String> {
+    if insertion_byte > content.len() || !content.is_char_boundary(insertion_byte) {
+        return None;
+    }
+
+    let line_start = content[..insertion_byte]
+        .rfind('\n')
+        .map_or(0, |idx| idx + 1);
+    let line_end = content[insertion_byte..]
+        .find('\n')
+        .map_or(content.len(), |idx| insertion_byte + idx);
+    let current_line = &content[line_start..line_end];
+    let current_indent: String = current_line
+        .chars()
+        .take_while(|ch| *ch == ' ' || *ch == '\t')
+        .collect();
+
+    let previous_indent = content[..line_start]
+        .lines()
+        .rev()
+        .find(|line| !line.trim().is_empty())
+        .map(|line| {
+            line.chars()
+                .take_while(|ch| *ch == ' ' || *ch == '\t')
+                .collect::<String>()
+        });
+
+    let field_indent = if let Some(prev) = previous_indent {
+        if prev.len() > current_indent.len() {
+            prev
+        } else if current_line.trim_start().starts_with('}')
+            || current_line.trim_start().starts_with(']')
+        {
+            format!("{}{}", current_indent, detect_indent_unit(content))
+        } else {
+            current_indent
+        }
+    } else if current_line.trim_start().starts_with('}')
+        || current_line.trim_start().starts_with(']')
+    {
+        format!("{}{}", current_indent, detect_indent_unit(content))
+    } else {
+        current_indent
+    };
+
+    let line = match format {
+        StructuredFieldFormat::Json => {
+            let comma = if trailing_separator { "," } else { "" };
+            format!(r#"{field_indent}"{key}": {value}{comma}"#)
+        }
+        StructuredFieldFormat::Yaml => format!("{field_indent}{key}: {value}"),
+    };
+
+    Some(format!("{line}\n"))
+}
+
+fn detect_indent_unit(content: &str) -> &'static str {
+    for line in content.lines() {
+        if line.trim().is_empty() {
+            continue;
+        }
+        let leading: String = line
+            .chars()
+            .take_while(|ch| *ch == ' ' || *ch == '\t')
+            .collect();
+        if leading.is_empty() {
+            continue;
+        }
+        if leading.starts_with('\t') {
+            return "\t";
+        }
+        if leading.len() >= 4 && leading.len().is_multiple_of(4) {
+            return "    ";
+        }
+        return "  ";
+    }
+    "  "
+}
+
 /// Find all byte positions where `"key"` appears followed by optional whitespace and `:`.
 /// Returns a vec of (key_start, key_end, after_colon) tuples.
 fn find_all_json_key_colon_positions(content: &str, key: &str) -> Vec<(usize, usize, usize)> {
@@ -448,6 +548,59 @@ mod tests {
     #[test]
     fn skip_whitespace_from_offset() {
         assert_eq!(skip_whitespace(b"ab  cd", 2), 4);
+    }
+
+    // ===== structured field insertion helper =====
+
+    #[test]
+    fn structured_json_insertion_respects_indent_before_closing_brace() {
+        let content = "{\n  \"type\": \"stdio\",\n  \"command\": \"node\"\n}\n";
+        let insert_at = content.find("}\n").unwrap();
+        let insertion = build_structured_field_insertion(
+            content,
+            insert_at,
+            "timeout",
+            "30",
+            StructuredFieldFormat::Json,
+            true,
+        )
+        .unwrap();
+
+        assert_eq!(insertion, "  \"timeout\": 30,\n");
+    }
+
+    #[test]
+    fn structured_json_insertion_without_trailing_separator_omits_comma() {
+        let content = "{\n  \"type\": \"stdio\"\n}\n";
+        let insert_at = content.find("}\n").unwrap();
+        let insertion = build_structured_field_insertion(
+            content,
+            insert_at,
+            "timeout",
+            "30",
+            StructuredFieldFormat::Json,
+            false,
+        )
+        .unwrap();
+
+        assert_eq!(insertion, "  \"timeout\": 30\n");
+    }
+
+    #[test]
+    fn structured_yaml_insertion_reuses_nested_indent() {
+        let content = "mcp:\n  server:\n    command: node\n";
+        let insert_at = content.len();
+        let insertion = build_structured_field_insertion(
+            content,
+            insert_at,
+            "timeout",
+            "30",
+            StructuredFieldFormat::Yaml,
+            false,
+        )
+        .unwrap();
+
+        assert_eq!(insertion, "    timeout: 30\n");
     }
 
     // ===== find_event_key_span =====

@@ -8,7 +8,7 @@ pub type LintResult<T> = Result<T, LintError>;
 pub type CoreResult<T> = Result<T, CoreError>;
 
 /// An automatic fix for a diagnostic
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Fix {
     /// Byte offset start (inclusive)
     pub start_byte: usize,
@@ -18,8 +18,36 @@ pub struct Fix {
     pub replacement: String,
     /// Human-readable description of what this fix does
     pub description: String,
-    /// Whether this fix is safe (HIGH certainty, >95%)
+    /// Legacy safety flag retained for backwards compatibility.
+    /// New code should prefer `confidence`, `is_safe()`, and `confidence_tier()`.
     pub safe: bool,
+    /// Confidence score (0.0 to 1.0).
+    ///
+    /// - HIGH: >= 0.95
+    /// - MEDIUM: >= 0.75 and < 0.95
+    /// - LOW: < 0.75
+    ///
+    /// When this is `None` (legacy serialized payloads), confidence is inferred
+    /// from `safe` for compatibility.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub confidence: Option<f32>,
+    /// Optional group key. Fixes in the same group are treated as alternatives.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub group: Option<String>,
+    /// Optional dependency key (group or description) required before applying this fix.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub depends_on: Option<String>,
+}
+
+pub const FIX_CONFIDENCE_HIGH_THRESHOLD: f32 = 0.95;
+pub const FIX_CONFIDENCE_MEDIUM_THRESHOLD: f32 = 0.75;
+const LEGACY_UNSAFE_CONFIDENCE: f32 = 0.80;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum FixConfidenceTier {
+    High,
+    Medium,
+    Low,
 }
 
 impl Fix {
@@ -31,12 +59,36 @@ impl Fix {
         description: impl Into<String>,
         safe: bool,
     ) -> Self {
+        let confidence = if safe { 1.0 } else { LEGACY_UNSAFE_CONFIDENCE };
         Self {
             start_byte: start,
             end_byte: end,
             replacement: replacement.into(),
             description: description.into(),
             safe,
+            confidence: Some(confidence),
+            group: None,
+            depends_on: None,
+        }
+    }
+
+    /// Create a replacement fix with explicit confidence.
+    pub fn replace_with_confidence(
+        start: usize,
+        end: usize,
+        replacement: impl Into<String>,
+        description: impl Into<String>,
+        confidence: f32,
+    ) -> Self {
+        Self {
+            start_byte: start,
+            end_byte: end,
+            replacement: replacement.into(),
+            description: description.into(),
+            safe: confidence >= FIX_CONFIDENCE_HIGH_THRESHOLD,
+            confidence: Some(clamp_confidence(confidence)),
+            group: None,
+            depends_on: None,
         }
     }
 
@@ -47,23 +99,117 @@ impl Fix {
         description: impl Into<String>,
         safe: bool,
     ) -> Self {
+        let confidence = if safe { 1.0 } else { LEGACY_UNSAFE_CONFIDENCE };
         Self {
             start_byte: position,
             end_byte: position,
             replacement: text.into(),
             description: description.into(),
             safe,
+            confidence: Some(confidence),
+            group: None,
+            depends_on: None,
+        }
+    }
+
+    /// Create an insertion fix with explicit confidence.
+    pub fn insert_with_confidence(
+        position: usize,
+        text: impl Into<String>,
+        description: impl Into<String>,
+        confidence: f32,
+    ) -> Self {
+        Self {
+            start_byte: position,
+            end_byte: position,
+            replacement: text.into(),
+            description: description.into(),
+            safe: confidence >= FIX_CONFIDENCE_HIGH_THRESHOLD,
+            confidence: Some(clamp_confidence(confidence)),
+            group: None,
+            depends_on: None,
         }
     }
 
     /// Create a deletion fix (replacement is empty)
     pub fn delete(start: usize, end: usize, description: impl Into<String>, safe: bool) -> Self {
+        let confidence = if safe { 1.0 } else { LEGACY_UNSAFE_CONFIDENCE };
         Self {
             start_byte: start,
             end_byte: end,
             replacement: String::new(),
             description: description.into(),
             safe,
+            confidence: Some(confidence),
+            group: None,
+            depends_on: None,
+        }
+    }
+
+    /// Create a deletion fix with explicit confidence.
+    pub fn delete_with_confidence(
+        start: usize,
+        end: usize,
+        description: impl Into<String>,
+        confidence: f32,
+    ) -> Self {
+        Self {
+            start_byte: start,
+            end_byte: end,
+            replacement: String::new(),
+            description: description.into(),
+            safe: confidence >= FIX_CONFIDENCE_HIGH_THRESHOLD,
+            confidence: Some(clamp_confidence(confidence)),
+            group: None,
+            depends_on: None,
+        }
+    }
+
+    /// Override confidence for this fix and sync legacy `safe`.
+    pub fn with_confidence(mut self, confidence: f32) -> Self {
+        let clamped = clamp_confidence(confidence);
+        self.confidence = Some(clamped);
+        self.safe = clamped >= FIX_CONFIDENCE_HIGH_THRESHOLD;
+        self
+    }
+
+    /// Mark this fix as part of an alternatives group.
+    pub fn with_group(mut self, group: impl Into<String>) -> Self {
+        self.group = Some(group.into());
+        self
+    }
+
+    /// Set a dependency key (group or description) that must be applied first.
+    pub fn with_dependency(mut self, depends_on: impl Into<String>) -> Self {
+        self.depends_on = Some(depends_on.into());
+        self
+    }
+
+    /// Resolve confidence score with legacy fallback.
+    pub fn confidence_score(&self) -> f32 {
+        self.confidence.unwrap_or({
+            if self.safe {
+                1.0
+            } else {
+                LEGACY_UNSAFE_CONFIDENCE
+            }
+        })
+    }
+
+    /// Derived safety check based on confidence threshold.
+    pub fn is_safe(&self) -> bool {
+        self.confidence_score() >= FIX_CONFIDENCE_HIGH_THRESHOLD
+    }
+
+    /// Confidence tier used for certainty filtering.
+    pub fn confidence_tier(&self) -> FixConfidenceTier {
+        let confidence = self.confidence_score();
+        if confidence >= FIX_CONFIDENCE_HIGH_THRESHOLD {
+            FixConfidenceTier::High
+        } else if confidence >= FIX_CONFIDENCE_MEDIUM_THRESHOLD {
+            FixConfidenceTier::Medium
+        } else {
+            FixConfidenceTier::Low
         }
     }
 
@@ -75,6 +221,33 @@ impl Fix {
     /// Check if this is a deletion (empty replacement)
     pub fn is_deletion(&self) -> bool {
         self.replacement.is_empty() && self.start_byte < self.end_byte
+    }
+}
+
+impl PartialEq for Fix {
+    fn eq(&self, other: &Self) -> bool {
+        self.start_byte == other.start_byte
+            && self.end_byte == other.end_byte
+            && self.replacement == other.replacement
+            && self.description == other.description
+            && self.safe == other.safe
+            && confidence_option_eq(self.confidence, other.confidence)
+            && self.group == other.group
+            && self.depends_on == other.depends_on
+    }
+}
+
+impl Eq for Fix {}
+
+fn clamp_confidence(confidence: f32) -> f32 {
+    confidence.clamp(0.0, 1.0)
+}
+
+fn confidence_option_eq(a: Option<f32>, b: Option<f32>) -> bool {
+    match (a, b) {
+        (Some(left), Some(right)) => left.to_bits() == right.to_bits(),
+        (None, None) => true,
+        _ => false,
     }
 }
 
@@ -247,7 +420,7 @@ impl Diagnostic {
 
     /// Check if this diagnostic has any safe fixes available
     pub fn has_safe_fixes(&self) -> bool {
-        self.fixes.iter().any(|f| f.safe)
+        self.fixes.iter().any(Fix::is_safe)
     }
 }
 
@@ -556,6 +729,9 @@ mod tests {
             replacement: String::new(),
             description: "no-op".to_string(),
             safe: true,
+            confidence: Some(1.0),
+            group: None,
+            depends_on: None,
         };
         assert!(!fix.is_insertion());
     }
@@ -595,6 +771,9 @@ mod tests {
             replacement: String::new(),
             description: "no-op".to_string(),
             safe: true,
+            confidence: Some(1.0),
+            group: None,
+            depends_on: None,
         };
         assert!(!fix.is_deletion());
     }
@@ -615,6 +794,7 @@ mod tests {
         assert_eq!(fix.replacement, "new");
         assert_eq!(fix.description, "replace old");
         assert!(!fix.safe);
+        assert_eq!(fix.confidence_tier(), FixConfidenceTier::Medium);
         assert!(!fix.is_insertion());
         assert!(!fix.is_deletion());
     }
@@ -626,6 +806,7 @@ mod tests {
         assert_eq!(fix.end_byte, 42);
         assert_eq!(fix.replacement, "text");
         assert!(fix.safe);
+        assert_eq!(fix.confidence_tier(), FixConfidenceTier::High);
     }
 
     #[test]
@@ -635,6 +816,27 @@ mod tests {
         assert_eq!(fix.end_byte, 100);
         assert!(fix.replacement.is_empty());
         assert!(fix.safe);
+        assert_eq!(fix.confidence_tier(), FixConfidenceTier::High);
+    }
+
+    #[test]
+    fn test_fix_explicit_confidence_fields() {
+        let fix = Fix::replace_with_confidence(0, 4, "NAME", "normalize", 0.42)
+            .with_group("name-normalization")
+            .with_dependency("fix-prefix");
+
+        assert_eq!(fix.confidence_score(), 0.42);
+        assert_eq!(fix.confidence_tier(), FixConfidenceTier::Low);
+        assert!(!fix.is_safe());
+        assert_eq!(fix.group.as_deref(), Some("name-normalization"));
+        assert_eq!(fix.depends_on.as_deref(), Some("fix-prefix"));
+    }
+
+    #[test]
+    fn test_fix_with_confidence_updates_safe_compat_flag() {
+        let fix = Fix::replace(0, 4, "NAME", "normalize", true).with_confidence(0.80);
+        assert!(!fix.safe);
+        assert_eq!(fix.confidence_tier(), FixConfidenceTier::Medium);
     }
 
     // ===== Diagnostic builder methods =====

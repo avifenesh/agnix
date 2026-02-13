@@ -55,7 +55,7 @@ CLAUDE.md:15:1 warning: Generic instruction 'Be helpful and accurate' [fixable]
 Found 1 error, 1 warning
   2 issues are automatically fixable
 
-hint: Run with --fix to apply fixes
+hint: Run with --fix, --fix-safe, or --fix-unsafe to apply fixes
 ```
 
 https://github.com/user-attachments/assets/72d5fe7c-476f-46ea-be64-5785cf6d5600
@@ -99,8 +99,10 @@ cargo install agnix-cli
 
 ```bash
 agnix .              # Validate current directory
-agnix --fix .        # Apply automatic fixes
-agnix --fix-safe .   # Apply only safe fixes
+agnix --fix .        # Apply HIGH and MEDIUM confidence fixes
+agnix --fix-safe .   # Apply only HIGH confidence fixes
+agnix --fix-unsafe . # Apply all fixes, including LOW confidence
+agnix --dry-run --show-fixes .  # Preview fixes with inline diff output
 agnix --strict .     # Strict mode (warnings = errors)
 agnix --target claude-code .  # Target specific tool
 ```

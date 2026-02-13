@@ -192,6 +192,9 @@ mod code_action_tests {
             replacement: "hello".to_string(),
             description: "Test fix".to_string(),
             safe: true,
+            confidence: None,
+            group: None,
+            depends_on: None,
         };
 
         assert!(fix.safe);
@@ -207,6 +210,9 @@ mod code_action_tests {
             replacement: "world".to_string(),
             description: "Unsafe fix".to_string(),
             safe: false,
+            confidence: None,
+            group: None,
+            depends_on: None,
         };
 
         assert!(!fix.safe);
@@ -221,6 +227,9 @@ mod code_action_tests {
             replacement: "inserted text".to_string(),
             description: "Insert text".to_string(),
             safe: true,
+            confidence: None,
+            group: None,
+            depends_on: None,
         };
 
         assert_eq!(fix.start_byte, fix.end_byte);
@@ -236,6 +245,9 @@ mod code_action_tests {
             replacement: String::new(),
             description: "Delete text".to_string(),
             safe: true,
+            confidence: None,
+            group: None,
+            depends_on: None,
         };
 
         assert!(fix.replacement.is_empty());
@@ -256,6 +268,9 @@ mod did_change_tests {
                 replacement: "fix1".to_string(),
                 description: "First fix".to_string(),
                 safe: true,
+                confidence: None,
+                group: None,
+                depends_on: None,
             },
             Fix {
                 start_byte: 10,
@@ -263,6 +278,9 @@ mod did_change_tests {
                 replacement: "fix2".to_string(),
                 description: "Second fix".to_string(),
                 safe: false,
+                confidence: None,
+                group: None,
+                depends_on: None,
             },
         ];
 
@@ -300,6 +318,9 @@ mod did_change_tests {
                 replacement: "x".to_string(),
                 description: "Fix".to_string(),
                 safe: true,
+                confidence: None,
+                group: None,
+                depends_on: None,
             }],
             assumption: None,
             metadata: None,
@@ -375,6 +396,9 @@ mod code_action_fix_tests {
             replacement: "bad-name".to_string(),
             description: "Convert to kebab-case".to_string(),
             safe: true,
+            confidence: None,
+            group: None,
+            depends_on: None,
         };
         let fix_data = serde_json::to_value(vec![&fix]).unwrap();
 
