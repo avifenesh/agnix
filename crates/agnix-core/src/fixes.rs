@@ -225,7 +225,7 @@ fn should_apply_by_mode(fix: &Fix, mode: FixApplyMode) -> bool {
     }
 }
 
-fn resolve_dependency_candidates<'a>(mut fixes: Vec<&'a Fix>) -> Vec<&'a Fix> {
+fn resolve_dependency_candidates(mut fixes: Vec<&Fix>) -> Vec<&Fix> {
     loop {
         let groups: HashSet<&str> = fixes.iter().filter_map(|f| f.group.as_deref()).collect();
         let descriptions: HashSet<&str> = fixes.iter().map(|f| f.description.as_str()).collect();
@@ -242,7 +242,7 @@ fn resolve_dependency_candidates<'a>(mut fixes: Vec<&'a Fix>) -> Vec<&'a Fix> {
     }
 }
 
-fn select_group_alternatives<'a>(fixes: Vec<&'a Fix>) -> Vec<&'a Fix> {
+fn select_group_alternatives(fixes: Vec<&Fix>) -> Vec<&Fix> {
     let mut selected_groups: HashSet<&str> = HashSet::new();
     let mut selected = Vec::new();
 

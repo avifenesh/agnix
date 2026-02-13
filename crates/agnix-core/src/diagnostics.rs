@@ -187,7 +187,7 @@ impl Fix {
 
     /// Resolve confidence score with legacy fallback.
     pub fn confidence_score(&self) -> f32 {
-        self.confidence.unwrap_or_else(|| {
+        self.confidence.unwrap_or({
             if self.safe {
                 1.0
             } else {

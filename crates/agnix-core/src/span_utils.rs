@@ -123,7 +123,7 @@ fn detect_indent_unit(content: &str) -> &'static str {
         if leading.starts_with('\t') {
             return "\t";
         }
-        if leading.len() >= 4 && leading.len() % 4 == 0 {
+        if leading.len() >= 4 && leading.len().is_multiple_of(4) {
             return "    ";
         }
         return "  ";
