@@ -3314,7 +3314,7 @@
       "evidence": {
         "source_type": "vendor_docs",
         "source_urls": [
-          "https://docs.cline.bot/features/cline-rules/overview"
+          "https://docs.cline.bot/features/cline-rules"
         ],
         "verified_on": "2026-02-13",
         "applies_to": {

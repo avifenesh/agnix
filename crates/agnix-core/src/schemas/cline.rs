@@ -28,6 +28,14 @@ impl PathsField {
         matches!(self, PathsField::Scalar(_))
     }
 
+    /// Returns the scalar value if this is a scalar, None if array
+    pub fn as_scalar(&self) -> Option<&str> {
+        match self {
+            PathsField::Scalar(s) => Some(s.as_str()),
+            PathsField::Array(_) => None,
+        }
+    }
+
     /// Get all patterns as a vector
     pub fn patterns(&self) -> Vec<&str> {
         match self {

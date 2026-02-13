@@ -158,8 +158,7 @@ impl Validator for ClineValidator {
         if config.is_rule_enabled("CLN-004") {
             if let Some(ref schema) = parsed.schema {
                 if let Some(ref paths_field) = schema.paths {
-                    if paths_field.is_scalar() {
-                        let pattern = paths_field.patterns()[0];
+                    if let Some(pattern) = paths_field.as_scalar() {
                         let line = parsed.paths_line.unwrap_or(parsed.start_line + 1);
                         let mut diagnostic = Diagnostic::warning(
                             path.to_path_buf(),
@@ -175,7 +174,8 @@ impl Validator for ClineValidator {
 
                         // Auto-fix: convert scalar to array
                         if let Some((start, end)) = line_byte_range(content, line) {
-                            let fix_text = format!("paths:\n  - \"{}\"\n", pattern);
+                            let escaped = pattern.replace('"', "\\\"");
+                            let fix_text = format!("paths:\n  - \"{}\"\n", escaped);
                             diagnostic = diagnostic.with_fix(Fix::replace(
                                 start,
                                 end,
@@ -360,6 +360,18 @@ mod tests {
         let cln_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CLN-002").collect();
         assert_eq!(cln_002.len(), 1, "Only the invalid pattern should trigger CLN-002");
         assert!(cln_002[0].message.contains("[invalid"));
+    }
+
+    #[test]
+    fn test_cln_002_multiple_invalid_patterns() {
+        let content = "---\npaths:\n  - \"[bad1\"\n  - \"**[bad2\"\n---\n# Instructions\n";
+        let diagnostics = validate_folder(content);
+        let cln_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CLN-002").collect();
+        assert_eq!(
+            cln_002.len(),
+            2,
+            "Both invalid patterns should trigger CLN-002"
+        );
     }
 
     #[test]
