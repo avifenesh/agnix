@@ -167,10 +167,7 @@ impl Validator for ClineValidator {
                             "CLN-004",
                             t!("rules.cln_004.message"),
                         )
-                        .with_suggestion(t!(
-                            "rules.cln_004.suggestion",
-                            pattern = pattern
-                        ));
+                        .with_suggestion(t!("rules.cln_004.suggestion", pattern = pattern));
 
                         // Auto-fix: convert scalar to array
                         if let Some((start, end)) = line_byte_range(content, line) {
@@ -358,7 +355,11 @@ mod tests {
         let content = "---\npaths:\n  - \"**/*.ts\"\n  - \"[invalid\"\n---\n# Instructions\n";
         let diagnostics = validate_folder(content);
         let cln_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CLN-002").collect();
-        assert_eq!(cln_002.len(), 1, "Only the invalid pattern should trigger CLN-002");
+        assert_eq!(
+            cln_002.len(),
+            1,
+            "Only the invalid pattern should trigger CLN-002"
+        );
         assert!(cln_002[0].message.contains("[invalid"));
     }
 
@@ -508,10 +509,7 @@ unknownKey: value
                     ".clinerules/test.md",
                 ),
                 "CLN-003" => ("---\nunknown: value\n---\nBody", ".clinerules/test.md"),
-                "CLN-004" => (
-                    "---\npaths: \"**/*.ts\"\n---\nBody",
-                    ".clinerules/test.md",
-                ),
+                "CLN-004" => ("---\npaths: \"**/*.ts\"\n---\nBody", ".clinerules/test.md"),
                 _ => unreachable!("Unknown rule: {rule}"),
             };
 
@@ -566,10 +564,7 @@ unknownKey: value
         let content = "---\npaths: []\n---\n# Instructions\n";
         let diagnostics = validate_folder(content);
         let cln_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CLN-004").collect();
-        assert!(
-            cln_004.is_empty(),
-            "Empty array should not trigger CLN-004"
-        );
+        assert!(cln_004.is_empty(), "Empty array should not trigger CLN-004");
     }
 
     // ===== File Type Detection =====
