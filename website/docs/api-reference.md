@@ -30,14 +30,14 @@ agnix [OPTIONS] [PATH]
 | Command | Description |
 |---------|-------------|
 | `agnix schema [--output FILE]` | Output JSON Schema for `.agnix.toml` |
-| `agnix watch [PATH]` | Watch mode -re-validate on file changes |
+| `agnix watch [PATH]` | Watch mode - re-validate on file changes |
 | `agnix telemetry <status\|enable\|disable>` | Manage telemetry settings |
 
 ### Output formats
 
-- **text** -Human-readable terminal output with colors
-- **json** -Machine-readable JSON object with diagnostics and summary metadata (e.g. version, files_checked, diagnostics, summary, category, rule_severity, applies_to_tool)
-- **sarif** -SARIF format for GitHub Code Scanning integration
+- **text** - Human-readable terminal output with colors
+- **json** - Machine-readable JSON object with diagnostics and summary metadata (e.g. version, files_checked, diagnostics, summary, category, rule_severity, applies_to_tool)
+- **sarif** - SARIF format for GitHub Code Scanning integration
 
 ## MCP server
 
@@ -64,13 +64,13 @@ agnix-lsp
 
 Supported LSP capabilities:
 
-- `textDocument/publishDiagnostics` -real-time validation
-- `textDocument/codeAction` -auto-fix suggestions
-- `textDocument/hover` -rule documentation on hover
-- `workspace/didChangeConfiguration` -runtime config updates
-- `workspace/executeCommand` -project-level validation (`agnix.validateProjectRules` command)
+- `textDocument/publishDiagnostics` - real-time validation
+- `textDocument/codeAction` - auto-fix suggestions
+- `textDocument/hover` - rule documentation on hover
+- `workspace/didChangeConfiguration` - runtime config updates
+- `workspace/executeCommand` - project-level validation (`agnix.validateProjectRules` command)
 
 ## References
 
-- [SPEC.md](https://github.com/avifenesh/agnix/blob/main/SPEC.md) -full technical specification
-- [MCP Protocol](https://modelcontextprotocol.io) -MCP specification
+- [SPEC.md](https://github.com/avifenesh/agnix/blob/main/SPEC.md) - full technical specification
+- [MCP Protocol](https://modelcontextprotocol.io) - MCP specification

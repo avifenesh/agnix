@@ -44,7 +44,7 @@ Check your `.agnix.toml` configuration:
 
 3. Check editor logs for LSP server startup errors
 
-4. For VS Code, the extension bundles the server -try reinstalling the extension
+4. For VS Code, the extension bundles the server - try reinstalling the extension
 
 ## Rule behavior differs from docs
 

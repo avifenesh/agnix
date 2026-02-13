@@ -75,20 +75,20 @@ To find the next available number for a prefix, check `knowledge-base/rules.json
 
 Step-by-step process for adding a new validation rule:
 
-1. **Add the rule to `knowledge-base/rules.json`** -Include all required fields: `id`, `name`, `severity`, `category`, `message`, `detection`, `fix`, and complete `evidence` metadata. The `crates/agnix-rules/rules.json` file is automatically synchronized during the build process.
+1. **Add the rule to `knowledge-base/rules.json`** - Include all required fields: `id`, `name`, `severity`, `category`, `message`, `detection`, `fix`, and complete `evidence` metadata. The `crates/agnix-rules/rules.json` file is automatically synchronized during the build process.
 
-2. **Add documentation to `knowledge-base/VALIDATION-RULES.md`** -Document the rule following the existing format with detection logic, fix description, and source citation. CI parity tests will fail if the rule exists in one file but not the other.
+2. **Add documentation to `knowledge-base/VALIDATION-RULES.md`** - Document the rule following the existing format with detection logic, fix description, and source citation. CI parity tests will fail if the rule exists in one file but not the other.
 
-3. **Implement the `Validator` trait** -Add validation logic in `crates/agnix-core/src/rules/`. Look at existing validators for patterns:
-   - `xml_balance.rs` -simple single-file validator
-   - `agents_md.rs` -project-level validator with cross-file analysis
-   - `skill/mod.rs` and `hooks/mod.rs` -complex validators split into focused `helpers.rs` and `tests.rs` modules
+3. **Implement the `Validator` trait** - Add validation logic in `crates/agnix-core/src/rules/`. Look at existing validators for patterns:
+   - `xml_balance.rs` - simple single-file validator
+   - `agents_md.rs` - project-level validator with cross-file analysis
+   - `skill/mod.rs` and `hooks/mod.rs` - complex validators split into focused `helpers.rs` and `tests.rs` modules
 
-4. **Register in `ValidatorRegistry`** -Add the validator factory to the `DEFAULTS` constant in `crates/agnix-core/src/registry.rs`. It will be included automatically via `ValidatorRegistry::with_defaults()`. External validators can use `ValidatorProvider` trait instead.
+4. **Register in `ValidatorRegistry`** - Add the validator factory to the `DEFAULTS` constant in `crates/agnix-core/src/registry.rs`. It will be included automatically via `ValidatorRegistry::with_defaults()`. External validators can use `ValidatorProvider` trait instead.
 
-5. **Add test fixtures** -Create test files in `tests/fixtures/` matching the validator's expected file type detection patterns. Fixtures should cover both valid and invalid configs.
+5. **Add test fixtures** - Create test files in `tests/fixtures/` matching the validator's expected file type detection patterns. Fixtures should cover both valid and invalid configs.
 
-6. **Run tests** -Verify everything passes:
+6. **Run tests** - Verify everything passes:
    ```bash
    cargo test                              # Full test suite
    cargo test -p agnix-rules --test parity # Parity check
@@ -123,12 +123,12 @@ Current tier assignments are documented in [`knowledge-base/RESEARCH-TRACKING.md
 
 We welcome community input through several channels:
 
-- **GitHub Issues** -Use the issue templates for structured feedback:
-  - [Bug Report](.github/ISSUE_TEMPLATE/bug_report.md) -Report validation errors
-  - [Feature Request](.github/ISSUE_TEMPLATE/feature_request.md) -Suggest new capabilities
-  - [Rule Contribution](.github/ISSUE_TEMPLATE/rule_contribution.md) -Propose new validation rules
-  - [Tool Support Request](.github/ISSUE_TEMPLATE/tool_support_request.md) -Request support for new tools
-- **GitHub Discussions** -General questions, ideas, and community discussion
+- **GitHub Issues** - Use the issue templates for structured feedback:
+  - [Bug Report](.github/ISSUE_TEMPLATE/bug_report.md) - Report validation errors
+  - [Feature Request](.github/ISSUE_TEMPLATE/feature_request.md) - Suggest new capabilities
+  - [Rule Contribution](.github/ISSUE_TEMPLATE/rule_contribution.md) - Propose new validation rules
+  - [Tool Support Request](.github/ISSUE_TEMPLATE/tool_support_request.md) - Request support for new tools
+- **GitHub Discussions** - General questions, ideas, and community discussion
 
 ## Pull Request Process
 
@@ -212,7 +212,7 @@ cargo test
 cargo test -p agnix-core
 
 # With output
-cargo test ---nocapture
+cargo test -- --nocapture
 ```
 
 ### Security Tests
@@ -223,9 +223,9 @@ cargo test --test security_integration
 
 # Fuzz testing (requires nightly)
 cd crates/agnix-core
-cargo +nightly fuzz run fuzz_markdown --max_total_time=300
-cargo +nightly fuzz run fuzz_frontmatter --max_total_time=300
-cargo +nightly fuzz run fuzz_json --max_total_time=300
+cargo +nightly fuzz run fuzz_markdown -- -max_total_time=300
+cargo +nightly fuzz run fuzz_frontmatter -- -max_total_time=300
+cargo +nightly fuzz run fuzz_json -- -max_total_time=300
 
 # Dependency audit
 cargo audit
