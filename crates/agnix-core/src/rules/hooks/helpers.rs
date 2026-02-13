@@ -259,7 +259,8 @@ pub(super) fn validate_cc_hk_001_event_name(
     false
 }
 
-/// CC-HK-003: Matcher hint for tool events
+/// CC-HK-003: Matcher hint for tool events.
+/// Omitting matcher is valid and means "match all tools".
 pub(super) fn validate_cc_hk_003_matcher_hint(
     event: &str,
     matcher: &Option<String>,
