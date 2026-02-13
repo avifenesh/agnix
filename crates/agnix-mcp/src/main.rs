@@ -460,7 +460,7 @@ impl ServerHandler for AgnixServer {
                 ..Default::default()
             },
             instructions: Some(
-                 "Agnix - AI agent configuration linter.\n\n\
+                "Agnix - AI agent configuration linter.\n\n\
                  Validates SKILL.md, CLAUDE.md, AGENTS.md, hooks, MCP configs, \
                  Cursor rules, and more against 168 rules.\n\n\
                  Tools:\n\
