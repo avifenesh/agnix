@@ -15,6 +15,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Inline editor diagnostics**: Red/yellow/teal wavy underlines via `@codemirror/lint`, gutter markers, hover tooltips with rule ID and message
 - **Auto-fix in playground**: WASM now exposes `Fix` data; per-diagnostic "Fix" buttons and "Fix all" button apply replacements directly in the editor
 - **New playground presets**: AGENTS.md, `.claude/agents/reviewer.md`, `plugin.json`; enriched `.claude/settings.json` hooks preset
+- **Backend revalidation regression tests**: Added coverage for `did_save` project-trigger revalidation and stale generation guard behavior in `agnix-lsp` backend tests
+
+### Changed
+- **Core refactor**: Split oversized `crates/agnix-core/src/config.rs` into focused submodules (`builder`, `rule_filter`, `schema`, `tests`) while preserving the stable `config` API
+- **LSP refactor**: Split oversized `crates/agnix-lsp/src/backend.rs` into focused submodules (`events`, `helpers`, `revalidation`, `tests`) while preserving `Backend` behavior and public exports
 
 ### Fixed
 - **CC-AG-004**: Added `delegate` as a valid permission mode for Claude Code agents

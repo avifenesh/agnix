@@ -123,7 +123,12 @@ agnix-lsp/
 ├── src/
 │   ├── lib.rs              # Public API and server setup
 │   ├── main.rs             # Binary entry point
-│   ├── backend.rs          # LSP protocol implementation
+│   ├── backend.rs          # LSP backend facade and LanguageServer wiring
+│   ├── backend/
+│   │   ├── events.rs       # did_open/did_change/did_save/did_close handlers
+│   │   ├── helpers.rs      # Diagnostics and path normalization helpers
+│   │   ├── revalidation.rs # Config and project revalidation orchestration
+│   │   └── tests.rs        # Backend unit and regression tests
 │   ├── diagnostic_mapper.rs # Converts agnix diagnostics to LSP format
 │   ├── code_actions.rs      # Quick-fix code action generation
 │   ├── completion_provider.rs # Context-aware frontmatter completions
