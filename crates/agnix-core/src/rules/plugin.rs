@@ -288,20 +288,18 @@ fn check_recommended_field(
     path: &Path,
     diagnostics: &mut Vec<Diagnostic>,
 ) {
-    if !is_field_missing(value, field) {
-        return;
+    if is_field_missing(value, field) {
+        diagnostics.push(
+            Diagnostic::warning(
+                path.to_path_buf(),
+                1,
+                0,
+                "CC-PL-004",
+                t!("rules.cc_pl_004_recommended.message", field = field),
+            )
+            .with_suggestion(t!("rules.cc_pl_004_recommended.suggestion", field = field)),
+        );
     }
-
-    diagnostics.push(
-        Diagnostic::warning(
-            path.to_path_buf(),
-            1,
-            0,
-            "CC-PL-004",
-            t!("rules.cc_pl_004_recommended.message", field = field),
-        )
-        .with_suggestion(t!("rules.cc_pl_004_recommended.suggestion", field = field)),
-    );
 }
 
 fn is_valid_semver(version: &str) -> bool {

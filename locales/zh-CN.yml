@@ -464,10 +464,10 @@ rules:
     message: "无效的 semver 格式: '%{version}'"
     suggestion: "使用 semver 格式: 1.0.0, 1.0.0-rc.1, 1.0.0+build"
   cc_pl_004:
-    message: "缺少必需字段: %{field}"
+    message: "缺少或无效的必需字段: %{field}"
     suggestion: "在 plugin.json 中添加 '%{field}' 字段"
   cc_pl_004_recommended:
-    message: "缺少推荐字段: %{field}"
+    message: "缺少或无效的推荐字段: %{field}"
     suggestion: "建议在 plugin.json 中添加 '%{field}' 字段"
   cc_pl_005:
     message: "插件名称不能为空"

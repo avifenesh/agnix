@@ -464,10 +464,10 @@ rules:
     message: "Formato semver invalido: '%{version}'"
     suggestion: "Usa formato semver: 1.0.0, 1.0.0-rc.1, 1.0.0+build"
   cc_pl_004:
-    message: "Falta campo requerido: %{field}"
+    message: "Falta o es invalido el campo requerido: %{field}"
     suggestion: "Agrega el campo '%{field}' a plugin.json"
   cc_pl_004_recommended:
-    message: "Falta campo recomendado: %{field}"
+    message: "Falta o es invalido el campo recomendado: %{field}"
     suggestion: "Considera agregar el campo '%{field}' a plugin.json"
   cc_pl_005:
     message: "El nombre del plugin no debe estar vacio"

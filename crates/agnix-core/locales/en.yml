@@ -549,10 +549,10 @@ rules:
     message: "Invalid semver format: '%{version}'"
     suggestion: "Use semver format: 1.0.0, 1.0.0-rc.1, 1.0.0+build"
   cc_pl_004:
-    message: "Missing required field: %{field}"
+    message: "Missing or invalid required field: %{field}"
     suggestion: "Add '%{field}' field to plugin.json"
   cc_pl_004_recommended:
-    message: "Missing recommended field: %{field}"
+    message: "Missing or invalid recommended field: %{field}"
     suggestion: "Consider adding '%{field}' field to plugin.json"
   cc_pl_005:
     message: "Plugin name must not be empty"

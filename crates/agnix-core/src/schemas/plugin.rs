@@ -53,13 +53,16 @@ impl PluginSchema {
     /// Validate semver format
     pub fn validate_version(&self) -> Result<(), String> {
         if let Some(ref version) = self.version {
-            semver::Version::parse(version).map_err(|e| {
-                format!(
-                    "Invalid semver format '{}': {}",
-                    version,
-                    e.to_string().to_lowercase()
-                )
-            })?;
+            let trimmed = version.trim();
+            if !trimmed.is_empty() {
+                semver::Version::parse(trimmed).map_err(|e| {
+                    format!(
+                        "Invalid semver format '{}': {}",
+                        trimmed,
+                        e.to_string().to_lowercase()
+                    )
+                })?;
+            }
         }
         Ok(())
     }
@@ -68,12 +71,12 @@ impl PluginSchema {
     pub fn validate(&self) -> Vec<String> {
         let mut errors = Vec::new();
 
-        if self.name.is_empty() {
+        if self.name.trim().is_empty() {
             errors.push("Plugin name cannot be empty".to_string());
         }
 
         if let Some(ref description) = self.description {
-            if description.is_empty() {
+            if description.trim().is_empty() {
                 errors.push("Plugin description cannot be empty".to_string());
             }
         }
