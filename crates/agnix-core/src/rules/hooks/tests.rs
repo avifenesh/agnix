@@ -904,7 +904,7 @@ fn test_fixture_prompt_on_wrong_event() {
     assert_eq!(cc_hk_002.len(), 2);
 }
 
-// ===== CC-HK-003 Tests: Missing Matcher for Tool Events =====
+// ===== CC-HK-003 Tests: Matcher Hint for Tool Events =====
 
 #[test]
 fn test_cc_hk_003_missing_matcher_pretooluse() {
@@ -927,8 +927,8 @@ fn test_cc_hk_003_missing_matcher_pretooluse() {
         .collect();
 
     assert_eq!(cc_hk_003.len(), 1);
-    assert_eq!(cc_hk_003[0].level, DiagnosticLevel::Error);
-    assert!(cc_hk_003[0].message.contains("requires a matcher"));
+    assert_eq!(cc_hk_003[0].level, DiagnosticLevel::Info);
+    assert!(cc_hk_003[0].message.contains("has no matcher"));
 }
 
 #[test]
@@ -2415,7 +2415,7 @@ fn test_cc_hk_001_all_valid_events() {
 }
 
 #[test]
-fn test_cc_hk_003_all_tool_events_require_matcher() {
+fn test_cc_hk_003_all_tool_events_hint_matcher() {
     // Must match HooksSchema::TOOL_EVENTS constant
     let tool_events = HooksSchema::TOOL_EVENTS;
 
@@ -2441,7 +2441,7 @@ fn test_cc_hk_003_all_tool_events_require_matcher() {
         assert_eq!(
             hk_003.len(),
             1,
-            "Event '{}' should require matcher but didn't get CC-HK-003",
+            "Event '{}' without matcher should get CC-HK-003 hint",
             event
         );
     }

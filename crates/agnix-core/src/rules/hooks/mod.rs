@@ -492,9 +492,9 @@ impl Validator for HooksValidator {
 
             for (matcher_idx, matcher) in matchers.iter().enumerate() {
                 // --- Matcher-level validation ---
-                // CC-HK-003: Missing matcher for tool events
+                // CC-HK-003: Matcher hint for tool events
                 if config.is_rule_enabled("CC-HK-003") {
-                    validate_cc_hk_003_matcher_required(
+                    validate_cc_hk_003_matcher_hint(
                         event,
                         &matcher.matcher,
                         matcher_idx,
