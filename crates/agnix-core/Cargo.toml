@@ -29,7 +29,7 @@ glob.workspace = true
 rayon = { workspace = true, optional = true }
 dirs = { version = "5", optional = true }
 semver = "1"
-toml = "0.8"
+toml = "1.0"
 schemars = "1"
 rust-i18n = { workspace = true }
 
