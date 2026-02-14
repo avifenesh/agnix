@@ -1936,12 +1936,13 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | OpenCode Skills | 1 | 0 | 1 | 0 | 1 |
 | Windsurf Skills | 1 | 0 | 1 | 0 | 1 |
 | Kiro Skills | 1 | 0 | 1 | 0 | 1 |
+| Kiro Steering | 4 | 2 | 2 | 0 | 0 |
 | Amp Skills | 1 | 0 | 1 | 0 | 1 |
 | Amp Checks | 4 | 2 | 2 | 0 | 0 |
 | Roo Code Skills | 1 | 0 | 1 | 0 | 1 |
 | Roo Code | 6 | 3 | 3 | 0 | 0 |
 | Version Awareness | 1 | 0 | 0 | 1 | 0 |
-| **TOTAL** | **220** | **132** | **80** | **8** | **59** |
+| **TOTAL** | **224** | **134** | **82** | **8** | **59** |
 
 
 ---
@@ -1971,7 +1972,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 
 ---
 
-**Total Coverage**: 220 validation rules across 31 categories
+**Total Coverage**: 224 validation rules across 32 categories
 
 **Knowledge Base**: 11,036 lines, 320KB, 75+ sources
 **Certainty**: 130 HIGH, 78 MEDIUM, 8 LOW

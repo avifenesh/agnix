@@ -194,7 +194,10 @@ impl Validator for KiroSteeringValidator {
                                 1,
                                 0,
                                 "KIRO-003",
-                                t!("rules.kiro_003.message", error = format!("expected string, got {display}")),
+                                t!(
+                                    "rules.kiro_003.message",
+                                    error = format!("expected string, got {display}")
+                                ),
                             )
                             .with_suggestion(t!("rules.kiro_003.suggestion")),
                         );
@@ -215,11 +218,7 @@ mod tests {
 
     fn validate(path: &str, content: &str) -> Vec<Diagnostic> {
         let validator = KiroSteeringValidator;
-        validator.validate(
-            Path::new(path),
-            content,
-            &LintConfig::default(),
-        )
+        validator.validate(Path::new(path), content, &LintConfig::default())
     }
 
     fn validate_steering(content: &str) -> Vec<Diagnostic> {
@@ -232,7 +231,10 @@ mod tests {
     fn test_kiro_001_invalid_mode() {
         let content = "---\ninclusion: invalid_mode\n---\n# Steering\n";
         let diagnostics = validate_steering(content);
-        let kiro_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "KIRO-001").collect();
+        let kiro_001: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "KIRO-001")
+            .collect();
         assert_eq!(kiro_001.len(), 1);
         assert_eq!(kiro_001[0].level, DiagnosticLevel::Error);
         assert!(kiro_001[0].message.contains("invalid_mode"));
@@ -242,7 +244,10 @@ mod tests {
     fn test_kiro_001_valid_always() {
         let content = "---\ninclusion: always\n---\n# Steering\n";
         let diagnostics = validate_steering(content);
-        let kiro_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "KIRO-001").collect();
+        let kiro_001: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "KIRO-001")
+            .collect();
         assert!(kiro_001.is_empty());
     }
 
@@ -250,7 +255,10 @@ mod tests {
     fn test_kiro_001_valid_auto() {
         let content = "---\ninclusion: auto\nname: test\ndescription: test desc\n---\n# Steering\n";
         let diagnostics = validate_steering(content);
-        let kiro_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "KIRO-001").collect();
+        let kiro_001: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "KIRO-001")
+            .collect();
         assert!(kiro_001.is_empty());
     }
 
@@ -258,7 +266,10 @@ mod tests {
     fn test_kiro_001_valid_filematch() {
         let content = "---\ninclusion: fileMatch\nfileMatchPattern: \"**/*.ts\"\n---\n# Steering\n";
         let diagnostics = validate_steering(content);
-        let kiro_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "KIRO-001").collect();
+        let kiro_001: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "KIRO-001")
+            .collect();
         assert!(kiro_001.is_empty());
     }
 
@@ -266,7 +277,10 @@ mod tests {
     fn test_kiro_001_valid_manual() {
         let content = "---\ninclusion: manual\n---\n# Steering\n";
         let diagnostics = validate_steering(content);
-        let kiro_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "KIRO-001").collect();
+        let kiro_001: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "KIRO-001")
+            .collect();
         assert!(kiro_001.is_empty());
     }
 
@@ -280,7 +294,10 @@ mod tests {
             "---\ninclusion: invalid_mode\n---\n# Steering\n",
             &config,
         );
-        let kiro_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "KIRO-001").collect();
+        let kiro_001: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "KIRO-001")
+            .collect();
         assert!(kiro_001.is_empty());
     }
 
@@ -290,7 +307,10 @@ mod tests {
     fn test_kiro_002_auto_missing_name() {
         let content = "---\ninclusion: auto\ndescription: test desc\n---\n# Steering\n";
         let diagnostics = validate_steering(content);
-        let kiro_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "KIRO-002").collect();
+        let kiro_002: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "KIRO-002")
+            .collect();
         assert_eq!(kiro_002.len(), 1);
         assert_eq!(kiro_002[0].level, DiagnosticLevel::Error);
         assert!(kiro_002[0].message.contains("name"));
@@ -300,7 +320,10 @@ mod tests {
     fn test_kiro_002_auto_missing_description() {
         let content = "---\ninclusion: auto\nname: my-steering\n---\n# Steering\n";
         let diagnostics = validate_steering(content);
-        let kiro_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "KIRO-002").collect();
+        let kiro_002: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "KIRO-002")
+            .collect();
         assert_eq!(kiro_002.len(), 1);
         assert!(kiro_002[0].message.contains("description"));
     }
@@ -309,7 +332,10 @@ mod tests {
     fn test_kiro_002_auto_missing_both() {
         let content = "---\ninclusion: auto\n---\n# Steering\n";
         let diagnostics = validate_steering(content);
-        let kiro_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "KIRO-002").collect();
+        let kiro_002: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "KIRO-002")
+            .collect();
         assert_eq!(kiro_002.len(), 2);
     }
 
@@ -318,7 +344,10 @@ mod tests {
         let content =
             "---\ninclusion: auto\nname: my-steering\ndescription: test desc\n---\n# Steering\n";
         let diagnostics = validate_steering(content);
-        let kiro_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "KIRO-002").collect();
+        let kiro_002: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "KIRO-002")
+            .collect();
         assert!(kiro_002.is_empty());
     }
 
@@ -326,7 +355,10 @@ mod tests {
     fn test_kiro_002_filematch_missing_pattern() {
         let content = "---\ninclusion: fileMatch\n---\n# Steering\n";
         let diagnostics = validate_steering(content);
-        let kiro_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "KIRO-002").collect();
+        let kiro_002: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "KIRO-002")
+            .collect();
         assert_eq!(kiro_002.len(), 1);
         assert!(kiro_002[0].message.contains("fileMatchPattern"));
     }
@@ -335,7 +367,10 @@ mod tests {
     fn test_kiro_002_filematch_valid() {
         let content = "---\ninclusion: fileMatch\nfileMatchPattern: \"**/*.ts\"\n---\n# Steering\n";
         let diagnostics = validate_steering(content);
-        let kiro_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "KIRO-002").collect();
+        let kiro_002: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "KIRO-002")
+            .collect();
         assert!(kiro_002.is_empty());
     }
 
@@ -343,7 +378,10 @@ mod tests {
     fn test_kiro_002_always_no_extra_fields_needed() {
         let content = "---\ninclusion: always\n---\n# Steering\n";
         let diagnostics = validate_steering(content);
-        let kiro_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "KIRO-002").collect();
+        let kiro_002: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "KIRO-002")
+            .collect();
         assert!(kiro_002.is_empty());
     }
 
@@ -351,7 +389,10 @@ mod tests {
     fn test_kiro_002_manual_no_extra_fields_needed() {
         let content = "---\ninclusion: manual\n---\n# Steering\n";
         let diagnostics = validate_steering(content);
-        let kiro_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "KIRO-002").collect();
+        let kiro_002: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "KIRO-002")
+            .collect();
         assert!(kiro_002.is_empty());
     }
 
@@ -365,7 +406,10 @@ mod tests {
             "---\ninclusion: auto\n---\n# Steering\n",
             &config,
         );
-        let kiro_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "KIRO-002").collect();
+        let kiro_002: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "KIRO-002")
+            .collect();
         assert!(kiro_002.is_empty());
     }
 
@@ -375,7 +419,10 @@ mod tests {
     fn test_kiro_003_bad_glob() {
         let content = "---\nfileMatchPattern: \"[unclosed\"\n---\n# Steering\n";
         let diagnostics = validate_steering(content);
-        let kiro_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "KIRO-003").collect();
+        let kiro_003: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "KIRO-003")
+            .collect();
         assert_eq!(kiro_003.len(), 1);
         assert_eq!(kiro_003[0].level, DiagnosticLevel::Warning);
     }
@@ -384,7 +431,10 @@ mod tests {
     fn test_kiro_003_valid_glob() {
         let content = "---\nfileMatchPattern: \"**/*.ts\"\n---\n# Steering\n";
         let diagnostics = validate_steering(content);
-        let kiro_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "KIRO-003").collect();
+        let kiro_003: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "KIRO-003")
+            .collect();
         assert!(kiro_003.is_empty());
     }
 
@@ -398,7 +448,10 @@ mod tests {
             "---\nfileMatchPattern: \"[unclosed\"\n---\n# Steering\n",
             &config,
         );
-        let kiro_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "KIRO-003").collect();
+        let kiro_003: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "KIRO-003")
+            .collect();
         assert!(kiro_003.is_empty());
     }
 
@@ -407,7 +460,10 @@ mod tests {
     #[test]
     fn test_kiro_004_empty_file() {
         let diagnostics = validate_steering("");
-        let kiro_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "KIRO-004").collect();
+        let kiro_004: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "KIRO-004")
+            .collect();
         assert_eq!(kiro_004.len(), 1);
         assert_eq!(kiro_004[0].level, DiagnosticLevel::Warning);
     }
@@ -415,14 +471,20 @@ mod tests {
     #[test]
     fn test_kiro_004_whitespace_only() {
         let diagnostics = validate_steering("   \n\n  ");
-        let kiro_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "KIRO-004").collect();
+        let kiro_004: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "KIRO-004")
+            .collect();
         assert_eq!(kiro_004.len(), 1);
     }
 
     #[test]
     fn test_kiro_004_valid_file() {
         let diagnostics = validate_steering("---\ninclusion: always\n---\n# Guidelines\n");
-        let kiro_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "KIRO-004").collect();
+        let kiro_004: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "KIRO-004")
+            .collect();
         assert!(kiro_004.is_empty());
     }
 
@@ -431,9 +493,11 @@ mod tests {
         let mut config = LintConfig::default();
         config.rules_mut().disabled_rules = vec!["KIRO-004".to_string()];
         let validator = KiroSteeringValidator;
-        let diagnostics =
-            validator.validate(Path::new(".kiro/steering/test.md"), "", &config);
-        let kiro_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "KIRO-004").collect();
+        let diagnostics = validator.validate(Path::new(".kiro/steering/test.md"), "", &config);
+        let kiro_004: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "KIRO-004")
+            .collect();
         assert!(kiro_004.is_empty());
     }
 
@@ -445,11 +509,7 @@ mod tests {
         config.rules_mut().kiro_steering = false;
         let validator = KiroSteeringValidator;
 
-        let diagnostics = validator.validate(
-            Path::new(".kiro/steering/test.md"),
-            "",
-            &config,
-        );
+        let diagnostics = validator.validate(Path::new(".kiro/steering/test.md"), "", &config);
         let kiro_rules: Vec<_> = diagnostics
             .iter()
             .filter(|d| d.rule.starts_with("KIRO-"))
@@ -496,7 +556,10 @@ mod tests {
         // Non-string inclusion values (number, bool) are flagged as invalid
         let content = "---\ninclusion: 123\n---\n# Content\n";
         let diagnostics = validate_steering(content);
-        let kiro_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "KIRO-001").collect();
+        let kiro_001: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "KIRO-001")
+            .collect();
         assert_eq!(kiro_001.len(), 1);
         assert_eq!(kiro_001[0].level, DiagnosticLevel::Error);
     }
@@ -506,7 +569,10 @@ mod tests {
         // Empty string name should be flagged
         let content = "---\ninclusion: auto\nname: \"\"\ndescription: test desc\n---\n# Steering\n";
         let diagnostics = validate_steering(content);
-        let kiro_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "KIRO-002").collect();
+        let kiro_002: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "KIRO-002")
+            .collect();
         assert_eq!(kiro_002.len(), 1);
         assert!(kiro_002[0].message.contains("name"));
     }
@@ -516,7 +582,10 @@ mod tests {
         // Null/non-string name should be flagged
         let content = "---\ninclusion: auto\nname: null\ndescription: test desc\n---\n# Steering\n";
         let diagnostics = validate_steering(content);
-        let kiro_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "KIRO-002").collect();
+        let kiro_002: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "KIRO-002")
+            .collect();
         assert_eq!(kiro_002.len(), 1);
         assert!(kiro_002[0].message.contains("name"));
     }
@@ -526,7 +595,10 @@ mod tests {
         // Inclusion modes are case-sensitive - "ALWAYS" is not valid
         let content = "---\ninclusion: ALWAYS\n---\n# Content\n";
         let diagnostics = validate_steering(content);
-        let kiro_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "KIRO-001").collect();
+        let kiro_001: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "KIRO-001")
+            .collect();
         assert_eq!(kiro_001.len(), 1);
     }
 
@@ -535,7 +607,10 @@ mod tests {
         // Non-string fileMatchPattern values are flagged as invalid
         let content = "---\nfileMatchPattern: 123\n---\n# Content\n";
         let diagnostics = validate_steering(content);
-        let kiro_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "KIRO-003").collect();
+        let kiro_003: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "KIRO-003")
+            .collect();
         assert_eq!(kiro_003.len(), 1);
         assert_eq!(kiro_003[0].level, DiagnosticLevel::Warning);
     }
@@ -545,7 +620,10 @@ mod tests {
         // Empty string is a valid glob pattern
         let content = "---\nfileMatchPattern: \"\"\n---\n# Content\n";
         let diagnostics = validate_steering(content);
-        let kiro_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "KIRO-003").collect();
+        let kiro_003: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "KIRO-003")
+            .collect();
         assert!(kiro_003.is_empty());
     }
 
@@ -554,7 +632,10 @@ mod tests {
         // File with frontmatter but no body is not "empty"
         let content = "---\ninclusion: always\n---\n";
         let diagnostics = validate_steering(content);
-        let kiro_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "KIRO-004").collect();
+        let kiro_004: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "KIRO-004")
+            .collect();
         assert!(kiro_004.is_empty());
     }
 

@@ -1,6 +1,6 @@
 # agnix Knowledge Base - Master Index
 
-> 224 validation rules across 31 categories, sourced from 75+ references
+> 224 validation rules across 32 categories, sourced from 75+ references
 
 
 ---

@@ -485,6 +485,23 @@ rules:
     message: "检测到旧版 .windsurfrules 文件"
     suggestion: "迁移到 .windsurf/rules/ 目录并使用单独的 .md 文件"
 
+  # --- Kiro Steering (kiro_steering.rs) ---
+  kiro_001:
+    message: "无效的引导文件包含模式 '%{value}' - 有效模式为: always, fileMatch, manual, auto"
+    suggestion: "使用以下之一: always, fileMatch, manual, auto"
+  kiro_002_auto:
+    message: "使用 'auto' 包含模式的引导文件缺少必需字段 '%{field}'"
+    suggestion: "使用 inclusion: auto 时需要添加 'name' 和 'description' 字段"
+  kiro_002_filematch:
+    message: "使用 'fileMatch' 包含模式的引导文件缺少必需的 'fileMatchPattern' 字段"
+    suggestion: "添加 'fileMatchPattern' glob 模式（例如 fileMatchPattern: '**/*.ts'）"
+  kiro_003:
+    message: "无效的 fileMatchPattern glob: %{error}"
+    suggestion: "修复 glob 模式语法"
+  kiro_004:
+    message: "Kiro 引导文件为空"
+    suggestion: "向文件添加引导内容"
+
   # --- Prompt engineering (prompt.rs) ---
   pe_001:
     message: "关键词 '%{keyword}' 在文档的 %{percent} 百分比处（40-60 百分比是'中间遗忘'区域）"

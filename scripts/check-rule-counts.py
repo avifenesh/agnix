@@ -127,6 +127,7 @@ def main() -> int:
         "codex": "Codex CLI",
         "version-awareness": "Version Awareness",
         "windsurf": "Windsurf",
+        "kiro-steering": "Kiro Steering",
         "amp-checks": "Amp Checks",
     }
 
@@ -220,6 +221,7 @@ def main() -> int:
         "OpenCode Skills": ["opencode-skills"],
         "Windsurf": ["windsurf"],
         "Windsurf Skills": ["windsurf-skills"],
+        "Kiro Steering": ["kiro-steering"],
         "Kiro Skills": ["kiro-skills"],
         "Amp Skills": ["amp-skills"],
         "Amp Checks": ["amp-checks"],
