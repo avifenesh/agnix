@@ -1,4 +1,4 @@
-//! Cursor project rules validation rules (CUR-001 to CUR-009)
+//! Cursor project rules validation rules (CUR-001 to CUR-016)
 //!
 //! Validates:
 //! - CUR-001: Empty .mdc rule file (HIGH) - files must have content
@@ -10,11 +10,19 @@
 //! - CUR-007: alwaysApply with redundant globs (MEDIUM) - globs ignored when alwaysApply is true
 //! - CUR-008: Invalid alwaysApply type (HIGH) - must be boolean, not string
 //! - CUR-009: Missing description for agent-requested rule (MEDIUM) - agent needs description
+//! - CUR-010: Invalid .cursor/hooks.json schema (HIGH)
+//! - CUR-011: Unknown hook event name in .cursor/hooks.json (MEDIUM)
+//! - CUR-012: Hook entry missing required command field (HIGH)
+//! - CUR-013: Invalid hook type value (HIGH)
+//! - CUR-014: Invalid Cursor subagent frontmatter (HIGH)
+//! - CUR-015: Empty Cursor subagent body (MEDIUM)
+//! - CUR-016: Invalid .cursor/environment.json schema (HIGH)
 
 use crate::{
     FileType,
     config::LintConfig,
     diagnostics::{Diagnostic, Fix},
+    parsers::frontmatter::split_frontmatter,
     rules::{Validator, ValidatorMetadata},
     schemas::cursor::{
         ParsedMdcFrontmatter, is_body_empty, is_content_empty, parse_mdc_frontmatter,
@@ -22,12 +30,39 @@ use crate::{
     },
 };
 use rust_i18n::t;
+use serde_json::Value as JsonValue;
+use serde_yaml::Value as YamlValue;
 use std::path::Path;
 
 const RULE_IDS: &[&str] = &[
     "CUR-001", "CUR-002", "CUR-003", "CUR-004", "CUR-005", "CUR-006", "CUR-007", "CUR-008",
-    "CUR-009",
+    "CUR-009", "CUR-010", "CUR-011", "CUR-012", "CUR-013", "CUR-014", "CUR-015", "CUR-016",
 ];
+
+const CURSOR_HOOK_EVENTS: &[&str] = &[
+    "sessionStart",
+    "sessionEnd",
+    "preToolUse",
+    "postToolUse",
+    "postToolUseFailure",
+    "subagentStart",
+    "subagentStop",
+    "beforeShellExecution",
+    "afterShellExecution",
+    "beforeMCPExecution",
+    "afterMCPExecution",
+    "beforeReadFile",
+    "afterFileEdit",
+    "beforeSubmitPrompt",
+    "preCompact",
+    "stop",
+    "afterAgentResponse",
+    "afterAgentThought",
+    "beforeTabFileRead",
+    "afterTabFileEdit",
+];
+
+const CURSOR_HOOK_TYPES: &[&str] = &["command", "prompt"];
 
 pub struct CursorValidator;
 
@@ -98,6 +133,571 @@ fn find_yaml_quoted_value_range(
     crate::rules::find_yaml_value_range(content, parsed, key, true)
 }
 
+fn json_type_name(value: &JsonValue) -> &'static str {
+    match value {
+        JsonValue::Null => "null",
+        JsonValue::Bool(_) => "boolean",
+        JsonValue::Number(_) => "number",
+        JsonValue::String(_) => "string",
+        JsonValue::Array(_) => "array",
+        JsonValue::Object(_) => "object",
+    }
+}
+
+fn is_valid_cursor_agent_name(name: &str) -> bool {
+    !name.is_empty()
+        && !name.starts_with('-')
+        && !name.ends_with('-')
+        && !name.contains("--")
+        && name
+            .chars()
+            .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '-')
+}
+
+fn is_valid_cursor_model_id(model: &str) -> bool {
+    !model.trim().is_empty()
+        && model
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || matches!(c, '-' | '_' | '.' | ':' | '/'))
+}
+
+fn validate_cursor_hooks_file(path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic> {
+    let mut diagnostics = Vec::new();
+
+    let parsed = match serde_json::from_str::<JsonValue>(content) {
+        Ok(value) => value,
+        Err(error) => {
+            if config.is_rule_enabled("CUR-010") {
+                diagnostics.push(
+                    Diagnostic::error(
+                        path.to_path_buf(),
+                        1,
+                        0,
+                        "CUR-010",
+                        t!("rules.cur_010.parse_error", error = error.to_string()),
+                    )
+                    .with_suggestion(t!("rules.cur_010.suggestion")),
+                );
+            }
+            return diagnostics;
+        }
+    };
+
+    let root = match parsed.as_object() {
+        Some(obj) => obj,
+        None => {
+            if config.is_rule_enabled("CUR-010") {
+                diagnostics.push(
+                    Diagnostic::error(
+                        path.to_path_buf(),
+                        1,
+                        0,
+                        "CUR-010",
+                        t!("rules.cur_010.message"),
+                    )
+                    .with_suggestion(t!("rules.cur_010.suggestion")),
+                );
+            }
+            return diagnostics;
+        }
+    };
+
+    if config.is_rule_enabled("CUR-010")
+        && root.get("version").and_then(JsonValue::as_i64).is_none()
+    {
+        diagnostics.push(
+            Diagnostic::error(
+                path.to_path_buf(),
+                1,
+                0,
+                "CUR-010",
+                t!("rules.cur_010.missing_version"),
+            )
+            .with_suggestion(t!("rules.cur_010.suggestion")),
+        );
+    }
+
+    let hooks = match root.get("hooks") {
+        Some(JsonValue::Object(map)) => map,
+        Some(other) => {
+            if config.is_rule_enabled("CUR-010") {
+                diagnostics.push(
+                    Diagnostic::error(
+                        path.to_path_buf(),
+                        1,
+                        0,
+                        "CUR-010",
+                        t!("rules.cur_010.invalid_hooks", got = json_type_name(other)),
+                    )
+                    .with_suggestion(t!("rules.cur_010.suggestion")),
+                );
+            }
+            return diagnostics;
+        }
+        None => {
+            if config.is_rule_enabled("CUR-010") {
+                diagnostics.push(
+                    Diagnostic::error(
+                        path.to_path_buf(),
+                        1,
+                        0,
+                        "CUR-010",
+                        t!("rules.cur_010.missing_hooks"),
+                    )
+                    .with_suggestion(t!("rules.cur_010.suggestion")),
+                );
+            }
+            return diagnostics;
+        }
+    };
+
+    for (event_name, hooks_value) in hooks {
+        if config.is_rule_enabled("CUR-011") && !CURSOR_HOOK_EVENTS.contains(&event_name.as_str()) {
+            diagnostics.push(
+                Diagnostic::warning(
+                    path.to_path_buf(),
+                    1,
+                    0,
+                    "CUR-011",
+                    t!("rules.cur_011.message", event = event_name.as_str()),
+                )
+                .with_suggestion(t!("rules.cur_011.suggestion")),
+            );
+        }
+
+        let hook_array = match hooks_value.as_array() {
+            Some(entries) => entries,
+            None => {
+                if config.is_rule_enabled("CUR-010") {
+                    diagnostics.push(
+                        Diagnostic::error(
+                            path.to_path_buf(),
+                            1,
+                            0,
+                            "CUR-010",
+                            t!(
+                                "rules.cur_010.invalid_event_hooks",
+                                event = event_name.as_str(),
+                                got = json_type_name(hooks_value)
+                            ),
+                        )
+                        .with_suggestion(t!("rules.cur_010.suggestion")),
+                    );
+                }
+                continue;
+            }
+        };
+
+        for (index, hook_entry) in hook_array.iter().enumerate() {
+            let hook_obj = match hook_entry.as_object() {
+                Some(obj) => obj,
+                None => {
+                    if config.is_rule_enabled("CUR-010") {
+                        diagnostics.push(
+                            Diagnostic::error(
+                                path.to_path_buf(),
+                                1,
+                                0,
+                                "CUR-010",
+                                t!(
+                                    "rules.cur_010.invalid_hook_entry",
+                                    event = event_name.as_str(),
+                                    index = index + 1
+                                ),
+                            )
+                            .with_suggestion(t!("rules.cur_010.suggestion")),
+                        );
+                    }
+                    continue;
+                }
+            };
+
+            if config.is_rule_enabled("CUR-013")
+                && let Some(type_value) = hook_obj.get("type")
+            {
+                let type_str = type_value.as_str();
+                if type_str.is_none() || !CURSOR_HOOK_TYPES.contains(&type_str.unwrap_or_default())
+                {
+                    diagnostics.push(
+                        Diagnostic::error(
+                            path.to_path_buf(),
+                            1,
+                            0,
+                            "CUR-013",
+                            t!(
+                                "rules.cur_013.message",
+                                event = event_name.as_str(),
+                                index = index + 1
+                            ),
+                        )
+                        .with_suggestion(t!("rules.cur_013.suggestion")),
+                    );
+                }
+            }
+
+            if config.is_rule_enabled("CUR-012") {
+                let has_valid_command = hook_obj
+                    .get("command")
+                    .and_then(JsonValue::as_str)
+                    .is_some_and(|command| !command.trim().is_empty());
+
+                if !has_valid_command {
+                    diagnostics.push(
+                        Diagnostic::error(
+                            path.to_path_buf(),
+                            1,
+                            0,
+                            "CUR-012",
+                            t!(
+                                "rules.cur_012.message",
+                                event = event_name.as_str(),
+                                index = index + 1
+                            ),
+                        )
+                        .with_suggestion(t!("rules.cur_012.suggestion")),
+                    );
+                }
+            }
+        }
+    }
+
+    diagnostics
+}
+
+fn validate_cursor_agent_file(path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic> {
+    let mut diagnostics = Vec::new();
+    let parts = split_frontmatter(content);
+
+    if config.is_rule_enabled("CUR-014") {
+        if !parts.has_frontmatter || !parts.has_closing {
+            diagnostics.push(
+                Diagnostic::error(
+                    path.to_path_buf(),
+                    1,
+                    0,
+                    "CUR-014",
+                    t!("rules.cur_014.message"),
+                )
+                .with_suggestion(t!("rules.cur_014.suggestion")),
+            );
+        } else {
+            let frontmatter = match serde_yaml::from_str::<YamlValue>(&parts.frontmatter) {
+                Ok(value) => Some(value),
+                Err(_) => {
+                    diagnostics.push(
+                        Diagnostic::error(
+                            path.to_path_buf(),
+                            1,
+                            0,
+                            "CUR-014",
+                            t!("rules.cur_014.invalid_frontmatter"),
+                        )
+                        .with_suggestion(t!("rules.cur_014.suggestion")),
+                    );
+                    None
+                }
+            };
+
+            if let Some(frontmatter_map) = frontmatter.as_ref().and_then(YamlValue::as_mapping) {
+                let key = |name: &str| YamlValue::String(name.to_string());
+
+                match frontmatter_map.get(key("name")) {
+                    Some(YamlValue::String(name)) if is_valid_cursor_agent_name(name) => {}
+                    Some(YamlValue::String(_)) => diagnostics.push(
+                        Diagnostic::error(
+                            path.to_path_buf(),
+                            1,
+                            0,
+                            "CUR-014",
+                            t!("rules.cur_014.invalid_name"),
+                        )
+                        .with_suggestion(t!("rules.cur_014.suggestion")),
+                    ),
+                    Some(_) => diagnostics.push(
+                        Diagnostic::error(
+                            path.to_path_buf(),
+                            1,
+                            0,
+                            "CUR-014",
+                            t!("rules.cur_014.name_not_string"),
+                        )
+                        .with_suggestion(t!("rules.cur_014.suggestion")),
+                    ),
+                    None => diagnostics.push(
+                        Diagnostic::error(
+                            path.to_path_buf(),
+                            1,
+                            0,
+                            "CUR-014",
+                            t!("rules.cur_014.missing_name"),
+                        )
+                        .with_suggestion(t!("rules.cur_014.suggestion")),
+                    ),
+                }
+
+                match frontmatter_map.get(key("description")) {
+                    Some(YamlValue::String(_)) => {}
+                    Some(_) => diagnostics.push(
+                        Diagnostic::error(
+                            path.to_path_buf(),
+                            1,
+                            0,
+                            "CUR-014",
+                            t!("rules.cur_014.description_not_string"),
+                        )
+                        .with_suggestion(t!("rules.cur_014.suggestion")),
+                    ),
+                    None => diagnostics.push(
+                        Diagnostic::error(
+                            path.to_path_buf(),
+                            1,
+                            0,
+                            "CUR-014",
+                            t!("rules.cur_014.missing_description"),
+                        )
+                        .with_suggestion(t!("rules.cur_014.suggestion")),
+                    ),
+                }
+
+                if let Some(model_value) = frontmatter_map.get(key("model")) {
+                    match model_value {
+                        YamlValue::String(model)
+                            if model == "fast"
+                                || model == "inherit"
+                                || is_valid_cursor_model_id(model) => {}
+                        YamlValue::String(_) => diagnostics.push(
+                            Diagnostic::error(
+                                path.to_path_buf(),
+                                1,
+                                0,
+                                "CUR-014",
+                                t!("rules.cur_014.invalid_model"),
+                            )
+                            .with_suggestion(t!("rules.cur_014.suggestion")),
+                        ),
+                        _ => diagnostics.push(
+                            Diagnostic::error(
+                                path.to_path_buf(),
+                                1,
+                                0,
+                                "CUR-014",
+                                t!("rules.cur_014.model_not_string"),
+                            )
+                            .with_suggestion(t!("rules.cur_014.suggestion")),
+                        ),
+                    }
+                }
+
+                if let Some(readonly_value) = frontmatter_map.get(key("readonly"))
+                    && !matches!(readonly_value, YamlValue::Bool(_))
+                {
+                    diagnostics.push(
+                        Diagnostic::error(
+                            path.to_path_buf(),
+                            1,
+                            0,
+                            "CUR-014",
+                            t!("rules.cur_014.readonly_not_bool"),
+                        )
+                        .with_suggestion(t!("rules.cur_014.suggestion")),
+                    );
+                }
+
+                if let Some(is_background_value) = frontmatter_map.get(key("is_background"))
+                    && !matches!(is_background_value, YamlValue::Bool(_))
+                {
+                    diagnostics.push(
+                        Diagnostic::error(
+                            path.to_path_buf(),
+                            1,
+                            0,
+                            "CUR-014",
+                            t!("rules.cur_014.is_background_not_bool"),
+                        )
+                        .with_suggestion(t!("rules.cur_014.suggestion")),
+                    );
+                }
+            } else if frontmatter.is_some() && config.is_rule_enabled("CUR-014") {
+                diagnostics.push(
+                    Diagnostic::error(
+                        path.to_path_buf(),
+                        1,
+                        0,
+                        "CUR-014",
+                        t!("rules.cur_014.invalid_frontmatter"),
+                    )
+                    .with_suggestion(t!("rules.cur_014.suggestion")),
+                );
+            }
+        }
+    }
+
+    if config.is_rule_enabled("CUR-015")
+        && parts.has_frontmatter
+        && parts.has_closing
+        && parts.body.trim().is_empty()
+    {
+        diagnostics.push(
+            Diagnostic::warning(
+                path.to_path_buf(),
+                1,
+                0,
+                "CUR-015",
+                t!("rules.cur_015.message"),
+            )
+            .with_suggestion(t!("rules.cur_015.suggestion")),
+        );
+    }
+
+    diagnostics
+}
+
+fn validate_cursor_environment_file(
+    path: &Path,
+    content: &str,
+    config: &LintConfig,
+) -> Vec<Diagnostic> {
+    let mut diagnostics = Vec::new();
+
+    if !config.is_rule_enabled("CUR-016") {
+        return diagnostics;
+    }
+
+    let parsed = match serde_json::from_str::<JsonValue>(content) {
+        Ok(value) => value,
+        Err(error) => {
+            diagnostics.push(
+                Diagnostic::error(
+                    path.to_path_buf(),
+                    1,
+                    0,
+                    "CUR-016",
+                    t!("rules.cur_016.parse_error", error = error.to_string()),
+                )
+                .with_suggestion(t!("rules.cur_016.suggestion")),
+            );
+            return diagnostics;
+        }
+    };
+
+    let root = match parsed.as_object() {
+        Some(obj) => obj,
+        None => {
+            diagnostics.push(
+                Diagnostic::error(
+                    path.to_path_buf(),
+                    1,
+                    0,
+                    "CUR-016",
+                    t!("rules.cur_016.message"),
+                )
+                .with_suggestion(t!("rules.cur_016.suggestion")),
+            );
+            return diagnostics;
+        }
+    };
+
+    if root.get("snapshot").and_then(JsonValue::as_str).is_none() {
+        diagnostics.push(
+            Diagnostic::error(
+                path.to_path_buf(),
+                1,
+                0,
+                "CUR-016",
+                t!("rules.cur_016.snapshot"),
+            )
+            .with_suggestion(t!("rules.cur_016.suggestion")),
+        );
+    }
+
+    if root.get("install").and_then(JsonValue::as_str).is_none() {
+        diagnostics.push(
+            Diagnostic::error(
+                path.to_path_buf(),
+                1,
+                0,
+                "CUR-016",
+                t!("rules.cur_016.install"),
+            )
+            .with_suggestion(t!("rules.cur_016.suggestion")),
+        );
+    }
+
+    if let Some(start) = root.get("start")
+        && start.as_str().is_none()
+    {
+        diagnostics.push(
+            Diagnostic::error(
+                path.to_path_buf(),
+                1,
+                0,
+                "CUR-016",
+                t!("rules.cur_016.start"),
+            )
+            .with_suggestion(t!("rules.cur_016.suggestion")),
+        );
+    }
+
+    match root.get("terminals") {
+        Some(JsonValue::Array(terminals)) => {
+            for (index, terminal) in terminals.iter().enumerate() {
+                if let Some(obj) = terminal.as_object() {
+                    let has_name = obj.get("name").and_then(JsonValue::as_str).is_some();
+                    let has_command = obj.get("command").and_then(JsonValue::as_str).is_some();
+                    if !has_name || !has_command {
+                        diagnostics.push(
+                            Diagnostic::error(
+                                path.to_path_buf(),
+                                1,
+                                0,
+                                "CUR-016",
+                                t!("rules.cur_016.terminal", index = index + 1),
+                            )
+                            .with_suggestion(t!("rules.cur_016.suggestion")),
+                        );
+                    }
+                } else {
+                    diagnostics.push(
+                        Diagnostic::error(
+                            path.to_path_buf(),
+                            1,
+                            0,
+                            "CUR-016",
+                            t!("rules.cur_016.terminal", index = index + 1),
+                        )
+                        .with_suggestion(t!("rules.cur_016.suggestion")),
+                    );
+                }
+            }
+        }
+        Some(other) => diagnostics.push(
+            Diagnostic::error(
+                path.to_path_buf(),
+                1,
+                0,
+                "CUR-016",
+                t!(
+                    "rules.cur_016.invalid_terminals",
+                    got = json_type_name(other)
+                ),
+            )
+            .with_suggestion(t!("rules.cur_016.suggestion")),
+        ),
+        None => diagnostics.push(
+            Diagnostic::error(
+                path.to_path_buf(),
+                1,
+                0,
+                "CUR-016",
+                t!("rules.cur_016.missing_terminals"),
+            )
+            .with_suggestion(t!("rules.cur_016.suggestion")),
+        ),
+    }
+
+    diagnostics
+}
+
 impl Validator for CursorValidator {
     fn metadata(&self) -> ValidatorMetadata {
         ValidatorMetadata {
@@ -109,8 +709,18 @@ impl Validator for CursorValidator {
     fn validate(&self, path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic> {
         let mut diagnostics = Vec::new();
 
-        // Determine if this is a .mdc rule file or legacy .cursorrules
         let file_type = crate::detect_file_type(path);
+
+        match file_type {
+            FileType::CursorHooks => return validate_cursor_hooks_file(path, content, config),
+            FileType::CursorAgent => return validate_cursor_agent_file(path, content, config),
+            FileType::CursorEnvironment => {
+                return validate_cursor_environment_file(path, content, config);
+            }
+            _ => {}
+        }
+
+        // Determine if this is a .mdc rule file or legacy .cursorrules
         let is_legacy = file_type == FileType::CursorRulesLegacy;
 
         // CUR-006: Legacy .cursorrules detected (WARNING)
@@ -142,8 +752,10 @@ impl Validator for CursorValidator {
         }
 
         // CUR-001: Empty .mdc rule file (ERROR)
+        let parsed_frontmatter = parse_mdc_frontmatter(content);
+
         if config.is_rule_enabled("CUR-001") {
-            if let Some(parsed) = parse_mdc_frontmatter(content) {
+            if let Some(parsed) = parsed_frontmatter.as_ref() {
                 // Skip CUR-001 if there's a frontmatter parse error - CUR-003 will handle it
                 if parsed.parse_error.is_none() && is_body_empty(&parsed.body) {
                     diagnostics.push(
@@ -173,7 +785,7 @@ impl Validator for CursorValidator {
         }
 
         // Parse frontmatter for further validation
-        let parsed = match parse_mdc_frontmatter(content) {
+        let parsed = match parsed_frontmatter {
             Some(p) => p,
             None => {
                 // CUR-002: Missing frontmatter in .mdc file (WARNING)
@@ -405,6 +1017,33 @@ mod tests {
     fn validate_mdc_with_config(content: &str, config: &LintConfig) -> Vec<Diagnostic> {
         let validator = CursorValidator;
         validator.validate(Path::new(".cursor/rules/typescript.mdc"), content, config)
+    }
+
+    fn validate_cursor_hooks(content: &str) -> Vec<Diagnostic> {
+        let validator = CursorValidator;
+        validator.validate(
+            Path::new(".cursor/hooks.json"),
+            content,
+            &LintConfig::default(),
+        )
+    }
+
+    fn validate_cursor_agent(content: &str) -> Vec<Diagnostic> {
+        let validator = CursorValidator;
+        validator.validate(
+            Path::new(".cursor/agents/reviewer.md"),
+            content,
+            &LintConfig::default(),
+        )
+    }
+
+    fn validate_cursor_environment(content: &str) -> Vec<Diagnostic> {
+        let validator = CursorValidator;
+        validator.validate(
+            Path::new(".cursor/environment.json"),
+            content,
+            &LintConfig::default(),
+        )
     }
 
     // ===== CUR-001: Empty Rule File =====
@@ -725,6 +1364,209 @@ description: Modern format
         assert!(cur_006.is_empty());
     }
 
+    // ===== CUR-010 to CUR-016: Cursor hooks/agents/environment =====
+
+    #[test]
+    fn test_cur_010_hooks_schema_invalid() {
+        let diagnostics = validate_cursor_hooks(r#"{"hooks": {}}"#);
+        assert!(diagnostics.iter().any(|d| d.rule == "CUR-010"));
+    }
+
+    #[test]
+    fn test_cur_010_hooks_json_parse_error() {
+        let diagnostics = validate_cursor_hooks(r#"{"version":1,"hooks":{"sessionStart":[}"#);
+        assert!(diagnostics.iter().any(|d| d.rule == "CUR-010"));
+    }
+
+    #[test]
+    fn test_cur_010_hooks_root_must_be_object() {
+        let diagnostics = validate_cursor_hooks(r#"["not", "an", "object"]"#);
+        assert!(diagnostics.iter().any(|d| d.rule == "CUR-010"));
+    }
+
+    #[test]
+    fn test_cur_010_hooks_field_must_be_object() {
+        let diagnostics = validate_cursor_hooks(r#"{"version":1,"hooks":[]}"#);
+        assert!(diagnostics.iter().any(|d| d.rule == "CUR-010"));
+    }
+
+    #[test]
+    fn test_cur_010_event_hooks_must_be_array() {
+        let diagnostics = validate_cursor_hooks(
+            r#"{"version":1,"hooks":{"sessionStart":{"type":"command","command":"echo hi"}}}"#,
+        );
+        assert!(diagnostics.iter().any(|d| d.rule == "CUR-010"));
+    }
+
+    #[test]
+    fn test_cur_010_hook_entries_must_be_objects() {
+        let diagnostics =
+            validate_cursor_hooks(r#"{"version":1,"hooks":{"sessionStart":["echo hi"]}}"#);
+        assert!(diagnostics.iter().any(|d| d.rule == "CUR-010"));
+    }
+
+    #[test]
+    fn test_cur_011_unknown_hook_event() {
+        let diagnostics = validate_cursor_hooks(
+            r#"{"version":1,"hooks":{"unknownEvent":[{"type":"command","command":"echo hi"}]}}"#,
+        );
+        assert!(diagnostics.iter().any(|d| d.rule == "CUR-011"));
+    }
+
+    #[test]
+    fn test_cur_012_missing_hook_command() {
+        let diagnostics =
+            validate_cursor_hooks(r#"{"version":1,"hooks":{"sessionStart":[{"type":"command"}]}}"#);
+        assert!(diagnostics.iter().any(|d| d.rule == "CUR-012"));
+    }
+
+    #[test]
+    fn test_cur_012_command_must_be_non_empty_string() {
+        let diagnostics = validate_cursor_hooks(
+            r#"{"version":1,"hooks":{"sessionStart":[{"type":"command","command":""}]}}"#,
+        );
+        assert!(diagnostics.iter().any(|d| d.rule == "CUR-012"));
+    }
+
+    #[test]
+    fn test_cur_013_invalid_hook_type() {
+        let diagnostics = validate_cursor_hooks(
+            r#"{"version":1,"hooks":{"sessionStart":[{"type":"agent","command":"echo hi"}]}}"#,
+        );
+        assert!(diagnostics.iter().any(|d| d.rule == "CUR-013"));
+    }
+
+    #[test]
+    fn test_cur_014_invalid_cursor_agent_frontmatter() {
+        let content = r#"---
+name: ReviewerAgent
+description: 123
+readonly: "true"
+---
+Review code changes."#;
+        let diagnostics = validate_cursor_agent(content);
+        assert!(diagnostics.iter().any(|d| d.rule == "CUR-014"));
+    }
+
+    #[test]
+    fn test_cur_014_malformed_yaml_reports_once() {
+        let diagnostics = validate_cursor_agent(
+            r#"---
+name: reviewer-agent
+description: [unclosed
+---
+Review changes."#,
+        );
+        let cur_014: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CUR-014").collect();
+        assert_eq!(cur_014.len(), 1);
+    }
+
+    #[test]
+    fn test_cur_014_missing_required_fields() {
+        let diagnostics = validate_cursor_agent(
+            r#"---
+model: fast
+---
+Review changes."#,
+        );
+        assert!(
+            diagnostics.iter().any(|d| d.rule == "CUR-014"),
+            "Expected CUR-014 when required fields are missing",
+        );
+    }
+
+    #[test]
+    fn test_cur_015_empty_cursor_agent_body() {
+        let content = r#"---
+name: reviewer-agent
+description: Reviews pull requests
+model: fast
+readonly: true
+is_background: false
+---
+"#;
+        let diagnostics = validate_cursor_agent(content);
+        assert!(diagnostics.iter().any(|d| d.rule == "CUR-015"));
+    }
+
+    #[test]
+    fn test_cur_016_invalid_environment_schema() {
+        let diagnostics = validate_cursor_environment(
+            r#"{"snapshot":42,"install":"npm ci","terminals":[{"name":"main"}]}"#,
+        );
+        assert!(diagnostics.iter().any(|d| d.rule == "CUR-016"));
+    }
+
+    #[test]
+    fn test_cur_016_environment_parse_error() {
+        let diagnostics = validate_cursor_environment(r#"{"snapshot":"ubuntu","install":}"#);
+        assert!(diagnostics.iter().any(|d| d.rule == "CUR-016"));
+    }
+
+    #[test]
+    fn test_cur_016_environment_root_must_be_object() {
+        let diagnostics = validate_cursor_environment(r#"["snapshot","install","terminals"]"#);
+        assert!(diagnostics.iter().any(|d| d.rule == "CUR-016"));
+    }
+
+    #[test]
+    fn test_cur_016_environment_missing_or_invalid_terminals() {
+        let missing = validate_cursor_environment(r#"{"snapshot":"ubuntu","install":"npm ci"}"#);
+        assert!(missing.iter().any(|d| d.rule == "CUR-016"));
+
+        let invalid_type = validate_cursor_environment(
+            r#"{"snapshot":"ubuntu","install":"npm ci","terminals":{}}"#,
+        );
+        assert!(invalid_type.iter().any(|d| d.rule == "CUR-016"));
+    }
+
+    #[test]
+    fn test_cur_016_environment_start_must_be_string() {
+        let diagnostics = validate_cursor_environment(
+            r#"{"snapshot":"ubuntu","install":"npm ci","start":42,"terminals":[{"name":"app","command":"npm run dev"}]}"#,
+        );
+        assert!(diagnostics.iter().any(|d| d.rule == "CUR-016"));
+    }
+
+    #[test]
+    fn test_cursor_hooks_agents_environment_valid() {
+        let hooks =
+            r#"{"version":1,"hooks":{"sessionStart":[{"type":"command","command":"echo start"}]}}"#;
+        let agent = r#"---
+name: reviewer-agent
+description: Reviews code quality
+model: fast
+readonly: true
+is_background: false
+---
+Review the diff and suggest improvements."#;
+        let environment = r#"{
+  "snapshot": "ubuntu-24.04",
+  "install": "npm ci",
+  "start": "npm run dev",
+  "terminals": [{"name": "app", "command": "npm run dev"}]
+}"#;
+
+        assert!(
+            !validate_cursor_hooks(hooks)
+                .iter()
+                .any(|d| d.rule.starts_with("CUR-01")),
+            "Valid hooks fixture should not trigger CUR-010..CUR-016",
+        );
+        assert!(
+            !validate_cursor_agent(agent)
+                .iter()
+                .any(|d| d.rule == "CUR-014" || d.rule == "CUR-015"),
+            "Valid cursor agent fixture should not trigger CUR-014/CUR-015",
+        );
+        assert!(
+            !validate_cursor_environment(environment)
+                .iter()
+                .any(|d| d.rule == "CUR-016"),
+            "Valid environment fixture should not trigger CUR-016",
+        );
+    }
+
     // ===== Config Integration =====
 
     #[test]
@@ -918,7 +1760,7 @@ Body"#;
     fn test_all_cur_rules_can_be_disabled() {
         let rules = [
             "CUR-001", "CUR-002", "CUR-003", "CUR-004", "CUR-005", "CUR-006", "CUR-007", "CUR-008",
-            "CUR-009",
+            "CUR-009", "CUR-010", "CUR-011", "CUR-012", "CUR-013", "CUR-014", "CUR-015", "CUR-016",
         ];
 
         for rule in rules {
@@ -938,6 +1780,28 @@ Body"#;
                     ".cursor/rules/test.mdc",
                 ),
                 "CUR-009" => ("---\n\n---\nBody", ".cursor/rules/test.mdc"),
+                "CUR-010" => ("{}", ".cursor/hooks.json"),
+                "CUR-011" => (
+                    r#"{"version":1,"hooks":{"unknownEvent":[{"type":"command","command":"echo hi"}]}}"#,
+                    ".cursor/hooks.json",
+                ),
+                "CUR-012" => (
+                    r#"{"version":1,"hooks":{"sessionStart":[{"type":"command"}]}}"#,
+                    ".cursor/hooks.json",
+                ),
+                "CUR-013" => (
+                    r#"{"version":1,"hooks":{"sessionStart":[{"type":"agent","command":"echo hi"}]}}"#,
+                    ".cursor/hooks.json",
+                ),
+                "CUR-014" => (
+                    "---\nname: BadName\ndescription: 1\nreadonly: \"true\"\n---\nbody",
+                    ".cursor/agents/reviewer.md",
+                ),
+                "CUR-015" => (
+                    "---\nname: reviewer-agent\ndescription: test\n---\n",
+                    ".cursor/agents/reviewer.md",
+                ),
+                "CUR-016" => ("{}", ".cursor/environment.json"),
                 _ => ("---\nunknown: value\n---\n", ".cursor/rules/test.mdc"),
             };
 

@@ -1,7 +1,7 @@
 {
   "description": "Machine-readable source of truth for all validation rules. When adding a new rule, add it here AND in VALIDATION-RULES.md. CI parity tests enforce sync.",
   "version": "1.1.0",
-  "total_rules": 200,
+  "total_rules": 207,
   "last_updated": "2026-02-14",
   "schema": {
     "evidence": {
@@ -3876,6 +3876,195 @@
       },
       "good_example": "---\ndescription: TypeScript coding standards and best practices\n---\n# Rules\n\nUse strict mode.",
       "bad_example": "---\n\n---\n# Rules\n\nUse strict mode and explicit types."
+    },
+    {
+      "id": "CUR-010",
+      "name": "Invalid Cursor Hooks Schema",
+      "severity": "HIGH",
+      "category": "cursor",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://cursor.com/docs/agent/hooks"
+        ],
+        "verified_on": "2026-02-14",
+        "applies_to": {
+          "tool": "cursor"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      },
+      "good_example": "{\"version\":1,\"hooks\":{\"sessionStart\":[{\"type\":\"command\",\"command\":\"echo start\"}]}}",
+      "bad_example": "{\"hooks\":{}}"
+    },
+    {
+      "id": "CUR-011",
+      "name": "Unknown Cursor Hook Event Name",
+      "severity": "MEDIUM",
+      "category": "cursor",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://cursor.com/docs/agent/hooks"
+        ],
+        "verified_on": "2026-02-14",
+        "applies_to": {
+          "tool": "cursor"
+        },
+        "normative_level": "SHOULD",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      },
+      "good_example": "{\"version\":1,\"hooks\":{\"sessionStart\":[{\"type\":\"command\",\"command\":\"echo start\"}]}}",
+      "bad_example": "{\"version\":1,\"hooks\":{\"unknownEvent\":[{\"type\":\"command\",\"command\":\"echo start\"}]}}"
+    },
+    {
+      "id": "CUR-012",
+      "name": "Hook Entry Missing Required Command Field",
+      "severity": "HIGH",
+      "category": "cursor",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://cursor.com/docs/agent/hooks"
+        ],
+        "verified_on": "2026-02-14",
+        "applies_to": {
+          "tool": "cursor"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      },
+      "good_example": "{\"version\":1,\"hooks\":{\"sessionStart\":[{\"type\":\"command\",\"command\":\"echo start\"}]}}",
+      "bad_example": "{\"version\":1,\"hooks\":{\"sessionStart\":[{\"type\":\"command\"}]}}"
+    },
+    {
+      "id": "CUR-013",
+      "name": "Invalid Cursor Hook Type Value",
+      "severity": "HIGH",
+      "category": "cursor",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://cursor.com/docs/agent/hooks"
+        ],
+        "verified_on": "2026-02-14",
+        "applies_to": {
+          "tool": "cursor"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      },
+      "good_example": "{\"version\":1,\"hooks\":{\"sessionStart\":[{\"type\":\"prompt\",\"command\":\"Summarize changes\"}]}}",
+      "bad_example": "{\"version\":1,\"hooks\":{\"sessionStart\":[{\"type\":\"agent\",\"command\":\"echo start\"}]}}"
+    },
+    {
+      "id": "CUR-014",
+      "name": "Invalid Cursor Subagent Frontmatter",
+      "severity": "HIGH",
+      "category": "cursor",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://cursor.com/docs/context/subagents"
+        ],
+        "verified_on": "2026-02-14",
+        "applies_to": {
+          "tool": "cursor"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      },
+      "good_example": "---\nname: reviewer-agent\ndescription: Reviews code for defects\nmodel: fast\nreadonly: true\nis_background: false\n---\nReview staged changes and prioritize findings.",
+      "bad_example": "---\nname: ReviewerAgent\ndescription: 123\nreadonly: \"true\"\n---\nReview staged changes."
+    },
+    {
+      "id": "CUR-015",
+      "name": "Empty Cursor Subagent Body",
+      "severity": "MEDIUM",
+      "category": "cursor",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://cursor.com/docs/context/subagents"
+        ],
+        "verified_on": "2026-02-14",
+        "applies_to": {
+          "tool": "cursor"
+        },
+        "normative_level": "SHOULD",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      },
+      "good_example": "---\nname: reviewer-agent\ndescription: Reviews code for defects\n---\nReview the diff and return a concise risk report.",
+      "bad_example": "---\nname: reviewer-agent\ndescription: Reviews code for defects\n---\n"
+    },
+    {
+      "id": "CUR-016",
+      "name": "Invalid Cursor Environment Schema",
+      "severity": "HIGH",
+      "category": "cursor",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://cursor.com/docs/cloud-agent"
+        ],
+        "verified_on": "2026-02-14",
+        "applies_to": {
+          "tool": "cursor"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      },
+      "good_example": "{\"snapshot\":\"ubuntu-24.04\",\"install\":\"npm ci\",\"start\":\"npm run dev\",\"terminals\":[{\"name\":\"app\",\"command\":\"npm run dev\"}]}",
+      "bad_example": "{\"snapshot\":42,\"install\":\"npm ci\",\"terminals\":[{\"name\":\"app\"}]}"
     },
     {
       "id": "CLN-001",

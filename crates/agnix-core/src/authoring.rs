@@ -94,6 +94,7 @@ fn family_id_for_file_type(file_type: FileType) -> Option<&'static str> {
         FileType::Mcp => Some("mcp"),
         FileType::Copilot | FileType::CopilotScoped => Some("copilot"),
         FileType::CursorRule | FileType::CursorRulesLegacy => Some("cursor"),
+        FileType::CursorHooks | FileType::CursorAgent | FileType::CursorEnvironment => None,
         FileType::ClaudeMd => Some("claude-agents"),
         FileType::ClaudeRule => None, // No authoring catalog entry yet
         FileType::GeminiMd => None,   // No authoring catalog entry yet
@@ -116,6 +117,7 @@ fn is_yaml_family(file_type: FileType) -> bool {
             | FileType::Agent
             | FileType::CopilotScoped
             | FileType::CursorRule
+            | FileType::CursorAgent
             | FileType::ClaudeRule
     )
 }
@@ -479,6 +481,37 @@ mod tests {
             candidates.iter().any(|c| c.label == "description"),
             "Cursor rule key completions should include 'description', got: {:?}",
             candidates.iter().map(|c| &c.label).collect::<Vec<_>>()
+        );
+    }
+
+    #[test]
+    fn test_cursor_auxiliary_file_types_have_no_authoring_catalog_entries() {
+        let content = "---\nname\n---\n";
+        let cursor_byte = content.find("name").unwrap();
+
+        assert!(
+            completion_candidates(FileType::CursorHooks, content, cursor_byte).is_empty(),
+            "CursorHooks should not expose catalog completions",
+        );
+        assert!(
+            completion_candidates(FileType::CursorAgent, content, cursor_byte).is_empty(),
+            "CursorAgent should not expose catalog completions",
+        );
+        assert!(
+            completion_candidates(FileType::CursorEnvironment, content, cursor_byte).is_empty(),
+            "CursorEnvironment should not expose catalog completions",
+        );
+        assert!(
+            hover_doc(FileType::CursorHooks, "version").is_none(),
+            "CursorHooks should not expose catalog hover docs",
+        );
+        assert!(
+            hover_doc(FileType::CursorAgent, "name").is_none(),
+            "CursorAgent should not expose catalog hover docs",
+        );
+        assert!(
+            hover_doc(FileType::CursorEnvironment, "snapshot").is_none(),
+            "CursorEnvironment should not expose catalog hover docs",
         );
     }
 

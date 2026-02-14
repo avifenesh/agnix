@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "hooks": {
+    "sessionStart": [
+      {
+        "type": "command",
+        "command": "echo session-start"
+      }
+    ],
+    "subagentStop": [
+      {
+        "type": "prompt",
+        "command": "Summarize findings"
+      }
+    ]
+  }
+}

@@ -66,6 +66,30 @@ fn get_supported_file_types_returns_array() {
 }
 
 #[wasm_bindgen_test]
+fn get_supported_file_types_includes_cursor_hooks_agents_environment() {
+    let types = agnix_wasm::get_supported_file_types();
+    let arr = js_sys::Array::from(&types);
+
+    let mut pairs = std::collections::HashSet::new();
+    for value in arr.iter() {
+        let pair = js_sys::Array::from(&value);
+        let filename = pair.get(0).as_string().unwrap_or_default();
+        let file_type = pair.get(1).as_string().unwrap_or_default();
+        pairs.insert((filename, file_type));
+    }
+
+    assert!(pairs.contains(&(".cursor/hooks.json".to_string(), "CursorHooks".to_string())));
+    assert!(pairs.contains(&(
+        ".cursor/agents/reviewer.md".to_string(),
+        "CursorAgent".to_string()
+    )));
+    assert!(pairs.contains(&(
+        ".cursor/environment.json".to_string(),
+        "CursorEnvironment".to_string()
+    )));
+}
+
+#[wasm_bindgen_test]
 fn get_supported_tools_returns_array() {
     let tools = agnix_wasm::get_supported_tools();
     assert!(!tools.is_null());
@@ -78,6 +102,19 @@ fn get_supported_tools_returns_array() {
 fn detect_type_known_file() {
     let result = agnix_wasm::detect_type("CLAUDE.md");
     assert_eq!(result, "ClaudeMd");
+}
+
+#[wasm_bindgen_test]
+fn detect_type_cursor_auxiliary_files() {
+    assert_eq!(agnix_wasm::detect_type(".cursor/hooks.json"), "CursorHooks");
+    assert_eq!(
+        agnix_wasm::detect_type(".cursor/agents/reviewer.md"),
+        "CursorAgent"
+    );
+    assert_eq!(
+        agnix_wasm::detect_type(".cursor/environment.json"),
+        "CursorEnvironment"
+    );
 }
 
 #[wasm_bindgen_test]

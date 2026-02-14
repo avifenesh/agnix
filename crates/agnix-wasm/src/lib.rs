@@ -90,13 +90,14 @@ struct ValidationResponse {
 #[wasm_bindgen]
 pub fn validate(filename: &str, content: &str, tool: Option<String>) -> JsValue {
     let path = Path::new(filename);
+    let detected_type = detect_file_type(path);
 
     // Reject oversized content to prevent memory exhaustion (1 MiB limit,
     // matching agnix-core's safe_read_file limit).
     if content.len() > 1_048_576 {
         let response = ValidationResponse {
             diagnostics: vec![],
-            file_type: detect_file_type(path).to_string(),
+            file_type: detected_type.to_string(),
         };
         return serde_wasm_bindgen::to_value(&response).unwrap_or(JsValue::NULL);
     }
@@ -117,7 +118,7 @@ pub fn validate(filename: &str, content: &str, tool: Option<String>) -> JsValue 
             .iter()
             .map(WasmDiagnostic::from_diagnostic)
             .collect(),
-        file_type: detect_file_type(path).to_string(),
+        file_type: detected_type.to_string(),
     };
 
     serde_wasm_bindgen::to_value(&response).unwrap_or(JsValue::NULL)
@@ -134,6 +135,9 @@ pub fn get_supported_file_types() -> JsValue {
         ("SKILL.md", "Skill"),
         (".cursorrules", "CursorRulesLegacy"),
         (".cursor/rules/example.mdc", "CursorRule"),
+        (".cursor/hooks.json", "CursorHooks"),
+        (".cursor/agents/reviewer.md", "CursorAgent"),
+        (".cursor/environment.json", "CursorEnvironment"),
         (".github/copilot-instructions.md", "Copilot"),
         ("GEMINI.md", "GeminiMd"),
         (".clinerules", "ClineRules"),

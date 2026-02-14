@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "hooks": {
+    "unknownEvent": [
+      {
+        "type": "agent"
+      }
+    ]
+  }
+}
