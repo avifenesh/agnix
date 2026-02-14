@@ -407,6 +407,33 @@ rules:
   gm_003:
     message: "GEMINI.md 指令文件中缺少项目上下文章节"
     suggestion: "添加 '# Project' 或 '## Overview' 章节描述项目目的和技术栈"
+  gm_004:
+    message: "无效的 hooks 配置: %{description}"
+    suggestion: "检查 .gemini/settings.json 中的 hook 事件名称和必需字段（type、command）"
+    unknown_event: "hooksConfig 中未知的 hook 事件类型 '%{event}'"
+    missing_field: "'%{event}' 中的 hook 缺少必需字段 '%{field}'"
+    invalid_type: "Hook 类型必须是 'command'，当前为 '%{value}'"
+  gm_005:
+    message: "无效的扩展清单: %{description}"
+    suggestion: "确保 gemini-extension.json 包含必需字段: name、version、description"
+    missing_field: "缺少必需字段 '%{field}'"
+    invalid_name: "扩展名称 '%{name}' 必须是小写字母数字加连字符"
+    parse_error: "解析 gemini-extension.json 失败: %{error}"
+  gm_006:
+    message: "无效的 .geminiignore: %{description}"
+    suggestion: "检查 .geminiignore 语法 - 使用 gitignore 风格的 glob 模式"
+    empty: ".geminiignore 文件为空"
+    syntax_error: "第 %{line} 行的 glob 模式无效: %{pattern}"
+  gm_007:
+    message: "@import 引用的文件不存在: %{path}"
+    suggestion: "验证导入路径相对于 GEMINI.md 文件位置是否存在"
+  gm_008:
+    message: "无效的上下文文件名: %{description}"
+    suggestion: "contextFileName 应引用有效的文件名（例如以 .md 结尾）"
+  gm_009:
+    message: "解析 .gemini/settings.json 失败: %{error}"
+    suggestion: "修复 .gemini/settings.json 中的 JSON 语法错误"
+    unknown_key: ".gemini/settings.json 中未知的顶级键 '%{key}'"
 
   # --- OpenCode (opencode.rs) ---
   oc_001:

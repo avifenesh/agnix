@@ -1279,6 +1279,48 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 **Fix**: No auto-fix (project context must be authored by user)
 **Source**: geminicli.com/docs/cli/gemini-md/
 
+<a id="gm-004"></a>
+### GM-004 [MEDIUM] Invalid Hooks Configuration in Gemini Settings
+**Requirement**: hooksConfig in .gemini/settings.json MUST use valid event names and hook structure
+**Detection**: Parse hooksConfig object, validate event names against known set, check required fields (type, command)
+**Fix**: No auto-fix (manual correction required)
+**Source**: geminicli.com/docs/hooks
+
+<a id="gm-005"></a>
+### GM-005 [HIGH] Invalid Extension Manifest
+**Requirement**: gemini-extension.json MUST have valid JSON with required fields (name, version, description)
+**Detection**: Parse JSON, check required fields exist and are non-empty strings, validate name format
+**Fix**: No auto-fix (manual correction required)
+**Source**: geminicli.com/docs/extensions/reference
+
+<a id="gm-006"></a>
+### GM-006 [LOW] Invalid .geminiignore File
+**Requirement**: .geminiignore MAY have valid gitignore-style patterns
+**Detection**: Check for empty content and unmatched brackets in glob patterns
+**Fix**: No auto-fix (manual correction required)
+**Source**: geminicli.com/docs/cli/settings
+
+<a id="gm-007"></a>
+### GM-007 [MEDIUM] @import File Not Found in GEMINI.md
+**Requirement**: @import directives in GEMINI.md SHOULD reference existing files
+**Detection**: Scan for @import lines, resolve paths relative to GEMINI.md, check file existence
+**Fix**: No auto-fix (create the file or fix the path)
+**Source**: geminicli.com/docs/cli/gemini-md/
+
+<a id="gm-008"></a>
+### GM-008 [LOW] Invalid Context File Name Configuration
+**Requirement**: contextFileName in gemini-extension.json MAY reference a valid filename
+**Detection**: Check if contextFileName contains path separators (should be a filename only)
+**Fix**: No auto-fix (manual correction required)
+**Source**: geminicli.com/docs/extensions/reference
+
+<a id="gm-009"></a>
+### GM-009 [HIGH] Settings.json Parse Error
+**Requirement**: .gemini/settings.json MUST have valid JSON/JSONC syntax
+**Detection**: Attempt to parse as JSONC; report parse errors with line/column. Detect unknown top-level keys.
+**Fix**: No auto-fix (correct the JSON syntax)
+**Source**: geminicli.com/docs/cli/settings
+
 ---
 
 ## CODEX CLI RULES
