@@ -1,4 +1,4 @@
-//! Hooks validation rules (CC-HK-001 to CC-HK-018)
+//! Hooks validation rules (CC-HK-001 to CC-HK-019)
 
 use crate::{
     config::LintConfig,
@@ -31,6 +31,7 @@ const RULE_IDS: &[&str] = &[
     "CC-HK-016",
     "CC-HK-017",
     "CC-HK-018",
+    "CC-HK-019",
 ];
 
 pub struct HooksValidator;
@@ -488,6 +489,11 @@ impl Validator for HooksValidator {
                 }
             } else if !HooksSchema::VALID_EVENTS.contains(&event.as_str()) {
                 continue; // Skip invalid events even if rule disabled
+            }
+
+            // CC-HK-019: Deprecated event name
+            if config.is_rule_enabled("CC-HK-019") {
+                validate_cc_hk_019_deprecated_event(event, path, content, &mut diagnostics);
             }
 
             for (matcher_idx, matcher) in matchers.iter().enumerate() {

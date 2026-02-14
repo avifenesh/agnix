@@ -219,6 +219,55 @@ pub(super) fn validate_cc_hk_011_invalid_timeout_values(
     }
 }
 
+/// Deprecated event names and their recommended replacements.
+/// Each entry is `(deprecated_name, replacement_name)`.
+pub(super) const DEPRECATED_EVENTS: &[(&str, &str)] = &[("Setup", "SessionStart")];
+
+/// CC-HK-019: Deprecated event name
+pub(super) fn validate_cc_hk_019_deprecated_event(
+    event: &str,
+    path: &Path,
+    content: &str,
+    diagnostics: &mut Vec<Diagnostic>,
+) {
+    if let Some(&(deprecated, replacement)) = DEPRECATED_EVENTS.iter().find(|&&(d, _)| d == event) {
+        let mut diagnostic = Diagnostic::warning(
+            path.to_path_buf(),
+            1,
+            0,
+            "CC-HK-019",
+            t!(
+                "rules.cc_hk_019.message",
+                event = deprecated,
+                replacement = replacement
+            ),
+        )
+        .with_suggestion(t!(
+            "rules.cc_hk_019.suggestion",
+            event = deprecated,
+            replacement = replacement
+        ));
+
+        // Unsafe auto-fix: replace deprecated event key with replacement
+        if let Some((start, end)) = find_event_key_position(content, event) {
+            let replacement_text = format!("\"{}\"", replacement);
+            diagnostic = diagnostic.with_fix(Fix::replace(
+                start,
+                end,
+                replacement_text,
+                t!(
+                    "rules.cc_hk_019.fix",
+                    event = deprecated,
+                    replacement = replacement
+                ),
+                false,
+            ));
+        }
+
+        diagnostics.push(diagnostic);
+    }
+}
+
 /// CC-HK-001: Invalid event name with auto-fix support
 pub(super) fn validate_cc_hk_001_event_name(
     event: &str,
