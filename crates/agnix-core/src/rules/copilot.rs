@@ -66,9 +66,17 @@ fn line_byte_range(content: &str, line_number: usize) -> Option<(usize, usize)> 
 }
 
 fn frontmatter_key_line(raw: &str, start_line: usize, key: &str) -> usize {
+    let key_name = key.trim_end_matches(':').trim();
     raw.lines()
         .enumerate()
-        .find(|(_, line)| line.trim_start().starts_with(key))
+        .find(|(_, line)| {
+            let trimmed = line.trim_start();
+            if let Some(after_key) = trimmed.strip_prefix(key_name) {
+                after_key.trim_start().starts_with(':')
+            } else {
+                false
+            }
+        })
         .map(|(idx, _)| start_line + 1 + idx)
         .unwrap_or(start_line)
 }
@@ -118,27 +126,44 @@ fn validate_custom_agent(path: &Path, content: &str, config: &LintConfig) -> Vec
                     )
                     .with_suggestion("Fix YAML syntax in custom agent frontmatter."),
                 );
+            } else if config.is_rule_enabled("COP-007") {
+                diagnostics.push(
+                    Diagnostic::error(
+                        path.to_path_buf(),
+                        parsed.start_line,
+                        0,
+                        "COP-007",
+                        format!("Custom agent frontmatter contains invalid YAML: {err}"),
+                    )
+                    .with_suggestion("Fix YAML syntax in custom agent frontmatter."),
+                );
             }
             return diagnostics;
         }
     }
 
     if config.is_rule_enabled("COP-007") {
+        let has_frontmatter = parsed.is_some();
         let has_description = parsed
             .as_ref()
             .and_then(|p| p.schema.as_ref())
             .and_then(|s| s.description.as_ref())
             .is_some_and(|desc| !desc.trim().is_empty());
         if !has_description {
-            diagnostics.push(
-                Diagnostic::error(
-                    path.to_path_buf(),
-                    1,
-                    0,
-                    "COP-007",
-                    "Custom agent frontmatter is missing required 'description' field",
+            let (message, suggestion) = if !has_frontmatter {
+                (
+                    "Custom agent file must start with YAML frontmatter containing a non-empty 'description' field",
+                    "Add a YAML frontmatter block at the top of the file with a non-empty 'description' key.",
                 )
-                .with_suggestion("Add a non-empty 'description' key in YAML frontmatter."),
+            } else {
+                (
+                    "Custom agent frontmatter is missing required 'description' field",
+                    "Add a non-empty 'description' key in YAML frontmatter.",
+                )
+            };
+            diagnostics.push(
+                Diagnostic::error(path.to_path_buf(), 1, 0, "COP-007", message)
+                    .with_suggestion(suggestion),
             );
         }
     }
@@ -269,7 +294,10 @@ fn validate_reusable_prompt(path: &Path, content: &str, config: &LintConfig) -> 
     let body = parsed.as_ref().map_or(content, |p| p.body.as_str());
 
     if config.is_rule_enabled("COP-013") && is_prompt_body_empty(body) {
-        let line = parsed.as_ref().map_or(1, |p| p.end_line + 1);
+        let max_line = content.lines().count().max(1);
+        let line = parsed
+            .as_ref()
+            .map_or(1, |p| (p.end_line + 1).min(max_line));
         diagnostics.push(
             Diagnostic::error(
                 path.to_path_buf(),
@@ -712,6 +740,15 @@ mod tests {
             Path::new(".github/agents/reviewer.agent.md"),
             content,
             &LintConfig::default(),
+        )
+    }
+
+    fn validate_agent_with_config(content: &str, config: &LintConfig) -> Vec<Diagnostic> {
+        let validator = CopilotValidator;
+        validator.validate(
+            Path::new(".github/agents/reviewer.agent.md"),
+            content,
+            config,
         )
     }
 
@@ -1395,6 +1432,16 @@ Review pull requests.
     }
 
     #[test]
+    fn test_cop_007_missing_frontmatter_message() {
+        let diagnostics = validate_agent("Review pull requests.");
+        let cop_007 = diagnostics
+            .iter()
+            .find(|d| d.rule == "COP-007")
+            .expect("expected COP-007");
+        assert!(cop_007.message.contains("must start with YAML frontmatter"));
+    }
+
+    #[test]
     fn test_cop_008_unknown_agent_field() {
         let diagnostics = validate_agent(
             r#"---
@@ -1430,6 +1477,28 @@ Review pull requests.
     }
 
     #[test]
+    fn test_cop_008_disabled_still_reports_parse_error() {
+        let mut config = LintConfig::default();
+        config.rules_mut().disabled_rules = vec!["COP-008".to_string()];
+        let diagnostics = validate_agent_with_config(
+            r#"---
+description: Review pull requests
+target: [vscode
+---
+Review pull requests.
+"#,
+            &config,
+        );
+        assert!(diagnostics.iter().all(|d| d.rule != "COP-008"));
+        assert!(
+            diagnostics
+                .iter()
+                .any(|d| d.rule == "COP-007" && d.message.contains("invalid YAML")),
+            "Parse errors should still be surfaced when COP-008 is disabled"
+        );
+    }
+
+    #[test]
     fn test_cop_009_invalid_target() {
         let diagnostics = validate_agent(
             r#"---
@@ -1440,6 +1509,23 @@ Review pull requests.
 "#,
         );
         assert!(diagnostics.iter().any(|d| d.rule == "COP-009"));
+    }
+
+    #[test]
+    fn test_cop_009_line_detection_handles_space_before_colon() {
+        let diagnostics = validate_agent(
+            r#"---
+description: Review pull requests
+target : desktop
+---
+Review pull requests.
+"#,
+        );
+        let cop_009 = diagnostics
+            .iter()
+            .find(|d| d.rule == "COP-009")
+            .expect("expected COP-009");
+        assert_eq!(cop_009.line, 3);
     }
 
     #[test]
@@ -1502,6 +1588,19 @@ description: Refactor selected code
 "#,
         );
         assert!(diagnostics.iter().any(|d| d.rule == "COP-013"));
+    }
+
+    #[test]
+    fn test_cop_013_line_is_clamped_to_file_length() {
+        let content = r#"---
+description: Refactor selected code
+---"#;
+        let diagnostics = validate_prompt(content);
+        let cop_013 = diagnostics
+            .iter()
+            .find(|d| d.rule == "COP-013")
+            .expect("expected COP-013");
+        assert_eq!(cop_013.line, 3);
     }
 
     #[test]

@@ -71,7 +71,7 @@ pub fn parse_agent_frontmatter(content: &str) -> Option<ParsedAgentFrontmatter> 
 
     let mut end_idx = None;
     for (i, line) in lines.iter().enumerate().skip(1) {
-        if line.trim() == "---" {
+        if *line == "---" {
             end_idx = Some(i);
             break;
         }
@@ -223,6 +223,25 @@ Body
             parsed.unknown_keys.is_empty(),
             "comments should not be treated as unknown keys"
         );
+    }
+
+    #[test]
+    fn parse_handles_indented_fence_in_block_scalar() {
+        let content = r#"---
+description: |
+  Keep this separator literal:
+  ---
+target: vscode
+---
+Body
+"#;
+        let parsed = parse_agent_frontmatter(content).expect("expected frontmatter");
+        assert!(
+            parsed.parse_error.is_none(),
+            "indented '---' should not terminate frontmatter"
+        );
+        let schema = parsed.schema.expect("expected schema");
+        assert_eq!(schema.target.as_deref(), Some("vscode"));
     }
 
     #[test]
