@@ -1,5 +1,5 @@
 ---
-name: hooks-skill
+name: with-hooks
 description: Use when testing valid hooks
 hooks:
   PreToolUse:

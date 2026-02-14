@@ -11,7 +11,7 @@ Install from the [VS Code Marketplace](https://marketplace.visualstudio.com/item
 - **Real-time validation** - Diagnostics as you type
 - **Context-aware completions** - Frontmatter keys, values, and snippets
 - **JSON Schema validation and autocomplete for `.agnix.toml` config files**
-- **Validates 224 rules** - From official specs and best practices
+- **Validates 229 rules** - From official specs and best practices
 
 - **Diagnostics panel** - Sidebar tree view of all issues by file
 - **CodeLens** - Rule info shown inline above problematic lines
@@ -197,5 +197,4 @@ The auto-downloaded binary is stored in the extension's global storage directory
 ## License
 
 MIT OR Apache-2.0
-
 

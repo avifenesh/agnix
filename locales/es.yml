@@ -53,6 +53,15 @@ rules:
   as_016:
     message: "Error al analizar SKILL.md: %{error}"
     suggestion: "Verifica la sintaxis YAML del frontmatter -- asegura indentacion adecuada, espacios despues de dos puntos, y comillas coincidentes"
+  as_017:
+    message: "El nombre del skill '%{name}' debe coincidir con el directorio padre '%{directory}'"
+    suggestion: "Renombra el directorio del skill o actualiza el campo name para que coincidan"
+  as_018:
+    message: "La descripcion no deberia usar primera o segunda persona"
+    suggestion: "Reescribe la descripcion en tercera persona"
+  as_019:
+    message: "El nombre del skill '%{name}' es demasiado vago para enrutamiento confiable"
+    suggestion: "Usa un nombre kebab-case especifico que describa el proposito del skill"
 
   # --- Claude Code Skills (skill/mod.rs) ---
   cc_sk_001:
@@ -83,6 +92,12 @@ rules:
   cc_sk_009:
     message: "Demasiadas inyecciones dinamicas (%{count}). Limite de %{max} para mejor rendimiento"
     suggestion: "Considera mover logica compleja a un directorio scripts/ o reducir las inyecciones"
+  cc_sk_016:
+    message: "El cuerpo usa $ARGUMENTS[n] indexado pero falta argument-hint"
+    suggestion: "Agrega argument-hint al frontmatter para indicar como proporcionar argumentos"
+  cc_sk_017:
+    message: "Campo de frontmatter desconocido '%{field}'"
+    suggestion: "Elimina campos no soportados o corrige errores tipograficos en claves del frontmatter"
 
   # --- Per-Client Skills (per_client_skill.rs) ---
   cr_sk_001:

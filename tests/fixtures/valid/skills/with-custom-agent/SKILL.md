@@ -1,5 +1,5 @@
 ---
-name: custom-agent-skill
+name: with-custom-agent
 description: Use when testing custom agent validation
 context: fork
 agent: my-custom-agent

@@ -417,7 +417,9 @@ fn test_validate_file_unknown_type() {
 #[test]
 fn test_validate_file_skill() {
     let temp = tempfile::TempDir::new().unwrap();
-    let skill_path = temp.path().join("SKILL.md");
+    let skill_dir = temp.path().join("test-skill");
+    std::fs::create_dir_all(&skill_dir).unwrap();
+    let skill_path = skill_dir.join("SKILL.md");
     std::fs::write(
         &skill_path,
         "---\nname: test-skill\ndescription: Use when testing\n---\nBody",
@@ -516,7 +518,9 @@ fn test_validate_invalid_skill_triggers_both_rules() {
 #[test]
 fn test_validate_valid_skill_produces_no_errors() {
     let temp = tempfile::TempDir::new().unwrap();
-    let skill_path = temp.path().join("SKILL.md");
+    let skill_dir = temp.path().join("code-review");
+    std::fs::create_dir_all(&skill_dir).unwrap();
+    let skill_path = skill_dir.join("SKILL.md");
     std::fs::write(
         &skill_path,
         "---\nname: code-review\ndescription: Use when reviewing code\n---\nBody",
@@ -639,7 +643,7 @@ fn test_parallel_validation_mixed_results() {
     std::fs::create_dir_all(&valid_dir).unwrap();
     std::fs::write(
         valid_dir.join("SKILL.md"),
-        "---\nname: code-review\ndescription: Use when reviewing code\n---\nBody",
+        "---\nname: valid\ndescription: Use when reviewing code\n---\nBody",
     )
     .unwrap();
 

@@ -102,6 +102,108 @@ Body"#;
 }
 
 #[test]
+fn test_as_017_name_directory_mismatch() {
+    let content = r#"---
+name: deploy-skill
+description: Use when validating directory name matching
+---
+Body"#;
+
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(
+        Path::new("code-review/SKILL.md"),
+        content,
+        &LintConfig::default(),
+    );
+
+    let as_017_errors: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-017").collect();
+    assert_eq!(as_017_errors.len(), 1);
+}
+
+#[test]
+fn test_as_017_name_directory_match_ok() {
+    let content = r#"---
+name: code-review
+description: Use when validating directory name matching
+---
+Body"#;
+
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(
+        Path::new("code-review/SKILL.md"),
+        content,
+        &LintConfig::default(),
+    );
+
+    let as_017_errors: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-017").collect();
+    assert_eq!(as_017_errors.len(), 0);
+}
+
+#[test]
+fn test_as_018_description_first_second_person() {
+    let content = r#"---
+name: review-skill
+description: You can use this when reviewing pull requests
+---
+Body"#;
+
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+    let as_018_warnings: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-018").collect();
+    assert_eq!(as_018_warnings.len(), 1);
+    assert_eq!(
+        as_018_warnings[0].level,
+        crate::diagnostics::DiagnosticLevel::Warning
+    );
+}
+
+#[test]
+fn test_as_018_description_third_person_ok() {
+    let content = r#"---
+name: review-skill
+description: Use when reviewing pull requests for quality issues
+---
+Body"#;
+
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+    let as_018_warnings: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-018").collect();
+    assert_eq!(as_018_warnings.len(), 0);
+}
+
+#[test]
+fn test_as_019_vague_name() {
+    let content = r#"---
+name: helper
+description: Use when running helper tasks
+---
+Body"#;
+
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+    let as_019_warnings: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-019").collect();
+    assert_eq!(as_019_warnings.len(), 1);
+}
+
+#[test]
+fn test_as_019_specific_name_ok() {
+    let content = r#"---
+name: code-review-helper
+description: Use when reviewing code quality
+---
+Body"#;
+
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+    let as_019_warnings: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-019").collect();
+    assert_eq!(as_019_warnings.len(), 0);
+}
+
+#[test]
 fn test_as_008_description_too_long() {
     let long_description = "a".repeat(1025);
     let content = format!(
@@ -1138,7 +1240,7 @@ fn test_cc_sk_008_all_known_tools_ok() {
     let content = r#"---
 name: test-skill
 description: Use when testing
-allowed-tools: Bash Read Write Edit Grep Glob Task WebFetch WebSearch AskUserQuestion TodoRead TodoWrite MultiTool NotebookEdit EnterPlanMode ExitPlanMode Skill StatusBarMessageTool TaskOutput
+allowed-tools: Bash Read Write Edit Grep Glob Task WebFetch WebSearch AskUserQuestion TodoRead TodoWrite MultiTool NotebookEdit EnterPlanMode ExitPlanMode Skill StatusBarMessageTool SendMessageTool TaskOutput
 ---
 Body"#;
 
@@ -3013,6 +3115,97 @@ fn test_cc_sk_012_fixture_valid() {
         0,
         "Valid argument hint fixture should not trigger CC-SK-012"
     );
+}
+
+// ===== CC-SK-016: Indexed $ARGUMENTS[n] Without argument-hint =====
+
+#[test]
+fn test_cc_sk_016_indexed_args_without_hint() {
+    let content = r#"---
+name: indexed-args
+description: Use when validating indexed arguments
+---
+Process path: $ARGUMENTS[0]"#;
+
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+    let cc_sk_016: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-SK-016")
+        .collect();
+
+    assert_eq!(cc_sk_016.len(), 1);
+    assert_eq!(
+        cc_sk_016[0].level,
+        crate::diagnostics::DiagnosticLevel::Warning
+    );
+}
+
+#[test]
+fn test_cc_sk_016_indexed_args_with_hint_ok() {
+    let content = r#"---
+name: indexed-args
+description: Use when validating indexed arguments
+argument-hint: <path>
+---
+Process path: $ARGUMENTS[0]"#;
+
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+    let cc_sk_016: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-SK-016")
+        .collect();
+
+    assert_eq!(cc_sk_016.len(), 0);
+}
+
+// ===== CC-SK-017: Unknown Frontmatter Field =====
+
+#[test]
+fn test_cc_sk_017_unknown_frontmatter_field() {
+    let content = r#"---
+name: test-skill
+description: Use when validating unknown frontmatter fields
+desription: typo field
+---
+Body"#;
+
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+    let cc_sk_017: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-SK-017")
+        .collect();
+
+    assert_eq!(cc_sk_017.len(), 1);
+    assert!(cc_sk_017[0].message.contains("desription"));
+}
+
+#[test]
+fn test_cc_sk_017_known_frontmatter_field_ok() {
+    let content = r#"---
+name: test-skill
+description: Use when validating known frontmatter fields
+hooks:
+  PreToolUse:
+    - type: command
+      command: echo pre
+---
+Body"#;
+
+    let validator = SkillValidator;
+    let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
+
+    let cc_sk_017: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-SK-017")
+        .collect();
+
+    assert_eq!(cc_sk_017.len(), 0);
 }
 
 // ===== CC-SK-013: Fork Context Without Actionable Instructions =====
