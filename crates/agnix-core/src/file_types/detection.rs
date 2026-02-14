@@ -87,6 +87,26 @@ fn is_documentation_directory(path: &Path) -> bool {
     false
 }
 
+/// Returns true if the path contains `.github/instructions` as consecutive
+/// components anywhere in the path. This allows scoped Copilot instruction
+/// files to live in subdirectories under `.github/instructions/`.
+fn is_under_github_instructions(path: &Path) -> bool {
+    let names: Vec<&str> = path
+        .components()
+        .filter_map(|c| {
+            if let std::path::Component::Normal(n) = c {
+                n.to_str()
+            } else {
+                None
+            }
+        })
+        .collect();
+
+    names
+        .windows(2)
+        .any(|pair| pair[0] == ".github" && pair[1] == "instructions")
+}
+
 fn is_excluded_filename(name: &str) -> bool {
     EXCLUDED_FILENAMES
         .iter()
@@ -135,10 +155,9 @@ pub fn detect_file_type(path: &Path) -> FileType {
         name if name.starts_with("mcp-") && name.ends_with(".json") => FileType::Mcp,
         // GitHub Copilot global instructions (.github/copilot-instructions.md)
         "copilot-instructions.md" if parent == Some(".github") => FileType::Copilot,
-        // GitHub Copilot scoped instructions (.github/instructions/*.instructions.md)
+        // GitHub Copilot scoped instructions (.github/instructions/**/*.instructions.md)
         name if name.ends_with(".instructions.md")
-            && parent == Some("instructions")
-            && grandparent == Some(".github") =>
+            && is_under_github_instructions(path) =>
         {
             FileType::CopilotScoped
         }
@@ -524,5 +543,45 @@ mod tests {
     fn is_documentation_directory_negative() {
         assert!(!is_documentation_directory(Path::new("src/lib.rs")));
         assert!(!is_documentation_directory(Path::new("agents/task.md")));
+    }
+
+    // ---- CopilotScoped subdirectory detection ----
+
+    #[test]
+    fn detect_copilot_scoped_subdirectory() {
+        assert_eq!(
+            detect_file_type(Path::new(
+                ".github/instructions/frontend/react.instructions.md"
+            )),
+            FileType::CopilotScoped
+        );
+    }
+
+    #[test]
+    fn detect_copilot_scoped_deep_nesting() {
+        assert_eq!(
+            detect_file_type(Path::new(
+                ".github/instructions/frontend/components/dialog.instructions.md"
+            )),
+            FileType::CopilotScoped
+        );
+    }
+
+    #[test]
+    fn detect_copilot_scoped_not_under_github() {
+        // .instructions.md under a different parent should NOT be CopilotScoped
+        assert_ne!(
+            detect_file_type(Path::new("other/instructions/react.instructions.md")),
+            FileType::CopilotScoped
+        );
+    }
+
+    #[test]
+    fn detect_copilot_scoped_wrong_order() {
+        // instructions/.github is the wrong order - should NOT be CopilotScoped
+        assert_ne!(
+            detect_file_type(Path::new("instructions/.github/foo.instructions.md")),
+            FileType::CopilotScoped
+        );
     }
 }
