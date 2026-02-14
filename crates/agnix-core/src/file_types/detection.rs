@@ -165,6 +165,7 @@ pub fn detect_file_type(path: &Path) -> FileType {
 
     match filename {
         "SKILL.md" if is_roo_mode_rules(path, parent, grandparent) => FileType::RooModeRules,
+        "SKILL.md" if is_under_roo_rules(path) => FileType::RooRules,
         "SKILL.md" => FileType::Skill,
         "CLAUDE.md" | "CLAUDE.local.md" | "AGENTS.md" | "AGENTS.local.md"
         | "AGENTS.override.md" => FileType::ClaudeMd,
@@ -838,6 +839,15 @@ mod tests {
             FileType::Skill
         );
         assert_eq!(detect_file_type(Path::new("SKILL.md")), FileType::Skill);
+    }
+
+    #[test]
+    fn detect_roo_rules_skill_md() {
+        // SKILL.md in .roo/rules/ should be RooRules, not Skill
+        assert_eq!(
+            detect_file_type(Path::new(".roo/rules/SKILL.md")),
+            FileType::RooRules
+        );
     }
 
     #[test]
