@@ -487,6 +487,9 @@ impl RooCodeValidator {
                     );
                     continue;
                 }
+            } else {
+                // Server not found in raw JSON - skip validation
+                continue;
             }
 
             // Check for required fields based on type
@@ -583,6 +586,13 @@ mod tests {
     #[test]
     fn test_roo_001_valid_roo_rules_folder() {
         let diagnostics = validate(".roo/rules/general.md", "# General rules\nBe concise.");
+        let roo_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "ROO-001").collect();
+        assert!(roo_001.is_empty());
+    }
+
+    #[test]
+    fn test_roo_001_mode_rules_valid_content() {
+        let diagnostics = validate(".roo/rules-architect/general.md", "# Architect mode rules\n\nFollow the architecture patterns.");
         let roo_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "ROO-001").collect();
         assert!(roo_001.is_empty());
     }
@@ -733,6 +743,31 @@ mod tests {
         assert!(roo_002.len() >= 1);
     }
 
+    #[test]
+    fn test_roo_002_empty_custom_modes_array() {
+        let content = r#"{"customModes": []}"#;
+        let diagnostics = validate(".roomodes", content);
+        let roo_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "ROO-002").collect();
+        assert_eq!(roo_002.len(), 0);
+    }
+
+    #[test]
+    fn test_roo_002_empty_groups_array() {
+        let content = r#"{
+  "customModes": [
+    {
+      "slug": "designer",
+      "name": "Designer",
+      "roleDefinition": "You are a designer.",
+      "groups": []
+    }
+  ]
+}"#;
+        let diagnostics = validate(".roomodes", content);
+        let roo_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "ROO-002").collect();
+        assert_eq!(roo_002.len(), 0);
+    }
+
     // ===== ROO-003: Invalid .rooignore =====
 
     #[test]
@@ -770,6 +805,22 @@ mod tests {
         let diagnostics = validate(".rooignore", "*.log\n!important.log\n");
         let roo_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "ROO-003").collect();
         assert!(roo_003.is_empty());
+    }
+
+    #[test]
+    fn test_roo_003_mixed_valid_invalid_patterns() {
+        let diagnostics = validate(".rooignore", "*.log\n[unclosed\nvalid-pattern.txt\n**[bracket\n");
+        let roo_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "ROO-003").collect();
+        assert_eq!(roo_003.len(), 2);
+        assert_eq!(roo_003[0].line, 2);
+        assert_eq!(roo_003[1].line, 4);
+    }
+
+    #[test]
+    fn test_roo_003_additional_invalid_patterns() {
+        let diagnostics = validate(".rooignore", "**[\n[]\n[a-\n");
+        let roo_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "ROO-003").collect();
+        assert_eq!(roo_003.len(), 3);
     }
 
     // ===== ROO-004: Invalid mode slug =====
@@ -898,6 +949,22 @@ mod tests {
         assert_eq!(roo_005.len(), 1);
     }
 
+    #[test]
+    fn test_roo_005_unknown_server_type() {
+        let content = r#"{
+  "mcpServers": {
+    "custom-server": {
+      "type": "custom-protocol",
+      "command": "custom-command"
+    }
+  }
+}"#;
+        let diagnostics = validate(".roo/mcp.json", content);
+        let roo_005: Vec<_> = diagnostics.iter().filter(|d| d.rule == "ROO-005").collect();
+        // Unknown types are handled gracefully - no error
+        assert_eq!(roo_005.len(), 0);
+    }
+
     // ===== ROO-006: Mode slug not recognized =====
 
     #[test]
@@ -924,6 +991,17 @@ mod tests {
         );
         let roo_006: Vec<_> = diagnostics.iter().filter(|d| d.rule == "ROO-006").collect();
         assert!(roo_006.is_empty());
+    }
+
+    #[test]
+    fn test_roo_006_all_builtin_slugs() {
+        // Verify none of the builtin slugs trigger ROO-006
+        for slug in BUILTIN_MODE_SLUGS {
+            let path = format!(".roo/rules-{}/SKILL.md", slug);
+            let diagnostics = validate(&path, "# Skill content");
+            let roo_006: Vec<_> = diagnostics.iter().filter(|d| d.rule == "ROO-006").collect();
+            assert!(roo_006.is_empty(), "Builtin slug '{}' should not trigger ROO-006", slug);
+        }
     }
 
     // ===== Rule disabling =====
