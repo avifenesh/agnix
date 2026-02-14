@@ -105,6 +105,24 @@ fn validate_custom_agent(path: &Path, content: &str, config: &LintConfig) -> Vec
         }
     }
 
+    if let Some(parsed) = &parsed {
+        if let Some(err) = &parsed.parse_error {
+            if config.is_rule_enabled("COP-008") {
+                diagnostics.push(
+                    Diagnostic::error(
+                        path.to_path_buf(),
+                        parsed.start_line,
+                        0,
+                        "COP-008",
+                        format!("Custom agent frontmatter contains invalid YAML: {err}"),
+                    )
+                    .with_suggestion("Fix YAML syntax in custom agent frontmatter."),
+                );
+            }
+            return diagnostics;
+        }
+    }
+
     if config.is_rule_enabled("COP-007") {
         let has_description = parsed
             .as_ref()
@@ -1381,6 +1399,28 @@ Review pull requests.
 "#,
         );
         assert!(diagnostics.iter().any(|d| d.rule == "COP-008"));
+    }
+
+    #[test]
+    fn test_cop_008_invalid_agent_frontmatter_yaml() {
+        let diagnostics = validate_agent(
+            r#"---
+description: Review pull requests
+target: [vscode
+---
+Review pull requests.
+"#,
+        );
+        assert!(diagnostics.iter().any(|d| d.rule == "COP-008"));
+        assert!(
+            diagnostics
+                .iter()
+                .any(|d| d.message.contains("invalid YAML"))
+        );
+        assert!(
+            diagnostics.iter().all(|d| d.rule != "COP-007"),
+            "Invalid YAML should not be reported as missing description"
+        );
     }
 
     #[test]
