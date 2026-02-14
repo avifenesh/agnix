@@ -583,7 +583,8 @@ applyTo: "{}"
 
     #[test]
     fn test_cop_003_multiple_invalid_in_comma_list() {
-        let content = "---\napplyTo: \"[unclosed,[also-bad\"\n---\n# Instructions\n";
+        // Use patterns where brackets are balanced so the comma acts as a separator
+        let content = "---\napplyTo: \"[!],[!\"\n---\n# Instructions\n";
         let diagnostics = validate_scoped(content);
         let cop_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "COP-003").collect();
         assert_eq!(
