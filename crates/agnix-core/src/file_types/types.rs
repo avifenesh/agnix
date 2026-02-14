@@ -58,6 +58,16 @@ pub enum FileType {
     GeminiIgnore,
     /// Codex CLI configuration (.codex/config.toml)
     CodexConfig,
+    /// Roo Code rules files (.roorules, .roo/rules/*.md)
+    RooRules,
+    /// Roo Code custom modes configuration (.roomodes)
+    RooModes,
+    /// Roo Code ignore file (.rooignore)
+    RooIgnore,
+    /// Roo Code mode-specific rules (.roo/rules-{slug}/*.md)
+    RooModeRules,
+    /// Roo Code MCP configuration (.roo/mcp.json)
+    RooMcp,
     /// Other .md files (for XML/import checks)
     GenericMarkdown,
     /// Skip validation
@@ -100,6 +110,11 @@ impl fmt::Display for FileType {
             FileType::GeminiExtension => "GeminiExtension",
             FileType::GeminiIgnore => "GeminiIgnore",
             FileType::CodexConfig => "CodexConfig",
+            FileType::RooRules => "RooRules",
+            FileType::RooModes => "RooModes",
+            FileType::RooIgnore => "RooIgnore",
+            FileType::RooModeRules => "RooModeRules",
+            FileType::RooMcp => "RooMcp",
             FileType::GenericMarkdown => "GenericMarkdown",
             FileType::Unknown => "Unknown",
         })
@@ -136,6 +151,11 @@ mod tests {
             (FileType::GeminiExtension, "GeminiExtension"),
             (FileType::GeminiIgnore, "GeminiIgnore"),
             (FileType::CodexConfig, "CodexConfig"),
+            (FileType::RooRules, "RooRules"),
+            (FileType::RooModes, "RooModes"),
+            (FileType::RooIgnore, "RooIgnore"),
+            (FileType::RooModeRules, "RooModeRules"),
+            (FileType::RooMcp, "RooMcp"),
             (FileType::GenericMarkdown, "GenericMarkdown"),
             (FileType::Unknown, "Unknown"),
         ];
@@ -171,6 +191,11 @@ mod tests {
             FileType::GeminiExtension,
             FileType::GeminiIgnore,
             FileType::CodexConfig,
+            FileType::RooRules,
+            FileType::RooModes,
+            FileType::RooIgnore,
+            FileType::RooModeRules,
+            FileType::RooMcp,
             FileType::GenericMarkdown,
         ];
 

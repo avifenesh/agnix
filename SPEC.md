@@ -1,6 +1,6 @@
 # agnix Technical Reference
 
-> Linter for agent configs. 194 rules across 28 categories.
+> Linter for agent configs. 200 rules across 28 categories.
 
 
 ## What agnix Validates
@@ -34,6 +34,7 @@
 | Kiro Skills | .kiro/skills/*/SKILL.md | 1 |
 | Amp Skills | .agents/skills/*/SKILL.md | 1 |
 | Roo Code Skills | .roo/skills/*/SKILL.md | 1 |
+| Roo Code | .roo/rules/*.md, .roomodes, .roorules, .roo/mcp.json, .rooignore | 6 |
 
 ## Architecture
 

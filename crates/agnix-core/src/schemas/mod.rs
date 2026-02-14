@@ -25,4 +25,5 @@ pub mod mcp;
 pub mod opencode;
 pub mod plugin;
 pub mod prompt;
+pub mod roo;
 pub mod skill;

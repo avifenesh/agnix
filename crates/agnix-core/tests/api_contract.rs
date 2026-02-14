@@ -276,13 +276,18 @@ fn file_type_enum_covers_all_variants() {
         agnix_core::FileType::GeminiExtension,
         agnix_core::FileType::GeminiIgnore,
         agnix_core::FileType::CodexConfig,
+        agnix_core::FileType::RooRules,
+        agnix_core::FileType::RooModes,
+        agnix_core::FileType::RooIgnore,
+        agnix_core::FileType::RooModeRules,
+        agnix_core::FileType::RooMcp,
         agnix_core::FileType::GenericMarkdown,
         agnix_core::FileType::Unknown,
     ];
 
     assert_eq!(
         variants.len(),
-        24,
+        29,
         "A new FileType variant may have been added or removed. Please update this test's variant list and the match statement below."
     );
 
@@ -310,6 +315,11 @@ fn file_type_enum_covers_all_variants() {
             agnix_core::FileType::GeminiExtension => {}
             agnix_core::FileType::GeminiIgnore => {}
             agnix_core::FileType::CodexConfig => {}
+            agnix_core::FileType::RooRules => {}
+            agnix_core::FileType::RooModes => {}
+            agnix_core::FileType::RooIgnore => {}
+            agnix_core::FileType::RooModeRules => {}
+            agnix_core::FileType::RooMcp => {}
             agnix_core::FileType::GenericMarkdown => {}
             agnix_core::FileType::Unknown => {}
         }

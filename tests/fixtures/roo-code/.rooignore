@@ -1,0 +1,12 @@
+# Build artifacts
+node_modules/
+dist/
+build/
+
+# Environment files
+.env
+.env.local
+
+# Large files
+*.log
+*.zip

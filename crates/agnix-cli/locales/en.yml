@@ -630,6 +630,42 @@ rules:
     message: "Invalid homepage URL: '%{url}' must use http:// or https:// scheme"
     suggestion: "Use a valid URL with http:// or https:// scheme"
 
+  # --- Roo Code (roo.rs) ---
+  roo_001:
+    message: "Roo Code rule file is empty"
+    suggestion: "Add rule content to the file"
+  roo_002:
+    parse_error: "Failed to parse .roomodes: %{error}"
+    suggestion: "Fix the JSON syntax in .roomodes"
+    missing_custom_modes: ".roomodes file is missing required 'customModes' field"
+    custom_modes_type: "'customModes' field must be an array"
+    missing_slug: "Custom mode at %{position} is missing required 'slug' field"
+    invalid_slug: "Invalid slug '%{slug}' in %{position} - must be lowercase alphanumeric with hyphens"
+    duplicate_slug: "Duplicate slug '%{slug}' in %{position}"
+    missing_name: "Custom mode at %{position} is missing required 'name' field"
+    missing_role_definition: "Custom mode at %{position} is missing required 'roleDefinition' field"
+    missing_groups: "Custom mode '%{slug}' is missing required 'groups' field"
+    groups_type: "Custom mode '%{slug}' has invalid 'groups' field - must be an array"
+    invalid_group: "Invalid group '%{group}' in %{position}. Valid groups: %{valid}"
+  roo_003:
+    empty: ".rooignore file is empty"
+    suggestion: "Add glob patterns to .rooignore or remove the file"
+    invalid_pattern: "Invalid glob pattern on line %{line}: %{pattern}"
+  roo_004:
+    message: "Invalid mode slug '%{slug}' in directory name"
+    suggestion: "Use lowercase alphanumeric characters and hyphens only (e.g., 'my-custom-mode')"
+  roo_005:
+    parse_error: "Failed to parse .roo/mcp.json: %{error}"
+    suggestion: "Fix the JSON syntax in .roo/mcp.json"
+    missing_mcp_servers: ".roo/mcp.json is missing required 'mcpServers' field"
+    mcp_servers_type: "'mcpServers' field must be an object"
+    invalid_server_entry: "Server '%{server}' must be an object with configuration fields"
+    missing_command: "Server '%{server}' is missing required 'command' field for stdio type"
+    missing_url: "Server '%{server}' is missing required 'url' field for http/sse type"
+  roo_006:
+    message: "Mode slug '%{slug}' is not a built-in mode and not defined in .roomodes"
+    suggestion: "Add the custom mode definition to .roomodes or use a built-in mode slug (code, architect, ask, debug, orchestrator)"
+
   # --- Version (lib.rs) ---
   ver_001:
     message: "No tool or spec versions pinned. Version-dependent rules will use default assumptions."

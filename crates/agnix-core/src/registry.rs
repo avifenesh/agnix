@@ -296,6 +296,11 @@ const DEFAULTS: &[(FileType, ValidatorFactory)] = &[
     // CodexValidator on ClaudeMd catches AGENTS.override.md files (CDX-003).
     // The validator early-returns for all other ClaudeMd filenames.
     (FileType::ClaudeMd, codex_validator),
+    (FileType::RooRules, roo_validator),
+    (FileType::RooModes, roo_validator),
+    (FileType::RooIgnore, roo_validator),
+    (FileType::RooModeRules, roo_validator),
+    (FileType::RooMcp, roo_validator),
     (FileType::GenericMarkdown, cross_platform_validator),
     (FileType::GenericMarkdown, xml_validator),
     (FileType::GenericMarkdown, imports_validator),
@@ -391,6 +396,10 @@ fn gemini_ignore_validator() -> Box<dyn Validator> {
 
 fn codex_validator() -> Box<dyn Validator> {
     Box::new(crate::rules::codex::CodexValidator)
+}
+
+fn roo_validator() -> Box<dyn Validator> {
+    Box::new(crate::rules::roo::RooCodeValidator)
 }
 
 #[cfg(test)]

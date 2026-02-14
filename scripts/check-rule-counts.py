@@ -220,6 +220,7 @@ def main() -> int:
         "Kiro Skills": ["kiro-skills"],
         "Amp Skills": ["amp-skills"],
         "Roo Code Skills": ["roo-code-skills"],
+        "Roo Code": ["roo-code"],
     }
     spec_sum = 0
     for label, categories in spec_map.items():

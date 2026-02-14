@@ -233,8 +233,8 @@ mod rules_tests {
 
     #[test]
     fn test_rules_count() {
-        // Should have 194 rules
-        assert_eq!(agnix_rules::rule_count(), 194);
+        // Should have 200 rules
+        assert_eq!(agnix_rules::rule_count(), 200);
     }
 
     #[test]
