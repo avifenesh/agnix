@@ -67,6 +67,19 @@ pub const EXCLUDED_PARENT_DIRECTORIES: &[&str] =
 // Detection helpers
 // ============================================================================
 
+/// Returns true if the path contains two consecutive normal path components.
+fn path_contains_consecutive_components(path: &Path, first: &str, second: &str) -> bool {
+    path.components()
+        .zip(path.components().skip(1))
+        .any(|(a, b)| {
+            matches!(
+                (a, b),
+                (std::path::Component::Normal(a_os), std::path::Component::Normal(b_os))
+                if a_os == first && b_os == second
+            )
+        })
+}
+
 /// Returns true if the file is inside a documentation directory that
 /// is unlikely to contain agent configuration files. This prevents
 /// false positives from XML tags, broken links, and cross-platform
@@ -91,30 +104,14 @@ fn is_documentation_directory(path: &Path) -> bool {
 /// components anywhere in the path. This allows scoped Copilot instruction
 /// files to live in subdirectories under `.github/instructions/`.
 fn is_under_github_instructions(path: &Path) -> bool {
-    path.components()
-        .zip(path.components().skip(1))
-        .any(|(a, b)| {
-            matches!(
-                (a, b),
-                (std::path::Component::Normal(a_os), std::path::Component::Normal(b_os))
-                if a_os == ".github" && b_os == "instructions"
-            )
-        })
+    path_contains_consecutive_components(path, ".github", "instructions")
 }
 
 /// Returns true if the path contains `.cursor/rules` as consecutive
 /// components anywhere in the path. This allows Cursor rules to live in
 /// nested subdirectories under `.cursor/rules/`.
 fn is_under_cursor_rules(path: &Path) -> bool {
-    path.components()
-        .zip(path.components().skip(1))
-        .any(|(a, b)| {
-            matches!(
-                (a, b),
-                (std::path::Component::Normal(a_os), std::path::Component::Normal(b_os))
-                if a_os == ".cursor" && b_os == "rules"
-            )
-        })
+    path_contains_consecutive_components(path, ".cursor", "rules")
 }
 
 fn is_excluded_filename(name: &str) -> bool {
