@@ -468,6 +468,23 @@ rules:
     message: "AGENTS.override.md no deberia estar en el control de versiones"
     suggestion: "Agrega AGENTS.override.md a .gitignore (contiene configuraciones especificas del usuario)"
 
+  # --- Windsurf (windsurf.rs) ---
+  ws_001:
+    message: "El archivo de reglas de Windsurf esta vacio"
+    suggestion: "Agrega contenido de reglas al archivo"
+  ws_002:
+    message: "El archivo de reglas de Windsurf excede el limite de %{limit} caracteres (%{len} caracteres)"
+    suggestion: "Reduce la longitud del contenido o divide en multiples archivos de reglas"
+  ws_003_empty:
+    message: "El archivo de flujo de trabajo de Windsurf esta vacio"
+    suggestion: "Agrega pasos del flujo de trabajo al archivo"
+  ws_003_too_long:
+    message: "El archivo de flujo de trabajo de Windsurf excede el limite de %{limit} caracteres (%{len} caracteres)"
+    suggestion: "Reduce la longitud del contenido o divide en multiples archivos de flujo de trabajo"
+  ws_004:
+    message: "Archivo heredado .windsurfrules detectado"
+    suggestion: "Migra al directorio .windsurf/rules/ con archivos .md individuales"
+
   # --- Prompt engineering (prompt.rs) ---
   pe_001:
     message: "Palabra clave critica '%{keyword}' al %{percent} por ciento del documento (40-60 por ciento es la zona 'perdido en el medio')"
