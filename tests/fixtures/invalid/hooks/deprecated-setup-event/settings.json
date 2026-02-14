@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "Setup": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo setup",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
+}

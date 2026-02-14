@@ -3783,3 +3783,202 @@ fn test_cc_hk_012_has_suggestion_on_schema_mismatch() {
         "CC-HK-012 schema mismatch should also have a suggestion"
     );
 }
+
+// ===== CC-HK-019 Tests: Deprecated Setup Event =====
+
+#[test]
+fn test_cc_hk_019_setup_triggers_deprecation_warning() {
+    let content = r#"{
+            "hooks": {
+                "Setup": [
+                    {
+                        "hooks": [
+                            { "type": "command", "command": "echo setup", "timeout": 30 }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+    let diagnostics = validate(content);
+    let cc_hk_019: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-019")
+        .collect();
+
+    assert_eq!(cc_hk_019.len(), 1);
+    assert_eq!(cc_hk_019[0].level, DiagnosticLevel::Warning);
+    assert!(
+        cc_hk_019[0].message.contains("Deprecated"),
+        "Should mention deprecation, got: {}",
+        cc_hk_019[0].message
+    );
+    assert!(
+        cc_hk_019[0].message.contains("Setup"),
+        "Should mention Setup event, got: {}",
+        cc_hk_019[0].message
+    );
+    assert!(
+        cc_hk_019[0].message.contains("SessionStart"),
+        "Should suggest SessionStart replacement, got: {}",
+        cc_hk_019[0].message
+    );
+}
+
+#[test]
+fn test_cc_hk_019_session_start_no_warning() {
+    let content = r#"{
+            "hooks": {
+                "SessionStart": [
+                    {
+                        "hooks": [
+                            { "type": "command", "command": "echo start", "timeout": 30 }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+    let diagnostics = validate(content);
+    let cc_hk_019: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-019")
+        .collect();
+
+    assert_eq!(
+        cc_hk_019.len(),
+        0,
+        "SessionStart should NOT trigger CC-HK-019"
+    );
+}
+
+#[test]
+fn test_cc_hk_019_has_autofix() {
+    let content = r#"{
+  "hooks": {
+    "Setup": [
+      {
+        "hooks": [
+          { "type": "command", "command": "echo setup", "timeout": 30 }
+        ]
+      }
+    ]
+  }
+}"#;
+
+    let diagnostics = validate(content);
+    let cc_hk_019: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-019")
+        .collect();
+
+    assert_eq!(cc_hk_019.len(), 1);
+    assert!(cc_hk_019[0].has_fixes(), "CC-HK-019 should have auto-fix");
+    let fix = &cc_hk_019[0].fixes[0];
+    assert!(
+        fix.replacement.contains("SessionStart"),
+        "Fix should replace with SessionStart, got: {}",
+        fix.replacement
+    );
+}
+
+#[test]
+fn test_cc_hk_019_fix_is_unsafe() {
+    let content = r#"{
+  "hooks": {
+    "Setup": [
+      {
+        "hooks": [
+          { "type": "command", "command": "echo setup", "timeout": 30 }
+        ]
+      }
+    ]
+  }
+}"#;
+
+    let diagnostics = validate(content);
+    let cc_hk_019: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-019")
+        .collect();
+
+    assert_eq!(cc_hk_019.len(), 1);
+    assert!(cc_hk_019[0].has_fixes(), "CC-HK-019 should have auto-fix");
+    let fix = &cc_hk_019[0].fixes[0];
+    assert!(!fix.safe, "CC-HK-019 fix should be unsafe (safe=false)");
+}
+
+#[test]
+fn test_cc_hk_019_can_be_disabled() {
+    let content = r#"{
+            "hooks": {
+                "Setup": [
+                    {
+                        "hooks": [
+                            { "type": "command", "command": "echo setup", "timeout": 30 }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+    let config = LintConfig::builder()
+        .disable_rule("CC-HK-019")
+        .build()
+        .unwrap();
+    let validator = HooksValidator;
+    let diagnostics = validator.validate(Path::new("settings.json"), content, &config);
+    let cc_hk_019: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-019")
+        .collect();
+
+    assert_eq!(
+        cc_hk_019.len(),
+        0,
+        "CC-HK-019 should not fire when disabled"
+    );
+}
+
+#[test]
+fn test_cc_hk_019_fixture_deprecated_setup_event() {
+    let content = include_str!(
+        "../../../../../tests/fixtures/invalid/hooks/deprecated-setup-event/settings.json"
+    );
+    let diagnostics = validate(content);
+    let cc_hk_019: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-019")
+        .collect();
+
+    assert_eq!(cc_hk_019.len(), 1, "Fixture should trigger CC-HK-019");
+    assert_eq!(cc_hk_019[0].level, DiagnosticLevel::Warning);
+}
+
+#[test]
+fn test_cc_hk_019_setup_does_not_trigger_cc_hk_001() {
+    // Setup is in VALID_EVENTS, so CC-HK-001 should NOT fire
+    let content = r#"{
+            "hooks": {
+                "Setup": [
+                    {
+                        "hooks": [
+                            { "type": "command", "command": "echo setup", "timeout": 30 }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+    let diagnostics = validate(content);
+    let cc_hk_001: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-001")
+        .collect();
+
+    assert_eq!(
+        cc_hk_001.len(),
+        0,
+        "Setup is a valid event - CC-HK-001 should NOT fire"
+    );
+}

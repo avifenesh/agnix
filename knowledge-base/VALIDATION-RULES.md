@@ -521,6 +521,13 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 **Fix**: Auto-fix (safe) -- remove the `matcher` field line
 **Source**: code.claude.com/docs/en/hooks
 
+<a id="cc-hk-019"></a>
+### CC-HK-019 [MEDIUM] Deprecated Setup Event
+**Requirement**: The `Setup` hook event SHOULD be replaced with `SessionStart`
+**Detection**: Check if `Setup` is used as a hook event name
+**Fix**: Auto-fix (unsafe) -- replace `Setup` with `SessionStart`
+**Source**: code.claude.com/docs/en/hooks
+
 ---
 
 ## CLAUDE CODE RULES (SUBAGENTS)
@@ -1484,6 +1491,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | CC-HK-013 | Remove async field | safe |
 | CC-HK-015 | Remove model field | safe |
 | CC-HK-018 | Remove matcher field | safe |
+| CC-HK-019 | Replace Setup with SessionStart | unsafe |
 | CC-AG-003 | Default invalid model to sonnet | unsafe |
 | CC-AG-004 | Default invalid permission mode | unsafe |
 | CC-AG-008 | Replace with closest memory scope | unsafe |
@@ -1513,7 +1521,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 |----------|-------------|------|--------|-----|--------------|
 | Agent Skills | 16 | 14 | 2 | 0 | 5 |
 | Claude Skills | 15 | 11 | 4 | 0 | 9 |
-| Claude Hooks | 18 | 12 | 4 | 2 | 7 |
+| Claude Hooks | 19 | 12 | 5 | 2 | 8 |
 | Claude Agents | 13 | 12 | 1 | 0 | 4 |
 | Claude Memory | 12 | 8 | 4 | 0 | 3 |
 | AGENTS.md | 6 | 1 | 5 | 0 | 0 |
@@ -1539,7 +1547,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | Amp Skills | 1 | 0 | 1 | 0 | 1 |
 | Roo Code Skills | 1 | 0 | 1 | 0 | 1 |
 | Version Awareness | 1 | 0 | 0 | 1 | 0 |
-| **TOTAL** | **169** | **110** | **55** | **4** | **58** |
+| **TOTAL** | **170** | **110** | **56** | **4** | **59** |
 
 
 ---
@@ -1569,8 +1577,8 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 
 ---
 
-**Total Coverage**: 169 validation rules across 28 categories
+**Total Coverage**: 170 validation rules across 28 categories
 
 **Knowledge Base**: 11,036 lines, 320KB, 75+ sources
-**Certainty**: 103 HIGH, 49 MEDIUM, 3 LOW
-**Auto-Fixable**: 58 rules (37%)
+**Certainty**: 103 HIGH, 50 MEDIUM, 3 LOW
+**Auto-Fixable**: 59 rules (35%)

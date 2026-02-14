@@ -1,6 +1,6 @@
 # Rules Reference
 
-This section contains all `169` validation rules generated from `knowledge-base/rules.json`.
+This section contains all `170` validation rules generated from `knowledge-base/rules.json`.
 `58` rules have automatic fixes.
 
 | Rule | Name | Severity | Category | Auto-Fix |
@@ -54,6 +54,7 @@ This section contains all `169` validation rules generated from `knowledge-base/
 | [CC-HK-016](./generated/cc-hk-016.md) | Validate Hook Type Agent | HIGH | Claude Hooks | Yes (unsafe) |
 | [CC-HK-017](./generated/cc-hk-017.md) | Prompt/Agent Hook Missing $ARGUMENTS | MEDIUM | Claude Hooks | No |
 | [CC-HK-018](./generated/cc-hk-018.md) | Matcher on UserPromptSubmit/Stop | LOW | Claude Hooks | Yes (safe) |
+| [CC-HK-019](./generated/cc-hk-019.md) | Deprecated Setup Event | MEDIUM | Claude Hooks | Yes (unsafe) |
 | [CC-AG-001](./generated/cc-ag-001.md) | Missing Name Field | HIGH | Claude Agents | No |
 | [CC-AG-002](./generated/cc-ag-002.md) | Missing Description Field | HIGH | Claude Agents | No |
 | [CC-AG-003](./generated/cc-ag-003.md) | Invalid Model Value | HIGH | Claude Agents | Yes (unsafe) |

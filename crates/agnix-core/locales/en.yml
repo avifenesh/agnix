@@ -204,6 +204,10 @@ rules:
     message: "Matcher at %{location} is silently ignored for '%{event}' events"
     suggestion: "Remove the matcher field as it has no effect on %{event} events"
     fix: "Remove 'matcher' field (ignored on %{event} events)"
+  cc_hk_019:
+    message: "Deprecated hook event '%{event}' - use '%{replacement}' instead"
+    suggestion: "'%{event}' is not listed in current Claude Code documentation. Use '%{replacement}' for forward compatibility"
+    fix: "Replace '%{event}' with '%{replacement}'"
 
   # --- MCP (mcp.rs) ---
   mcp_001:
