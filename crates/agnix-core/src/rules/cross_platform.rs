@@ -107,7 +107,8 @@ impl Validator for CrossPlatformValidator {
         }
 
         // XP-007: AGENTS.md exceeds Codex byte limit (WARNING)
-        if config.is_rule_enabled("XP-007") && is_agents_md {
+        // Only check AGENTS.md itself (Codex CLI reads this file, not local/override variants)
+        if config.is_rule_enabled("XP-007") && filename == "AGENTS.md" {
             if let Some(exceeded) = check_byte_limit(content, CODEX_BYTE_LIMIT) {
                 diagnostics.push(
                     Diagnostic::warning(
@@ -854,13 +855,17 @@ Use context: fork for subagents.
     }
 
     #[test]
-    fn test_xp_007_agents_local_md() {
+    fn test_xp_007_not_checked_for_agents_local_md() {
+        // Codex CLI only reads AGENTS.md, not local/override variants
         let content = "a".repeat(33000);
         let validator = CrossPlatformValidator;
         let diagnostics =
             validator.validate(Path::new("AGENTS.local.md"), &content, &LintConfig::default());
 
         let xp_007: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XP-007").collect();
-        assert_eq!(xp_007.len(), 1, "XP-007 should apply to AGENTS.local.md");
+        assert!(
+            xp_007.is_empty(),
+            "XP-007 should only apply to AGENTS.md, not AGENTS.local.md"
+        );
     }
 }

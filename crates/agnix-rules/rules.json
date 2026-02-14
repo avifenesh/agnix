@@ -4493,7 +4493,7 @@
         ],
         "verified_on": "2025-05-01",
         "applies_to": {
-          "tool": "codex-cli"
+          "tool": "codex"
         },
         "normative_level": "SHOULD",
         "tests": {
