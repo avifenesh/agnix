@@ -293,7 +293,7 @@ fn file_type_enum_covers_all_variants() {
 
     assert_eq!(
         variants.len(),
-        32,
+        35,
         "A new FileType variant may have been added or removed. Please update this test's variant list and the match statement below."
     );
 
