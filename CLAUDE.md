@@ -66,7 +66,7 @@ tests/fixtures/     # Test cases by category
 
 - `parsers/` - Frontmatter, JSON, Markdown parsing
 - `schemas/` - Type definitions (13 schemas: skill, hooks, agent, mcp, cline, roo, etc.)
-- `rules/` - Validators implementing Validator trait (27 validators)
+- `rules/` - Validators implementing Validator trait (25 validators)
 - `config.rs` - LintConfig, LintConfigBuilder, ConfigError, ToolVersions, SpecRevisions
 - `diagnostics.rs` - Diagnostic, Fix, DiagnosticLevel
 - `eval.rs` - Rule efficacy evaluation (precision/recall/F1)
@@ -181,7 +181,7 @@ Format: `[CATEGORY]-[NUMBER]` (AS-004, CC-HK-001, etc.)
 ## Current State
 
 - v0.10.0 - Production-ready with full validation pipeline
-- 215 validation rules across 28 validators
+- 215 validation rules across 25 validators
 
 - 2600+ passing tests
 - LSP + MCP servers with VS Code extension

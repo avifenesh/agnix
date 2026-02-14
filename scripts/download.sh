@@ -26,7 +26,7 @@ if [ "${BUILD_FROM_SOURCE}" = "true" ]; then
     fi
 
     # Build release binary
-    cargo build --release --bin agnix
+    cargo build --release -p agnix-cli --bin agnix
 
     # Copy to bin directory (handle both Unix and Windows binaries)
     if [ -f "target/release/agnix.exe" ]; then

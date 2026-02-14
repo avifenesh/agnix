@@ -70,22 +70,42 @@ impl Validator for KiroSteeringValidator {
         let key_file_match_pattern = serde_yaml::Value::String("fileMatchPattern".into());
 
         // Look up inclusion once - used by both KIRO-001 and KIRO-002
-        let inclusion_str = mapping.get(&key_inclusion).and_then(|v| v.as_str());
+        let inclusion_val = mapping.get(&key_inclusion);
+        let inclusion_str = inclusion_val.and_then(|v| v.as_str());
 
         // KIRO-001: Invalid inclusion mode
         if config.is_rule_enabled("KIRO-001") {
-            if let Some(inclusion) = inclusion_str {
-                if !VALID_INCLUSION_MODES.contains(&inclusion) {
-                    diagnostics.push(
-                        Diagnostic::error(
-                            path.to_path_buf(),
-                            1,
-                            0,
-                            "KIRO-001",
-                            t!("rules.kiro_001.message", value = inclusion),
-                        )
-                        .with_suggestion(t!("rules.kiro_001.suggestion")),
-                    );
+            if let Some(val) = inclusion_val {
+                match val.as_str() {
+                    Some(inclusion) if VALID_INCLUSION_MODES.contains(&inclusion) => {
+                        // Valid mode - no diagnostic
+                    }
+                    Some(inclusion) => {
+                        diagnostics.push(
+                            Diagnostic::error(
+                                path.to_path_buf(),
+                                1,
+                                0,
+                                "KIRO-001",
+                                t!("rules.kiro_001.message", value = inclusion),
+                            )
+                            .with_suggestion(t!("rules.kiro_001.suggestion")),
+                        );
+                    }
+                    None => {
+                        // Non-string value (number, bool, etc.) - also invalid
+                        let display = format!("{val:?}");
+                        diagnostics.push(
+                            Diagnostic::error(
+                                path.to_path_buf(),
+                                1,
+                                0,
+                                "KIRO-001",
+                                t!("rules.kiro_001.message", value = display),
+                            )
+                            .with_suggestion(t!("rules.kiro_001.suggestion")),
+                        );
+                    }
                 }
             }
         }
@@ -448,12 +468,13 @@ mod tests {
     }
 
     #[test]
-    fn test_kiro_001_non_string_inclusion_ignored() {
-        // Non-string inclusion values (number, bool) are silently ignored
+    fn test_kiro_001_non_string_inclusion_flagged() {
+        // Non-string inclusion values (number, bool) are flagged as invalid
         let content = "---\ninclusion: 123\n---\n# Content\n";
         let diagnostics = validate_steering(content);
         let kiro_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "KIRO-001").collect();
-        assert!(kiro_001.is_empty());
+        assert_eq!(kiro_001.len(), 1);
+        assert_eq!(kiro_001[0].level, DiagnosticLevel::Error);
     }
 
     #[test]
