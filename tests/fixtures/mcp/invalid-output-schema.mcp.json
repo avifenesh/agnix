@@ -1,0 +1,10 @@
+{
+  "tools": [
+    {
+      "name": "valid-tool",
+      "description": "Valid tool description for testing.",
+      "inputSchema": {"type": "object"},
+      "outputSchema": {"type": "not_a_valid_json_schema_type"}
+    }
+  ]
+}

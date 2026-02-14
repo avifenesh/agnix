@@ -89,9 +89,73 @@ cases:
     expected: [MCP-008]
     description: "Protocol version mismatch triggers MCP-008"
 
+  - file: fixtures/mcp/missing-command-stdio.mcp.json
+    expected: [MCP-009]
+    description: "Stdio server without command triggers MCP-009"
+
+  - file: fixtures/mcp/missing-url-http.mcp.json
+    expected: [MCP-010]
+    description: "HTTP server without URL triggers MCP-010"
+
+  - file: fixtures/mcp/invalid-server-type.mcp.json
+    expected: [MCP-011]
+    description: "Invalid server type triggers MCP-011"
+
+  - file: fixtures/mcp/deprecated-sse.mcp.json
+    expected: [MCP-012]
+    description: "SSE transport triggers MCP-012"
+
   - file: fixtures/mcp/valid-tool.mcp.json
     expected: []
     description: "Valid MCP tool should have no errors"
+
+  - file: fixtures/mcp/invalid-tool-name.mcp.json
+    expected: [MCP-013]
+    description: "Invalid tool name format triggers MCP-013"
+
+  - file: fixtures/mcp/invalid-output-schema.mcp.json
+    expected: [MCP-014]
+    description: "Invalid outputSchema triggers MCP-014"
+
+  - file: fixtures/mcp/missing-resource-required-fields.mcp.json
+    expected: [MCP-015]
+    description: "Resource missing required uri/name triggers MCP-015"
+
+  - file: fixtures/mcp/missing-prompt-name.mcp.json
+    expected: [MCP-016]
+    description: "Prompt missing required name triggers MCP-016"
+
+  - file: fixtures/mcp/insecure-http-server.mcp.json
+    expected: [MCP-017]
+    description: "Remote HTTP server URL without HTTPS triggers MCP-017"
+
+  - file: fixtures/mcp/plaintext-env-secret.mcp.json
+    expected: [MCP-018]
+    description: "Plaintext secret-like env var triggers MCP-018"
+
+  - file: fixtures/mcp/dangerous-stdio-command.mcp.json
+    expected: [MCP-019]
+    description: "Dangerous stdio command pattern triggers MCP-019"
+
+  - file: fixtures/mcp/invalid-capability-key.mcp.json
+    expected: [MCP-020]
+    description: "Unknown capability key triggers MCP-020"
+
+  - file: fixtures/mcp/wildcard-http-binding.mcp.json
+    expected: [MCP-021]
+    description: "Wildcard HTTP binding warning triggers MCP-021"
+
+  - file: fixtures/mcp/invalid-args-type.mcp.json
+    expected: [MCP-022]
+    description: "Non-array args value triggers MCP-022"
+
+  - file: fixtures/mcp/duplicate-server-names.mcp.json
+    expected: [MCP-023]
+    description: "Duplicate mcpServers keys trigger MCP-023"
+
+  - file: fixtures/mcp/empty-server-config.mcp.json
+    expected: [MCP-024]
+    description: "Empty mcpServers entry triggers MCP-024"
 
   # ===== AGENTS.md Rules (AGM-*) =====
 

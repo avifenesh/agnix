@@ -154,8 +154,8 @@ The `` !`command` `` syntax runs shell commands before skill content is sent. Cu
 | Field | Type | Required | Valid Values | Default | agnix Rule | Gap? |
 |-------|------|----------|-------------|---------|------------|------|
 | `name` | string | Yes (if manifest exists) | kebab-case, no spaces | directory name | CC-PL-004, CC-PL-005 | No |
-| `description` | string | No | Free-form text | none | CC-PL-004 | No |
-| `version` | string | No | semver format (MAJOR.MINOR.PATCH) | none | CC-PL-003 | No |
+| `description` | string | No (recommended) | Free-form text | none | CC-PL-004 (warning) | No |
+| `version` | string | No (recommended) | semver format (MAJOR.MINOR.PATCH) | none | CC-PL-003, CC-PL-004 (warning) | No |
 | `author` | object | No | `{ name, email?, url? }` | none | (none) | LOW |
 | `homepage` | string | No | URL | none | (none) | LOW |
 | `repository` | string | No | URL | none | (none) | LOW |

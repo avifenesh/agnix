@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "dup": {
+      "type": "stdio",
+      "command": "node"
+    },
+    "dup": {
+      "type": "stdio",
+      "command": "python"
+    }
+  }
+}

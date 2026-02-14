@@ -1,6 +1,6 @@
 # agnix Technical Reference
 
-> Linter for agent configs. 157 rules across 28 categories.
+> Linter for agent configs. 169 rules across 28 categories.
 
 
 ## What agnix Validates
@@ -15,7 +15,7 @@
 | Plugins | plugin.json | 10 |
 | Prompt Engineering | CLAUDE.md, AGENTS.md | 4 |
 | Cross-Platform | AGENTS.md | 7 |
-| MCP | tool definitions | 12 |
+| MCP | tool definitions | 24 |
 | XML | all .md files | 3 |
 | References | @imports | 2 |
 | GitHub Copilot | .github/copilot-instructions.md, .github/instructions/*.instructions.md, .github/agents/*.agent.md, .github/prompts/*.prompt.md, .github/hooks/hooks.json, .github/workflows/copilot-setup-steps.yml | 17 |
@@ -50,7 +50,7 @@ agnix/
 │   ├── agnix-mcp/      # MCP server
 │   └── agnix-wasm/     # WebAssembly bindings
 ├── editors/            # Neovim, VS Code, JetBrains, Zed integrations
-├── knowledge-base/     # 157 rules documented
+├── knowledge-base/     # 169 rules documented
 
 ├── scripts/            # Build/dev automation scripts
 ├── website/            # Docusaurus documentation website
@@ -171,7 +171,7 @@ All rules in `knowledge-base/VALIDATION-RULES.md`
 | CC-PL-001 | ERROR | Plugin manifest not in .claude-plugin/ |
 | CC-PL-002 | ERROR | Components inside .claude-plugin/ |
 | CC-PL-003 | ERROR | Invalid semver format |
-| CC-PL-004 | ERROR | Missing required plugin field |
+| CC-PL-004 | ERROR/WARN | Missing required/recommended plugin field |
 | CC-PL-005 | ERROR | Empty plugin name |
 | XML-001 | ERROR | Unclosed XML tag |
 ## CLI
@@ -358,3 +358,4 @@ Instruction counts directly correlate with wall-clock time but without noise fro
 - **macOS x86**: Full support for both iai-callgrind and Criterion
 - **macOS ARM**: Valgrind support is experimental; use Criterion for local development
 - **Windows**: No Valgrind support; use Criterion only (CI runs iai on Linux)
+

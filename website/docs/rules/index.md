@@ -1,6 +1,6 @@
 # Rules Reference
 
-This section contains all `157` validation rules generated from `knowledge-base/rules.json`.
+This section contains all `169` validation rules generated from `knowledge-base/rules.json`.
 `58` rules have automatic fixes.
 
 | Rule | Name | Severity | Category | Auto-Fix |
@@ -38,7 +38,7 @@ This section contains all `157` validation rules generated from `knowledge-base/
 | [CC-SK-015](./generated/cc-sk-015.md) | Invalid user-invocable Type | HIGH | Claude Skills | Yes (safe) |
 | [CC-HK-001](./generated/cc-hk-001.md) | Invalid Hook Event | HIGH | Claude Hooks | Yes (safe/unsafe) |
 | [CC-HK-002](./generated/cc-hk-002.md) | Prompt Hook on Wrong Event | HIGH | Claude Hooks | No |
-| [CC-HK-003](./generated/cc-hk-003.md) | Missing Matcher for Tool Events | HIGH | Claude Hooks | No |
+| [CC-HK-003](./generated/cc-hk-003.md) | Matcher Hint for Tool Events | LOW | Claude Hooks | No |
 | [CC-HK-004](./generated/cc-hk-004.md) | Matcher on Non-Tool Event | HIGH | Claude Hooks | Yes (safe) |
 | [CC-HK-005](./generated/cc-hk-005.md) | Missing Type Field | HIGH | Claude Hooks | No |
 | [CC-HK-006](./generated/cc-hk-006.md) | Missing Command Field | HIGH | Claude Hooks | No |
@@ -88,7 +88,7 @@ This section contains all `157` validation rules generated from `knowledge-base/
 | [CC-PL-001](./generated/cc-pl-001.md) | Plugin Manifest Not in .claude-plugin/ | HIGH | Claude Plugins | No |
 | [CC-PL-002](./generated/cc-pl-002.md) | Components in .claude-plugin/ | HIGH | Claude Plugins | No |
 | [CC-PL-003](./generated/cc-pl-003.md) | Invalid Semver | HIGH | Claude Plugins | No |
-| [CC-PL-004](./generated/cc-pl-004.md) | Missing Required Plugin Field | HIGH | Claude Plugins | No |
+| [CC-PL-004](./generated/cc-pl-004.md) | Missing Required/Recommended Plugin Field | HIGH | Claude Plugins | No |
 | [CC-PL-005](./generated/cc-pl-005.md) | Empty Plugin Name | HIGH | Claude Plugins | Yes (unsafe) |
 | [CC-PL-006](./generated/cc-pl-006.md) | Plugin Parse Error | HIGH | Claude Plugins | No |
 | [CC-PL-007](./generated/cc-pl-007.md) | Invalid Component Path | HIGH | Claude Plugins | Yes (safe) |
@@ -106,7 +106,19 @@ This section contains all `157` validation rules generated from `knowledge-base/
 | [MCP-009](./generated/mcp-009.md) | Missing command for stdio server | HIGH | MCP | No |
 | [MCP-010](./generated/mcp-010.md) | Missing url for http/sse server | HIGH | MCP | No |
 | [MCP-011](./generated/mcp-011.md) | Invalid MCP server type | HIGH | MCP | Yes (unsafe) |
-| [MCP-012](./generated/mcp-012.md) | Deprecated SSE transport | MEDIUM | MCP | Yes (unsafe) |
+| [MCP-012](./generated/mcp-012.md) | Deprecated SSE transport | HIGH | MCP | Yes (unsafe) |
+| [MCP-013](./generated/mcp-013.md) | Invalid Tool Name Format | HIGH | MCP | No |
+| [MCP-014](./generated/mcp-014.md) | Invalid outputSchema Definition | HIGH | MCP | No |
+| [MCP-015](./generated/mcp-015.md) | Missing Resource Required Fields | HIGH | MCP | No |
+| [MCP-016](./generated/mcp-016.md) | Missing Prompt Required Name | HIGH | MCP | No |
+| [MCP-017](./generated/mcp-017.md) | Non-HTTPS Remote HTTP Server URL | HIGH | MCP | No |
+| [MCP-018](./generated/mcp-018.md) | Potential Plaintext Secret in MCP Env | MEDIUM | MCP | No |
+| [MCP-019](./generated/mcp-019.md) | Potentially Dangerous Stdio Command | MEDIUM | MCP | No |
+| [MCP-020](./generated/mcp-020.md) | Unknown Capability Declaration Key | MEDIUM | MCP | No |
+| [MCP-021](./generated/mcp-021.md) | Wildcard HTTP Interface Binding | MEDIUM | MCP | No |
+| [MCP-022](./generated/mcp-022.md) | Invalid args Array Type | HIGH | MCP | No |
+| [MCP-023](./generated/mcp-023.md) | Duplicate MCP Server Names | HIGH | MCP | No |
+| [MCP-024](./generated/mcp-024.md) | Empty MCP Server Configuration | HIGH | MCP | No |
 | [COP-001](./generated/cop-001.md) | Empty Copilot Instruction File | HIGH | GitHub Copilot | No |
 | [COP-002](./generated/cop-002.md) | Invalid Frontmatter in Scoped Instructions | HIGH | GitHub Copilot | Yes (unsafe) |
 | [COP-003](./generated/cop-003.md) | Invalid Glob Pattern in applyTo | HIGH | GitHub Copilot | No |

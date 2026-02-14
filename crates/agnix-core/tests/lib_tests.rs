@@ -695,7 +695,7 @@ fn test_validate_project_plugin_detection() {
     let plugin_dir = temp.path().join("my-plugin.claude-plugin");
     std::fs::create_dir_all(&plugin_dir).unwrap();
 
-    // Create plugin.json with a validation issue (missing description - CC-PL-004)
+    // Create plugin.json with a validation issue (missing recommended description - CC-PL-004 warning)
     std::fs::write(
         plugin_dir.join("plugin.json"),
         r#"{"name": "test-plugin", "version": "1.0.0"}"#,
@@ -705,7 +705,7 @@ fn test_validate_project_plugin_detection() {
     let config = LintConfig::default();
     let result = validate_project(temp.path(), &config).unwrap();
 
-    // Should detect the plugin.json and report CC-PL-004 for missing description
+    // Should detect the plugin.json and report CC-PL-004 warning for missing description
     let plugin_diagnostics: Vec<_> = result
         .diagnostics
         .iter()
@@ -719,7 +719,13 @@ fn test_validate_project_plugin_detection() {
 
     assert!(
         plugin_diagnostics.iter().any(|d| d.rule == "CC-PL-004"),
-        "Should report CC-PL-004 for missing description field"
+        "Should report CC-PL-004 for missing recommended description field"
+    );
+
+    assert!(
+        plugin_diagnostics.iter().any(|d| d.rule == "CC-PL-004"
+            && d.level == agnix_core::diagnostics::DiagnosticLevel::Warning),
+        "CC-PL-004 for missing description should be a warning, not an error"
     );
 }
 
@@ -1879,6 +1885,33 @@ fn test_validate_fixtures_directory() {
                 && d.file.to_string_lossy().contains("untrusted-annotations")),
         "Expected MCP-006 from untrusted-annotations.mcp.json fixture"
     );
+
+    // New MCP expansion fixtures (MCP-013..MCP-024)
+    let new_mcp_expectations = [
+        ("MCP-013", "invalid-tool-name"),
+        ("MCP-014", "invalid-output-schema"),
+        ("MCP-015", "missing-resource-required-fields"),
+        ("MCP-016", "missing-prompt-name"),
+        ("MCP-017", "insecure-http-server"),
+        ("MCP-018", "plaintext-env-secret"),
+        ("MCP-019", "dangerous-stdio-command"),
+        ("MCP-020", "invalid-capability-key"),
+        ("MCP-021", "wildcard-http-binding"),
+        ("MCP-022", "invalid-args-type"),
+        ("MCP-023", "duplicate-server-names"),
+        ("MCP-024", "empty-server-config"),
+    ];
+
+    for (rule, file_part) in new_mcp_expectations {
+        assert!(
+            mcp_diagnostics
+                .iter()
+                .any(|d| d.rule == rule && d.file.to_string_lossy().contains(file_part)),
+            "Expected {} from {}.mcp.json fixture",
+            rule,
+            file_part
+        );
+    }
 
     // Verify AGM, XP, REF, and XML fixtures trigger expected rules
     let expectations = [
