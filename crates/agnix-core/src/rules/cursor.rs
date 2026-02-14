@@ -401,7 +401,7 @@ fn validate_cursor_agent_file(path: &Path, content: &str, config: &LintConfig) -
             if let Some(frontmatter_map) = frontmatter.as_ref().and_then(YamlValue::as_mapping) {
                 let key = |name: &str| YamlValue::String(name.to_string());
 
-                match frontmatter_map.get(&key("name")) {
+                match frontmatter_map.get(key("name")) {
                     Some(YamlValue::String(name)) if is_valid_cursor_agent_name(name) => {}
                     Some(YamlValue::String(_)) => diagnostics.push(
                         Diagnostic::error(
@@ -435,7 +435,7 @@ fn validate_cursor_agent_file(path: &Path, content: &str, config: &LintConfig) -
                     ),
                 }
 
-                match frontmatter_map.get(&key("description")) {
+                match frontmatter_map.get(key("description")) {
                     Some(YamlValue::String(_)) => {}
                     Some(_) => diagnostics.push(
                         Diagnostic::error(
@@ -459,7 +459,7 @@ fn validate_cursor_agent_file(path: &Path, content: &str, config: &LintConfig) -
                     ),
                 }
 
-                if let Some(model_value) = frontmatter_map.get(&key("model")) {
+                if let Some(model_value) = frontmatter_map.get(key("model")) {
                     match model_value {
                         YamlValue::String(model)
                             if model == "fast"
@@ -488,7 +488,7 @@ fn validate_cursor_agent_file(path: &Path, content: &str, config: &LintConfig) -
                     }
                 }
 
-                if let Some(readonly_value) = frontmatter_map.get(&key("readonly"))
+                if let Some(readonly_value) = frontmatter_map.get(key("readonly"))
                     && !matches!(readonly_value, YamlValue::Bool(_))
                 {
                     diagnostics.push(
@@ -503,7 +503,7 @@ fn validate_cursor_agent_file(path: &Path, content: &str, config: &LintConfig) -
                     );
                 }
 
-                if let Some(is_background_value) = frontmatter_map.get(&key("is_background"))
+                if let Some(is_background_value) = frontmatter_map.get(key("is_background"))
                     && !matches!(is_background_value, YamlValue::Bool(_))
                 {
                     diagnostics.push(

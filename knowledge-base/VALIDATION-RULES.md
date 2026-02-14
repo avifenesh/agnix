@@ -1791,7 +1791,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | AGENTS.md | 6 | 1 | 5 | 0 | 0 |
 | Claude Plugins | 10 | 8 | 2 | 0 | 2 |
 | GitHub Copilot | 17 | 11 | 6 | 0 | 3 |
-| Cursor | 9 | 4 | 5 | 0 | 4 |
+| Cursor | 16 | 9 | 7 | 0 | 4 |
 | Cline | 4 | 3 | 1 | 0 | 2 |
 | OpenCode | 8 | 4 | 3 | 1 | 1 |
 | Gemini CLI | 9 | 3 | 4 | 2 | 3 |
@@ -1812,7 +1812,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | Roo Code Skills | 1 | 0 | 1 | 0 | 1 |
 | Roo Code | 6 | 3 | 3 | 0 | 0 |
 | Version Awareness | 1 | 0 | 0 | 1 | 0 |
-| **TOTAL** | **200** | **124** | **69** | **7** | **49** |
+| **TOTAL** | **207** | **129** | **71** | **7** | **49** |
 
 
 ---
@@ -1842,7 +1842,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 
 ---
 
-****Total Coverage**: 200 validation rules across 28 categories
+****Total Coverage**: 207 validation rules across 28 categories
 
 **Knowledge Base**: 11,036 lines, 320KB, 75+ sources
 **Certainty**: 124 HIGH, 69 MEDIUM, 7 LOW
