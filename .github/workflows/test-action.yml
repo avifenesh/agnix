@@ -243,7 +243,7 @@ jobs:
 
       - name: Upload SARIF to GitHub
         if: steps.agnix.outputs.sarif-file != ''
-        uses: github/codeql-action/upload-sarif@2588666de8825e1e9dc4e2329a4c985457d55b32 # v3
+        uses: github/codeql-action/upload-sarif@9e907b5e64f6b83e7804b09294d44122997950d6 # v3
         with:
           sarif_file: ${{ steps.agnix.outputs.sarif-file }}
           category: agnix-linting
