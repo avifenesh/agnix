@@ -1,6 +1,6 @@
 # agnix Knowledge Base - Master Index
 
-> 182 validation rules across 28 categories, sourced from 75+ references
+> 187 validation rules across 28 categories, sourced from 75+ references
 
 
 ---
@@ -9,7 +9,7 @@
 
 | What You Need | Start Here |
 |---------------|------------|
-| **Implement validator** | [VALIDATION-RULES.md](./VALIDATION-RULES.md) - 182 rules with detection logic |
+| **Implement validator** | [VALIDATION-RULES.md](./VALIDATION-RULES.md) - 187 rules with detection logic |
 
 | **Understand a standard** | [standards/](#standards) - HARD-RULES files |
 | **Learn best practices** | [standards/](#standards) - OPINIONS files |
@@ -28,7 +28,7 @@
 knowledge-base/
 ├── INDEX.md                        # This file
 ├── README.md                       # Detailed navigation guide
-├── VALIDATION-RULES.md             # ⭐ Master validation reference (182 rules)
+├── VALIDATION-RULES.md             # ⭐ Master validation reference (187 rules)
 
 ├── PATTERNS-CATALOG.md             # 70 production-tested patterns
 ├── RESEARCH-TRACKING.md            # Tool inventory and monitoring process
@@ -81,7 +81,7 @@ knowledge-base/
 | **AGENTS.md** | 5 | - | - | 6 rules |
 | **Cursor** | 2 | - | - | 9 rules |
 | **agentsys** | 12 | - | - | 70 patterns |
-| **Total** | **75+** | **117KB** | **160KB** | **182 rules** |
+| **Total** | **75+** | **117KB** | **160KB** | **187 rules** |
 
 
 ### Validation Rules by Category
@@ -95,7 +95,7 @@ knowledge-base/
 | Claude Memory | 12 | 8 | 4 | 0 | 3 |
 | AGENTS.md | 6 | 1 | 5 | 0 | 0 |
 | Claude Plugins | 10 | 8 | 2 | 0 | 2 |
-| GitHub Copilot | 6 | 4 | 2 | 0 | 1 |
+| GitHub Copilot | 17 | 11 | 6 | 0 | 1 |
 | MCP | 24 | 19 | 5 | 0 | 3 |
 | XML | 3 | 3 | 0 | 0 | 3 |
 | References | 2 | 2 | 0 | 0 | 0 |
@@ -107,7 +107,7 @@ knowledge-base/
 | Cline Skills | 1 | 0 | 1 | 0 | 1 |
 | OpenCode | 3 | 3 | 0 | 0 | 0 |
 | OpenCode Skills | 1 | 0 | 1 | 0 | 1 |
-| Gemini CLI | 9 | 3 | 6 | 0 | 3 |
+| Gemini CLI | 9 | 3 | 4 | 2 | 3 |
 | Version Awareness | 1 | 0 | 0 | 1 | 0 |
 | Codex CLI | 4 | 3 | 1 | 0 | 0 |
 | Copilot Skills | 1 | 0 | 1 | 0 | 1 |
@@ -116,7 +116,7 @@ knowledge-base/
 | Kiro Skills | 1 | 0 | 1 | 0 | 1 |
 | Amp Skills | 1 | 0 | 1 | 0 | 1 |
 | Roo Code Skills | 1 | 0 | 1 | 0 | 1 |
-| **TOTAL** | **182** | **116** | **62** | **4** | **49** |
+| **TOTAL** | **187** | **119** | **62** | **6** | **49** |
 
 
 ---
@@ -154,8 +154,7 @@ knowledge-base/
 
 ### For Implementation
 
-**Start here**: [VALIDATION-RULES.md](./VALIDATION-RULES.md)
-- 182 rules with rule IDs (AS-001, CC-HK-001, etc.)
+**Start here**: [VALIDATION-RULES.md](./VALIDATION-RULES.md) - 187 rules with rule IDs (AS-001, CC-HK-001, etc.)
 
 - Detection pseudocode
 - Auto-fix implementations
@@ -281,7 +280,7 @@ Total Size:           650KB
 Standards Covered:     5 (Agent Skills, MCP, Claude Code, Multi-Platform, Prompt Eng)
 Sources Consulted:    75+ (specs, docs, research papers, repos)
 Research Agents:       5 (10+ sources each)
-Validation Rules:     182 rules
+Validation Rules:     187 rules
 Auto-Fixable Rules:   49 rules
 
 Test Fixtures:        116 files
