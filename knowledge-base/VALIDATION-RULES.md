@@ -1880,12 +1880,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | Roo Code Skills | 1 | 0 | 1 | 0 | 1 |
 | Roo Code | 6 | 3 | 3 | 0 | 0 |
 | Version Awareness | 1 | 0 | 0 | 1 | 0 |
-| **TOTAL** | **212** | **129** | **76** | **7** | **49** |
-||||||| 664c21f
-| **TOTAL** | **207** | **129** | **71** | **7** | **49** |
-=======
-| **TOTAL** | **211** | **130** | **73** | **8** | **49** |
->>>>>>> origin/main
+| **TOTAL** | **216** | **130** | **78** | **8** | **59** |
 
 
 ---
@@ -1915,9 +1910,8 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 
 ---
 
-<<<<<<< HEAD
-****Total Coverage**: 216 validation rules across 28 categories
+**Total Coverage**: 216 validation rules across 30 categories
 
 **Knowledge Base**: 11,036 lines, 320KB, 75+ sources
-**Certainty**: 130 HIGH, 73 MEDIUM, 8 LOW
-**Auto-Fixable**: 59 rules (29%)
+**Certainty**: 130 HIGH, 78 MEDIUM, 8 LOW
+**Auto-Fixable**: 59 rules (27%)
