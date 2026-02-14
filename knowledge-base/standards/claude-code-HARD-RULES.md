@@ -23,7 +23,7 @@
 | `SubagentStop` | When subagent finishes | Yes |
 | `Stop` | Claude finishes responding | Yes |
 | `PreCompact` | Before context compaction | No |
-| `Setup` | `--init`, `--init-only`, or `--maintenance` flags | No |
+| `Setup` | **DEPRECATED** - use `SessionStart` instead. Triggered by `--init`, `--init-only`, or `--maintenance` flags | No |
 | `SessionEnd` | Session terminates | No |
 | `Notification` | Claude Code sends notifications | No |
 | `TeammateIdle` | Teammate becomes idle in shared session | No |
