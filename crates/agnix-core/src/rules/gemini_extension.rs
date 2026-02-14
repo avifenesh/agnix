@@ -249,6 +249,36 @@ mod tests {
         assert!(gm_008.is_empty());
     }
 
+    // ===== GM-005: Empty field edge cases =====
+
+    #[test]
+    fn test_gm_005_empty_required_fields() {
+        let content = r#"{"name": "", "version": "", "description": ""}"#;
+        let diagnostics = validate(content);
+        let gm_005: Vec<_> = diagnostics.iter().filter(|d| d.rule == "GM-005").collect();
+        assert_eq!(
+            gm_005.len(),
+            3,
+            "GM-005 should fire for each empty required field (name, version, description)"
+        );
+    }
+
+    // ===== GM-008: Windows path separator =====
+
+    #[test]
+    fn test_gm_008_windows_path_separator() {
+        let content =
+            r#"{"name": "ext", "version": "1.0.0", "description": "Test", "contextFileName": "docs\\context.md"}"#;
+        let diagnostics = validate(content);
+        let gm_008: Vec<_> = diagnostics.iter().filter(|d| d.rule == "GM-008").collect();
+        assert_eq!(
+            gm_008.len(),
+            1,
+            "GM-008 should fire for contextFileName containing backslash path separator"
+        );
+        assert_eq!(gm_008[0].level, DiagnosticLevel::Info);
+    }
+
     // ===== Config Integration =====
 
     #[test]

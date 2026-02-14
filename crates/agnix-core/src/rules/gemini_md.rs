@@ -105,7 +105,7 @@ impl Validator for GeminiMdValidator {
                     if !import_path.is_empty() {
                         let base_dir = path.parent().unwrap_or(Path::new("."));
                         let resolved = base_dir.join(import_path);
-                        if !resolved.exists() {
+                        if std::fs::symlink_metadata(&resolved).is_err() {
                             diagnostics.push(
                                 Diagnostic::warning(
                                     path_buf.clone(),
@@ -365,7 +365,7 @@ Just text without headers."#;
 
     #[test]
     fn test_all_gm_rules_can_be_disabled() {
-        let rules = ["GM-001", "GM-002", "GM-003"];
+        let rules = ["GM-001", "GM-002", "GM-003", "GM-007"];
 
         for rule in rules {
             let mut config = LintConfig::default();
@@ -445,6 +445,81 @@ Run npm test.
         assert_eq!(
             crate::detect_file_type(Path::new("GEMINI.local.md")),
             crate::FileType::GeminiMd
+        );
+    }
+
+    // ===== GM-007: @import file not found =====
+
+    #[test]
+    fn test_gm_007_import_not_found() {
+        let content = r#"# Project
+
+This project validates agent configs.
+
+@import "nonexistent-file-that-does-not-exist.md"
+"#;
+        let diagnostics = validate(content);
+        let gm_007: Vec<_> = diagnostics.iter().filter(|d| d.rule == "GM-007").collect();
+        assert_eq!(
+            gm_007.len(),
+            1,
+            "GM-007 should fire for non-existent import path"
+        );
+        assert_eq!(gm_007[0].level, DiagnosticLevel::Warning);
+    }
+
+    #[test]
+    fn test_gm_007_no_imports_no_error() {
+        let content = r#"# Project
+
+This project validates agent configs.
+
+## Build
+
+Run cargo build.
+"#;
+        let diagnostics = validate(content);
+        let gm_007: Vec<_> = diagnostics.iter().filter(|d| d.rule == "GM-007").collect();
+        assert!(
+            gm_007.is_empty(),
+            "GM-007 should not fire when there are no @import directives"
+        );
+    }
+
+    #[test]
+    fn test_gm_007_empty_import_path() {
+        let content = r#"# Project
+
+This project validates agent configs.
+
+@import ""
+@import ''
+@import
+"#;
+        let diagnostics = validate(content);
+        let gm_007: Vec<_> = diagnostics.iter().filter(|d| d.rule == "GM-007").collect();
+        assert!(
+            gm_007.is_empty(),
+            "GM-007 should handle empty import paths gracefully without firing"
+        );
+    }
+
+    #[test]
+    fn test_gm_007_disabled_rule() {
+        let mut config = LintConfig::default();
+        config.rules_mut().disabled_rules = vec!["GM-007".to_string()];
+
+        let content = r#"# Project
+
+This project validates agent configs.
+
+@import "nonexistent-file.md"
+"#;
+        let diagnostics = validate_with_config(content, &config);
+        let gm_007: Vec<_> = diagnostics.iter().filter(|d| d.rule == "GM-007").collect();
+        assert!(
+            gm_007.is_empty(),
+            "GM-007 should not fire when disabled via config"
         );
     }
 
