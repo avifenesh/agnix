@@ -1,7 +1,7 @@
 {
   "description": "Machine-readable source of truth for all validation rules. When adding a new rule, add it here AND in VALIDATION-RULES.md. CI parity tests enforce sync.",
   "version": "1.1.0",
-  "total_rules": 211,
+  "total_rules": 215,
   "last_updated": "2026-02-14",
   "schema": {
     "evidence": {
@@ -5519,6 +5519,114 @@
       "bad_example": "---\nname: my-skill\ndescription: A useful development skill\nmodel: haiku\n---\n# My Skill\n\nSkill instructions here."
     },
     {
+      "id": "KIRO-001",
+      "name": "Invalid Steering File Inclusion Mode",
+      "severity": "HIGH",
+      "category": "kiro-steering",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://kiro.dev/docs/steering/"
+        ],
+        "verified_on": "2026-02-14",
+        "applies_to": {
+          "tool": "kiro"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      },
+      "good_example": "---\ninclusion: always\n---\n# TypeScript Guidelines\n\nUse strict mode.",
+      "bad_example": "---\ninclusion: invalid_mode\n---\n# TypeScript Guidelines\n\nUse strict mode."
+    },
+    {
+      "id": "KIRO-002",
+      "name": "Missing Required Fields for Inclusion Mode",
+      "severity": "HIGH",
+      "category": "kiro-steering",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://kiro.dev/docs/steering/"
+        ],
+        "verified_on": "2026-02-14",
+        "applies_to": {
+          "tool": "kiro"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      },
+      "good_example": "---\ninclusion: auto\nname: typescript-guidelines\ndescription: Guidelines for TypeScript development\n---\n# TypeScript Guidelines",
+      "bad_example": "---\ninclusion: auto\n---\n# TypeScript Guidelines"
+    },
+    {
+      "id": "KIRO-003",
+      "name": "Invalid fileMatchPattern Glob",
+      "severity": "MEDIUM",
+      "category": "kiro-steering",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://kiro.dev/docs/steering/"
+        ],
+        "verified_on": "2026-02-14",
+        "applies_to": {
+          "tool": "kiro"
+        },
+        "normative_level": "SHOULD",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      },
+      "good_example": "---\ninclusion: fileMatch\nfileMatchPattern: \"**/*.ts\"\n---\n# TypeScript Guidelines",
+      "bad_example": "---\ninclusion: fileMatch\nfileMatchPattern: \"[unclosed\"\n---\n# TypeScript Guidelines"
+    },
+    {
+      "id": "KIRO-004",
+      "name": "Empty Kiro Steering File",
+      "severity": "MEDIUM",
+      "category": "kiro-steering",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://kiro.dev/docs/steering/"
+        ],
+        "verified_on": "2026-02-14",
+        "applies_to": {
+          "tool": "kiro"
+        },
+        "normative_level": "SHOULD",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      },
+      "good_example": "---\ninclusion: always\n---\n# TypeScript Guidelines\n\nUse strict mode.",
+      "bad_example": ""
+    },
+    {
       "id": "AMP-SK-001",
       "name": "Amp Skill Uses Unsupported Field",
       "severity": "MEDIUM",
@@ -5897,6 +6005,11 @@
       "prefix": "KR-SK",
       "count": 1,
       "description": "Kiro per-client skill rules"
+    },
+    "kiro-steering": {
+      "prefix": "KIRO",
+      "count": 4,
+      "description": "Kiro steering file validation"
     },
     "amp-skills": {
       "prefix": "AMP-SK",

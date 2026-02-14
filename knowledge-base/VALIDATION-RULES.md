@@ -1532,6 +1532,38 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 
 ---
 
+## KIRO STEERING RULES
+
+<a id="kiro-001"></a>
+### KIRO-001 [HIGH] Invalid Steering File Inclusion Mode
+**Requirement**: Kiro steering files MUST use a valid inclusion mode
+**Detection**: Frontmatter `inclusion` field is not one of: always, fileMatch, manual, auto
+**Fix**: Use one of: always, fileMatch, manual, auto
+**Source**: kiro.dev/docs/steering/
+
+<a id="kiro-002"></a>
+### KIRO-002 [HIGH] Missing Required Fields for Inclusion Mode
+**Requirement**: Steering files MUST include required fields for their inclusion mode
+**Detection**: `inclusion: auto` without `name` and `description` fields, or `inclusion: fileMatch` without `fileMatchPattern` field
+**Fix**: Add the missing required fields for the specified inclusion mode
+**Source**: kiro.dev/docs/steering/
+
+<a id="kiro-003"></a>
+### KIRO-003 [MEDIUM] Invalid fileMatchPattern Glob
+**Requirement**: The `fileMatchPattern` field SHOULD contain a valid glob pattern
+**Detection**: Glob pattern fails to parse
+**Fix**: Fix the glob pattern syntax
+**Source**: kiro.dev/docs/steering/
+
+<a id="kiro-004"></a>
+### KIRO-004 [MEDIUM] Empty Kiro Steering File
+**Requirement**: Kiro steering files in `.kiro/steering/` SHOULD have content
+**Detection**: File is empty or whitespace-only
+**Fix**: Add steering content to the file
+**Source**: kiro.dev/docs/steering/
+
+---
+
 ## UNIVERSAL RULES (XML)
 
 <a id="xml-001"></a>

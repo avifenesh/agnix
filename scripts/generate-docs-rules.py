@@ -42,6 +42,7 @@ CATEGORY_LABELS: Dict[str, str] = {
     "opencode-skills": "OpenCode Skills",
     "windsurf-skills": "Windsurf Skills",
     "kiro-skills": "Kiro Skills",
+    "kiro-steering": "Kiro Steering",
     "amp-skills": "Amp Skills",
     "roo-code": "Roo Code",
     "roo-code-skills": "Roo Code Skills",
@@ -155,6 +156,11 @@ TEMPLATES: Dict[str, Dict[str, str]] = {
     "opencode-skills": {"invalid": "", "valid": "", "lang": "markdown"},
     "windsurf-skills": {"invalid": "", "valid": "", "lang": "markdown"},
     "kiro-skills": {"invalid": "", "valid": "", "lang": "markdown"},
+    "kiro-steering": {
+        "invalid": "---\ninclusion: invalid_mode\n---\n# Guidelines\n",
+        "valid": "---\ninclusion: always\n---\n# TypeScript Guidelines\n\nUse strict mode.\n",
+        "lang": "markdown",
+    },
     "amp-skills": {"invalid": "", "valid": "", "lang": "markdown"},
     "roo-code-skills": {"invalid": "", "valid": "", "lang": "markdown"},
 }
