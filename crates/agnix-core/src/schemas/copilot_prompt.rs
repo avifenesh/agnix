@@ -108,25 +108,42 @@ pub fn parse_prompt_frontmatter(content: &str) -> Option<ParsedPromptFrontmatter
 
 fn find_unknown_keys(yaml: &str, start_line: usize) -> Vec<UnknownKey> {
     let mut unknown = Vec::new();
+    let top_level_indent = yaml
+        .lines()
+        .filter_map(|line| {
+            let trimmed = line.trim_start();
+            if trimmed.is_empty() || trimmed.starts_with('#') {
+                return None;
+            }
+            let colon_idx = trimmed.find(':')?;
+            let key = trimmed[..colon_idx].trim();
+            if key.is_empty() {
+                return None;
+            }
+            Some(line.len() - trimmed.len())
+        })
+        .min()
+        .unwrap_or(0);
 
     for (i, line) in yaml.lines().enumerate() {
         let trimmed = line.trim_start();
         if trimmed.is_empty() || trimmed.starts_with('#') {
             continue;
         }
-        if line.starts_with(' ') || line.starts_with('\t') {
+        let indent = line.len() - trimmed.len();
+        if indent != top_level_indent {
             continue;
         }
 
-        if let Some(colon_idx) = line.find(':') {
-            let key_raw = &line[..colon_idx];
+        if let Some(colon_idx) = trimmed.find(':') {
+            let key_raw = &trimmed[..colon_idx];
             let key = key_raw.trim().trim_matches(|c| c == '\'' || c == '"');
 
             if !key.is_empty() && !KNOWN_KEYS.contains(&key) {
                 unknown.push(UnknownKey {
                     key: key.to_string(),
                     line: start_line + i,
-                    column: key_raw.len() - key_raw.trim_start().len(),
+                    column: indent,
                 });
             }
         }
@@ -164,6 +181,19 @@ Summarize the current file.
 description: test
 weird-key: yes
 ---
+Body
+"#;
+        let parsed = parse_prompt_frontmatter(content).expect("expected frontmatter");
+        assert_eq!(parsed.unknown_keys.len(), 1);
+        assert_eq!(parsed.unknown_keys[0].key, "weird-key");
+    }
+
+    #[test]
+    fn parse_unknown_keys_with_uniform_indentation() {
+        let content = r#"---
+ description: test
+ weird-key: yes
+ ---
 Body
 "#;
         let parsed = parse_prompt_frontmatter(content).expect("expected frontmatter");

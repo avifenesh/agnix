@@ -109,7 +109,7 @@ fn validate_custom_agent(path: &Path, content: &str, config: &LintConfig) -> Vec
         if let Some(err) = &parsed.parse_error {
             if config.is_rule_enabled("COP-008") {
                 diagnostics.push(
-                    Diagnostic::error(
+                    Diagnostic::warning(
                         path.to_path_buf(),
                         parsed.start_line,
                         0,
@@ -247,6 +247,25 @@ fn validate_custom_agent(path: &Path, content: &str, config: &LintConfig) -> Vec
 fn validate_reusable_prompt(path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic> {
     let mut diagnostics = Vec::new();
     let parsed = parse_prompt_frontmatter(content);
+
+    if let Some(parsed) = &parsed {
+        if let Some(err) = &parsed.parse_error {
+            if config.is_rule_enabled("COP-014") {
+                diagnostics.push(
+                    Diagnostic::warning(
+                        path.to_path_buf(),
+                        parsed.start_line,
+                        0,
+                        "COP-014",
+                        format!("Prompt frontmatter contains invalid YAML: {err}"),
+                    )
+                    .with_suggestion("Fix YAML syntax in prompt frontmatter."),
+                );
+            }
+            return diagnostics;
+        }
+    }
+
     let body = parsed.as_ref().map_or(content, |p| p.body.as_str());
 
     if config.is_rule_enabled("COP-013") && is_prompt_body_empty(body) {
@@ -265,20 +284,6 @@ fn validate_reusable_prompt(path: &Path, content: &str, config: &LintConfig) -> 
 
     if let Some(parsed) = &parsed {
         if config.is_rule_enabled("COP-014") {
-            if let Some(err) = &parsed.parse_error {
-                diagnostics.push(
-                    Diagnostic::error(
-                        path.to_path_buf(),
-                        parsed.start_line,
-                        0,
-                        "COP-014",
-                        format!("Prompt frontmatter contains invalid YAML: {err}"),
-                    )
-                    .with_suggestion("Fix YAML syntax in prompt frontmatter."),
-                );
-                return diagnostics;
-            }
-
             for unknown in &parsed.unknown_keys {
                 diagnostics.push(
                     Diagnostic::warning(
@@ -1527,6 +1532,21 @@ Refactor the selected code.
             diagnostics
                 .iter()
                 .any(|d| d.message.contains("invalid YAML"))
+        );
+    }
+
+    #[test]
+    fn test_cop_014_invalid_prompt_frontmatter_yaml_does_not_emit_cop_013() {
+        let diagnostics = validate_prompt(
+            r#"---
+description: Refactor selected code
+agent: [ask
+"#,
+        );
+        assert!(diagnostics.iter().any(|d| d.rule == "COP-014"));
+        assert!(
+            diagnostics.iter().all(|d| d.rule != "COP-013"),
+            "Invalid frontmatter should not also report empty prompt body"
         );
     }
 
