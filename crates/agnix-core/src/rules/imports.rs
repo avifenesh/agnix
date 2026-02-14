@@ -1688,4 +1688,21 @@ mod tests {
         let ref_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "REF-004").collect();
         assert!(ref_004.is_empty(), "REF-004 should be disabled");
     }
+
+    #[test]
+    fn test_ref_004_extensionless_import_ok() {
+        let temp = TempDir::new().unwrap();
+        let file_path = temp.path().join("test.md");
+        fs::write(&file_path, "@utils").unwrap();
+
+        let validator = ImportsValidator;
+        let diagnostics =
+            validator.validate(&file_path, "@utils", &LintConfig::default());
+
+        let ref_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "REF-004").collect();
+        assert!(
+            ref_004.is_empty(),
+            "Extensionless imports should not trigger REF-004"
+        );
+    }
 }

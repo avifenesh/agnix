@@ -816,4 +816,32 @@ This is not a critical section.
         let pe_006: Vec<_> = diagnostics.iter().filter(|d| d.rule == "PE-006").collect();
         assert!(pe_006.is_empty());
     }
+
+    // ===== PE-005/PE-006 Config Disable =====
+
+    #[test]
+    fn test_pe_005_disabled_individually() {
+        let mut config = LintConfig::default();
+        config.rules_mut().disabled_rules = vec!["PE-005".to_string()];
+
+        let content = "Be helpful and accurate.";
+        let validator = PromptValidator;
+        let diagnostics = validator.validate(Path::new("SKILL.md"), content, &config);
+
+        let pe_005: Vec<_> = diagnostics.iter().filter(|d| d.rule == "PE-005").collect();
+        assert!(pe_005.is_empty(), "PE-005 should be disabled");
+    }
+
+    #[test]
+    fn test_pe_006_disabled_individually() {
+        let mut config = LintConfig::default();
+        config.rules_mut().disabled_rules = vec!["PE-006".to_string()];
+
+        let content = "Don't use global variables.";
+        let validator = PromptValidator;
+        let diagnostics = validator.validate(Path::new("SKILL.md"), content, &config);
+
+        let pe_006: Vec<_> = diagnostics.iter().filter(|d| d.rule == "PE-006").collect();
+        assert!(pe_006.is_empty(), "PE-006 should be disabled");
+    }
 }
