@@ -1,7 +1,7 @@
 {
   "description": "Machine-readable source of truth for all validation rules. When adding a new rule, add it here AND in VALIDATION-RULES.md. CI parity tests enforce sync.",
   "version": "1.1.0",
-  "total_rules": 194,
+  "total_rules": 200,
   "last_updated": "2026-02-14",
   "schema": {
     "evidence": {
@@ -5301,6 +5301,168 @@
       },
       "good_example": "---\nname: code-review\ndescription: Reviews code for quality issues\n---\nReview the code for bugs and style issues.",
       "bad_example": "---\nname: code-review\ndescription: Reviews code for quality issues\nmodel: opus\ncontext: fork\nagent: general-purpose\n---\nReview the code for bugs and style issues."
+    },
+    {
+      "id": "ROO-001",
+      "name": "Empty Roo Code Rule File",
+      "severity": "HIGH",
+      "category": "roo-code",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://docs.roocode.com/features/custom-modes"
+        ],
+        "verified_on": "2026-02-14",
+        "applies_to": {
+          "tool": "roo-code"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      },
+      "good_example": "# General Rules\n\nFollow project coding standards and write clean, maintainable code.",
+      "bad_example": ""
+    },
+    {
+      "id": "ROO-002",
+      "name": "Invalid .roomodes Configuration",
+      "severity": "HIGH",
+      "category": "roo-code",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://docs.roocode.com/features/custom-modes"
+        ],
+        "verified_on": "2026-02-14",
+        "applies_to": {
+          "tool": "roo-code"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      },
+      "good_example": "{\n  \"customModes\": [\n    {\n      \"slug\": \"designer\",\n      \"name\": \"Designer\",\n      \"roleDefinition\": \"You are a UI/UX designer.\",\n      \"groups\": [\"read\", \"edit\"]\n    }\n  ]\n}",
+      "bad_example": "{\n  \"customModes\": \"not-an-array\"\n}"
+    },
+    {
+      "id": "ROO-003",
+      "name": "Invalid .rooignore File",
+      "severity": "MEDIUM",
+      "category": "roo-code",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://docs.roocode.com/features/rooignore"
+        ],
+        "verified_on": "2026-02-14",
+        "applies_to": {
+          "tool": "roo-code"
+        },
+        "normative_level": "SHOULD",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      },
+      "good_example": "node_modules/\n*.log\n.env\nbuild/",
+      "bad_example": ""
+    },
+    {
+      "id": "ROO-004",
+      "name": "Invalid Mode Slug in Rule Directory",
+      "severity": "MEDIUM",
+      "category": "roo-code",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://docs.roocode.com/features/custom-modes"
+        ],
+        "verified_on": "2026-02-14",
+        "applies_to": {
+          "tool": "roo-code"
+        },
+        "normative_level": "SHOULD",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      },
+      "good_example": ".roo/rules-architect/general.md",
+      "bad_example": ".roo/rules-INVALID SLUG/general.md"
+    },
+    {
+      "id": "ROO-005",
+      "name": "Invalid .roo/mcp.json Configuration",
+      "severity": "HIGH",
+      "category": "roo-code",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://docs.roocode.com/features/mcp/using-mcp-in-roo"
+        ],
+        "verified_on": "2026-02-14",
+        "applies_to": {
+          "tool": "roo-code"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      },
+      "good_example": "{\n  \"mcpServers\": {\n    \"my-server\": {\n      \"command\": \"node\",\n      \"args\": [\"server.js\"]\n    }\n  }\n}",
+      "bad_example": "{\n  \"mcpServers\": \"not-an-object\"\n}"
+    },
+    {
+      "id": "ROO-006",
+      "name": "Mode Slug Not Recognized",
+      "severity": "MEDIUM",
+      "category": "roo-code",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://docs.roocode.com/features/custom-modes"
+        ],
+        "verified_on": "2026-02-14",
+        "applies_to": {
+          "tool": "roo-code"
+        },
+        "normative_level": "SHOULD",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      },
+      "good_example": ".roo/rules-code/SKILL.md with content",
+      "bad_example": ".roo/rules-custom-undefined/SKILL.md"
     }
   ],
   "categories": {

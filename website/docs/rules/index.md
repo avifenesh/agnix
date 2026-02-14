@@ -1,7 +1,7 @@
 # Rules Reference
 
-This section contains all `194` validation rules generated from `knowledge-base/rules.json`.
-`59` rules have automatic fixes.
+This section contains all `200` validation rules generated from `knowledge-base/rules.json`.
+`49` rules have automatic fixes.
 
 | Rule | Name | Severity | Category | Auto-Fix |
 |------|------|----------|----------|----------|
@@ -188,6 +188,12 @@ This section contains all `194` validation rules generated from `knowledge-base/
 | [CDX-003](./generated/cdx-003.md) | AGENTS.override.md in Version Control | MEDIUM | Codex CLI | No |
 | [CDX-004](./generated/cdx-004.md) | Unknown Config Key | MEDIUM | Codex CLI | No |
 | [CDX-005](./generated/cdx-005.md) | project_doc_max_bytes Exceeds Limit | HIGH | Codex CLI | No |
+| [ROO-001](./generated/roo-001.md) | Empty Roo Code Rule File | HIGH | Roo Code | No |
+| [ROO-002](./generated/roo-002.md) | Invalid .roomodes Configuration | HIGH | Roo Code | No |
+| [ROO-003](./generated/roo-003.md) | Invalid .rooignore File | MEDIUM | Roo Code | No |
+| [ROO-004](./generated/roo-004.md) | Invalid Mode Slug in Rule Directory | MEDIUM | Roo Code | No |
+| [ROO-005](./generated/roo-005.md) | Invalid .roo/mcp.json Configuration | HIGH | Roo Code | No |
+| [ROO-006](./generated/roo-006.md) | Mode Slug Not Recognized | MEDIUM | Roo Code | No |
 | [VER-001](./generated/ver-001.md) | No Tool/Spec Versions Pinned | LOW | Version Awareness | No |
 | [CR-SK-001](./generated/cr-sk-001.md) | Cursor Skill Uses Unsupported Field | MEDIUM | Cursor Skills | Yes (safe/unsafe) |
 | [CL-SK-001](./generated/cl-sk-001.md) | Cline Skill Uses Unsupported Field | MEDIUM | Cline Skills | Yes (safe/unsafe) |

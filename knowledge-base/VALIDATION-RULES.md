@@ -1405,6 +1405,52 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 
 ---
 
+## ROO CODE RULES
+
+<a id="roo-001"></a>
+### ROO-001 [HIGH] Empty Roo Code Rule File
+**Requirement**: Roo Code rule files (`.roorules`, `.roo/rules/*.md`) MUST contain content
+**Detection**: Check if `content.trim().is_empty()`
+**Fix**: Add meaningful rule content to the file
+**Source**: docs.roocode.com/features/custom-modes
+
+<a id="roo-002"></a>
+### ROO-002 [HIGH] Invalid .roomodes Configuration
+**Requirement**: `.roomodes` MUST be valid JSON with `customModes` array containing mode entries with slug, name, roleDefinition, and groups
+**Detection**: Parse JSON, validate structure - check customModes is array, each entry has required fields, slug format is valid, groups are valid names
+**Fix**: Correct the .roomodes configuration to match the expected schema
+**Source**: docs.roocode.com/features/custom-modes
+
+<a id="roo-003"></a>
+### ROO-003 [MEDIUM] Invalid .rooignore File
+**Requirement**: `.rooignore` SHOULD have valid gitignore-style glob patterns
+**Detection**: Check for empty content, validate each non-comment line as a glob pattern
+**Fix**: Add valid glob patterns or fix syntax errors
+**Source**: docs.roocode.com/features/rooignore
+
+<a id="roo-004"></a>
+### ROO-004 [MEDIUM] Invalid Mode Slug in Rule Directory
+**Requirement**: Mode-specific rule directories (`.roo/rules-{slug}/`) SHOULD use valid slug format (lowercase alphanumeric with hyphens)
+**Detection**: Extract slug from parent directory name, validate format
+**Fix**: Rename directory to use a valid slug format
+**Source**: docs.roocode.com/features/custom-modes
+
+<a id="roo-005"></a>
+### ROO-005 [HIGH] Invalid .roo/mcp.json Configuration
+**Requirement**: `.roo/mcp.json` MUST be valid JSON with `mcpServers` object containing server entries with required fields
+**Detection**: Parse JSON, validate structure - check mcpServers is object, stdio servers have command, http/sse servers have url
+**Fix**: Correct the .roo/mcp.json configuration to match the expected schema
+**Source**: docs.roocode.com/features/mcp/using-mcp-in-roo
+
+<a id="roo-006"></a>
+### ROO-006 [MEDIUM] Mode Slug Not Recognized
+**Requirement**: SKILL.md files in mode-specific directories SHOULD reference built-in modes or modes defined in .roomodes
+**Detection**: Check if slug matches built-in modes (code, architect, ask, debug, orchestrator) for SKILL.md files
+**Fix**: Define the mode in .roomodes or use a built-in mode slug
+**Source**: docs.roocode.com/features/custom-modes
+
+---
+
 ## UNIVERSAL RULES (XML)
 
 <a id="xml-001"></a>
@@ -1715,8 +1761,9 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | Kiro Skills | 1 | 0 | 1 | 0 | 1 |
 | Amp Skills | 1 | 0 | 1 | 0 | 1 |
 | Roo Code Skills | 1 | 0 | 1 | 0 | 1 |
+| Roo Code | 6 | 3 | 3 | 0 | 0 |
 | Version Awareness | 1 | 0 | 0 | 1 | 0 |
-| **TOTAL** | **194** | **121** | **66** | **7** | **49** |
+| **TOTAL** | **200** | **124** | **69** | **7** | **49** |
 
 
 ---
@@ -1746,8 +1793,8 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 
 ---
 
-****Total Coverage**: 194 validation rules across 28 categories
+****Total Coverage**: 200 validation rules across 28 categories
 
 **Knowledge Base**: 11,036 lines, 320KB, 75+ sources
-**Certainty**: 121 HIGH, 66 MEDIUM, 7 LOW
-**Auto-Fixable**: 59 rules (33%)
+**Certainty**: 124 HIGH, 69 MEDIUM, 7 LOW
+**Auto-Fixable**: 49 rules (25%)
