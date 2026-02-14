@@ -182,8 +182,7 @@ mod tests {
         let mut config = LintConfig::default();
         config.rules_mut().disabled_rules = vec!["WS-001".to_string()];
         let validator = WindsurfValidator;
-        let diagnostics =
-            validator.validate(Path::new(".windsurf/rules/test.md"), "", &config);
+        let diagnostics = validator.validate(Path::new(".windsurf/rules/test.md"), "", &config);
         let ws_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "WS-001").collect();
         assert!(ws_001.is_empty());
     }
@@ -252,8 +251,7 @@ mod tests {
         let mut config = LintConfig::default();
         config.rules_mut().disabled_rules = vec!["WS-003".to_string()];
         let validator = WindsurfValidator;
-        let diagnostics =
-            validator.validate(Path::new(".windsurf/workflows/test.md"), "", &config);
+        let diagnostics = validator.validate(Path::new(".windsurf/workflows/test.md"), "", &config);
         let ws_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "WS-003").collect();
         assert!(ws_003.is_empty());
     }
@@ -274,8 +272,7 @@ mod tests {
         let mut config = LintConfig::default();
         config.rules_mut().disabled_rules = vec!["WS-004".to_string()];
         let validator = WindsurfValidator;
-        let diagnostics =
-            validator.validate(Path::new(".windsurfrules"), "content", &config);
+        let diagnostics = validator.validate(Path::new(".windsurfrules"), "content", &config);
         let ws_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "WS-004").collect();
         assert!(ws_004.is_empty());
     }
@@ -288,16 +285,14 @@ mod tests {
         config.rules_mut().windsurf = false;
         let validator = WindsurfValidator;
 
-        let diagnostics =
-            validator.validate(Path::new(".windsurf/rules/test.md"), "", &config);
+        let diagnostics = validator.validate(Path::new(".windsurf/rules/test.md"), "", &config);
         let ws_rules: Vec<_> = diagnostics
             .iter()
             .filter(|d| d.rule.starts_with("WS-"))
             .collect();
         assert!(ws_rules.is_empty());
 
-        let diagnostics =
-            validator.validate(Path::new(".windsurfrules"), "content", &config);
+        let diagnostics = validator.validate(Path::new(".windsurfrules"), "content", &config);
         let ws_rules: Vec<_> = diagnostics
             .iter()
             .filter(|d| d.rule.starts_with("WS-"))

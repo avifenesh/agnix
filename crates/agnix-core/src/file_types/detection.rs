@@ -304,9 +304,7 @@ pub fn detect_file_type(path: &Path) -> FileType {
             FileType::ClineRulesFolder
         }
         // Windsurf rules (.windsurf/rules/**/*.md)
-        name if name.ends_with(".md") && is_under_windsurf_rules(path) => {
-            FileType::WindsurfRule
-        }
+        name if name.ends_with(".md") && is_under_windsurf_rules(path) => FileType::WindsurfRule,
         // Windsurf workflows (.windsurf/workflows/**/*.md)
         name if name.ends_with(".md") && is_under_windsurf_workflows(path) => {
             FileType::WindsurfWorkflow
