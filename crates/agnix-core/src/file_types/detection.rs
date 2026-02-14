@@ -91,18 +91,15 @@ fn is_documentation_directory(path: &Path) -> bool {
 /// components anywhere in the path. This allows scoped Copilot instruction
 /// files to live in subdirectories under `.github/instructions/`.
 fn is_under_github_instructions(path: &Path) -> bool {
-    let mut prev: Option<&str> = None;
-    for component in path.components() {
-        if let std::path::Component::Normal(n) = component {
-            if let Some(name) = n.to_str() {
-                if prev == Some(".github") && name == "instructions" {
-                    return true;
-                }
-                prev = Some(name);
-            }
-        }
-    }
-    false
+    path.components()
+        .zip(path.components().skip(1))
+        .any(|(a, b)| {
+            matches!(
+                (a, b),
+                (std::path::Component::Normal(a_os), std::path::Component::Normal(b_os))
+                if a_os == ".github" && b_os == "instructions"
+            )
+        })
 }
 
 fn is_excluded_filename(name: &str) -> bool {
@@ -154,9 +151,7 @@ pub fn detect_file_type(path: &Path) -> FileType {
         // GitHub Copilot global instructions (.github/copilot-instructions.md)
         "copilot-instructions.md" if parent == Some(".github") => FileType::Copilot,
         // GitHub Copilot scoped instructions (.github/instructions/**/*.instructions.md)
-        name if name.ends_with(".instructions.md")
-            && is_under_github_instructions(path) =>
-        {
+        name if name.ends_with(".instructions.md") && is_under_github_instructions(path) => {
             FileType::CopilotScoped
         }
         // Claude Code rules (.claude/rules/*.md)
