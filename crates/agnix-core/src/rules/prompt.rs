@@ -5,6 +5,8 @@
 //! - PE-002: Chain-of-thought phrases in simple tasks
 //! - PE-003: Weak language (should/try/consider) in critical sections
 //! - PE-004: Ambiguous terms (usually/sometimes/if possible)
+//! - PE-005: Redundant generic instructions (be helpful, be accurate)
+//! - PE-006: Negative-only instructions without positive alternative
 
 use crate::{
     config::LintConfig,
@@ -12,13 +14,14 @@ use crate::{
     rules::{Validator, ValidatorMetadata},
     schemas::prompt::{
         find_ambiguous_instructions, find_cot_on_simple_tasks, find_critical_in_middle_pe,
+        find_negative_only_instructions, find_redundant_instructions,
         find_weak_imperative_language,
     },
 };
 use rust_i18n::t;
 use std::path::Path;
 
-const RULE_IDS: &[&str] = &["PE-001", "PE-002", "PE-003", "PE-004"];
+const RULE_IDS: &[&str] = &["PE-001", "PE-002", "PE-003", "PE-004", "PE-005", "PE-006"];
 
 pub struct PromptValidator;
 
@@ -109,6 +112,40 @@ impl Validator for PromptValidator {
                         t!("rules.pe_004.message", term = issue.term.as_str()),
                     )
                     .with_suggestion(t!("rules.pe_004.suggestion")),
+                );
+            }
+        }
+
+        // PE-005: Redundant generic instructions
+        if config.is_rule_enabled("PE-005") {
+            let redundant = find_redundant_instructions(content);
+            for issue in redundant {
+                diagnostics.push(
+                    Diagnostic::warning(
+                        path.to_path_buf(),
+                        issue.line,
+                        issue.column,
+                        "PE-005",
+                        t!("rules.pe_005.message", phrase = issue.phrase.as_str()),
+                    )
+                    .with_suggestion(t!("rules.pe_005.suggestion")),
+                );
+            }
+        }
+
+        // PE-006: Negative-only instructions
+        if config.is_rule_enabled("PE-006") {
+            let negative_only = find_negative_only_instructions(content);
+            for issue in negative_only {
+                diagnostics.push(
+                    Diagnostic::warning(
+                        path.to_path_buf(),
+                        issue.line,
+                        issue.column,
+                        "PE-006",
+                        t!("rules.pe_006.message", text = issue.text.as_str()),
+                    )
+                    .with_suggestion(t!("rules.pe_006.suggestion")),
                 );
             }
         }
@@ -660,7 +697,7 @@ This is not a critical section.
 
     #[test]
     fn test_all_pe_rules_can_be_disabled() {
-        let rules = ["PE-001", "PE-002", "PE-003", "PE-004"];
+        let rules = ["PE-001", "PE-002", "PE-003", "PE-004", "PE-005", "PE-006"];
 
         for rule in rules {
             let mut config = LintConfig::default();
@@ -671,6 +708,8 @@ This is not a critical section.
             lines[10] = "This is critical information.".to_string();
             lines[1] = "# Critical Rules".to_string();
             lines[2] = "You should step by step read the file. Usually do it.".to_string();
+            lines[3] = "Be helpful and accurate.".to_string();
+            lines[4] = "Don't use global variables.".to_string();
             let content = lines.join("\n");
 
             let validator = PromptValidator;
@@ -682,5 +721,99 @@ This is not a critical section.
                 rule
             );
         }
+    }
+
+    // ===== PE-005: Redundant Generic Instructions =====
+
+    #[test]
+    fn test_pe_005_be_helpful() {
+        let content = "Be helpful and accurate when responding.";
+        let validator = PromptValidator;
+        let diagnostics =
+            validator.validate(Path::new("SKILL.md"), content, &LintConfig::default());
+
+        let pe_005: Vec<_> = diagnostics.iter().filter(|d| d.rule == "PE-005").collect();
+        assert_eq!(pe_005.len(), 1);
+        assert_eq!(pe_005[0].level, DiagnosticLevel::Warning);
+    }
+
+    #[test]
+    fn test_pe_005_specific_instructions_ok() {
+        let content = "Format all output as JSON with 2-space indentation.";
+        let validator = PromptValidator;
+        let diagnostics =
+            validator.validate(Path::new("SKILL.md"), content, &LintConfig::default());
+
+        let pe_005: Vec<_> = diagnostics.iter().filter(|d| d.rule == "PE-005").collect();
+        assert!(pe_005.is_empty());
+    }
+
+    #[test]
+    fn test_pe_005_skips_code_blocks() {
+        let content = "```\nBe helpful and accurate.\n```";
+        let validator = PromptValidator;
+        let diagnostics =
+            validator.validate(Path::new("SKILL.md"), content, &LintConfig::default());
+
+        let pe_005: Vec<_> = diagnostics.iter().filter(|d| d.rule == "PE-005").collect();
+        assert!(pe_005.is_empty());
+    }
+
+    #[test]
+    fn test_pe_005_multiple_redundant() {
+        let content = "Be helpful.\nBe accurate.\nBe concise.";
+        let validator = PromptValidator;
+        let diagnostics =
+            validator.validate(Path::new("SKILL.md"), content, &LintConfig::default());
+
+        let pe_005: Vec<_> = diagnostics.iter().filter(|d| d.rule == "PE-005").collect();
+        assert_eq!(pe_005.len(), 3);
+    }
+
+    // ===== PE-006: Negative-Only Instructions =====
+
+    #[test]
+    fn test_pe_006_negative_only() {
+        let content = "Don't use global variables.";
+        let validator = PromptValidator;
+        let diagnostics =
+            validator.validate(Path::new("SKILL.md"), content, &LintConfig::default());
+
+        let pe_006: Vec<_> = diagnostics.iter().filter(|d| d.rule == "PE-006").collect();
+        assert_eq!(pe_006.len(), 1);
+        assert_eq!(pe_006[0].level, DiagnosticLevel::Warning);
+    }
+
+    #[test]
+    fn test_pe_006_with_alternative_ok() {
+        let content = "Don't use global variables. Instead, pass values as function parameters.";
+        let validator = PromptValidator;
+        let diagnostics =
+            validator.validate(Path::new("SKILL.md"), content, &LintConfig::default());
+
+        let pe_006: Vec<_> = diagnostics.iter().filter(|d| d.rule == "PE-006").collect();
+        assert!(pe_006.is_empty());
+    }
+
+    #[test]
+    fn test_pe_006_never_without_alternative() {
+        let content = "Never use eval in production code.";
+        let validator = PromptValidator;
+        let diagnostics =
+            validator.validate(Path::new("SKILL.md"), content, &LintConfig::default());
+
+        let pe_006: Vec<_> = diagnostics.iter().filter(|d| d.rule == "PE-006").collect();
+        assert_eq!(pe_006.len(), 1);
+    }
+
+    #[test]
+    fn test_pe_006_skips_code_blocks() {
+        let content = "```\nDon't use global variables.\n```";
+        let validator = PromptValidator;
+        let diagnostics =
+            validator.validate(Path::new("SKILL.md"), content, &LintConfig::default());
+
+        let pe_006: Vec<_> = diagnostics.iter().filter(|d| d.rule == "PE-006").collect();
+        assert!(pe_006.is_empty());
     }
 }
