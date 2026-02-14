@@ -50,6 +50,12 @@ pub enum FileType {
     OpenCodeConfig,
     /// Gemini CLI instruction files (GEMINI.md, GEMINI.local.md)
     GeminiMd,
+    /// Gemini CLI settings (.gemini/settings.json)
+    GeminiSettings,
+    /// Gemini CLI extension manifest (gemini-extension.json)
+    GeminiExtension,
+    /// Gemini CLI ignore file (.geminiignore)
+    GeminiIgnore,
     /// Codex CLI configuration (.codex/config.toml)
     CodexConfig,
     /// Other .md files (for XML/import checks)
@@ -90,6 +96,9 @@ impl fmt::Display for FileType {
             FileType::ClineRulesFolder => "ClineRulesFolder",
             FileType::OpenCodeConfig => "OpenCodeConfig",
             FileType::GeminiMd => "GeminiMd",
+            FileType::GeminiSettings => "GeminiSettings",
+            FileType::GeminiExtension => "GeminiExtension",
+            FileType::GeminiIgnore => "GeminiIgnore",
             FileType::CodexConfig => "CodexConfig",
             FileType::GenericMarkdown => "GenericMarkdown",
             FileType::Unknown => "Unknown",
@@ -123,6 +132,9 @@ mod tests {
             (FileType::ClineRulesFolder, "ClineRulesFolder"),
             (FileType::OpenCodeConfig, "OpenCodeConfig"),
             (FileType::GeminiMd, "GeminiMd"),
+            (FileType::GeminiSettings, "GeminiSettings"),
+            (FileType::GeminiExtension, "GeminiExtension"),
+            (FileType::GeminiIgnore, "GeminiIgnore"),
             (FileType::CodexConfig, "CodexConfig"),
             (FileType::GenericMarkdown, "GenericMarkdown"),
             (FileType::Unknown, "Unknown"),
@@ -155,6 +167,9 @@ mod tests {
             FileType::ClineRulesFolder,
             FileType::OpenCodeConfig,
             FileType::GeminiMd,
+            FileType::GeminiSettings,
+            FileType::GeminiExtension,
+            FileType::GeminiIgnore,
             FileType::CodexConfig,
             FileType::GenericMarkdown,
         ];

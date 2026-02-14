@@ -141,6 +141,9 @@ pub fn detect_file_type(path: &Path) -> FileType {
         "SKILL.md" => FileType::Skill,
         "CLAUDE.md" | "CLAUDE.local.md" | "AGENTS.md" | "AGENTS.local.md"
         | "AGENTS.override.md" => FileType::ClaudeMd,
+        "settings.json" | "settings.local.json" if parent == Some(".gemini") => {
+            FileType::GeminiSettings
+        }
         "settings.json" | "settings.local.json" => FileType::Hooks,
         // Classify any plugin.json as Plugin - validator checks location constraint (CC-PL-001)
         "plugin.json" => FileType::Plugin,
@@ -196,12 +199,16 @@ pub fn detect_file_type(path: &Path) -> FileType {
         ".cursorrules" | ".cursorrules.md" => FileType::CursorRulesLegacy,
         // Cline rules single file (.clinerules without extension)
         ".clinerules" => FileType::ClineRules,
+        // Gemini CLI ignore file (.geminiignore)
+        ".geminiignore" => FileType::GeminiIgnore,
         // Cline rules folder (.clinerules/*.md)
         name if name.ends_with(".md") && parent == Some(".clinerules") => {
             FileType::ClineRulesFolder
         }
         // OpenCode configuration (opencode.json)
         "opencode.json" => FileType::OpenCodeConfig,
+        // Gemini CLI extension manifest (gemini-extension.json)
+        "gemini-extension.json" => FileType::GeminiExtension,
         // Gemini CLI instruction files (GEMINI.md, GEMINI.local.md)
         "GEMINI.md" | "GEMINI.local.md" => FileType::GeminiMd,
         // Codex CLI configuration (.codex/config.toml)
@@ -635,6 +642,61 @@ mod tests {
         assert_ne!(
             detect_file_type(Path::new("instructions/.github/foo.instructions.md")),
             FileType::CopilotScoped
+        );
+    }
+
+    // ---- Gemini Settings / Extension / Ignore detection ----
+
+    #[test]
+    fn detect_gemini_settings() {
+        assert_eq!(
+            detect_file_type(Path::new(".gemini/settings.json")),
+            FileType::GeminiSettings
+        );
+        assert_eq!(
+            detect_file_type(Path::new(".gemini/settings.local.json")),
+            FileType::GeminiSettings
+        );
+    }
+
+    #[test]
+    fn detect_settings_json_without_gemini_parent_is_hooks() {
+        // settings.json without .gemini parent should remain Hooks
+        assert_eq!(
+            detect_file_type(Path::new("settings.json")),
+            FileType::Hooks
+        );
+        assert_eq!(
+            detect_file_type(Path::new(".claude/settings.json")),
+            FileType::Hooks
+        );
+        assert_eq!(
+            detect_file_type(Path::new("settings.local.json")),
+            FileType::Hooks
+        );
+    }
+
+    #[test]
+    fn detect_gemini_extension() {
+        assert_eq!(
+            detect_file_type(Path::new("gemini-extension.json")),
+            FileType::GeminiExtension
+        );
+        assert_eq!(
+            detect_file_type(Path::new("project/gemini-extension.json")),
+            FileType::GeminiExtension
+        );
+    }
+
+    #[test]
+    fn detect_gemini_ignore() {
+        assert_eq!(
+            detect_file_type(Path::new(".geminiignore")),
+            FileType::GeminiIgnore
+        );
+        assert_eq!(
+            detect_file_type(Path::new("project/.geminiignore")),
+            FileType::GeminiIgnore
         );
     }
 }

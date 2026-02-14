@@ -272,6 +272,9 @@ fn file_type_enum_covers_all_variants() {
         agnix_core::FileType::ClineRulesFolder,
         agnix_core::FileType::OpenCodeConfig,
         agnix_core::FileType::GeminiMd,
+        agnix_core::FileType::GeminiSettings,
+        agnix_core::FileType::GeminiExtension,
+        agnix_core::FileType::GeminiIgnore,
         agnix_core::FileType::CodexConfig,
         agnix_core::FileType::GenericMarkdown,
         agnix_core::FileType::Unknown,
@@ -303,6 +306,9 @@ fn file_type_enum_covers_all_variants() {
             agnix_core::FileType::ClineRulesFolder => {}
             agnix_core::FileType::OpenCodeConfig => {}
             agnix_core::FileType::GeminiMd => {}
+            agnix_core::FileType::GeminiSettings => {}
+            agnix_core::FileType::GeminiExtension => {}
+            agnix_core::FileType::GeminiIgnore => {}
             agnix_core::FileType::CodexConfig => {}
             agnix_core::FileType::GenericMarkdown => {}
             agnix_core::FileType::Unknown => {}
