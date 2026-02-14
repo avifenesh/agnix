@@ -189,7 +189,7 @@ pub fn detect_file_type(path: &Path) -> FileType {
 
     // Cursor subagent definitions should always be classified as CursorAgent,
     // including AGENTS.md / CLAUDE.md filenames under .cursor/agents.
-    if filename.ends_with(".md") && is_under_cursor_agents(path) {
+    if filename.to_ascii_lowercase().ends_with(".md") && is_under_cursor_agents(path) {
         return FileType::CursorAgent;
     }
 
@@ -682,6 +682,10 @@ mod tests {
         );
         assert_eq!(
             detect_file_type(Path::new("project/.cursor/agents/CLAUDE.md")),
+            FileType::CursorAgent
+        );
+        assert_eq!(
+            detect_file_type(Path::new("project/.cursor/agents/reviewer.MD")),
             FileType::CursorAgent
         );
     }

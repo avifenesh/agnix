@@ -206,9 +206,9 @@ This section contains all `207` validation rules generated from `knowledge-base/
 | [AMP-SK-001](./generated/amp-sk-001.md) | Amp Skill Uses Unsupported Field | MEDIUM | Amp Skills | Yes (safe/unsafe) |
 | [RC-SK-001](./generated/rc-sk-001.md) | Roo Code Skill Uses Unsupported Field | MEDIUM | Roo Code Skills | Yes (safe/unsafe) |
 | [XP-SK-001](./generated/xp-sk-001.md) | Skill Uses Client-Specific Features | LOW | Cross-Platform | No |
-| [ROO-001](./generated/roo-001.md) | Empty Roo Code Rule File | HIGH | roo-code | No |
-| [ROO-002](./generated/roo-002.md) | Invalid .roomodes Configuration | HIGH | roo-code | No |
-| [ROO-003](./generated/roo-003.md) | Invalid .rooignore File | MEDIUM | roo-code | No |
-| [ROO-004](./generated/roo-004.md) | Invalid Mode Slug in Rule Directory | MEDIUM | roo-code | No |
-| [ROO-005](./generated/roo-005.md) | Invalid .roo/mcp.json Configuration | HIGH | roo-code | No |
-| [ROO-006](./generated/roo-006.md) | Mode Slug Not Recognized | MEDIUM | roo-code | No |
+| [ROO-001](./generated/roo-001.md) | Empty Roo Code Rule File | HIGH | Roo Code | No |
+| [ROO-002](./generated/roo-002.md) | Invalid .roomodes Configuration | HIGH | Roo Code | No |
+| [ROO-003](./generated/roo-003.md) | Invalid .rooignore File | MEDIUM | Roo Code | No |
+| [ROO-004](./generated/roo-004.md) | Invalid Mode Slug in Rule Directory | MEDIUM | Roo Code | No |
+| [ROO-005](./generated/roo-005.md) | Invalid .roo/mcp.json Configuration | HIGH | Roo Code | No |
+| [ROO-006](./generated/roo-006.md) | Mode Slug Not Recognized | MEDIUM | Roo Code | No |

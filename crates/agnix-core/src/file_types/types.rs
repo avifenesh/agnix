@@ -42,7 +42,7 @@ pub enum FileType {
     CursorRule,
     /// Cursor hooks configuration (.cursor/hooks.json)
     CursorHooks,
-    /// Cursor subagent definitions (.cursor/agents/*.md)
+    /// Cursor subagent definitions (.cursor/agents/**/*.md, including nested dirs)
     CursorAgent,
     /// Cursor cloud-agent environment configuration (.cursor/environment.json)
     CursorEnvironment,

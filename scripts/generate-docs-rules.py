@@ -42,6 +42,7 @@ CATEGORY_LABELS: Dict[str, str] = {
     "windsurf-skills": "Windsurf Skills",
     "kiro-skills": "Kiro Skills",
     "amp-skills": "Amp Skills",
+    "roo-code": "Roo Code",
     "roo-code-skills": "Roo Code Skills",
 }
 
