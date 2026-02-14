@@ -56,11 +56,8 @@ impl Validator for AmpValidator {
     }
 
     fn validate(&self, path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic> {
-        if is_amp_check_path(path) {
-            return validate_amp_check(path, content, config);
-        }
-
-        match crate::detect_file_type(path) {
+        match crate::file_types::detect_file_type(path) {
+            FileType::AmpCheck => validate_amp_check(path, content, config),
             FileType::AmpSettings => validate_amp_settings(path, content, config),
             FileType::ClaudeMd => validate_amp_agents_globs(path, content, config),
             _ => Vec::new(),
@@ -206,32 +203,46 @@ fn validate_amp_check(path: &Path, content: &str, config: &LintConfig) -> Vec<Di
         }
     }
 
-    if amp_002_enabled && let Some(value) = mapping_value(mapping, "severity-default") {
-        match value.as_str() {
-            Some(severity) if VALID_SEVERITY_DEFAULT.contains(&severity) => {}
-            Some(severity) => diagnostics.push(
-                Diagnostic::warning(
-                    path.to_path_buf(),
-                    frontmatter_key_line(&parts.frontmatter, "severity-default"),
-                    0,
-                    "AMP-002",
-                    format!(
-                        "Invalid severity-default value '{severity}' (expected low, medium, high, or critical)"
+    if amp_002_enabled {
+        match mapping_value(mapping, "severity-default") {
+            Some(value) => match value.as_str() {
+                Some(severity) if VALID_SEVERITY_DEFAULT.contains(&severity) => {}
+                Some(severity) => diagnostics.push(
+                    Diagnostic::warning(
+                        path.to_path_buf(),
+                        frontmatter_key_line(&parts.frontmatter, "severity-default"),
+                        0,
+                        "AMP-002",
+                        format!(
+                            "Invalid severity-default value '{severity}' (expected low, medium, high, or critical)"
+                        ),
+                    )
+                    .with_suggestion(
+                        "Set `severity-default` to one of: low, medium, high, critical.",
                     ),
-                )
-                .with_suggestion(
-                    "Set `severity-default` to one of: low, medium, high, critical.",
                 ),
-            ),
+                None => diagnostics.push(
+                    Diagnostic::warning(
+                        path.to_path_buf(),
+                        frontmatter_key_line(&parts.frontmatter, "severity-default"),
+                        0,
+                        "AMP-002",
+                        "severity-default must be a string",
+                    )
+                    .with_suggestion("Set `severity-default` to a string value."),
+                ),
+            },
             None => diagnostics.push(
                 Diagnostic::warning(
                     path.to_path_buf(),
-                    frontmatter_key_line(&parts.frontmatter, "severity-default"),
+                    1,
                     0,
                     "AMP-002",
-                    "severity-default must be a string",
+                    "Amp check frontmatter is missing required `severity-default` field",
                 )
-                .with_suggestion("Set `severity-default` to a string value."),
+                .with_suggestion(
+                    "Add `severity-default` with one of: low, medium, high, critical.",
+                ),
             ),
         }
     }
@@ -386,31 +397,6 @@ fn mapping_value<'a>(mapping: &'a Mapping, key: &str) -> Option<&'a YamlValue> {
         .iter()
         .find(|(candidate, _)| candidate.as_str() == Some(key))
         .map(|(_, value)| value)
-}
-
-fn is_amp_check_path(path: &Path) -> bool {
-    let filename = path
-        .file_name()
-        .and_then(|name| name.to_str())
-        .unwrap_or("");
-    if !filename.ends_with(".md") {
-        return false;
-    }
-
-    path.components()
-        .zip(path.components().skip(1))
-        .any(|(a, b)| {
-            matches!(
-                (a, b),
-                (std::path::Component::Normal(a_os), std::path::Component::Normal(b_os))
-                if a_os
-                    .to_str()
-                    .is_some_and(|s| s.eq_ignore_ascii_case(".agents"))
-                    && b_os
-                        .to_str()
-                        .is_some_and(|s| s.eq_ignore_ascii_case("checks"))
-            )
-        })
 }
 
 fn is_valid_tools_field(value: &YamlValue) -> bool {
@@ -571,6 +557,19 @@ mod tests {
     }
 
     #[test]
+    fn test_amp_002_missing_severity_default() {
+        let content = "---\nname: security\n---\n# Body";
+        let diagnostics = validate(".agents/checks/security.md", content);
+        let amp_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AMP-002").collect();
+        assert_eq!(amp_002.len(), 1);
+        assert!(
+            amp_002[0]
+                .message
+                .contains("missing required `severity-default`")
+        );
+    }
+
+    #[test]
     fn test_amp_check_valid_file() {
         let content = "---\nname: security\ndescription: Security checks\nseverity-default: high\ntools:\n  - rg\n---\n# Body";
         let diagnostics = validate(".agents/checks/security.md", content);
@@ -594,10 +593,18 @@ mod tests {
     }
 
     #[test]
-    fn test_amp_001_applies_to_agents_file_under_checks() {
+    fn test_amp_001_does_not_apply_to_agents_file_under_checks() {
         let diagnostics = validate(".agents/checks/AGENTS.md", "# Missing frontmatter");
         let amp_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AMP-001").collect();
-        assert_eq!(amp_001.len(), 1);
+        assert!(amp_001.is_empty());
+    }
+
+    #[test]
+    fn test_amp_003_applies_to_agents_file_under_checks() {
+        let content = "---\nglobs: \"[broken\"\n---\n# Instructions";
+        let diagnostics = validate(".agents/checks/AGENTS.md", content);
+        let amp_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AMP-003").collect();
+        assert_eq!(amp_003.len(), 1);
     }
 
     #[test]

@@ -172,6 +172,21 @@ def slug(rule_id: str) -> str:
     return rule_id.lower()
 
 
+def infer_fence_language(default_lang: str, invalid: str, valid: str) -> str:
+    """Pick a code fence language using per-rule example content."""
+    invalid_trimmed = invalid.lstrip()
+    valid_trimmed = valid.lstrip()
+
+    # JSON-heavy categories (e.g., roo-code, amp-checks) need per-rule inference.
+    if invalid_trimmed.startswith("{") or valid_trimmed.startswith("{"):
+        return "json"
+
+    if invalid_trimmed.startswith("<") or valid_trimmed.startswith("<"):
+        return "xml"
+
+    return default_lang
+
+
 
 def render_autofix(rule: dict) -> str:
     """Return a human-readable auto-fix label for a rule."""
@@ -201,7 +216,7 @@ def render_rule(rule: dict) -> str:
     # Normalize so each example ends with exactly one trailing newline.
     invalid = (rule.get("bad_example") or template["invalid"]).rstrip("\n") + "\n"
     valid = (rule.get("good_example") or template["valid"]).rstrip("\n") + "\n"
-    lang = template["lang"]
+    lang = infer_fence_language(template["lang"], invalid, valid)
 
     # Use longer fence when examples contain triple backticks to avoid breakout
     fence = "````" if ("```" in invalid or "```" in valid) else "```"

@@ -44,6 +44,21 @@ fn test_category_disabled_skills() {
 }
 
 #[test]
+fn test_category_disabled_amp_checks() {
+    let mut config = LintConfig::default();
+    config.rules.amp_checks = false;
+
+    assert!(!config.is_rule_enabled("AMP-001"));
+    assert!(!config.is_rule_enabled("AMP-002"));
+    assert!(!config.is_rule_enabled("AMP-003"));
+    assert!(!config.is_rule_enabled("AMP-004"));
+
+    // Other categories still enabled
+    assert!(config.is_rule_enabled("AS-005"));
+    assert!(config.is_rule_enabled("CC-HK-001"));
+}
+
+#[test]
 fn test_category_disabled_hooks() {
     let mut config = LintConfig::default();
     config.rules.hooks = false;
@@ -248,6 +263,7 @@ exclude = []
     assert!(config.rules.mcp);
     assert!(config.rules.imports);
     assert!(config.rules.cross_platform);
+    assert!(config.rules.amp_checks);
     assert!(config.rules.prompt_engineering);
     assert!(config.rules.disabled_rules.is_empty());
 }
@@ -1896,6 +1912,7 @@ fn test_config_serialize_deserialize_roundtrip() {
     config.severity = SeverityLevel::Error;
     config.target = TargetTool::ClaudeCode;
     config.rules.skills = false;
+    config.rules.amp_checks = false;
     config.rules.disabled_rules = vec!["CC-MEM-006".to_string()];
 
     let serialized = toml::to_string(&config).unwrap();
@@ -1904,6 +1921,7 @@ fn test_config_serialize_deserialize_roundtrip() {
     assert_eq!(deserialized.severity, SeverityLevel::Error);
     assert_eq!(deserialized.target, TargetTool::ClaudeCode);
     assert!(!deserialized.rules.skills);
+    assert!(!deserialized.rules.amp_checks);
     assert_eq!(deserialized.rules.disabled_rules, vec!["CC-MEM-006"]);
 }
 
@@ -2176,6 +2194,7 @@ fn test_rule_filter_target_checked_second() {
 fn test_rule_filter_category_checked_third() {
     let mut config = LintConfig::default();
     config.rules.skills = false;
+    config.rules.amp_checks = false;
 
     // Skills category disabled
     assert!(!config.is_rule_enabled("AS-001"));
@@ -3119,9 +3138,11 @@ fn test_builder_rules() {
     let mut rules = RuleConfig::default();
     rules.skills = false;
     rules.hooks = false;
+    rules.amp_checks = false;
     let config = LintConfig::builder().rules(rules).build_unchecked();
     assert!(!config.rules().skills);
     assert!(!config.rules().hooks);
+    assert!(!config.rules().amp_checks);
 }
 
 #[test]
