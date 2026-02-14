@@ -64,10 +64,29 @@ pub fn parse_prompt_frontmatter(content: &str) -> Option<ParsedPromptFrontmatter
     }
 
     let mut end_idx = None;
+    let mut min_key_indent: Option<usize> = None;
     for (i, line) in lines.iter().enumerate().skip(1) {
-        if *line == "---" {
-            end_idx = Some(i);
-            break;
+        let trimmed_start = line.trim_start();
+        if !trimmed_start.is_empty() && !trimmed_start.starts_with('#') {
+            if let Some(colon_idx) = trimmed_start.find(':') {
+                let key = trimmed_start[..colon_idx].trim();
+                if !key.is_empty() {
+                    let indent = line.len() - trimmed_start.len();
+                    min_key_indent = Some(match min_key_indent {
+                        Some(existing) => existing.min(indent),
+                        None => indent,
+                    });
+                }
+            }
+        }
+
+        if line.trim() == "---" {
+            let indent = line.len() - trimmed_start.len();
+            let can_close = min_key_indent.is_none_or(|key_indent| indent <= key_indent);
+            if can_close {
+                end_idx = Some(i);
+                break;
+            }
         }
     }
 
@@ -193,7 +212,7 @@ Body
         let content = r#"---
  description: test
  weird-key: yes
----
+ --- 
 Body
 "#;
         let parsed = parse_prompt_frontmatter(content).expect("expected frontmatter");
