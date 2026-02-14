@@ -246,6 +246,20 @@ fn validate_reusable_prompt(path: &Path, content: &str, config: &LintConfig) -> 
 
     if let Some(parsed) = &parsed {
         if config.is_rule_enabled("COP-014") {
+            if let Some(err) = &parsed.parse_error {
+                diagnostics.push(
+                    Diagnostic::error(
+                        path.to_path_buf(),
+                        parsed.start_line,
+                        0,
+                        "COP-014",
+                        format!("Prompt frontmatter contains invalid YAML: {err}"),
+                    )
+                    .with_suggestion("Fix YAML syntax in prompt frontmatter."),
+                );
+                return diagnostics;
+            }
+
             for unknown in &parsed.unknown_keys {
                 diagnostics.push(
                     Diagnostic::warning(
@@ -1438,6 +1452,24 @@ Refactor the selected code.
 "#,
         );
         assert!(diagnostics.iter().any(|d| d.rule == "COP-014"));
+    }
+
+    #[test]
+    fn test_cop_014_invalid_prompt_frontmatter_yaml() {
+        let diagnostics = validate_prompt(
+            r#"---
+description: Refactor selected code
+agent: [ask
+---
+Refactor the selected code.
+"#,
+        );
+        assert!(diagnostics.iter().any(|d| d.rule == "COP-014"));
+        assert!(
+            diagnostics
+                .iter()
+                .any(|d| d.message.contains("invalid YAML"))
+        );
     }
 
     #[test]

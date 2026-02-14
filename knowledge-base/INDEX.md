@@ -89,34 +89,34 @@ knowledge-base/
 | Category | Rules | HIGH | MEDIUM | LOW | Auto-Fix |
 |----------|-------|------|--------|-----|----------|
 | Agent Skills | 16 | 14 | 2 | 0 | 5 |
-| Claude Skills | 15 | 11 | 4 | 0 | 7 |
-| Claude Hooks | 18 | 13 | 4 | 1 | 3 |
-| Claude Agents | 13 | 12 | 1 | 0 | 2 |
+| Claude Skills | 15 | 11 | 4 | 0 | 9 |
+| Claude Hooks | 18 | 13 | 4 | 1 | 7 |
+| Claude Agents | 13 | 12 | 1 | 0 | 4 |
 | Claude Memory | 12 | 8 | 4 | 0 | 3 |
 | AGENTS.md | 6 | 1 | 5 | 0 | 0 |
 | Claude Plugins | 10 | 8 | 2 | 0 | 2 |
-| GitHub Copilot | 17 | 11 | 6 | 0 | 1 |
-| MCP | 12 | 10 | 2 | 0 | 3 |
+| GitHub Copilot | 17 | 11 | 6 | 0 | 3 |
+| Cursor | 9 | 4 | 5 | 0 | 4 |
+| Cline | 4 | 3 | 1 | 0 | 2 |
+| OpenCode | 3 | 3 | 0 | 0 | 1 |
+| Gemini CLI | 3 | 1 | 2 | 0 | 0 |
+| Codex CLI | 4 | 3 | 1 | 0 | 2 |
+| MCP | 12 | 10 | 2 | 0 | 4 |
 | XML | 3 | 3 | 0 | 0 | 3 |
 | References | 2 | 2 | 0 | 0 | 0 |
 | Prompt Eng | 4 | 0 | 4 | 0 | 0 |
 | Cross-Platform | 7 | 2 | 4 | 1 | 0 |
-| Cursor | 9 | 4 | 5 | 0 | 2 |
 | Cursor Skills | 1 | 0 | 1 | 0 | 1 |
-| Cline | 4 | 3 | 1 | 0 | 2 |
 | Cline Skills | 1 | 0 | 1 | 0 | 1 |
-| OpenCode | 3 | 3 | 0 | 0 | 0 |
 | OpenCode Skills | 1 | 0 | 1 | 0 | 1 |
-| Gemini CLI | 3 | 1 | 2 | 0 | 0 |
-| Version Awareness | 1 | 0 | 0 | 1 | 0 |
-| Codex CLI | 4 | 3 | 1 | 0 | 0 |
 | Copilot Skills | 1 | 0 | 1 | 0 | 1 |
 | Codex Skills | 1 | 0 | 1 | 0 | 1 |
 | Windsurf Skills | 1 | 0 | 1 | 0 | 1 |
 | Kiro Skills | 1 | 0 | 1 | 0 | 1 |
 | Amp Skills | 1 | 0 | 1 | 0 | 1 |
 | Roo Code Skills | 1 | 0 | 1 | 0 | 1 |
-| **TOTAL** | **168** | **109** | **56** | **3** | **42** |
+| Version Awareness | 1 | 0 | 0 | 1 | 0 |
+| **TOTAL** | **168** | **109** | **56** | **3** | **58** |
 
 
 ---
