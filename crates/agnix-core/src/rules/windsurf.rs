@@ -286,7 +286,11 @@ mod tests {
     fn test_ws_004_legacy_empty() {
         let diagnostics = validate_legacy("");
         let ws_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "WS-004").collect();
-        assert_eq!(ws_004.len(), 1, "WS-004 should trigger even on empty legacy file");
+        assert_eq!(
+            ws_004.len(),
+            1,
+            "WS-004 should trigger even on empty legacy file"
+        );
         assert_eq!(ws_004[0].level, DiagnosticLevel::Info);
     }
 
