@@ -371,4 +371,32 @@ mod tests {
             diagnostics
         );
     }
+
+    #[test]
+    fn test_gm_004_missing_command() {
+        let content = r#"{
+      "hooksConfig": {
+        "BeforeAgent": [
+          {"type": "command"}
+        ]
+      }
+    }"#;
+        let diagnostics = validate(content);
+        let gm_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "GM-004").collect();
+        assert!(!gm_004.is_empty(), "GM-004 should fire for missing command field");
+    }
+
+    #[test]
+    fn test_gm_004_empty_command() {
+        let content = r#"{
+      "hooksConfig": {
+        "BeforeAgent": [
+          {"type": "command", "command": ""}
+        ]
+      }
+    }"#;
+        let diagnostics = validate(content);
+        let gm_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "GM-004").collect();
+        assert!(!gm_004.is_empty(), "GM-004 should fire for empty command field");
+    }
 }
