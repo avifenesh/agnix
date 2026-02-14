@@ -65,7 +65,7 @@ jobs:
       - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2
         with:
           save-if: ${{ github.ref == 'refs/heads/main' }}
-      - uses: taiki-e/install-action@650c5ca14212efbbf3e580844b04bdccf68dac31 # v2
+      - uses: taiki-e/install-action@288875dd3d64326724fa6d9593062d9f8ba0b131 # v2
         with:
           tool: cargo-machete@0.9.1
       - run: cargo machete
@@ -94,7 +94,7 @@ jobs:
         with:
           key: ${{ matrix.os }}-${{ matrix.rust }}
           save-if: ${{ github.ref == 'refs/heads/main' }}
-      - uses: taiki-e/install-action@cd05dcd6eb73067dda063b97a15b7060049dacd9 # nextest
+      - uses: taiki-e/install-action@288875dd3d64326724fa6d9593062d9f8ba0b131 # nextest
       - run: cargo nextest run --workspace
       - run: cargo test --doc --workspace
 
@@ -110,10 +110,10 @@ jobs:
       - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2
         with:
           save-if: ${{ github.ref == 'refs/heads/main' }}
-      - uses: taiki-e/install-action@650c5ca14212efbbf3e580844b04bdccf68dac31 # v2
+      - uses: taiki-e/install-action@288875dd3d64326724fa6d9593062d9f8ba0b131 # v2
         with:
           tool: cargo-llvm-cov@0.6.16
-      - uses: taiki-e/install-action@cd05dcd6eb73067dda063b97a15b7060049dacd9 # nextest
+      - uses: taiki-e/install-action@288875dd3d64326724fa6d9593062d9f8ba0b131 # nextest
       - name: Generate coverage
         run: cargo llvm-cov nextest --workspace --lcov --output-path lcov.info
       - name: Upload to Codecov
@@ -161,7 +161,7 @@ jobs:
         run: cargo check -p agnix-core --no-default-features
       - name: Check agnix-wasm compiles for wasm32
         run: cargo check -p agnix-wasm --target wasm32-unknown-unknown
-      - uses: taiki-e/install-action@650c5ca14212efbbf3e580844b04bdccf68dac31 # v2
+      - uses: taiki-e/install-action@288875dd3d64326724fa6d9593062d9f8ba0b131 # v2
         with:
           tool: wasm-pack@0.13.1
       - name: Run WASM tests
