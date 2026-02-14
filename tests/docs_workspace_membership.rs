@@ -18,9 +18,8 @@ fn architecture_docs_list_all_workspace_crates() {
     // Parse Cargo.toml to extract workspace members
     let cargo_content =
         fs::read_to_string(format!("{root}/Cargo.toml")).expect("Failed to read Cargo.toml");
-    let cargo_toml: toml::Value =
-        toml::from_str(&cargo_content)
-            .unwrap_or_else(|e| panic!("Failed to parse Cargo.toml as TOML: {e}"));
+    let cargo_toml: toml::Value = toml::from_str(&cargo_content)
+        .unwrap_or_else(|e| panic!("Failed to parse Cargo.toml as TOML: {e}"));
 
     let members = cargo_toml
         .get("workspace")
@@ -31,8 +30,7 @@ fn architecture_docs_list_all_workspace_crates() {
     // Extract crate names by stripping the "crates/" prefix
     let crate_names: Vec<&str> = members
         .iter()
-        .filter_map(|m| m.as_str())
-        .filter_map(|m| m.strip_prefix("crates/"))
+        .filter_map(|m| m.as_str()?.strip_prefix("crates/"))
         .collect();
 
     assert!(
@@ -57,9 +55,41 @@ fn architecture_docs_list_all_workspace_crates() {
 
         for crate_name in &crate_names {
             if !content.contains(crate_name) {
-                mismatches.push(format!("  - {doc_file} is missing mention of `{crate_name}`"));
+                mismatches.push(format!(
+                    "  - {doc_file} is missing mention of `{crate_name}`"
+                ));
             }
         }
+    }
+
+    // Bidirectional check: detect stale crate references in docs
+    // that no longer exist in workspace members.
+    // Skip lines containing URLs to avoid false positives (e.g. agnix-ci GitHub Action).
+    let known_crate_prefix = "agnix-";
+    let mut stale: std::collections::BTreeSet<(String, String)> = std::collections::BTreeSet::new();
+    for doc_file in &doc_files {
+        let content = fs::read_to_string(format!("{root}/{doc_file}"))
+            .unwrap_or_else(|_| panic!("Failed to read {doc_file}"));
+        for line in content.lines() {
+            if line.contains("http://") || line.contains("https://") {
+                continue;
+            }
+            for word in line.split(|c: char| !c.is_alphanumeric() && c != '-') {
+                if word.starts_with(known_crate_prefix) && !crate_names.contains(&word) {
+                    let suffix = &word[known_crate_prefix.len()..];
+                    if !suffix.is_empty()
+                        && suffix.chars().all(|c| c.is_ascii_lowercase() || c == '-')
+                    {
+                        stale.insert((doc_file.to_string(), word.to_string()));
+                    }
+                }
+            }
+        }
+    }
+    for (doc, name) in &stale {
+        mismatches.push(format!(
+            "  - {doc} references `{name}` which is not a workspace member"
+        ));
     }
 
     assert!(
@@ -67,7 +97,7 @@ fn architecture_docs_list_all_workspace_crates() {
         "Workspace crate graph is out of sync with documentation.\n\
          Workspace members: {crate_names:?}\n\
          Mismatches found:\n{}\n\n\
-         Fix: add the missing crate names to the listed doc files \
+         Fix: add missing crate names to docs, or remove stale references, \
          so they stay in sync with Cargo.toml workspace.members.",
         mismatches.join("\n")
     );
