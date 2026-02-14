@@ -23,7 +23,7 @@ keywords: ["CR-SK-001", "cursor skill uses unsupported field", "cursor skills", 
 
 ## Evidence Sources
 
-- https://docs.cursor.com/en/context/skills
+- https://cursor.com/docs/context/skills
 
 ## Test Coverage Metadata
 

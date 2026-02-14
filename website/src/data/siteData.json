@@ -1,5 +1,5 @@
 {
-  "totalRules": 200,
+  "totalRules": 205,
   "categoryCount": 28,
   "autofixCount": 59,
   "uniqueTools": [
@@ -7,6 +7,7 @@
     "claude-code",
     "cline",
     "codex",
+    "codex-cli",
     "cursor",
     "gemini-cli",
     "github-copilot",
