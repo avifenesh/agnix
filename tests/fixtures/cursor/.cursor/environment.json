@@ -1,0 +1,15 @@
+{
+  "snapshot": "ubuntu-24.04",
+  "install": "npm ci",
+  "start": "npm run dev",
+  "terminals": [
+    {
+      "name": "app",
+      "command": "npm run dev"
+    },
+    {
+      "name": "tests",
+      "command": "npm test"
+    }
+  ]
+}

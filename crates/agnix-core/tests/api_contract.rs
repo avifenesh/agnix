@@ -267,6 +267,9 @@ fn file_type_enum_covers_all_variants() {
         agnix_core::FileType::CopilotHooks,
         agnix_core::FileType::ClaudeRule,
         agnix_core::FileType::CursorRule,
+        agnix_core::FileType::CursorHooks,
+        agnix_core::FileType::CursorAgent,
+        agnix_core::FileType::CursorEnvironment,
         agnix_core::FileType::CursorRulesLegacy,
         agnix_core::FileType::ClineRules,
         agnix_core::FileType::ClineRulesFolder,
@@ -306,6 +309,9 @@ fn file_type_enum_covers_all_variants() {
             agnix_core::FileType::CopilotHooks => {}
             agnix_core::FileType::ClaudeRule => {}
             agnix_core::FileType::CursorRule => {}
+            agnix_core::FileType::CursorHooks => {}
+            agnix_core::FileType::CursorAgent => {}
+            agnix_core::FileType::CursorEnvironment => {}
             agnix_core::FileType::CursorRulesLegacy => {}
             agnix_core::FileType::ClineRules => {}
             agnix_core::FileType::ClineRulesFolder => {}

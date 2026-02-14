@@ -40,6 +40,12 @@ pub enum FileType {
     ClaudeRule,
     /// Cursor project rules (.cursor/rules/*.md, .cursor/rules/*.mdc, including nested dirs)
     CursorRule,
+    /// Cursor hooks configuration (.cursor/hooks.json)
+    CursorHooks,
+    /// Cursor subagent definitions (.cursor/agents/*.md)
+    CursorAgent,
+    /// Cursor cloud-agent environment configuration (.cursor/environment.json)
+    CursorEnvironment,
     /// Legacy Cursor rules file (.cursorrules)
     CursorRulesLegacy,
     /// Cline rules single file (.clinerules)
@@ -101,6 +107,9 @@ impl fmt::Display for FileType {
             FileType::CopilotHooks => "CopilotHooks",
             FileType::ClaudeRule => "ClaudeRule",
             FileType::CursorRule => "CursorRule",
+            FileType::CursorHooks => "CursorHooks",
+            FileType::CursorAgent => "CursorAgent",
+            FileType::CursorEnvironment => "CursorEnvironment",
             FileType::CursorRulesLegacy => "CursorRulesLegacy",
             FileType::ClineRules => "ClineRules",
             FileType::ClineRulesFolder => "ClineRulesFolder",
@@ -142,6 +151,9 @@ mod tests {
             (FileType::CopilotHooks, "CopilotHooks"),
             (FileType::ClaudeRule, "ClaudeRule"),
             (FileType::CursorRule, "CursorRule"),
+            (FileType::CursorHooks, "CursorHooks"),
+            (FileType::CursorAgent, "CursorAgent"),
+            (FileType::CursorEnvironment, "CursorEnvironment"),
             (FileType::CursorRulesLegacy, "CursorRulesLegacy"),
             (FileType::ClineRules, "ClineRules"),
             (FileType::ClineRulesFolder, "ClineRulesFolder"),
@@ -182,6 +194,9 @@ mod tests {
             FileType::CopilotHooks,
             FileType::ClaudeRule,
             FileType::CursorRule,
+            FileType::CursorHooks,
+            FileType::CursorAgent,
+            FileType::CursorEnvironment,
             FileType::CursorRulesLegacy,
             FileType::ClineRules,
             FileType::ClineRulesFolder,

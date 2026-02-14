@@ -1197,6 +1197,55 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 **Fix**: Add a `description` field explaining when the rule should apply
 **Source**: docs.cursor.com/en/context
 
+<a id="cur-010"></a>
+### CUR-010 [HIGH] Invalid .cursor/hooks.json Schema
+**Requirement**: `.cursor/hooks.json` MUST define an integer `version` and object `hooks` map
+**Detection**: Parse JSON and validate top-level shape and required fields
+**Fix**: Add required fields and correct schema types for `version` and `hooks`
+**Source**: cursor.com/docs/context/hooks
+
+<a id="cur-011"></a>
+### CUR-011 [MEDIUM] Unknown Cursor Hook Event Name
+**Requirement**: Hook event names in `.cursor/hooks.json` SHOULD use documented Cursor events
+**Detection**: Validate each `hooks.<event>` key against allowlisted event names
+**Fix**: Rename event keys to supported Cursor hook events
+**Source**: cursor.com/docs/context/hooks
+
+<a id="cur-012"></a>
+### CUR-012 [HIGH] Hook Entry Missing Required Command Field
+**Requirement**: Each hook entry MUST include a `command` field
+**Detection**: Parse `hooks.<event>[]` objects and check for missing `command`
+**Fix**: Add a non-empty command to each hook object
+**Source**: cursor.com/docs/context/hooks
+
+<a id="cur-013"></a>
+### CUR-013 [HIGH] Invalid Cursor Hook Type Value
+**Requirement**: Hook `type` MUST be `command` or `prompt` when present
+**Detection**: Parse hook entries and validate `type` values
+**Fix**: Change invalid `type` values to supported values
+**Source**: cursor.com/docs/context/hooks
+
+<a id="cur-014"></a>
+### CUR-014 [HIGH] Invalid Cursor Subagent Frontmatter
+**Requirement**: `.cursor/agents/*.md` files MUST have valid YAML frontmatter with required typed fields
+**Detection**: Parse frontmatter and validate required keys (`name`, `description`) and field types
+**Fix**: Correct frontmatter keys, naming format, and value types
+**Source**: cursor.com/docs/agent/sub-agents
+
+<a id="cur-015"></a>
+### CUR-015 [MEDIUM] Empty Cursor Subagent Body
+**Requirement**: Cursor subagent markdown files SHOULD include body instructions after frontmatter
+**Detection**: Parse file and check that body content is non-empty after frontmatter
+**Fix**: Add clear subagent instructions below frontmatter
+**Source**: cursor.com/docs/agent/sub-agents
+
+<a id="cur-016"></a>
+### CUR-016 [HIGH] Invalid .cursor/environment.json Schema
+**Requirement**: `.cursor/environment.json` MUST be an object with string `snapshot`, string `install`, and array `terminals`
+**Detection**: Parse JSON and validate required fields plus terminal entry structure
+**Fix**: Provide required fields and valid terminal objects (`name`, `command`)
+**Source**: cursor.com/docs/cloud/environments
+
 ---
 
 ## CLINE RULES
