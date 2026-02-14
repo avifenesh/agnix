@@ -414,11 +414,20 @@ pub fn find_negative_only_instructions(content: &str) -> Vec<NegativeOnlyInstruc
         }
 
         if let Some(mat) = neg_pattern.find(line) {
-            // Check current line and next 2 lines for positive alternative
+            // Check current line and next 2 lines for positive alternative,
+            // but skip lines inside fenced code blocks
             let window_end = (line_num + 3).min(lines.len());
-            let has_positive = lines[line_num..window_end]
-                .iter()
-                .any(|l| pos_pattern.is_match(l));
+            let mut window_in_code = false;
+            let has_positive = lines[line_num..window_end].iter().any(|l| {
+                if l.trim_start().starts_with("```") {
+                    window_in_code = !window_in_code;
+                    return false;
+                }
+                if window_in_code {
+                    return false;
+                }
+                pos_pattern.is_match(l)
+            });
 
             if !has_positive {
                 results.push(NegativeOnlyInstruction {

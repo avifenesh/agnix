@@ -139,7 +139,7 @@ impl Validator for ImportsValidator {
             for import in &root_imports {
                 let import_path = Path::new(&import.path);
                 if let Some(ext) = import_path.extension().and_then(|e| e.to_str()) {
-                    if ext != "md" {
+                    if !ext.eq_ignore_ascii_case("md") {
                         diagnostics.push(
                             Diagnostic::warning(
                                 path.to_path_buf(),
