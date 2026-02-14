@@ -1,6 +1,6 @@
 # agnix Knowledge Base - Master Index
 
-> 193 validation rules across 29 categories, sourced from 75+ references
+> 200 validation rules across 29 categories, sourced from 75+ references
 
 
 ---
@@ -105,18 +105,19 @@ knowledge-base/
 | Cursor Skills | 1 | 0 | 1 | 0 | 1 |
 | Cline | 4 | 3 | 1 | 0 | 2 |
 | Cline Skills | 1 | 0 | 1 | 0 | 1 |
-| OpenCode | 3 | 3 | 0 | 0 | 0 |
+| OpenCode | 8 | 4 | 3 | 1 | 0 |
 | OpenCode Skills | 1 | 0 | 1 | 0 | 1 |
 | Gemini CLI | 9 | 3 | 4 | 2 | 3 |
 | Version Awareness | 1 | 0 | 0 | 1 | 0 |
-| Codex CLI | 4 | 3 | 1 | 0 | 0 |
+| Codex CLI | 6 | 4 | 2 | 0 | 0 |
 | Copilot Skills | 1 | 0 | 1 | 0 | 1 |
 | Codex Skills | 1 | 0 | 1 | 0 | 1 |
 | Windsurf Skills | 1 | 0 | 1 | 0 | 1 |
 | Kiro Skills | 1 | 0 | 1 | 0 | 1 |
 | Amp Skills | 1 | 0 | 1 | 0 | 1 |
 | Roo Code Skills | 1 | 0 | 1 | 0 | 1 |
-| **TOTAL** | **187** | **119** | **62** | **6** | **49** |
+| Roo Code | 6 | 3 | 3 | 0 | 0 |
+| **TOTAL** | **200** | **124** | **69** | **7** | **59** |
 
 
 ---

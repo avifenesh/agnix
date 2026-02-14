@@ -34,6 +34,7 @@
 | Kiro Skills | .kiro/skills/*/SKILL.md | 1 |
 | Amp Skills | .agents/skills/*/SKILL.md | 1 |
 | Roo Code Skills | .roo/skills/*/SKILL.md | 1 |
+| Roo Code | .roo/rules/*.md, .roomodes, .roorules, .roo/mcp.json, .rooignore | 6 |
 
 ## Architecture
 
