@@ -538,6 +538,23 @@ rules:
   oc_003:
     message: "opencode.json parse error: %{error}"
     suggestion: "Fix the JSON syntax in opencode.json"
+  oc_004:
+    message: "Unknown config key '%{key}' in opencode.json"
+    suggestion: "Remove unrecognized keys or check the OpenCode documentation for valid configuration options"
+  oc_006:
+    message: "Remote instruction URL '%{url}' may slow startup (5-second timeout per URL)"
+    suggestion: "Consider using local instruction files instead of remote URLs for faster startup"
+  oc_007:
+    message: "Custom agent '%{name}' is missing required field 'description'"
+    type_error: "Field 'agent' must be an object mapping agent names to their configuration"
+    suggestion: "Add a 'description' field to each custom agent definition"
+  oc_008:
+    message: "Invalid permission value '%{value}' for tool '%{tool}'. Valid values: 'allow', 'ask', 'deny'"
+    type_error: "Field 'permission' must be an object or a string ('allow', 'ask', or 'deny')"
+    suggestion: "Use 'allow', 'ask', or 'deny' for permission values"
+  oc_009:
+    message: "Invalid variable substitution '%{pattern}' - %{reason}"
+    suggestion: "Use {env:VARIABLE_NAME} or {file:path/to/file} syntax for variable substitution"
 
   # --- Codex CLI (codex.rs) ---
   cdx_000:
@@ -556,6 +573,13 @@ rules:
   cdx_003:
     message: "AGENTS.override.md should not be in version control"
     suggestion: "Add AGENTS.override.md to .gitignore (it contains user-specific overrides)"
+  cdx_004:
+    message: "Unknown config key '%{key}' in .codex/config.toml"
+    suggestion: "Remove unrecognized keys or check the Codex CLI documentation for valid configuration options"
+  cdx_005:
+    message: "project_doc_max_bytes value %{value} exceeds the maximum limit of 65536"
+    type_error: "Field 'project_doc_max_bytes' must be a positive integer"
+    suggestion: "Set project_doc_max_bytes to 65536 or less (default: 32768)"
 
   # --- Prompt engineering (prompt.rs) ---
   pe_001:

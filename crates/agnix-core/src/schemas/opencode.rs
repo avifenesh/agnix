@@ -5,11 +5,56 @@
 //! Validates:
 //! - `share` field values (manual, auto, disabled)
 //! - `instructions` array paths existence
+//! - Unknown config keys (OC-004)
+//! - Remote URLs in instructions (OC-006)
+//! - Agent definitions (OC-007)
+//! - Permission configuration (OC-008)
+//! - Variable substitution syntax (OC-009)
 
 use serde::{Deserialize, Serialize};
+use std::collections::HashSet;
 
 /// Valid values for the `share` field
 pub const VALID_SHARE_MODES: &[&str] = &["manual", "auto", "disabled"];
+
+/// Known valid top-level keys for opencode.json
+pub const KNOWN_TOP_LEVEL_KEYS: &[&str] = &[
+    "$schema",
+    "theme",
+    "model",
+    "small_model",
+    "provider",
+    "autoupdate",
+    "tools",
+    "tui",
+    "server",
+    "agent",
+    "default_agent",
+    "command",
+    "keybinds",
+    "share",
+    "formatter",
+    "permission",
+    "compaction",
+    "watcher",
+    "mcp",
+    "plugin",
+    "instructions",
+    "disabled_providers",
+    "enabled_providers",
+    "experimental",
+];
+
+/// Valid permission mode values
+pub const VALID_PERMISSION_MODES: &[&str] = &["allow", "ask", "deny"];
+
+/// An unknown key found in config
+#[derive(Debug, Clone)]
+pub struct UnknownKey {
+    pub key: String,
+    pub line: usize,
+    pub column: usize,
+}
 
 /// Partial schema for opencode.json (only fields we validate)
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -21,6 +66,14 @@ pub struct OpenCodeSchema {
     /// Array of paths/globs to instruction files
     #[serde(default)]
     pub instructions: Option<Vec<String>>,
+
+    /// Agent definitions
+    #[serde(default, skip_serializing)]
+    pub agent: Option<serde_json::Value>,
+
+    /// Permission configuration
+    #[serde(default, skip_serializing)]
+    pub permission: Option<serde_json::Value>,
 }
 
 /// Result of parsing opencode.json
@@ -34,6 +87,14 @@ pub struct ParsedOpenCodeConfig {
     pub share_wrong_type: bool,
     /// Whether `instructions` key exists but has wrong type (not an array of strings)
     pub instructions_wrong_type: bool,
+    /// Whether `agent` key exists but has wrong type (not an object)
+    pub agent_wrong_type: bool,
+    /// Whether `permission` key exists but has wrong type (not an object or string)
+    pub permission_wrong_type: bool,
+    /// Unknown top-level keys found in config
+    pub unknown_keys: Vec<UnknownKey>,
+    /// The raw parsed JSON value (for OC-009 substitution scanning)
+    pub raw_value: Option<serde_json::Value>,
 }
 
 /// A JSON parse error with location information
@@ -68,6 +129,10 @@ pub fn parse_opencode_json(content: &str) -> ParsedOpenCodeConfig {
                 }),
                 share_wrong_type: false,
                 instructions_wrong_type: false,
+                agent_wrong_type: false,
+                permission_wrong_type: false,
+                unknown_keys: Vec::new(),
+                raw_value: None,
             };
         }
     };
@@ -95,14 +160,34 @@ pub fn parse_opencode_json(content: &str) -> ParsedOpenCodeConfig {
         })
     });
 
+    // Extract agent field (OC-007)
+    let agent_value = value.get("agent");
+    let agent_wrong_type = agent_value.is_some_and(|v| !v.is_object() && !v.is_null());
+    let agent = agent_value.cloned();
+
+    // Extract permission field (OC-008)
+    let permission_value = value.get("permission");
+    let permission_wrong_type =
+        permission_value.is_some_and(|v| !v.is_object() && !v.is_string() && !v.is_null());
+    let permission = permission_value.cloned();
+
+    // Detect unknown top-level keys (OC-004)
+    let unknown_keys = detect_unknown_keys(&value, content);
+
     ParsedOpenCodeConfig {
         schema: Some(OpenCodeSchema {
             share,
             instructions,
+            agent,
+            permission,
         }),
         parse_error: None,
         share_wrong_type,
         instructions_wrong_type,
+        agent_wrong_type,
+        permission_wrong_type,
+        unknown_keys,
+        raw_value: Some(value),
     }
 }
 
@@ -174,6 +259,44 @@ pub fn is_glob_pattern(path: &str) -> bool {
 /// Validate a glob pattern syntax
 pub fn validate_glob_pattern(pattern: &str) -> bool {
     glob::Pattern::new(pattern).is_ok()
+}
+
+/// Detect unknown top-level keys by comparing JSON object keys against the known set.
+fn detect_unknown_keys(value: &serde_json::Value, content: &str) -> Vec<UnknownKey> {
+    let Some(obj) = value.as_object() else {
+        return Vec::new();
+    };
+
+    let known: HashSet<&str> = KNOWN_TOP_LEVEL_KEYS.iter().copied().collect();
+
+    let mut unknown = Vec::new();
+    for key in obj.keys() {
+        if !known.contains(key.as_str()) {
+            unknown.push(UnknownKey {
+                key: key.clone(),
+                line: find_json_key_line(content, key).unwrap_or(1),
+                column: 0,
+            });
+        }
+    }
+    unknown
+}
+
+/// Find the 1-indexed line number of a JSON key in the content.
+///
+/// Looks for `"key"` followed by `:` to avoid matching the key name
+/// when it appears as a string value rather than an object key.
+fn find_json_key_line(content: &str, key: &str) -> Option<usize> {
+    let needle = format!("\"{}\"", key);
+    for (i, line) in content.lines().enumerate() {
+        if let Some(pos) = line.find(&needle) {
+            let after = &line[pos + needle.len()..];
+            if after.trim_start().starts_with(':') {
+                return Some(i + 1);
+            }
+        }
+    }
+    None
 }
 
 #[cfg(test)]
@@ -306,5 +429,103 @@ mod tests {
         assert!(result.parse_error.is_some());
         let err = result.parse_error.unwrap();
         assert!(err.line > 0);
+    }
+
+    // ===== Unknown Keys Detection =====
+
+    #[test]
+    fn test_unknown_keys_detected() {
+        let content = r#"{"totally_unknown": true, "share": "manual"}"#;
+        let result = parse_opencode_json(content);
+        assert_eq!(result.unknown_keys.len(), 1);
+        assert_eq!(result.unknown_keys[0].key, "totally_unknown");
+    }
+
+    #[test]
+    fn test_known_keys_not_flagged() {
+        let content = r#"{
+  "share": "manual",
+  "instructions": ["**/*.md"],
+  "model": "claude-sonnet-4-5",
+  "agent": {},
+  "permission": {}
+}"#;
+        let result = parse_opencode_json(content);
+        assert!(result.unknown_keys.is_empty(), "All keys are known");
+    }
+
+    #[test]
+    fn test_unknown_keys_empty_on_parse_error() {
+        let content = "{ invalid }";
+        let result = parse_opencode_json(content);
+        assert!(result.parse_error.is_some());
+        assert!(result.unknown_keys.is_empty());
+    }
+
+    // ===== Agent Parsing =====
+
+    #[test]
+    fn test_agent_parsed() {
+        let content = r#"{"agent": {"my-agent": {"description": "test"}}}"#;
+        let result = parse_opencode_json(content);
+        assert!(result.schema.is_some());
+        assert!(result.schema.unwrap().agent.is_some());
+        assert!(!result.agent_wrong_type);
+    }
+
+    #[test]
+    fn test_agent_wrong_type() {
+        let content = r#"{"agent": "not an object"}"#;
+        let result = parse_opencode_json(content);
+        assert!(result.agent_wrong_type);
+    }
+
+    #[test]
+    fn test_agent_null_ok() {
+        let content = r#"{"agent": null}"#;
+        let result = parse_opencode_json(content);
+        assert!(!result.agent_wrong_type);
+    }
+
+    // ===== Permission Parsing =====
+
+    #[test]
+    fn test_permission_object_parsed() {
+        let content = r#"{"permission": {"read": "allow", "edit": "ask"}}"#;
+        let result = parse_opencode_json(content);
+        assert!(result.schema.is_some());
+        assert!(result.schema.unwrap().permission.is_some());
+        assert!(!result.permission_wrong_type);
+    }
+
+    #[test]
+    fn test_permission_string_parsed() {
+        let content = r#"{"permission": "allow"}"#;
+        let result = parse_opencode_json(content);
+        assert!(!result.permission_wrong_type);
+    }
+
+    #[test]
+    fn test_permission_wrong_type() {
+        let content = r#"{"permission": 42}"#;
+        let result = parse_opencode_json(content);
+        assert!(result.permission_wrong_type);
+    }
+
+    #[test]
+    fn test_permission_null_ok() {
+        let content = r#"{"permission": null}"#;
+        let result = parse_opencode_json(content);
+        assert!(!result.permission_wrong_type);
+    }
+
+    // ===== find_json_key_line =====
+
+    #[test]
+    fn test_find_json_key_line_basic() {
+        let content = "{\n  \"share\": \"manual\",\n  \"unknown\": true\n}";
+        assert_eq!(find_json_key_line(content, "share"), Some(2));
+        assert_eq!(find_json_key_line(content, "unknown"), Some(3));
+        assert_eq!(find_json_key_line(content, "nonexistent"), None);
     }
 }

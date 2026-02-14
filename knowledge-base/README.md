@@ -5,7 +5,7 @@
 ## Start Here
 
 - [INDEX.md](./INDEX.md) - Master navigation and summaries
-- [VALIDATION-RULES.md](./VALIDATION-RULES.md) - 187 rules with detection logic
+- [VALIDATION-RULES.md](./VALIDATION-RULES.md) - 194 rules with detection logic
 
 - [PATTERNS-CATALOG.md](./PATTERNS-CATALOG.md) - 70 patterns from agentsys
 - [standards/](./standards/) - HARD-RULES and OPINIONS by topic

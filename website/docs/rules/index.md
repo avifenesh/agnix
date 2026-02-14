@@ -1,6 +1,6 @@
 # Rules Reference
 
-This section contains all `187` validation rules generated from `knowledge-base/rules.json`.
+This section contains all `194` validation rules generated from `knowledge-base/rules.json`.
 `59` rules have automatic fixes.
 
 | Rule | Name | Severity | Category | Auto-Fix |
@@ -168,6 +168,11 @@ This section contains all `187` validation rules generated from `knowledge-base/
 | [OC-001](./generated/oc-001.md) | Invalid Share Mode | HIGH | OpenCode | Yes (unsafe) |
 | [OC-002](./generated/oc-002.md) | Invalid Instruction Path | HIGH | OpenCode | No |
 | [OC-003](./generated/oc-003.md) | opencode.json Parse Error | HIGH | OpenCode | No |
+| [OC-004](./generated/oc-004.md) | Unknown Config Key | MEDIUM | OpenCode | No |
+| [OC-006](./generated/oc-006.md) | Remote URL in Instructions | LOW | OpenCode | No |
+| [OC-007](./generated/oc-007.md) | Invalid Agent Definition | MEDIUM | OpenCode | No |
+| [OC-008](./generated/oc-008.md) | Invalid Permission Config | HIGH | OpenCode | No |
+| [OC-009](./generated/oc-009.md) | Invalid Variable Substitution | MEDIUM | OpenCode | No |
 | [GM-001](./generated/gm-001.md) | Invalid Markdown Structure in GEMINI.md | HIGH | Gemini CLI | No |
 | [GM-002](./generated/gm-002.md) | Missing Section Headers in GEMINI.md | MEDIUM | Gemini CLI | No |
 | [GM-003](./generated/gm-003.md) | Missing Project Context in GEMINI.md | MEDIUM | Gemini CLI | No |
@@ -181,6 +186,8 @@ This section contains all `187` validation rules generated from `knowledge-base/
 | [CDX-001](./generated/cdx-001.md) | Invalid Approval Mode | HIGH | Codex CLI | Yes (unsafe) |
 | [CDX-002](./generated/cdx-002.md) | Invalid Full Auto Error Mode | HIGH | Codex CLI | Yes (unsafe) |
 | [CDX-003](./generated/cdx-003.md) | AGENTS.override.md in Version Control | MEDIUM | Codex CLI | No |
+| [CDX-004](./generated/cdx-004.md) | Unknown Config Key | MEDIUM | Codex CLI | No |
+| [CDX-005](./generated/cdx-005.md) | project_doc_max_bytes Exceeds Limit | HIGH | Codex CLI | No |
 | [VER-001](./generated/ver-001.md) | No Tool/Spec Versions Pinned | LOW | Version Awareness | No |
 | [CR-SK-001](./generated/cr-sk-001.md) | Cursor Skill Uses Unsupported Field | MEDIUM | Cursor Skills | Yes (safe/unsafe) |
 | [CL-SK-001](./generated/cl-sk-001.md) | Cline Skill Uses Unsupported Field | MEDIUM | Cline Skills | Yes (safe/unsafe) |

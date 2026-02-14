@@ -57,7 +57,7 @@ editors/
 ├── vscode/         # VS Code extension
 ├── jetbrains/      # JetBrains IDE plugin
 └── zed/            # Zed extension
-knowledge-base/     # 187 rules, 75+ sources, rules.json
+knowledge-base/     # 194 rules, 75+ sources, rules.json
 
 tests/fixtures/     # Test cases by category
 ```
@@ -169,7 +169,7 @@ cargo run --bin agnix-mcp   # Run MCP server
 
 ## Rules Reference
 
-187 rules defined in `knowledge-base/rules.json` (source of truth)
+194 rules defined in `knowledge-base/rules.json` (source of truth)
 
 
 Human-readable docs: `knowledge-base/VALIDATION-RULES.md`

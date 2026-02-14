@@ -1254,6 +1254,41 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 **Fix**: Fix JSON syntax errors
 **Source**: opencode.ai/docs/config
 
+<a id="oc-004"></a>
+### OC-004 [MEDIUM] Unknown Config Key
+**Requirement**: Top-level keys in `opencode.json` SHOULD be from the known configuration schema
+**Detection**: Parse JSON, compare top-level keys against known key allowlist
+**Fix**: Remove unrecognized keys
+**Source**: opencode.ai/docs/config
+
+<a id="oc-006"></a>
+### OC-006 [LOW] Remote URL in Instructions
+**Requirement**: Remote URLs in `instructions` MAY slow startup (5-second timeout per URL)
+**Detection**: Check if instruction paths start with `http://` or `https://`
+**Fix**: No auto-fix (user preference)
+**Source**: opencode.ai/docs/config
+
+<a id="oc-007"></a>
+### OC-007 [MEDIUM] Invalid Agent Definition
+**Requirement**: Custom agents in `agent` object SHOULD have a `description` field
+**Detection**: Parse JSON, check each agent object for `description` key
+**Fix**: Add description field to agent definitions
+**Source**: opencode.ai/docs/config
+
+<a id="oc-008"></a>
+### OC-008 [HIGH] Invalid Permission Config
+**Requirement**: Permission values MUST be `"allow"`, `"ask"`, or `"deny"`
+**Detection**: Parse JSON, validate each permission value against allowed set
+**Fix**: No auto-fix (must be manually corrected)
+**Source**: opencode.ai/docs/config
+
+<a id="oc-009"></a>
+### OC-009 [MEDIUM] Invalid Variable Substitution
+**Requirement**: Variable substitution patterns MUST use `{env:NAME}` or `{file:path}` syntax
+**Detection**: Scan all string values for `{prefix:value}` patterns, flag unknown prefixes or empty values
+**Fix**: No auto-fix (must be manually corrected)
+**Source**: opencode.ai/docs/config
+
 ---
 
 ## GEMINI CLI RULES
@@ -1330,7 +1365,7 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 **Requirement**: Codex config.toml files MUST have valid TOML syntax
 **Detection**: Attempt to parse as TOML; report parse errors with line/column
 **Fix**: Correct the TOML syntax
-**Source**: github.com/openai/codex
+**Source**: developers.openai.com/codex/
 
 
 <a id="cdx-001"></a>
@@ -1338,21 +1373,35 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 **Requirement**: The `approvalMode` field in `.codex/config.toml` MUST be `"suggest"`, `"auto-edit"`, or `"full-auto"`
 **Detection**: Parse TOML, validate `approvalMode` value against allowed set
 **Fix**: Auto-fix (unsafe) -- replace with closest valid approval mode
-**Source**: github.com/openai/codex
+**Source**: developers.openai.com/codex/
 
 <a id="cdx-002"></a>
 ### CDX-002 [HIGH] Invalid Full Auto Error Mode
 **Requirement**: The `fullAutoErrorMode` field in `.codex/config.toml` MUST be `"ask-user"` or `"ignore-and-continue"`
 **Detection**: Parse TOML, validate `fullAutoErrorMode` value against allowed set
 **Fix**: Auto-fix (unsafe) -- replace with closest valid full auto error mode
-**Source**: github.com/openai/codex
+**Source**: developers.openai.com/codex/
 
 <a id="cdx-003"></a>
 ### CDX-003 [MEDIUM] AGENTS.override.md in Version Control
 **Requirement**: `AGENTS.override.md` SHOULD NOT be committed to version control (contains user-specific overrides)
 **Detection**: Check if file name is `AGENTS.override.md`
 **Fix**: Add `AGENTS.override.md` to `.gitignore`
-**Source**: github.com/openai/codex
+**Source**: developers.openai.com/codex/
+
+<a id="cdx-004"></a>
+### CDX-004 [MEDIUM] Unknown Config Key
+**Requirement**: Top-level keys in `.codex/config.toml` SHOULD be from the known configuration schema
+**Detection**: Parse TOML, compare top-level keys against known key and table allowlists
+**Fix**: Remove unrecognized keys
+**Source**: developers.openai.com/codex/
+
+<a id="cdx-005"></a>
+### CDX-005 [HIGH] project_doc_max_bytes Exceeds Limit
+**Requirement**: `project_doc_max_bytes` in `.codex/config.toml` MUST be a positive integer <= 65536
+**Detection**: Parse TOML, validate `project_doc_max_bytes` value is an integer within the allowed range
+**Fix**: Reduce value to 65536 or less (default: 32768)
+**Source**: developers.openai.com/codex/
 
 ---
 
@@ -1649,9 +1698,9 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | GitHub Copilot | 17 | 11 | 6 | 0 | 3 |
 | Cursor | 9 | 4 | 5 | 0 | 4 |
 | Cline | 4 | 3 | 1 | 0 | 2 |
-| OpenCode | 3 | 3 | 0 | 0 | 1 |
+| OpenCode | 8 | 4 | 3 | 1 | 1 |
 | Gemini CLI | 9 | 3 | 4 | 2 | 3 |
-| Codex CLI | 4 | 3 | 1 | 0 | 2 |
+| Codex CLI | 6 | 4 | 2 | 0 | 2 |
 | MCP | 24 | 19 | 5 | 0 | 4 |
 | XML | 3 | 3 | 0 | 0 | 3 |
 | References | 2 | 2 | 0 | 0 | 0 |
@@ -1667,7 +1716,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | Amp Skills | 1 | 0 | 1 | 0 | 1 |
 | Roo Code Skills | 1 | 0 | 1 | 0 | 1 |
 | Version Awareness | 1 | 0 | 0 | 1 | 0 |
-| **TOTAL** | **187** | **119** | **62** | **6** | **49** |
+| **TOTAL** | **194** | **121** | **66** | **7** | **49** |
 
 
 ---
@@ -1697,8 +1746,8 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 
 ---
 
-****Total Coverage**: 187 validation rules across 28 categories
+****Total Coverage**: 194 validation rules across 28 categories
 
 **Knowledge Base**: 11,036 lines, 320KB, 75+ sources
-**Certainty**: 117 HIGH, 60 MEDIUM, 4 LOW
+**Certainty**: 121 HIGH, 66 MEDIUM, 7 LOW
 **Auto-Fixable**: 59 rules (33%)

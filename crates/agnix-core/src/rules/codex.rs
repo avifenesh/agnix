@@ -1,10 +1,12 @@
-//! Codex CLI configuration validation rules (CDX-000 to CDX-003)
+//! Codex CLI configuration validation rules (CDX-000 to CDX-005)
 //!
 //! Validates:
 //! - CDX-000: TOML Parse Error (HIGH) - invalid TOML syntax in config.toml
 //! - CDX-001: Invalid approvalMode (HIGH) - must be "suggest", "auto-edit", or "full-auto"
 //! - CDX-002: Invalid fullAutoErrorMode (HIGH) - must be "ask-user" or "ignore-and-continue"
 //! - CDX-003: AGENTS.override.md in version control (MEDIUM) - should be in .gitignore
+//! - CDX-004: Unknown config key (MEDIUM) - unrecognized key in .codex/config.toml
+//! - CDX-005: project_doc_max_bytes exceeds limit (HIGH) - must be <= 65536
 
 use crate::{
     config::LintConfig,
@@ -29,7 +31,9 @@ fn find_toml_string_value_span(
     crate::span_utils::find_unique_toml_string_value(content, key, current_value)
 }
 
-const RULE_IDS: &[&str] = &["CDX-000", "CDX-001", "CDX-002", "CDX-003"];
+const RULE_IDS: &[&str] = &[
+    "CDX-000", "CDX-001", "CDX-002", "CDX-003", "CDX-004", "CDX-005",
+];
 
 pub struct CodexValidator;
 
@@ -73,11 +77,13 @@ impl Validator for CodexValidator {
             return diagnostics;
         }
 
-        // For CodexConfig files, check CDX-001 and CDX-002
-        // Skip TOML parsing entirely when both rules are disabled (performance)
+        // For CodexConfig files, check CDX-001 through CDX-005
+        // Skip TOML parsing entirely when all TOML-dependent rules are disabled
         let cdx_001_enabled = config.is_rule_enabled("CDX-001");
         let cdx_002_enabled = config.is_rule_enabled("CDX-002");
-        if !cdx_001_enabled && !cdx_002_enabled {
+        let cdx_004_enabled = config.is_rule_enabled("CDX-004");
+        let cdx_005_enabled = config.is_rule_enabled("CDX-005");
+        if !cdx_001_enabled && !cdx_002_enabled && !cdx_004_enabled && !cdx_005_enabled {
             return diagnostics;
         }
 
@@ -98,6 +104,24 @@ impl Validator for CodexValidator {
                 .with_suggestion(t!("rules.cdx_000.suggestion")),
             );
             return diagnostics;
+        }
+
+        // CDX-004: Unknown config keys (WARNING)
+        // Runs on unknown_keys which are populated whenever TOML parses successfully,
+        // even when schema extraction fails.
+        if cdx_004_enabled {
+            for unknown in &parsed.unknown_keys {
+                diagnostics.push(
+                    Diagnostic::warning(
+                        path.to_path_buf(),
+                        unknown.line,
+                        unknown.column,
+                        "CDX-004",
+                        t!("rules.cdx_004.message", key = unknown.key.as_str()),
+                    )
+                    .with_suggestion(t!("rules.cdx_004.suggestion")),
+                );
+            }
         }
 
         let schema = match parsed.schema {
@@ -202,6 +226,48 @@ impl Validator for CodexValidator {
                     }
 
                     diagnostics.push(diagnostic);
+                }
+            }
+        }
+
+        // CDX-005: project_doc_max_bytes exceeds limit (ERROR)
+        if cdx_005_enabled {
+            if parsed.project_doc_max_bytes_wrong_type {
+                let line = key_lines.get("project_doc_max_bytes").copied().unwrap_or(1);
+                diagnostics.push(
+                    Diagnostic::error(
+                        path.to_path_buf(),
+                        line,
+                        0,
+                        "CDX-005",
+                        t!("rules.cdx_005.type_error"),
+                    )
+                    .with_suggestion(t!("rules.cdx_005.suggestion")),
+                );
+            } else if let Some(value) = schema.project_doc_max_bytes {
+                let line = key_lines.get("project_doc_max_bytes").copied().unwrap_or(1);
+                if value <= 0 {
+                    diagnostics.push(
+                        Diagnostic::error(
+                            path.to_path_buf(),
+                            line,
+                            0,
+                            "CDX-005",
+                            t!("rules.cdx_005.type_error"),
+                        )
+                        .with_suggestion(t!("rules.cdx_005.suggestion")),
+                    );
+                } else if value > 65536 {
+                    diagnostics.push(
+                        Diagnostic::error(
+                            path.to_path_buf(),
+                            line,
+                            0,
+                            "CDX-005",
+                            t!("rules.cdx_005.message", value = &value.to_string()),
+                        )
+                        .with_suggestion(t!("rules.cdx_005.suggestion")),
+                    );
                 }
             }
         }
@@ -640,7 +706,7 @@ mod tests {
 
     #[test]
     fn test_all_cdx_rules_can_be_disabled() {
-        let rules = ["CDX-001", "CDX-002", "CDX-003"];
+        let rules = ["CDX-001", "CDX-002", "CDX-003", "CDX-004", "CDX-005"];
 
         for rule in rules {
             let mut config = LintConfig::default();
@@ -650,6 +716,8 @@ mod tests {
                 "CDX-001" => ("approvalMode = \"invalid\"", ".codex/config.toml"),
                 "CDX-002" => ("fullAutoErrorMode = \"crash\"", ".codex/config.toml"),
                 "CDX-003" => ("# Override", "AGENTS.override.md"),
+                "CDX-004" => ("totally_unknown_key = true", ".codex/config.toml"),
+                "CDX-005" => ("project_doc_max_bytes = 999999", ".codex/config.toml"),
                 _ => unreachable!(),
             };
 
@@ -735,6 +803,180 @@ notify = true
         );
         assert!(cdx_001[0].message.contains("string"));
         assert!(cdx_002[0].message.contains("string"));
+    }
+
+    // ===== CDX-004: Unknown config keys =====
+
+    #[test]
+    fn test_cdx_004_unknown_key() {
+        let diagnostics = validate_config("totally_unknown_key = true");
+        let cdx_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CDX-004").collect();
+        assert_eq!(cdx_004.len(), 1);
+        assert_eq!(cdx_004[0].level, DiagnosticLevel::Warning);
+        assert!(cdx_004[0].message.contains("totally_unknown_key"));
+    }
+
+    #[test]
+    fn test_cdx_004_known_keys_no_warning() {
+        let content = r#"
+model = "o4-mini"
+approvalMode = "suggest"
+fullAutoErrorMode = "ask-user"
+notify = true
+project_doc_max_bytes = 32768
+"#;
+        let diagnostics = validate_config(content);
+        let cdx_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CDX-004").collect();
+        assert!(cdx_004.is_empty(), "Known keys should not trigger CDX-004");
+    }
+
+    #[test]
+    fn test_cdx_004_multiple_unknown_keys() {
+        let content = "unknown_a = true\nunknown_b = false\nmodel = \"o4-mini\"";
+        let diagnostics = validate_config(content);
+        let cdx_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CDX-004").collect();
+        assert_eq!(cdx_004.len(), 2);
+    }
+
+    #[test]
+    fn test_cdx_004_line_number() {
+        let content = "model = \"o4-mini\"\nmy_custom_key = true";
+        let diagnostics = validate_config(content);
+        let cdx_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CDX-004").collect();
+        assert_eq!(cdx_004.len(), 1);
+        assert_eq!(cdx_004[0].line, 2);
+    }
+
+    #[test]
+    fn test_cdx_004_table_keys_not_flagged() {
+        let content = r#"
+model = "o4-mini"
+
+[mcp_servers]
+name = "test"
+"#;
+        let diagnostics = validate_config(content);
+        let cdx_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CDX-004").collect();
+        assert!(
+            cdx_004.is_empty(),
+            "Known table keys should not trigger CDX-004"
+        );
+    }
+
+    #[test]
+    fn test_cdx_004_has_suggestion() {
+        let diagnostics = validate_config("bogus_setting = 42");
+        let cdx_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CDX-004").collect();
+        assert_eq!(cdx_004.len(), 1);
+        assert!(
+            cdx_004[0].suggestion.is_some(),
+            "CDX-004 should have a suggestion"
+        );
+    }
+
+    // ===== CDX-005: project_doc_max_bytes exceeds limit =====
+
+    #[test]
+    fn test_cdx_005_exceeds_limit() {
+        let diagnostics = validate_config("project_doc_max_bytes = 100000");
+        let cdx_005: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CDX-005").collect();
+        assert_eq!(cdx_005.len(), 1);
+        assert_eq!(cdx_005[0].level, DiagnosticLevel::Error);
+        assert!(cdx_005[0].message.contains("100000"));
+    }
+
+    #[test]
+    fn test_cdx_005_at_limit() {
+        let diagnostics = validate_config("project_doc_max_bytes = 65536");
+        let cdx_005: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CDX-005").collect();
+        assert!(cdx_005.is_empty(), "65536 is at the limit, should be valid");
+    }
+
+    #[test]
+    fn test_cdx_005_below_limit() {
+        let diagnostics = validate_config("project_doc_max_bytes = 32768");
+        let cdx_005: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CDX-005").collect();
+        assert!(cdx_005.is_empty(), "32768 is below limit, should be valid");
+    }
+
+    #[test]
+    fn test_cdx_005_just_over_limit() {
+        let diagnostics = validate_config("project_doc_max_bytes = 65537");
+        let cdx_005: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CDX-005").collect();
+        assert_eq!(cdx_005.len(), 1, "65537 exceeds 65536 limit");
+    }
+
+    #[test]
+    fn test_cdx_005_wrong_type() {
+        let diagnostics = validate_config("project_doc_max_bytes = \"not a number\"");
+        let cdx_005: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CDX-005").collect();
+        assert_eq!(cdx_005.len(), 1);
+        assert!(cdx_005[0].message.contains("integer"));
+    }
+
+    #[test]
+    fn test_cdx_005_absent() {
+        let diagnostics = validate_config("model = \"o4-mini\"");
+        let cdx_005: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CDX-005").collect();
+        assert!(
+            cdx_005.is_empty(),
+            "Absent field should not trigger CDX-005"
+        );
+    }
+
+    #[test]
+    fn test_cdx_005_line_number() {
+        let content = "model = \"o4-mini\"\nproject_doc_max_bytes = 999999";
+        let diagnostics = validate_config(content);
+        let cdx_005: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CDX-005").collect();
+        assert_eq!(cdx_005.len(), 1);
+        assert_eq!(cdx_005[0].line, 2);
+    }
+
+    #[test]
+    fn test_cdx_005_has_suggestion() {
+        let diagnostics = validate_config("project_doc_max_bytes = 100000");
+        let cdx_005: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CDX-005").collect();
+        assert_eq!(cdx_005.len(), 1);
+        assert!(
+            cdx_005[0].suggestion.is_some(),
+            "CDX-005 should have a suggestion"
+        );
+    }
+
+    #[test]
+    fn test_cdx_005_negative_value() {
+        // Negative values are invalid because project_doc_max_bytes must be a positive integer
+        let diagnostics = validate_config("project_doc_max_bytes = -1");
+        let cdx_005: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CDX-005").collect();
+        assert_eq!(cdx_005.len(), 1, "Negative values should trigger CDX-005");
+        assert!(
+            cdx_005[0].message.contains("positive integer"),
+            "Error message should indicate positive integer requirement"
+        );
+    }
+
+    #[test]
+    fn test_cdx_005_zero_value() {
+        // Zero is invalid because project_doc_max_bytes must be a positive integer
+        let diagnostics = validate_config("project_doc_max_bytes = 0");
+        let cdx_005: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CDX-005").collect();
+        assert_eq!(cdx_005.len(), 1, "Zero should trigger CDX-005");
+        assert!(
+            cdx_005[0].message.contains("positive integer"),
+            "Error message should indicate positive integer requirement"
+        );
+    }
+
+    #[test]
+    fn test_cdx_004_and_cdx_005_combined() {
+        // Both an unknown key and exceeding limit in the same file
+        let content = "unknown_key = true\nproject_doc_max_bytes = 999999";
+        let diagnostics = validate_config(content);
+        let cdx_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CDX-004").collect();
+        let cdx_005: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CDX-005").collect();
+        assert_eq!(cdx_004.len(), 1, "CDX-004 should fire for unknown_key");
+        assert_eq!(cdx_005.len(), 1, "CDX-005 should fire for exceeding limit");
     }
 
     // ===== Fixture Integration =====
