@@ -3742,14 +3742,13 @@
       "severity": "HIGH",
       "category": "references",
       "evidence": {
-        "source_type": "vendor_docs",
+        "source_type": "community",
         "source_urls": [
-          "https://code.claude.com/docs/en/memory"
+          "https://code.claude.com/docs/en/memory",
+          "https://agentskills.io"
         ],
         "verified_on": "2026-02-04",
-        "applies_to": {
-          "tool": "claude-code"
-        },
+        "applies_to": {},
         "normative_level": "MUST",
         "tests": {
           "unit": true,

@@ -1262,7 +1262,7 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 **Requirement**: @import references MUST point to existing files
 **Detection**: Resolve path, check existence
 **Fix**: Show resolved path, suggest alternatives
-**Source**: code.claude.com/docs/en/memory
+**Source**: code.claude.com/docs/en/memory, agentskills.io
 
 <a id="ref-002"></a>
 ### REF-002 [HIGH] Broken Markdown Link
