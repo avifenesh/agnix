@@ -21,9 +21,9 @@
 | GitHub Copilot | .github/copilot-instructions.md, .github/instructions/*.instructions.md, .github/agents/*.agent.md, .github/prompts/*.prompt.md, .github/hooks/hooks.json, .github/workflows/copilot-setup-steps.yml | 17 |
 | Cursor Project Rules | .cursor/rules/*.mdc, .cursorrules | 9 |
 | Cline | .clinerules, .clinerules/*.md | 4 |
-| OpenCode | opencode.json | 3 |
+| OpenCode | opencode.json | 8 |
 | Gemini CLI | GEMINI.md, GEMINI.local.md, .gemini/settings.json (hooks), gemini-extension.json (extensions), .geminiignore | 9 |
-| Codex CLI | .codex/config.toml | 4 |
+| Codex CLI | .codex/config.toml | 6 |
 | Version Awareness | .agnix.toml | 1 |
 | Cursor Skills | .cursor/skills/*/SKILL.md | 1 |
 | Cline Skills | .cline/skills/*/SKILL.md | 1 |

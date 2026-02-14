@@ -36,7 +36,7 @@
 
 **Bad patterns get amplified.** AI assistants don't ignore wrong configs - they [learn from them](https://www.augmentcode.com/guides/enterprise-coding-standards-12-rules-for-ai-ready-teams).
 
-agnix validates all of it - 187 rules sourced from official specs, academic research, and real-world breakage patterns. Auto-fix included.
+agnix validates all of it - 194 rules sourced from official specs, academic research, and real-world breakage patterns. Auto-fix included.
 
 > **Want to try it first?** [Open the playground](https://avifenesh.github.io/agnix/playground) - paste any agent config, see diagnostics instantly. No install, runs in your browser.
 
@@ -107,7 +107,7 @@ agnix --strict .     # Strict mode (warnings = errors)
 agnix --target claude-code .  # Target specific tool
 ```
 
-[Full CLI reference](https://avifenesh.github.io/agnix/docs/configuration) | [All 187 rules](https://avifenesh.github.io/agnix/docs/rules)
+[Full CLI reference](https://avifenesh.github.io/agnix/docs/configuration) | [All 194 rules](https://avifenesh.github.io/agnix/docs/rules)
 
 ## Supported Tools
 
