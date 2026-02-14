@@ -19,7 +19,8 @@ fn architecture_docs_list_all_workspace_crates() {
     let cargo_content =
         fs::read_to_string(format!("{root}/Cargo.toml")).expect("Failed to read Cargo.toml");
     let cargo_toml: toml::Value =
-        toml::from_str(&cargo_content).expect("Failed to parse Cargo.toml as TOML");
+        toml::from_str(&cargo_content)
+            .unwrap_or_else(|e| panic!("Failed to parse Cargo.toml as TOML: {e}"));
 
     let members = cargo_toml
         .get("workspace")
