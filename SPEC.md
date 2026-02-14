@@ -13,11 +13,11 @@
 | Instructions (Cross-Tool) | AGENTS.md, AGENTS.local.md, AGENTS.override.md | 6 |
 | Agents | agents/*.md | 13 |
 | Plugins | plugin.json | 10 |
-| Prompt Engineering | CLAUDE.md, AGENTS.md | 4 |
-| Cross-Platform | AGENTS.md | 7 |
+| Prompt Engineering | CLAUDE.md, AGENTS.md | 6 |
+| Cross-Platform | AGENTS.md | 8 |
 | MCP | tool definitions | 24 |
 | XML | all .md files | 3 |
-| References | @imports | 2 |
+| References | @imports | 4 |
 | GitHub Copilot | .github/copilot-instructions.md, .github/instructions/*.instructions.md, .github/agents/*.agent.md, .github/prompts/*.prompt.md, .github/hooks/hooks.json, .github/workflows/copilot-setup-steps.yml | 17 |
 | Cursor Project Rules | .cursor/rules/*.mdc, .cursorrules, .cursor/hooks.json, .cursor/agents/**/*.md, .cursor/environment.json | 16 |
 | Cline | .clinerules, .clinerules/*.md | 4 |

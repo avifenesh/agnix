@@ -11,8 +11,8 @@ use crate::{
     diagnostics::Diagnostic,
     rules::{Validator, ValidatorMetadata},
     schemas::cross_platform::{
-        check_byte_limit, check_markdown_structure, find_claude_specific_features,
-        find_hard_coded_paths, CODEX_BYTE_LIMIT,
+        CODEX_BYTE_LIMIT, check_byte_limit, check_markdown_structure,
+        find_claude_specific_features, find_hard_coded_paths,
     },
 };
 use rust_i18n::t;
@@ -859,8 +859,11 @@ Use context: fork for subagents.
         // Codex CLI only reads AGENTS.md, not local/override variants
         let content = "a".repeat(33000);
         let validator = CrossPlatformValidator;
-        let diagnostics =
-            validator.validate(Path::new("AGENTS.local.md"), &content, &LintConfig::default());
+        let diagnostics = validator.validate(
+            Path::new("AGENTS.local.md"),
+            &content,
+            &LintConfig::default(),
+        );
 
         let xp_007: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XP-007").collect();
         assert!(

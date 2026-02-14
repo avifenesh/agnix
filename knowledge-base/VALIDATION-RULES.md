@@ -1835,7 +1835,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | XML | 3 | 3 | 0 | 0 | 3 |
 | References | 4 | 2 | 2 | 0 | 0 |
 | Prompt Eng | 6 | 0 | 6 | 0 | 0 |
-| Cross-Platform | 7 | 2 | 4 | 1 | 0 |
+| Cross-Platform | 8 | 2 | 5 | 1 | 0 |
 | Cursor Skills | 1 | 0 | 1 | 0 | 1 |
 | Cline Skills | 1 | 0 | 1 | 0 | 1 |
 | Copilot Skills | 1 | 0 | 1 | 0 | 1 |
@@ -1847,7 +1847,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | Roo Code Skills | 1 | 0 | 1 | 0 | 1 |
 | Roo Code | 6 | 3 | 3 | 0 | 0 |
 | Version Awareness | 1 | 0 | 0 | 1 | 0 |
-| **TOTAL** | **207** | **129** | **71** | **7** | **49** |
+| **TOTAL** | **212** | **129** | **76** | **7** | **49** |
 
 
 ---

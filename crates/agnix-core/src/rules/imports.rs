@@ -1558,8 +1558,7 @@ mod tests {
         fs::write(&file_path, "@a.md\n@b.md").unwrap();
 
         let validator = ImportsValidator;
-        let diagnostics =
-            validator.validate(&file_path, "@a.md\n@b.md", &LintConfig::default());
+        let diagnostics = validator.validate(&file_path, "@a.md\n@b.md", &LintConfig::default());
 
         let ref_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "REF-003").collect();
         assert!(ref_003.is_empty(), "No duplicate imports");
@@ -1600,8 +1599,7 @@ mod tests {
         config.rules_mut().disabled_rules = vec!["REF-003".to_string()];
 
         let validator = ImportsValidator;
-        let diagnostics =
-            validator.validate(&file_path, "@target.md\n@target.md", &config);
+        let diagnostics = validator.validate(&file_path, "@target.md\n@target.md", &config);
 
         let ref_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "REF-003").collect();
         assert!(ref_003.is_empty(), "REF-003 should be disabled");
@@ -1616,8 +1614,7 @@ mod tests {
         fs::write(&file_path, "@config.json").unwrap();
 
         let validator = ImportsValidator;
-        let diagnostics =
-            validator.validate(&file_path, "@config.json", &LintConfig::default());
+        let diagnostics = validator.validate(&file_path, "@config.json", &LintConfig::default());
 
         let ref_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "REF-004").collect();
         assert_eq!(ref_004.len(), 1, "Should detect non-markdown import");
@@ -1648,8 +1645,7 @@ mod tests {
         fs::write(&file_path, "@guide.md").unwrap();
 
         let validator = ImportsValidator;
-        let diagnostics =
-            validator.validate(&file_path, "@guide.md", &LintConfig::default());
+        let diagnostics = validator.validate(&file_path, "@guide.md", &LintConfig::default());
 
         let ref_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "REF-004").collect();
         assert!(ref_004.is_empty(), "Markdown imports should be OK");
@@ -1682,8 +1678,7 @@ mod tests {
         config.rules_mut().disabled_rules = vec!["REF-004".to_string()];
 
         let validator = ImportsValidator;
-        let diagnostics =
-            validator.validate(&file_path, "@config.json", &config);
+        let diagnostics = validator.validate(&file_path, "@config.json", &config);
 
         let ref_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "REF-004").collect();
         assert!(ref_004.is_empty(), "REF-004 should be disabled");
@@ -1696,8 +1691,7 @@ mod tests {
         fs::write(&file_path, "@utils").unwrap();
 
         let validator = ImportsValidator;
-        let diagnostics =
-            validator.validate(&file_path, "@utils", &LintConfig::default());
+        let diagnostics = validator.validate(&file_path, "@utils", &LintConfig::default());
 
         let ref_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "REF-004").collect();
         assert!(

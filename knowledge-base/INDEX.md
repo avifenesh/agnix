@@ -77,7 +77,7 @@ knowledge-base/
 | **MCP** | 11 | 33KB | 36KB | 24 rules |
 | **Claude Code** | 10 | 34KB | 40KB | 42 rules |
 | **Multi-Platform** | 15 | 15KB | 27KB | 6 rules |
-| **Prompt Eng** | 15 | 16KB | 21KB | 4 rules |
+| **Prompt Eng** | 15 | 16KB | 21KB | 6 rules |
 | **AGENTS.md** | 5 | - | - | 6 rules |
 | **Cursor** | 2 | - | - | 9 rules |
 | **agentsys** | 12 | - | - | 70 patterns |
@@ -98,9 +98,9 @@ knowledge-base/
 | GitHub Copilot | 17 | 11 | 6 | 0 | 1 |
 | MCP | 24 | 19 | 5 | 0 | 3 |
 | XML | 3 | 3 | 0 | 0 | 3 |
-| References | 2 | 2 | 0 | 0 | 0 |
+| References | 4 | 2 | 2 | 0 | 0 |
 | Prompt Eng | 4 | 0 | 4 | 0 | 0 |
-| Cross-Platform | 7 | 2 | 4 | 1 | 0 |
+| Cross-Platform | 8 | 2 | 5 | 1 | 0 |
 | Cursor | 16 | 9 | 7 | 0 | 2 |
 | Cursor Skills | 1 | 0 | 1 | 0 | 1 |
 | Cline | 4 | 3 | 1 | 0 | 2 |

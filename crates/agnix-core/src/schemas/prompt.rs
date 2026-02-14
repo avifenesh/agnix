@@ -944,7 +944,8 @@ Code could be cleaner.
 
     #[test]
     fn test_no_redundant_in_specific_instructions() {
-        let content = "Format all output as JSON with 2-space indentation.\nAlways include error codes.";
+        let content =
+            "Format all output as JSON with 2-space indentation.\nAlways include error codes.";
         let results = find_redundant_instructions(content);
         assert!(results.is_empty());
     }
@@ -1001,28 +1002,43 @@ Code could be cleaner.
     fn test_negative_with_positive_alternative() {
         let content = "Don't use global variables. Instead, pass values as function parameters.";
         let results = find_negative_only_instructions(content);
-        assert!(results.is_empty(), "Should not flag when positive alternative is on same line");
+        assert!(
+            results.is_empty(),
+            "Should not flag when positive alternative is on same line"
+        );
     }
 
     #[test]
     fn test_negative_with_positive_on_next_line() {
         let content = "Don't use global variables.\nInstead, pass values as function parameters.";
         let results = find_negative_only_instructions(content);
-        assert!(results.is_empty(), "Should not flag when positive alternative is within 2 lines");
+        assert!(
+            results.is_empty(),
+            "Should not flag when positive alternative is within 2 lines"
+        );
     }
 
     #[test]
     fn test_negative_with_positive_two_lines_away() {
-        let content = "Don't use global variables.\nSome explanation.\nUse function parameters instead.";
+        let content =
+            "Don't use global variables.\nSome explanation.\nUse function parameters instead.";
         let results = find_negative_only_instructions(content);
-        assert!(results.is_empty(), "Should not flag when positive alternative is within window");
+        assert!(
+            results.is_empty(),
+            "Should not flag when positive alternative is within window"
+        );
     }
 
     #[test]
     fn test_negative_without_positive_too_far() {
-        let content = "Don't use global variables.\nLine 2.\nLine 3.\nLine 4.\nUse functions instead.";
+        let content =
+            "Don't use global variables.\nLine 2.\nLine 3.\nLine 4.\nUse functions instead.";
         let results = find_negative_only_instructions(content);
-        assert_eq!(results.len(), 1, "Should flag when positive alternative is beyond 2-line window");
+        assert_eq!(
+            results.len(),
+            1,
+            "Should flag when positive alternative is beyond 2-line window"
+        );
     }
 
     #[test]
