@@ -165,10 +165,10 @@ fn extract_implemented_rule_ids() -> BTreeSet<String> {
 
     // Known rule ID prefixes to filter out false positives
     let valid_prefixes = [
-        "AS-", "CC-SK-", "CC-HK-", "CC-AG-", "CC-MEM-", "CC-PL-", "AGM-", "MCP-", "COP-",
-        "CUR-", "CLN-", "CDX-", "OC-", "GM-", "XML-", "REF-", "PE-", "XP-", "VER-", "WS-",
-        "CR-SK-", "CL-SK-", "CP-SK-", "CX-SK-", "OC-SK-", "WS-SK-", "KR-SK-", "AMP-SK-",
-        "AMP-", "RC-SK-", "ROO-",
+        "AS-", "CC-SK-", "CC-HK-", "CC-AG-", "CC-MEM-", "CC-PL-", "AGM-", "MCP-", "COP-", "CUR-",
+        "CLN-", "CDX-", "OC-", "GM-", "XML-", "REF-", "PE-", "XP-", "VER-", "WS-", "CR-SK-",
+        "CL-SK-", "CP-SK-", "CX-SK-", "OC-SK-", "WS-SK-", "KR-SK-", "AMP-SK-", "AMP-", "RC-SK-",
+        "ROO-",
     ];
 
     fn extract_from_file(
