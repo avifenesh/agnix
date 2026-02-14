@@ -257,6 +257,7 @@ fn file_type_enum_covers_all_variants() {
         agnix_core::FileType::Skill,
         agnix_core::FileType::ClaudeMd,
         agnix_core::FileType::Agent,
+        agnix_core::FileType::AmpCheck,
         agnix_core::FileType::Hooks,
         agnix_core::FileType::Plugin,
         agnix_core::FileType::Mcp,
@@ -267,15 +268,13 @@ fn file_type_enum_covers_all_variants() {
         agnix_core::FileType::CopilotHooks,
         agnix_core::FileType::ClaudeRule,
         agnix_core::FileType::CursorRule,
-        agnix_core::FileType::CursorHooks,
-        agnix_core::FileType::CursorAgent,
-        agnix_core::FileType::CursorEnvironment,
         agnix_core::FileType::CursorRulesLegacy,
         agnix_core::FileType::ClineRules,
         agnix_core::FileType::ClineRulesFolder,
         agnix_core::FileType::OpenCodeConfig,
         agnix_core::FileType::GeminiMd,
         agnix_core::FileType::GeminiSettings,
+        agnix_core::FileType::AmpSettings,
         agnix_core::FileType::GeminiExtension,
         agnix_core::FileType::GeminiIgnore,
         agnix_core::FileType::CodexConfig,
@@ -284,16 +283,13 @@ fn file_type_enum_covers_all_variants() {
         agnix_core::FileType::RooIgnore,
         agnix_core::FileType::RooModeRules,
         agnix_core::FileType::RooMcp,
-        agnix_core::FileType::WindsurfRule,
-        agnix_core::FileType::WindsurfWorkflow,
-        agnix_core::FileType::WindsurfRulesLegacy,
         agnix_core::FileType::GenericMarkdown,
         agnix_core::FileType::Unknown,
     ];
 
     assert_eq!(
         variants.len(),
-        35,
+        31,
         "A new FileType variant may have been added or removed. Please update this test's variant list and the match statement below."
     );
 
@@ -302,6 +298,7 @@ fn file_type_enum_covers_all_variants() {
             agnix_core::FileType::Skill => {}
             agnix_core::FileType::ClaudeMd => {}
             agnix_core::FileType::Agent => {}
+            agnix_core::FileType::AmpCheck => {}
             agnix_core::FileType::Hooks => {}
             agnix_core::FileType::Plugin => {}
             agnix_core::FileType::Mcp => {}
@@ -312,15 +309,13 @@ fn file_type_enum_covers_all_variants() {
             agnix_core::FileType::CopilotHooks => {}
             agnix_core::FileType::ClaudeRule => {}
             agnix_core::FileType::CursorRule => {}
-            agnix_core::FileType::CursorHooks => {}
-            agnix_core::FileType::CursorAgent => {}
-            agnix_core::FileType::CursorEnvironment => {}
             agnix_core::FileType::CursorRulesLegacy => {}
             agnix_core::FileType::ClineRules => {}
             agnix_core::FileType::ClineRulesFolder => {}
             agnix_core::FileType::OpenCodeConfig => {}
             agnix_core::FileType::GeminiMd => {}
             agnix_core::FileType::GeminiSettings => {}
+            agnix_core::FileType::AmpSettings => {}
             agnix_core::FileType::GeminiExtension => {}
             agnix_core::FileType::GeminiIgnore => {}
             agnix_core::FileType::CodexConfig => {}
@@ -329,9 +324,6 @@ fn file_type_enum_covers_all_variants() {
             agnix_core::FileType::RooIgnore => {}
             agnix_core::FileType::RooModeRules => {}
             agnix_core::FileType::RooMcp => {}
-            agnix_core::FileType::WindsurfRule => {}
-            agnix_core::FileType::WindsurfWorkflow => {}
-            agnix_core::FileType::WindsurfRulesLegacy => {}
             agnix_core::FileType::GenericMarkdown => {}
             agnix_core::FileType::Unknown => {}
         }

@@ -31,9 +31,9 @@ CATEGORY_LABELS: Dict[str, str] = {
     "cursor": "Cursor",
     "cline": "Cline",
     "codex": "Codex CLI",
-    "windsurf": "Windsurf",
     "gemini-cli": "Gemini CLI",
     "opencode": "OpenCode",
+    "roo-code": "Roo Code",
     "version-awareness": "Version Awareness",
     "cursor-skills": "Cursor Skills",
     "cline-skills": "Cline Skills",
@@ -43,7 +43,7 @@ CATEGORY_LABELS: Dict[str, str] = {
     "windsurf-skills": "Windsurf Skills",
     "kiro-skills": "Kiro Skills",
     "amp-skills": "Amp Skills",
-    "roo-code": "Roo Code",
+    "amp-checks": "Amp Checks",
     "roo-code-skills": "Roo Code Skills",
 }
 
@@ -133,11 +133,6 @@ TEMPLATES: Dict[str, Dict[str, str]] = {
         "valid": "[model]\nmodel = \"o4-mini\"\n",
         "lang": "toml",
     },
-    "windsurf": {
-        "invalid": "",
-        "valid": "# TypeScript Guidelines\n\nUse strict mode and explicit types.\n",
-        "lang": "markdown",
-    },
     "gemini-cli": {
         "invalid": "# Gemini\n",
         "valid": "# Gemini Instructions\n\nFollow project coding standards.\n",
@@ -148,6 +143,11 @@ TEMPLATES: Dict[str, Dict[str, str]] = {
         "valid": """{"model": "claude-sonnet-4-5-20250929", "share": "manual"}\n""",
         "lang": "json",
     },
+    "roo-code": {
+        "invalid": "# Rules\n",
+        "valid": "# Roo Rules\n\nFollow project coding and review policies.\n",
+        "lang": "markdown",
+    },
     "cline-skills": {"invalid": "", "valid": "", "lang": "markdown"},
     "codex-skills": {"invalid": "", "valid": "", "lang": "markdown"},
     "copilot-skills": {"invalid": "", "valid": "", "lang": "markdown"},
@@ -156,6 +156,7 @@ TEMPLATES: Dict[str, Dict[str, str]] = {
     "windsurf-skills": {"invalid": "", "valid": "", "lang": "markdown"},
     "kiro-skills": {"invalid": "", "valid": "", "lang": "markdown"},
     "amp-skills": {"invalid": "", "valid": "", "lang": "markdown"},
+    "amp-checks": {"invalid": "", "valid": "", "lang": "markdown"},
     "roo-code-skills": {"invalid": "", "valid": "", "lang": "markdown"},
 }
 

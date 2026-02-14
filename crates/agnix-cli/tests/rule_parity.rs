@@ -166,8 +166,8 @@ fn extract_implemented_rule_ids() -> BTreeSet<String> {
     // Known rule ID prefixes to filter out false positives
     let valid_prefixes = [
         "AS-", "CC-SK-", "CC-HK-", "CC-AG-", "CC-MEM-", "CC-PL-", "AGM-", "MCP-", "COP-", "CUR-",
-        "CLN-", "CDX-", "OC-", "GM-", "XML-", "REF-", "PE-", "XP-", "VER-", "WS-", "CR-SK-",
-        "CL-SK-", "CP-SK-", "CX-SK-", "OC-SK-", "WS-SK-", "KR-SK-", "AMP-SK-", "RC-SK-", "ROO-",
+        "CLN-", "CDX-", "OC-", "GM-", "XML-", "REF-", "PE-", "XP-", "VER-", "CR-SK-", "CL-SK-",
+        "CP-SK-", "CX-SK-", "OC-SK-", "WS-SK-", "KR-SK-", "AMP-SK-", "AMP-", "RC-SK-", "ROO-",
     ];
 
     fn extract_from_file(
@@ -316,11 +316,11 @@ fn infer_fixture_coverage(rules: &[RuleEntry]) -> HashMap<String, Vec<String>> {
         ("windsurf-skills", vec!["per_client_skills"]),
         ("kiro-skills", vec!["per_client_skills"]),
         ("amp-skills", vec!["per_client_skills"]),
+        ("amp-checks", vec!["amp-checks"]),
         ("roo-code-skills", vec!["per_client_skills"]),
         ("gemini-cli", vec!["gemini_md", "gemini_md-invalid"]),
         ("codex", vec!["codex", "codex-invalid"]),
         ("roo-code", vec!["roo-code"]),
-        ("windsurf", vec!["windsurf", "windsurf-legacy"]),
     ]
     .into_iter()
     .collect();
@@ -513,7 +513,6 @@ fn test_rules_json_integrity() {
         "cline",
         "gemini-cli",
         "codex",
-        "windsurf",
         "xml",
         "references",
         "prompt-engineering",
@@ -528,6 +527,7 @@ fn test_rules_json_integrity() {
         "windsurf-skills",
         "kiro-skills",
         "amp-skills",
+        "amp-checks",
         "roo-code-skills",
         "roo-code",
     ];

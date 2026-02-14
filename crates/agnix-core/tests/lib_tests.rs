@@ -338,7 +338,24 @@ fn test_validators_for_skill() {
 fn test_validators_for_claude_md() {
     let registry = ValidatorRegistry::with_defaults();
     let validators = registry.validators_for(FileType::ClaudeMd);
-    assert_eq!(validators.len(), 7);
+    assert_eq!(validators.len(), 8);
+    assert!(validators.iter().any(|v| v.name() == "AmpValidator"));
+}
+
+#[test]
+fn test_validators_for_amp_check() {
+    let registry = ValidatorRegistry::with_defaults();
+    let validators = registry.validators_for(FileType::AmpCheck);
+    assert!(!validators.is_empty());
+    assert!(validators.iter().any(|v| v.name() == "AmpValidator"));
+}
+
+#[test]
+fn test_validators_for_amp_settings() {
+    let registry = ValidatorRegistry::with_defaults();
+    let validators = registry.validators_for(FileType::AmpSettings);
+    assert!(!validators.is_empty());
+    assert!(validators.iter().any(|v| v.name() == "AmpValidator"));
 }
 
 #[test]
@@ -1986,6 +2003,61 @@ fn test_validate_fixtures_directory() {
             message
         );
     }
+
+    let amp_diagnostics: Vec<_> = result
+        .diagnostics
+        .iter()
+        .filter(|d| d.rule.starts_with("AMP-"))
+        .collect();
+    assert!(
+        amp_diagnostics.iter().any(|d| {
+            d.rule == "AMP-001"
+                && d.file
+                    .to_string_lossy()
+                    .replace('\\', "/")
+                    .contains("amp-checks/.agents/checks/missing-name.md")
+        }),
+        "Expected AMP-001 from amp-checks/.agents/checks/missing-name.md fixture"
+    );
+    assert!(
+        amp_diagnostics.iter().any(|d| {
+            d.rule == "AMP-002"
+                && d.file
+                    .to_string_lossy()
+                    .replace('\\', "/")
+                    .contains("amp-checks/.agents/checks/invalid-severity.md")
+        }),
+        "Expected AMP-002 from amp-checks/.agents/checks/invalid-severity.md fixture"
+    );
+    assert!(
+        amp_diagnostics.iter().any(|d| {
+            d.rule == "AMP-003"
+                && d.file
+                    .to_string_lossy()
+                    .replace('\\', "/")
+                    .contains("amp-checks/AGENTS.md")
+        }),
+        "Expected AMP-003 from amp-checks/AGENTS.md fixture"
+    );
+    assert!(
+        amp_diagnostics.iter().any(|d| {
+            d.rule == "AMP-004"
+                && d.file
+                    .to_string_lossy()
+                    .replace('\\', "/")
+                    .contains("amp-checks/.amp/settings.json")
+        }),
+        "Expected AMP-004 from amp-checks/.amp/settings.json fixture"
+    );
+    assert!(
+        !amp_diagnostics.iter().any(|d| {
+            d.file
+                .to_string_lossy()
+                .replace('\\', "/")
+                .contains("amp-checks/.agents/checks/valid.md")
+        }),
+        "Expected no AMP diagnostics for amp-checks/.agents/checks/valid.md fixture"
+    );
 }
 
 #[test]
@@ -2006,6 +2078,10 @@ fn test_fixture_positive_cases_by_family() {
         ("MCP-", fixtures_dir.join("mcp/valid-tool.mcp.json")),
         ("REF-", fixtures_dir.join("refs/valid-links.md")),
         ("XML-", fixtures_dir.join("xml/xml-valid.md")),
+        (
+            "AMP-",
+            fixtures_dir.join("amp-checks/.agents/checks/valid.md"),
+        ),
     ];
     cases.push(("PE-", pe_path));
 
@@ -4097,6 +4173,7 @@ fn test_validator_names_are_ascii_and_nonempty() {
         FileType::Skill,
         FileType::ClaudeMd,
         FileType::Agent,
+        FileType::AmpCheck,
         FileType::Hooks,
         FileType::Plugin,
         FileType::Mcp,
@@ -4113,6 +4190,7 @@ fn test_validator_names_are_ascii_and_nonempty() {
         FileType::OpenCodeConfig,
         FileType::GeminiMd,
         FileType::GeminiSettings,
+        FileType::AmpSettings,
         FileType::GeminiExtension,
         FileType::GeminiIgnore,
         FileType::CodexConfig,
@@ -4142,6 +4220,7 @@ const ALL_VALIDATED_FILE_TYPES: &[FileType] = &[
     FileType::Skill,
     FileType::ClaudeMd,
     FileType::Agent,
+    FileType::AmpCheck,
     FileType::Hooks,
     FileType::Plugin,
     FileType::Mcp,
@@ -4158,6 +4237,7 @@ const ALL_VALIDATED_FILE_TYPES: &[FileType] = &[
     FileType::OpenCodeConfig,
     FileType::GeminiMd,
     FileType::GeminiSettings,
+    FileType::AmpSettings,
     FileType::GeminiExtension,
     FileType::GeminiIgnore,
     FileType::CodexConfig,

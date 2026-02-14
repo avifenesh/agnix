@@ -702,6 +702,33 @@ fn test_format_json_contains_cross_platform_rules() {
     check_json_rule_family("tests/fixtures/cross_platform", &["XP-"], "cross-platform");
 }
 
+#[test]
+fn test_format_json_contains_amp_rules() {
+    check_json_rule_family("tests/fixtures/amp-checks", &["AMP-"], "Amp");
+}
+
+#[test]
+fn test_format_json_contains_amp_002_diagnostic() {
+    let mut cmd = agnix();
+    let output = cmd
+        .arg("tests/fixtures/amp-checks")
+        .arg("--format")
+        .arg("json")
+        .output()
+        .unwrap();
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let json: serde_json::Value = serde_json::from_str(&stdout).unwrap();
+    let diagnostics = json["diagnostics"].as_array().unwrap();
+    assert!(
+        diagnostics
+            .iter()
+            .any(|d| d["rule"].as_str() == Some("AMP-002")),
+        "Expected AMP-002 in JSON diagnostics, got: {}",
+        stdout
+    );
+}
+
 // ============================================================================
 // SARIF Output Completeness Tests
 // ============================================================================
@@ -719,6 +746,33 @@ fn test_format_sarif_results_include_hook_diagnostics() {
 #[test]
 fn test_format_sarif_results_include_mcp_diagnostics() {
     check_sarif_rule_family("tests/fixtures/mcp", &["MCP-"], "MCP");
+}
+
+#[test]
+fn test_format_sarif_results_include_amp_diagnostics() {
+    check_sarif_rule_family("tests/fixtures/amp-checks", &["AMP-"], "Amp");
+}
+
+#[test]
+fn test_format_sarif_results_include_amp_002_diagnostic() {
+    let mut cmd = agnix();
+    let output = cmd
+        .arg("tests/fixtures/amp-checks")
+        .arg("--format")
+        .arg("sarif")
+        .output()
+        .unwrap();
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let json: serde_json::Value = serde_json::from_str(&stdout).unwrap();
+    let results = json["runs"][0]["results"].as_array().unwrap();
+    assert!(
+        results
+            .iter()
+            .any(|r| r["ruleId"].as_str() == Some("AMP-002")),
+        "Expected AMP-002 in SARIF results, got: {}",
+        stdout
+    );
 }
 
 #[test]

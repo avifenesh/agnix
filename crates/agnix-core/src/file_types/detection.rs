@@ -99,6 +99,33 @@ fn path_contains_consecutive_components(path: &Path, first: &str, second: &str) 
     false
 }
 
+/// Returns true if the path contains two consecutive normal path components,
+/// compared case-insensitively.
+fn path_contains_consecutive_components_ci(path: &Path, first: &str, second: &str) -> bool {
+    path.components()
+        .zip(path.components().skip(1))
+        .any(|(a, b)| {
+            matches!(
+                (a, b),
+                (std::path::Component::Normal(a_os), std::path::Component::Normal(b_os))
+                if a_os
+                    .to_str()
+                    .is_some_and(|s| s.eq_ignore_ascii_case(first))
+                    && b_os
+                        .to_str()
+                        .is_some_and(|s| s.eq_ignore_ascii_case(second))
+            )
+        })
+}
+
+fn parent_eq_ignore_ascii_case(parent: Option<&str>, expected: &str) -> bool {
+    parent.is_some_and(|p| p.eq_ignore_ascii_case(expected))
+}
+
+fn is_agents_instruction_filename(name: &str) -> bool {
+    matches!(name, "AGENTS.md" | "AGENTS.local.md" | "AGENTS.override.md")
+}
+
 /// Returns true if the file is inside a documentation directory that
 /// is unlikely to contain agent configuration files. This prevents
 /// false positives from XML tags, broken links, and cross-platform
@@ -144,6 +171,12 @@ fn is_under_cursor_agents(path: &Path) -> bool {
 /// `.roo/rules/*.md`.
 fn is_under_roo_rules(path: &Path) -> bool {
     path_contains_consecutive_components(path, ".roo", "rules")
+}
+
+/// Returns true if the path contains `.agents/checks` as consecutive
+/// components anywhere in the path.
+fn is_under_agents_checks(path: &Path) -> bool {
+    path_contains_consecutive_components_ci(path, ".agents", "checks")
 }
 
 /// Returns true if the path has a parent directory starting with `rules-`
@@ -207,12 +240,25 @@ pub fn detect_file_type(path: &Path) -> FileType {
     }
 
     match filename {
+        // Amp code review checks (.agents/checks/**/*.md), excluding AGENTS
+        // variants so AGENTS.md keeps ClaudeMd validator coverage.
+        name if name.ends_with(".md")
+            && is_under_agents_checks(path)
+            && !is_agents_instruction_filename(name) =>
+        {
+            FileType::AmpCheck
+        }
         "SKILL.md" if is_roo_mode_rules(path, parent, grandparent) => FileType::RooModeRules,
         "SKILL.md" if is_under_roo_rules(path) => FileType::RooRules,
         "SKILL.md" => FileType::Skill,
         "CLAUDE.md" | "CLAUDE.local.md" | "AGENTS.md" | "AGENTS.local.md"
         | "AGENTS.override.md" => FileType::ClaudeMd,
-        "settings.json" | "settings.local.json" if parent == Some(".gemini") => {
+        "settings.json" | "settings.local.json" if parent_eq_ignore_ascii_case(parent, ".amp") => {
+            FileType::AmpSettings
+        }
+        "settings.json" | "settings.local.json"
+            if parent_eq_ignore_ascii_case(parent, ".gemini") =>
+        {
             FileType::GeminiSettings
         }
         "settings.json" | "settings.local.json" => FileType::Hooks,
@@ -612,6 +658,42 @@ mod tests {
     }
 
     #[test]
+    fn detect_amp_check() {
+        assert_eq!(
+            detect_file_type(Path::new(".agents/checks/security.md")),
+            FileType::AmpCheck
+        );
+        assert_eq!(
+            detect_file_type(Path::new("apps/web/.agents/checks/api/auth.md")),
+            FileType::AmpCheck
+        );
+        assert_eq!(
+            detect_file_type(Path::new(".agents/checks/SKILL.md")),
+            FileType::AmpCheck
+        );
+    }
+
+    #[test]
+    fn detect_agents_filename_under_checks_is_claude_md() {
+        assert_eq!(
+            detect_file_type(Path::new(".agents/checks/AGENTS.md")),
+            FileType::ClaudeMd
+        );
+    }
+
+    #[test]
+    fn detect_amp_check_not_under_checks() {
+        assert_ne!(
+            detect_file_type(Path::new(".agents/skills/security.md")),
+            FileType::AmpCheck
+        );
+        assert_ne!(
+            detect_file_type(Path::new("agents/checks/security.md")),
+            FileType::AmpCheck
+        );
+    }
+
+    #[test]
     fn detect_cursor_rule() {
         assert_eq!(
             detect_file_type(Path::new(".cursor/rules/custom.mdc")),
@@ -864,6 +946,38 @@ mod tests {
         assert_eq!(
             detect_file_type(Path::new(".gemini/settings.local.json")),
             FileType::GeminiSettings
+        );
+        assert_eq!(
+            detect_file_type(Path::new(".GEMINI/settings.json")),
+            FileType::GeminiSettings
+        );
+        assert_eq!(
+            detect_file_type(Path::new(".GeMiNi/settings.local.json")),
+            FileType::GeminiSettings
+        );
+    }
+
+    #[test]
+    fn detect_amp_settings() {
+        assert_eq!(
+            detect_file_type(Path::new(".amp/settings.json")),
+            FileType::AmpSettings
+        );
+        assert_eq!(
+            detect_file_type(Path::new(".amp/settings.local.json")),
+            FileType::AmpSettings
+        );
+        assert_eq!(
+            detect_file_type(Path::new(".AMP/settings.json")),
+            FileType::AmpSettings
+        );
+    }
+
+    #[test]
+    fn detect_amp_check_case_insensitive_path() {
+        assert_eq!(
+            detect_file_type(Path::new(".AGENTS/CHECKS/security.md")),
+            FileType::AmpCheck
         );
     }
 

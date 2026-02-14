@@ -1361,6 +1361,26 @@ fn test_tools_array_overrides_target() {
 }
 
 #[test]
+fn test_tools_array_amp_tool_enables_amp_rules() {
+    let mut config = LintConfig::default();
+    config.tools = vec!["amp".to_string()];
+
+    assert!(config.is_rule_enabled("AMP-001"));
+    assert!(!config.is_rule_enabled("CUR-001"));
+    assert!(config.is_rule_enabled("AS-001"));
+}
+
+#[test]
+fn test_tools_array_amp_respects_disabled_rules() {
+    let mut config = LintConfig::default();
+    config.tools = vec!["amp".to_string()];
+    config.rules.disabled_rules = vec!["AMP-001".to_string()];
+
+    assert!(!config.is_rule_enabled("AMP-001"));
+    assert!(config.is_rule_enabled("AMP-002"));
+}
+
+#[test]
 fn test_tools_toml_deserialization() {
     let toml_str = r#"
 severity = "Warning"
@@ -2160,6 +2180,7 @@ fn test_rule_filter_category_checked_third() {
     // Skills category disabled
     assert!(!config.is_rule_enabled("AS-001"));
     assert!(!config.is_rule_enabled("CC-SK-001"));
+    assert!(!config.is_rule_enabled("AMP-001"));
 
     // Other categories still enabled
     assert!(config.is_rule_enabled("CC-HK-001"));
@@ -2339,6 +2360,7 @@ fn test_validate_valid_disabled_rules() {
         "XML-001".to_string(),
         "REF-001".to_string(),
         "VER-001".to_string(),
+        "AMP-001".to_string(),
     ];
 
     let warnings = config.validate();
@@ -2380,6 +2402,7 @@ fn test_validate_valid_tools() {
         "codex".to_string(),
         "copilot".to_string(),
         "github-copilot".to_string(),
+        "amp".to_string(),
         "generic".to_string(),
     ];
 

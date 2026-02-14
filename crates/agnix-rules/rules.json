@@ -1,7 +1,7 @@
 {
   "description": "Machine-readable source of truth for all validation rules. When adding a new rule, add it here AND in VALIDATION-RULES.md. CI parity tests enforce sync.",
   "version": "1.1.0",
-  "total_rules": 216,
+  "total_rules": 220,
   "last_updated": "2026-02-14",
   "schema": {
     "evidence": {
@@ -5892,6 +5892,114 @@
       },
       "good_example": "---\nname: code-review\ndescription: Reviews code for quality issues\n---\nReview the code for bugs and style issues.",
       "bad_example": "---\nname: code-review\ndescription: Reviews code for quality issues\nmodel: opus\ncontext: fork\nagent: general-purpose\n---\nReview the code for bugs and style issues."
+    },
+    {
+      "id": "AMP-001",
+      "name": "Invalid Amp Check Frontmatter",
+      "severity": "HIGH",
+      "category": "amp-checks",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://ampcode.com/manual#code-review-checks"
+        ],
+        "verified_on": "2026-02-14",
+        "applies_to": {
+          "tool": "amp"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      },
+      "good_example": "---\nname: security-review\ndescription: Review security-sensitive changes\nseverity-default: high\ntools:\n  - rg\n---\n# Security Review\n\nReview auth, secrets, and shell execution paths.",
+      "bad_example": "---\ndescription: Review security-sensitive changes\nunknownKey: true\n---\n# Security Review\n\nMissing required name field."
+    },
+    {
+      "id": "AMP-002",
+      "name": "Invalid Amp severity-default",
+      "severity": "MEDIUM",
+      "category": "amp-checks",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://ampcode.com/manual#code-review-checks"
+        ],
+        "verified_on": "2026-02-14",
+        "applies_to": {
+          "tool": "amp"
+        },
+        "normative_level": "SHOULD",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      },
+      "good_example": "---\nname: security-review\nseverity-default: high\n---\n# Security Review\n\nReview auth and secret handling.",
+      "bad_example": "---\nname: security-review\nseverity-default: urgent\n---\n# Security Review\n\nInvalid severity-default value."
+    },
+    {
+      "id": "AMP-003",
+      "name": "Invalid AGENTS.md globs Frontmatter for Amp",
+      "severity": "MEDIUM",
+      "category": "amp-checks",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://ampcode.com/manual#settings"
+        ],
+        "verified_on": "2026-02-14",
+        "applies_to": {
+          "tool": "amp"
+        },
+        "normative_level": "SHOULD",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      },
+      "good_example": "---\nglobs:\n  - \"src/**/*.rs\"\n---\n# AGENTS\n\nProject instructions for Amp.",
+      "bad_example": "---\nglobs: \"[broken\"\n---\n# AGENTS\n\nInvalid glob syntax."
+    },
+    {
+      "id": "AMP-004",
+      "name": "Invalid Amp Settings Configuration",
+      "severity": "HIGH",
+      "category": "amp-checks",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://ampcode.com/manual#settings"
+        ],
+        "verified_on": "2026-02-14",
+        "applies_to": {
+          "tool": "amp"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      },
+      "good_example": "{\n  \"model\": \"amp-default\",\n  \"notify\": true\n}",
+      "bad_example": "{\n  \"model\": \"amp-default\",\n  \"unknownKey\": true\n}"
     }
   ],
   "categories": {
@@ -5907,7 +6015,7 @@
     },
     "claude-hooks": {
       "prefix": "CC-HK",
-      "count": 18,
+      "count": 19,
       "description": "Claude Code Hooks rules"
     },
     "claude-agents": {
@@ -5932,37 +6040,37 @@
     },
     "mcp": {
       "prefix": "MCP",
-      "count": 12,
+      "count": 24,
       "description": "Model Context Protocol rules"
     },
     "copilot": {
       "prefix": "COP",
-      "count": 6,
+      "count": 17,
       "description": "GitHub Copilot rules"
     },
     "cursor": {
       "prefix": "CUR",
-      "count": 9,
+      "count": 16,
       "description": "Cursor project rules"
     },
     "cline": {
       "prefix": "CLN",
-      "count": 3,
+      "count": 4,
       "description": "Cline rules validation"
     },
     "opencode": {
       "prefix": "OC",
-      "count": 3,
+      "count": 8,
       "description": "OpenCode configuration rules"
     },
     "gemini-cli": {
       "prefix": "GM",
-      "count": 3,
+      "count": 9,
       "description": "Gemini CLI instruction file rules"
     },
     "codex": {
       "prefix": "CDX",
-      "count": 4,
+      "count": 6,
       "description": "Codex CLI configuration validation"
     },
     "roo-code": {
@@ -5977,17 +6085,17 @@
     },
     "references": {
       "prefix": "REF",
-      "count": 2,
+      "count": 4,
       "description": "Reference/import validation rules"
     },
     "prompt-engineering": {
       "prefix": "PE",
-      "count": 4,
+      "count": 6,
       "description": "Prompt engineering rules"
     },
     "cross-platform": {
       "prefix": "XP",
-      "count": 7,
+      "count": 8,
       "description": "Cross-platform compatibility rules"
     },
     "cursor-skills": {
@@ -6044,6 +6152,11 @@
       "prefix": "VER",
       "count": 1,
       "description": "Version-aware validation rules"
+    },
+    "amp-checks": {
+      "prefix": "AMP",
+      "count": 4,
+      "description": "Amp code review checks and settings rules"
     }
   },
   "authoring": {
