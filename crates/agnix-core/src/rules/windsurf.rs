@@ -240,6 +240,21 @@ mod tests {
     }
 
     #[test]
+    fn test_ws_003_whitespace_only() {
+        let diagnostics = validate_workflow("   \n\n  ");
+        let ws_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "WS-003").collect();
+        assert_eq!(ws_003.len(), 1);
+    }
+
+    #[test]
+    fn test_ws_003_workflow_at_limit() {
+        let content = "y".repeat(WORKFLOW_CHAR_LIMIT);
+        let diagnostics = validate_workflow(&content);
+        let ws_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "WS-003").collect();
+        assert!(ws_003.is_empty(), "Exactly at limit should not trigger");
+    }
+
+    #[test]
     fn test_ws_003_valid_workflow() {
         let diagnostics = validate_workflow("# Deploy\nRun deploy steps.");
         let ws_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "WS-003").collect();
@@ -265,6 +280,25 @@ mod tests {
         assert_eq!(ws_004.len(), 1);
         assert_eq!(ws_004[0].level, DiagnosticLevel::Info);
         assert!(ws_004[0].message.contains("Legacy"));
+    }
+
+    #[test]
+    fn test_ws_004_legacy_empty() {
+        let diagnostics = validate_legacy("");
+        let ws_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "WS-004").collect();
+        assert_eq!(ws_004.len(), 1, "WS-004 should trigger even on empty legacy file");
+        assert_eq!(ws_004[0].level, DiagnosticLevel::Info);
+    }
+
+    #[test]
+    fn test_ws_004_legacy_only_one_diagnostic() {
+        let diagnostics = validate_legacy("Some rules content");
+        assert_eq!(
+            diagnostics.len(),
+            1,
+            "Legacy file should produce exactly 1 diagnostic (WS-004)"
+        );
+        assert_eq!(diagnostics[0].rule, "WS-004");
     }
 
     #[test]
