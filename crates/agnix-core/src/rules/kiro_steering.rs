@@ -115,7 +115,15 @@ impl Validator for KiroSteeringValidator {
             if let Some(mode) = inclusion_str {
                 match mode {
                     "auto" => {
-                        if !mapping.contains_key(&key_name) {
+                        let name_valid = mapping
+                            .get(&key_name)
+                            .and_then(|v| v.as_str())
+                            .is_some_and(|s| !s.trim().is_empty());
+                        let desc_valid = mapping
+                            .get(&key_description)
+                            .and_then(|v| v.as_str())
+                            .is_some_and(|s| !s.trim().is_empty());
+                        if !name_valid {
                             diagnostics.push(
                                 Diagnostic::error(
                                     path.to_path_buf(),
@@ -127,7 +135,7 @@ impl Validator for KiroSteeringValidator {
                                 .with_suggestion(t!("rules.kiro_002_auto.suggestion")),
                             );
                         }
-                        if !mapping.contains_key(&key_description) {
+                        if !desc_valid {
                             diagnostics.push(
                                 Diagnostic::error(
                                     path.to_path_buf(),
@@ -491,6 +499,26 @@ mod tests {
         let kiro_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "KIRO-001").collect();
         assert_eq!(kiro_001.len(), 1);
         assert_eq!(kiro_001[0].level, DiagnosticLevel::Error);
+    }
+
+    #[test]
+    fn test_kiro_002_auto_empty_name_flagged() {
+        // Empty string name should be flagged
+        let content = "---\ninclusion: auto\nname: \"\"\ndescription: test desc\n---\n# Steering\n";
+        let diagnostics = validate_steering(content);
+        let kiro_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "KIRO-002").collect();
+        assert_eq!(kiro_002.len(), 1);
+        assert!(kiro_002[0].message.contains("name"));
+    }
+
+    #[test]
+    fn test_kiro_002_auto_null_name_flagged() {
+        // Null/non-string name should be flagged
+        let content = "---\ninclusion: auto\nname: null\ndescription: test desc\n---\n# Steering\n";
+        let diagnostics = validate_steering(content);
+        let kiro_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "KIRO-002").collect();
+        assert_eq!(kiro_002.len(), 1);
+        assert!(kiro_002[0].message.contains("name"));
     }
 
     #[test]
