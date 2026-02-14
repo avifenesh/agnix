@@ -1,6 +1,6 @@
 # Rules Reference
 
-This section contains all `212` validation rules generated from `knowledge-base/rules.json`.
+This section contains all `216` validation rules generated from `knowledge-base/rules.json`.
 `59` rules have automatic fixes.
 
 | Rule | Name | Severity | Category | Auto-Fix |
@@ -211,6 +211,10 @@ This section contains all `212` validation rules generated from `knowledge-base/
 | [AMP-SK-001](./generated/amp-sk-001.md) | Amp Skill Uses Unsupported Field | MEDIUM | Amp Skills | Yes (safe/unsafe) |
 | [RC-SK-001](./generated/rc-sk-001.md) | Roo Code Skill Uses Unsupported Field | MEDIUM | Roo Code Skills | Yes (safe/unsafe) |
 | [XP-SK-001](./generated/xp-sk-001.md) | Skill Uses Client-Specific Features | LOW | Cross-Platform | No |
+| [WS-001](./generated/ws-001.md) | Empty Windsurf Rule File | MEDIUM | Windsurf | No |
+| [WS-002](./generated/ws-002.md) | Windsurf Rule File Exceeds Character Limit | HIGH | Windsurf | No |
+| [WS-003](./generated/ws-003.md) | Empty or Oversized Windsurf Workflow File | MEDIUM | Windsurf | No |
+| [WS-004](./generated/ws-004.md) | Legacy .windsurfrules File Detected | LOW | Windsurf | No |
 | [ROO-001](./generated/roo-001.md) | Empty Roo Code Rule File | HIGH | Roo Code | No |
 | [ROO-002](./generated/roo-002.md) | Invalid .roomodes Configuration | HIGH | Roo Code | No |
 | [ROO-003](./generated/roo-003.md) | Invalid .rooignore File | MEDIUM | Roo Code | No |

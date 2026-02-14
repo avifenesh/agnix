@@ -126,6 +126,7 @@ def main() -> int:
         "gemini-cli": "Gemini CLI",
         "codex": "Codex CLI",
         "version-awareness": "Version Awareness",
+        "windsurf": "Windsurf",
     }
 
     index_path = ROOT / "knowledge-base" / "INDEX.md"
@@ -216,6 +217,7 @@ def main() -> int:
         "Copilot Skills": ["copilot-skills"],
         "Codex Skills": ["codex-skills"],
         "OpenCode Skills": ["opencode-skills"],
+        "Windsurf": ["windsurf"],
         "Windsurf Skills": ["windsurf-skills"],
         "Kiro Skills": ["kiro-skills"],
         "Amp Skills": ["amp-skills"],

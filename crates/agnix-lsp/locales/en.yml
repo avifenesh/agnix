@@ -634,6 +634,23 @@ rules:
     type_error: "Field 'project_doc_max_bytes' must be a positive integer"
     suggestion: "Set project_doc_max_bytes to 65536 or less (default: 32768)"
 
+  # --- Windsurf (windsurf.rs) ---
+  ws_001:
+    message: "Windsurf rule file is empty"
+    suggestion: "Add rule content to the file"
+  ws_002:
+    message: "Windsurf rule file exceeds %{limit} character limit (%{len} characters)"
+    suggestion: "Reduce content length or split into multiple rule files"
+  ws_003_empty:
+    message: "Windsurf workflow file is empty"
+    suggestion: "Add workflow steps to the file"
+  ws_003_too_long:
+    message: "Windsurf workflow file exceeds %{limit} character limit (%{len} characters)"
+    suggestion: "Reduce content length or split into multiple workflow files"
+  ws_004:
+    message: "Legacy .windsurfrules file detected"
+    suggestion: "Migrate to .windsurf/rules/ directory with individual .md files"
+
   # --- Prompt engineering (prompt.rs) ---
   pe_001:
     message: "Critical keyword '%{keyword}' at %{percent} percent of document (40-60 percent is the 'lost in the middle' zone)"

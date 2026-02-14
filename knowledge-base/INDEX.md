@@ -1,6 +1,6 @@
 # agnix Knowledge Base - Master Index
 
-> 212 validation rules across 29 categories, sourced from 75+ references
+> 216 validation rules across 30 categories, sourced from 75+ references
 
 
 ---
@@ -9,7 +9,7 @@
 
 | What You Need | Start Here |
 |---------------|------------|
-| **Implement validator** | [VALIDATION-RULES.md](./VALIDATION-RULES.md) - 212 rules with detection logic |
+| **Implement validator** | [VALIDATION-RULES.md](./VALIDATION-RULES.md) - 216 rules with detection logic |
 
 | **Understand a standard** | [standards/](#standards) - HARD-RULES files |
 | **Learn best practices** | [standards/](#standards) - OPINIONS files |
@@ -28,7 +28,7 @@
 knowledge-base/
 ├── INDEX.md                        # This file
 ├── README.md                       # Detailed navigation guide
-├── VALIDATION-RULES.md             # ⭐ Master validation reference (212 rules)
+├── VALIDATION-RULES.md             # ⭐ Master validation reference (216 rules)
 
 ├── PATTERNS-CATALOG.md             # 70 production-tested patterns
 ├── RESEARCH-TRACKING.md            # Tool inventory and monitoring process
@@ -81,7 +81,13 @@ knowledge-base/
 | **AGENTS.md** | 5 | - | - | 6 rules |
 | **Cursor** | 2 | - | - | 9 rules |
 | **agentsys** | 12 | - | - | 70 patterns |
+<<<<<<< HEAD
 | **Total** | **75+** | **117KB** | **160KB** | **212 rules** |
+||||||| 664c21f
+| **Total** | **75+** | **117KB** | **160KB** | **207 rules** |
+=======
+| **Total** | **75+** | **117KB** | **160KB** | **211 rules** |
+>>>>>>> origin/main
 
 
 ### Validation Rules by Category
@@ -117,7 +123,14 @@ knowledge-base/
 | Amp Skills | 1 | 0 | 1 | 0 | 1 |
 | Roo Code Skills | 1 | 0 | 1 | 0 | 1 |
 | Roo Code | 6 | 3 | 3 | 0 | 0 |
+<<<<<<< HEAD
 | **TOTAL** | **212** | **129** | **76** | **7** | **59** |
+||||||| 664c21f
+| **TOTAL** | **207** | **129** | **71** | **7** | **59** |
+=======
+| Windsurf | 4 | 1 | 2 | 1 | 0 |
+| **TOTAL** | **211** | **130** | **73** | **8** | **59** |
+>>>>>>> origin/main
 
 
 ---
@@ -155,7 +168,13 @@ knowledge-base/
 
 ### For Implementation
 
+<<<<<<< HEAD
 **Start here**: [VALIDATION-RULES.md](./VALIDATION-RULES.md) - 212 rules with rule IDs (AS-001, CC-HK-001, etc.)
+||||||| 664c21f
+**Start here**: [VALIDATION-RULES.md](./VALIDATION-RULES.md) - 207 rules with rule IDs (AS-001, CC-HK-001, etc.)
+=======
+**Start here**: [VALIDATION-RULES.md](./VALIDATION-RULES.md) - 211 rules with rule IDs (AS-001, CC-HK-001, etc.)
+>>>>>>> origin/main
 
 - Detection pseudocode
 - Auto-fix implementations
@@ -281,7 +300,13 @@ Total Size:           650KB
 Standards Covered:     5 (Agent Skills, MCP, Claude Code, Multi-Platform, Prompt Eng)
 Sources Consulted:    75+ (specs, docs, research papers, repos)
 Research Agents:       5 (10+ sources each)
+<<<<<<< HEAD
 Validation Rules:     212 rules
+||||||| 664c21f
+Validation Rules:     207 rules
+=======
+Validation Rules:     211 rules
+>>>>>>> origin/main
 Auto-Fixable Rules:   49 rules
 
 Test Fixtures:        116 files

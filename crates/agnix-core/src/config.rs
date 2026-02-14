@@ -480,6 +480,11 @@ pub struct RuleConfig {
     #[schemars(description = "Enable Roo Code validation rules (ROO-*)")]
     pub roo_code: bool,
 
+    /// Enable Windsurf validation (WS-*)
+    #[serde(default = "default_true")]
+    #[schemars(description = "Enable Windsurf validation rules (WS-*)")]
+    pub windsurf: bool,
+
     /// Enable prompt engineering validation (PE-*)
     #[serde(default = "default_true")]
     #[schemars(description = "Enable prompt engineering validation rules (PE-*)")]
@@ -540,6 +545,7 @@ impl Default for RuleConfig {
             gemini_md: true,
             codex: true,
             roo_code: true,
+            windsurf: true,
             prompt_engineering: true,
             generic_instructions: true,
             frontmatter_validation: true,

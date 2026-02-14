@@ -31,6 +31,7 @@ CATEGORY_LABELS: Dict[str, str] = {
     "cursor": "Cursor",
     "cline": "Cline",
     "codex": "Codex CLI",
+    "windsurf": "Windsurf",
     "gemini-cli": "Gemini CLI",
     "opencode": "OpenCode",
     "version-awareness": "Version Awareness",
@@ -131,6 +132,11 @@ TEMPLATES: Dict[str, Dict[str, str]] = {
         "invalid": "",
         "valid": "[model]\nmodel = \"o4-mini\"\n",
         "lang": "toml",
+    },
+    "windsurf": {
+        "invalid": "",
+        "valid": "# TypeScript Guidelines\n\nUse strict mode and explicit types.\n",
+        "lang": "markdown",
     },
     "gemini-cli": {
         "invalid": "# Gemini\n",

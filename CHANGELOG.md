@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Cross-platform and reference validation expansion**: 5 new rules - XP-007 (AGENTS.md exceeds Codex CLI 32KB byte limit), REF-003 (duplicate @import detection), REF-004 (non-markdown @import warning), PE-005 (redundant LLM instructions), PE-006 (negative instructions without positive alternatives)
 - **Roo Code support**: 6 new validation rules (ROO-001 through ROO-006) for `.roorules`, `.roomodes`, `.rooignore`, `.roo/rules/*.md`, `.roo/rules-{slug}/*.md`, and `.roo/mcp.json` configuration files
 - **Cursor expanded coverage**: Added 7 new validation rules (CUR-010 through CUR-016) for `.cursor/hooks.json`, `.cursor/agents/**/*.md`, and `.cursor/environment.json`, including stricter field validation and case-insensitive path detection.
+- **Windsurf support**: Added 4 validation rules (WS-001 through WS-004) for `.windsurf/rules/*.md` and `.windsurf/workflows/*.md` directories, plus legacy `.windsurfrules` detection. Includes file type detection, character limit enforcement (12,000), and empty file warnings.
 - **Gemini CLI expanded coverage**: Added 6 new validation rules (GM-004 through GM-009) for .gemini/settings.json hooks configuration, gemini-extension.json manifests, and .geminiignore files. Added 3 new file type detectors and validators.
 - **Codex CLI expanded validation**: CDX-004 (unknown config keys), CDX-005 (`project_doc_max_bytes` exceeds 65536 limit); updated CDX source_urls to official docs
 - **OpenCode expanded validation**: OC-004 (unknown config keys), OC-006 (remote instruction URL timeout warning), OC-007 (invalid agent definition), OC-008 (invalid permission configuration), OC-009 (variable substitution syntax validation)
@@ -536,7 +537,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Quick-fix code actions from Fix objects
   - Hover documentation for frontmatter fields
   - Document content caching for performance
-  - Supports all 212 agnix validation rules with severity mapping
+  - Supports all 216 agnix validation rules with severity mapping
 
   - Workspace boundary validation for security (prevents path traversal)
   - Config caching optimization for performance
@@ -552,7 +553,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Case-insensitive tool name matching
   - Takes precedence over legacy `target` field for flexibility
 - VS Code extension with full LSP integration (#22)
-  - Real-time diagnostics for all 212 validation rules
+  - Real-time diagnostics for all 216 validation rules
 
   - Status bar indicator showing agnix validation status
   - Syntax highlighting for SKILL.md YAML frontmatter

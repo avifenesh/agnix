@@ -1,7 +1,7 @@
 {
   "description": "Machine-readable source of truth for all validation rules. When adding a new rule, add it here AND in VALIDATION-RULES.md. CI parity tests enforce sync.",
   "version": "1.1.0",
-  "total_rules": 212,
+  "total_rules": 216,
   "last_updated": "2026-02-14",
   "schema": {
     "evidence": {
@@ -5468,6 +5468,114 @@
       "bad_example": "# .agnix.toml\n\n[rules]\nprompt_engineering = true\n\n# No tool_versions or spec_revisions pinned"
     },
     {
+      "id": "WS-001",
+      "name": "Empty Windsurf Rule File",
+      "severity": "MEDIUM",
+      "category": "windsurf",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://docs.windsurf.com/windsurf/cascade/memories"
+        ],
+        "verified_on": "2026-02-14",
+        "applies_to": {
+          "tool": "windsurf"
+        },
+        "normative_level": "SHOULD",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      },
+      "good_example": "# TypeScript Guidelines\nUse strict mode and explicit types.",
+      "bad_example": ""
+    },
+    {
+      "id": "WS-002",
+      "name": "Windsurf Rule File Exceeds Character Limit",
+      "severity": "HIGH",
+      "category": "windsurf",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://docs.windsurf.com/windsurf/cascade/memories"
+        ],
+        "verified_on": "2026-02-14",
+        "applies_to": {
+          "tool": "windsurf"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      },
+      "good_example": "# TypeScript Guidelines\nUse strict mode and explicit types.",
+      "bad_example": "# Very long rule file exceeding 12000 characters..."
+    },
+    {
+      "id": "WS-003",
+      "name": "Empty or Oversized Windsurf Workflow File",
+      "severity": "MEDIUM",
+      "category": "windsurf",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://docs.windsurf.com/windsurf/cascade/memories"
+        ],
+        "verified_on": "2026-02-14",
+        "applies_to": {
+          "tool": "windsurf"
+        },
+        "normative_level": "SHOULD",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      },
+      "good_example": "# Deploy Workflow\nRun deployment steps.",
+      "bad_example": ""
+    },
+    {
+      "id": "WS-004",
+      "name": "Legacy .windsurfrules File Detected",
+      "severity": "LOW",
+      "category": "windsurf",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://docs.windsurf.com/windsurf/cascade/memories"
+        ],
+        "verified_on": "2026-02-14",
+        "applies_to": {
+          "tool": "windsurf"
+        },
+        "normative_level": "BEST_PRACTICE",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      },
+      "good_example": "# .windsurf/rules/typescript.md\n# TypeScript Guidelines\nUse strict mode.",
+      "bad_example": "# .windsurfrules (legacy file)\nUse strict mode."
+    },
+    {
       "id": "WS-SK-001",
       "name": "Windsurf Skill Uses Unsupported Field",
       "severity": "MEDIUM",
@@ -5857,6 +5965,11 @@
       "count": 4,
       "description": "Codex CLI configuration validation"
     },
+    "roo-code": {
+      "prefix": "ROO",
+      "count": 6,
+      "description": "Roo Code rules and configuration validation"
+    },
     "xml": {
       "prefix": "XML",
       "count": 3,
@@ -5906,6 +6019,11 @@
       "prefix": "WS-SK",
       "count": 1,
       "description": "Windsurf per-client skill rules"
+    },
+    "windsurf": {
+      "prefix": "WS",
+      "count": 4,
+      "description": "Windsurf rules, workflows, and legacy file validation"
     },
     "kiro-skills": {
       "prefix": "KR-SK",

@@ -1500,6 +1500,38 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 
 ---
 
+## WINDSURF RULES
+
+<a id="ws-001"></a>
+### WS-001 [MEDIUM] Empty Windsurf Rule File
+**Requirement**: Windsurf rule files in `.windsurf/rules/` SHOULD have content
+**Detection**: File is empty or whitespace-only
+**Fix**: Add rule content to the file
+**Source**: docs.windsurf.com/windsurf/cascade/memories
+
+<a id="ws-002"></a>
+### WS-002 [HIGH] Windsurf Rule File Exceeds Character Limit
+**Requirement**: Windsurf rule files MUST be under 12000 characters
+**Detection**: File content length exceeds 12000 characters
+**Fix**: Reduce content length or split into multiple rule files
+**Source**: docs.windsurf.com/windsurf/cascade/memories
+
+<a id="ws-003"></a>
+### WS-003 [MEDIUM] Empty or Oversized Windsurf Workflow File
+**Requirement**: Windsurf workflow files in `.windsurf/workflows/` SHOULD have content and be under 12000 characters
+**Detection**: File is empty or exceeds 12000 characters
+**Fix**: Add workflow steps or reduce content length
+**Source**: docs.windsurf.com/windsurf/cascade/memories
+
+<a id="ws-004"></a>
+### WS-004 [LOW] Legacy .windsurfrules File Detected
+**Requirement**: Projects SHOULD migrate from `.windsurfrules` to `.windsurf/rules/` directory format
+**Detection**: File named `.windsurfrules`
+**Fix**: Migrate to `.windsurf/rules/` directory with individual `.md` files
+**Source**: docs.windsurf.com/windsurf/cascade/memories
+
+---
+
 ## UNIVERSAL RULES (XML)
 
 <a id="xml-001"></a>
@@ -1831,6 +1863,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | OpenCode | 8 | 4 | 3 | 1 | 1 |
 | Gemini CLI | 9 | 3 | 4 | 2 | 3 |
 | Codex CLI | 6 | 4 | 2 | 0 | 2 |
+| Windsurf | 4 | 1 | 2 | 1 | 0 |
 | MCP | 24 | 19 | 5 | 0 | 4 |
 | XML | 3 | 3 | 0 | 0 | 3 |
 | References | 4 | 2 | 2 | 0 | 0 |
@@ -1848,6 +1881,11 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | Roo Code | 6 | 3 | 3 | 0 | 0 |
 | Version Awareness | 1 | 0 | 0 | 1 | 0 |
 | **TOTAL** | **212** | **129** | **76** | **7** | **49** |
+||||||| 664c21f
+| **TOTAL** | **207** | **129** | **71** | **7** | **49** |
+=======
+| **TOTAL** | **211** | **130** | **73** | **8** | **49** |
+>>>>>>> origin/main
 
 
 ---
@@ -1877,8 +1915,9 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 
 ---
 
-****Total Coverage**: 212 validation rules across 28 categories
+<<<<<<< HEAD
+****Total Coverage**: 216 validation rules across 28 categories
 
 **Knowledge Base**: 11,036 lines, 320KB, 75+ sources
-**Certainty**: 124 HIGH, 69 MEDIUM, 7 LOW
-**Auto-Fixable**: 59 rules (30%)
+**Certainty**: 130 HIGH, 73 MEDIUM, 8 LOW
+**Auto-Fixable**: 59 rules (29%)
