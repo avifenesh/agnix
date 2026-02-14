@@ -25,6 +25,27 @@ const RULE_IDS: &[&str] = &[
 
 pub struct ClaudeMdValidator;
 
+fn is_path_under_cursor_rules(path: &Path) -> bool {
+    path.components()
+        .zip(path.components().skip(1))
+        .any(|(a, b)| {
+            matches!(
+                (a, b),
+                (std::path::Component::Normal(a_os), std::path::Component::Normal(b_os))
+                if a_os == ".cursor" && b_os == "rules"
+            )
+        })
+}
+
+fn is_cursor_rules_file(path: &Path) -> bool {
+    let filename = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
+    if matches!(filename, ".cursorrules" | ".cursorrules.md") {
+        return true;
+    }
+
+    (filename.ends_with(".md") || filename.ends_with(".mdc")) && is_path_under_cursor_rules(path)
+}
+
 impl Validator for ClaudeMdValidator {
     fn metadata(&self) -> ValidatorMetadata {
         ValidatorMetadata {
@@ -40,9 +61,7 @@ impl Validator for ClaudeMdValidator {
         // Skip AGENTS.* files - CC-MEM rules are Claude-specific.
         let filename = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
         let is_claude_md = matches!(filename, "CLAUDE.md" | "CLAUDE.local.md");
-        let is_cursor_rules = filename == ".cursorrules"
-            || filename == ".cursorrules.md"
-            || filename.ends_with(".mdc");
+        let is_cursor_rules = is_cursor_rules_file(path);
         if !is_claude_md && !is_cursor_rules {
             return diagnostics;
         }
@@ -337,6 +356,34 @@ mod tests {
             !diagnostics.is_empty(),
             "CC-MEM rules should fire for CLAUDE.local.md"
         );
+        assert!(diagnostics.iter().any(|d| d.rule == "CC-MEM-005"));
+    }
+
+    #[test]
+    fn test_cursor_rules_mdc_gets_rules() {
+        let content = "Be helpful and accurate when responding.";
+        let validator = ClaudeMdValidator;
+        let diagnostics = validator.validate(
+            Path::new(".cursor/rules/typescript.mdc"),
+            content,
+            &LintConfig::default(),
+        );
+
+        assert!(!diagnostics.is_empty());
+        assert!(diagnostics.iter().any(|d| d.rule == "CC-MEM-005"));
+    }
+
+    #[test]
+    fn test_cursor_rules_md_gets_rules() {
+        let content = "Be helpful and accurate when responding.";
+        let validator = ClaudeMdValidator;
+        let diagnostics = validator.validate(
+            Path::new(".cursor/rules/typescript.md"),
+            content,
+            &LintConfig::default(),
+        );
+
+        assert!(!diagnostics.is_empty());
         assert!(diagnostics.iter().any(|d| d.rule == "CC-MEM-005"));
     }
 

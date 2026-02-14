@@ -2558,7 +2558,15 @@ fn test_detect_cursor_rule() {
         FileType::CursorRule
     );
     assert_eq!(
+        detect_file_type(Path::new(".cursor/rules/typescript.md")),
+        FileType::CursorRule
+    );
+    assert_eq!(
         detect_file_type(Path::new("project/.cursor/rules/rust.mdc")),
+        FileType::CursorRule
+    );
+    assert_eq!(
+        detect_file_type(Path::new("project/.cursor/rules/frontend/rust.md")),
         FileType::CursorRule
     );
 }
@@ -2586,13 +2594,21 @@ fn test_detect_cursor_legacy() {
 
 #[test]
 fn test_cursor_not_detected_outside_cursor_dir() {
-    // .mdc files outside .cursor/rules/ should not be detected as CursorRule
+    // .md/.mdc files outside .cursor/rules/ should not be detected as CursorRule
     assert_ne!(
         detect_file_type(Path::new("rules/typescript.mdc")),
         FileType::CursorRule
     );
     assert_ne!(
+        detect_file_type(Path::new("rules/typescript.md")),
+        FileType::CursorRule
+    );
+    assert_ne!(
         detect_file_type(Path::new(".cursor/typescript.mdc")),
+        FileType::CursorRule
+    );
+    assert_ne!(
+        detect_file_type(Path::new(".cursor/notes.md")),
         FileType::CursorRule
     );
 }

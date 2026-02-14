@@ -38,7 +38,7 @@ pub enum FileType {
     CopilotHooks,
     /// Claude Code rules (.claude/rules/*.md)
     ClaudeRule,
-    /// Cursor project rules (.cursor/rules/*.mdc)
+    /// Cursor project rules (.cursor/rules/*.md, .cursor/rules/*.mdc, including nested dirs)
     CursorRule,
     /// Legacy Cursor rules file (.cursorrules)
     CursorRulesLegacy,
