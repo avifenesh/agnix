@@ -74,6 +74,12 @@ pub enum FileType {
     RooModeRules,
     /// Roo Code MCP configuration (.roo/mcp.json)
     RooMcp,
+    /// Windsurf rule files (.windsurf/rules/*.md)
+    WindsurfRule,
+    /// Windsurf workflow files (.windsurf/workflows/*.md)
+    WindsurfWorkflow,
+    /// Legacy Windsurf rules file (.windsurfrules)
+    WindsurfRulesLegacy,
     /// Other .md files (for XML/import checks)
     GenericMarkdown,
     /// Skip validation
@@ -124,6 +130,9 @@ impl fmt::Display for FileType {
             FileType::RooIgnore => "RooIgnore",
             FileType::RooModeRules => "RooModeRules",
             FileType::RooMcp => "RooMcp",
+            FileType::WindsurfRule => "WindsurfRule",
+            FileType::WindsurfWorkflow => "WindsurfWorkflow",
+            FileType::WindsurfRulesLegacy => "WindsurfRulesLegacy",
             FileType::GenericMarkdown => "GenericMarkdown",
             FileType::Unknown => "Unknown",
         })
@@ -168,6 +177,9 @@ mod tests {
             (FileType::RooIgnore, "RooIgnore"),
             (FileType::RooModeRules, "RooModeRules"),
             (FileType::RooMcp, "RooMcp"),
+            (FileType::WindsurfRule, "WindsurfRule"),
+            (FileType::WindsurfWorkflow, "WindsurfWorkflow"),
+            (FileType::WindsurfRulesLegacy, "WindsurfRulesLegacy"),
             (FileType::GenericMarkdown, "GenericMarkdown"),
             (FileType::Unknown, "Unknown"),
         ];
@@ -211,6 +223,9 @@ mod tests {
             FileType::RooIgnore,
             FileType::RooModeRules,
             FileType::RooMcp,
+            FileType::WindsurfRule,
+            FileType::WindsurfWorkflow,
+            FileType::WindsurfRulesLegacy,
             FileType::GenericMarkdown,
         ];
 

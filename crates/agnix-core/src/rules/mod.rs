@@ -22,6 +22,7 @@ pub mod plugin;
 pub mod prompt;
 pub mod roo;
 pub mod skill;
+pub mod windsurf;
 pub mod xml;
 
 use crate::{config::LintConfig, diagnostics::Diagnostic};

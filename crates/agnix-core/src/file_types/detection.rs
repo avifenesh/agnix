@@ -152,6 +152,19 @@ fn is_under_roo_rules(path: &Path) -> bool {
 fn is_roo_mode_rules(_path: &Path, parent: Option<&str>, grandparent: Option<&str>) -> bool {
     parent.is_some_and(|p| p.starts_with("rules-")) && grandparent == Some(".roo")
 }
+
+/// Returns true if the path contains `.windsurf/rules` as consecutive
+/// components anywhere in the path.
+fn is_under_windsurf_rules(path: &Path) -> bool {
+    path_contains_consecutive_components(path, ".windsurf", "rules")
+}
+
+/// Returns true if the path contains `.windsurf/workflows` as consecutive
+/// components anywhere in the path.
+fn is_under_windsurf_workflows(path: &Path) -> bool {
+    path_contains_consecutive_components(path, ".windsurf", "workflows")
+}
+
 fn is_excluded_filename(name: &str) -> bool {
     EXCLUDED_FILENAMES
         .iter()
@@ -270,6 +283,8 @@ pub fn detect_file_type(path: &Path) -> FileType {
         ".cursorrules" | ".cursorrules.md" => FileType::CursorRulesLegacy,
         // Cline rules single file (.clinerules without extension)
         ".clinerules" => FileType::ClineRules,
+        // Legacy Windsurf rules file (.windsurfrules)
+        ".windsurfrules" => FileType::WindsurfRulesLegacy,
         // Gemini CLI ignore file (.geminiignore)
         ".geminiignore" => FileType::GeminiIgnore,
         // Roo Code custom modes file (.roomodes)
@@ -287,6 +302,14 @@ pub fn detect_file_type(path: &Path) -> FileType {
         // Cline rules folder (.clinerules/*.md)
         name if name.ends_with(".md") && parent == Some(".clinerules") => {
             FileType::ClineRulesFolder
+        }
+        // Windsurf rules (.windsurf/rules/**/*.md)
+        name if name.ends_with(".md") && is_under_windsurf_rules(path) => {
+            FileType::WindsurfRule
+        }
+        // Windsurf workflows (.windsurf/workflows/**/*.md)
+        name if name.ends_with(".md") && is_under_windsurf_workflows(path) => {
+            FileType::WindsurfWorkflow
         }
         // OpenCode configuration (opencode.json)
         "opencode.json" => FileType::OpenCodeConfig,
@@ -995,6 +1018,48 @@ mod tests {
         assert_eq!(
             detect_file_type(Path::new(".claude/mcp.json")),
             FileType::Mcp
+        );
+    }
+
+    // ---- Windsurf detection ----
+
+    #[test]
+    fn detect_windsurf_rule() {
+        assert_eq!(
+            detect_file_type(Path::new(".windsurf/rules/custom.md")),
+            FileType::WindsurfRule
+        );
+    }
+
+    #[test]
+    fn detect_windsurf_rule_nested() {
+        assert_eq!(
+            detect_file_type(Path::new(".windsurf/rules/frontend/style.md")),
+            FileType::WindsurfRule
+        );
+    }
+
+    #[test]
+    fn detect_windsurf_workflow() {
+        assert_eq!(
+            detect_file_type(Path::new(".windsurf/workflows/deploy.md")),
+            FileType::WindsurfWorkflow
+        );
+    }
+
+    #[test]
+    fn detect_windsurf_rules_legacy() {
+        assert_eq!(
+            detect_file_type(Path::new(".windsurfrules")),
+            FileType::WindsurfRulesLegacy
+        );
+    }
+
+    #[test]
+    fn detect_windsurf_other_not_rule() {
+        assert_ne!(
+            detect_file_type(Path::new(".windsurf/README.md")),
+            FileType::WindsurfRule
         );
     }
 }
