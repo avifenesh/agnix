@@ -13,7 +13,10 @@ use crate::{
     config::LintConfig,
     diagnostics::{Diagnostic, Fix},
     rules::{Validator, ValidatorMetadata},
-    schemas::copilot::{is_body_empty, is_content_empty, parse_frontmatter, validate_glob_pattern},
+    schemas::copilot::{
+        is_body_empty, is_content_empty, parse_frontmatter, split_comma_separated_globs,
+        validate_glob_pattern,
+    },
 };
 use rust_i18n::t;
 use std::path::Path;
@@ -199,25 +202,29 @@ impl Validator for CopilotValidator {
         }
 
         // COP-003: Invalid glob pattern
+        // Supports comma-separated globs (e.g. "**/*.ts,**/*.tsx") by
+        // splitting at top-level commas and validating each sub-pattern.
         if config.is_rule_enabled("COP-003") {
             if let Some(ref schema) = parsed.schema {
                 if let Some(ref apply_to) = schema.apply_to {
-                    let validation = validate_glob_pattern(apply_to);
-                    if !validation.valid {
-                        diagnostics.push(
-                            Diagnostic::error(
-                                path.to_path_buf(),
-                                parsed.start_line + 1, // applyTo is typically on line 2
-                                0,
-                                "COP-003",
-                                t!(
-                                    "rules.cop_003.message",
-                                    pattern = apply_to.as_str(),
-                                    error = validation.error.unwrap_or_default()
-                                ),
-                            )
-                            .with_suggestion(t!("rules.cop_003.suggestion")),
-                        );
+                    for pattern in split_comma_separated_globs(apply_to) {
+                        let validation = validate_glob_pattern(pattern);
+                        if !validation.valid {
+                            diagnostics.push(
+                                Diagnostic::error(
+                                    path.to_path_buf(),
+                                    parsed.start_line + 1, // applyTo is typically on line 2
+                                    0,
+                                    "COP-003",
+                                    t!(
+                                        "rules.cop_003.message",
+                                        pattern = pattern,
+                                        error = validation.error.unwrap_or_default()
+                                    ),
+                                )
+                                .with_suggestion(t!("rules.cop_003.suggestion")),
+                            );
+                        }
                     }
                 }
             }
@@ -510,6 +517,80 @@ applyTo: "{}"
             let cop_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "COP-003").collect();
             assert!(cop_003.is_empty(), "Pattern '{}' should be valid", pattern);
         }
+    }
+
+    // ===== COP-003: Comma-Separated Globs =====
+
+    #[test]
+    fn test_cop_003_valid_comma_separated() {
+        let content = "---\napplyTo: \"**/*.ts,**/*.tsx\"\n---\n# Instructions\n";
+        let diagnostics = validate_scoped(content);
+        let cop_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "COP-003").collect();
+        assert!(
+            cop_003.is_empty(),
+            "Comma-separated valid globs should not trigger COP-003"
+        );
+    }
+
+    #[test]
+    fn test_cop_003_valid_comma_separated_with_spaces() {
+        let content = "---\napplyTo: \"**/*.ts, **/*.tsx, **/*.js\"\n---\n# Instructions\n";
+        let diagnostics = validate_scoped(content);
+        let cop_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "COP-003").collect();
+        assert!(
+            cop_003.is_empty(),
+            "Comma-separated globs with spaces should not trigger COP-003"
+        );
+    }
+
+    #[test]
+    fn test_cop_003_one_invalid_in_comma_list() {
+        let content = "---\napplyTo: \"**/*.ts,[unclosed\"\n---\n# Instructions\n";
+        let diagnostics = validate_scoped(content);
+        let cop_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "COP-003").collect();
+        assert_eq!(
+            cop_003.len(),
+            1,
+            "Only the invalid sub-pattern should trigger COP-003"
+        );
+        assert!(
+            cop_003[0].message.contains("[unclosed"),
+            "Diagnostic should mention the failing sub-pattern"
+        );
+    }
+
+    #[test]
+    fn test_cop_003_brace_expansion_valid() {
+        let content = "---\napplyTo: \"{src,lib}/**/*.ts\"\n---\n# Instructions\n";
+        let diagnostics = validate_scoped(content);
+        let cop_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "COP-003").collect();
+        assert!(
+            cop_003.is_empty(),
+            "Brace expansion should not trigger COP-003"
+        );
+    }
+
+    #[test]
+    fn test_cop_003_brace_expansion_plus_comma() {
+        let content = "---\napplyTo: \"{src,lib}/**/*.ts,**/*.md\"\n---\n# Instructions\n";
+        let diagnostics = validate_scoped(content);
+        let cop_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "COP-003").collect();
+        assert!(
+            cop_003.is_empty(),
+            "Brace expansion with comma-separated pattern should not trigger COP-003"
+        );
+    }
+
+    #[test]
+    fn test_cop_003_multiple_invalid_in_comma_list() {
+        let content = "---\napplyTo: \"[unclosed,[also-bad\"\n---\n# Instructions\n";
+        let diagnostics = validate_scoped(content);
+        let cop_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "COP-003").collect();
+        assert_eq!(
+            cop_003.len(),
+            2,
+            "Each invalid sub-pattern should produce its own COP-003 diagnostic"
+        );
     }
 
     // ===== COP-004: Unknown Frontmatter Keys =====

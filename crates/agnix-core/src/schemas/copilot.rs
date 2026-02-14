@@ -173,6 +173,40 @@ fn find_unknown_keys(yaml: &str, start_line: usize) -> Vec<UnknownKey> {
     unknown
 }
 
+/// Split a comma-separated glob string into individual patterns.
+///
+/// Commas inside brace expansions (e.g. `{src,lib}`) are preserved as part
+/// of a single pattern. Only commas at brace depth 0 act as separators.
+/// Each segment is trimmed of whitespace; empty segments are skipped.
+pub fn split_comma_separated_globs(s: &str) -> Vec<&str> {
+    let mut result = Vec::new();
+    let mut depth: usize = 0;
+    let mut start = 0;
+
+    for (i, ch) in s.char_indices() {
+        match ch {
+            '{' => depth += 1,
+            '}' => depth = depth.saturating_sub(1),
+            ',' if depth == 0 => {
+                let segment = s[start..i].trim();
+                if !segment.is_empty() {
+                    result.push(segment);
+                }
+                start = i + 1; // skip the comma byte (ASCII, always 1 byte)
+            }
+            _ => {}
+        }
+    }
+
+    // Handle the last segment after the final comma (or the entire string)
+    let segment = s[start..].trim();
+    if !segment.is_empty() {
+        result.push(segment);
+    }
+
+    result
+}
+
 /// Validate a glob pattern
 ///
 /// Uses the glob crate to validate pattern syntax.
@@ -417,5 +451,76 @@ applyTo: "**/*.ts"
         let result = parse_frontmatter(content).unwrap();
         assert!(result.schema.is_some());
         assert!(result.schema.unwrap().exclude_agent.is_none());
+    }
+
+    // ===== Comma-Separated Glob Splitting =====
+
+    #[test]
+    fn test_split_comma_single_pattern() {
+        assert_eq!(split_comma_separated_globs("**/*.ts"), vec!["**/*.ts"]);
+    }
+
+    #[test]
+    fn test_split_comma_two_patterns() {
+        assert_eq!(
+            split_comma_separated_globs("**/*.ts,**/*.tsx"),
+            vec!["**/*.ts", "**/*.tsx"]
+        );
+    }
+
+    #[test]
+    fn test_split_comma_with_spaces() {
+        assert_eq!(
+            split_comma_separated_globs("**/*.ts, **/*.tsx, **/*.js"),
+            vec!["**/*.ts", "**/*.tsx", "**/*.js"]
+        );
+    }
+
+    #[test]
+    fn test_split_comma_brace_expansion_preserved() {
+        assert_eq!(
+            split_comma_separated_globs("{src,lib}/**/*.ts"),
+            vec!["{src,lib}/**/*.ts"]
+        );
+    }
+
+    #[test]
+    fn test_split_comma_brace_plus_comma() {
+        assert_eq!(
+            split_comma_separated_globs("{src,lib}/**/*.ts,**/*.md"),
+            vec!["{src,lib}/**/*.ts", "**/*.md"]
+        );
+    }
+
+    #[test]
+    fn test_split_comma_nested_braces() {
+        assert_eq!(
+            split_comma_separated_globs("{{a,b},{c,d}}/*.ts"),
+            vec!["{{a,b},{c,d}}/*.ts"]
+        );
+    }
+
+    #[test]
+    fn test_split_comma_empty_string() {
+        let result: Vec<&str> = split_comma_separated_globs("");
+        assert!(result.is_empty());
+    }
+
+    #[test]
+    fn test_split_comma_trailing_comma() {
+        assert_eq!(split_comma_separated_globs("**/*.ts,"), vec!["**/*.ts"]);
+    }
+
+    #[test]
+    fn test_split_comma_leading_comma() {
+        assert_eq!(split_comma_separated_globs(",**/*.ts"), vec!["**/*.ts"]);
+    }
+
+    #[test]
+    fn test_split_comma_consecutive_commas() {
+        assert_eq!(
+            split_comma_separated_globs("**/*.ts,,**/*.tsx"),
+            vec!["**/*.ts", "**/*.tsx"]
+        );
     }
 }
