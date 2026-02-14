@@ -1,9 +1,10 @@
-//! Gemini CLI instruction file validation rules (GM-001 to GM-003)
+//! Gemini CLI instruction file validation rules (GM-001 to GM-003, GM-007)
 //!
 //! Validates:
 //! - GM-001: Valid markdown structure (HIGH) - unclosed code blocks, malformed links
 //! - GM-002: Missing section headers (MEDIUM) - no # or ## headers
 //! - GM-003: Missing project context (MEDIUM) - no project description
+//! - GM-007: @import file not found (MEDIUM) - referenced files must exist
 
 use crate::{
     config::LintConfig,
@@ -16,7 +17,7 @@ use crate::{
 use rust_i18n::t;
 use std::path::Path;
 
-const RULE_IDS: &[&str] = &["GM-001", "GM-002", "GM-003"];
+const RULE_IDS: &[&str] = &["GM-001", "GM-002", "GM-003", "GM-007"];
 
 pub struct GeminiMdValidator;
 
@@ -84,7 +85,7 @@ impl Validator for GeminiMdValidator {
             if let Some(issue) = check_project_context(content) {
                 diagnostics.push(
                     Diagnostic::warning(
-                        path_buf,
+                        path_buf.clone(),
                         issue.line,
                         issue.column,
                         "GM-003",
@@ -92,6 +93,32 @@ impl Validator for GeminiMdValidator {
                     )
                     .with_suggestion(t!("rules.gm_003.suggestion")),
                 );
+            }
+        }
+
+        // GM-007: @import file not found (WARNING)
+        if config.is_rule_enabled("GM-007") {
+            for (line_num, line) in content.lines().enumerate() {
+                let trimmed = line.trim();
+                if let Some(import_path) = trimmed.strip_prefix("@import ") {
+                    let import_path = import_path.trim().trim_matches('"').trim_matches('\'');
+                    if !import_path.is_empty() {
+                        let base_dir = path.parent().unwrap_or(Path::new("."));
+                        let resolved = base_dir.join(import_path);
+                        if !resolved.exists() {
+                            diagnostics.push(
+                                Diagnostic::warning(
+                                    path_buf.clone(),
+                                    line_num + 1,
+                                    0,
+                                    "GM-007",
+                                    t!("rules.gm_007.message", path = import_path),
+                                )
+                                .with_suggestion(t!("rules.gm_007.suggestion")),
+                            );
+                        }
+                    }
+                }
             }
         }
 
