@@ -167,7 +167,7 @@ fn extract_implemented_rule_ids() -> BTreeSet<String> {
     let valid_prefixes = [
         "AS-", "CC-SK-", "CC-HK-", "CC-AG-", "CC-MEM-", "CC-PL-", "AGM-", "MCP-", "COP-", "CUR-",
         "CLN-", "CDX-", "OC-", "GM-", "XML-", "REF-", "PE-", "XP-", "VER-", "CR-SK-", "CL-SK-",
-        "CP-SK-", "CX-SK-", "OC-SK-", "WS-SK-", "KR-SK-", "AMP-SK-", "RC-SK-",
+        "CP-SK-", "CX-SK-", "OC-SK-", "WS-SK-", "KR-SK-", "AMP-SK-", "RC-SK-", "ROO-",
     ];
 
     fn extract_from_file(
@@ -319,6 +319,7 @@ fn infer_fixture_coverage(rules: &[RuleEntry]) -> HashMap<String, Vec<String>> {
         ("roo-code-skills", vec!["per_client_skills"]),
         ("gemini-cli", vec!["gemini_md", "gemini_md-invalid"]),
         ("codex", vec!["codex", "codex-invalid"]),
+        ("roo-code", vec!["roo-code"]),
     ]
     .into_iter()
     .collect();
@@ -526,6 +527,7 @@ fn test_rules_json_integrity() {
         "kiro-skills",
         "amp-skills",
         "roo-code-skills",
+        "roo-code",
     ];
     for rule in &rules_index.rules {
         assert!(

@@ -1,0 +1,10 @@
+{
+  "customModes": [
+    {
+      "slug": "designer",
+      "name": "Designer",
+      "roleDefinition": "You are a UI/UX designer focused on creating beautiful and accessible interfaces.",
+      "groups": ["read", "edit", "browser"]
+    }
+  ]
+}
