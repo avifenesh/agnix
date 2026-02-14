@@ -72,6 +72,7 @@ agnix-core = { path = "crates/agnix-core" }
 agnix-rules = { path = "crates/agnix-rules" }
 serde_json = "1"
 tempfile = "3"
+toml = "0.8"
 
 [profile.release]
 lto = "fat"

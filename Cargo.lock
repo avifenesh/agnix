@@ -117,6 +117,7 @@ dependencies = [
  "agnix-rules",
  "serde_json",
  "tempfile",
+ "toml",
 ]
 
 [[package]]

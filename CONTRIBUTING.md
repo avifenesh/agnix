@@ -241,6 +241,7 @@ crates/
   agnix-cli/      # CLI binary
   agnix-lsp/      # Language server
   agnix-mcp/      # MCP server
+  agnix-wasm/     # WebAssembly bindings
 editors/
   neovim/         # Neovim extension
   vscode/         # VS Code extension
