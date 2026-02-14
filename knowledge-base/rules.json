@@ -5833,6 +5833,11 @@
       "count": 4,
       "description": "Codex CLI configuration validation"
     },
+    "roo-code": {
+      "prefix": "ROO",
+      "count": 6,
+      "description": "Roo Code rules and configuration validation"
+    },
     "xml": {
       "prefix": "XML",
       "count": 3,
