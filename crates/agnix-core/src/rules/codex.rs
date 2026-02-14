@@ -245,8 +245,19 @@ impl Validator for CodexValidator {
                     .with_suggestion(t!("rules.cdx_005.suggestion")),
                 );
             } else if let Some(value) = schema.project_doc_max_bytes {
-                if value > 65536 {
-                    let line = key_lines.get("project_doc_max_bytes").copied().unwrap_or(1);
+                let line = key_lines.get("project_doc_max_bytes").copied().unwrap_or(1);
+                if value <= 0 {
+                    diagnostics.push(
+                        Diagnostic::error(
+                            path.to_path_buf(),
+                            line,
+                            0,
+                            "CDX-005",
+                            t!("rules.cdx_005.type_error"),
+                        )
+                        .with_suggestion(t!("rules.cdx_005.suggestion")),
+                    );
+                } else if value > 65536 {
                     diagnostics.push(
                         Diagnostic::error(
                             path.to_path_buf(),
@@ -935,15 +946,25 @@ name = "test"
 
     #[test]
     fn test_cdx_005_negative_value() {
-        // Negative values are semantically invalid but CDX-005 only checks the upper bound.
-        // Codex itself rejects negative values, but since this is an unusual edge case
-        // and not the primary concern (the issue is about the 65536 cap), we document
-        // that negative values pass CDX-005 validation.
+        // Negative values are invalid because project_doc_max_bytes must be a positive integer
         let diagnostics = validate_config("project_doc_max_bytes = -1");
         let cdx_005: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CDX-005").collect();
+        assert_eq!(cdx_005.len(), 1, "Negative values should trigger CDX-005");
         assert!(
-            cdx_005.is_empty(),
-            "Negative values do not exceed the upper limit"
+            cdx_005[0].message.contains("positive integer"),
+            "Error message should indicate positive integer requirement"
+        );
+    }
+
+    #[test]
+    fn test_cdx_005_zero_value() {
+        // Zero is invalid because project_doc_max_bytes must be a positive integer
+        let diagnostics = validate_config("project_doc_max_bytes = 0");
+        let cdx_005: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CDX-005").collect();
+        assert_eq!(cdx_005.len(), 1, "Zero should trigger CDX-005");
+        assert!(
+            cdx_005[0].message.contains("positive integer"),
+            "Error message should indicate positive integer requirement"
         );
     }
 

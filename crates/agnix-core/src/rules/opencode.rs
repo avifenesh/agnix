@@ -261,6 +261,17 @@ impl Validator for OpenCodeValidator {
                                     .with_suggestion(t!("rules.oc_007.suggestion")),
                                 );
                             }
+                        } else if !config_val.is_null() {
+                            diagnostics.push(
+                                Diagnostic::warning(
+                                    path.to_path_buf(),
+                                    agent_line,
+                                    0,
+                                    "OC-007",
+                                    t!("rules.oc_007.message", name = name.as_str()),
+                                )
+                                .with_suggestion(t!("rules.oc_007.suggestion")),
+                            );
                         }
                     }
                 }
@@ -336,8 +347,30 @@ impl Validator for OpenCodeValidator {
                                             .with_suggestion(t!("rules.oc_008.suggestion")),
                                         );
                                     }
+                                } else if !pattern_mode.is_null() {
+                                    diagnostics.push(
+                                        Diagnostic::error(
+                                            path.to_path_buf(),
+                                            perm_line,
+                                            0,
+                                            "OC-008",
+                                            t!("rules.oc_008.type_error"),
+                                        )
+                                        .with_suggestion(t!("rules.oc_008.suggestion")),
+                                    );
                                 }
                             }
+                        } else if !mode_value.is_null() {
+                            diagnostics.push(
+                                Diagnostic::error(
+                                    path.to_path_buf(),
+                                    perm_line,
+                                    0,
+                                    "OC-008",
+                                    t!("rules.oc_008.type_error"),
+                                )
+                                .with_suggestion(t!("rules.oc_008.suggestion")),
+                            );
                         }
                     }
                 }
@@ -429,27 +462,16 @@ fn validate_substitution_string(
                         .chars()
                         .all(|c| c.is_ascii_alphanumeric() || c == '_')
                 {
-                    if prefix != "env" && prefix != "file" {
-                        let pattern = format!("{{{}}}", inner);
-                        let reason =
-                            format!("unknown prefix '{}'. Valid prefixes: 'env', 'file'", prefix);
-                        diagnostics.push(
-                            Diagnostic::warning(
-                                path.to_path_buf(),
-                                find_string_line(content, &pattern).unwrap_or(1),
-                                0,
-                                "OC-009",
-                                t!(
-                                    "rules.oc_009.message",
-                                    pattern = pattern.as_str(),
-                                    reason = reason.as_str()
-                                ),
-                            )
-                            .with_suggestion(t!("rules.oc_009.suggestion")),
-                        );
+                    let reason = if prefix != "env" && prefix != "file" {
+                        Some(format!("unknown prefix '{}'. Valid prefixes: 'env', 'file'", prefix))
                     } else if value_part.is_empty() {
+                        Some(format!("empty value after '{}:'", prefix))
+                    } else {
+                        None
+                    };
+
+                    if let Some(reason_str) = reason {
                         let pattern = format!("{{{}}}", inner);
-                        let reason = format!("empty value after '{}:'", prefix);
                         diagnostics.push(
                             Diagnostic::warning(
                                 path.to_path_buf(),
@@ -459,7 +481,7 @@ fn validate_substitution_string(
                                 t!(
                                     "rules.oc_009.message",
                                     pattern = pattern.as_str(),
-                                    reason = reason.as_str()
+                                    reason = reason_str.as_str()
                                 ),
                             )
                             .with_suggestion(t!("rules.oc_009.suggestion")),
@@ -1020,6 +1042,15 @@ mod tests {
         assert!(oc_007[0].message.contains("agent-a"));
     }
 
+    #[test]
+    fn test_oc_007_non_object_agent_entry() {
+        // Agent entry that's a string instead of an object should trigger OC-007
+        let diagnostics = validate(r#"{"agent": {"my-agent": "oops"}}"#);
+        let oc_007: Vec<_> = diagnostics.iter().filter(|d| d.rule == "OC-007").collect();
+        assert_eq!(oc_007.len(), 1, "Non-object agent entry should trigger OC-007");
+        assert!(oc_007[0].message.contains("my-agent"));
+    }
+
     // ===== OC-008: Permission validation =====
 
     #[test]
@@ -1076,6 +1107,22 @@ mod tests {
         let diagnostics = validate(content);
         let oc_008: Vec<_> = diagnostics.iter().filter(|d| d.rule == "OC-008").collect();
         assert_eq!(oc_008.len(), 1, "Only 'invalid' should trigger OC-008");
+    }
+
+    #[test]
+    fn test_oc_008_non_string_permission_value() {
+        // Permission value that's a number instead of a string should trigger OC-008
+        let diagnostics = validate(r#"{"permission": {"read": 123}}"#);
+        let oc_008: Vec<_> = diagnostics.iter().filter(|d| d.rule == "OC-008").collect();
+        assert_eq!(oc_008.len(), 1, "Non-string permission value should trigger OC-008");
+    }
+
+    #[test]
+    fn test_oc_008_non_string_nested_permission_value() {
+        // Nested permission value that's not a string should trigger OC-008
+        let diagnostics = validate(r#"{"permission": {"bash": {"*.sh": true}}}"#);
+        let oc_008: Vec<_> = diagnostics.iter().filter(|d| d.rule == "OC-008").collect();
+        assert_eq!(oc_008.len(), 1, "Non-string nested permission should trigger OC-008");
     }
 
     // ===== OC-009: Variable substitution validation =====
