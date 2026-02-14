@@ -872,6 +872,32 @@ mod tests {
         assert!(roo_005.is_empty());
     }
 
+    #[test]
+    fn test_roo_005_sse_server_missing_url() {
+        let content = r#"{
+  "mcpServers": {
+    "my-sse": {
+      "type": "sse"
+    }
+  }
+}"#;
+        let diagnostics = validate(".roo/mcp.json", content);
+        let roo_005: Vec<_> = diagnostics.iter().filter(|d| d.rule == "ROO-005").collect();
+        assert_eq!(roo_005.len(), 1);
+    }
+
+    #[test]
+    fn test_roo_005_invalid_server_entry() {
+        let content = r#"{
+  "mcpServers": {
+    "my-server": "not-an-object"
+  }
+}"#;
+        let diagnostics = validate(".roo/mcp.json", content);
+        let roo_005: Vec<_> = diagnostics.iter().filter(|d| d.rule == "ROO-005").collect();
+        assert_eq!(roo_005.len(), 1);
+    }
+
     // ===== ROO-006: Mode slug not recognized =====
 
     #[test]
@@ -930,6 +956,41 @@ mod tests {
         let diagnostics = validate_with_config(".rooignore", "", &config);
         let roo_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "ROO-003").collect();
         assert!(roo_003.is_empty());
+    }
+
+    #[test]
+    fn test_roo_004_disabled() {
+        let mut config = LintConfig::default();
+        config.rules_mut().disabled_rules = vec!["ROO-004".to_string()];
+
+        let diagnostics = validate_with_config(
+            ".roo/rules-INVALID SLUG/general.md",
+            "# Bad slug rules",
+            &config,
+        );
+        let roo_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "ROO-004").collect();
+        assert!(roo_004.is_empty());
+    }
+
+    #[test]
+    fn test_roo_005_disabled() {
+        let mut config = LintConfig::default();
+        config.rules_mut().disabled_rules = vec!["ROO-005".to_string()];
+
+        let diagnostics = validate_with_config(".roo/mcp.json", "{ invalid }", &config);
+        let roo_005: Vec<_> = diagnostics.iter().filter(|d| d.rule == "ROO-005").collect();
+        assert!(roo_005.is_empty());
+    }
+
+    #[test]
+    fn test_roo_006_disabled() {
+        let mut config = LintConfig::default();
+        config.rules_mut().disabled_rules = vec!["ROO-006".to_string()];
+
+        let diagnostics =
+            validate_with_config(".roo/rules-custom-mode/SKILL.md", "# Custom mode skill", &config);
+        let roo_006: Vec<_> = diagnostics.iter().filter(|d| d.rule == "ROO-006").collect();
+        assert!(roo_006.is_empty());
     }
 
     #[test]
