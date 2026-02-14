@@ -384,6 +384,12 @@ rules:
   ref_002:
     message: "Broken markdown link: '%{url}' (file not found: %{resolved})"
     suggestion: "Fix the link target or remove the broken link"
+  ref_003:
+    message: "Duplicate @import: '%{path}' is imported multiple times"
+    suggestion: "Remove the duplicate import to avoid processing the same file twice"
+  ref_004:
+    message: "Non-markdown @import: '%{path}' has extension '%{ext}'"
+    suggestion: "Use .md files for @imports - non-markdown files may not be processed correctly"
 
   # --- Cross-platform (cross_platform.rs) ---
   xp_001:
@@ -402,6 +408,9 @@ rules:
     suggestion: "Resolve the conflict by consistently allowing or disallowing the tool"
   xp_006:
     suggestion: "Document which file takes precedence (e.g., 'CLAUDE.md takes precedence over AGENTS.md')"
+  xp_007:
+    message: "AGENTS.md exceeds Codex CLI byte limit (%{bytes} bytes, max %{limit})"
+    suggestion: "Reduce content or split into multiple files using @import for Codex CLI compatibility"
 
   # --- Copilot (copilot.rs) ---
   cop_001:
@@ -655,6 +664,12 @@ rules:
   pe_004:
     message: "Ambiguous term '%{term}' creates unclear instruction"
     suggestion: "Replace with specific criteria or remove ambiguity (e.g., 'always' instead of 'usually')"
+  pe_005:
+    message: "Redundant instruction '%{phrase}' - LLMs already follow this by default"
+    suggestion: "Remove generic instructions and focus on project-specific behavior and constraints"
+  pe_006:
+    message: "Negative instruction '%{text}' without positive alternative"
+    suggestion: "Add a positive alternative after negative instructions (e.g., 'Instead, use...')"
 
   # --- Plugin (plugin.rs) ---
   cc_pl_001:

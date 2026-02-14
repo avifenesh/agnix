@@ -1,6 +1,6 @@
 # agnix Technical Reference
 
-> Linter for agent configs. 215 rules across 31 categories.
+> Linter for agent configs. 224 rules across 31 categories.
 
 
 ## What agnix Validates
@@ -13,11 +13,11 @@
 | Instructions (Cross-Tool) | AGENTS.md, AGENTS.local.md, AGENTS.override.md | 6 |
 | Agents | agents/*.md | 13 |
 | Plugins | plugin.json | 10 |
-| Prompt Engineering | CLAUDE.md, AGENTS.md | 4 |
-| Cross-Platform | AGENTS.md | 7 |
+| Prompt Engineering | CLAUDE.md, AGENTS.md | 6 |
+| Cross-Platform | AGENTS.md | 8 |
 | MCP | tool definitions | 24 |
 | XML | all .md files | 3 |
-| References | @imports | 2 |
+| References | @imports | 4 |
 | GitHub Copilot | .github/copilot-instructions.md, .github/instructions/*.instructions.md, .github/agents/*.agent.md, .github/prompts/*.prompt.md, .github/hooks/hooks.json, .github/workflows/copilot-setup-steps.yml | 17 |
 | Cursor Project Rules | .cursor/rules/*.mdc, .cursorrules, .cursor/hooks.json, .cursor/agents/**/*.md, .cursor/environment.json | 16 |
 | Cline | .clinerules, .clinerules/*.md | 4 |
@@ -35,6 +35,7 @@
 | Kiro Steering | .kiro/steering/*.md | 4 |
 | Kiro Skills | .kiro/skills/*/SKILL.md | 1 |
 | Amp Skills | .agents/skills/*/SKILL.md | 1 |
+| Amp Checks | .agents/checks/*.md, .amp/settings*.json | 4 |
 | Roo Code Skills | .roo/skills/*/SKILL.md | 1 |
 | Roo Code | .roo/rules/*.md, .roomodes, .roorules, .roo/mcp.json, .rooignore | 6 |
 
@@ -53,7 +54,7 @@ agnix/
 │   ├── agnix-mcp/      # MCP server
 │   └── agnix-wasm/     # WebAssembly bindings
 ├── editors/            # Neovim, VS Code, JetBrains, Zed integrations
-├── knowledge-base/     # 207 rules documented
+├── knowledge-base/     # 220 rules documented
 
 ├── scripts/            # Build/dev automation scripts
 ├── website/            # Docusaurus documentation website

@@ -94,6 +94,7 @@ impl<'a> DefaultRuleFilter<'a> {
             {
                 self.rules.skills
             }
+            s if s.starts_with("AMP-") => self.rules.amp_checks,
             s if s.starts_with("CC-HK-") => self.rules.hooks,
             s if s.starts_with("CC-AG-") => self.rules.agents,
             s if s.starts_with("CC-MEM-") => self.rules.memory,

@@ -127,6 +127,7 @@ def main() -> int:
         "codex": "Codex CLI",
         "version-awareness": "Version Awareness",
         "windsurf": "Windsurf",
+        "amp-checks": "Amp Checks",
     }
 
     index_path = ROOT / "knowledge-base" / "INDEX.md"
@@ -221,6 +222,7 @@ def main() -> int:
         "Windsurf Skills": ["windsurf-skills"],
         "Kiro Skills": ["kiro-skills"],
         "Amp Skills": ["amp-skills"],
+        "Amp Checks": ["amp-checks"],
         "Roo Code Skills": ["roo-code-skills"],
         "Roo Code": ["roo-code"],
     }

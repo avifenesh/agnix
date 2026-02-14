@@ -5,6 +5,8 @@
 //! - PE-002: Chain-of-thought phrases on simple tasks
 //! - PE-003: Weak imperative language in critical sections
 //! - PE-004: Ambiguous instructions
+//! - PE-005: Redundant generic instructions
+//! - PE-006: Negative-only instructions without positive alternative
 //!
 //! ## Security
 //!
@@ -312,6 +314,134 @@ pub fn find_ambiguous_instructions(content: &str) -> Vec<AmbiguousInstruction> {
     results
 }
 
+// ============================================================================
+// PE-005: Redundant Generic Instructions
+// ============================================================================
+
+static_regex!(fn redundant_instruction_pattern, r"(?i)\b(be helpful|be accurate|be concise|follow instructions|do your best|try your hardest|respond accurately|answer correctly|be thorough|be detailed|be precise|be clear|be professional|be consistent|be efficient)\b");
+
+/// Redundant generic instruction found in content
+#[derive(Debug, Clone)]
+pub struct RedundantInstruction {
+    pub line: usize,
+    pub column: usize,
+    pub phrase: String,
+}
+
+/// Find redundant generic instructions that LLMs already follow by default
+///
+/// Instructions like "be helpful" or "be accurate" waste context window tokens
+/// without adding value, since LLMs already behave this way by default.
+///
+/// # Security
+///
+/// Returns early for content exceeding `MAX_REGEX_INPUT_SIZE` to prevent ReDoS.
+pub fn find_redundant_instructions(content: &str) -> Vec<RedundantInstruction> {
+    if content.len() > MAX_REGEX_INPUT_SIZE {
+        return Vec::new();
+    }
+
+    let mut results = Vec::new();
+    let pattern = redundant_instruction_pattern();
+    let mut in_code_block = false;
+
+    for (line_num, line) in content.lines().enumerate() {
+        if line.trim_start().starts_with("```") {
+            in_code_block = !in_code_block;
+            continue;
+        }
+        if in_code_block {
+            continue;
+        }
+
+        for mat in pattern.find_iter(line) {
+            results.push(RedundantInstruction {
+                line: line_num + 1,
+                column: mat.start() + 1,
+                phrase: mat.as_str().to_string(),
+            });
+        }
+    }
+
+    results
+}
+
+// ============================================================================
+// PE-006: Negative-Only Instructions
+// ============================================================================
+
+static_regex!(fn negative_only_pattern, r"(?i)^[*\-]?\s*(don't|do not|never|avoid|refrain from)\b");
+static_regex!(fn positive_alternative_pattern, r"(?i)\b(instead|rather|prefer|use\s+\S+\s+instead|better to|should\s+\S+\s+instead)\b");
+
+/// Negative-only instruction found in content
+#[derive(Debug, Clone)]
+pub struct NegativeOnlyInstruction {
+    pub line: usize,
+    pub column: usize,
+    pub text: String,
+}
+
+/// Find negative instructions that lack a positive alternative
+///
+/// Instructions are more effective when they tell the LLM what to do
+/// instead of only what not to do. For example, "Don't use global variables.
+/// Instead, pass values as function parameters." is better than just
+/// "Don't use global variables."
+///
+/// Checks 3 lines (current + 2 following) for a positive alternative.
+///
+/// # Security
+///
+/// Returns early for content exceeding `MAX_REGEX_INPUT_SIZE` to prevent ReDoS.
+pub fn find_negative_only_instructions(content: &str) -> Vec<NegativeOnlyInstruction> {
+    if content.len() > MAX_REGEX_INPUT_SIZE {
+        return Vec::new();
+    }
+
+    let neg_pattern = negative_only_pattern();
+    let pos_pattern = positive_alternative_pattern();
+    let lines: Vec<&str> = content.lines().collect();
+    let mut results = Vec::new();
+    let mut in_code_block = false;
+
+    for (line_num, line) in lines.iter().enumerate() {
+        if line.trim_start().starts_with("```") {
+            in_code_block = !in_code_block;
+            continue;
+        }
+        if in_code_block {
+            continue;
+        }
+
+        if let Some(mat) = neg_pattern.find(line) {
+            // Check current line and next 2 lines for positive alternative,
+            // but skip lines inside fenced code blocks
+            let window_end = (line_num + 3).min(lines.len());
+            let mut window_in_code = false;
+            let has_positive = lines[line_num..window_end].iter().any(|l| {
+                if l.trim_start().starts_with("```") {
+                    window_in_code = !window_in_code;
+                    return false;
+                }
+                if window_in_code {
+                    return false;
+                }
+                pos_pattern.is_match(l)
+            });
+
+            if !has_positive {
+                results.push(NegativeOnlyInstruction {
+                    line: line_num + 1,
+                    column: mat.start() + 1,
+                    text: line.trim().to_string(),
+                });
+            }
+        }
+    }
+
+    results
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -324,6 +454,9 @@ mod tests {
         let _ = weak_language_pattern();
         let _ = critical_section_pattern();
         let _ = ambiguous_term_pattern();
+        let _ = redundant_instruction_pattern();
+        let _ = negative_only_pattern();
+        let _ = positive_alternative_pattern();
     }
 
     // ===== PE-001: Critical Content in Middle =====
@@ -782,5 +915,169 @@ Code could be cleaner.
             results.is_empty(),
             "Oversized content should be skipped for ReDoS protection"
         );
+    }
+
+    // ===== PE-005: Redundant Generic Instructions =====
+
+    #[test]
+    fn test_find_redundant_be_helpful() {
+        let content = "Be helpful and accurate when responding.";
+        let results = find_redundant_instructions(content);
+        assert_eq!(results.len(), 1);
+        assert!(results[0].phrase.to_lowercase().contains("be helpful"));
+    }
+
+    #[test]
+    fn test_find_redundant_be_concise() {
+        let content = "# Rules\n\nBe concise in your responses.";
+        let results = find_redundant_instructions(content);
+        assert_eq!(results.len(), 1);
+        assert!(results[0].phrase.to_lowercase().contains("be concise"));
+    }
+
+    #[test]
+    fn test_find_multiple_redundant() {
+        let content = "Be helpful.\nBe accurate.\nBe concise.";
+        let results = find_redundant_instructions(content);
+        assert_eq!(results.len(), 3);
+    }
+
+    #[test]
+    fn test_no_redundant_in_specific_instructions() {
+        let content =
+            "Format all output as JSON with 2-space indentation.\nAlways include error codes.";
+        let results = find_redundant_instructions(content);
+        assert!(results.is_empty());
+    }
+
+    #[test]
+    fn test_redundant_skips_code_blocks() {
+        let content = "```\nBe helpful and accurate.\n```";
+        let results = find_redundant_instructions(content);
+        assert!(results.is_empty());
+    }
+
+    #[test]
+    fn test_redundant_case_insensitive() {
+        let content = "BE HELPFUL in all interactions.";
+        let results = find_redundant_instructions(content);
+        assert_eq!(results.len(), 1);
+    }
+
+    #[test]
+    fn test_find_redundant_instructions_oversized_input() {
+        let large_content = "a".repeat(MAX_REGEX_INPUT_SIZE + 1000);
+        let results = find_redundant_instructions(&large_content);
+        assert!(
+            results.is_empty(),
+            "Oversized content should be skipped for ReDoS protection"
+        );
+    }
+
+    // ===== PE-006: Negative-Only Instructions =====
+
+    #[test]
+    fn test_find_negative_only_dont() {
+        let content = "Don't use global variables.";
+        let results = find_negative_only_instructions(content);
+        assert_eq!(results.len(), 1);
+        assert!(results[0].text.contains("Don't"));
+    }
+
+    #[test]
+    fn test_find_negative_only_never() {
+        let content = "Never use console.log in production.";
+        let results = find_negative_only_instructions(content);
+        assert_eq!(results.len(), 1);
+    }
+
+    #[test]
+    fn test_find_negative_only_avoid() {
+        let content = "Avoid inline styles.";
+        let results = find_negative_only_instructions(content);
+        assert_eq!(results.len(), 1);
+    }
+
+    #[test]
+    fn test_negative_with_positive_alternative() {
+        let content = "Don't use global variables. Instead, pass values as function parameters.";
+        let results = find_negative_only_instructions(content);
+        assert!(
+            results.is_empty(),
+            "Should not flag when positive alternative is on same line"
+        );
+    }
+
+    #[test]
+    fn test_negative_with_positive_on_next_line() {
+        let content = "Don't use global variables.\nInstead, pass values as function parameters.";
+        let results = find_negative_only_instructions(content);
+        assert!(
+            results.is_empty(),
+            "Should not flag when positive alternative is within 2 lines"
+        );
+    }
+
+    #[test]
+    fn test_negative_with_positive_two_lines_away() {
+        let content =
+            "Don't use global variables.\nSome explanation.\nUse function parameters instead.";
+        let results = find_negative_only_instructions(content);
+        assert!(
+            results.is_empty(),
+            "Should not flag when positive alternative is within window"
+        );
+    }
+
+    #[test]
+    fn test_negative_without_positive_too_far() {
+        let content =
+            "Don't use global variables.\nLine 2.\nLine 3.\nLine 4.\nUse functions instead.";
+        let results = find_negative_only_instructions(content);
+        assert_eq!(
+            results.len(),
+            1,
+            "Should flag when positive alternative is beyond 2-line window"
+        );
+    }
+
+    #[test]
+    fn test_negative_skips_code_blocks() {
+        let content = "```\nDon't use global variables.\n```";
+        let results = find_negative_only_instructions(content);
+        assert!(results.is_empty());
+    }
+
+    #[test]
+    fn test_multiple_negative_only() {
+        let content = "Don't use globals.\nNever use eval.\nAvoid inline styles.";
+        let results = find_negative_only_instructions(content);
+        assert_eq!(results.len(), 3);
+    }
+
+    #[test]
+    fn test_negative_with_list_marker() {
+        let content = "- Don't use global variables.";
+        let results = find_negative_only_instructions(content);
+        assert_eq!(results.len(), 1);
+    }
+
+    #[test]
+    fn test_find_negative_only_instructions_oversized_input() {
+        let large_content = "a".repeat(MAX_REGEX_INPUT_SIZE + 1000);
+        let results = find_negative_only_instructions(&large_content);
+        assert!(
+            results.is_empty(),
+            "Oversized content should be skipped for ReDoS protection"
+        );
+    }
+
+    #[test]
+    fn test_empty_content_pe_005_pe_006() {
+        let empty = "";
+        let redundant = find_redundant_instructions(empty);
+        let negative = find_negative_only_instructions(empty);
+        assert!(redundant.is_empty());
+        assert!(negative.is_empty());
     }
 }

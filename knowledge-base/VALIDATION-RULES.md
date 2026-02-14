@@ -377,6 +377,34 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 **Fix**: [AUTO-FIX, safe] Remove unsupported field
 **Source**: docs.amp.dev/setup/customization
 
+<a id="amp-001"></a>
+### AMP-001 [HIGH] Invalid Amp Check Frontmatter
+**Requirement**: `.agents/checks/*.md` files MUST include valid YAML frontmatter with required `name` and known optional fields
+**Detection**: Missing frontmatter OR invalid YAML OR missing `name` OR unknown key outside `name`, `description`, `severity-default`, `tools`
+**Fix**: Add valid frontmatter with required fields and remove unknown keys
+**Source**: ampcode.com/manual#code-review-checks
+
+<a id="amp-002"></a>
+### AMP-002 [MEDIUM] Invalid Amp severity-default
+**Requirement**: `severity-default` SHOULD be one of `low`, `medium`, `high`, `critical`
+**Detection**: Frontmatter `severity-default` value is missing, non-string, or outside allowed values
+**Fix**: Set `severity-default` to a valid value
+**Source**: ampcode.com/manual#code-review-checks
+
+<a id="amp-003"></a>
+### AMP-003 [MEDIUM] Invalid AGENTS.md globs Frontmatter for Amp
+**Requirement**: AGENTS frontmatter `globs` SHOULD contain syntactically valid glob patterns for Amp
+**Detection**: `globs` is invalid type OR contains a pattern that fails glob parsing (after Amp implicit `**/` behavior)
+**Fix**: Correct glob syntax in `globs` frontmatter
+**Source**: ampcode.com/manual#settings
+
+<a id="amp-004"></a>
+### AMP-004 [HIGH] Invalid Amp Settings Configuration
+**Requirement**: `.amp/settings.json` MUST be valid JSON and use known top-level keys
+**Detection**: JSON parse error OR unknown top-level key in `.amp/settings.json` / `.amp/settings.local.json`
+**Fix**: Fix JSON syntax and remove unknown keys
+**Source**: ampcode.com/manual#settings
+
 <a id="rc-sk-001"></a>
 ### RC-SK-001 [MEDIUM] Roo Code Skill Uses Unsupported Field
 **Requirement**: Skills in `.roo/skills/` SHOULD NOT use frontmatter fields unsupported by Roo Code
@@ -1605,6 +1633,20 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 **Fix**: Show available files
 **Source**: Standard markdown validation
 
+<a id="ref-003"></a>
+### REF-003 [MEDIUM] Duplicate Import
+**Requirement**: Each @import path SHOULD appear only once per file
+**Detection**: Extract @imports, normalize paths (strip `./` prefix), flag duplicates
+**Fix**: Remove the duplicate @import line
+**Source**: Claude Code memory docs
+
+<a id="ref-004"></a>
+### REF-004 [MEDIUM] Non-Markdown Import
+**Requirement**: @imports SHOULD reference .md files only
+**Detection**: Extract @imports, check file extension, flag non-`.md` extensions
+**Fix**: Convert referenced content to markdown or remove the import
+**Source**: Claude Code memory docs
+
 ---
 
 ## PROMPT ENGINEERING RULES
@@ -1635,6 +1677,20 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 **Requirement**: Instructions SHOULD be specific and measurable
 **Detection**: Check for vague terms without concrete criteria
 **Fix**: Add specific criteria or examples
+**Source**: Anthropic prompt engineering guide
+
+<a id="pe-005"></a>
+### PE-005 [MEDIUM] Redundant Generic Instructions
+**Requirement**: Instructions SHOULD NOT include generic directives that LLMs already follow by default
+**Detection**: Check for phrases like "be helpful", "be accurate", "be concise", "follow instructions", etc.
+**Fix**: Remove generic instructions and focus on project-specific behavior
+**Source**: Anthropic prompt engineering guide
+
+<a id="pe-006"></a>
+### PE-006 [MEDIUM] Negative-Only Instructions
+**Requirement**: Negative instructions SHOULD include a positive alternative
+**Detection**: Check for "don't/never/avoid" without "instead/rather/prefer" within 3-line window
+**Fix**: Add positive alternative (e.g., "Instead, use...")
 **Source**: Anthropic prompt engineering guide
 
 ---
@@ -1698,6 +1754,13 @@ agent: reviewer
 **Fix**: Document which file takes precedence (e.g., "CLAUDE.md takes precedence over AGENTS.md")
 **Source**: multi-platform clarity requirements
 
+<a id="xp-007"></a>
+### XP-007 [MEDIUM] AGENTS.md Exceeds Codex Byte Limit
+**Requirement**: AGENTS.md SHOULD stay under Codex CLI's 32768-byte default limit
+**Detection**: Check byte length of AGENTS.md content against the 32768-byte threshold
+**Fix**: Reduce content or split into multiple files using @import
+**Source**: developers.openai.com/codex/guides/agents-md
+
 <a id="xp-sk-001"></a>
 ### XP-SK-001 [LOW] Skill Uses Client-Specific Features
 **Requirement**: Skills SHOULD avoid client-specific frontmatter fields for maximum portability
@@ -1734,7 +1797,7 @@ Implement these 30 rules first:
 - CC-HK-001 through CC-HK-008 (Hooks)
 - CC-MEM-001, CC-MEM-005 (Memory critical)
 - XML-001 through XML-003 (XML balance)
-- REF-001 (Import validation)
+- REF-001 through REF-004 (Import/reference validation)
 
 ### P1 (Week 4)
 Add these 15 rules:
@@ -1746,8 +1809,8 @@ Add these 15 rules:
 ### P2 (Week 5-6)
 Complete coverage:
 - MCP-001 through MCP-006 (MCP protocol)
-- PE-001 through PE-004 (Prompt engineering)
-- XP-001 through XP-006, XP-SK-001 (Cross-platform)
+- PE-001 through PE-006 (Prompt engineering)
+- XP-001 through XP-007, XP-SK-001 (Cross-platform)
 - CR-SK-001, CL-SK-001, CP-SK-001, CX-SK-001, OC-SK-001, WS-SK-001, KR-SK-001, AMP-SK-001, RC-SK-001 (Per-client skills)
 - Remaining MEDIUM/LOW certainty rules
 
@@ -1863,9 +1926,9 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | Windsurf | 4 | 1 | 2 | 1 | 0 |
 | MCP | 24 | 19 | 5 | 0 | 4 |
 | XML | 3 | 3 | 0 | 0 | 3 |
-| References | 2 | 2 | 0 | 0 | 0 |
-| Prompt Eng | 4 | 0 | 4 | 0 | 0 |
-| Cross-Platform | 7 | 2 | 4 | 1 | 0 |
+| References | 4 | 2 | 2 | 0 | 0 |
+| Prompt Eng | 6 | 0 | 6 | 0 | 0 |
+| Cross-Platform | 8 | 2 | 5 | 1 | 0 |
 | Cursor Skills | 1 | 0 | 1 | 0 | 1 |
 | Cline Skills | 1 | 0 | 1 | 0 | 1 |
 | Copilot Skills | 1 | 0 | 1 | 0 | 1 |
@@ -1874,10 +1937,11 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | Windsurf Skills | 1 | 0 | 1 | 0 | 1 |
 | Kiro Skills | 1 | 0 | 1 | 0 | 1 |
 | Amp Skills | 1 | 0 | 1 | 0 | 1 |
+| Amp Checks | 4 | 2 | 2 | 0 | 0 |
 | Roo Code Skills | 1 | 0 | 1 | 0 | 1 |
 | Roo Code | 6 | 3 | 3 | 0 | 0 |
 | Version Awareness | 1 | 0 | 0 | 1 | 0 |
-| **TOTAL** | **211** | **130** | **73** | **8** | **49** |
+| **TOTAL** | **220** | **132** | **80** | **8** | **59** |
 
 
 ---
@@ -1907,8 +1971,8 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 
 ---
 
-****Total Coverage**: 211 validation rules across 31 categories
+**Total Coverage**: 220 validation rules across 31 categories
 
 **Knowledge Base**: 11,036 lines, 320KB, 75+ sources
-**Certainty**: 130 HIGH, 73 MEDIUM, 8 LOW
-**Auto-Fixable**: 59 rules (29%)
+**Certainty**: 130 HIGH, 78 MEDIUM, 8 LOW
+**Auto-Fixable**: 59 rules (27%)

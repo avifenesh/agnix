@@ -167,7 +167,8 @@ fn extract_implemented_rule_ids() -> BTreeSet<String> {
     let valid_prefixes = [
         "AS-", "CC-SK-", "CC-HK-", "CC-AG-", "CC-MEM-", "CC-PL-", "AGM-", "MCP-", "COP-", "CUR-",
         "CLN-", "CDX-", "OC-", "GM-", "XML-", "REF-", "PE-", "XP-", "VER-", "WS-", "CR-SK-",
-        "CL-SK-", "CP-SK-", "CX-SK-", "OC-SK-", "WS-SK-", "KR-SK-", "KIRO-", "AMP-SK-", "RC-SK-", "ROO-",
+        "CL-SK-", "CP-SK-", "CX-SK-", "OC-SK-", "WS-SK-", "KR-SK-", "KIRO-", "AMP-SK-", "AMP-",
+        "RC-SK-", "ROO-",
     ];
 
     fn extract_from_file(
@@ -316,6 +317,7 @@ fn infer_fixture_coverage(rules: &[RuleEntry]) -> HashMap<String, Vec<String>> {
         ("windsurf-skills", vec!["per_client_skills"]),
         ("kiro-skills", vec!["per_client_skills"]),
         ("amp-skills", vec!["per_client_skills"]),
+        ("amp-checks", vec!["amp-checks"]),
         ("roo-code-skills", vec!["per_client_skills"]),
         ("gemini-cli", vec!["gemini_md", "gemini_md-invalid"]),
         ("codex", vec!["codex", "codex-invalid"]),
@@ -530,6 +532,7 @@ fn test_rules_json_integrity() {
         "kiro-skills",
         "kiro-steering",
         "amp-skills",
+        "amp-checks",
         "roo-code-skills",
         "roo-code",
     ];

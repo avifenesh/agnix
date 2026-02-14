@@ -19,6 +19,8 @@ pub enum FileType {
     ClaudeMd,
     /// .claude/agents/*.md or agents/*.md
     Agent,
+    /// Amp code review checks (.agents/checks/*.md)
+    AmpCheck,
     /// settings.json, settings.local.json
     Hooks,
     /// plugin.json (validator checks .claude-plugin/ location)
@@ -58,6 +60,8 @@ pub enum FileType {
     GeminiMd,
     /// Gemini CLI settings (.gemini/settings.json)
     GeminiSettings,
+    /// Amp settings (.amp/settings.json, .amp/settings.local.json)
+    AmpSettings,
     /// Gemini CLI extension manifest (gemini-extension.json)
     GeminiExtension,
     /// Gemini CLI ignore file (.geminiignore)
@@ -105,6 +109,7 @@ impl fmt::Display for FileType {
             FileType::Skill => "Skill",
             FileType::ClaudeMd => "ClaudeMd",
             FileType::Agent => "Agent",
+            FileType::AmpCheck => "AmpCheck",
             FileType::Hooks => "Hooks",
             FileType::Plugin => "Plugin",
             FileType::Mcp => "Mcp",
@@ -124,6 +129,7 @@ impl fmt::Display for FileType {
             FileType::OpenCodeConfig => "OpenCodeConfig",
             FileType::GeminiMd => "GeminiMd",
             FileType::GeminiSettings => "GeminiSettings",
+            FileType::AmpSettings => "AmpSettings",
             FileType::GeminiExtension => "GeminiExtension",
             FileType::GeminiIgnore => "GeminiIgnore",
             FileType::CodexConfig => "CodexConfig",
@@ -153,6 +159,7 @@ mod tests {
             (FileType::Skill, "Skill"),
             (FileType::ClaudeMd, "ClaudeMd"),
             (FileType::Agent, "Agent"),
+            (FileType::AmpCheck, "AmpCheck"),
             (FileType::Hooks, "Hooks"),
             (FileType::Plugin, "Plugin"),
             (FileType::Mcp, "Mcp"),
@@ -172,6 +179,7 @@ mod tests {
             (FileType::OpenCodeConfig, "OpenCodeConfig"),
             (FileType::GeminiMd, "GeminiMd"),
             (FileType::GeminiSettings, "GeminiSettings"),
+            (FileType::AmpSettings, "AmpSettings"),
             (FileType::GeminiExtension, "GeminiExtension"),
             (FileType::GeminiIgnore, "GeminiIgnore"),
             (FileType::CodexConfig, "CodexConfig"),
@@ -200,6 +208,7 @@ mod tests {
             FileType::Skill,
             FileType::ClaudeMd,
             FileType::Agent,
+            FileType::AmpCheck,
             FileType::Hooks,
             FileType::Plugin,
             FileType::Mcp,
@@ -219,6 +228,7 @@ mod tests {
             FileType::OpenCodeConfig,
             FileType::GeminiMd,
             FileType::GeminiSettings,
+            FileType::AmpSettings,
             FileType::GeminiExtension,
             FileType::GeminiIgnore,
             FileType::CodexConfig,
