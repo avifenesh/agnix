@@ -3261,4 +3261,3 @@ fn test_no_raw_i18n_keys_in_json_output() {
         }
     }
 }
-
