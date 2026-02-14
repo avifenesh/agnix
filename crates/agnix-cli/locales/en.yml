@@ -493,6 +493,35 @@ rules:
   gm_003:
     message: "Missing project context section in GEMINI.md instruction file"
     suggestion: "Add a '# Project' or '## Overview' section describing the project purpose and tech stack"
+  gm_004:
+    message: "Invalid hooks configuration: %{description}"
+    suggestion: "Check hook event names and required fields (type, command) in .gemini/settings.json"
+    unknown_event: "Unknown hook event type '%{event}' in hooksConfig"
+    missing_field: "Hook in '%{event}' is missing required field '%{field}'"
+    invalid_type: "Hook type must be 'command', got '%{value}'"
+    malformed_hook: "Malformed hook entry in '%{event}' - expected an object with 'type' and 'command' fields"
+  gm_005:
+    message: "Invalid extension manifest: %{description}"
+    suggestion: "Ensure gemini-extension.json has required fields: name, version, description"
+    missing_field: "Missing required field '%{field}'"
+    invalid_name: "Extension name '%{name}' must be lowercase alphanumeric with dashes"
+    parse_error: "Failed to parse gemini-extension.json: %{error}"
+  gm_006:
+    message: "Invalid .geminiignore: %{description}"
+    suggestion: "Check .geminiignore syntax - use gitignore-style glob patterns"
+    empty: ".geminiignore file is empty"
+    syntax_error: "Invalid glob pattern on line %{line}: %{pattern}"
+  gm_007:
+    message: "@import references missing file: %{path}"
+    suggestion: "Verify the import path exists relative to the GEMINI.md file location"
+  gm_008:
+    message: "Invalid context file name: %{description}"
+    suggestion: "contextFileName should reference a valid file name (e.g., ending in .md)"
+    path_not_filename: "contextFileName should be a filename, not a path"
+  gm_009:
+    message: "Failed to parse .gemini/settings.json: %{error}"
+    suggestion: "Fix the JSON syntax error in .gemini/settings.json"
+    unknown_key: "Unknown top-level key '%{key}' in .gemini/settings.json"
 
   # --- OpenCode (opencode.rs) ---
   oc_001:

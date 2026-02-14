@@ -1,7 +1,7 @@
 {
   "description": "Machine-readable source of truth for all validation rules. When adding a new rule, add it here AND in VALIDATION-RULES.md. CI parity tests enforce sync.",
   "version": "1.1.0",
-  "total_rules": 181,
+  "total_rules": 187,
   "last_updated": "2026-02-14",
   "schema": {
     "evidence": {
@@ -4538,6 +4538,168 @@
       },
       "good_example": "# Project\n\nThis is a linter for agent configurations.\n\n## Build\n\nRun cargo build.",
       "bad_example": "# Build Commands\n\nRun npm install and npm build.\n\n## Testing\n\nUse npm test."
+    },
+    {
+      "id": "GM-004",
+      "name": "Invalid Hooks Configuration in Gemini Settings",
+      "severity": "MEDIUM",
+      "category": "gemini-cli",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://geminicli.com/docs/hooks"
+        ],
+        "verified_on": "2026-02-14",
+        "applies_to": {
+          "tool": "gemini-cli"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      },
+      "good_example": "{\"hooksConfig\":{\"BeforeAgent\":[{\"type\":\"command\",\"command\":\"echo test\"}]}}",
+      "bad_example": "{\"hooksConfig\":{\"InvalidEvent\":[{\"type\":\"command\",\"command\":\"echo test\"}]}}"
+    },
+    {
+      "id": "GM-005",
+      "name": "Invalid Extension Manifest",
+      "severity": "HIGH",
+      "category": "gemini-cli",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://geminicli.com/docs/extensions/reference"
+        ],
+        "verified_on": "2026-02-14",
+        "applies_to": {
+          "tool": "gemini-cli"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      },
+      "good_example": "{\"name\":\"my-extension\",\"version\":\"1.0.0\",\"description\":\"A useful extension\"}",
+      "bad_example": "{\"version\":\"1.0.0\"}"
+    },
+    {
+      "id": "GM-006",
+      "name": "Invalid .geminiignore File",
+      "severity": "LOW",
+      "category": "gemini-cli",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://geminicli.com/docs/cli/settings"
+        ],
+        "verified_on": "2026-02-14",
+        "applies_to": {
+          "tool": "gemini-cli"
+        },
+        "normative_level": "SHOULD",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      },
+      "good_example": "node_modules/\n*.log\n.env",
+      "bad_example": ""
+    },
+    {
+      "id": "GM-007",
+      "name": "@import File Not Found in GEMINI.md",
+      "severity": "MEDIUM",
+      "category": "gemini-cli",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://geminicli.com/docs/cli/gemini-md/"
+        ],
+        "verified_on": "2026-02-14",
+        "applies_to": {
+          "tool": "gemini-cli"
+        },
+        "normative_level": "SHOULD",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      },
+      "good_example": "@import shared-rules.md",
+      "bad_example": "@import nonexistent-file.md"
+    },
+    {
+      "id": "GM-008",
+      "name": "Invalid Context File Name Configuration",
+      "severity": "LOW",
+      "category": "gemini-cli",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://geminicli.com/docs/extensions/reference"
+        ],
+        "verified_on": "2026-02-14",
+        "applies_to": {
+          "tool": "gemini-cli"
+        },
+        "normative_level": "SHOULD",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      },
+      "good_example": "{\"contextFileName\":\"CONTEXT.md\"}",
+      "bad_example": "{\"contextFileName\":\"docs/context.md\"}"
+    },
+    {
+      "id": "GM-009",
+      "name": "Settings.json Parse Error",
+      "severity": "HIGH",
+      "category": "gemini-cli",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://geminicli.com/docs/cli/settings"
+        ],
+        "verified_on": "2026-02-14",
+        "applies_to": {
+          "tool": "gemini-cli"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      },
+      "good_example": "{\"general\":{},\"model\":{}}",
+      "bad_example": "{ invalid json }"
     },
     {
       "id": "CDX-000",

@@ -304,6 +304,30 @@ fn test_validators_for_gemini_md() {
 }
 
 #[test]
+fn test_validators_for_gemini_settings() {
+    let registry = ValidatorRegistry::with_defaults();
+    let validators = registry.validators_for(FileType::GeminiSettings);
+    assert_eq!(validators.len(), 1);
+    assert_eq!(validators[0].name(), "GeminiSettingsValidator");
+}
+
+#[test]
+fn test_validators_for_gemini_extension() {
+    let registry = ValidatorRegistry::with_defaults();
+    let validators = registry.validators_for(FileType::GeminiExtension);
+    assert_eq!(validators.len(), 1);
+    assert_eq!(validators[0].name(), "GeminiExtensionValidator");
+}
+
+#[test]
+fn test_validators_for_gemini_ignore() {
+    let registry = ValidatorRegistry::with_defaults();
+    let validators = registry.validators_for(FileType::GeminiIgnore);
+    assert_eq!(validators.len(), 1);
+    assert_eq!(validators[0].name(), "GeminiIgnoreValidator");
+}
+
+#[test]
 fn test_validators_for_skill() {
     let registry = ValidatorRegistry::with_defaults();
     let validators = registry.validators_for(FileType::Skill);
@@ -3942,6 +3966,9 @@ fn test_validator_names_are_ascii_and_nonempty() {
         FileType::ClineRulesFolder,
         FileType::OpenCodeConfig,
         FileType::GeminiMd,
+        FileType::GeminiSettings,
+        FileType::GeminiExtension,
+        FileType::GeminiIgnore,
         FileType::CodexConfig,
         FileType::GenericMarkdown,
     ];
@@ -3981,6 +4008,9 @@ const ALL_VALIDATED_FILE_TYPES: &[FileType] = &[
     FileType::ClineRulesFolder,
     FileType::OpenCodeConfig,
     FileType::GeminiMd,
+    FileType::GeminiSettings,
+    FileType::GeminiExtension,
+    FileType::GeminiIgnore,
     FileType::CodexConfig,
     FileType::GenericMarkdown,
 ];

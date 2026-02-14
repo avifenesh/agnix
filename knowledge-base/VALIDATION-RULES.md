@@ -1279,6 +1279,48 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 **Fix**: No auto-fix (project context must be authored by user)
 **Source**: geminicli.com/docs/cli/gemini-md/
 
+<a id="gm-004"></a>
+### GM-004 [MEDIUM] Invalid Hooks Configuration in Gemini Settings
+**Requirement**: hooksConfig in .gemini/settings.json MUST use valid event names and hook structure
+**Detection**: Parse hooksConfig object, validate event names against known set, check required fields (type, command)
+**Fix**: No auto-fix (manual correction required)
+**Source**: geminicli.com/docs/hooks
+
+<a id="gm-005"></a>
+### GM-005 [HIGH] Invalid Extension Manifest
+**Requirement**: gemini-extension.json MUST have valid JSON with required fields (name, version, description)
+**Detection**: Parse JSON, check required fields exist and are non-empty strings, validate name format
+**Fix**: No auto-fix (manual correction required)
+**Source**: geminicli.com/docs/extensions/reference
+
+<a id="gm-006"></a>
+### GM-006 [LOW] Invalid .geminiignore File
+**Requirement**: .geminiignore MAY have valid gitignore-style patterns
+**Detection**: Check for empty content and unmatched brackets in glob patterns
+**Fix**: No auto-fix (manual correction required)
+**Source**: geminicli.com/docs/cli/settings
+
+<a id="gm-007"></a>
+### GM-007 [MEDIUM] @import File Not Found in GEMINI.md
+**Requirement**: @import directives in GEMINI.md SHOULD reference existing files
+**Detection**: Scan for @import lines, resolve paths relative to GEMINI.md, check file existence
+**Fix**: No auto-fix (create the file or fix the path)
+**Source**: geminicli.com/docs/cli/gemini-md/
+
+<a id="gm-008"></a>
+### GM-008 [LOW] Invalid Context File Name Configuration
+**Requirement**: contextFileName in gemini-extension.json MAY reference a valid filename
+**Detection**: Check if contextFileName contains path separators (should be a filename only)
+**Fix**: No auto-fix (manual correction required)
+**Source**: geminicli.com/docs/extensions/reference
+
+<a id="gm-009"></a>
+### GM-009 [HIGH] Settings.json Parse Error
+**Requirement**: .gemini/settings.json MUST have valid JSON/JSONC syntax
+**Detection**: Attempt to parse as JSONC; report parse errors with line/column. Detect unknown top-level keys.
+**Fix**: No auto-fix (correct the JSON syntax)
+**Source**: geminicli.com/docs/cli/settings
+
 ---
 
 ## CODEX CLI RULES
@@ -1608,7 +1650,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | Cursor | 9 | 4 | 5 | 0 | 4 |
 | Cline | 4 | 3 | 1 | 0 | 2 |
 | OpenCode | 3 | 3 | 0 | 0 | 1 |
-| Gemini CLI | 3 | 1 | 2 | 0 | 0 |
+| Gemini CLI | 9 | 3 | 4 | 2 | 3 |
 | Codex CLI | 4 | 3 | 1 | 0 | 2 |
 | MCP | 24 | 19 | 5 | 0 | 4 |
 | XML | 3 | 3 | 0 | 0 | 3 |
@@ -1625,7 +1667,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | Amp Skills | 1 | 0 | 1 | 0 | 1 |
 | Roo Code Skills | 1 | 0 | 1 | 0 | 1 |
 | Version Awareness | 1 | 0 | 0 | 1 | 0 |
-| **TOTAL** | **181** | **117** | **60** | **4** | **59** |
+| **TOTAL** | **187** | **119** | **62** | **6** | **49** |
 
 
 ---
@@ -1655,7 +1697,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 
 ---
 
-**Total Coverage**: 181 validation rules across 28 categories
+****Total Coverage**: 187 validation rules across 28 categories
 
 **Knowledge Base**: 11,036 lines, 320KB, 75+ sources
 **Certainty**: 117 HIGH, 60 MEDIUM, 4 LOW

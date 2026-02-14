@@ -1,25 +1,14 @@
 {
-  "taskId": 399,
+  "taskId": 402,
   "phase": "implementation",
   "status": "complete",
   "implementationComplete": true,
-  "currentStep": 9,
-  "totalSteps": 9,
-  "lastActivityAt": "2026-02-14T00:10:00Z",
+  "currentStep": "review-fixes",
+  "totalSteps": 4,
+  "lastActivityAt": "2026-02-14T12:00:00Z",
   "filesModified": [
-    "crates/agnix-core/src/rules/hooks/helpers.rs",
-    "crates/agnix-core/src/rules/hooks/mod.rs",
-    "crates/agnix-core/src/rules/hooks/tests.rs",
-    "crates/agnix-core/locales/en.yml",
-    "knowledge-base/rules.json",
-    "crates/agnix-rules/rules.json",
-    "knowledge-base/VALIDATION-RULES.md",
-    "knowledge-base/standards/claude-code-HARD-RULES.md",
-    "tests/fixtures/invalid/hooks/deprecated-setup-event/settings.json",
-    "crates/agnix-mcp/tests/mcp_tests.rs",
-    "website/src/data/siteData.json",
-    "website/docs/rules/index.md",
-    "website/docs/rules/generated/cc-hk-019.md"
+    "crates/agnix-core/src/rules/gemini_md.rs",
+    "crates/agnix-core/src/rules/gemini_extension.rs"
   ],
   "verification": {
     "fmt": "ok",

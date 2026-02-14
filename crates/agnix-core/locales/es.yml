@@ -407,6 +407,35 @@ rules:
   gm_003:
     message: "Falta sección de contexto del proyecto en el archivo de instrucciones GEMINI.md"
     suggestion: "Agrega una sección '# Project' o '## Overview' describiendo el propósito del proyecto y la tecnología"
+  gm_004:
+    message: "Configuración de hooks inválida: %{description}"
+    suggestion: "Verifica los nombres de eventos de hooks y los campos requeridos (type, command) en .gemini/settings.json"
+    unknown_event: "Tipo de evento de hook desconocido '%{event}' en hooksConfig"
+    missing_field: "El hook en '%{event}' le falta el campo requerido '%{field}'"
+    invalid_type: "El tipo de hook debe ser 'command', se obtuvo '%{value}'"
+    malformed_hook: "Entrada de hook malformada en '%{event}' - se esperaba un objeto con campos 'type' y 'command'"
+  gm_005:
+    message: "Manifiesto de extensión inválido: %{description}"
+    suggestion: "Asegúrate de que gemini-extension.json tenga los campos requeridos: name, version, description"
+    missing_field: "Falta el campo requerido '%{field}'"
+    invalid_name: "El nombre de extensión '%{name}' debe ser alfanumérico en minúsculas con guiones"
+    parse_error: "Error al analizar gemini-extension.json: %{error}"
+  gm_006:
+    message: ".geminiignore inválido: %{description}"
+    suggestion: "Verifica la sintaxis de .geminiignore - usa patrones glob estilo gitignore"
+    empty: "El archivo .geminiignore está vacío"
+    syntax_error: "Patrón glob inválido en la línea %{line}: %{pattern}"
+  gm_007:
+    message: "@import referencia archivo no encontrado: %{path}"
+    suggestion: "Verifica que la ruta de importación existe relativa a la ubicación del archivo GEMINI.md"
+  gm_008:
+    message: "Nombre de archivo de contexto inválido: %{description}"
+    suggestion: "contextFileName debe referenciar un nombre de archivo válido (ej., terminando en .md)"
+    path_not_filename: "contextFileName debe ser un nombre de archivo, no una ruta"
+  gm_009:
+    message: "Error al analizar .gemini/settings.json: %{error}"
+    suggestion: "Corrige el error de sintaxis JSON en .gemini/settings.json"
+    unknown_key: "Clave de nivel superior desconocida '%{key}' en .gemini/settings.json"
 
   # --- OpenCode (opencode.rs) ---
   oc_001:
