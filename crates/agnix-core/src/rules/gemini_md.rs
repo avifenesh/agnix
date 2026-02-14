@@ -103,6 +103,26 @@ impl Validator for GeminiMdValidator {
                 if let Some(import_path) = trimmed.strip_prefix("@import ") {
                     let import_path = import_path.trim().trim_matches('"').trim_matches('\'');
                     if !import_path.is_empty() {
+                        // Reject absolute paths and path traversal attempts
+                        let is_absolute = import_path.starts_with('/')
+                            || import_path.starts_with('\\')
+                            || (import_path.len() >= 2 && import_path.as_bytes()[1] == b':');
+                        let has_traversal = Path::new(import_path)
+                            .components()
+                            .any(|c| matches!(c, std::path::Component::ParentDir));
+                        if is_absolute || has_traversal {
+                            diagnostics.push(
+                                Diagnostic::warning(
+                                    path_buf.clone(),
+                                    line_num + 1,
+                                    0,
+                                    "GM-007",
+                                    t!("rules.gm_007.message", path = import_path),
+                                )
+                                .with_suggestion(t!("rules.gm_007.suggestion")),
+                            );
+                            continue;
+                        }
                         let base_dir = path.parent().unwrap_or(Path::new("."));
                         let resolved = base_dir.join(import_path);
                         if std::fs::symlink_metadata(&resolved).is_err() {
