@@ -289,6 +289,9 @@ const DEFAULTS: &[(FileType, ValidatorFactory)] = &[
     (FileType::GeminiMd, xml_validator),
     (FileType::GeminiMd, imports_validator),
     (FileType::GeminiMd, cross_platform_validator),
+    (FileType::GeminiSettings, gemini_settings_validator),
+    (FileType::GeminiExtension, gemini_extension_validator),
+    (FileType::GeminiIgnore, gemini_ignore_validator),
     (FileType::CodexConfig, codex_validator),
     // CodexValidator on ClaudeMd catches AGENTS.override.md files (CDX-003).
     // The validator early-returns for all other ClaudeMd filenames.
@@ -372,6 +375,18 @@ fn opencode_validator() -> Box<dyn Validator> {
 
 fn gemini_md_validator() -> Box<dyn Validator> {
     Box::new(crate::rules::gemini_md::GeminiMdValidator)
+}
+
+fn gemini_settings_validator() -> Box<dyn Validator> {
+    Box::new(crate::rules::gemini_settings::GeminiSettingsValidator)
+}
+
+fn gemini_extension_validator() -> Box<dyn Validator> {
+    Box::new(crate::rules::gemini_extension::GeminiExtensionValidator)
+}
+
+fn gemini_ignore_validator() -> Box<dyn Validator> {
+    Box::new(crate::rules::gemini_ignore::GeminiIgnoreValidator)
 }
 
 fn codex_validator() -> Box<dyn Validator> {
@@ -609,7 +624,7 @@ mod tests {
     // ---- Backward compatibility ----
 
     #[test]
-    fn with_defaults_returns_39_factories() {
+    fn with_defaults_returns_expected_factories() {
         let registry = ValidatorRegistry::with_defaults();
         assert_eq!(
             registry.total_factory_count(),
