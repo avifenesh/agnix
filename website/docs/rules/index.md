@@ -1,6 +1,6 @@
 # Rules Reference
 
-This section contains all `224` validation rules generated from `knowledge-base/rules.json`.
+This section contains all `229` validation rules generated from `knowledge-base/rules.json`.
 `59` rules have automatic fixes.
 
 | Rule | Name | Severity | Category | Auto-Fix |
@@ -11,6 +11,10 @@ This section contains all `224` validation rules generated from `knowledge-base/
 | [AGM-004](./generated/agm-004.md) | Missing Project Context | MEDIUM | AGENTS.md | No |
 | [AGM-005](./generated/agm-005.md) | Platform-Specific Features Without Guard | MEDIUM | AGENTS.md | No |
 | [AGM-006](./generated/agm-006.md) | Nested AGENTS.md Hierarchy | MEDIUM | AGENTS.md | No |
+| [AMP-001](./generated/amp-001.md) | Invalid Amp Check Frontmatter | HIGH | Amp Checks | No |
+| [AMP-002](./generated/amp-002.md) | Invalid Amp severity-default | MEDIUM | Amp Checks | No |
+| [AMP-003](./generated/amp-003.md) | Invalid AGENTS.md globs Frontmatter for Amp | MEDIUM | Amp Checks | No |
+| [AMP-004](./generated/amp-004.md) | Invalid Amp Settings Configuration | HIGH | Amp Checks | No |
 | [AMP-SK-001](./generated/amp-sk-001.md) | Amp Skill Uses Unsupported Field | MEDIUM | Amp Skills | Yes (safe/unsafe) |
 | [AS-001](./generated/as-001.md) | Missing Frontmatter | HIGH | Agent Skills | No |
 | [AS-002](./generated/as-002.md) | Missing Required Field: name | HIGH | Agent Skills | No |
@@ -28,6 +32,9 @@ This section contains all `224` validation rules generated from `knowledge-base/
 | [AS-014](./generated/as-014.md) | Windows Path Separator | HIGH | Agent Skills | Yes (safe) |
 | [AS-015](./generated/as-015.md) | Upload Size Exceeds 8MB | HIGH | Agent Skills | No |
 | [AS-016](./generated/as-016.md) | Skill Parse Error | HIGH | Agent Skills | No |
+| [AS-017](./generated/as-017.md) | Name Must Match Parent Directory | HIGH | Agent Skills | No |
+| [AS-018](./generated/as-018.md) | Description Uses First or Second Person | MEDIUM | Agent Skills | No |
+| [AS-019](./generated/as-019.md) | Vague Skill Name | MEDIUM | Agent Skills | No |
 | [CC-AG-001](./generated/cc-ag-001.md) | Missing Name Field | HIGH | Claude Agents | No |
 | [CC-AG-002](./generated/cc-ag-002.md) | Missing Description Field | HIGH | Claude Agents | No |
 | [CC-AG-003](./generated/cc-ag-003.md) | Invalid Model Value | HIGH | Claude Agents | Yes (unsafe) |
@@ -97,6 +104,8 @@ This section contains all `224` validation rules generated from `knowledge-base/
 | [CC-SK-013](./generated/cc-sk-013.md) | Fork Context Without Actionable Instructions | MEDIUM | Claude Skills | No |
 | [CC-SK-014](./generated/cc-sk-014.md) | Invalid disable-model-invocation Type | HIGH | Claude Skills | Yes (safe) |
 | [CC-SK-015](./generated/cc-sk-015.md) | Invalid user-invocable Type | HIGH | Claude Skills | Yes (safe) |
+| [CC-SK-016](./generated/cc-sk-016.md) | Indexed $ARGUMENTS Without argument-hint | MEDIUM | Claude Skills | No |
+| [CC-SK-017](./generated/cc-sk-017.md) | Unknown Frontmatter Field | MEDIUM | Claude Skills | No |
 | [CDX-000](./generated/cdx-000.md) | TOML Parse Error | HIGH | Codex CLI | No |
 | [CDX-001](./generated/cdx-001.md) | Invalid Approval Mode | HIGH | Codex CLI | Yes (unsafe) |
 | [CDX-002](./generated/cdx-002.md) | Invalid Full Auto Error Mode | HIGH | Codex CLI | Yes (unsafe) |
@@ -153,11 +162,11 @@ This section contains all `224` validation rules generated from `knowledge-base/
 | [GM-007](./generated/gm-007.md) | @import File Not Found in GEMINI.md | MEDIUM | Gemini CLI | No |
 | [GM-008](./generated/gm-008.md) | Invalid Context File Name Configuration | LOW | Gemini CLI | No |
 | [GM-009](./generated/gm-009.md) | Settings.json Parse Error | HIGH | Gemini CLI | No |
-| [KR-SK-001](./generated/kr-sk-001.md) | Kiro Skill Uses Unsupported Field | MEDIUM | Kiro Skills | Yes (safe/unsafe) |
 | [KIRO-001](./generated/kiro-001.md) | Invalid Steering File Inclusion Mode | HIGH | Kiro Steering | No |
 | [KIRO-002](./generated/kiro-002.md) | Missing Required Fields for Inclusion Mode | HIGH | Kiro Steering | No |
 | [KIRO-003](./generated/kiro-003.md) | Invalid fileMatchPattern Glob | MEDIUM | Kiro Steering | No |
 | [KIRO-004](./generated/kiro-004.md) | Empty Kiro Steering File | MEDIUM | Kiro Steering | No |
+| [KR-SK-001](./generated/kr-sk-001.md) | Kiro Skill Uses Unsupported Field | MEDIUM | Kiro Skills | Yes (safe/unsafe) |
 | [MCP-001](./generated/mcp-001.md) | Invalid JSON-RPC Version | HIGH | MCP | Yes (safe) |
 | [MCP-002](./generated/mcp-002.md) | Missing Required Tool Field | HIGH | MCP | No |
 | [MCP-003](./generated/mcp-003.md) | Invalid JSON Schema | HIGH | MCP | No |
@@ -225,7 +234,3 @@ This section contains all `224` validation rules generated from `knowledge-base/
 | [XP-006](./generated/xp-006.md) | Multiple Layers Without Documented Precedence | MEDIUM | Cross-Platform | No |
 | [XP-007](./generated/xp-007.md) | AGENTS.md Exceeds Codex Byte Limit | MEDIUM | Cross-Platform | No |
 | [XP-SK-001](./generated/xp-sk-001.md) | Skill Uses Client-Specific Features | LOW | Cross-Platform | No |
-| [AMP-001](./generated/amp-001.md) | Invalid Amp Check Frontmatter | HIGH | Amp Checks | No |
-| [AMP-002](./generated/amp-002.md) | Invalid Amp severity-default | MEDIUM | Amp Checks | No |
-| [AMP-003](./generated/amp-003.md) | Invalid AGENTS.md globs Frontmatter for Amp | MEDIUM | Amp Checks | No |
-| [AMP-004](./generated/amp-004.md) | Invalid Amp Settings Configuration | HIGH | Amp Checks | No |

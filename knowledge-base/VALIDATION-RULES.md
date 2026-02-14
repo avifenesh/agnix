@@ -207,6 +207,27 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 **Fix**: Fix YAML syntax errors in frontmatter
 **Source**: agentskills.io/specification
 
+<a id="as-017"></a>
+### AS-017 [HIGH] Name Must Match Parent Directory
+**Requirement**: Skill `name` MUST match the parent directory name for `SKILL.md`
+**Detection**: Compare frontmatter `name` with immediate parent directory for `.../<dir>/SKILL.md`
+**Fix**: Rename either the directory or the `name` field so they match
+**Source**: agentskills.io/specification
+
+<a id="as-018"></a>
+### AS-018 [MEDIUM] Description Uses First or Second Person
+**Requirement**: Skill descriptions SHOULD use neutral/third-person phrasing
+**Detection**: Regex matches first/second person phrasing (for example: "I will", "you can", "we should")
+**Fix**: Rewrite description in third person
+**Source**: agentskills.io/specification
+
+<a id="as-019"></a>
+### AS-019 [MEDIUM] Vague Skill Name
+**Requirement**: Skill name SHOULD be specific enough for reliable tool routing
+**Detection**: Name is a generic token like `helper`, `utils`, `tools`, `misc`, `general`, `common`, `base`, `main`, or `default`
+**Fix**: Replace with a concrete kebab-case name describing the skill purpose
+**Source**: agentskills.io/specification
+
 ---
 
 ## CLAUDE CODE RULES (SKILLS)
@@ -263,7 +284,7 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 <a id="cc-sk-008"></a>
 ### CC-SK-008 [HIGH] Unknown Tool Name
 **Requirement**: Tool names MUST match Claude Code tools
-**Known Tools**: Bash, Read, Write, Edit, Grep, Glob, Task, WebFetch, WebSearch, AskUserQuestion, TodoRead, TodoWrite, MultiTool, NotebookEdit, EnterPlanMode, ExitPlanMode, Skill, StatusBarMessageTool, TaskOutput
+**Known Tools**: Bash, Read, Write, Edit, Grep, Glob, Task, WebFetch, WebSearch, AskUserQuestion, TodoRead, TodoWrite, MultiTool, NotebookEdit, EnterPlanMode, ExitPlanMode, Skill, StatusBarMessageTool, SendMessageTool, TaskOutput
 **Detection**: Check against tool list; MCP tools with lowercase `mcp__<server>__<tool>` format are accepted (case-sensitive prefix)
 **Fix**: Suggest closest match
 **Source**: code.claude.com/docs/en/settings
@@ -315,6 +336,20 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 **Requirement**: `user-invocable` MUST be a boolean, not a string
 **Detection**: Raw YAML parsing detects quoted "true"/"false" strings
 **Fix**: [AUTO-FIX, safe] Convert string to boolean
+**Source**: code.claude.com/docs/en/skills
+
+<a id="cc-sk-016"></a>
+### CC-SK-016 [MEDIUM] Indexed $ARGUMENTS Without argument-hint
+**Requirement**: Skills that use indexed placeholders like `$ARGUMENTS[0]` SHOULD declare `argument-hint`
+**Detection**: Body contains regex `\$ARGUMENTS\[\d+\]` and frontmatter omits `argument-hint`
+**Fix**: Add `argument-hint` to frontmatter
+**Source**: code.claude.com/docs/en/skills
+
+<a id="cc-sk-017"></a>
+### CC-SK-017 [MEDIUM] Unknown Frontmatter Field
+**Requirement**: Frontmatter keys SHOULD match the documented schema
+**Detection**: Top-level YAML key is not in known set (`name`, `description`, `license`, `compatibility`, `metadata`, `allowed-tools`, `argument-hint`, `disable-model-invocation`, `user-invocable`, `model`, `context`, `agent`, `hooks`)
+**Fix**: Remove unsupported keys or correct typos
 **Source**: code.claude.com/docs/en/skills
 
 ---
@@ -1910,8 +1945,8 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 
 | Category | Total Rules | HIGH | MEDIUM | LOW | Auto-Fixable |
 |----------|-------------|------|--------|-----|--------------|
-| Agent Skills | 16 | 14 | 2 | 0 | 5 |
-| Claude Skills | 15 | 11 | 4 | 0 | 9 |
+| Agent Skills | 19 | 15 | 4 | 0 | 5 |
+| Claude Skills | 17 | 11 | 6 | 0 | 9 |
 | Claude Hooks | 19 | 12 | 5 | 2 | 8 |
 | Claude Agents | 13 | 12 | 1 | 0 | 4 |
 | Claude Memory | 12 | 8 | 4 | 0 | 3 |
@@ -1942,7 +1977,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | Roo Code Skills | 1 | 0 | 1 | 0 | 1 |
 | Roo Code | 6 | 3 | 3 | 0 | 0 |
 | Version Awareness | 1 | 0 | 0 | 1 | 0 |
-| **TOTAL** | **224** | **134** | **82** | **8** | **59** |
+| **TOTAL** | **229** | **135** | **86** | **8** | **59** |
 
 
 ---
@@ -1972,8 +2007,8 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 
 ---
 
-**Total Coverage**: 224 validation rules across 32 categories
+**Total Coverage**: 229 validation rules across 32 categories
 
 **Knowledge Base**: 11,036 lines, 320KB, 75+ sources
-**Certainty**: 130 HIGH, 78 MEDIUM, 8 LOW
+**Certainty**: 135 HIGH, 86 MEDIUM, 8 LOW
 **Auto-Fixable**: 59 rules (27%)

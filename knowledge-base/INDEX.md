@@ -1,6 +1,6 @@
 # agnix Knowledge Base - Master Index
 
-> 224 validation rules across 32 categories, sourced from 75+ references
+> 229 validation rules across 32 categories, sourced from 75+ references
 
 
 ---
@@ -9,7 +9,7 @@
 
 | What You Need | Start Here |
 |---------------|------------|
-| **Implement validator** | [VALIDATION-RULES.md](./VALIDATION-RULES.md) - 224 rules with detection logic |
+| **Implement validator** | [VALIDATION-RULES.md](./VALIDATION-RULES.md) - 229 rules with detection logic |
 
 | **Understand a standard** | [standards/](#standards) - HARD-RULES files |
 | **Learn best practices** | [standards/](#standards) - OPINIONS files |
@@ -81,15 +81,15 @@ knowledge-base/
 | **AGENTS.md** | 5 | - | - | 6 rules |
 | **Cursor** | 2 | - | - | 9 rules |
 | **agentsys** | 12 | - | - | 70 patterns |
-| **Total** | **75+** | **117KB** | **160KB** | **224 rules** |
+| **Total** | **75+** | **117KB** | **160KB** | **229 rules** |
 
 
 ### Validation Rules by Category
 
 | Category | Rules | HIGH | MEDIUM | LOW | Auto-Fix |
 |----------|-------|------|--------|-----|----------|
-| Agent Skills | 16 | 14 | 2 | 0 | 5 |
-| Claude Skills | 15 | 11 | 4 | 0 | 7 |
+| Agent Skills | 19 | 15 | 4 | 0 | 5 |
+| Claude Skills | 17 | 11 | 6 | 0 | 9 |
 | Claude Hooks | 19 | 12 | 5 | 2 | 4 |
 | Claude Agents | 13 | 12 | 1 | 0 | 2 |
 | Claude Memory | 12 | 8 | 4 | 0 | 3 |
@@ -120,7 +120,7 @@ knowledge-base/
 | Roo Code | 6 | 3 | 3 | 0 | 0 |
 | Windsurf | 4 | 1 | 2 | 1 | 0 |
 | Kiro Steering | 4 | 2 | 2 | 0 | 0 |
-| **TOTAL** | **224** | **134** | **82** | **8** | **59** |
+| **TOTAL** | **229** | **135** | **86** | **8** | **59** |
 
 
 ---
@@ -158,7 +158,7 @@ knowledge-base/
 
 ### For Implementation
 
-**Start here**: [VALIDATION-RULES.md](./VALIDATION-RULES.md) - 224 rules with rule IDs (AS-001, CC-HK-001, etc.)
+**Start here**: [VALIDATION-RULES.md](./VALIDATION-RULES.md) - 229 rules with rule IDs (AS-001, CC-HK-001, etc.)
 
 - Detection pseudocode
 - Auto-fix implementations
