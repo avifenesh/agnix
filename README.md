@@ -11,7 +11,7 @@
   </p>
 </div>
 
-<p align="center">Catch broken agent configs before your AI tools silently ignore them.<br>187 rules across Claude Code, Codex CLI, OpenCode, Cursor, Copilot, and more -<br>validating CLAUDE.md, SKILL.md, hooks, MCP configs, and other agent files.</p>
+<p align="center">Catch broken agent configs before your AI tools silently ignore them.<br>194 rules across Claude Code, Codex CLI, OpenCode, Cursor, Copilot, and more -<br>validating CLAUDE.md, SKILL.md, hooks, MCP configs, and other agent files.</p>
 
 <p align="center"><strong>Auto-fix</strong> | <strong><a href="https://github.com/marketplace/actions/agnix-ci">GitHub Action</a></strong> | <strong><a href="https://marketplace.visualstudio.com/items?itemName=avifenesh.agnix">VS Code</a> + <a href="https://plugins.jetbrains.com/plugin/30087-agnix">JetBrains</a> + <a href="https://github.com/avifenesh/agnix.nvim">Neovim</a> + <a href="https://github.com/avifenesh/agnix/tree/main/editors/zed">Zed</a></strong></p>
 

@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **Gemini CLI expanded coverage**: Added 6 new validation rules (GM-004 through GM-009) for .gemini/settings.json hooks configuration, gemini-extension.json manifests, and .geminiignore files. Added 3 new file type detectors and validators.
+- **Codex CLI expanded validation**: CDX-004 (unknown config keys), CDX-005 (`project_doc_max_bytes` exceeds 65536 limit); updated CDX source_urls to official docs
+- **OpenCode expanded validation**: OC-004 (unknown config keys), OC-006 (remote instruction URL timeout warning), OC-007 (invalid agent definition), OC-008 (invalid permission configuration), OC-009 (variable substitution syntax validation)
 - **`agnix-wasm` crate**: New WebAssembly bindings for the validation engine, enabling browser-based validation without a server
 - **`validate_content()` API**: New pure function in `agnix-core` for validating content strings without filesystem I/O
 - **`filesystem` feature flag**: `agnix-core` now gates filesystem-dependent code (`rayon`, `ignore`, `dirs`) behind a `filesystem` feature (enabled by default), allowing WASM compilation with `default-features = false`
