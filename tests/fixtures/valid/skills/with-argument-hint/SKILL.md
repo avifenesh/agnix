@@ -1,5 +1,5 @@
 ---
-name: greeter
+name: with-argument-hint
 description: Use when greeting users
 argument-hint: user-name
 ---
