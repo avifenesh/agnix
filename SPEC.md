@@ -1,6 +1,6 @@
 # agnix Technical Reference
 
-> Linter for agent configs. 216 rules across 30 categories.
+> Linter for agent configs. 220 rules across 31 categories.
 
 
 ## What agnix Validates
@@ -34,6 +34,7 @@
 | Windsurf Skills | .windsurf/skills/*/SKILL.md | 1 |
 | Kiro Skills | .kiro/skills/*/SKILL.md | 1 |
 | Amp Skills | .agents/skills/*/SKILL.md | 1 |
+| Amp Checks | .agents/checks/*.md, .amp/settings*.json | 4 |
 | Roo Code Skills | .roo/skills/*/SKILL.md | 1 |
 | Roo Code | .roo/rules/*.md, .roomodes, .roorules, .roo/mcp.json, .rooignore | 6 |
 
@@ -52,7 +53,7 @@ agnix/
 │   ├── agnix-mcp/      # MCP server
 │   └── agnix-wasm/     # WebAssembly bindings
 ├── editors/            # Neovim, VS Code, JetBrains, Zed integrations
-├── knowledge-base/     # 207 rules documented
+├── knowledge-base/     # 220 rules documented
 
 ├── scripts/            # Build/dev automation scripts
 ├── website/            # Docusaurus documentation website

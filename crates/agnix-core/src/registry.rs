@@ -270,9 +270,11 @@ const DEFAULTS: &[(FileType, ValidatorFactory)] = &[
     (FileType::Skill, per_client_skill_validator),
     (FileType::Skill, xml_validator),
     (FileType::Skill, imports_validator),
+    (FileType::AmpCheck, amp_validator),
     (FileType::ClaudeMd, claude_md_validator),
     (FileType::ClaudeMd, cross_platform_validator),
     (FileType::ClaudeMd, agents_md_validator),
+    (FileType::ClaudeMd, amp_validator),
     (FileType::ClaudeMd, xml_validator),
     (FileType::ClaudeMd, imports_validator),
     (FileType::ClaudeMd, prompt_validator),
@@ -309,6 +311,7 @@ const DEFAULTS: &[(FileType, ValidatorFactory)] = &[
     (FileType::GeminiMd, imports_validator),
     (FileType::GeminiMd, cross_platform_validator),
     (FileType::GeminiSettings, gemini_settings_validator),
+    (FileType::AmpSettings, amp_validator),
     (FileType::GeminiExtension, gemini_extension_validator),
     (FileType::GeminiIgnore, gemini_ignore_validator),
     (FileType::CodexConfig, codex_validator),
@@ -338,6 +341,10 @@ fn skill_validator() -> Box<dyn Validator> {
 
 fn per_client_skill_validator() -> Box<dyn Validator> {
     Box::new(crate::rules::per_client_skill::PerClientSkillValidator)
+}
+
+fn amp_validator() -> Box<dyn Validator> {
+    Box::new(crate::rules::amp::AmpValidator)
 }
 
 fn claude_md_validator() -> Box<dyn Validator> {
