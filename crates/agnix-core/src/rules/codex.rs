@@ -933,6 +933,35 @@ name = "test"
         );
     }
 
+    #[test]
+    fn test_cdx_005_negative_value() {
+        // Negative values are semantically invalid but CDX-005 only checks the upper bound.
+        // Codex itself rejects negative values, but since this is an unusual edge case
+        // and not the primary concern (the issue is about the 65536 cap), we document
+        // that negative values pass CDX-005 validation.
+        let diagnostics = validate_config("project_doc_max_bytes = -1");
+        let cdx_005: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CDX-005").collect();
+        assert!(
+            cdx_005.is_empty(),
+            "Negative values do not exceed the upper limit"
+        );
+    }
+
+    #[test]
+    fn test_cdx_004_and_cdx_005_combined() {
+        // Both an unknown key and exceeding limit in the same file
+        let content = "unknown_key = true\nproject_doc_max_bytes = 999999";
+        let diagnostics = validate_config(content);
+        let cdx_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CDX-004").collect();
+        let cdx_005: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CDX-005").collect();
+        assert_eq!(cdx_004.len(), 1, "CDX-004 should fire for unknown_key");
+        assert_eq!(
+            cdx_005.len(),
+            1,
+            "CDX-005 should fire for exceeding limit"
+        );
+    }
+
     // ===== Fixture Integration =====
 
     #[test]

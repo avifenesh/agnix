@@ -357,24 +357,44 @@ impl Validator for OpenCodeValidator {
 
 /// Recursively walk the JSON value tree and validate any string containing
 /// variable substitution patterns like `{env:...}` or `{file:...}`.
+///
+/// Depth is bounded to prevent stack overflow on pathologically nested JSON.
+/// In practice, `file_utils::safe_read_file` enforces a 1 MiB limit upstream,
+/// but the depth guard is an additional safety layer.
 fn validate_substitutions(
     value: &serde_json::Value,
     path: &Path,
     content: &str,
     diagnostics: &mut Vec<Diagnostic>,
 ) {
+    validate_substitutions_inner(value, path, content, diagnostics, 0);
+}
+
+/// Maximum recursion depth for JSON tree traversal (OC-009).
+const MAX_SUBSTITUTION_DEPTH: usize = 64;
+
+fn validate_substitutions_inner(
+    value: &serde_json::Value,
+    path: &Path,
+    content: &str,
+    diagnostics: &mut Vec<Diagnostic>,
+    depth: usize,
+) {
+    if depth > MAX_SUBSTITUTION_DEPTH {
+        return;
+    }
     match value {
         serde_json::Value::String(s) => {
             validate_substitution_string(s, path, content, diagnostics);
         }
         serde_json::Value::Array(arr) => {
             for item in arr {
-                validate_substitutions(item, path, content, diagnostics);
+                validate_substitutions_inner(item, path, content, diagnostics, depth + 1);
             }
         }
         serde_json::Value::Object(obj) => {
             for (_, v) in obj {
-                validate_substitutions(v, path, content, diagnostics);
+                validate_substitutions_inner(v, path, content, diagnostics, depth + 1);
             }
         }
         _ => {}
@@ -1111,6 +1131,48 @@ mod tests {
         let diagnostics = validate(r#"{"tui": {"prompt": "{bogus:test}"}}"#);
         let oc_009: Vec<_> = diagnostics.iter().filter(|d| d.rule == "OC-009").collect();
         assert_eq!(oc_009.len(), 1);
+    }
+
+    #[test]
+    fn test_oc_009_multiple_substitutions_in_one_string() {
+        let diagnostics =
+            validate(r#"{"model": "{env:MODEL} and {file:path.txt} and {bad:x}"}"#);
+        let oc_009: Vec<_> = diagnostics.iter().filter(|d| d.rule == "OC-009").collect();
+        assert_eq!(
+            oc_009.len(),
+            1,
+            "Only {{bad:x}} should flag, not {{env:MODEL}} or {{file:path.txt}}"
+        );
+    }
+
+    #[test]
+    fn test_oc_009_colon_in_value_part() {
+        // {file:C:/path/to/file} has a colon in the value part - should still be valid
+        let diagnostics = validate(r#"{"model": "{file:C:/path/to/file}"}"#);
+        let oc_009: Vec<_> = diagnostics.iter().filter(|d| d.rule == "OC-009").collect();
+        assert!(
+            oc_009.is_empty(),
+            "Colons after the first should be part of the value"
+        );
+    }
+
+    #[test]
+    fn test_oc_009_unmatched_opening_brace() {
+        // An unmatched opening brace without closing should not crash
+        let diagnostics = validate(r#"{"model": "some {env:FOO text"}"#);
+        let oc_009: Vec<_> = diagnostics.iter().filter(|d| d.rule == "OC-009").collect();
+        assert!(oc_009.is_empty(), "Unmatched brace should be ignored");
+    }
+
+    #[test]
+    fn test_oc_009_non_substitution_braces() {
+        // Plain braces like JSON-in-string should not flag
+        let diagnostics = validate(r#"{"model": "value with {json} content"}"#);
+        let oc_009: Vec<_> = diagnostics.iter().filter(|d| d.rule == "OC-009").collect();
+        assert!(
+            oc_009.is_empty(),
+            "{{json}} without colon should not be flagged"
+        );
     }
 
     // ===== Fixture Integration =====
