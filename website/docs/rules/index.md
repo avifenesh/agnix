@@ -1,6 +1,6 @@
 # Rules Reference
 
-This section contains all `211` validation rules generated from `knowledge-base/rules.json`.
+This section contains all `216` validation rules generated from `knowledge-base/rules.json`.
 `59` rules have automatic fixes.
 
 | Rule | Name | Severity | Category | Auto-Fix |
@@ -162,16 +162,21 @@ This section contains all `211` validation rules generated from `knowledge-base/
 | [XML-003](./generated/xml-003.md) | Unmatched Closing Tag | HIGH | XML | Yes (unsafe) |
 | [REF-001](./generated/ref-001.md) | Import File Not Found | HIGH | References | No |
 | [REF-002](./generated/ref-002.md) | Broken Markdown Link | HIGH | References | No |
+| [REF-003](./generated/ref-003.md) | Duplicate Import | MEDIUM | References | No |
+| [REF-004](./generated/ref-004.md) | Non-Markdown Import | MEDIUM | References | No |
 | [PE-001](./generated/pe-001.md) | Lost in the Middle | MEDIUM | Prompt Engineering | No |
 | [PE-002](./generated/pe-002.md) | Chain-of-Thought on Simple Task | MEDIUM | Prompt Engineering | No |
 | [PE-003](./generated/pe-003.md) | Weak Imperative Language | MEDIUM | Prompt Engineering | No |
 | [PE-004](./generated/pe-004.md) | Ambiguous Instructions | MEDIUM | Prompt Engineering | No |
+| [PE-005](./generated/pe-005.md) | Redundant Generic Instructions | MEDIUM | Prompt Engineering | No |
+| [PE-006](./generated/pe-006.md) | Negative-Only Instructions | MEDIUM | Prompt Engineering | No |
 | [XP-001](./generated/xp-001.md) | Platform-Specific Feature in Generic Config | HIGH | Cross-Platform | No |
 | [XP-002](./generated/xp-002.md) | AGENTS.md Platform Compatibility | MEDIUM | Cross-Platform | No |
 | [XP-003](./generated/xp-003.md) | Hard-Coded Platform Paths | MEDIUM | Cross-Platform | No |
 | [XP-004](./generated/xp-004.md) | Conflicting Build/Test Commands | MEDIUM | Cross-Platform | No |
 | [XP-005](./generated/xp-005.md) | Conflicting Tool Constraints | HIGH | Cross-Platform | No |
 | [XP-006](./generated/xp-006.md) | Multiple Layers Without Documented Precedence | MEDIUM | Cross-Platform | No |
+| [XP-007](./generated/xp-007.md) | AGENTS.md Exceeds Codex Byte Limit | MEDIUM | Cross-Platform | No |
 | [OC-001](./generated/oc-001.md) | Invalid Share Mode | HIGH | OpenCode | Yes (unsafe) |
 | [OC-002](./generated/oc-002.md) | Invalid Instruction Path | HIGH | OpenCode | No |
 | [OC-003](./generated/oc-003.md) | opencode.json Parse Error | HIGH | OpenCode | No |
