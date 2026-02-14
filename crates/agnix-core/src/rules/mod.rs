@@ -16,6 +16,7 @@ pub mod gemini_md;
 pub mod gemini_settings;
 pub mod hooks;
 pub mod imports;
+pub mod kiro_steering;
 pub mod mcp;
 pub mod opencode;
 pub mod per_client_skill;

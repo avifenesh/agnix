@@ -1,6 +1,6 @@
 # Rules Reference
 
-This section contains all `220` validation rules generated from `knowledge-base/rules.json`.
+This section contains all `224` validation rules generated from `knowledge-base/rules.json`.
 `59` rules have automatic fixes.
 
 | Rule | Name | Severity | Category | Auto-Fix |
@@ -154,6 +154,10 @@ This section contains all `220` validation rules generated from `knowledge-base/
 | [GM-008](./generated/gm-008.md) | Invalid Context File Name Configuration | LOW | Gemini CLI | No |
 | [GM-009](./generated/gm-009.md) | Settings.json Parse Error | HIGH | Gemini CLI | No |
 | [KR-SK-001](./generated/kr-sk-001.md) | Kiro Skill Uses Unsupported Field | MEDIUM | Kiro Skills | Yes (safe/unsafe) |
+| [KIRO-001](./generated/kiro-001.md) | Invalid Steering File Inclusion Mode | HIGH | Kiro Steering | No |
+| [KIRO-002](./generated/kiro-002.md) | Missing Required Fields for Inclusion Mode | HIGH | Kiro Steering | No |
+| [KIRO-003](./generated/kiro-003.md) | Invalid fileMatchPattern Glob | MEDIUM | Kiro Steering | No |
+| [KIRO-004](./generated/kiro-004.md) | Empty Kiro Steering File | MEDIUM | Kiro Steering | No |
 | [MCP-001](./generated/mcp-001.md) | Invalid JSON-RPC Version | HIGH | MCP | Yes (safe) |
 | [MCP-002](./generated/mcp-002.md) | Missing Required Tool Field | HIGH | MCP | No |
 | [MCP-003](./generated/mcp-003.md) | Invalid JSON Schema | HIGH | MCP | No |

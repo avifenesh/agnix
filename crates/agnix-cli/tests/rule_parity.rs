@@ -167,8 +167,8 @@ fn extract_implemented_rule_ids() -> BTreeSet<String> {
     let valid_prefixes = [
         "AS-", "CC-SK-", "CC-HK-", "CC-AG-", "CC-MEM-", "CC-PL-", "AGM-", "MCP-", "COP-", "CUR-",
         "CLN-", "CDX-", "OC-", "GM-", "XML-", "REF-", "PE-", "XP-", "VER-", "WS-", "CR-SK-",
-        "CL-SK-", "CP-SK-", "CX-SK-", "OC-SK-", "WS-SK-", "KR-SK-", "AMP-SK-", "AMP-", "RC-SK-",
-        "ROO-",
+        "CL-SK-", "CP-SK-", "CX-SK-", "OC-SK-", "WS-SK-", "KR-SK-", "KIRO-", "AMP-SK-", "AMP-",
+        "RC-SK-", "ROO-",
     ];
 
     fn extract_from_file(
@@ -323,6 +323,7 @@ fn infer_fixture_coverage(rules: &[RuleEntry]) -> HashMap<String, Vec<String>> {
         ("codex", vec!["codex", "codex-invalid"]),
         ("roo-code", vec!["roo-code"]),
         ("windsurf", vec!["windsurf", "windsurf-legacy"]),
+        ("kiro-steering", vec!["kiro-steering"]),
     ]
     .into_iter()
     .collect();
@@ -529,6 +530,7 @@ fn test_rules_json_integrity() {
         "opencode-skills",
         "windsurf-skills",
         "kiro-skills",
+        "kiro-steering",
         "amp-skills",
         "amp-checks",
         "roo-code-skills",

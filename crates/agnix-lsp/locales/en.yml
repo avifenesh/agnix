@@ -651,6 +651,23 @@ rules:
     message: "Legacy .windsurfrules file detected"
     suggestion: "Migrate to .windsurf/rules/ directory with individual .md files"
 
+  # --- Kiro Steering (kiro_steering.rs) ---
+  kiro_001:
+    message: "Invalid steering file inclusion mode '%{value}' - valid modes are: always, fileMatch, manual, auto"
+    suggestion: "Use one of: always, fileMatch, manual, auto"
+  kiro_002_auto:
+    message: "Steering file with 'auto' inclusion mode is missing required field '%{field}'"
+    suggestion: "Add both 'name' and 'description' fields when using inclusion: auto"
+  kiro_002_filematch:
+    message: "Steering file with 'fileMatch' inclusion mode is missing required 'fileMatchPattern' field"
+    suggestion: "Add a 'fileMatchPattern' glob pattern (e.g., fileMatchPattern: '**/*.ts')"
+  kiro_003:
+    message: "Invalid fileMatchPattern glob: %{error}"
+    suggestion: "Fix the glob pattern syntax"
+  kiro_004:
+    message: "Kiro steering file is empty"
+    suggestion: "Add steering content to the file"
+
   # --- Prompt engineering (prompt.rs) ---
   pe_001:
     message: "Critical keyword '%{keyword}' at %{percent} percent of document (40-60 percent is the 'lost in the middle' zone)"
