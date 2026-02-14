@@ -1492,6 +1492,20 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 **Fix**: Show available files
 **Source**: Standard markdown validation
 
+<a id="ref-003"></a>
+### REF-003 [MEDIUM] Duplicate Import
+**Requirement**: Each @import path SHOULD appear only once per file
+**Detection**: Extract @imports, normalize paths (strip `./` prefix), flag duplicates
+**Fix**: Remove the duplicate @import line
+**Source**: Claude Code memory docs
+
+<a id="ref-004"></a>
+### REF-004 [MEDIUM] Non-Markdown Import
+**Requirement**: @imports SHOULD reference .md files only
+**Detection**: Extract @imports, check file extension, flag non-`.md` extensions
+**Fix**: Convert referenced content to markdown or remove the import
+**Source**: Claude Code memory docs
+
 ---
 
 ## PROMPT ENGINEERING RULES
@@ -1522,6 +1536,20 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 **Requirement**: Instructions SHOULD be specific and measurable
 **Detection**: Check for vague terms without concrete criteria
 **Fix**: Add specific criteria or examples
+**Source**: Anthropic prompt engineering guide
+
+<a id="pe-005"></a>
+### PE-005 [MEDIUM] Redundant Generic Instructions
+**Requirement**: Instructions SHOULD NOT include generic directives that LLMs already follow by default
+**Detection**: Check for phrases like "be helpful", "be accurate", "be concise", "follow instructions", etc.
+**Fix**: Remove generic instructions and focus on project-specific behavior
+**Source**: Anthropic prompt engineering guide
+
+<a id="pe-006"></a>
+### PE-006 [MEDIUM] Negative-Only Instructions
+**Requirement**: Negative instructions SHOULD include a positive alternative
+**Detection**: Check for "don't/never/avoid" without "instead/rather/prefer" within 3-line window
+**Fix**: Add positive alternative (e.g., "Instead, use...")
 **Source**: Anthropic prompt engineering guide
 
 ---
@@ -1585,6 +1613,13 @@ agent: reviewer
 **Fix**: Document which file takes precedence (e.g., "CLAUDE.md takes precedence over AGENTS.md")
 **Source**: multi-platform clarity requirements
 
+<a id="xp-007"></a>
+### XP-007 [MEDIUM] AGENTS.md Exceeds Codex Byte Limit
+**Requirement**: AGENTS.md SHOULD stay under Codex CLI's 32768-byte default limit
+**Detection**: Check byte length of AGENTS.md content against the 32768-byte threshold
+**Fix**: Reduce content or split into multiple files using @import
+**Source**: developers.openai.com/codex/guides/agents-md
+
 <a id="xp-sk-001"></a>
 ### XP-SK-001 [LOW] Skill Uses Client-Specific Features
 **Requirement**: Skills SHOULD avoid client-specific frontmatter fields for maximum portability
@@ -1621,7 +1656,7 @@ Implement these 30 rules first:
 - CC-HK-001 through CC-HK-008 (Hooks)
 - CC-MEM-001, CC-MEM-005 (Memory critical)
 - XML-001 through XML-003 (XML balance)
-- REF-001 (Import validation)
+- REF-001 through REF-004 (Import/reference validation)
 
 ### P1 (Week 4)
 Add these 15 rules:
@@ -1633,8 +1668,8 @@ Add these 15 rules:
 ### P2 (Week 5-6)
 Complete coverage:
 - MCP-001 through MCP-006 (MCP protocol)
-- PE-001 through PE-004 (Prompt engineering)
-- XP-001 through XP-006, XP-SK-001 (Cross-platform)
+- PE-001 through PE-006 (Prompt engineering)
+- XP-001 through XP-007, XP-SK-001 (Cross-platform)
 - CR-SK-001, CL-SK-001, CP-SK-001, CX-SK-001, OC-SK-001, WS-SK-001, KR-SK-001, AMP-SK-001, RC-SK-001 (Per-client skills)
 - Remaining MEDIUM/LOW certainty rules
 
