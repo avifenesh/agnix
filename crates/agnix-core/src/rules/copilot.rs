@@ -204,7 +204,8 @@ fn validate_custom_agent(path: &Path, content: &str, config: &LintConfig) -> Vec
                 );
             }
 
-            if config.is_rule_enabled("COP-012") {
+            let applies_to_github = !matches!(schema.target.as_deref(), Some("vscode"));
+            if config.is_rule_enabled("COP-012") && applies_to_github {
                 let unsupported = [
                     ("model:", schema.model.is_some(), "model"),
                     (
@@ -1468,6 +1469,23 @@ Review pull requests.
 "#,
         );
         assert!(diagnostics.iter().any(|d| d.rule == "COP-012"));
+    }
+
+    #[test]
+    fn test_cop_012_skips_vscode_target() {
+        let diagnostics = validate_agent(
+            r#"---
+description: Review pull requests
+target: vscode
+model: gpt-4
+---
+Review pull requests.
+"#,
+        );
+        assert!(
+            diagnostics.iter().all(|d| d.rule != "COP-012"),
+            "COP-012 should not fire for VS Code-targeted agents"
+        );
     }
 
     #[test]

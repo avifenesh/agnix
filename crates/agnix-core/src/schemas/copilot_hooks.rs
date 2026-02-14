@@ -206,7 +206,7 @@ fn is_supported_runner_label(label: &str) -> bool {
 }
 
 fn yaml_get<'a>(map: &'a Mapping, key: &str) -> Option<&'a YamlValue> {
-    map.get(&YamlValue::String(key.to_string()))
+    map.get(YamlValue::String(key.to_string()))
 }
 
 #[cfg(test)]
