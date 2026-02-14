@@ -202,7 +202,7 @@ Body
         let content = r#"---
  description: Review pull requests
  mystery: true
- ---
+---
 Body
 "#;
         let parsed = parse_agent_frontmatter(content).expect("expected frontmatter");

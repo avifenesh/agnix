@@ -193,7 +193,7 @@ Body
         let content = r#"---
  description: test
  weird-key: yes
- ---
+---
 Body
 "#;
         let parsed = parse_prompt_frontmatter(content).expect("expected frontmatter");
