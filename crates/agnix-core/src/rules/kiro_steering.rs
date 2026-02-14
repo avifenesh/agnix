@@ -162,15 +162,31 @@ impl Validator for KiroSteeringValidator {
         // KIRO-003: Invalid fileMatchPattern glob
         if config.is_rule_enabled("KIRO-003") {
             if let Some(pattern_val) = mapping.get(&key_file_match_pattern) {
-                if let Some(pattern) = pattern_val.as_str() {
-                    if let Err(e) = glob::Pattern::new(pattern) {
+                match pattern_val.as_str() {
+                    Some(pattern) => {
+                        if let Err(e) = glob::Pattern::new(pattern) {
+                            diagnostics.push(
+                                Diagnostic::warning(
+                                    path.to_path_buf(),
+                                    1,
+                                    0,
+                                    "KIRO-003",
+                                    t!("rules.kiro_003.message", error = e.to_string()),
+                                )
+                                .with_suggestion(t!("rules.kiro_003.suggestion")),
+                            );
+                        }
+                    }
+                    None => {
+                        // Non-string value (number, bool, etc.) - not a valid glob
+                        let display = format!("{pattern_val:?}");
                         diagnostics.push(
                             Diagnostic::warning(
                                 path.to_path_buf(),
                                 1,
                                 0,
                                 "KIRO-003",
-                                t!("rules.kiro_003.message", error = e.to_string()),
+                                t!("rules.kiro_003.message", error = format!("expected string, got {display}")),
                             )
                             .with_suggestion(t!("rules.kiro_003.suggestion")),
                         );
@@ -487,11 +503,13 @@ mod tests {
     }
 
     #[test]
-    fn test_kiro_003_non_string_pattern_ignored() {
+    fn test_kiro_003_non_string_pattern_flagged() {
+        // Non-string fileMatchPattern values are flagged as invalid
         let content = "---\nfileMatchPattern: 123\n---\n# Content\n";
         let diagnostics = validate_steering(content);
         let kiro_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "KIRO-003").collect();
-        assert!(kiro_003.is_empty());
+        assert_eq!(kiro_003.len(), 1);
+        assert_eq!(kiro_003[0].level, DiagnosticLevel::Warning);
     }
 
     #[test]

@@ -212,6 +212,12 @@ pub fn detect_file_type(path: &Path) -> FileType {
         return FileType::CursorAgent;
     }
 
+    // Kiro steering files take precedence over filename-based matches
+    // (e.g., .kiro/steering/AGENTS.md should be KiroSteering, not ClaudeMd).
+    if filename.to_ascii_lowercase().ends_with(".md") && is_under_kiro_steering(path) {
+        return FileType::KiroSteering;
+    }
+
     match filename {
         "SKILL.md" if is_roo_mode_rules(path, parent, grandparent) => FileType::RooModeRules,
         "SKILL.md" if is_under_roo_rules(path) => FileType::RooRules,
@@ -315,8 +321,6 @@ pub fn detect_file_type(path: &Path) -> FileType {
         name if name.ends_with(".md") && is_under_windsurf_workflows(path) => {
             FileType::WindsurfWorkflow
         }
-        // Kiro steering files (.kiro/steering/*.md)
-        name if name.ends_with(".md") && is_under_kiro_steering(path) => FileType::KiroSteering,
         // OpenCode configuration (opencode.json)
         "opencode.json" => FileType::OpenCodeConfig,
         // Gemini CLI extension manifest (gemini-extension.json)
@@ -1101,6 +1105,19 @@ mod tests {
         // A .md file directly under .kiro/ (not in steering/) should not be KiroSteering
         assert_ne!(
             detect_file_type(Path::new(".kiro/README.md")),
+            FileType::KiroSteering
+        );
+    }
+
+    #[test]
+    fn detect_kiro_steering_overrides_filename_matches() {
+        // AGENTS.md under .kiro/steering/ should be KiroSteering, not ClaudeMd
+        assert_eq!(
+            detect_file_type(Path::new(".kiro/steering/AGENTS.md")),
+            FileType::KiroSteering
+        );
+        assert_eq!(
+            detect_file_type(Path::new(".kiro/steering/SKILL.md")),
             FileType::KiroSteering
         );
     }
