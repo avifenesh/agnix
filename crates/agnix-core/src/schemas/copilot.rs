@@ -180,14 +180,17 @@ fn find_unknown_keys(yaml: &str, start_line: usize) -> Vec<UnknownKey> {
 /// Each segment is trimmed of whitespace; empty segments are skipped.
 pub fn split_comma_separated_globs(s: &str) -> Vec<&str> {
     let mut result = Vec::new();
-    let mut depth: usize = 0;
+    let mut brace_depth: usize = 0;
+    let mut bracket_depth: usize = 0;
     let mut start = 0;
 
     for (i, ch) in s.char_indices() {
         match ch {
-            '{' => depth += 1,
-            '}' => depth = depth.saturating_sub(1),
-            ',' if depth == 0 => {
+            '{' => brace_depth += 1,
+            '}' => brace_depth = brace_depth.saturating_sub(1),
+            '[' => bracket_depth += 1,
+            ']' => bracket_depth = bracket_depth.saturating_sub(1),
+            ',' if brace_depth == 0 && bracket_depth == 0 => {
                 let segment = s[start..i].trim();
                 if !segment.is_empty() {
                     result.push(segment);
@@ -535,6 +538,45 @@ applyTo: "**/*.ts"
         assert_eq!(
             split_comma_separated_globs("src}/**/*.ts,**/*.md"),
             vec!["src}/**/*.ts", "**/*.md"]
+        );
+    }
+
+    #[test]
+    fn test_split_comma_bracket_character_class() {
+        // Commas inside brackets should NOT split (glob character classes)
+        assert_eq!(split_comma_separated_globs("**/*.[ts]"), vec!["**/*.[ts]"]);
+        // Multiple character classes
+        assert_eq!(
+            split_comma_separated_globs("**/*.[ts],**/*.[js]"),
+            vec!["**/*.[ts]", "**/*.[js]"]
+        );
+    }
+
+    #[test]
+    fn test_split_comma_brace_and_bracket() {
+        // Mix of brace expansion and character class
+        assert_eq!(
+            split_comma_separated_globs("{src,lib}/**/*.[ts]"),
+            vec!["{src,lib}/**/*.[ts]"]
+        );
+        // Both with pattern separators
+        assert_eq!(
+            split_comma_separated_globs("{src,lib}/**/*.[ts],**/*.md"),
+            vec!["{src,lib}/**/*.[ts]", "**/*.md"]
+        );
+    }
+
+    #[test]
+    fn test_split_comma_unbalanced_brackets() {
+        // Unclosed bracket - commas inside are still treated as inside bracket
+        assert_eq!(
+            split_comma_separated_globs("**/*.[ts,**/*.md"),
+            vec!["**/*.[ts,**/*.md"]
+        );
+        // Extra closing bracket - depth saturates to 0, comma splitting resumes
+        assert_eq!(
+            split_comma_separated_globs("**/*.ts],**/*.md"),
+            vec!["**/*.ts]", "**/*.md"]
         );
     }
 }
