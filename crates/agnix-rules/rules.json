@@ -2094,7 +2094,7 @@
         "source_type": "community",
         "source_urls": [
           "https://developers.openai.com/codex/guides/agents-md",
-          "https://docs.cursor.com/en/context",
+          "https://cursor.com/docs/context/rules",
           "https://docs.cline.bot/prompting/cline-memory-bank#cline-memory-bank-custom-instructions-[copy-this]"
         ],
         "verified_on": "2026-02-09",
@@ -2120,7 +2120,7 @@
       "evidence": {
         "source_type": "community",
         "source_urls": [
-          "https://docs.cursor.com/en/context",
+          "https://cursor.com/docs/context/rules",
           "https://docs.cline.bot/prompting/cline-memory-bank#cline-memory-bank-custom-instructions-[copy-this]"
         ],
         "verified_on": "2026-02-09",
@@ -2174,7 +2174,7 @@
         "source_type": "community",
         "source_urls": [
           "https://developers.openai.com/codex/guides/agents-md",
-          "https://docs.cursor.com/en/context"
+          "https://cursor.com/docs/context/rules"
         ],
         "verified_on": "2026-02-04",
         "applies_to": {},
@@ -2200,7 +2200,7 @@
         "source_type": "community",
         "source_urls": [
           "https://developers.openai.com/codex/guides/agents-md",
-          "https://docs.cursor.com/en/context"
+          "https://cursor.com/docs/context/rules"
         ],
         "verified_on": "2026-02-04",
         "applies_to": {},
@@ -3341,7 +3341,7 @@
       "evidence": {
         "source_type": "vendor_docs",
         "source_urls": [
-          "https://docs.cursor.com/en/context"
+          "https://cursor.com/docs/context/rules"
         ],
         "verified_on": "2026-02-04",
         "applies_to": {
@@ -3368,7 +3368,7 @@
       "evidence": {
         "source_type": "vendor_docs",
         "source_urls": [
-          "https://docs.cursor.com/en/context"
+          "https://cursor.com/docs/context/rules"
         ],
         "verified_on": "2026-02-04",
         "applies_to": {
@@ -3396,7 +3396,7 @@
       "evidence": {
         "source_type": "vendor_docs",
         "source_urls": [
-          "https://docs.cursor.com/en/context"
+          "https://cursor.com/docs/context/rules"
         ],
         "verified_on": "2026-02-04",
         "applies_to": {
@@ -3423,7 +3423,7 @@
       "evidence": {
         "source_type": "vendor_docs",
         "source_urls": [
-          "https://docs.cursor.com/en/context"
+          "https://cursor.com/docs/context/rules"
         ],
         "verified_on": "2026-02-04",
         "applies_to": {
@@ -3450,7 +3450,7 @@
       "evidence": {
         "source_type": "vendor_docs",
         "source_urls": [
-          "https://docs.cursor.com/en/context"
+          "https://cursor.com/docs/context/rules"
         ],
         "verified_on": "2026-02-04",
         "applies_to": {
@@ -3478,7 +3478,7 @@
       "evidence": {
         "source_type": "vendor_docs",
         "source_urls": [
-          "https://docs.cursor.com/en/context"
+          "https://cursor.com/docs/context/rules"
         ],
         "verified_on": "2026-02-04",
         "applies_to": {
@@ -3505,7 +3505,7 @@
       "evidence": {
         "source_type": "vendor_docs",
         "source_urls": [
-          "https://docs.cursor.com/en/context"
+          "https://cursor.com/docs/context/rules"
         ],
         "verified_on": "2026-02-07",
         "applies_to": {
@@ -3533,7 +3533,7 @@
       "evidence": {
         "source_type": "vendor_docs",
         "source_urls": [
-          "https://docs.cursor.com/en/context"
+          "https://cursor.com/docs/context/rules"
         ],
         "verified_on": "2026-02-07",
         "applies_to": {
@@ -3561,7 +3561,7 @@
       "evidence": {
         "source_type": "vendor_docs",
         "source_urls": [
-          "https://docs.cursor.com/en/context"
+          "https://cursor.com/docs/context/rules"
         ],
         "verified_on": "2026-02-07",
         "applies_to": {
@@ -3929,7 +3929,7 @@
         "source_type": "community",
         "source_urls": [
           "https://developers.openai.com/codex/guides/agents-md",
-          "https://docs.cursor.com/en/context"
+          "https://cursor.com/docs/context/rules"
         ],
         "verified_on": "2026-02-04",
         "applies_to": {},
@@ -3956,7 +3956,7 @@
         "source_urls": [
           "https://developers.openai.com/codex/guides/agents-md",
           "https://opencode.ai/docs/rules",
-          "https://docs.cursor.com/en/context",
+          "https://cursor.com/docs/context/rules",
           "https://docs.cline.bot/prompting/cline-memory-bank#cline-memory-bank-custom-instructions-[copy-this]",
           "https://github.blog/changelog/2025-08-28-copilot-coding-agent-now-supports-agents-md-custom-instructions/"
         ],
@@ -3984,7 +3984,7 @@
         "source_type": "community",
         "source_urls": [
           "https://developers.openai.com/codex/guides/agents-md",
-          "https://docs.cursor.com/en/context"
+          "https://cursor.com/docs/context/rules"
         ],
         "verified_on": "2026-02-04",
         "applies_to": {},
@@ -4010,7 +4010,7 @@
         "source_type": "community",
         "source_urls": [
           "https://developers.openai.com/codex/guides/agents-md",
-          "https://docs.cursor.com/en/context"
+          "https://cursor.com/docs/context/rules"
         ],
         "verified_on": "2026-02-04",
         "applies_to": {},
@@ -4036,7 +4036,7 @@
         "source_type": "community",
         "source_urls": [
           "https://developers.openai.com/codex/guides/agents-md",
-          "https://docs.cursor.com/en/context"
+          "https://cursor.com/docs/context/rules"
         ],
         "verified_on": "2026-02-04",
         "applies_to": {},
@@ -4062,7 +4062,7 @@
         "source_type": "community",
         "source_urls": [
           "https://developers.openai.com/codex/guides/agents-md",
-          "https://docs.cursor.com/en/context"
+          "https://cursor.com/docs/context/rules"
         ],
         "verified_on": "2026-02-04",
         "applies_to": {},
@@ -4385,7 +4385,7 @@
       "evidence": {
         "source_type": "vendor_docs",
         "source_urls": [
-          "https://docs.cursor.com/en/context/skills"
+          "https://cursor.com/docs/context/skills"
         ],
         "verified_on": "2026-02-07",
         "applies_to": {

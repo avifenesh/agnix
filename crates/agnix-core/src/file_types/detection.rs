@@ -102,6 +102,21 @@ fn is_under_github_instructions(path: &Path) -> bool {
         })
 }
 
+/// Returns true if the path contains `.cursor/rules` as consecutive
+/// components anywhere in the path. This allows Cursor rules to live in
+/// nested subdirectories under `.cursor/rules/`.
+fn is_under_cursor_rules(path: &Path) -> bool {
+    path.components()
+        .zip(path.components().skip(1))
+        .any(|(a, b)| {
+            matches!(
+                (a, b),
+                (std::path::Component::Normal(a_os), std::path::Component::Normal(b_os))
+                if a_os == ".cursor" && b_os == "rules"
+            )
+        })
+}
+
 fn is_excluded_filename(name: &str) -> bool {
     EXCLUDED_FILENAMES
         .iter()
@@ -161,10 +176,8 @@ pub fn detect_file_type(path: &Path) -> FileType {
         {
             FileType::ClaudeRule
         }
-        // Cursor project rules (.cursor/rules/*.mdc)
-        name if name.ends_with(".mdc")
-            && parent == Some("rules")
-            && grandparent == Some(".cursor") =>
+        // Cursor project rules (.cursor/rules/**/*.md and .mdc)
+        name if (name.ends_with(".md") || name.ends_with(".mdc")) && is_under_cursor_rules(path) =>
         {
             FileType::CursorRule
         }
@@ -444,6 +457,26 @@ mod tests {
     fn detect_cursor_rule() {
         assert_eq!(
             detect_file_type(Path::new(".cursor/rules/custom.mdc")),
+            FileType::CursorRule
+        );
+        assert_eq!(
+            detect_file_type(Path::new(".cursor/rules/custom.md")),
+            FileType::CursorRule
+        );
+        assert_eq!(
+            detect_file_type(Path::new(".cursor/rules/frontend/components.mdc")),
+            FileType::CursorRule
+        );
+        assert_eq!(
+            detect_file_type(Path::new(".cursor/rules/frontend/components.md")),
+            FileType::CursorRule
+        );
+    }
+
+    #[test]
+    fn detect_cursor_rule_does_not_match_other_cursor_markdown() {
+        assert_ne!(
+            detect_file_type(Path::new(".cursor/README.md")),
             FileType::CursorRule
         );
     }
