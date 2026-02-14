@@ -16,9 +16,6 @@ use crate::{
 use rust_i18n::t;
 use std::path::Path;
 
-/// Character limit for Windsurf workflow files.
-const WORKFLOW_CHAR_LIMIT: usize = 12_000;
-
 const RULE_IDS: &[&str] = &["WS-001", "WS-002", "WS-003", "WS-004"];
 
 pub struct WindsurfValidator;
@@ -37,7 +34,8 @@ impl Validator for WindsurfValidator {
 
         match file_type {
             FileType::WindsurfRule => {
-                // WS-001: Empty Windsurf rule file (WARNING)
+                // WS-001 and WS-002 are mutually exclusive: an empty file
+                // cannot also exceed the character limit.
                 if config.is_rule_enabled("WS-001") && content.trim().is_empty() {
                     diagnostics.push(
                         Diagnostic::warning(
@@ -49,10 +47,9 @@ impl Validator for WindsurfValidator {
                         )
                         .with_suggestion(t!("rules.ws_001.suggestion")),
                     );
-                }
-
-                // WS-002: Windsurf rule file exceeds character limit (ERROR)
-                if config.is_rule_enabled("WS-002") && content.len() > WINDSURF_CHAR_LIMIT {
+                } else if config.is_rule_enabled("WS-002")
+                    && content.len() > WINDSURF_CHAR_LIMIT
+                {
                     diagnostics.push(
                         Diagnostic::error(
                             path.to_path_buf(),
@@ -83,7 +80,7 @@ impl Validator for WindsurfValidator {
                             )
                             .with_suggestion(t!("rules.ws_003_empty.suggestion")),
                         );
-                    } else if content.len() > WORKFLOW_CHAR_LIMIT {
+                    } else if content.len() > WINDSURF_CHAR_LIMIT {
                         diagnostics.push(
                             Diagnostic::warning(
                                 path.to_path_buf(),
@@ -92,7 +89,7 @@ impl Validator for WindsurfValidator {
                                 "WS-003",
                                 t!(
                                     "rules.ws_003_too_long.message",
-                                    limit = WORKFLOW_CHAR_LIMIT,
+                                    limit = WINDSURF_CHAR_LIMIT,
                                     len = content.len()
                                 ),
                             )
@@ -232,7 +229,7 @@ mod tests {
 
     #[test]
     fn test_ws_003_workflow_too_long() {
-        let content = "y".repeat(WORKFLOW_CHAR_LIMIT + 1);
+        let content = "y".repeat(WINDSURF_CHAR_LIMIT + 1);
         let diagnostics = validate_workflow(&content);
         let ws_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "WS-003").collect();
         assert_eq!(ws_003.len(), 1);
@@ -248,7 +245,7 @@ mod tests {
 
     #[test]
     fn test_ws_003_workflow_at_limit() {
-        let content = "y".repeat(WORKFLOW_CHAR_LIMIT);
+        let content = "y".repeat(WINDSURF_CHAR_LIMIT);
         let diagnostics = validate_workflow(&content);
         let ws_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "WS-003").collect();
         assert!(ws_003.is_empty(), "Exactly at limit should not trigger");
