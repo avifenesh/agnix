@@ -1833,8 +1833,8 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | Codex CLI | 6 | 4 | 2 | 0 | 2 |
 | MCP | 24 | 19 | 5 | 0 | 4 |
 | XML | 3 | 3 | 0 | 0 | 3 |
-| References | 2 | 2 | 0 | 0 | 0 |
-| Prompt Eng | 4 | 0 | 4 | 0 | 0 |
+| References | 4 | 2 | 2 | 0 | 0 |
+| Prompt Eng | 6 | 0 | 6 | 0 | 0 |
 | Cross-Platform | 7 | 2 | 4 | 1 | 0 |
 | Cursor Skills | 1 | 0 | 1 | 0 | 1 |
 | Cline Skills | 1 | 0 | 1 | 0 | 1 |
