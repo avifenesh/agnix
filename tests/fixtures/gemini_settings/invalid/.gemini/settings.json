@@ -1,0 +1,17 @@
+{
+  "general": {},
+  "badTopKey": true,
+  "hooksConfig": {
+    "InvalidEvent": [
+      {
+        "type": "command",
+        "command": "echo test"
+      }
+    ],
+    "BeforeAgent": [
+      {
+        "command": "echo missing type"
+      }
+    ]
+  }
+}

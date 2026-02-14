@@ -1,0 +1,11 @@
+# Build artifacts
+build/
+dist/
+target/
+
+# Dependencies
+node_modules/
+
+# Environment
+.env
+*.log

@@ -1,0 +1,6 @@
+{
+  "name": "my-test-extension",
+  "version": "1.0.0",
+  "description": "A test extension for validation",
+  "contextFileName": "CONTEXT.md"
+}

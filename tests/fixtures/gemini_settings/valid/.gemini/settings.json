@@ -1,0 +1,19 @@
+{
+  "general": {},
+  "model": {},
+  "hooksConfig": {
+    "BeforeAgent": [
+      {
+        "type": "command",
+        "command": "echo starting agent",
+        "name": "pre-agent-hook"
+      }
+    ],
+    "AfterAgent": [
+      {
+        "type": "command",
+        "command": "echo agent finished"
+      }
+    ]
+  }
+}
