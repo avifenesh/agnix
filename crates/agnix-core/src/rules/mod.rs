@@ -20,6 +20,7 @@ pub mod opencode;
 pub mod per_client_skill;
 pub mod plugin;
 pub mod prompt;
+pub mod roo;
 pub mod skill;
 pub mod xml;
 

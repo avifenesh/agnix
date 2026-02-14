@@ -475,6 +475,11 @@ pub struct RuleConfig {
     #[schemars(description = "Enable Codex CLI validation rules (CDX-*)")]
     pub codex: bool,
 
+    /// Enable Roo Code validation (ROO-*)
+    #[serde(default = "default_true")]
+    #[schemars(description = "Enable Roo Code validation rules (ROO-*)")]
+    pub roo_code: bool,
+
     /// Enable prompt engineering validation (PE-*)
     #[serde(default = "default_true")]
     #[schemars(description = "Enable prompt engineering validation rules (PE-*)")]
@@ -534,6 +539,7 @@ impl Default for RuleConfig {
             opencode: true,
             gemini_md: true,
             codex: true,
+            roo_code: true,
             prompt_engineering: true,
             generic_instructions: true,
             frontmatter_validation: true,
