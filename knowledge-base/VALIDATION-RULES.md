@@ -1716,7 +1716,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | Amp Skills | 1 | 0 | 1 | 0 | 1 |
 | Roo Code Skills | 1 | 0 | 1 | 0 | 1 |
 | Version Awareness | 1 | 0 | 0 | 1 | 0 |
-| **TOTAL** | **187** | **119** | **62** | **6** | **49** |
+| **TOTAL** | **194** | **121** | **66** | **7** | **49** |
 
 
 ---
