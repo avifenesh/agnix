@@ -377,6 +377,34 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 **Fix**: [AUTO-FIX, safe] Remove unsupported field
 **Source**: docs.amp.dev/setup/customization
 
+<a id="amp-001"></a>
+### AMP-001 [HIGH] Invalid Amp Check Frontmatter
+**Requirement**: `.agents/checks/*.md` files MUST include valid YAML frontmatter with required `name` and known optional fields
+**Detection**: Missing frontmatter OR invalid YAML OR missing `name` OR unknown key outside `name`, `description`, `severity-default`, `tools`
+**Fix**: Add valid frontmatter with required fields and remove unknown keys
+**Source**: ampcode.com/manual#code-review-checks
+
+<a id="amp-002"></a>
+### AMP-002 [MEDIUM] Invalid Amp severity-default
+**Requirement**: `severity-default` SHOULD be one of `low`, `medium`, `high`, `critical`
+**Detection**: Frontmatter `severity-default` value is missing, non-string, or outside allowed values
+**Fix**: Set `severity-default` to a valid value
+**Source**: ampcode.com/manual#code-review-checks
+
+<a id="amp-003"></a>
+### AMP-003 [MEDIUM] Invalid AGENTS.md globs Frontmatter for Amp
+**Requirement**: AGENTS frontmatter `globs` SHOULD contain syntactically valid glob patterns for Amp
+**Detection**: `globs` is invalid type OR contains a pattern that fails glob parsing (after Amp implicit `**/` behavior)
+**Fix**: Correct glob syntax in `globs` frontmatter
+**Source**: ampcode.com/manual#settings
+
+<a id="amp-004"></a>
+### AMP-004 [HIGH] Invalid Amp Settings Configuration
+**Requirement**: `.amp/settings.json` MUST be valid JSON and use known top-level keys
+**Detection**: JSON parse error OR unknown top-level key in `.amp/settings.json` / `.amp/settings.local.json`
+**Fix**: Fix JSON syntax and remove unknown keys
+**Source**: ampcode.com/manual#settings
+
 <a id="rc-sk-001"></a>
 ### RC-SK-001 [MEDIUM] Roo Code Skill Uses Unsupported Field
 **Requirement**: Skills in `.roo/skills/` SHOULD NOT use frontmatter fields unsupported by Roo Code
@@ -1877,10 +1905,11 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | Windsurf Skills | 1 | 0 | 1 | 0 | 1 |
 | Kiro Skills | 1 | 0 | 1 | 0 | 1 |
 | Amp Skills | 1 | 0 | 1 | 0 | 1 |
+| Amp Checks | 4 | 2 | 2 | 0 | 0 |
 | Roo Code Skills | 1 | 0 | 1 | 0 | 1 |
 | Roo Code | 6 | 3 | 3 | 0 | 0 |
 | Version Awareness | 1 | 0 | 0 | 1 | 0 |
-| **TOTAL** | **216** | **130** | **78** | **8** | **59** |
+| **TOTAL** | **220** | **132** | **80** | **8** | **59** |
 
 
 ---
@@ -1910,7 +1939,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 
 ---
 
-**Total Coverage**: 216 validation rules across 30 categories
+**Total Coverage**: 220 validation rules across 31 categories
 
 **Knowledge Base**: 11,036 lines, 320KB, 75+ sources
 **Certainty**: 130 HIGH, 78 MEDIUM, 8 LOW
