@@ -66,8 +66,14 @@ impl Validator for GeminiIgnoreValidator {
             };
 
             diagnostics.push(
-                Diagnostic::info(path_buf.clone(), issue.line, issue.column, "GM-006", message)
-                    .with_suggestion(suggestion),
+                Diagnostic::info(
+                    path_buf.clone(),
+                    issue.line,
+                    issue.column,
+                    "GM-006",
+                    message,
+                )
+                .with_suggestion(suggestion),
             );
         }
 
@@ -83,11 +89,7 @@ mod tests {
 
     fn validate(content: &str) -> Vec<Diagnostic> {
         let validator = GeminiIgnoreValidator;
-        validator.validate(
-            Path::new(".geminiignore"),
-            content,
-            &LintConfig::default(),
-        )
+        validator.validate(Path::new(".geminiignore"), content, &LintConfig::default())
     }
 
     fn validate_with_config(content: &str, config: &LintConfig) -> Vec<Diagnostic> {

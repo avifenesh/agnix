@@ -8,9 +8,7 @@ use crate::{
     config::LintConfig,
     diagnostics::Diagnostic,
     rules::{Validator, ValidatorMetadata},
-    schemas::gemini_settings::{
-        GeminiHook, VALID_HOOK_EVENTS, parse_gemini_settings,
-    },
+    schemas::gemini_settings::{GeminiHook, VALID_HOOK_EVENTS, parse_gemini_settings},
 };
 use rust_i18n::t;
 use std::path::Path;
@@ -88,8 +86,10 @@ impl Validator for GeminiSettingsValidator {
                                     "GM-004",
                                     t!(
                                         "rules.gm_004.message",
-                                        description =
-                                            t!("rules.gm_004.unknown_event", event = event_name.as_str())
+                                        description = t!(
+                                            "rules.gm_004.unknown_event",
+                                            event = event_name.as_str()
+                                        )
                                     ),
                                 )
                                 .with_suggestion(t!("rules.gm_004.suggestion")),
@@ -100,29 +100,31 @@ impl Validator for GeminiSettingsValidator {
                         // Validate each hook in the array
                         if let Some(arr) = hooks_array.as_array() {
                             for hook_value in arr {
-                                let hook: GeminiHook = match serde_json::from_value(hook_value.clone()) {
-                                    Ok(h) => h,
-                                    Err(_) => {
-                                        let line = find_key_line(content, event_name).unwrap_or(1);
-                                        diagnostics.push(
-                                            Diagnostic::warning(
-                                                path_buf.clone(),
-                                                line,
-                                                0,
-                                                "GM-004",
-                                                t!(
-                                                    "rules.gm_004.message",
-                                                    description = t!(
-                                                        "rules.gm_004.malformed_hook",
-                                                        event = event_name.as_str()
-                                                    )
-                                                ),
-                                            )
-                                            .with_suggestion(t!("rules.gm_004.suggestion")),
-                                        );
-                                        continue;
-                                    }
-                                };
+                                let hook: GeminiHook =
+                                    match serde_json::from_value(hook_value.clone()) {
+                                        Ok(h) => h,
+                                        Err(_) => {
+                                            let line =
+                                                find_key_line(content, event_name).unwrap_or(1);
+                                            diagnostics.push(
+                                                Diagnostic::warning(
+                                                    path_buf.clone(),
+                                                    line,
+                                                    0,
+                                                    "GM-004",
+                                                    t!(
+                                                        "rules.gm_004.message",
+                                                        description = t!(
+                                                            "rules.gm_004.malformed_hook",
+                                                            event = event_name.as_str()
+                                                        )
+                                                    ),
+                                                )
+                                                .with_suggestion(t!("rules.gm_004.suggestion")),
+                                            );
+                                            continue;
+                                        }
+                                    };
 
                                 // Check required field: type
                                 match &hook.type_ {
@@ -406,7 +408,10 @@ mod tests {
     }"#;
         let diagnostics = validate(content);
         let gm_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "GM-004").collect();
-        assert!(!gm_004.is_empty(), "GM-004 should fire for missing command field");
+        assert!(
+            !gm_004.is_empty(),
+            "GM-004 should fire for missing command field"
+        );
     }
 
     #[test]
@@ -420,6 +425,9 @@ mod tests {
     }"#;
         let diagnostics = validate(content);
         let gm_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "GM-004").collect();
-        assert!(!gm_004.is_empty(), "GM-004 should fire for empty command field");
+        assert!(
+            !gm_004.is_empty(),
+            "GM-004 should fire for empty command field"
+        );
     }
 }

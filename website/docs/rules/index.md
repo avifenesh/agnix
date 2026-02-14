@@ -1,6 +1,6 @@
 # Rules Reference
 
-This section contains all `181` validation rules generated from `knowledge-base/rules.json`.
+This section contains all `187` validation rules generated from `knowledge-base/rules.json`.
 `59` rules have automatic fixes.
 
 | Rule | Name | Severity | Category | Auto-Fix |
@@ -171,6 +171,12 @@ This section contains all `181` validation rules generated from `knowledge-base/
 | [GM-001](./generated/gm-001.md) | Invalid Markdown Structure in GEMINI.md | HIGH | Gemini CLI | No |
 | [GM-002](./generated/gm-002.md) | Missing Section Headers in GEMINI.md | MEDIUM | Gemini CLI | No |
 | [GM-003](./generated/gm-003.md) | Missing Project Context in GEMINI.md | MEDIUM | Gemini CLI | No |
+| [GM-004](./generated/gm-004.md) | Invalid Hooks Configuration in Gemini Settings | MEDIUM | Gemini CLI | No |
+| [GM-005](./generated/gm-005.md) | Invalid Extension Manifest | HIGH | Gemini CLI | No |
+| [GM-006](./generated/gm-006.md) | Invalid .geminiignore File | LOW | Gemini CLI | No |
+| [GM-007](./generated/gm-007.md) | @import File Not Found in GEMINI.md | MEDIUM | Gemini CLI | No |
+| [GM-008](./generated/gm-008.md) | Invalid Context File Name Configuration | LOW | Gemini CLI | No |
+| [GM-009](./generated/gm-009.md) | Settings.json Parse Error | HIGH | Gemini CLI | No |
 | [CDX-000](./generated/cdx-000.md) | TOML Parse Error | HIGH | Codex CLI | No |
 | [CDX-001](./generated/cdx-001.md) | Invalid Approval Mode | HIGH | Codex CLI | Yes (unsafe) |
 | [CDX-002](./generated/cdx-002.md) | Invalid Full Auto Error Mode | HIGH | Codex CLI | Yes (unsafe) |

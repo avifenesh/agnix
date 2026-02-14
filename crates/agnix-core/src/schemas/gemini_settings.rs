@@ -251,9 +251,11 @@ mod tests {
         assert!(result.parse_error.is_none());
         assert_eq!(result.unknown_top_keys.len(), 2);
         assert!(result.unknown_top_keys.contains(&"unknownKey".to_string()));
-        assert!(result
-            .unknown_top_keys
-            .contains(&"anotherBadKey".to_string()));
+        assert!(
+            result
+                .unknown_top_keys
+                .contains(&"anotherBadKey".to_string())
+        );
     }
 
     #[test]

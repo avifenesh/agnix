@@ -82,8 +82,7 @@ impl Validator for GeminiExtensionValidator {
                             "GM-005",
                             t!(
                                 "rules.gm_005.message",
-                                description =
-                                    t!("rules.gm_005.missing_field", field = field)
+                                description = t!("rules.gm_005.missing_field", field = field)
                             ),
                         )
                         .with_suggestion(t!("rules.gm_005.suggestion")),
@@ -103,8 +102,7 @@ impl Validator for GeminiExtensionValidator {
                             "GM-005",
                             t!(
                                 "rules.gm_005.message",
-                                description =
-                                    t!("rules.gm_005.invalid_name", name = name.as_str())
+                                description = t!("rules.gm_005.invalid_name", name = name.as_str())
                             ),
                         )
                         .with_suggestion(t!("rules.gm_005.suggestion")),
@@ -118,8 +116,7 @@ impl Validator for GeminiExtensionValidator {
             if let Some(ref context_file) = schema.context_file_name {
                 if !context_file.is_empty() {
                     // Check for path separators (should be just a filename)
-                    let has_separator =
-                        context_file.contains('/') || context_file.contains('\\');
+                    let has_separator = context_file.contains('/') || context_file.contains('\\');
                     if has_separator {
                         let line = find_key_line(content, "contextFileName").unwrap_or(1);
                         diagnostics.push(
@@ -130,8 +127,7 @@ impl Validator for GeminiExtensionValidator {
                                 "GM-008",
                                 t!(
                                     "rules.gm_008.message",
-                                    description =
-                                        t!("rules.gm_008.path_not_filename")
+                                    description = t!("rules.gm_008.path_not_filename")
                                 ),
                             )
                             .with_suggestion(t!("rules.gm_008.suggestion")),
@@ -267,8 +263,7 @@ mod tests {
 
     #[test]
     fn test_gm_008_windows_path_separator() {
-        let content =
-            r#"{"name": "ext", "version": "1.0.0", "description": "Test", "contextFileName": "docs\\context.md"}"#;
+        let content = r#"{"name": "ext", "version": "1.0.0", "description": "Test", "contextFileName": "docs\\context.md"}"#;
         let diagnostics = validate(content);
         let gm_008: Vec<_> = diagnostics.iter().filter(|d| d.rule == "GM-008").collect();
         assert_eq!(
