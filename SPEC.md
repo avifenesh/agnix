@@ -1,6 +1,6 @@
 # agnix Technical Reference
 
-> Linter for agent configs. 169 rules across 28 categories.
+> Linter for agent configs. 170 rules across 28 categories.
 
 
 ## What agnix Validates
@@ -8,7 +8,7 @@
 | Type | Files | Rules |
 |------|-------|-------|
 | Skills | SKILL.md | 31 |
-| Hooks | settings.json | 18 |
+| Hooks | settings.json | 19 |
 | Memory (Claude Code) | CLAUDE.md, CLAUDE.local.md, .claude/rules/*.md | 12 |
 | Instructions (Cross-Tool) | AGENTS.md, AGENTS.local.md, AGENTS.override.md | 6 |
 | Agents | agents/*.md | 13 |
