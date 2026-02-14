@@ -63,43 +63,39 @@ impl Validator for KiroSteeringValidator {
             None => return diagnostics,
         };
 
+        // Extract commonly accessed keys once to avoid repeated allocations
+        let key_inclusion = serde_yaml::Value::String("inclusion".into());
+        let key_name = serde_yaml::Value::String("name".into());
+        let key_description = serde_yaml::Value::String("description".into());
+        let key_file_match_pattern = serde_yaml::Value::String("fileMatchPattern".into());
+
+        // Look up inclusion once - used by both KIRO-001 and KIRO-002
+        let inclusion_str = mapping.get(&key_inclusion).and_then(|v| v.as_str());
+
         // KIRO-001: Invalid inclusion mode
         if config.is_rule_enabled("KIRO-001") {
-            if let Some(inclusion_val) =
-                mapping.get(&serde_yaml::Value::String("inclusion".to_string()))
-            {
-                if let Some(inclusion) = inclusion_val.as_str() {
-                    if !VALID_INCLUSION_MODES.contains(&inclusion) {
-                        diagnostics.push(
-                            Diagnostic::error(
-                                path.to_path_buf(),
-                                1,
-                                0,
-                                "KIRO-001",
-                                t!("rules.kiro_001.message", value = inclusion),
-                            )
-                            .with_suggestion(t!("rules.kiro_001.suggestion")),
-                        );
-                    }
+            if let Some(inclusion) = inclusion_str {
+                if !VALID_INCLUSION_MODES.contains(&inclusion) {
+                    diagnostics.push(
+                        Diagnostic::error(
+                            path.to_path_buf(),
+                            1,
+                            0,
+                            "KIRO-001",
+                            t!("rules.kiro_001.message", value = inclusion),
+                        )
+                        .with_suggestion(t!("rules.kiro_001.suggestion")),
+                    );
                 }
             }
         }
 
-        // Get inclusion mode for KIRO-002 checks
-        let inclusion_mode = mapping
-            .get(&serde_yaml::Value::String("inclusion".to_string()))
-            .and_then(|v| v.as_str());
-
         // KIRO-002: Missing required fields for inclusion mode
         if config.is_rule_enabled("KIRO-002") {
-            if let Some(mode) = inclusion_mode {
+            if let Some(mode) = inclusion_str {
                 match mode {
                     "auto" => {
-                        let has_name = mapping
-                            .contains_key(&serde_yaml::Value::String("name".to_string()));
-                        let has_description = mapping
-                            .contains_key(&serde_yaml::Value::String("description".to_string()));
-                        if !has_name {
+                        if !mapping.contains_key(&key_name) {
                             diagnostics.push(
                                 Diagnostic::error(
                                     path.to_path_buf(),
@@ -111,7 +107,7 @@ impl Validator for KiroSteeringValidator {
                                 .with_suggestion(t!("rules.kiro_002_auto.suggestion")),
                             );
                         }
-                        if !has_description {
+                        if !mapping.contains_key(&key_description) {
                             diagnostics.push(
                                 Diagnostic::error(
                                     path.to_path_buf(),
@@ -125,10 +121,7 @@ impl Validator for KiroSteeringValidator {
                         }
                     }
                     "fileMatch" => {
-                        let has_pattern = mapping.contains_key(&serde_yaml::Value::String(
-                            "fileMatchPattern".to_string(),
-                        ));
-                        if !has_pattern {
+                        if !mapping.contains_key(&key_file_match_pattern) {
                             diagnostics.push(
                                 Diagnostic::error(
                                     path.to_path_buf(),
@@ -148,9 +141,7 @@ impl Validator for KiroSteeringValidator {
 
         // KIRO-003: Invalid fileMatchPattern glob
         if config.is_rule_enabled("KIRO-003") {
-            if let Some(pattern_val) =
-                mapping.get(&serde_yaml::Value::String("fileMatchPattern".to_string()))
-            {
+            if let Some(pattern_val) = mapping.get(&key_file_match_pattern) {
                 if let Some(pattern) = pattern_val.as_str() {
                     if let Err(e) = glob::Pattern::new(pattern) {
                         diagnostics.push(
@@ -433,12 +424,71 @@ mod tests {
         assert!(kiro_rules.is_empty());
     }
 
-    // ===== No frontmatter - no diagnostics =====
+    // ===== Edge cases =====
 
     #[test]
     fn test_no_frontmatter_no_diagnostics() {
         let diagnostics = validate_steering("# Just a heading\nSome content.");
         assert!(diagnostics.is_empty());
+    }
+
+    #[test]
+    fn test_malformed_yaml_no_crash() {
+        let content = "---\ninclusion: auto\n  bad: indentation\n---\n# Content\n";
+        let diagnostics = validate_steering(content);
+        // Malformed YAML is handled gracefully - no panic, no diagnostics
+        assert!(diagnostics.is_empty());
+    }
+
+    #[test]
+    fn test_non_mapping_yaml_no_crash() {
+        let content = "---\n- item1\n- item2\n---\n# Content\n";
+        let diagnostics = validate_steering(content);
+        assert!(diagnostics.is_empty());
+    }
+
+    #[test]
+    fn test_kiro_001_non_string_inclusion_ignored() {
+        // Non-string inclusion values (number, bool) are silently ignored
+        let content = "---\ninclusion: 123\n---\n# Content\n";
+        let diagnostics = validate_steering(content);
+        let kiro_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "KIRO-001").collect();
+        assert!(kiro_001.is_empty());
+    }
+
+    #[test]
+    fn test_kiro_001_case_sensitive() {
+        // Inclusion modes are case-sensitive - "ALWAYS" is not valid
+        let content = "---\ninclusion: ALWAYS\n---\n# Content\n";
+        let diagnostics = validate_steering(content);
+        let kiro_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "KIRO-001").collect();
+        assert_eq!(kiro_001.len(), 1);
+    }
+
+    #[test]
+    fn test_kiro_003_non_string_pattern_ignored() {
+        let content = "---\nfileMatchPattern: 123\n---\n# Content\n";
+        let diagnostics = validate_steering(content);
+        let kiro_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "KIRO-003").collect();
+        assert!(kiro_003.is_empty());
+    }
+
+    #[test]
+    fn test_kiro_003_empty_string_pattern() {
+        // Empty string is a valid glob pattern
+        let content = "---\nfileMatchPattern: \"\"\n---\n# Content\n";
+        let diagnostics = validate_steering(content);
+        let kiro_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "KIRO-003").collect();
+        assert!(kiro_003.is_empty());
+    }
+
+    #[test]
+    fn test_frontmatter_only_no_body_not_empty() {
+        // File with frontmatter but no body is not "empty"
+        let content = "---\ninclusion: always\n---\n";
+        let diagnostics = validate_steering(content);
+        let kiro_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "KIRO-004").collect();
+        assert!(kiro_004.is_empty());
     }
 
     // ===== Metadata =====
