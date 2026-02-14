@@ -413,6 +413,7 @@ rules:
     unknown_event: "hooksConfig 中未知的 hook 事件类型 '%{event}'"
     missing_field: "'%{event}' 中的 hook 缺少必需字段 '%{field}'"
     invalid_type: "Hook 类型必须是 'command'，当前为 '%{value}'"
+    malformed_hook: "'%{event}' 中的 hook 条目格式错误 - 应为包含 'type' 和 'command' 字段的对象"
   gm_005:
     message: "无效的扩展清单: %{description}"
     suggestion: "确保 gemini-extension.json 包含必需字段: name、version、description"
@@ -430,6 +431,7 @@ rules:
   gm_008:
     message: "无效的上下文文件名: %{description}"
     suggestion: "contextFileName 应引用有效的文件名（例如以 .md 结尾）"
+    path_not_filename: "contextFileName 应为文件名，而非路径"
   gm_009:
     message: "解析 .gemini/settings.json 失败: %{error}"
     suggestion: "修复 .gemini/settings.json 中的 JSON 语法错误"

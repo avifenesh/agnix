@@ -131,7 +131,7 @@ impl Validator for GeminiExtensionValidator {
                                 t!(
                                     "rules.gm_008.message",
                                     description =
-                                        "contextFileName should be a filename, not a path"
+                                        t!("rules.gm_008.path_not_filename")
                                 ),
                             )
                             .with_suggestion(t!("rules.gm_008.suggestion")),

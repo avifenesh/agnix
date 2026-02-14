@@ -102,7 +102,26 @@ impl Validator for GeminiSettingsValidator {
                             for hook_value in arr {
                                 let hook: GeminiHook = match serde_json::from_value(hook_value.clone()) {
                                     Ok(h) => h,
-                                    Err(_) => continue,
+                                    Err(_) => {
+                                        let line = find_key_line(content, event_name).unwrap_or(1);
+                                        diagnostics.push(
+                                            Diagnostic::warning(
+                                                path_buf.clone(),
+                                                line,
+                                                0,
+                                                "GM-004",
+                                                t!(
+                                                    "rules.gm_004.message",
+                                                    description = t!(
+                                                        "rules.gm_004.malformed_hook",
+                                                        event = event_name.as_str()
+                                                    )
+                                                ),
+                                            )
+                                            .with_suggestion(t!("rules.gm_004.suggestion")),
+                                        );
+                                        continue;
+                                    }
                                 };
 
                                 // Check required field: type
