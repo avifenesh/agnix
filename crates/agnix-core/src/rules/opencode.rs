@@ -1135,8 +1135,7 @@ mod tests {
 
     #[test]
     fn test_oc_009_multiple_substitutions_in_one_string() {
-        let diagnostics =
-            validate(r#"{"model": "{env:MODEL} and {file:path.txt} and {bad:x}"}"#);
+        let diagnostics = validate(r#"{"model": "{env:MODEL} and {file:path.txt} and {bad:x}"}"#);
         let oc_009: Vec<_> = diagnostics.iter().filter(|d| d.rule == "OC-009").collect();
         assert_eq!(
             oc_009.len(),

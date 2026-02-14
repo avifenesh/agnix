@@ -955,11 +955,7 @@ name = "test"
         let cdx_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CDX-004").collect();
         let cdx_005: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CDX-005").collect();
         assert_eq!(cdx_004.len(), 1, "CDX-004 should fire for unknown_key");
-        assert_eq!(
-            cdx_005.len(),
-            1,
-            "CDX-005 should fire for exceeding limit"
-        );
+        assert_eq!(cdx_005.len(), 1, "CDX-005 should fire for exceeding limit");
     }
 
     // ===== Fixture Integration =====
