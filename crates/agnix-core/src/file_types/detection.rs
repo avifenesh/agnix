@@ -142,6 +142,30 @@ pub fn detect_file_type(path: &Path) -> FileType {
         {
             FileType::CopilotScoped
         }
+        // GitHub Copilot custom agents (.github/agents/*.agent.md)
+        name if name.ends_with(".agent.md")
+            && parent == Some("agents")
+            && grandparent == Some(".github") =>
+        {
+            FileType::CopilotAgent
+        }
+        // GitHub Copilot reusable prompts (.github/prompts/*.prompt.md)
+        name if name.ends_with(".prompt.md")
+            && parent == Some("prompts")
+            && grandparent == Some(".github") =>
+        {
+            FileType::CopilotPrompt
+        }
+        // GitHub Copilot hooks configuration (.github/hooks/hooks.json)
+        "hooks.json" if parent == Some("hooks") && grandparent == Some(".github") => {
+            FileType::CopilotHooks
+        }
+        // GitHub Copilot setup workflow (.github/workflows/copilot-setup-steps.yml/.yaml)
+        "copilot-setup-steps.yml" | "copilot-setup-steps.yaml"
+            if parent == Some("workflows") && grandparent == Some(".github") =>
+        {
+            FileType::CopilotHooks
+        }
         // Claude Code rules (.claude/rules/*.md)
         name if name.ends_with(".md")
             && parent == Some("rules")
@@ -339,6 +363,42 @@ mod tests {
         assert_eq!(
             detect_file_type(Path::new(".github/instructions/rust.instructions.md")),
             FileType::CopilotScoped
+        );
+    }
+
+    #[test]
+    fn detect_copilot_agent() {
+        assert_eq!(
+            detect_file_type(Path::new(".github/agents/reviewer.agent.md")),
+            FileType::CopilotAgent
+        );
+    }
+
+    #[test]
+    fn detect_copilot_prompt() {
+        assert_eq!(
+            detect_file_type(Path::new(".github/prompts/refactor.prompt.md")),
+            FileType::CopilotPrompt
+        );
+    }
+
+    #[test]
+    fn detect_copilot_hooks_json() {
+        assert_eq!(
+            detect_file_type(Path::new(".github/hooks/hooks.json")),
+            FileType::CopilotHooks
+        );
+    }
+
+    #[test]
+    fn detect_copilot_setup_steps_workflow() {
+        assert_eq!(
+            detect_file_type(Path::new(".github/workflows/copilot-setup-steps.yml")),
+            FileType::CopilotHooks
+        );
+        assert_eq!(
+            detect_file_type(Path::new(".github/workflows/copilot-setup-steps.yaml")),
+            FileType::CopilotHooks
         );
     }
 

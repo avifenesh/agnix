@@ -2103,6 +2103,50 @@ fn test_validate_copilot_fixtures() {
         "Valid scoped file should have no COP errors, got: {:?}",
         cop_errors
     );
+
+    // Validate custom agent
+    let agent_path = copilot_dir.join(".github/agents/reviewer.agent.md");
+    let diagnostics = validate_file(&agent_path, &config).unwrap();
+    let cop_errors: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule.starts_with("COP-") && d.level == DiagnosticLevel::Error)
+        .collect();
+    assert!(
+        cop_errors.is_empty(),
+        "Valid custom agent file should have no COP errors, got: {:?}",
+        cop_errors
+    );
+
+    // Validate reusable prompt
+    let prompt_path = copilot_dir.join(".github/prompts/refactor.prompt.md");
+    let diagnostics = validate_file(&prompt_path, &config).unwrap();
+    let cop_errors: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule.starts_with("COP-") && d.level == DiagnosticLevel::Error)
+        .collect();
+    assert!(
+        cop_errors.is_empty(),
+        "Valid prompt file should have no COP errors, got: {:?}",
+        cop_errors
+    );
+
+    // Validate hooks.json
+    let hooks_path = copilot_dir.join(".github/hooks/hooks.json");
+    let diagnostics = validate_file(&hooks_path, &config).unwrap();
+    assert!(
+        diagnostics.iter().all(|d| d.rule != "COP-017"),
+        "Valid hooks.json should not trigger COP-017, got: {:?}",
+        diagnostics.iter().map(|d| &d.rule).collect::<Vec<_>>()
+    );
+
+    // Validate setup workflow
+    let setup_steps_path = copilot_dir.join(".github/workflows/copilot-setup-steps.yml");
+    let diagnostics = validate_file(&setup_steps_path, &config).unwrap();
+    assert!(
+        diagnostics.iter().all(|d| d.rule != "COP-018"),
+        "Valid setup workflow should not trigger COP-018, got: {:?}",
+        diagnostics.iter().map(|d| &d.rule).collect::<Vec<_>>()
+    );
 }
 
 #[test]
@@ -2154,6 +2198,88 @@ fn test_validate_copilot_invalid_fixtures() {
         diagnostics.iter().any(|d| d.rule == "COP-005"),
         "Expected COP-005 from bad-exclude-agent.instructions.md fixture"
     );
+
+    // COP-007: Custom agent missing description
+    let missing_description =
+        copilot_invalid_dir.join(".github/agents/missing-description.agent.md");
+    let diagnostics = validate_file(&missing_description, &config).unwrap();
+    assert!(
+        diagnostics.iter().any(|d| d.rule == "COP-007"),
+        "Expected COP-007 from missing-description.agent.md fixture"
+    );
+
+    // COP-008: Unknown custom-agent field
+    let unknown_agent_field = copilot_invalid_dir.join(".github/agents/unknown-field.agent.md");
+    let diagnostics = validate_file(&unknown_agent_field, &config).unwrap();
+    assert!(
+        diagnostics.iter().any(|d| d.rule == "COP-008"),
+        "Expected COP-008 from unknown-field.agent.md fixture"
+    );
+
+    // COP-009: Invalid custom-agent target
+    let invalid_target = copilot_invalid_dir.join(".github/agents/invalid-target.agent.md");
+    let diagnostics = validate_file(&invalid_target, &config).unwrap();
+    assert!(
+        diagnostics.iter().any(|d| d.rule == "COP-009"),
+        "Expected COP-009 from invalid-target.agent.md fixture"
+    );
+
+    // COP-010: Deprecated infer field
+    let deprecated_infer = copilot_invalid_dir.join(".github/agents/deprecated-infer.agent.md");
+    let diagnostics = validate_file(&deprecated_infer, &config).unwrap();
+    assert!(
+        diagnostics.iter().any(|d| d.rule == "COP-010"),
+        "Expected COP-010 from deprecated-infer.agent.md fixture"
+    );
+
+    // COP-012: Unsupported GitHub.com fields
+    let unsupported_fields = copilot_invalid_dir.join(".github/agents/unsupported-fields.agent.md");
+    let diagnostics = validate_file(&unsupported_fields, &config).unwrap();
+    assert!(
+        diagnostics.iter().any(|d| d.rule == "COP-012"),
+        "Expected COP-012 from unsupported-fields.agent.md fixture"
+    );
+
+    // COP-013: Empty prompt body
+    let empty_prompt = copilot_invalid_dir.join(".github/prompts/empty.prompt.md");
+    let diagnostics = validate_file(&empty_prompt, &config).unwrap();
+    assert!(
+        diagnostics.iter().any(|d| d.rule == "COP-013"),
+        "Expected COP-013 from empty.prompt.md fixture"
+    );
+
+    // COP-014: Unknown prompt field
+    let unknown_prompt_field = copilot_invalid_dir.join(".github/prompts/unknown-field.prompt.md");
+    let diagnostics = validate_file(&unknown_prompt_field, &config).unwrap();
+    assert!(
+        diagnostics.iter().any(|d| d.rule == "COP-014"),
+        "Expected COP-014 from unknown-field.prompt.md fixture"
+    );
+
+    // COP-015: Invalid prompt agent mode
+    let invalid_prompt_agent = copilot_invalid_dir.join(".github/prompts/invalid-agent.prompt.md");
+    let diagnostics = validate_file(&invalid_prompt_agent, &config).unwrap();
+    assert!(
+        diagnostics.iter().any(|d| d.rule == "COP-015"),
+        "Expected COP-015 from invalid-agent.prompt.md fixture"
+    );
+
+    // COP-017: Hooks schema violations
+    let invalid_hooks = copilot_invalid_dir.join(".github/hooks/hooks.json");
+    let diagnostics = validate_file(&invalid_hooks, &config).unwrap();
+    assert!(
+        diagnostics.iter().any(|d| d.rule == "COP-017"),
+        "Expected COP-017 from hooks.json fixture"
+    );
+
+    // COP-018: Missing jobs.copilot-setup-steps in workflow
+    let invalid_setup_workflow =
+        copilot_invalid_dir.join(".github/workflows/copilot-setup-steps.yml");
+    let diagnostics = validate_file(&invalid_setup_workflow, &config).unwrap();
+    assert!(
+        diagnostics.iter().any(|d| d.rule == "COP-018"),
+        "Expected COP-018 from copilot-setup-steps.yml fixture"
+    );
 }
 
 #[test]
@@ -2167,6 +2293,14 @@ fn test_validate_copilot_006_too_long() {
     assert!(
         diagnostics.iter().any(|d| d.rule == "COP-006"),
         "Expected COP-006 from copilot-too-long fixture, got: {:?}",
+        diagnostics.iter().map(|d| &d.rule).collect::<Vec<_>>()
+    );
+
+    let long_agent = copilot_too_long_dir.join(".github/agents/too-long.agent.md");
+    let diagnostics = validate_file(&long_agent, &config).unwrap();
+    assert!(
+        diagnostics.iter().any(|d| d.rule == "COP-011"),
+        "Expected COP-011 from too-long.agent.md fixture, got: {:?}",
         diagnostics.iter().map(|d| &d.rule).collect::<Vec<_>>()
     );
 }

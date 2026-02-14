@@ -18,7 +18,7 @@
 | MCP | tool definitions | 12 |
 | XML | all .md files | 3 |
 | References | @imports | 2 |
-| GitHub Copilot | .github/copilot-instructions.md, .github/instructions/*.instructions.md | 6 |
+| GitHub Copilot | .github/copilot-instructions.md, .github/instructions/*.instructions.md, .github/agents/*.agent.md, .github/prompts/*.prompt.md, .github/hooks/hooks.json, .github/workflows/copilot-setup-steps.yml | 17 |
 | Cursor Project Rules | .cursor/rules/*.mdc, .cursorrules | 9 |
 | Cline | .clinerules, .clinerules/*.md | 4 |
 | OpenCode | opencode.json | 3 |

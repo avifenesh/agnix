@@ -29,6 +29,13 @@ pub enum FileType {
     Copilot,
     /// GitHub Copilot scoped instructions (.github/instructions/*.instructions.md)
     CopilotScoped,
+    /// GitHub Copilot custom agents (.github/agents/*.agent.md)
+    CopilotAgent,
+    /// GitHub Copilot reusable prompts (.github/prompts/*.prompt.md)
+    CopilotPrompt,
+    /// GitHub Copilot coding agent hooks (.github/hooks/hooks.json)
+    /// and setup workflow (.github/workflows/copilot-setup-steps.yml)
+    CopilotHooks,
     /// Claude Code rules (.claude/rules/*.md)
     ClaudeRule,
     /// Cursor project rules (.cursor/rules/*.mdc)
@@ -73,6 +80,9 @@ impl fmt::Display for FileType {
             FileType::Mcp => "Mcp",
             FileType::Copilot => "Copilot",
             FileType::CopilotScoped => "CopilotScoped",
+            FileType::CopilotAgent => "CopilotAgent",
+            FileType::CopilotPrompt => "CopilotPrompt",
+            FileType::CopilotHooks => "CopilotHooks",
             FileType::ClaudeRule => "ClaudeRule",
             FileType::CursorRule => "CursorRule",
             FileType::CursorRulesLegacy => "CursorRulesLegacy",
@@ -91,7 +101,7 @@ impl fmt::Display for FileType {
 mod tests {
     use super::*;
 
-    /// All 18 variants must round-trip through Display.
+    /// All variants must round-trip through Display.
     #[test]
     fn display_all_variants() {
         let variants = [
@@ -103,6 +113,9 @@ mod tests {
             (FileType::Mcp, "Mcp"),
             (FileType::Copilot, "Copilot"),
             (FileType::CopilotScoped, "CopilotScoped"),
+            (FileType::CopilotAgent, "CopilotAgent"),
+            (FileType::CopilotPrompt, "CopilotPrompt"),
+            (FileType::CopilotHooks, "CopilotHooks"),
             (FileType::ClaudeRule, "ClaudeRule"),
             (FileType::CursorRule, "CursorRule"),
             (FileType::CursorRulesLegacy, "CursorRulesLegacy"),
@@ -132,6 +145,9 @@ mod tests {
             FileType::Mcp,
             FileType::Copilot,
             FileType::CopilotScoped,
+            FileType::CopilotAgent,
+            FileType::CopilotPrompt,
+            FileType::CopilotHooks,
             FileType::ClaudeRule,
             FileType::CursorRule,
             FileType::CursorRulesLegacy,

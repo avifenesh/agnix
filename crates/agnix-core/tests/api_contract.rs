@@ -262,6 +262,9 @@ fn file_type_enum_covers_all_variants() {
         agnix_core::FileType::Mcp,
         agnix_core::FileType::Copilot,
         agnix_core::FileType::CopilotScoped,
+        agnix_core::FileType::CopilotAgent,
+        agnix_core::FileType::CopilotPrompt,
+        agnix_core::FileType::CopilotHooks,
         agnix_core::FileType::ClaudeRule,
         agnix_core::FileType::CursorRule,
         agnix_core::FileType::CursorRulesLegacy,
@@ -276,7 +279,7 @@ fn file_type_enum_covers_all_variants() {
 
     assert_eq!(
         variants.len(),
-        18,
+        21,
         "A new FileType variant may have been added or removed. Please update this test's variant list and the match statement below."
     );
 
@@ -290,6 +293,9 @@ fn file_type_enum_covers_all_variants() {
             agnix_core::FileType::Mcp => {}
             agnix_core::FileType::Copilot => {}
             agnix_core::FileType::CopilotScoped => {}
+            agnix_core::FileType::CopilotAgent => {}
+            agnix_core::FileType::CopilotPrompt => {}
+            agnix_core::FileType::CopilotHooks => {}
             agnix_core::FileType::ClaudeRule => {}
             agnix_core::FileType::CursorRule => {}
             agnix_core::FileType::CursorRulesLegacy => {}
