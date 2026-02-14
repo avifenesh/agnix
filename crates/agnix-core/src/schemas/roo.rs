@@ -250,10 +250,7 @@ mod tests {
             extract_slug_from_path(Path::new(".roo/rules/general.md")),
             None
         );
-        assert_eq!(
-            extract_slug_from_path(Path::new(".roorules")),
-            None
-        );
+        assert_eq!(extract_slug_from_path(Path::new(".roorules")), None);
     }
 
     // ===== parse_roomodes =====

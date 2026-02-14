@@ -764,10 +764,7 @@ mod tests {
 
     #[test]
     fn detect_roo_rules() {
-        assert_eq!(
-            detect_file_type(Path::new(".roorules")),
-            FileType::RooRules
-        );
+        assert_eq!(detect_file_type(Path::new(".roorules")), FileType::RooRules);
         assert_eq!(
             detect_file_type(Path::new("project/.roorules")),
             FileType::RooRules
@@ -788,10 +785,7 @@ mod tests {
 
     #[test]
     fn detect_roo_modes() {
-        assert_eq!(
-            detect_file_type(Path::new(".roomodes")),
-            FileType::RooModes
-        );
+        assert_eq!(detect_file_type(Path::new(".roomodes")), FileType::RooModes);
         assert_eq!(
             detect_file_type(Path::new("project/.roomodes")),
             FileType::RooModes
@@ -843,10 +837,7 @@ mod tests {
             detect_file_type(Path::new("project/SKILL.md")),
             FileType::Skill
         );
-        assert_eq!(
-            detect_file_type(Path::new("SKILL.md")),
-            FileType::Skill
-        );
+        assert_eq!(detect_file_type(Path::new("SKILL.md")), FileType::Skill);
     }
 
     #[test]

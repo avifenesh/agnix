@@ -13,8 +13,8 @@ use crate::{
     diagnostics::Diagnostic,
     rules::{Validator, ValidatorMetadata},
     schemas::roo::{
-        extract_slug_from_path, is_valid_slug, parse_roo_mcp, parse_roomodes, BUILTIN_MODE_SLUGS,
-        VALID_GROUP_NAMES,
+        BUILTIN_MODE_SLUGS, VALID_GROUP_NAMES, extract_slug_from_path, is_valid_slug,
+        parse_roo_mcp, parse_roomodes,
     },
 };
 use rust_i18n::t;
@@ -154,10 +154,7 @@ impl RooCodeValidator {
         }
 
         // Check that customModes is an array
-        if !raw
-            .get("customModes")
-            .is_some_and(|v| v.is_array())
-        {
+        if !raw.get("customModes").is_some_and(|v| v.is_array()) {
             diagnostics.push(
                 Diagnostic::error(
                     path.to_path_buf(),
@@ -442,7 +439,8 @@ impl RooCodeValidator {
         // 2. Get the project root (parent of .roo)
         // 3. Check for .roomodes at the project root
 
-        let roo_dir = path.ancestors()
+        let roo_dir = path
+            .ancestors()
             .find(|p| p.file_name().and_then(|n| n.to_str()) == Some(".roo"));
 
         if let Some(roo_dir) = roo_dir {
@@ -512,10 +510,7 @@ impl RooCodeValidator {
         }
 
         // Check that mcpServers is an object
-        if !raw
-            .get("mcpServers")
-            .is_some_and(|v| v.is_object())
-        {
+        if !raw.get("mcpServers").is_some_and(|v| v.is_object()) {
             diagnostics.push(
                 Diagnostic::error(
                     path.to_path_buf(),
@@ -532,10 +527,7 @@ impl RooCodeValidator {
         // Validate each server entry
         for server in &parsed.servers {
             // Check that each server value is an object
-            if let Some(server_val) = raw
-                .get("mcpServers")
-                .and_then(|v| v.get(&server.name))
-            {
+            if let Some(server_val) = raw.get("mcpServers").and_then(|v| v.get(&server.name)) {
                 if !server_val.is_object() {
                     diagnostics.push(
                         Diagnostic::error(
@@ -586,10 +578,7 @@ impl RooCodeValidator {
                                 1,
                                 0,
                                 "ROO-005",
-                                t!(
-                                    "rules.roo_005.missing_url",
-                                    server = server.name.as_str()
-                                ),
+                                t!("rules.roo_005.missing_url", server = server.name.as_str()),
                             )
                             .with_suggestion(t!("rules.roo_005.suggestion")),
                         );
@@ -657,7 +646,10 @@ mod tests {
 
     #[test]
     fn test_roo_001_mode_rules_valid_content() {
-        let diagnostics = validate(".roo/rules-architect/general.md", "# Architect mode rules\n\nFollow the architecture patterns.");
+        let diagnostics = validate(
+            ".roo/rules-architect/general.md",
+            "# Architect mode rules\n\nFollow the architecture patterns.",
+        );
         let roo_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "ROO-001").collect();
         assert!(roo_001.is_empty());
     }
@@ -867,7 +859,11 @@ mod tests {
         let roo_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "ROO-002").collect();
         // Should error for groups not being an array
         assert!(roo_002.len() >= 1);
-        assert!(roo_002.iter().any(|d| d.message.contains("groups") || d.message.contains("array")));
+        assert!(
+            roo_002
+                .iter()
+                .any(|d| d.message.contains("groups") || d.message.contains("array"))
+        );
     }
 
     // ===== ROO-003: Invalid .rooignore =====
@@ -911,7 +907,10 @@ mod tests {
 
     #[test]
     fn test_roo_003_mixed_valid_invalid_patterns() {
-        let diagnostics = validate(".rooignore", "*.log\n[unclosed\nvalid-pattern.txt\n**[bracket\n");
+        let diagnostics = validate(
+            ".rooignore",
+            "*.log\n[unclosed\nvalid-pattern.txt\n**[bracket\n",
+        );
         let roo_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "ROO-003").collect();
         assert_eq!(roo_003.len(), 2);
         assert_eq!(roo_003[0].line, 2);
@@ -936,8 +935,7 @@ mod tests {
 
     #[test]
     fn test_roo_004_invalid_slug() {
-        let diagnostics =
-            validate(".roo/rules-INVALID SLUG/general.md", "# Bad slug rules");
+        let diagnostics = validate(".roo/rules-INVALID SLUG/general.md", "# Bad slug rules");
         let roo_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "ROO-004").collect();
         assert_eq!(roo_004.len(), 1);
         assert_eq!(roo_004[0].level, DiagnosticLevel::Warning);
@@ -1102,7 +1100,11 @@ mod tests {
             let path = format!(".roo/rules-{}/SKILL.md", slug);
             let diagnostics = validate(&path, "# Skill content");
             let roo_006: Vec<_> = diagnostics.iter().filter(|d| d.rule == "ROO-006").collect();
-            assert!(roo_006.is_empty(), "Builtin slug '{}' should not trigger ROO-006", slug);
+            assert!(
+                roo_006.is_empty(),
+                "Builtin slug '{}' should not trigger ROO-006",
+                slug
+            );
         }
     }
 
@@ -1126,7 +1128,10 @@ mod tests {
   ]
 }"#,
         );
-        fs.add_file(".roo/rules-custom-designer/SKILL.md", "# Custom designer mode");
+        fs.add_file(
+            ".roo/rules-custom-designer/SKILL.md",
+            "# Custom designer mode",
+        );
 
         let config = LintConfig::builder().fs(fs).build_unchecked();
 
@@ -1256,8 +1261,11 @@ mod tests {
         let mut config = LintConfig::default();
         config.rules_mut().disabled_rules = vec!["ROO-006".to_string()];
 
-        let diagnostics =
-            validate_with_config(".roo/rules-custom-mode/SKILL.md", "# Custom mode skill", &config);
+        let diagnostics = validate_with_config(
+            ".roo/rules-custom-mode/SKILL.md",
+            "# Custom mode skill",
+            &config,
+        );
         let roo_006: Vec<_> = diagnostics.iter().filter(|d| d.rule == "ROO-006").collect();
         assert!(roo_006.is_empty());
     }
@@ -1284,7 +1292,9 @@ mod tests {
         assert_eq!(meta.name, "RooCodeValidator");
         assert_eq!(
             meta.rule_ids,
-            &["ROO-001", "ROO-002", "ROO-003", "ROO-004", "ROO-005", "ROO-006"]
+            &[
+                "ROO-001", "ROO-002", "ROO-003", "ROO-004", "ROO-005", "ROO-006"
+            ]
         );
     }
 }
