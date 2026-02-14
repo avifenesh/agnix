@@ -164,6 +164,7 @@ pub fn detect_file_type(path: &Path) -> FileType {
         .and_then(|n| n.to_str());
 
     match filename {
+        "SKILL.md" if is_roo_mode_rules(path, parent, grandparent) => FileType::RooModeRules,
         "SKILL.md" => FileType::Skill,
         "CLAUDE.md" | "CLAUDE.local.md" | "AGENTS.md" | "AGENTS.local.md"
         | "AGENTS.override.md" => FileType::ClaudeMd,
@@ -827,6 +828,24 @@ mod tests {
         assert_ne!(
             detect_file_type(Path::new("other/rules-architect/general.md")),
             FileType::RooModeRules
+        );
+    }
+
+    #[test]
+    fn detect_roo_mode_skill_md() {
+        // SKILL.md in .roo/rules-{slug}/ should be RooModeRules, not Skill
+        assert_eq!(
+            detect_file_type(Path::new(".roo/rules-architect/SKILL.md")),
+            FileType::RooModeRules
+        );
+        // Regular SKILL.md should still be Skill
+        assert_eq!(
+            detect_file_type(Path::new("project/SKILL.md")),
+            FileType::Skill
+        );
+        assert_eq!(
+            detect_file_type(Path::new("SKILL.md")),
+            FileType::Skill
         );
     }
 

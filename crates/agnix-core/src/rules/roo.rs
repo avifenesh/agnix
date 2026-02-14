@@ -173,8 +173,40 @@ impl RooCodeValidator {
 
         // Validate each mode entry
         let mut seen_slugs = HashSet::new();
+        let custom_modes_array = raw.get("customModes").and_then(|v| v.as_array());
+
         for (idx, mode) in parsed.modes.iter().enumerate() {
             let pos = format!("customModes[{}]", idx);
+
+            // Check if groups field is missing in the raw JSON
+            if let Some(modes_array) = custom_modes_array {
+                if let Some(mode_obj) = modes_array.get(idx).and_then(|v| v.as_object()) {
+                    if !mode_obj.contains_key("groups") {
+                        diagnostics.push(
+                            Diagnostic::error(
+                                path.to_path_buf(),
+                                1,
+                                0,
+                                "ROO-002",
+                                t!("rules.roo_002.missing_groups", slug = mode.slug.as_str()),
+                            )
+                            .with_suggestion(t!("rules.roo_002.suggestion")),
+                        );
+                    } else if !mode_obj.get("groups").is_some_and(|v| v.is_array()) {
+                        // groups exists but is not an array
+                        diagnostics.push(
+                            Diagnostic::error(
+                                path.to_path_buf(),
+                                1,
+                                0,
+                                "ROO-002",
+                                t!("rules.roo_002.groups_type", slug = mode.slug.as_str()),
+                            )
+                            .with_suggestion(t!("rules.roo_002.suggestion")),
+                        );
+                    }
+                }
+            }
 
             // Missing slug
             if mode.slug.is_empty() {
@@ -381,20 +413,53 @@ impl RooCodeValidator {
             if filename == "SKILL.md" {
                 if let Some(slug) = extract_slug_from_path(path) {
                     if !BUILTIN_MODE_SLUGS.contains(&slug.as_str()) {
-                        diagnostics.push(
-                            Diagnostic::warning(
-                                path.to_path_buf(),
-                                1,
-                                0,
-                                "ROO-006",
-                                t!("rules.roo_006.message", slug = slug.as_str()),
-                            )
-                            .with_suggestion(t!("rules.roo_006.suggestion")),
-                        );
+                        // Try to check custom modes from .roomodes
+                        let is_custom_mode = self.check_custom_mode(path, &slug, config);
+
+                        if !is_custom_mode {
+                            diagnostics.push(
+                                Diagnostic::warning(
+                                    path.to_path_buf(),
+                                    1,
+                                    0,
+                                    "ROO-006",
+                                    t!("rules.roo_006.message", slug = slug.as_str()),
+                                )
+                                .with_suggestion(t!("rules.roo_006.suggestion")),
+                            );
+                        }
                     }
                 }
             }
         }
+    }
+
+    /// Check if a slug exists in custom modes defined in .roomodes
+    fn check_custom_mode(&self, path: &Path, slug: &str, config: &LintConfig) -> bool {
+        // Navigate from the file path to find .roomodes
+        // For a path like .roo/rules-custom-mode/SKILL.md:
+        // 1. Get the .roo directory (grandparent of the file)
+        // 2. Get the project root (parent of .roo)
+        // 3. Check for .roomodes at the project root
+
+        let roo_dir = path.ancestors()
+            .find(|p| p.file_name().and_then(|n| n.to_str()) == Some(".roo"));
+
+        if let Some(roo_dir) = roo_dir {
+            if let Some(project_root) = roo_dir.parent() {
+                let roomodes_path = project_root.join(".roomodes");
+                let fs = config.fs();
+
+                if fs.exists(&roomodes_path) {
+                    if let Ok(content) = fs.read_to_string(&roomodes_path) {
+                        let parsed = crate::schemas::roo::parse_roomodes(&content);
+                        return parsed.modes.iter().any(|m| m.slug == slug);
+                    }
+                }
+            }
+        }
+
+        false
     }
 
     /// ROO-005: Validate .roo/mcp.json configuration
@@ -768,6 +833,43 @@ mod tests {
         assert_eq!(roo_002.len(), 0);
     }
 
+    #[test]
+    fn test_roo_002_missing_groups_field() {
+        let content = r#"{
+  "customModes": [
+    {
+      "slug": "designer",
+      "name": "Designer",
+      "roleDefinition": "You are a designer."
+    }
+  ]
+}"#;
+        let diagnostics = validate(".roomodes", content);
+        let roo_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "ROO-002").collect();
+        // Should error for missing groups field
+        assert!(roo_002.len() >= 1);
+        assert!(roo_002.iter().any(|d| d.message.contains("groups")));
+    }
+
+    #[test]
+    fn test_roo_002_groups_not_array() {
+        let content = r#"{
+  "customModes": [
+    {
+      "slug": "designer",
+      "name": "Designer",
+      "roleDefinition": "You are a designer.",
+      "groups": "not-an-array"
+    }
+  ]
+}"#;
+        let diagnostics = validate(".roomodes", content);
+        let roo_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "ROO-002").collect();
+        // Should error for groups not being an array
+        assert!(roo_002.len() >= 1);
+        assert!(roo_002.iter().any(|d| d.message.contains("groups") || d.message.contains("array")));
+    }
+
     // ===== ROO-003: Invalid .rooignore =====
 
     #[test]
@@ -1002,6 +1104,95 @@ mod tests {
             let roo_006: Vec<_> = diagnostics.iter().filter(|d| d.rule == "ROO-006").collect();
             assert!(roo_006.is_empty(), "Builtin slug '{}' should not trigger ROO-006", slug);
         }
+    }
+
+    #[test]
+    fn test_roo_006_custom_mode_with_roomodes_no_warning() {
+        use crate::fs::MockFileSystem;
+        use std::sync::Arc;
+
+        // Create a mock filesystem with .roomodes defining custom-designer mode
+        let fs = Arc::new(MockFileSystem::new());
+        fs.add_file(
+            ".roomodes",
+            r#"{
+  "customModes": [
+    {
+      "slug": "custom-designer",
+      "name": "Designer",
+      "roleDefinition": "You are a UI/UX designer.",
+      "groups": ["read", "edit"]
+    }
+  ]
+}"#,
+        );
+        fs.add_file(".roo/rules-custom-designer/SKILL.md", "# Custom designer mode");
+
+        let config = LintConfig::builder().fs(fs).build_unchecked();
+
+        let diagnostics = validate_with_config(
+            ".roo/rules-custom-designer/SKILL.md",
+            "# Custom designer mode",
+            &config,
+        );
+        let roo_006: Vec<_> = diagnostics.iter().filter(|d| d.rule == "ROO-006").collect();
+        // Should not warn because custom-designer is in .roomodes
+        assert!(roo_006.is_empty());
+    }
+
+    #[test]
+    fn test_roo_006_custom_mode_without_roomodes_warns() {
+        use crate::fs::MockFileSystem;
+        use std::sync::Arc;
+
+        // Create a mock filesystem without .roomodes
+        let fs = Arc::new(MockFileSystem::new());
+        fs.add_file(".roo/rules-unknown-mode/SKILL.md", "# Unknown mode");
+
+        let config = LintConfig::builder().fs(fs).build_unchecked();
+
+        let diagnostics = validate_with_config(
+            ".roo/rules-unknown-mode/SKILL.md",
+            "# Unknown mode",
+            &config,
+        );
+        let roo_006: Vec<_> = diagnostics.iter().filter(|d| d.rule == "ROO-006").collect();
+        // Should warn because unknown-mode is not in BUILTIN_MODE_SLUGS and no .roomodes exists
+        assert_eq!(roo_006.len(), 1);
+    }
+
+    #[test]
+    fn test_roo_006_custom_mode_in_roomodes_different_slug_warns() {
+        use crate::fs::MockFileSystem;
+        use std::sync::Arc;
+
+        // Create a mock filesystem with .roomodes defining one mode, but using a different slug
+        let fs = Arc::new(MockFileSystem::new());
+        fs.add_file(
+            ".roomodes",
+            r#"{
+  "customModes": [
+    {
+      "slug": "custom-designer",
+      "name": "Designer",
+      "roleDefinition": "You are a UI/UX designer.",
+      "groups": ["read"]
+    }
+  ]
+}"#,
+        );
+        fs.add_file(".roo/rules-different-mode/SKILL.md", "# Different mode");
+
+        let config = LintConfig::builder().fs(fs).build_unchecked();
+
+        let diagnostics = validate_with_config(
+            ".roo/rules-different-mode/SKILL.md",
+            "# Different mode",
+            &config,
+        );
+        let roo_006: Vec<_> = diagnostics.iter().filter(|d| d.rule == "ROO-006").collect();
+        // Should warn because different-mode is not in customModes
+        assert_eq!(roo_006.len(), 1);
     }
 
     // ===== Rule disabling =====
