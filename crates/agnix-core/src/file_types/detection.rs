@@ -69,15 +69,34 @@ pub const EXCLUDED_PARENT_DIRECTORIES: &[&str] =
 
 /// Returns true if the path contains two consecutive normal path components.
 fn path_contains_consecutive_components(path: &Path, first: &str, second: &str) -> bool {
-    path.components()
-        .zip(path.components().skip(1))
-        .any(|(a, b)| {
-            matches!(
-                (a, b),
-                (std::path::Component::Normal(a_os), std::path::Component::Normal(b_os))
-                if a_os == first && b_os == second
-            )
-        })
+    let mut previous: Option<&str> = None;
+
+    for component in path.components() {
+        let current = match component {
+            std::path::Component::Normal(name) => match name.to_str() {
+                Some(name_str) => name_str,
+                None => {
+                    previous = None;
+                    continue;
+                }
+            },
+            _ => {
+                previous = None;
+                continue;
+            }
+        };
+
+        if let Some(prev) = previous
+            && prev.eq_ignore_ascii_case(first)
+            && current.eq_ignore_ascii_case(second)
+        {
+            return true;
+        }
+
+        previous = Some(current);
+    }
+
+    false
 }
 
 /// Returns true if the file is inside a documentation directory that
@@ -114,6 +133,12 @@ fn is_under_cursor_rules(path: &Path) -> bool {
     path_contains_consecutive_components(path, ".cursor", "rules")
 }
 
+/// Returns true if the path contains `.cursor/agents` as consecutive
+/// components anywhere in the path.
+fn is_under_cursor_agents(path: &Path) -> bool {
+    path_contains_consecutive_components(path, ".cursor", "agents")
+}
+
 /// Returns true if the path contains `.roo/rules` as consecutive
 /// components anywhere in the path. This allows Roo Code rules to live in
 /// `.roo/rules/*.md`.
@@ -127,7 +152,6 @@ fn is_under_roo_rules(path: &Path) -> bool {
 fn is_roo_mode_rules(_path: &Path, parent: Option<&str>, grandparent: Option<&str>) -> bool {
     parent.is_some_and(|p| p.starts_with("rules-")) && grandparent == Some(".roo")
 }
-
 fn is_excluded_filename(name: &str) -> bool {
     EXCLUDED_FILENAMES
         .iter()
@@ -162,6 +186,12 @@ pub fn detect_file_type(path: &Path) -> FileType {
         .and_then(|p| p.parent())
         .and_then(|p| p.file_name())
         .and_then(|n| n.to_str());
+
+    // Cursor subagent definitions should always be classified as CursorAgent,
+    // including AGENTS.md / CLAUDE.md filenames under .cursor/agents.
+    if filename.to_ascii_lowercase().ends_with(".md") && is_under_cursor_agents(path) {
+        return FileType::CursorAgent;
+    }
 
     match filename {
         "SKILL.md" if is_roo_mode_rules(path, parent, grandparent) => FileType::RooModeRules,
@@ -223,6 +253,18 @@ pub fn detect_file_type(path: &Path) -> FileType {
             && is_under_cursor_rules(path) =>
         {
             FileType::CursorRule
+        }
+        // Cursor hooks configuration (.cursor/hooks.json)
+        name if name.eq_ignore_ascii_case("hooks.json")
+            && parent.is_some_and(|p| p.eq_ignore_ascii_case(".cursor")) =>
+        {
+            FileType::CursorHooks
+        }
+        // Cursor cloud-agent environment configuration (.cursor/environment.json)
+        name if name.eq_ignore_ascii_case("environment.json")
+            && parent.is_some_and(|p| p.eq_ignore_ascii_case(".cursor")) =>
+        {
+            FileType::CursorEnvironment
         }
         // Legacy Cursor rules file (.cursorrules or .cursorrules.md)
         ".cursorrules" | ".cursorrules.md" => FileType::CursorRulesLegacy,
@@ -573,6 +615,90 @@ mod tests {
         assert_ne!(
             detect_file_type(Path::new(".cursor/README.md")),
             FileType::CursorRule
+        );
+    }
+
+    #[test]
+    fn detect_cursor_hooks() {
+        assert_eq!(
+            detect_file_type(Path::new(".cursor/hooks.json")),
+            FileType::CursorHooks
+        );
+        assert_eq!(
+            detect_file_type(Path::new("project/.cursor/hooks.json")),
+            FileType::CursorHooks
+        );
+        assert_eq!(
+            detect_file_type(Path::new("project/.CURSOR/HOOKS.JSON")),
+            FileType::CursorHooks
+        );
+        assert_ne!(
+            detect_file_type(Path::new("project/hooks.json")),
+            FileType::CursorHooks
+        );
+        assert_ne!(
+            detect_file_type(Path::new("project/.cursor/subdir/hooks.json")),
+            FileType::CursorHooks
+        );
+    }
+
+    #[test]
+    fn detect_cursor_environment() {
+        assert_eq!(
+            detect_file_type(Path::new(".cursor/environment.json")),
+            FileType::CursorEnvironment
+        );
+        assert_eq!(
+            detect_file_type(Path::new("project/.cursor/environment.json")),
+            FileType::CursorEnvironment
+        );
+        assert_eq!(
+            detect_file_type(Path::new("project/.CURSOR/ENVIRONMENT.JSON")),
+            FileType::CursorEnvironment
+        );
+        assert_ne!(
+            detect_file_type(Path::new("project/environment.json")),
+            FileType::CursorEnvironment
+        );
+    }
+
+    #[test]
+    fn detect_cursor_agent() {
+        assert_eq!(
+            detect_file_type(Path::new(".cursor/agents/reviewer.md")),
+            FileType::CursorAgent
+        );
+        assert_eq!(
+            detect_file_type(Path::new("project/.cursor/agents/reviewer.md")),
+            FileType::CursorAgent
+        );
+        assert_eq!(
+            detect_file_type(Path::new("project/.cursor/agents/frontend/react.md")),
+            FileType::CursorAgent
+        );
+        assert_eq!(
+            detect_file_type(Path::new("project/.cursor/agents/AGENTS.md")),
+            FileType::CursorAgent
+        );
+        assert_eq!(
+            detect_file_type(Path::new("project/.cursor/agents/CLAUDE.md")),
+            FileType::CursorAgent
+        );
+        assert_eq!(
+            detect_file_type(Path::new("project/.cursor/agents/reviewer.MD")),
+            FileType::CursorAgent
+        );
+    }
+
+    #[test]
+    fn detect_cursor_agent_does_not_match_non_cursor_agents() {
+        assert_ne!(
+            detect_file_type(Path::new("agents/reviewer.md")),
+            FileType::CursorAgent
+        );
+        assert_ne!(
+            detect_file_type(Path::new(".claude/agents/reviewer.md")),
+            FileType::CursorAgent
         );
     }
 

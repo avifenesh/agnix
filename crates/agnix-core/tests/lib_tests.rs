@@ -2572,6 +2572,34 @@ fn test_detect_cursor_rule() {
 }
 
 #[test]
+fn test_detect_cursor_hooks_agent_environment() {
+    assert_eq!(
+        detect_file_type(Path::new(".cursor/hooks.json")),
+        FileType::CursorHooks
+    );
+    assert_eq!(
+        detect_file_type(Path::new(".cursor/environment.json")),
+        FileType::CursorEnvironment
+    );
+    assert_eq!(
+        detect_file_type(Path::new(".cursor/agents/reviewer.md")),
+        FileType::CursorAgent
+    );
+    assert_eq!(
+        detect_file_type(Path::new("project/.cursor/agents/nested/reviewer.md")),
+        FileType::CursorAgent
+    );
+    assert_eq!(
+        detect_file_type(Path::new("project/.cursor/agents/AGENTS.md")),
+        FileType::CursorAgent
+    );
+    assert_eq!(
+        detect_file_type(Path::new("project/.cursor/agents/CLAUDE.md")),
+        FileType::CursorAgent
+    );
+}
+
+#[test]
 fn test_detect_cursor_legacy() {
     assert_eq!(
         detect_file_type(Path::new(".cursorrules")),
@@ -2620,6 +2648,18 @@ fn test_validators_for_cursor() {
     let cursor_validators = registry.validators_for(FileType::CursorRule);
     assert_eq!(cursor_validators.len(), 3); // cursor + prompt + claude_md
 
+    let hooks_validators = registry.validators_for(FileType::CursorHooks);
+    assert_eq!(hooks_validators.len(), 1); // cursor
+    assert_eq!(hooks_validators[0].name(), "CursorValidator");
+
+    let agent_validators = registry.validators_for(FileType::CursorAgent);
+    assert_eq!(agent_validators.len(), 1); // cursor
+    assert_eq!(agent_validators[0].name(), "CursorValidator");
+
+    let environment_validators = registry.validators_for(FileType::CursorEnvironment);
+    assert_eq!(environment_validators.len(), 1); // cursor
+    assert_eq!(environment_validators[0].name(), "CursorValidator");
+
     let legacy_validators = registry.validators_for(FileType::CursorRulesLegacy);
     assert_eq!(legacy_validators.len(), 3); // cursor + prompt + claude_md
 }
@@ -2656,6 +2696,44 @@ fn test_validate_cursor_fixtures() {
         cur_errors.is_empty(),
         "Valid .mdc file with multiple globs should have no CUR errors, got: {:?}",
         cur_errors
+    );
+
+    let hooks_path = cursor_dir.join(".cursor/hooks.json");
+    let diagnostics = validate_file(&hooks_path, &config).unwrap();
+    assert!(
+        diagnostics.iter().all(|d| !matches!(
+            d.rule.as_str(),
+            "CUR-010" | "CUR-011" | "CUR-012" | "CUR-013"
+        )),
+        "Valid hooks fixture should have no CUR-010..CUR-013 diagnostics, got: {:?}",
+        diagnostics
+            .iter()
+            .map(|d| (&d.rule, &d.message))
+            .collect::<Vec<_>>()
+    );
+
+    let agent_path = cursor_dir.join(".cursor/agents/reviewer.md");
+    let diagnostics = validate_file(&agent_path, &config).unwrap();
+    assert!(
+        diagnostics
+            .iter()
+            .all(|d| !matches!(d.rule.as_str(), "CUR-014" | "CUR-015")),
+        "Valid agent fixture should have no CUR-014/CUR-015 diagnostics, got: {:?}",
+        diagnostics
+            .iter()
+            .map(|d| (&d.rule, &d.message))
+            .collect::<Vec<_>>()
+    );
+
+    let environment_path = cursor_dir.join(".cursor/environment.json");
+    let diagnostics = validate_file(&environment_path, &config).unwrap();
+    assert!(
+        diagnostics.iter().all(|d| d.rule != "CUR-016"),
+        "Valid environment fixture should have no CUR-016 diagnostics, got: {:?}",
+        diagnostics
+            .iter()
+            .map(|d| (&d.rule, &d.message))
+            .collect::<Vec<_>>()
     );
 }
 
@@ -2704,6 +2782,55 @@ fn test_validate_cursor_invalid_fixtures() {
     assert!(
         diagnostics.iter().any(|d| d.rule == "CUR-005"),
         "Expected CUR-005 from unknown-keys.mdc fixture"
+    );
+
+    // CUR-010: Invalid hooks schema
+    let cur_010_hooks = cursor_invalid_dir.join("hooks-cur010/.cursor/hooks.json");
+    let diagnostics = validate_file(&cur_010_hooks, &config).unwrap();
+    assert!(
+        diagnostics.iter().any(|d| d.rule == "CUR-010"),
+        "Expected CUR-010 from hooks-cur010 fixture"
+    );
+
+    // CUR-011/CUR-012/CUR-013 from malformed hook entry
+    let cur_011_to_013 = cursor_invalid_dir.join("hooks-cur011-013/.cursor/hooks.json");
+    let diagnostics = validate_file(&cur_011_to_013, &config).unwrap();
+    assert!(
+        diagnostics.iter().any(|d| d.rule == "CUR-011"),
+        "Expected CUR-011 from hooks-cur011-013 fixture"
+    );
+    assert!(
+        diagnostics.iter().any(|d| d.rule == "CUR-012"),
+        "Expected CUR-012 from hooks-cur011-013 fixture"
+    );
+    assert!(
+        diagnostics.iter().any(|d| d.rule == "CUR-013"),
+        "Expected CUR-013 from hooks-cur011-013 fixture"
+    );
+
+    // CUR-014: Invalid Cursor agent frontmatter
+    let cur_014_agent = cursor_invalid_dir.join("agent-cur014/.cursor/agents/reviewer.md");
+    let diagnostics = validate_file(&cur_014_agent, &config).unwrap();
+    assert!(
+        diagnostics.iter().any(|d| d.rule == "CUR-014"),
+        "Expected CUR-014 from agent-cur014 fixture"
+    );
+
+    // CUR-015: Empty Cursor agent body
+    let cur_015_agent = cursor_invalid_dir.join("agent-cur015/.cursor/agents/reviewer.md");
+    let diagnostics = validate_file(&cur_015_agent, &config).unwrap();
+    assert!(
+        diagnostics.iter().any(|d| d.rule == "CUR-015"),
+        "Expected CUR-015 from agent-cur015 fixture"
+    );
+
+    // CUR-016: Invalid environment schema
+    let cur_016_environment =
+        cursor_invalid_dir.join("environment-cur016/.cursor/environment.json");
+    let diagnostics = validate_file(&cur_016_environment, &config).unwrap();
+    assert!(
+        diagnostics.iter().any(|d| d.rule == "CUR-016"),
+        "Expected CUR-016 from environment-cur016 fixture"
     );
 }
 
@@ -3977,6 +4104,9 @@ fn test_validator_names_are_ascii_and_nonempty() {
         FileType::CopilotScoped,
         FileType::ClaudeRule,
         FileType::CursorRule,
+        FileType::CursorHooks,
+        FileType::CursorAgent,
+        FileType::CursorEnvironment,
         FileType::CursorRulesLegacy,
         FileType::ClineRules,
         FileType::ClineRulesFolder,
@@ -4019,6 +4149,9 @@ const ALL_VALIDATED_FILE_TYPES: &[FileType] = &[
     FileType::CopilotScoped,
     FileType::ClaudeRule,
     FileType::CursorRule,
+    FileType::CursorHooks,
+    FileType::CursorAgent,
+    FileType::CursorEnvironment,
     FileType::CursorRulesLegacy,
     FileType::ClineRules,
     FileType::ClineRulesFolder,

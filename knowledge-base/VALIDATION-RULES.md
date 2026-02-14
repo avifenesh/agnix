@@ -1197,6 +1197,55 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 **Fix**: Add a `description` field explaining when the rule should apply
 **Source**: docs.cursor.com/en/context
 
+<a id="cur-010"></a>
+### CUR-010 [HIGH] Invalid .cursor/hooks.json Schema
+**Requirement**: `.cursor/hooks.json` MUST define an integer `version` and object `hooks` map
+**Detection**: Parse JSON and validate top-level shape and required fields
+**Fix**: Add required fields and correct schema types for `version` and `hooks`
+**Source**: cursor.com/docs/agent/hooks
+
+<a id="cur-011"></a>
+### CUR-011 [MEDIUM] Unknown Cursor Hook Event Name
+**Requirement**: Hook event names in `.cursor/hooks.json` SHOULD use documented Cursor events
+**Detection**: Validate each `hooks.<event>` key against allowlisted event names
+**Fix**: Rename event keys to supported Cursor hook events
+**Source**: cursor.com/docs/agent/hooks
+
+<a id="cur-012"></a>
+### CUR-012 [HIGH] Hook Entry Missing Required Command Field
+**Requirement**: Each hook entry MUST include a `command` field
+**Detection**: Parse `hooks.<event>[]` objects and check for missing `command`
+**Fix**: Add a non-empty command to each hook object
+**Source**: cursor.com/docs/agent/hooks
+
+<a id="cur-013"></a>
+### CUR-013 [HIGH] Invalid Cursor Hook Type Value
+**Requirement**: Hook `type` MUST be `command` or `prompt` when present
+**Detection**: Parse hook entries and validate `type` values
+**Fix**: Change invalid `type` values to supported values
+**Source**: cursor.com/docs/agent/hooks
+
+<a id="cur-014"></a>
+### CUR-014 [HIGH] Invalid Cursor Subagent Frontmatter
+**Requirement**: `.cursor/agents/**/*.md` files MUST have valid YAML frontmatter with required fields and valid optional field types
+**Detection**: Parse frontmatter and validate required keys (`name`, `description`), plus optional typed fields (`model`, `readonly`, `is_background`) when present
+**Fix**: Correct frontmatter keys, naming format, and value types
+**Source**: cursor.com/docs/context/subagents
+
+<a id="cur-015"></a>
+### CUR-015 [MEDIUM] Empty Cursor Subagent Body
+**Requirement**: `.cursor/agents/**/*.md` Cursor subagent markdown files SHOULD include body instructions after frontmatter
+**Detection**: Parse file and check that body content is non-empty after frontmatter
+**Fix**: Add clear subagent instructions below frontmatter
+**Source**: cursor.com/docs/context/subagents
+
+<a id="cur-016"></a>
+### CUR-016 [HIGH] Invalid .cursor/environment.json Schema
+**Requirement**: `.cursor/environment.json` MUST be an object with string `snapshot`, string `install`, and array `terminals`
+**Detection**: Parse JSON and validate required fields plus terminal entry structure
+**Fix**: Provide required fields and valid terminal objects (`name`, `command`)
+**Source**: cursor.com/docs/cloud-agent
+
 ---
 
 ## CLINE RULES
@@ -1777,7 +1826,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | AGENTS.md | 6 | 1 | 5 | 0 | 0 |
 | Claude Plugins | 10 | 8 | 2 | 0 | 2 |
 | GitHub Copilot | 17 | 11 | 6 | 0 | 3 |
-| Cursor | 9 | 4 | 5 | 0 | 4 |
+| Cursor | 16 | 9 | 7 | 0 | 4 |
 | Cline | 4 | 3 | 1 | 0 | 2 |
 | OpenCode | 8 | 4 | 3 | 1 | 1 |
 | Gemini CLI | 9 | 3 | 4 | 2 | 3 |
@@ -1798,7 +1847,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | Roo Code Skills | 1 | 0 | 1 | 0 | 1 |
 | Roo Code | 6 | 3 | 3 | 0 | 0 |
 | Version Awareness | 1 | 0 | 0 | 1 | 0 |
-| **TOTAL** | **200** | **124** | **69** | **7** | **49** |
+| **TOTAL** | **207** | **129** | **71** | **7** | **49** |
 
 
 ---
@@ -1828,7 +1877,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 
 ---
 
-****Total Coverage**: 205 validation rules across 28 categories
+****Total Coverage**: 212 validation rules across 28 categories
 
 **Knowledge Base**: 11,036 lines, 320KB, 75+ sources
 **Certainty**: 124 HIGH, 69 MEDIUM, 7 LOW

@@ -465,6 +465,50 @@ rules:
   cur_009:
     message: "Agent-requested rule has no description - the agent cannot determine when to apply it"
     suggestion: "Add a description field explaining when this rule should apply, or set alwaysApply or globs to control activation"
+  cur_010:
+    message: ".cursor/hooks.json must define an integer version and a hooks object"
+    missing_version: ".cursor/hooks.json is missing required integer field 'version'"
+    missing_hooks: ".cursor/hooks.json is missing required object field 'hooks'"
+    invalid_hooks: "Field 'hooks' must be an object, got %{got}"
+    invalid_event_hooks: "hooks.%{event} must be an array of hook definitions, got %{got}"
+    invalid_hook_entry: "hooks.%{event}[%{index}] must be an object"
+    parse_error: "Failed to parse .cursor/hooks.json: %{error}"
+    suggestion: "Define {\"version\": <integer>, \"hooks\": {\"eventName\": [{\"type\": \"command\", \"command\": \"...\"}]}}"
+  cur_011:
+    message: "Unknown Cursor hook event '%{event}'"
+    suggestion: "Use one of the documented Cursor hook events in .cursor/hooks.json"
+  cur_012:
+    message: "hooks.%{event}[%{index}] is missing required non-empty string 'command' field"
+    suggestion: "Set command to a non-empty string for each hook definition"
+  cur_013:
+    message: "hooks.%{event}[%{index}] has invalid 'type' value"
+    suggestion: "If present, 'type' must be 'command' or 'prompt'"
+  cur_014:
+    message: "Cursor subagent file must have valid YAML frontmatter with required fields"
+    invalid_frontmatter: "Cursor subagent frontmatter is invalid YAML or not a mapping"
+    missing_name: "Cursor subagent frontmatter is missing required 'name' field"
+    invalid_name: "Cursor subagent name must use lowercase letters, digits, and hyphens only"
+    name_not_string: "Cursor subagent 'name' field must be a string"
+    missing_description: "Cursor subagent frontmatter is missing required 'description' field"
+    description_not_string: "Cursor subagent 'description' field must be a string"
+    invalid_model: "Cursor subagent model must be 'fast', 'inherit', or a valid model ID"
+    model_not_string: "Cursor subagent 'model' field must be a string"
+    readonly_not_bool: "Cursor subagent 'readonly' field must be a boolean"
+    is_background_not_bool: "Cursor subagent 'is_background' field must be a boolean"
+    suggestion: "Use frontmatter fields: name, description, model, readonly, and is_background with valid types"
+  cur_015:
+    message: "Cursor subagent definition is empty after frontmatter"
+    suggestion: "Add body instructions below the frontmatter section"
+  cur_016:
+    message: ".cursor/environment.json must be an object with snapshot, install, and terminals"
+    parse_error: "Failed to parse .cursor/environment.json: %{error}"
+    snapshot: "Field 'snapshot' must be a string"
+    install: "Field 'install' must be a string"
+    start: "Field 'start' must be a string when present"
+    missing_terminals: "Field 'terminals' is required and must be an array"
+    invalid_terminals: "Field 'terminals' must be an array, got %{got}"
+    terminal: "terminals[%{index}] must be an object with string fields 'name' and 'command'"
+    suggestion: "Use schema: {\"snapshot\":\"...\",\"install\":\"...\",\"start\":\"...\",\"terminals\":[{\"name\":\"...\",\"command\":\"...\"}]}"
 
   # --- Cline (cline.rs) ---
   cln_001:
