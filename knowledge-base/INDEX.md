@@ -28,7 +28,7 @@
 knowledge-base/
 ├── INDEX.md                        # This file
 ├── README.md                       # Detailed navigation guide
-├── VALIDATION-RULES.md             # ⭐ Master validation reference (169 rules)
+├── VALIDATION-RULES.md             # ⭐ Master validation reference (170 rules)
 
 ├── PATTERNS-CATALOG.md             # 70 production-tested patterns
 ├── RESEARCH-TRACKING.md            # Tool inventory and monitoring process
@@ -81,7 +81,7 @@ knowledge-base/
 | **AGENTS.md** | 5 | - | - | 6 rules |
 | **Cursor** | 2 | - | - | 9 rules |
 | **agentsys** | 12 | - | - | 70 patterns |
-| **Total** | **75+** | **117KB** | **160KB** | **169 rules** |
+| **Total** | **75+** | **117KB** | **160KB** | **170 rules** |
 
 
 ### Validation Rules by Category
@@ -155,7 +155,7 @@ knowledge-base/
 ### For Implementation
 
 **Start here**: [VALIDATION-RULES.md](./VALIDATION-RULES.md)
-- 169 rules with rule IDs (AS-001, CC-HK-001, etc.)
+- 170 rules with rule IDs (AS-001, CC-HK-001, etc.)
 
 - Detection pseudocode
 - Auto-fix implementations
@@ -281,7 +281,7 @@ Total Size:           650KB
 Standards Covered:     5 (Agent Skills, MCP, Claude Code, Multi-Platform, Prompt Eng)
 Sources Consulted:    75+ (specs, docs, research papers, repos)
 Research Agents:       5 (10+ sources each)
-Validation Rules:     169 rules
+Validation Rules:     170 rules
 Auto-Fixable Rules:   48 rules
 
 Test Fixtures:        116 files
