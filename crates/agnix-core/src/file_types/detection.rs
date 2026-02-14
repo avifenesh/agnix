@@ -102,20 +102,7 @@ fn path_contains_consecutive_components(path: &Path, first: &str, second: &str) 
 /// Returns true if the path contains two consecutive normal path components,
 /// compared case-insensitively.
 fn path_contains_consecutive_components_ci(path: &Path, first: &str, second: &str) -> bool {
-    path.components()
-        .zip(path.components().skip(1))
-        .any(|(a, b)| {
-            matches!(
-                (a, b),
-                (std::path::Component::Normal(a_os), std::path::Component::Normal(b_os))
-                if a_os
-                    .to_str()
-                    .is_some_and(|s| s.eq_ignore_ascii_case(first))
-                    && b_os
-                        .to_str()
-                        .is_some_and(|s| s.eq_ignore_ascii_case(second))
-            )
-        })
+    path_contains_consecutive_components(path, first, second)
 }
 
 fn parent_eq_ignore_ascii_case(parent: Option<&str>, expected: &str) -> bool {
