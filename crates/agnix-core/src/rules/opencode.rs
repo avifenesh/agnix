@@ -1,16 +1,22 @@
-//! OpenCode configuration validation rules (OC-001 to OC-003)
+//! OpenCode configuration validation rules (OC-001 to OC-009)
 //!
 //! Validates:
 //! - OC-001: Invalid share mode (HIGH) - must be "manual", "auto", or "disabled"
 //! - OC-002: Invalid instruction path (HIGH) - paths must exist or be valid globs
 //! - OC-003: opencode.json parse error (HIGH) - must be valid JSON/JSONC
+//! - OC-004: Unknown config key (MEDIUM) - unrecognized key in opencode.json
+//! - OC-006: Remote URL in instructions (LOW) - may slow startup
+//! - OC-007: Invalid agent definition (MEDIUM/HIGH) - agents must have description
+//! - OC-008: Invalid permission config (HIGH) - must be allow/ask/deny
+//! - OC-009: Invalid variable substitution (MEDIUM) - must use {env:...} or {file:...}
 
 use crate::{
     config::LintConfig,
     diagnostics::{Diagnostic, Fix},
     rules::{Validator, ValidatorMetadata},
     schemas::opencode::{
-        VALID_SHARE_MODES, is_glob_pattern, parse_opencode_json, validate_glob_pattern,
+        VALID_PERMISSION_MODES, VALID_SHARE_MODES, is_glob_pattern, parse_opencode_json,
+        validate_glob_pattern,
     },
 };
 use rust_i18n::t;
@@ -18,7 +24,9 @@ use std::path::Path;
 
 use crate::rules::{find_closest_value, find_unique_json_string_value_span};
 
-const RULE_IDS: &[&str] = &["OC-001", "OC-002", "OC-003"];
+const RULE_IDS: &[&str] = &[
+    "OC-001", "OC-002", "OC-003", "OC-004", "OC-006", "OC-007", "OC-008", "OC-009",
+];
 
 pub struct OpenCodeValidator;
 
@@ -50,6 +58,24 @@ impl Validator for OpenCodeValidator {
             }
             // Can't continue if JSON is broken
             return diagnostics;
+        }
+
+        // OC-004: Unknown config keys (WARNING)
+        // Runs on unknown_keys which are populated whenever JSON parses successfully,
+        // even when schema extraction fails.
+        if config.is_rule_enabled("OC-004") {
+            for unknown in &parsed.unknown_keys {
+                diagnostics.push(
+                    Diagnostic::warning(
+                        path.to_path_buf(),
+                        unknown.line,
+                        unknown.column,
+                        "OC-004",
+                        t!("rules.oc_004.message", key = unknown.key.as_str()),
+                    )
+                    .with_suggestion(t!("rules.oc_004.suggestion")),
+                );
+            }
         }
 
         let schema = match parsed.schema {
@@ -128,6 +154,25 @@ impl Validator for OpenCodeValidator {
                         continue;
                     }
 
+                    // OC-006: Remote URL in instructions (INFO)
+                    if instruction_path.starts_with("http://")
+                        || instruction_path.starts_with("https://")
+                    {
+                        if config.is_rule_enabled("OC-006") {
+                            diagnostics.push(
+                                Diagnostic::info(
+                                    path.to_path_buf(),
+                                    instructions_line,
+                                    0,
+                                    "OC-006",
+                                    t!("rules.oc_006.message", url = instruction_path.as_str()),
+                                )
+                                .with_suggestion(t!("rules.oc_006.suggestion")),
+                            );
+                        }
+                        continue; // Don't check URL as file path
+                    }
+
                     // Reject absolute paths and path traversal attempts
                     let p = Path::new(instruction_path);
                     if p.is_absolute()
@@ -185,8 +230,239 @@ impl Validator for OpenCodeValidator {
             }
         }
 
+        // OC-007: Agent validation (WARNING for missing description, ERROR for wrong type)
+        if config.is_rule_enabled("OC-007") {
+            if parsed.agent_wrong_type {
+                let line = find_key_line(content, "agent").unwrap_or(1);
+                diagnostics.push(
+                    Diagnostic::error(
+                        path.to_path_buf(),
+                        line,
+                        0,
+                        "OC-007",
+                        t!("rules.oc_007.type_error"),
+                    )
+                    .with_suggestion(t!("rules.oc_007.suggestion")),
+                );
+            } else if let Some(ref agent_value) = schema.agent {
+                if let Some(agents) = agent_value.as_object() {
+                    let agent_line = find_key_line(content, "agent").unwrap_or(1);
+                    for (name, config_val) in agents {
+                        if let Some(obj) = config_val.as_object() {
+                            if !obj.contains_key("description") {
+                                diagnostics.push(
+                                    Diagnostic::warning(
+                                        path.to_path_buf(),
+                                        agent_line,
+                                        0,
+                                        "OC-007",
+                                        t!("rules.oc_007.message", name = name.as_str()),
+                                    )
+                                    .with_suggestion(t!("rules.oc_007.suggestion")),
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // OC-008: Permission validation (ERROR)
+        if config.is_rule_enabled("OC-008") {
+            if parsed.permission_wrong_type {
+                let line = find_key_line(content, "permission").unwrap_or(1);
+                diagnostics.push(
+                    Diagnostic::error(
+                        path.to_path_buf(),
+                        line,
+                        0,
+                        "OC-008",
+                        t!("rules.oc_008.type_error"),
+                    )
+                    .with_suggestion(t!("rules.oc_008.suggestion")),
+                );
+            } else if let Some(ref perm_value) = schema.permission {
+                let perm_line = find_key_line(content, "permission").unwrap_or(1);
+                if let Some(perm_str) = perm_value.as_str() {
+                    // Global string shorthand
+                    if !VALID_PERMISSION_MODES.contains(&perm_str) {
+                        diagnostics.push(
+                            Diagnostic::error(
+                                path.to_path_buf(),
+                                perm_line,
+                                0,
+                                "OC-008",
+                                t!("rules.oc_008.message", value = perm_str, tool = "*"),
+                            )
+                            .with_suggestion(t!("rules.oc_008.suggestion")),
+                        );
+                    }
+                } else if let Some(perm_obj) = perm_value.as_object() {
+                    for (tool, mode_value) in perm_obj {
+                        if let Some(mode_str) = mode_value.as_str() {
+                            if !VALID_PERMISSION_MODES.contains(&mode_str) {
+                                diagnostics.push(
+                                    Diagnostic::error(
+                                        path.to_path_buf(),
+                                        perm_line,
+                                        0,
+                                        "OC-008",
+                                        t!(
+                                            "rules.oc_008.message",
+                                            value = mode_str,
+                                            tool = tool.as_str()
+                                        ),
+                                    )
+                                    .with_suggestion(t!("rules.oc_008.suggestion")),
+                                );
+                            }
+                        } else if let Some(mode_obj) = mode_value.as_object() {
+                            // Nested permission objects (with patterns)
+                            for (_, pattern_mode) in mode_obj {
+                                if let Some(pm) = pattern_mode.as_str() {
+                                    if !VALID_PERMISSION_MODES.contains(&pm) {
+                                        diagnostics.push(
+                                            Diagnostic::error(
+                                                path.to_path_buf(),
+                                                perm_line,
+                                                0,
+                                                "OC-008",
+                                                t!(
+                                                    "rules.oc_008.message",
+                                                    value = pm,
+                                                    tool = tool.as_str()
+                                                ),
+                                            )
+                                            .with_suggestion(t!("rules.oc_008.suggestion")),
+                                        );
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // OC-009: Variable substitution validation (WARNING)
+        if config.is_rule_enabled("OC-009") {
+            if let Some(ref raw_value) = parsed.raw_value {
+                validate_substitutions(raw_value, path, content, &mut diagnostics);
+            }
+        }
+
         diagnostics
     }
+}
+
+/// Recursively walk the JSON value tree and validate any string containing
+/// variable substitution patterns like `{env:...}` or `{file:...}`.
+fn validate_substitutions(
+    value: &serde_json::Value,
+    path: &Path,
+    content: &str,
+    diagnostics: &mut Vec<Diagnostic>,
+) {
+    match value {
+        serde_json::Value::String(s) => {
+            validate_substitution_string(s, path, content, diagnostics);
+        }
+        serde_json::Value::Array(arr) => {
+            for item in arr {
+                validate_substitutions(item, path, content, diagnostics);
+            }
+        }
+        serde_json::Value::Object(obj) => {
+            for (_, v) in obj {
+                validate_substitutions(v, path, content, diagnostics);
+            }
+        }
+        _ => {}
+    }
+}
+
+/// Validate substitution patterns in a single string value.
+///
+/// Valid patterns: `{env:VARIABLE_NAME}`, `{file:path/to/file}`
+/// Flags: unknown prefix (not env or file), empty value part
+fn validate_substitution_string(
+    s: &str,
+    path: &Path,
+    content: &str,
+    diagnostics: &mut Vec<Diagnostic>,
+) {
+    // Match patterns like {word:...}
+    let mut start = 0;
+    while let Some(open_pos) = s[start..].find('{') {
+        let abs_open = start + open_pos;
+        if let Some(close_pos) = s[abs_open..].find('}') {
+            let abs_close = abs_open + close_pos;
+            let inner = &s[abs_open + 1..abs_close];
+
+            if let Some(colon_pos) = inner.find(':') {
+                let prefix = &inner[..colon_pos];
+                let value_part = &inner[colon_pos + 1..];
+
+                // Only flag patterns that look like substitutions (word:something)
+                if !prefix.is_empty()
+                    && prefix
+                        .chars()
+                        .all(|c| c.is_ascii_alphanumeric() || c == '_')
+                {
+                    if prefix != "env" && prefix != "file" {
+                        let pattern = format!("{{{}}}", inner);
+                        let reason =
+                            format!("unknown prefix '{}'. Valid prefixes: 'env', 'file'", prefix);
+                        diagnostics.push(
+                            Diagnostic::warning(
+                                path.to_path_buf(),
+                                find_string_line(content, &pattern).unwrap_or(1),
+                                0,
+                                "OC-009",
+                                t!(
+                                    "rules.oc_009.message",
+                                    pattern = pattern.as_str(),
+                                    reason = reason.as_str()
+                                ),
+                            )
+                            .with_suggestion(t!("rules.oc_009.suggestion")),
+                        );
+                    } else if value_part.is_empty() {
+                        let pattern = format!("{{{}}}", inner);
+                        let reason = format!("empty value after '{}:'", prefix);
+                        diagnostics.push(
+                            Diagnostic::warning(
+                                path.to_path_buf(),
+                                find_string_line(content, &pattern).unwrap_or(1),
+                                0,
+                                "OC-009",
+                                t!(
+                                    "rules.oc_009.message",
+                                    pattern = pattern.as_str(),
+                                    reason = reason.as_str()
+                                ),
+                            )
+                            .with_suggestion(t!("rules.oc_009.suggestion")),
+                        );
+                    }
+                }
+            }
+
+            start = abs_close + 1;
+        } else {
+            break;
+        }
+    }
+}
+
+/// Find the 1-indexed line number where a string pattern appears in content.
+fn find_string_line(content: &str, pattern: &str) -> Option<usize> {
+    for (i, line) in content.lines().enumerate() {
+        if line.contains(pattern) {
+            return Some(i + 1);
+        }
+    }
+    None
 }
 
 /// Find the 1-indexed line number of a JSON key in the content.
@@ -480,7 +756,9 @@ mod tests {
 
     #[test]
     fn test_all_oc_rules_can_be_disabled() {
-        let rules = ["OC-001", "OC-002", "OC-003"];
+        let rules = [
+            "OC-001", "OC-002", "OC-003", "OC-004", "OC-006", "OC-007", "OC-008", "OC-009",
+        ];
 
         for rule in rules {
             let mut config = LintConfig::default();
@@ -490,6 +768,11 @@ mod tests {
                 "OC-001" => r#"{"share": "invalid"}"#,
                 "OC-002" => r#"{"instructions": ["nonexistent.md"]}"#,
                 "OC-003" => "{ invalid }",
+                "OC-004" => r#"{"totally_unknown": true}"#,
+                "OC-006" => r#"{"instructions": ["https://example.com/rules.md"]}"#,
+                "OC-007" => r#"{"agent": {"test": {}}}"#,
+                "OC-008" => r#"{"permission": {"read": "bogus"}}"#,
+                "OC-009" => r#"{"model": "{bad:value}"}"#,
                 _ => unreachable!(),
             };
 
@@ -590,6 +873,256 @@ mod tests {
         assert!(
             !oc_002.is_empty(),
             "Non-string array elements should trigger OC-002"
+        );
+    }
+
+    // ===== OC-004: Unknown config keys =====
+
+    #[test]
+    fn test_oc_004_unknown_key() {
+        let diagnostics = validate(r#"{"totally_unknown": true}"#);
+        let oc_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "OC-004").collect();
+        assert_eq!(oc_004.len(), 1);
+        assert_eq!(oc_004[0].level, DiagnosticLevel::Warning);
+        assert!(oc_004[0].message.contains("totally_unknown"));
+    }
+
+    #[test]
+    fn test_oc_004_known_keys_no_warning() {
+        let content = r#"{
+  "share": "manual",
+  "instructions": ["**/*.md"],
+  "model": "claude-sonnet-4-5",
+  "agent": {},
+  "permission": {}
+}"#;
+        let diagnostics = validate(content);
+        let oc_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "OC-004").collect();
+        assert!(oc_004.is_empty(), "Known keys should not trigger OC-004");
+    }
+
+    #[test]
+    fn test_oc_004_multiple_unknown_keys() {
+        let content = r#"{"unknown_a": true, "unknown_b": false, "share": "manual"}"#;
+        let diagnostics = validate(content);
+        let oc_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "OC-004").collect();
+        assert_eq!(oc_004.len(), 2);
+    }
+
+    #[test]
+    fn test_oc_004_has_suggestion() {
+        let diagnostics = validate(r#"{"bogus_setting": 42}"#);
+        let oc_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "OC-004").collect();
+        assert_eq!(oc_004.len(), 1);
+        assert!(
+            oc_004[0].suggestion.is_some(),
+            "OC-004 should have a suggestion"
+        );
+    }
+
+    // ===== OC-006: Remote URL in instructions =====
+
+    #[test]
+    fn test_oc_006_https_url() {
+        let diagnostics = validate(r#"{"instructions": ["https://example.com/rules.md"]}"#);
+        let oc_006: Vec<_> = diagnostics.iter().filter(|d| d.rule == "OC-006").collect();
+        assert_eq!(oc_006.len(), 1);
+        assert_eq!(oc_006[0].level, DiagnosticLevel::Info);
+        assert!(oc_006[0].message.contains("https://example.com"));
+    }
+
+    #[test]
+    fn test_oc_006_http_url() {
+        let diagnostics = validate(r#"{"instructions": ["http://example.com/rules.md"]}"#);
+        let oc_006: Vec<_> = diagnostics.iter().filter(|d| d.rule == "OC-006").collect();
+        assert_eq!(oc_006.len(), 1);
+    }
+
+    #[test]
+    fn test_oc_006_local_path_no_warning() {
+        let diagnostics = validate(r#"{"instructions": ["**/*.md"]}"#);
+        let oc_006: Vec<_> = diagnostics.iter().filter(|d| d.rule == "OC-006").collect();
+        assert!(oc_006.is_empty());
+    }
+
+    #[test]
+    fn test_oc_006_url_not_checked_as_path() {
+        // URLs should trigger OC-006 but NOT OC-002 (not-found)
+        let diagnostics = validate(r#"{"instructions": ["https://example.com/rules.md"]}"#);
+        let oc_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "OC-002").collect();
+        assert!(
+            oc_002.is_empty(),
+            "URLs should not be checked as file paths"
+        );
+    }
+
+    // ===== OC-007: Agent validation =====
+
+    #[test]
+    fn test_oc_007_missing_description() {
+        let diagnostics = validate(r#"{"agent": {"my-agent": {"model": "gpt-4"}}}"#);
+        let oc_007: Vec<_> = diagnostics.iter().filter(|d| d.rule == "OC-007").collect();
+        assert_eq!(oc_007.len(), 1);
+        assert_eq!(oc_007[0].level, DiagnosticLevel::Warning);
+        assert!(oc_007[0].message.contains("my-agent"));
+    }
+
+    #[test]
+    fn test_oc_007_with_description() {
+        let content =
+            r#"{"agent": {"my-agent": {"description": "A test agent", "model": "gpt-4"}}}"#;
+        let diagnostics = validate(content);
+        let oc_007: Vec<_> = diagnostics.iter().filter(|d| d.rule == "OC-007").collect();
+        assert!(oc_007.is_empty());
+    }
+
+    #[test]
+    fn test_oc_007_wrong_type() {
+        let diagnostics = validate(r#"{"agent": "not an object"}"#);
+        let oc_007: Vec<_> = diagnostics.iter().filter(|d| d.rule == "OC-007").collect();
+        assert_eq!(oc_007.len(), 1);
+        assert_eq!(oc_007[0].level, DiagnosticLevel::Error);
+    }
+
+    #[test]
+    fn test_oc_007_absent() {
+        let diagnostics = validate(r#"{"share": "manual"}"#);
+        let oc_007: Vec<_> = diagnostics.iter().filter(|d| d.rule == "OC-007").collect();
+        assert!(oc_007.is_empty());
+    }
+
+    #[test]
+    fn test_oc_007_multiple_agents() {
+        let content = r#"{"agent": {"agent-a": {}, "agent-b": {"description": "ok"}}}"#;
+        let diagnostics = validate(content);
+        let oc_007: Vec<_> = diagnostics.iter().filter(|d| d.rule == "OC-007").collect();
+        assert_eq!(oc_007.len(), 1, "Only agent-a should trigger OC-007");
+        assert!(oc_007[0].message.contains("agent-a"));
+    }
+
+    // ===== OC-008: Permission validation =====
+
+    #[test]
+    fn test_oc_008_valid_permissions() {
+        let content = r#"{"permission": {"read": "allow", "edit": "ask", "bash": "deny"}}"#;
+        let diagnostics = validate(content);
+        let oc_008: Vec<_> = diagnostics.iter().filter(|d| d.rule == "OC-008").collect();
+        assert!(oc_008.is_empty());
+    }
+
+    #[test]
+    fn test_oc_008_invalid_permission_value() {
+        let diagnostics = validate(r#"{"permission": {"read": "yes"}}"#);
+        let oc_008: Vec<_> = diagnostics.iter().filter(|d| d.rule == "OC-008").collect();
+        assert_eq!(oc_008.len(), 1);
+        assert_eq!(oc_008[0].level, DiagnosticLevel::Error);
+        assert!(oc_008[0].message.contains("yes"));
+        assert!(oc_008[0].message.contains("read"));
+    }
+
+    #[test]
+    fn test_oc_008_global_string_valid() {
+        let diagnostics = validate(r#"{"permission": "allow"}"#);
+        let oc_008: Vec<_> = diagnostics.iter().filter(|d| d.rule == "OC-008").collect();
+        assert!(oc_008.is_empty());
+    }
+
+    #[test]
+    fn test_oc_008_global_string_invalid() {
+        let diagnostics = validate(r#"{"permission": "bogus"}"#);
+        let oc_008: Vec<_> = diagnostics.iter().filter(|d| d.rule == "OC-008").collect();
+        assert_eq!(oc_008.len(), 1);
+        assert!(oc_008[0].message.contains("bogus"));
+    }
+
+    #[test]
+    fn test_oc_008_wrong_type() {
+        let diagnostics = validate(r#"{"permission": 42}"#);
+        let oc_008: Vec<_> = diagnostics.iter().filter(|d| d.rule == "OC-008").collect();
+        assert_eq!(oc_008.len(), 1);
+        assert_eq!(oc_008[0].level, DiagnosticLevel::Error);
+    }
+
+    #[test]
+    fn test_oc_008_absent() {
+        let diagnostics = validate(r#"{"share": "manual"}"#);
+        let oc_008: Vec<_> = diagnostics.iter().filter(|d| d.rule == "OC-008").collect();
+        assert!(oc_008.is_empty());
+    }
+
+    #[test]
+    fn test_oc_008_nested_pattern_permissions() {
+        let content = r#"{"permission": {"bash": {"*.sh": "allow", "*.py": "invalid"}}}"#;
+        let diagnostics = validate(content);
+        let oc_008: Vec<_> = diagnostics.iter().filter(|d| d.rule == "OC-008").collect();
+        assert_eq!(oc_008.len(), 1, "Only 'invalid' should trigger OC-008");
+    }
+
+    // ===== OC-009: Variable substitution validation =====
+
+    #[test]
+    fn test_oc_009_valid_env_substitution() {
+        let diagnostics = validate(r#"{"model": "{env:OPENAI_MODEL}"}"#);
+        let oc_009: Vec<_> = diagnostics.iter().filter(|d| d.rule == "OC-009").collect();
+        assert!(oc_009.is_empty());
+    }
+
+    #[test]
+    fn test_oc_009_valid_file_substitution() {
+        let diagnostics = validate(r#"{"model": "{file:model.txt}"}"#);
+        let oc_009: Vec<_> = diagnostics.iter().filter(|d| d.rule == "OC-009").collect();
+        assert!(oc_009.is_empty());
+    }
+
+    #[test]
+    fn test_oc_009_unknown_prefix() {
+        let diagnostics = validate(r#"{"model": "{bad:value}"}"#);
+        let oc_009: Vec<_> = diagnostics.iter().filter(|d| d.rule == "OC-009").collect();
+        assert_eq!(oc_009.len(), 1);
+        assert_eq!(oc_009[0].level, DiagnosticLevel::Warning);
+        assert!(oc_009[0].message.contains("bad"));
+    }
+
+    #[test]
+    fn test_oc_009_empty_env_value() {
+        let diagnostics = validate(r#"{"model": "{env:}"}"#);
+        let oc_009: Vec<_> = diagnostics.iter().filter(|d| d.rule == "OC-009").collect();
+        assert_eq!(oc_009.len(), 1);
+        assert!(oc_009[0].message.contains("empty"));
+    }
+
+    #[test]
+    fn test_oc_009_empty_file_value() {
+        let diagnostics = validate(r#"{"model": "{file:}"}"#);
+        let oc_009: Vec<_> = diagnostics.iter().filter(|d| d.rule == "OC-009").collect();
+        assert_eq!(oc_009.len(), 1);
+    }
+
+    #[test]
+    fn test_oc_009_no_substitution_no_warning() {
+        let diagnostics = validate(r#"{"model": "gpt-4"}"#);
+        let oc_009: Vec<_> = diagnostics.iter().filter(|d| d.rule == "OC-009").collect();
+        assert!(oc_009.is_empty());
+    }
+
+    #[test]
+    fn test_oc_009_nested_value() {
+        // Substitution in a nested value should be found
+        let diagnostics = validate(r#"{"tui": {"prompt": "{bogus:test}"}}"#);
+        let oc_009: Vec<_> = diagnostics.iter().filter(|d| d.rule == "OC-009").collect();
+        assert_eq!(oc_009.len(), 1);
+    }
+
+    // ===== Fixture Integration =====
+
+    #[test]
+    fn test_valid_opencode_fixture_no_diagnostics() {
+        let fixture = include_str!("../../../../tests/fixtures/opencode/opencode.json");
+        let diagnostics = validate(fixture);
+        assert!(
+            diagnostics.is_empty(),
+            "Valid opencode fixture should produce 0 diagnostics, got: {:?}",
+            diagnostics
         );
     }
 
