@@ -630,6 +630,40 @@ rules:
     message: "Invalid homepage URL: '%{url}' must use http:// or https:// scheme"
     suggestion: "Use a valid URL with http:// or https:// scheme"
 
+  # --- Roo Code (roo.rs) ---
+  roo_001:
+    message: "Roo Code rule file is empty"
+    suggestion: "Add rule content to the file"
+  roo_002:
+    parse_error: "Failed to parse .roomodes: %{error}"
+    missing_custom_modes: "Missing required 'customModes' key in .roomodes"
+    custom_modes_type: "'customModes' must be an array in .roomodes"
+    missing_slug: "%{position}: missing required 'slug' field"
+    invalid_slug: "%{position}: invalid slug '%{slug}' - must be lowercase alphanumeric with hyphens"
+    missing_name: "%{position}: missing required 'name' field"
+    missing_role_definition: "%{position}: missing required 'roleDefinition' field"
+    invalid_group: "%{position}: invalid group '%{group}' - valid groups are: %{valid}"
+    duplicate_slug: "%{position}: duplicate slug '%{slug}'"
+    suggestion: "Fix the .roomodes configuration to match the expected schema"
+  roo_003:
+    empty: ".rooignore file is empty"
+    invalid_pattern: "Invalid glob pattern on line %{line}: %{pattern}"
+    suggestion: "Use gitignore-style glob patterns in .rooignore"
+  roo_004:
+    message: "Invalid mode slug '%{slug}' in directory name - must be lowercase alphanumeric with hyphens"
+    suggestion: "Rename the directory to use a valid slug format (e.g., rules-my-mode)"
+  roo_005:
+    parse_error: "Failed to parse .roo/mcp.json: %{error}"
+    missing_mcp_servers: "Missing required 'mcpServers' key in .roo/mcp.json"
+    mcp_servers_type: "'mcpServers' must be an object in .roo/mcp.json"
+    invalid_server_entry: "Server '%{server}' must be an object in .roo/mcp.json"
+    missing_command: "Server '%{server}' is missing required 'command' field for stdio transport"
+    missing_url: "Server '%{server}' is missing required 'url' field for http/sse transport"
+    suggestion: "Fix the .roo/mcp.json configuration to match the expected schema"
+  roo_006:
+    message: "Mode slug '%{slug}' is not a built-in Roo Code mode - SKILL.md may not be loaded"
+    suggestion: "Define this mode in .roomodes or use a built-in mode (code, architect, ask, debug, orchestrator)"
+
   # --- Version (lib.rs) ---
   ver_001:
     message: "No tool or spec versions pinned. Version-dependent rules will use default assumptions."
