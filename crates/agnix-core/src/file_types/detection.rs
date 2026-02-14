@@ -177,7 +177,8 @@ pub fn detect_file_type(path: &Path) -> FileType {
             FileType::ClaudeRule
         }
         // Cursor project rules (.cursor/rules/**/*.md and .mdc)
-        name if (name.ends_with(".md") || name.ends_with(".mdc")) && is_under_cursor_rules(path) =>
+        name if (name.ends_with(".md") || name.ends_with(".mdc"))
+            && is_under_cursor_rules(path) =>
         {
             FileType::CursorRule
         }
