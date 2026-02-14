@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "hooks": [
+    {
+      "type": "command",
+      "events": ["notRealEvent"],
+      "command": { "bash": "echo start" }
+    }
+  ]
+}

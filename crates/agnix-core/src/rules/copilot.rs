@@ -1,4 +1,4 @@
-//! GitHub Copilot instruction file validation rules (COP-001 to COP-006)
+//! GitHub Copilot validation rules (COP-001 to COP-018)
 //!
 //! Validates:
 //! - COP-001: Empty instruction file (HIGH) - files must have content
@@ -7,22 +7,35 @@
 //! - COP-004: Unknown frontmatter keys (MEDIUM) - warn about unrecognized keys
 //! - COP-005: Invalid excludeAgent value (HIGH) - must be "code-review" or "coding-agent"
 //! - COP-006: File length limit (MEDIUM) - global files should not exceed ~4000 characters
+//! - COP-007 to COP-012: Custom agent validation
+//! - COP-013 to COP-015: Reusable prompt validation
+//! - COP-017: Hooks schema validation
+//! - COP-018: Setup workflow validation
 
 use crate::{
     FileType,
     config::LintConfig,
     diagnostics::{Diagnostic, Fix},
     rules::{Validator, ValidatorMetadata},
-    schemas::copilot::{
-        is_body_empty, is_content_empty, parse_frontmatter, split_comma_separated_globs,
-        validate_glob_pattern,
+    schemas::{
+        copilot::{is_body_empty, is_content_empty, parse_frontmatter, validate_glob_pattern},
+        copilot_agent::parse_agent_frontmatter,
+        copilot_hooks::{
+            has_copilot_setup_steps_job, parse_hooks_json, parse_setup_steps_yaml,
+            validate_hooks_schema,
+        },
+        copilot_prompt::{
+            VALID_AGENT_MODES, is_body_empty as is_prompt_body_empty, parse_prompt_frontmatter,
+        },
     },
 };
 use rust_i18n::t;
 use std::path::Path;
 
 const RULE_IDS: &[&str] = &[
-    "COP-001", "COP-002", "COP-003", "COP-004", "COP-005", "COP-006",
+    "COP-001", "COP-002", "COP-003", "COP-004", "COP-005", "COP-006", "COP-007", "COP-008",
+    "COP-009", "COP-010", "COP-011", "COP-012", "COP-013", "COP-014", "COP-015", "COP-017",
+    "COP-018",
 ];
 
 pub struct CopilotValidator;
@@ -52,6 +65,368 @@ fn line_byte_range(content: &str, line_number: usize) -> Option<(usize, usize)> 
     }
 }
 
+fn frontmatter_key_line(raw: &str, start_line: usize, key: &str) -> usize {
+    let key_name = key.trim_end_matches(':').trim();
+    raw.lines()
+        .enumerate()
+        .find(|(_, line)| {
+            let trimmed = line.trim_start();
+            if let Some(after_key) = trimmed.strip_prefix(key_name) {
+                after_key.trim_start().starts_with(':')
+            } else {
+                false
+            }
+        })
+        .map(|(idx, _)| start_line + 1 + idx)
+        .unwrap_or(start_line)
+}
+
+fn is_setup_steps_workflow(path: &Path) -> bool {
+    matches!(
+        path.file_name().and_then(|n| n.to_str()),
+        Some("copilot-setup-steps.yml") | Some("copilot-setup-steps.yaml")
+    )
+}
+
+fn validate_custom_agent(path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic> {
+    let mut diagnostics = Vec::new();
+    let parsed = parse_agent_frontmatter(content);
+    let body = parsed.as_ref().map_or(content, |p| p.body.as_str());
+
+    if config.is_rule_enabled("COP-011") {
+        const MAX_AGENT_BODY_CHARS: usize = 30_000;
+        let body_len = body.chars().count();
+        if body_len > MAX_AGENT_BODY_CHARS {
+            diagnostics.push(
+                Diagnostic::error(
+                    path.to_path_buf(),
+                    1,
+                    0,
+                    "COP-011",
+                    format!(
+                        "Custom agent prompt body exceeds {} characters (found {})",
+                        MAX_AGENT_BODY_CHARS, body_len
+                    ),
+                )
+                .with_suggestion("Reduce agent prompt size to 30000 characters or fewer."),
+            );
+        }
+    }
+
+    if let Some(parsed) = &parsed {
+        if let Some(err) = &parsed.parse_error {
+            if config.is_rule_enabled("COP-008") {
+                diagnostics.push(
+                    Diagnostic::error(
+                        path.to_path_buf(),
+                        parsed.start_line,
+                        0,
+                        "COP-008",
+                        format!("Custom agent frontmatter contains invalid YAML: {err}"),
+                    )
+                    .with_suggestion("Fix YAML syntax in custom agent frontmatter."),
+                );
+            } else if config.is_rule_enabled("COP-007") {
+                diagnostics.push(
+                    Diagnostic::error(
+                        path.to_path_buf(),
+                        parsed.start_line,
+                        0,
+                        "COP-007",
+                        format!("Custom agent frontmatter contains invalid YAML: {err}"),
+                    )
+                    .with_suggestion("Fix YAML syntax in custom agent frontmatter."),
+                );
+            }
+            return diagnostics;
+        }
+    }
+
+    if config.is_rule_enabled("COP-007") {
+        let has_frontmatter = parsed.is_some();
+        let has_description = parsed
+            .as_ref()
+            .and_then(|p| p.schema.as_ref())
+            .and_then(|s| s.description.as_ref())
+            .is_some_and(|desc| !desc.trim().is_empty());
+        if !has_description {
+            let (message, suggestion) = if !has_frontmatter {
+                (
+                    "Custom agent file must start with YAML frontmatter containing a non-empty 'description' field",
+                    "Add a YAML frontmatter block at the top of the file with a non-empty 'description' key.",
+                )
+            } else {
+                (
+                    "Custom agent frontmatter is missing required 'description' field",
+                    "Add a non-empty 'description' key in YAML frontmatter.",
+                )
+            };
+            diagnostics.push(
+                Diagnostic::error(path.to_path_buf(), 1, 0, "COP-007", message)
+                    .with_suggestion(suggestion),
+            );
+        }
+    }
+
+    if let Some(parsed) = &parsed {
+        if config.is_rule_enabled("COP-008") {
+            for unknown in &parsed.unknown_keys {
+                diagnostics.push(
+                    Diagnostic::warning(
+                        path.to_path_buf(),
+                        unknown.line,
+                        unknown.column,
+                        "COP-008",
+                        format!(
+                            "Custom agent has unsupported frontmatter field '{}'",
+                            unknown.key
+                        ),
+                    )
+                    .with_suggestion(format!(
+                        "Remove unknown frontmatter field '{}'.",
+                        unknown.key
+                    )),
+                );
+            }
+        }
+
+        if let Some(schema) = &parsed.schema {
+            if config.is_rule_enabled("COP-009") {
+                if let Some(target) = &schema.target {
+                    const VALID_TARGETS: &[&str] = &["vscode", "github-copilot"];
+                    if !VALID_TARGETS.contains(&target.as_str()) {
+                        let line = frontmatter_key_line(&parsed.raw, parsed.start_line, "target:");
+                        diagnostics.push(
+                            Diagnostic::error(
+                                path.to_path_buf(),
+                                line,
+                                0,
+                                "COP-009",
+                                format!(
+                                    "Invalid custom agent target '{}'; expected 'vscode' or 'github-copilot'",
+                                    target
+                                ),
+                            )
+                            .with_suggestion("Set target to 'vscode' or 'github-copilot'."),
+                        );
+                    }
+                }
+            }
+
+            if config.is_rule_enabled("COP-010") && schema.infer.is_some() {
+                let line = frontmatter_key_line(&parsed.raw, parsed.start_line, "infer:");
+                diagnostics.push(
+                    Diagnostic::warning(
+                        path.to_path_buf(),
+                        line,
+                        0,
+                        "COP-010",
+                        "Custom agent uses deprecated 'infer' field",
+                    )
+                    .with_suggestion(
+                        "Remove 'infer' and use user-invokable custom agents instead.",
+                    ),
+                );
+            }
+
+            let applies_to_github = !matches!(schema.target.as_deref(), Some("vscode"));
+            if config.is_rule_enabled("COP-012") && applies_to_github {
+                let unsupported = [
+                    ("model:", schema.model.is_some(), "model"),
+                    (
+                        "argument-hint:",
+                        schema.argument_hint.is_some(),
+                        "argument-hint",
+                    ),
+                    ("handoffs:", schema.handoffs.is_some(), "handoffs"),
+                ];
+
+                for (prefix, present, field_name) in unsupported {
+                    if present {
+                        let line = frontmatter_key_line(&parsed.raw, parsed.start_line, prefix);
+                        diagnostics.push(
+                            Diagnostic::warning(
+                                path.to_path_buf(),
+                                line,
+                                0,
+                                "COP-012",
+                                format!(
+                                    "Field '{}' is unsupported on GitHub.com custom agents",
+                                    field_name
+                                ),
+                            )
+                            .with_suggestion(format!(
+                                "Remove '{}' for GitHub.com compatibility.",
+                                field_name
+                            )),
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    diagnostics
+}
+
+fn validate_reusable_prompt(path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic> {
+    let mut diagnostics = Vec::new();
+    let parsed = parse_prompt_frontmatter(content);
+
+    if let Some(parsed) = &parsed {
+        if let Some(err) = &parsed.parse_error {
+            if config.is_rule_enabled("COP-014") {
+                diagnostics.push(
+                    Diagnostic::warning(
+                        path.to_path_buf(),
+                        parsed.start_line,
+                        0,
+                        "COP-014",
+                        format!("Prompt frontmatter contains invalid YAML: {err}"),
+                    )
+                    .with_suggestion("Fix YAML syntax in prompt frontmatter."),
+                );
+            }
+            return diagnostics;
+        }
+    }
+
+    let body = parsed.as_ref().map_or(content, |p| p.body.as_str());
+
+    if config.is_rule_enabled("COP-013") && is_prompt_body_empty(body) {
+        let max_line = content.lines().count().max(1);
+        let line = parsed
+            .as_ref()
+            .map_or(1, |p| (p.end_line + 1).min(max_line));
+        diagnostics.push(
+            Diagnostic::error(
+                path.to_path_buf(),
+                line,
+                0,
+                "COP-013",
+                "Prompt file body is empty",
+            )
+            .with_suggestion("Add prompt text below the optional frontmatter."),
+        );
+    }
+
+    if let Some(parsed) = &parsed {
+        if config.is_rule_enabled("COP-014") {
+            for unknown in &parsed.unknown_keys {
+                diagnostics.push(
+                    Diagnostic::warning(
+                        path.to_path_buf(),
+                        unknown.line,
+                        unknown.column,
+                        "COP-014",
+                        format!(
+                            "Prompt file has unsupported frontmatter field '{}'",
+                            unknown.key
+                        ),
+                    )
+                    .with_suggestion(format!(
+                        "Remove unknown frontmatter field '{}'.",
+                        unknown.key
+                    )),
+                );
+            }
+        }
+
+        if config.is_rule_enabled("COP-015") {
+            if let Some(schema) = &parsed.schema {
+                if let Some(agent_mode) = &schema.agent {
+                    if !VALID_AGENT_MODES.contains(&agent_mode.as_str()) {
+                        let line = frontmatter_key_line(&parsed.raw, parsed.start_line, "agent:");
+                        diagnostics.push(
+                            Diagnostic::error(
+                                path.to_path_buf(),
+                                line,
+                                0,
+                                "COP-015",
+                                format!(
+                                    "Invalid prompt agent mode '{}'; expected one of: none, ask, always",
+                                    agent_mode
+                                ),
+                            )
+                            .with_suggestion("Use agent mode 'none', 'ask', or 'always'."),
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    diagnostics
+}
+
+fn validate_hooks_file(path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic> {
+    let mut diagnostics = Vec::new();
+
+    if is_setup_steps_workflow(path) {
+        if !config.is_rule_enabled("COP-018") {
+            return diagnostics;
+        }
+
+        match parse_setup_steps_yaml(content) {
+            Ok(workflow) => {
+                if !has_copilot_setup_steps_job(&workflow) {
+                    diagnostics.push(
+                        Diagnostic::error(
+                            path.to_path_buf(),
+                            1,
+                            0,
+                            "COP-018",
+                            "copilot-setup-steps workflow must define jobs.copilot-setup-steps with ubuntu runs-on and non-empty steps",
+                        )
+                        .with_suggestion(
+                            "Define jobs.copilot-setup-steps with an Ubuntu runner and at least one step in .github/workflows/copilot-setup-steps.yml.",
+                        ),
+                    );
+                }
+            }
+            Err(err) => diagnostics.push(
+                Diagnostic::error(
+                    path.to_path_buf(),
+                    1,
+                    0,
+                    "COP-018",
+                    format!("Invalid copilot-setup-steps workflow YAML: {err}"),
+                )
+                .with_suggestion("Fix YAML syntax in copilot-setup-steps workflow."),
+            ),
+        }
+
+        return diagnostics;
+    }
+
+    if !config.is_rule_enabled("COP-017") {
+        return diagnostics;
+    }
+
+    match parse_hooks_json(content) {
+        Ok(hooks) => {
+            for error in validate_hooks_schema(&hooks) {
+                diagnostics.push(
+                    Diagnostic::error(path.to_path_buf(), 1, 0, "COP-017", error)
+                        .with_suggestion("Fix hooks.json to match Copilot hooks schema."),
+                );
+            }
+        }
+        Err(err) => diagnostics.push(
+            Diagnostic::error(
+                path.to_path_buf(),
+                1,
+                0,
+                "COP-017",
+                format!("Invalid hooks.json syntax: {err}"),
+            )
+            .with_suggestion("Fix JSON syntax in .github/hooks/hooks.json."),
+        ),
+    }
+
+    diagnostics
+}
+
 impl Validator for CopilotValidator {
     fn metadata(&self) -> ValidatorMetadata {
         ValidatorMetadata {
@@ -63,15 +438,28 @@ impl Validator for CopilotValidator {
     fn validate(&self, path: &Path, content: &str, config: &LintConfig) -> Vec<Diagnostic> {
         let mut diagnostics = Vec::new();
 
-        // Determine if this is global or scoped instruction file
         let file_type = crate::detect_file_type(path);
+        match file_type {
+            FileType::CopilotAgent => return validate_custom_agent(path, content, config),
+            FileType::CopilotPrompt => return validate_reusable_prompt(path, content, config),
+            FileType::CopilotHooks => return validate_hooks_file(path, content, config),
+            FileType::Copilot | FileType::CopilotScoped => {}
+            _ => return diagnostics,
+        }
+
+        // Determine if this is global or scoped instruction file
         let is_scoped = file_type == FileType::CopilotScoped;
+        let scoped_frontmatter = if is_scoped {
+            parse_frontmatter(content)
+        } else {
+            None
+        };
 
         // COP-001: Empty instruction file (ERROR)
         if config.is_rule_enabled("COP-001") {
             if is_scoped {
                 // For scoped files, check body after frontmatter
-                if let Some(parsed) = parse_frontmatter(content) {
+                if let Some(parsed) = scoped_frontmatter.as_ref() {
                     if is_body_empty(&parsed.body) {
                         diagnostics.push(
                             Diagnostic::error(
@@ -116,21 +504,20 @@ impl Validator for CopilotValidator {
 
         // COP-006: File length limit for global files (WARNING)
         const COPILOT_GLOBAL_LENGTH_LIMIT: usize = 4000;
-        let char_count = content.chars().count();
-        if config.is_rule_enabled("COP-006")
-            && !is_scoped
-            && char_count > COPILOT_GLOBAL_LENGTH_LIMIT
-        {
-            diagnostics.push(
-                Diagnostic::warning(
-                    path.to_path_buf(),
-                    1,
-                    0,
-                    "COP-006",
-                    t!("rules.cop_006.message", len = char_count),
-                )
-                .with_suggestion(t!("rules.cop_006.suggestion")),
-            );
+        if config.is_rule_enabled("COP-006") && !is_scoped {
+            let char_count = content.chars().count();
+            if char_count > COPILOT_GLOBAL_LENGTH_LIMIT {
+                diagnostics.push(
+                    Diagnostic::warning(
+                        path.to_path_buf(),
+                        1,
+                        0,
+                        "COP-006",
+                        t!("rules.cop_006.message", len = char_count),
+                    )
+                    .with_suggestion(t!("rules.cop_006.suggestion")),
+                );
+            }
         }
 
         // Rules COP-002, COP-003, COP-004, COP-005 only apply to scoped instruction files
@@ -139,7 +526,7 @@ impl Validator for CopilotValidator {
         }
 
         // Parse frontmatter for scoped files
-        let parsed = match parse_frontmatter(content) {
+        let parsed = match scoped_frontmatter {
             Some(p) => p,
             None => {
                 // COP-002: Missing frontmatter in scoped file
@@ -202,29 +589,25 @@ impl Validator for CopilotValidator {
         }
 
         // COP-003: Invalid glob pattern
-        // Supports comma-separated globs (e.g. "**/*.ts,**/*.tsx") by
-        // splitting at top-level commas and validating each sub-pattern.
         if config.is_rule_enabled("COP-003") {
             if let Some(ref schema) = parsed.schema {
                 if let Some(ref apply_to) = schema.apply_to {
-                    for pattern in split_comma_separated_globs(apply_to) {
-                        let validation = validate_glob_pattern(pattern);
-                        if !validation.valid {
-                            diagnostics.push(
-                                Diagnostic::error(
-                                    path.to_path_buf(),
-                                    parsed.start_line + 1, // applyTo is typically on line 2
-                                    0,
-                                    "COP-003",
-                                    t!(
-                                        "rules.cop_003.message",
-                                        pattern = pattern,
-                                        error = validation.error.unwrap_or_default()
-                                    ),
-                                )
-                                .with_suggestion(t!("rules.cop_003.suggestion")),
-                            );
-                        }
+                    let validation = validate_glob_pattern(apply_to);
+                    if !validation.valid {
+                        diagnostics.push(
+                            Diagnostic::error(
+                                path.to_path_buf(),
+                                parsed.start_line + 1, // applyTo is typically on line 2
+                                0,
+                                "COP-003",
+                                t!(
+                                    "rules.cop_003.message",
+                                    pattern = apply_to.as_str(),
+                                    error = validation.error.unwrap_or_default()
+                                ),
+                            )
+                            .with_suggestion(t!("rules.cop_003.suggestion")),
+                        );
                     }
                 }
             }
@@ -348,6 +731,51 @@ mod tests {
             Path::new(".github/instructions/typescript.instructions.md"),
             content,
             config,
+        )
+    }
+
+    fn validate_agent(content: &str) -> Vec<Diagnostic> {
+        let validator = CopilotValidator;
+        validator.validate(
+            Path::new(".github/agents/reviewer.agent.md"),
+            content,
+            &LintConfig::default(),
+        )
+    }
+
+    fn validate_agent_with_config(content: &str, config: &LintConfig) -> Vec<Diagnostic> {
+        let validator = CopilotValidator;
+        validator.validate(
+            Path::new(".github/agents/reviewer.agent.md"),
+            content,
+            config,
+        )
+    }
+
+    fn validate_prompt(content: &str) -> Vec<Diagnostic> {
+        let validator = CopilotValidator;
+        validator.validate(
+            Path::new(".github/prompts/refactor.prompt.md"),
+            content,
+            &LintConfig::default(),
+        )
+    }
+
+    fn validate_hooks(content: &str) -> Vec<Diagnostic> {
+        let validator = CopilotValidator;
+        validator.validate(
+            Path::new(".github/hooks/hooks.json"),
+            content,
+            &LintConfig::default(),
+        )
+    }
+
+    fn validate_setup_steps(content: &str) -> Vec<Diagnostic> {
+        let validator = CopilotValidator;
+        validator.validate(
+            Path::new(".github/workflows/copilot-setup-steps.yml"),
+            content,
+            &LintConfig::default(),
         )
     }
 
@@ -517,96 +945,6 @@ applyTo: "{}"
             let cop_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "COP-003").collect();
             assert!(cop_003.is_empty(), "Pattern '{}' should be valid", pattern);
         }
-    }
-
-    // ===== COP-003: Comma-Separated Globs =====
-
-    #[test]
-    fn test_cop_003_valid_comma_separated() {
-        let content = "---\napplyTo: \"**/*.ts,**/*.tsx\"\n---\n# Instructions\n";
-        let diagnostics = validate_scoped(content);
-        let cop_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "COP-003").collect();
-        assert!(
-            cop_003.is_empty(),
-            "Comma-separated valid globs should not trigger COP-003"
-        );
-    }
-
-    #[test]
-    fn test_cop_003_valid_comma_separated_with_spaces() {
-        let content = "---\napplyTo: \"**/*.ts, **/*.tsx, **/*.js\"\n---\n# Instructions\n";
-        let diagnostics = validate_scoped(content);
-        let cop_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "COP-003").collect();
-        assert!(
-            cop_003.is_empty(),
-            "Comma-separated globs with spaces should not trigger COP-003"
-        );
-    }
-
-    #[test]
-    fn test_cop_003_one_invalid_in_comma_list() {
-        let content = "---\napplyTo: \"**/*.ts,[unclosed\"\n---\n# Instructions\n";
-        let diagnostics = validate_scoped(content);
-        let cop_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "COP-003").collect();
-        assert_eq!(
-            cop_003.len(),
-            1,
-            "Only the invalid sub-pattern should trigger COP-003"
-        );
-        assert!(
-            cop_003[0].message.contains("[unclosed"),
-            "Diagnostic should mention the failing sub-pattern"
-        );
-    }
-
-    #[test]
-    fn test_cop_003_brace_expansion_valid() {
-        let content = "---\napplyTo: \"{src,lib}/**/*.ts\"\n---\n# Instructions\n";
-        let diagnostics = validate_scoped(content);
-        let cop_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "COP-003").collect();
-        assert!(
-            cop_003.is_empty(),
-            "Brace expansion should not trigger COP-003"
-        );
-    }
-
-    #[test]
-    fn test_cop_003_brace_expansion_plus_comma() {
-        let content = "---\napplyTo: \"{src,lib}/**/*.ts,**/*.md\"\n---\n# Instructions\n";
-        let diagnostics = validate_scoped(content);
-        let cop_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "COP-003").collect();
-        assert!(
-            cop_003.is_empty(),
-            "Brace expansion with comma-separated pattern should not trigger COP-003"
-        );
-    }
-
-    #[test]
-    fn test_cop_003_multiple_invalid_in_comma_list() {
-        // Use patterns where brackets are balanced so the comma acts as a separator
-        let content = "---\napplyTo: \"[!],[!\"\n---\n# Instructions\n";
-        let diagnostics = validate_scoped(content);
-        let cop_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "COP-003").collect();
-        assert_eq!(
-            cop_003.len(),
-            2,
-            "Each invalid sub-pattern should produce its own COP-003 diagnostic"
-        );
-    }
-
-    // ===== COP-003: Fixture Integration =====
-
-    #[test]
-    fn test_cop_003_fixture_subdirectory_comma_globs() {
-        let content = include_str!(
-            "../../../../tests/fixtures/copilot/.github/instructions/frontend/react.instructions.md"
-        );
-        let diagnostics = validate_scoped(content);
-        let cop_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "COP-003").collect();
-        assert!(
-            cop_003.is_empty(),
-            "Subdirectory fixture with comma-separated globs should not trigger COP-003"
-        );
     }
 
     // ===== COP-004: Unknown Frontmatter Keys =====
@@ -1077,5 +1415,302 @@ excludeAgent: "invalid-agent"
         let diagnostics = validate_global_with_config(&make_long_content(), &config);
         let cop_006: Vec<_> = diagnostics.iter().filter(|d| d.rule == "COP-006").collect();
         assert!(cop_006.is_empty());
+    }
+
+    // ===== COP-007..COP-015, COP-017, COP-018 =====
+
+    #[test]
+    fn test_cop_007_missing_description() {
+        let diagnostics = validate_agent(
+            r#"---
+target: vscode
+---
+Review pull requests.
+"#,
+        );
+        assert!(diagnostics.iter().any(|d| d.rule == "COP-007"));
+    }
+
+    #[test]
+    fn test_cop_007_missing_frontmatter_message() {
+        let diagnostics = validate_agent("Review pull requests.");
+        let cop_007 = diagnostics
+            .iter()
+            .find(|d| d.rule == "COP-007")
+            .expect("expected COP-007");
+        assert!(cop_007.message.contains("must start with YAML frontmatter"));
+    }
+
+    #[test]
+    fn test_cop_008_unknown_agent_field() {
+        let diagnostics = validate_agent(
+            r#"---
+description: Review pull requests
+unknown-field: true
+---
+Review pull requests.
+"#,
+        );
+        assert!(diagnostics.iter().any(|d| d.rule == "COP-008"));
+    }
+
+    #[test]
+    fn test_cop_008_invalid_agent_frontmatter_yaml() {
+        let diagnostics = validate_agent(
+            r#"---
+description: Review pull requests
+target: [vscode
+---
+Review pull requests.
+"#,
+        );
+        assert!(diagnostics.iter().any(|d| d.rule == "COP-008"));
+        assert!(
+            diagnostics
+                .iter()
+                .any(|d| d.message.contains("invalid YAML"))
+        );
+        let cop_008 = diagnostics
+            .iter()
+            .find(|d| d.rule == "COP-008")
+            .expect("expected COP-008");
+        assert_eq!(cop_008.level, DiagnosticLevel::Error);
+        assert!(
+            diagnostics.iter().all(|d| d.rule != "COP-007"),
+            "Invalid YAML should not be reported as missing description"
+        );
+    }
+
+    #[test]
+    fn test_cop_008_disabled_still_reports_parse_error() {
+        let mut config = LintConfig::default();
+        config.rules_mut().disabled_rules = vec!["COP-008".to_string()];
+        let diagnostics = validate_agent_with_config(
+            r#"---
+description: Review pull requests
+target: [vscode
+---
+Review pull requests.
+"#,
+            &config,
+        );
+        assert!(diagnostics.iter().all(|d| d.rule != "COP-008"));
+        assert!(
+            diagnostics
+                .iter()
+                .any(|d| d.rule == "COP-007" && d.message.contains("invalid YAML")),
+            "Parse errors should still be surfaced when COP-008 is disabled"
+        );
+    }
+
+    #[test]
+    fn test_cop_009_invalid_target() {
+        let diagnostics = validate_agent(
+            r#"---
+description: Review pull requests
+target: desktop
+---
+Review pull requests.
+"#,
+        );
+        assert!(diagnostics.iter().any(|d| d.rule == "COP-009"));
+    }
+
+    #[test]
+    fn test_cop_009_line_detection_handles_space_before_colon() {
+        let diagnostics = validate_agent(
+            r#"---
+description: Review pull requests
+target : desktop
+---
+Review pull requests.
+"#,
+        );
+        let cop_009 = diagnostics
+            .iter()
+            .find(|d| d.rule == "COP-009")
+            .expect("expected COP-009");
+        assert_eq!(cop_009.line, 3);
+    }
+
+    #[test]
+    fn test_cop_010_deprecated_infer() {
+        let diagnostics = validate_agent(
+            r#"---
+description: Review pull requests
+infer: true
+---
+Review pull requests.
+"#,
+        );
+        assert!(diagnostics.iter().any(|d| d.rule == "COP-010"));
+    }
+
+    #[test]
+    fn test_cop_011_agent_body_length_limit() {
+        let long_body = "x".repeat(30_001);
+        let diagnostics =
+            validate_agent(&format!("---\ndescription: Long agent\n---\n{}", long_body));
+        assert!(diagnostics.iter().any(|d| d.rule == "COP-011"));
+    }
+
+    #[test]
+    fn test_cop_012_github_unsupported_fields() {
+        let diagnostics = validate_agent(
+            r#"---
+description: Review pull requests
+model: gpt-4
+---
+Review pull requests.
+"#,
+        );
+        assert!(diagnostics.iter().any(|d| d.rule == "COP-012"));
+    }
+
+    #[test]
+    fn test_cop_012_skips_vscode_target() {
+        let diagnostics = validate_agent(
+            r#"---
+description: Review pull requests
+target: vscode
+model: gpt-4
+---
+Review pull requests.
+"#,
+        );
+        assert!(
+            diagnostics.iter().all(|d| d.rule != "COP-012"),
+            "COP-012 should not fire for VS Code-targeted agents"
+        );
+    }
+
+    #[test]
+    fn test_cop_013_empty_prompt_body() {
+        let diagnostics = validate_prompt(
+            r#"---
+description: Refactor selected code
+---
+"#,
+        );
+        assert!(diagnostics.iter().any(|d| d.rule == "COP-013"));
+    }
+
+    #[test]
+    fn test_cop_013_line_is_clamped_to_file_length() {
+        let content = r#"---
+description: Refactor selected code
+---"#;
+        let diagnostics = validate_prompt(content);
+        let cop_013 = diagnostics
+            .iter()
+            .find(|d| d.rule == "COP-013")
+            .expect("expected COP-013");
+        assert_eq!(cop_013.line, 3);
+    }
+
+    #[test]
+    fn test_cop_014_unknown_prompt_field() {
+        let diagnostics = validate_prompt(
+            r#"---
+description: Refactor selected code
+mystery: true
+---
+Refactor the selected code.
+"#,
+        );
+        assert!(diagnostics.iter().any(|d| d.rule == "COP-014"));
+    }
+
+    #[test]
+    fn test_cop_014_invalid_prompt_frontmatter_yaml() {
+        let diagnostics = validate_prompt(
+            r#"---
+description: Refactor selected code
+agent: [ask
+---
+Refactor the selected code.
+"#,
+        );
+        assert!(diagnostics.iter().any(|d| d.rule == "COP-014"));
+        assert!(
+            diagnostics
+                .iter()
+                .any(|d| d.message.contains("invalid YAML"))
+        );
+    }
+
+    #[test]
+    fn test_cop_014_invalid_prompt_frontmatter_yaml_does_not_emit_cop_013() {
+        let diagnostics = validate_prompt(
+            r#"---
+description: Refactor selected code
+agent: [ask
+"#,
+        );
+        assert!(diagnostics.iter().any(|d| d.rule == "COP-014"));
+        assert!(
+            diagnostics.iter().all(|d| d.rule != "COP-013"),
+            "Invalid frontmatter should not also report empty prompt body"
+        );
+    }
+
+    #[test]
+    fn test_cop_015_invalid_prompt_agent_mode() {
+        let diagnostics = validate_prompt(
+            r#"---
+description: Refactor selected code
+agent: maybe
+---
+Refactor the selected code.
+"#,
+        );
+        assert!(diagnostics.iter().any(|d| d.rule == "COP-015"));
+    }
+
+    #[test]
+    fn test_cop_017_hooks_schema_validation() {
+        let diagnostics = validate_hooks(
+            r#"{
+  "version": 1,
+  "hooks": [
+    { "type": "command", "events": ["notReal"], "command": { "bash": "echo hi" } }
+  ]
+}"#,
+        );
+        assert!(diagnostics.iter().any(|d| d.rule == "COP-017"));
+    }
+
+    #[test]
+    fn test_cop_017_invalid_hooks_json_syntax() {
+        let diagnostics = validate_hooks("{");
+        assert!(diagnostics.iter().any(|d| d.rule == "COP-017"));
+        assert!(
+            diagnostics
+                .iter()
+                .any(|d| d.message.contains("Invalid hooks.json syntax"))
+        );
+    }
+
+    #[test]
+    fn test_cop_018_setup_steps_requires_copilot_setup_steps_job() {
+        let diagnostics = validate_setup_steps(
+            r#"
+name: Copilot Setup Steps
+jobs:
+  build:
+    runs-on: ubuntu-latest
+"#,
+        );
+        assert!(diagnostics.iter().any(|d| d.rule == "COP-018"));
+    }
+
+    #[test]
+    fn test_cop_018_invalid_setup_workflow_yaml() {
+        let diagnostics = validate_setup_steps("name: Copilot Setup Steps\njobs: [");
+        assert!(diagnostics.iter().any(|d| d.rule == "COP-018"));
+        assert!(diagnostics.iter().any(|d| {
+            d.message
+                .contains("Invalid copilot-setup-steps workflow YAML")
+        }));
     }
 }

@@ -81,7 +81,7 @@ The extension automatically downloads the `agnix-lsp` binary. See `editors/zed/R
 
 - Real-time diagnostics as you type (via textDocument/didChange)
 - Real-time diagnostics on file open and save
-- Supports all agnix validation rules (170 rules)
+- Supports all agnix validation rules (181 rules)
 - Project-level validation for cross-file rules (AGM-006, XP-004/005/006, VER-001)
 
 - Maps diagnostic severity levels (Error, Warning, Info)
@@ -99,7 +99,7 @@ The LSP server validates the same file types as the CLI:
 - `.claude/settings.json`, `.claude/settings.local.json` - Hook configurations
 - `plugin.json` - Plugin manifests
 - `*.mcp.json`, `mcp.json`, `mcp-*.json` - MCP tool configurations
-- `.github/copilot-instructions.md`, `.github/instructions/*.instructions.md` - GitHub Copilot instructions
+- `.github/copilot-instructions.md`, `.github/instructions/*.instructions.md`, `.github/agents/*.agent.md`, `.github/prompts/*.prompt.md`, `.github/hooks/hooks.json`, `.github/workflows/copilot-setup-steps.yml` - GitHub Copilot configuration
 - `.cursor/rules/*.mdc`, `.cursorrules` - Cursor project rules
 
 ## Development
@@ -143,4 +143,3 @@ agnix-lsp/
 ## License
 
 MIT OR Apache-2.0
-

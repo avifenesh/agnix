@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "hooks": [
+    {
+      "type": "command",
+      "events": ["sessionStart"],
+      "command": { "bash": "echo start" }
+    }
+  ]
+}

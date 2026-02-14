@@ -2,7 +2,7 @@
 
 > Consolidated from 320KB knowledge base, 75+ sources, 5 research agents
 
-**Last Updated**: 2026-02-04
+**Last Updated**: 2026-02-14
 **Coverage**: Agent Skills • MCP • Claude Code • Cursor • Multi-Platform • Prompt Engineering
 
 ---
@@ -1027,8 +1027,8 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 
 <a id="cop-003"></a>
 ### COP-003 [HIGH] Invalid Glob Pattern in applyTo
-**Requirement**: `applyTo` field MUST contain valid glob patterns (supports comma-separated patterns like `**/*.ts,**/*.tsx`)
-**Detection**: Split on commas (respecting brace expansion), validate each glob pattern
+**Requirement**: `applyTo` field MUST contain valid glob patterns
+**Detection**: Attempt to parse as glob pattern
 **Fix**: Correct the glob syntax
 **Source**: docs.github.com/en/copilot/customizing-copilot
 
@@ -1052,6 +1052,83 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 **Detection**: Check `content.chars().count() > 4000`
 **Fix**: Reduce content or split into scoped instruction files
 **Source**: docs.github.com/en/copilot/customizing-copilot
+
+<a id="cop-007"></a>
+### COP-007 [HIGH] Custom Agent Missing Description
+**Requirement**: Custom Copilot agent files (`.github/agents/*.agent.md`) MUST include a non-empty `description` frontmatter field
+**Detection**: Parse frontmatter and verify `description` exists and is non-empty
+**Fix**: Add `description` to frontmatter
+**Source**: docs.github.com/en/copilot/reference/custom-agents-configuration
+
+<a id="cop-008"></a>
+### COP-008 [MEDIUM] Custom Agent Unknown Frontmatter Field
+**Requirement**: Custom agent frontmatter SHOULD only use supported keys
+**Detection**: Parse frontmatter and detect unknown top-level keys
+**Fix**: Remove unsupported keys
+**Source**: docs.github.com/en/copilot/reference/custom-agents-configuration
+
+<a id="cop-009"></a>
+### COP-009 [HIGH] Custom Agent Invalid Target
+**Requirement**: Custom agent `target` MUST be `vscode` or `github-copilot`
+**Detection**: Parse `target` and validate against allowed values
+**Fix**: Set `target` to `vscode` or `github-copilot`
+**Source**: docs.github.com/en/copilot/reference/custom-agents-configuration
+
+<a id="cop-010"></a>
+### COP-010 [MEDIUM] Custom Agent Uses Deprecated infer Field
+**Requirement**: Custom agent files SHOULD NOT use deprecated `infer` frontmatter
+**Detection**: Detect `infer` key in custom agent frontmatter
+**Fix**: Remove `infer` and use user-invokable custom agents
+**Source**: github.com/avifenesh/agnix/issues/400
+
+<a id="cop-011"></a>
+### COP-011 [HIGH] Custom Agent Prompt Body Exceeds Length Limit
+**Requirement**: Custom agent prompt body MUST be at most 30,000 characters
+**Detection**: Count body characters after frontmatter and check `> 30000`
+**Fix**: Reduce prompt body length
+**Source**: docs.github.com/en/copilot/reference/custom-agents-configuration
+
+<a id="cop-012"></a>
+### COP-012 [MEDIUM] Custom Agent Uses GitHub.com Unsupported Fields
+**Requirement**: Custom agents for GitHub.com SHOULD NOT use unsupported fields (`model`, `argument-hint`, `handoffs`)
+**Detection**: Parse frontmatter and detect unsupported field presence
+**Fix**: Remove unsupported fields for GitHub.com compatibility
+**Source**: docs.github.com/en/copilot/reference/custom-agents-configuration
+
+<a id="cop-013"></a>
+### COP-013 [HIGH] Prompt File Empty Body
+**Requirement**: Reusable prompt files (`.github/prompts/*.prompt.md`) MUST contain non-empty prompt body content
+**Detection**: Parse optional frontmatter and check body for non-whitespace content
+**Fix**: Add prompt body content
+**Source**: code.visualstudio.com/docs/copilot/customization/prompt-files
+
+<a id="cop-014"></a>
+### COP-014 [MEDIUM] Prompt File Unknown Frontmatter Field
+**Requirement**: Prompt file frontmatter SHOULD only use supported keys
+**Detection**: Parse frontmatter and detect unknown top-level keys
+**Fix**: Remove unsupported keys
+**Source**: code.visualstudio.com/docs/copilot/customization/prompt-files
+
+<a id="cop-015"></a>
+### COP-015 [HIGH] Prompt File Invalid Agent Mode
+**Requirement**: Prompt file `agent` field MUST be one of `none`, `ask`, or `always`
+**Detection**: Parse frontmatter and validate `agent` value
+**Fix**: Set `agent` to a supported mode
+**Source**: code.visualstudio.com/docs/copilot/customization/prompt-files
+
+<a id="cop-017"></a>
+### COP-017 [HIGH] Copilot Hooks Schema Validation
+**Requirement**: `.github/hooks/hooks.json` MUST use version `1`, valid event names, `type: "command"`, and valid command structure
+**Detection**: Parse JSON and validate version, events, required hook `type`, and command object shape
+**Fix**: Correct hooks schema structure
+**Source**: docs.github.com/en/copilot/reference/hooks-configuration
+
+<a id="cop-018"></a>
+### COP-018 [HIGH] Copilot Setup Steps Missing or Invalid copilot-setup-steps Job
+**Requirement**: `copilot-setup-steps.yml` MUST define `jobs.copilot-setup-steps` with an Ubuntu runner and non-empty `steps`
+**Detection**: Parse workflow YAML and verify `jobs.copilot-setup-steps` exists, `runs-on` targets Ubuntu (or expression), and `steps` is non-empty
+**Fix**: Add or correct `copilot-setup-steps` job in the workflow
+**Source**: docs.github.com/copilot/how-tos/agents/copilot-coding-agent/customizing-the-development-environment-for-copilot-coding-agent
 
 ---
 
@@ -1503,6 +1580,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | MCP-008 | Update protocolVersion | unsafe |
 | MCP-011 | Replace with closest server type | unsafe |
 | MCP-012 | Change sse to http | unsafe |
+| COP-002 | Insert template frontmatter with applyTo | unsafe |
 | COP-004 | Remove unknown frontmatter key | safe |
 | COP-005 | Replace with closest excludeAgent value | unsafe |
 | CUR-005 | Remove unknown frontmatter key | safe |
@@ -1526,7 +1604,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | Claude Memory | 12 | 8 | 4 | 0 | 3 |
 | AGENTS.md | 6 | 1 | 5 | 0 | 0 |
 | Claude Plugins | 10 | 8 | 2 | 0 | 2 |
-| GitHub Copilot | 6 | 4 | 2 | 0 | 3 |
+| GitHub Copilot | 17 | 11 | 6 | 0 | 3 |
 | Cursor | 9 | 4 | 5 | 0 | 4 |
 | Cline | 4 | 3 | 1 | 0 | 2 |
 | OpenCode | 3 | 3 | 0 | 0 | 1 |
@@ -1547,7 +1625,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | Amp Skills | 1 | 0 | 1 | 0 | 1 |
 | Roo Code Skills | 1 | 0 | 1 | 0 | 1 |
 | Version Awareness | 1 | 0 | 0 | 1 | 0 |
-| **TOTAL** | **170** | **110** | **56** | **4** | **59** |
+| **TOTAL** | **181** | **117** | **60** | **4** | **59** |
 
 
 ---
@@ -1577,8 +1655,8 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 
 ---
 
-**Total Coverage**: 170 validation rules across 28 categories
+**Total Coverage**: 181 validation rules across 28 categories
 
 **Knowledge Base**: 11,036 lines, 320KB, 75+ sources
-**Certainty**: 103 HIGH, 50 MEDIUM, 3 LOW
-**Auto-Fixable**: 59 rules (35%)
+**Certainty**: 117 HIGH, 60 MEDIUM, 4 LOW
+**Auto-Fixable**: 59 rules (33%)
