@@ -2,3 +2,4 @@ model = "o4-mini"
 approvalMode = "suggest"
 fullAutoErrorMode = "ask-user"
 notify = true
+project_doc_max_bytes = 32768

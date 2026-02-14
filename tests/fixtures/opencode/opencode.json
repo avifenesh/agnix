@@ -1,4 +1,14 @@
 {
   "share": "manual",
-  "instructions": ["**/*.md"]
+  "instructions": ["**/*.md"],
+  "agent": {
+    "my-agent": {
+      "description": "A custom agent",
+      "model": "anthropic/claude-sonnet-4-5"
+    }
+  },
+  "permission": {
+    "read": "allow",
+    "edit": "ask"
+  }
 }
