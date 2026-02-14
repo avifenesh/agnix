@@ -165,6 +165,12 @@ fn is_under_windsurf_workflows(path: &Path) -> bool {
     path_contains_consecutive_components(path, ".windsurf", "workflows")
 }
 
+/// Returns true if the path contains `.kiro/steering` as consecutive
+/// components anywhere in the path.
+fn is_under_kiro_steering(path: &Path) -> bool {
+    path_contains_consecutive_components(path, ".kiro", "steering")
+}
+
 fn is_excluded_filename(name: &str) -> bool {
     EXCLUDED_FILENAMES
         .iter()
@@ -309,6 +315,8 @@ pub fn detect_file_type(path: &Path) -> FileType {
         name if name.ends_with(".md") && is_under_windsurf_workflows(path) => {
             FileType::WindsurfWorkflow
         }
+        // Kiro steering files (.kiro/steering/*.md)
+        name if name.ends_with(".md") && is_under_kiro_steering(path) => FileType::KiroSteering,
         // OpenCode configuration (opencode.json)
         "opencode.json" => FileType::OpenCodeConfig,
         // Gemini CLI extension manifest (gemini-extension.json)
@@ -1058,6 +1066,42 @@ mod tests {
         assert_ne!(
             detect_file_type(Path::new(".windsurf/README.md")),
             FileType::WindsurfRule
+        );
+    }
+
+    // ---- Kiro Steering detection ----
+
+    #[test]
+    fn detect_kiro_steering() {
+        assert_eq!(
+            detect_file_type(Path::new(".kiro/steering/typescript.md")),
+            FileType::KiroSteering
+        );
+    }
+
+    #[test]
+    fn detect_kiro_steering_nested() {
+        assert_eq!(
+            detect_file_type(Path::new("project/.kiro/steering/guidelines.md")),
+            FileType::KiroSteering
+        );
+    }
+
+    #[test]
+    fn detect_kiro_steering_not_outside_kiro() {
+        // A .md file in steering/ but not under .kiro/ should not be KiroSteering
+        assert_ne!(
+            detect_file_type(Path::new("steering/guidelines.md")),
+            FileType::KiroSteering
+        );
+    }
+
+    #[test]
+    fn detect_kiro_steering_not_other_kiro_file() {
+        // A .md file directly under .kiro/ (not in steering/) should not be KiroSteering
+        assert_ne!(
+            detect_file_type(Path::new(".kiro/README.md")),
+            FileType::KiroSteering
         );
     }
 }

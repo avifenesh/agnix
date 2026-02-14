@@ -80,6 +80,8 @@ pub enum FileType {
     WindsurfWorkflow,
     /// Legacy Windsurf rules file (.windsurfrules)
     WindsurfRulesLegacy,
+    /// Kiro steering files (.kiro/steering/*.md)
+    KiroSteering,
     /// Other .md files (for XML/import checks)
     GenericMarkdown,
     /// Skip validation
@@ -133,6 +135,7 @@ impl fmt::Display for FileType {
             FileType::WindsurfRule => "WindsurfRule",
             FileType::WindsurfWorkflow => "WindsurfWorkflow",
             FileType::WindsurfRulesLegacy => "WindsurfRulesLegacy",
+            FileType::KiroSteering => "KiroSteering",
             FileType::GenericMarkdown => "GenericMarkdown",
             FileType::Unknown => "Unknown",
         })
@@ -180,6 +183,7 @@ mod tests {
             (FileType::WindsurfRule, "WindsurfRule"),
             (FileType::WindsurfWorkflow, "WindsurfWorkflow"),
             (FileType::WindsurfRulesLegacy, "WindsurfRulesLegacy"),
+            (FileType::KiroSteering, "KiroSteering"),
             (FileType::GenericMarkdown, "GenericMarkdown"),
             (FileType::Unknown, "Unknown"),
         ];
@@ -226,6 +230,7 @@ mod tests {
             FileType::WindsurfRule,
             FileType::WindsurfWorkflow,
             FileType::WindsurfRulesLegacy,
+            FileType::KiroSteering,
             FileType::GenericMarkdown,
         ];
 

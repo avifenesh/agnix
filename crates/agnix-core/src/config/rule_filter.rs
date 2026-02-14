@@ -111,6 +111,7 @@ impl<'a> DefaultRuleFilter<'a> {
             s if s.starts_with("CDX-") => self.rules.codex,
             s if s.starts_with("ROO-") => self.rules.roo_code,
             s if s.starts_with("WS-") => self.rules.windsurf,
+            s if s.starts_with("KIRO-") => self.rules.kiro_steering,
             s if s.starts_with("PE-") => self.rules.prompt_engineering,
             // Unknown rules are enabled by default
             _ => true,
