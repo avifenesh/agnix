@@ -3215,7 +3215,7 @@
       "fix": {
         "autofix": false
       },
-      "good_example": "---\napplyTo: \"**/*.ts\"\n---\n# TypeScript Instructions\n\nUse strict mode.",
+      "good_example": "---\napplyTo: \"**/*.ts,**/*.tsx\"\n---\n# TypeScript Instructions\n\nUse strict mode.",
       "bad_example": "---\napplyTo: \"[unclosed\"\n---\n# TypeScript Instructions\n\nUse strict mode."
     },
     {

@@ -1020,8 +1020,8 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 
 <a id="cop-003"></a>
 ### COP-003 [HIGH] Invalid Glob Pattern in applyTo
-**Requirement**: `applyTo` field MUST contain valid glob patterns
-**Detection**: Attempt to parse as glob pattern
+**Requirement**: `applyTo` field MUST contain valid glob patterns (supports comma-separated patterns like `**/*.ts,**/*.tsx`)
+**Detection**: Split on commas (respecting brace expansion), validate each glob pattern
 **Fix**: Correct the glob syntax
 **Source**: docs.github.com/en/copilot/customizing-copilot
 

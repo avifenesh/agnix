@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - **REF-001**: Corrected metadata to reflect universal applicability across all tools (not claude-code specific), changed source_type to community, and added agentskills.io reference
+- **COP-003**: Added support for comma-separated globs in Copilot instruction files and improved subdirectory detection
 - **CC-HK-001**: Added `TeammateIdle` and `TaskCompleted` as valid hook event names
 - **CC-AG-004**: Added `delegate` as a valid permission mode for Claude Code agents
 - **CC-HK-002**: Expanded PROMPT_EVENTS to include all 8 officially supported events (Stop, SubagentStop, PreToolUse, PostToolUse, PostToolUseFailure, PermissionRequest, UserPromptSubmit, TaskCompleted) per Claude Code documentation, fixing false positives for prompt/agent hooks on previously-valid events
