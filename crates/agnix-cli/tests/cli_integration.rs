@@ -431,7 +431,7 @@ fn test_format_json_strict_mode_with_warnings() {
     // Create a dedicated fixture that guarantees warnings but no errors
     let temp_dir = tempfile::tempdir().unwrap();
 
-    let skills_dir = temp_dir.path().join("skills").join("test-skill");
+    let skills_dir = temp_dir.path().join("skills").join("test-skill-name");
     fs::create_dir_all(&skills_dir).unwrap();
 
     let skill_path = skills_dir.join("SKILL.md");
@@ -439,7 +439,7 @@ fn test_format_json_strict_mode_with_warnings() {
     // Valid skill name but missing trigger phrase (AS-010 warning)
     writeln!(
         file,
-        "---\nname: test-skill\ndescription: A test skill for validation\n---\nThis skill does something."
+        "---\nname: test-skill-name\ndescription: A test skill for validation\n---\nThis skill does something."
     )
     .unwrap();
 
@@ -916,7 +916,7 @@ fn test_format_text_shows_warning_level() {
     use std::io::Write;
 
     let temp_dir = tempfile::tempdir().unwrap();
-    let skills_dir = temp_dir.path().join("skills").join("test-skill");
+    let skills_dir = temp_dir.path().join("skills").join("test-skill-name");
     fs::create_dir_all(&skills_dir).unwrap();
 
     let skill_path = skills_dir.join("SKILL.md");
@@ -924,7 +924,7 @@ fn test_format_text_shows_warning_level() {
     // Valid skill name but missing trigger phrase (AS-010 warning)
     writeln!(
         file,
-        "---\nname: test-skill\ndescription: A test skill\n---\nContent"
+        "---\nname: test-skill-name\ndescription: A test skill\n---\nContent"
     )
     .unwrap();
 
@@ -1048,7 +1048,7 @@ fn test_fix_exit_code_when_all_issues_are_fixed() {
     use std::io::Write;
 
     let temp_dir = tempfile::tempdir().expect("Failed to create temp dir for test");
-    let skills_dir = temp_dir.path().join("skills").join("test-skill");
+    let skills_dir = temp_dir.path().join("skills").join("test-skill-name");
     fs::create_dir_all(&skills_dir).expect("Failed to create skill dir for test");
 
     let skill_path = skills_dir.join("SKILL.md");
@@ -1632,8 +1632,10 @@ fn test_format_json_files_checked_excludes_unknown_types() {
     fs::write(temp_dir.path().join("index.ts"), "console.log('hello')").unwrap();
 
     // Create one recognized file (should be counted)
+    let skill_dir = temp_dir.path().join("code-review");
+    fs::create_dir_all(&skill_dir).unwrap();
     fs::write(
-        temp_dir.path().join("SKILL.md"),
+        skill_dir.join("SKILL.md"),
         "---\nname: code-review\ndescription: Use when reviewing code\n---\nBody",
     )
     .unwrap();
@@ -2894,7 +2896,7 @@ fn test_fix_ccsk_invalid_skill_name() {
     use std::io::Write;
 
     let temp_dir = tempfile::tempdir().unwrap();
-    let skills_dir = temp_dir.path().join("skills").join("my-skill");
+    let skills_dir = temp_dir.path().join("skills").join("my-broken-skill");
     fs::create_dir_all(&skills_dir).unwrap();
 
     let skill_path = skills_dir.join("SKILL.md");
@@ -3259,3 +3261,4 @@ fn test_no_raw_i18n_keys_in_json_output() {
         }
     }
 }
+
