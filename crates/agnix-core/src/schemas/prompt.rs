@@ -354,7 +354,7 @@ pub fn find_redundant_instructions(content: &str) -> Vec<RedundantInstruction> {
             continue;
         }
 
-        if let Some(mat) = pattern.find(line) {
+        for mat in pattern.find_iter(line) {
             results.push(RedundantInstruction {
                 line: line_num + 1,
                 column: mat.start() + 1,
