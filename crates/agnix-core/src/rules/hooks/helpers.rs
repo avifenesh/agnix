@@ -230,44 +230,41 @@ pub(super) fn validate_cc_hk_019_deprecated_event(
     content: &str,
     diagnostics: &mut Vec<Diagnostic>,
 ) {
-    for &(deprecated, replacement) in DEPRECATED_EVENTS {
-        if event == deprecated {
-            let mut diagnostic = Diagnostic::warning(
-                path.to_path_buf(),
-                1,
-                0,
-                "CC-HK-019",
+    if let Some(&(deprecated, replacement)) = DEPRECATED_EVENTS.iter().find(|&&(d, _)| d == event) {
+        let mut diagnostic = Diagnostic::warning(
+            path.to_path_buf(),
+            1,
+            0,
+            "CC-HK-019",
+            t!(
+                "rules.cc_hk_019.message",
+                event = deprecated,
+                replacement = replacement
+            ),
+        )
+        .with_suggestion(t!(
+            "rules.cc_hk_019.suggestion",
+            event = deprecated,
+            replacement = replacement
+        ));
+
+        // Unsafe auto-fix: replace deprecated event key with replacement
+        if let Some((start, end)) = find_event_key_position(content, event) {
+            let replacement_text = format!("\"{}\"", replacement);
+            diagnostic = diagnostic.with_fix(Fix::replace(
+                start,
+                end,
+                replacement_text,
                 t!(
-                    "rules.cc_hk_019.message",
+                    "rules.cc_hk_019.fix",
                     event = deprecated,
                     replacement = replacement
                 ),
-            )
-            .with_suggestion(t!(
-                "rules.cc_hk_019.suggestion",
-                event = deprecated,
-                replacement = replacement
+                false,
             ));
-
-            // Unsafe auto-fix: replace deprecated event key with replacement
-            if let Some((start, end)) = find_event_key_position(content, event) {
-                let replacement_text = format!("\"{}\"", replacement);
-                diagnostic = diagnostic.with_fix(Fix::replace(
-                    start,
-                    end,
-                    replacement_text,
-                    t!(
-                        "rules.cc_hk_019.fix",
-                        event = deprecated,
-                        replacement = replacement
-                    ),
-                    false,
-                ));
-            }
-
-            diagnostics.push(diagnostic);
-            return;
         }
+
+        diagnostics.push(diagnostic);
     }
 }
 

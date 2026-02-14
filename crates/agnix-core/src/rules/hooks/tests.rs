@@ -4104,9 +4104,5 @@ fn test_cc_hk_019_autofix_application() {
         .iter()
         .filter(|d| d.rule == "CC-HK-019")
         .collect();
-    assert_eq!(
-        re_019.len(),
-        0,
-        "After fix, CC-HK-019 should not fire"
-    );
+    assert_eq!(re_019.len(), 0, "After fix, CC-HK-019 should not fire");
 }
