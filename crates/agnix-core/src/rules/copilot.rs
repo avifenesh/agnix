@@ -117,7 +117,7 @@ fn validate_custom_agent(path: &Path, content: &str, config: &LintConfig) -> Vec
         if let Some(err) = &parsed.parse_error {
             if config.is_rule_enabled("COP-008") {
                 diagnostics.push(
-                    Diagnostic::warning(
+                    Diagnostic::error(
                         path.to_path_buf(),
                         parsed.start_line,
                         0,
@@ -1470,6 +1470,11 @@ Review pull requests.
                 .iter()
                 .any(|d| d.message.contains("invalid YAML"))
         );
+        let cop_008 = diagnostics
+            .iter()
+            .find(|d| d.rule == "COP-008")
+            .expect("expected COP-008");
+        assert_eq!(cop_008.level, DiagnosticLevel::Error);
         assert!(
             diagnostics.iter().all(|d| d.rule != "COP-007"),
             "Invalid YAML should not be reported as missing description"
