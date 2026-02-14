@@ -1,6 +1,6 @@
 # agnix Technical Reference
 
-> Linter for agent configs. 176 rules across 28 categories.
+> Linter for agent configs. 182 rules across 28 categories.
 
 
 ## What agnix Validates
@@ -22,7 +22,7 @@
 | Cursor Project Rules | .cursor/rules/*.mdc, .cursorrules | 9 |
 | Cline | .clinerules, .clinerules/*.md | 4 |
 | OpenCode | opencode.json | 3 |
-| Gemini CLI | GEMINI.md, GEMINI.local.md, .gemini/settings.json, gemini-extension.json, .geminiignore | 9 |
+| Gemini CLI | GEMINI.md, GEMINI.local.md, .gemini/settings.json (hooks), gemini-extension.json (extensions), .geminiignore | 9 |
 | Codex CLI | .codex/config.toml | 4 |
 | Version Awareness | .agnix.toml | 1 |
 | Cursor Skills | .cursor/skills/*/SKILL.md | 1 |
