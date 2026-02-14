@@ -463,7 +463,10 @@ fn validate_substitution_string(
                         .all(|c| c.is_ascii_alphanumeric() || c == '_')
                 {
                     let reason = if prefix != "env" && prefix != "file" {
-                        Some(format!("unknown prefix '{}'. Valid prefixes: 'env', 'file'", prefix))
+                        Some(format!(
+                            "unknown prefix '{}'. Valid prefixes: 'env', 'file'",
+                            prefix
+                        ))
                     } else if value_part.is_empty() {
                         Some(format!("empty value after '{}:'", prefix))
                     } else {
@@ -1047,7 +1050,11 @@ mod tests {
         // Agent entry that's a string instead of an object should trigger OC-007
         let diagnostics = validate(r#"{"agent": {"my-agent": "oops"}}"#);
         let oc_007: Vec<_> = diagnostics.iter().filter(|d| d.rule == "OC-007").collect();
-        assert_eq!(oc_007.len(), 1, "Non-object agent entry should trigger OC-007");
+        assert_eq!(
+            oc_007.len(),
+            1,
+            "Non-object agent entry should trigger OC-007"
+        );
         assert!(oc_007[0].message.contains("my-agent"));
     }
 
@@ -1114,7 +1121,11 @@ mod tests {
         // Permission value that's a number instead of a string should trigger OC-008
         let diagnostics = validate(r#"{"permission": {"read": 123}}"#);
         let oc_008: Vec<_> = diagnostics.iter().filter(|d| d.rule == "OC-008").collect();
-        assert_eq!(oc_008.len(), 1, "Non-string permission value should trigger OC-008");
+        assert_eq!(
+            oc_008.len(),
+            1,
+            "Non-string permission value should trigger OC-008"
+        );
     }
 
     #[test]
@@ -1122,7 +1133,11 @@ mod tests {
         // Nested permission value that's not a string should trigger OC-008
         let diagnostics = validate(r#"{"permission": {"bash": {"*.sh": true}}}"#);
         let oc_008: Vec<_> = diagnostics.iter().filter(|d| d.rule == "OC-008").collect();
-        assert_eq!(oc_008.len(), 1, "Non-string nested permission should trigger OC-008");
+        assert_eq!(
+            oc_008.len(),
+            1,
+            "Non-string nested permission should trigger OC-008"
+        );
     }
 
     // ===== OC-009: Variable substitution validation =====

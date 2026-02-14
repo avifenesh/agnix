@@ -105,18 +105,18 @@ knowledge-base/
 | Cursor Skills | 1 | 0 | 1 | 0 | 1 |
 | Cline | 4 | 3 | 1 | 0 | 2 |
 | Cline Skills | 1 | 0 | 1 | 0 | 1 |
-| OpenCode | 3 | 3 | 0 | 0 | 0 |
+| OpenCode | 8 | 4 | 3 | 1 | 0 |
 | OpenCode Skills | 1 | 0 | 1 | 0 | 1 |
 | Gemini CLI | 9 | 3 | 4 | 2 | 3 |
 | Version Awareness | 1 | 0 | 0 | 1 | 0 |
-| Codex CLI | 4 | 3 | 1 | 0 | 0 |
+| Codex CLI | 6 | 4 | 2 | 0 | 0 |
 | Copilot Skills | 1 | 0 | 1 | 0 | 1 |
 | Codex Skills | 1 | 0 | 1 | 0 | 1 |
 | Windsurf Skills | 1 | 0 | 1 | 0 | 1 |
 | Kiro Skills | 1 | 0 | 1 | 0 | 1 |
 | Amp Skills | 1 | 0 | 1 | 0 | 1 |
 | Roo Code Skills | 1 | 0 | 1 | 0 | 1 |
-| **TOTAL** | **187** | **119** | **62** | **6** | **49** |
+| **TOTAL** | **194** | **121** | **66** | **7** | **49** |
 
 
 ---
