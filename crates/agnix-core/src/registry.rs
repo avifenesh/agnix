@@ -320,6 +320,9 @@ const DEFAULTS: &[(FileType, ValidatorFactory)] = &[
     (FileType::RooIgnore, roo_validator),
     (FileType::RooModeRules, roo_validator),
     (FileType::RooMcp, roo_validator),
+    (FileType::WindsurfRule, windsurf_validator),
+    (FileType::WindsurfWorkflow, windsurf_validator),
+    (FileType::WindsurfRulesLegacy, windsurf_validator),
     (FileType::GenericMarkdown, cross_platform_validator),
     (FileType::GenericMarkdown, xml_validator),
     (FileType::GenericMarkdown, imports_validator),
@@ -419,6 +422,10 @@ fn codex_validator() -> Box<dyn Validator> {
 
 fn roo_validator() -> Box<dyn Validator> {
     Box::new(crate::rules::roo::RooCodeValidator)
+}
+
+fn windsurf_validator() -> Box<dyn Validator> {
+    Box::new(crate::rules::windsurf::WindsurfValidator)
 }
 
 #[cfg(test)]

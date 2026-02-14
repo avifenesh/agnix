@@ -33,6 +33,7 @@ impl LintConfig {
             "PE-",
             "VER-",
             "ROO-",
+            "WS-",
             "imports::",
         ];
         for rule_id in &self.rules.disabled_rules {
@@ -64,6 +65,7 @@ impl LintConfig {
             "opencode",
             "gemini-cli",
             "roo-code",
+            "windsurf",
             "generic",
         ];
         for tool in &self.tools {
