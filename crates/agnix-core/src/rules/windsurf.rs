@@ -47,9 +47,7 @@ impl Validator for WindsurfValidator {
                         )
                         .with_suggestion(t!("rules.ws_001.suggestion")),
                     );
-                } else if config.is_rule_enabled("WS-002")
-                    && content.len() > WINDSURF_CHAR_LIMIT
-                {
+                } else if config.is_rule_enabled("WS-002") && content.len() > WINDSURF_CHAR_LIMIT {
                     diagnostics.push(
                         Diagnostic::error(
                             path.to_path_buf(),
