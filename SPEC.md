@@ -1,6 +1,6 @@
 # agnix Technical Reference
 
-> Linter for agent configs. 211 rules across 31 categories.
+> Linter for agent configs. 215 rules across 32 categories.
 
 
 ## What agnix Validates
@@ -32,6 +32,7 @@
 | OpenCode Skills | .opencode/skills/*/SKILL.md | 1 |
 | Windsurf | .windsurf/rules/*.md, .windsurf/workflows/*.md, .windsurfrules | 4 |
 | Windsurf Skills | .windsurf/skills/*/SKILL.md | 1 |
+| Kiro Steering | .kiro/steering/*.md | 4 |
 | Kiro Skills | .kiro/skills/*/SKILL.md | 1 |
 | Amp Skills | .agents/skills/*/SKILL.md | 1 |
 | Roo Code Skills | .roo/skills/*/SKILL.md | 1 |
