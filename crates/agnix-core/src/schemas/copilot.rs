@@ -523,4 +523,18 @@ applyTo: "**/*.ts"
             vec!["**/*.ts", "**/*.tsx"]
         );
     }
+
+    #[test]
+    fn test_split_comma_unbalanced_braces() {
+        // Unclosed brace - commas inside are still treated as inside a brace group
+        assert_eq!(
+            split_comma_separated_globs("{src,lib/**/*.ts,**/*.md"),
+            vec!["{src,lib/**/*.ts,**/*.md"]
+        );
+        // Extra closing brace - depth saturates to 0, comma splitting resumes
+        assert_eq!(
+            split_comma_separated_globs("src}/**/*.ts,**/*.md"),
+            vec!["src}/**/*.ts", "**/*.md"]
+        );
+    }
 }

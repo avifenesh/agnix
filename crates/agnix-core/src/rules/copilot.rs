@@ -593,6 +593,21 @@ applyTo: "{}"
         );
     }
 
+    // ===== COP-003: Fixture Integration =====
+
+    #[test]
+    fn test_cop_003_fixture_subdirectory_comma_globs() {
+        let content = include_str!(
+            "../../../../tests/fixtures/copilot/.github/instructions/frontend/react.instructions.md"
+        );
+        let diagnostics = validate_scoped(content);
+        let cop_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "COP-003").collect();
+        assert!(
+            cop_003.is_empty(),
+            "Subdirectory fixture with comma-separated globs should not trigger COP-003"
+        );
+    }
+
     // ===== COP-004: Unknown Frontmatter Keys =====
 
     #[test]

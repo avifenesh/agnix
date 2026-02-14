@@ -91,20 +91,18 @@ fn is_documentation_directory(path: &Path) -> bool {
 /// components anywhere in the path. This allows scoped Copilot instruction
 /// files to live in subdirectories under `.github/instructions/`.
 fn is_under_github_instructions(path: &Path) -> bool {
-    let names: Vec<&str> = path
-        .components()
-        .filter_map(|c| {
-            if let std::path::Component::Normal(n) = c {
-                n.to_str()
-            } else {
-                None
+    let mut prev: Option<&str> = None;
+    for component in path.components() {
+        if let std::path::Component::Normal(n) = component {
+            if let Some(name) = n.to_str() {
+                if prev == Some(".github") && name == "instructions" {
+                    return true;
+                }
+                prev = Some(name);
             }
-        })
-        .collect();
-
-    names
-        .windows(2)
-        .any(|pair| pair[0] == ".github" && pair[1] == "instructions")
+        }
+    }
+    false
 }
 
 fn is_excluded_filename(name: &str) -> bool {
