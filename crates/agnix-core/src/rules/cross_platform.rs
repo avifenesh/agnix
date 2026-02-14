@@ -4,19 +4,21 @@
 //! - XP-001: Claude-specific features in AGENTS.md (error)
 //! - XP-002: AGENTS.md markdown structure (warning)
 //! - XP-003: Hard-coded platform paths in configs (warning)
+//! - XP-007: AGENTS.md exceeds Codex CLI byte limit (warning)
 
 use crate::{
     config::LintConfig,
     diagnostics::Diagnostic,
     rules::{Validator, ValidatorMetadata},
     schemas::cross_platform::{
-        check_markdown_structure, find_claude_specific_features, find_hard_coded_paths,
+        check_byte_limit, check_markdown_structure, find_claude_specific_features,
+        find_hard_coded_paths, CODEX_BYTE_LIMIT,
     },
 };
 use rust_i18n::t;
 use std::path::Path;
 
-const RULE_IDS: &[&str] = &["XP-001", "XP-002", "XP-003"];
+const RULE_IDS: &[&str] = &["XP-001", "XP-002", "XP-003", "XP-007"];
 
 pub struct CrossPlatformValidator;
 
@@ -100,6 +102,26 @@ impl Validator for CrossPlatformValidator {
                         ),
                     )
                     .with_suggestion(t!("rules.xp_003.suggestion")),
+                );
+            }
+        }
+
+        // XP-007: AGENTS.md exceeds Codex byte limit (WARNING)
+        if config.is_rule_enabled("XP-007") && is_agents_md {
+            if let Some(exceeded) = check_byte_limit(content, CODEX_BYTE_LIMIT) {
+                diagnostics.push(
+                    Diagnostic::warning(
+                        path.to_path_buf(),
+                        1,
+                        1,
+                        "XP-007",
+                        t!(
+                            "rules.xp_007.message",
+                            bytes = exceeded.byte_count,
+                            limit = exceeded.limit
+                        ),
+                    )
+                    .with_suggestion(t!("rules.xp_007.suggestion")),
                 );
             }
         }
@@ -771,19 +793,20 @@ Use context: fork for subagents.
 
     #[test]
     fn test_all_xp_rules_can_be_disabled() {
-        let rules = ["XP-001", "XP-002", "XP-003"];
+        let rules = ["XP-001", "XP-002", "XP-003", "XP-007"];
 
         for rule in rules {
             let mut config = LintConfig::default();
             config.rules_mut().disabled_rules = vec![rule.to_string()];
 
-            // Content that could trigger each rule
-            let content = r#"# Project
-context: fork
-/etc/hosts"#;
+            // Content that could trigger each rule (XP-007 needs >32KB)
+            let mut content = "# Project\ncontext: fork\n/etc/hosts\n".to_string();
+            if rule == "XP-007" {
+                content = "a".repeat(33000);
+            }
 
             let validator = CrossPlatformValidator;
-            let diagnostics = validator.validate(Path::new("AGENTS.md"), content, &config);
+            let diagnostics = validator.validate(Path::new("AGENTS.md"), &content, &config);
 
             assert!(
                 !diagnostics.iter().any(|d| d.rule == rule),
@@ -791,5 +814,53 @@ context: fork
                 rule
             );
         }
+    }
+
+    // ===== XP-007: AGENTS.md Codex Byte Limit =====
+
+    #[test]
+    fn test_xp_007_agents_md_over_limit() {
+        let content = "a".repeat(33000); // Over 32768 limit
+        let validator = CrossPlatformValidator;
+        let diagnostics =
+            validator.validate(Path::new("AGENTS.md"), &content, &LintConfig::default());
+
+        let xp_007: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XP-007").collect();
+        assert_eq!(xp_007.len(), 1);
+        assert_eq!(xp_007[0].level, DiagnosticLevel::Warning);
+        assert!(xp_007[0].message.contains("33000"));
+    }
+
+    #[test]
+    fn test_xp_007_agents_md_under_limit() {
+        let content = "# Project\n\nShort content.";
+        let validator = CrossPlatformValidator;
+        let diagnostics =
+            validator.validate(Path::new("AGENTS.md"), &content, &LintConfig::default());
+
+        let xp_007: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XP-007").collect();
+        assert!(xp_007.is_empty());
+    }
+
+    #[test]
+    fn test_xp_007_not_checked_for_claude_md() {
+        let content = "a".repeat(33000);
+        let validator = CrossPlatformValidator;
+        let diagnostics =
+            validator.validate(Path::new("CLAUDE.md"), &content, &LintConfig::default());
+
+        let xp_007: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XP-007").collect();
+        assert!(xp_007.is_empty(), "XP-007 should only apply to AGENTS.md");
+    }
+
+    #[test]
+    fn test_xp_007_agents_local_md() {
+        let content = "a".repeat(33000);
+        let validator = CrossPlatformValidator;
+        let diagnostics =
+            validator.validate(Path::new("AGENTS.local.md"), &content, &LintConfig::default());
+
+        let xp_007: Vec<_> = diagnostics.iter().filter(|d| d.rule == "XP-007").collect();
+        assert_eq!(xp_007.len(), 1, "XP-007 should apply to AGENTS.local.md");
     }
 }

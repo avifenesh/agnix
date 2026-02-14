@@ -4,6 +4,7 @@
 //! - XP-001: Claude-specific features in AGENTS.md
 //! - XP-002: AGENTS.md markdown structure validation
 //! - XP-003: Hard-coded platform paths in configs
+//! - XP-007: AGENTS.md exceeds Codex CLI byte limit
 //!
 //! ## Security
 //!
@@ -972,6 +973,34 @@ pub fn is_instruction_file(path: &Path) -> bool {
             && (path_str.ends_with(".mdc") || path_str.contains("rules")))
         || (path_str.contains(".github") && path_str.contains("copilot"))
         || path_str.contains(".opencode")
+}
+
+// ============================================================================
+// XP-007: AGENTS.md Codex Byte Limit
+// ============================================================================
+
+/// Codex CLI project_doc_max_bytes default (32 KiB)
+pub const CODEX_BYTE_LIMIT: usize = 32_768;
+
+/// Byte limit exceeded result
+#[derive(Debug, Clone)]
+pub struct ByteLimitExceeded {
+    pub byte_count: usize,
+    pub limit: usize,
+}
+
+/// Check if content exceeds a byte limit
+///
+/// Codex CLI has a default `project_doc_max_bytes` of 32768. AGENTS.md files
+/// exceeding this limit will be silently truncated, potentially losing
+/// important instructions.
+pub fn check_byte_limit(content: &str, limit: usize) -> Option<ByteLimitExceeded> {
+    let byte_count = content.len();
+    if byte_count > limit {
+        Some(ByteLimitExceeded { byte_count, limit })
+    } else {
+        None
+    }
 }
 
 #[cfg(test)]
@@ -2299,5 +2328,37 @@ Use pnpm install for dependencies.
                 file
             );
         }
+    }
+
+    // ===== XP-007: Byte Limit =====
+
+    #[test]
+    fn test_check_byte_limit_under() {
+        let content = "Short content";
+        let result = check_byte_limit(content, CODEX_BYTE_LIMIT);
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_check_byte_limit_exact() {
+        let content = "a".repeat(CODEX_BYTE_LIMIT);
+        let result = check_byte_limit(&content, CODEX_BYTE_LIMIT);
+        assert!(result.is_none(), "Exact limit should not trigger");
+    }
+
+    #[test]
+    fn test_check_byte_limit_over() {
+        let content = "a".repeat(CODEX_BYTE_LIMIT + 1);
+        let result = check_byte_limit(&content, CODEX_BYTE_LIMIT);
+        assert!(result.is_some());
+        let exceeded = result.unwrap();
+        assert_eq!(exceeded.byte_count, CODEX_BYTE_LIMIT + 1);
+        assert_eq!(exceeded.limit, CODEX_BYTE_LIMIT);
+    }
+
+    #[test]
+    fn test_check_byte_limit_empty() {
+        let result = check_byte_limit("", CODEX_BYTE_LIMIT);
+        assert!(result.is_none());
     }
 }
