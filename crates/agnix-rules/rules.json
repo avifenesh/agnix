@@ -1,7 +1,7 @@
 {
   "description": "Machine-readable source of truth for all validation rules. When adding a new rule, add it here AND in VALIDATION-RULES.md. CI parity tests enforce sync.",
   "version": "1.1.0",
-  "total_rules": 187,
+  "total_rules": 194,
   "last_updated": "2026-02-14",
   "schema": {
     "evidence": {
@@ -4459,6 +4459,141 @@
       "bad_example": "{ invalid json content }"
     },
     {
+      "id": "OC-004",
+      "name": "Unknown Config Key",
+      "severity": "MEDIUM",
+      "category": "opencode",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://opencode.ai/docs/config"
+        ],
+        "verified_on": "2026-02-14",
+        "applies_to": {
+          "tool": "opencode"
+        },
+        "normative_level": "SHOULD",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      },
+      "good_example": "{\n  \"share\": \"manual\",\n  \"model\": \"claude-sonnet-4-5\"\n}",
+      "bad_example": "{\n  \"unknownKey\": true\n}"
+    },
+    {
+      "id": "OC-006",
+      "name": "Remote URL in Instructions",
+      "severity": "LOW",
+      "category": "opencode",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://opencode.ai/docs/config"
+        ],
+        "verified_on": "2026-02-14",
+        "applies_to": {
+          "tool": "opencode"
+        },
+        "normative_level": "BEST_PRACTICE",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      },
+      "good_example": "{\n  \"instructions\": [\"**/*.md\"]\n}",
+      "bad_example": "{\n  \"instructions\": [\"https://example.com/rules.md\"]\n}"
+    },
+    {
+      "id": "OC-007",
+      "name": "Invalid Agent Definition",
+      "severity": "MEDIUM",
+      "category": "opencode",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://opencode.ai/docs/config"
+        ],
+        "verified_on": "2026-02-14",
+        "applies_to": {
+          "tool": "opencode"
+        },
+        "normative_level": "SHOULD",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      },
+      "good_example": "{\n  \"agent\": {\n    \"my-agent\": {\n      \"description\": \"A custom agent\"\n    }\n  }\n}",
+      "bad_example": "{\n  \"agent\": {\n    \"my-agent\": {}\n  }\n}"
+    },
+    {
+      "id": "OC-008",
+      "name": "Invalid Permission Config",
+      "severity": "HIGH",
+      "category": "opencode",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://opencode.ai/docs/config"
+        ],
+        "verified_on": "2026-02-14",
+        "applies_to": {
+          "tool": "opencode"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      },
+      "good_example": "{\n  \"permission\": {\n    \"read\": \"allow\",\n    \"edit\": \"ask\"\n  }\n}",
+      "bad_example": "{\n  \"permission\": {\n    \"read\": \"yes\"\n  }\n}"
+    },
+    {
+      "id": "OC-009",
+      "name": "Invalid Variable Substitution",
+      "severity": "MEDIUM",
+      "category": "opencode",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://opencode.ai/docs/config"
+        ],
+        "verified_on": "2026-02-14",
+        "applies_to": {
+          "tool": "opencode"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      },
+      "good_example": "{\n  \"model\": \"{env:OPENAI_MODEL}\"\n}",
+      "bad_example": "{\n  \"model\": \"{bad:value}\"\n}"
+    },
+    {
       "id": "GM-001",
       "name": "Invalid Markdown Structure in GEMINI.md",
       "severity": "HIGH",
@@ -4709,7 +4844,7 @@
       "evidence": {
         "source_type": "vendor_docs",
         "source_urls": [
-          "https://github.com/openai/codex"
+          "https://developers.openai.com/codex/"
         ],
         "verified_on": "2026-02-09",
         "applies_to": {
@@ -4736,7 +4871,7 @@
       "evidence": {
         "source_type": "vendor_docs",
         "source_urls": [
-          "https://github.com/openai/codex"
+          "https://developers.openai.com/codex/"
         ],
         "verified_on": "2026-02-07",
         "applies_to": {
@@ -4764,7 +4899,7 @@
       "evidence": {
         "source_type": "vendor_docs",
         "source_urls": [
-          "https://github.com/openai/codex"
+          "https://developers.openai.com/codex/"
         ],
         "verified_on": "2026-02-07",
         "applies_to": {
@@ -4792,7 +4927,7 @@
       "evidence": {
         "source_type": "vendor_docs",
         "source_urls": [
-          "https://github.com/openai/codex"
+          "https://developers.openai.com/codex/"
         ],
         "verified_on": "2026-02-07",
         "applies_to": {
@@ -4810,6 +4945,60 @@
       },
       "good_example": "# AGENTS.md\n\nProject instructions for Codex CLI.",
       "bad_example": "# AGENTS.override.md\n\nLocal overrides that should not be committed to version control."
+    },
+    {
+      "id": "CDX-004",
+      "name": "Unknown Config Key",
+      "severity": "MEDIUM",
+      "category": "codex",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://developers.openai.com/codex/"
+        ],
+        "verified_on": "2026-02-14",
+        "applies_to": {
+          "tool": "codex"
+        },
+        "normative_level": "SHOULD",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      },
+      "good_example": "model = \"o4-mini\"\napprovalMode = \"suggest\"",
+      "bad_example": "unknownKey = true"
+    },
+    {
+      "id": "CDX-005",
+      "name": "project_doc_max_bytes Exceeds Limit",
+      "severity": "HIGH",
+      "category": "codex",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://developers.openai.com/codex/"
+        ],
+        "verified_on": "2026-02-14",
+        "applies_to": {
+          "tool": "codex"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      },
+      "good_example": "project_doc_max_bytes = 32768",
+      "bad_example": "project_doc_max_bytes = 100000"
     },
     {
       "id": "VER-001",
