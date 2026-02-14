@@ -3982,3 +3982,131 @@ fn test_cc_hk_019_setup_does_not_trigger_cc_hk_001() {
         "Setup is a valid event - CC-HK-001 should NOT fire"
     );
 }
+
+#[test]
+fn test_cc_hk_019_case_variants_trigger_cc_hk_001_not_019() {
+    // "setup" (lowercase) and "SetUp" (wrong case) are NOT deprecated - they are invalid.
+    // They should trigger CC-HK-001 (invalid event), not CC-HK-019 (deprecated event).
+    for variant in &["setup", "SetUp", "SETUP", "Setups"] {
+        let content = format!(
+            r#"{{
+            "hooks": {{
+                "{}": [
+                    {{
+                        "hooks": [
+                            {{ "type": "command", "command": "echo test", "timeout": 30 }}
+                        ]
+                    }}
+                ]
+            }}
+        }}"#,
+            variant
+        );
+
+        let diagnostics = validate(&content);
+        let cc_hk_001: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-HK-001")
+            .collect();
+        let cc_hk_019: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-HK-019")
+            .collect();
+
+        assert_eq!(
+            cc_hk_001.len(),
+            1,
+            "'{}' should trigger CC-HK-001 (invalid event)",
+            variant
+        );
+        assert_eq!(
+            cc_hk_019.len(),
+            0,
+            "'{}' should NOT trigger CC-HK-019 (not exact match for deprecated)",
+            variant
+        );
+    }
+}
+
+#[test]
+fn test_cc_hk_019_suggestion_field() {
+    let content = r#"{
+  "hooks": {
+    "Setup": [
+      {
+        "hooks": [
+          { "type": "command", "command": "echo setup", "timeout": 30 }
+        ]
+      }
+    ]
+  }
+}"#;
+
+    let diagnostics = validate(content);
+    let cc_hk_019: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-019")
+        .collect();
+
+    assert_eq!(cc_hk_019.len(), 1);
+    assert!(
+        cc_hk_019[0].suggestion.is_some(),
+        "CC-HK-019 should have a suggestion"
+    );
+    let suggestion = cc_hk_019[0].suggestion.as_ref().unwrap();
+    assert!(
+        suggestion.contains("SessionStart"),
+        "Suggestion should mention SessionStart, got: {}",
+        suggestion
+    );
+}
+
+#[test]
+fn test_cc_hk_019_autofix_application() {
+    let content = r#"{
+  "hooks": {
+    "Setup": [
+      {
+        "hooks": [
+          { "type": "command", "command": "echo setup", "timeout": 30 }
+        ]
+      }
+    ]
+  }
+}"#;
+
+    let diagnostics = validate(content);
+    let cc_hk_019: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-019")
+        .collect();
+
+    assert_eq!(cc_hk_019.len(), 1);
+    assert!(cc_hk_019[0].has_fixes());
+
+    let fix = &cc_hk_019[0].fixes[0];
+    let mut fixed_content = content.to_string();
+    fixed_content.replace_range(fix.start_byte..fix.end_byte, &fix.replacement);
+
+    // Verify the fixed content replaces Setup with SessionStart
+    assert!(
+        fixed_content.contains("\"SessionStart\""),
+        "Fixed content should contain SessionStart"
+    );
+    assert!(
+        !fixed_content.contains("\"Setup\""),
+        "Fixed content should not contain Setup"
+    );
+
+    // Verify re-validation produces no CC-HK-019
+    let re_diagnostics = validate(&fixed_content);
+    let re_019: Vec<_> = re_diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-HK-019")
+        .collect();
+    assert_eq!(
+        re_019.len(),
+        0,
+        "After fix, CC-HK-019 should not fire"
+    );
+}
