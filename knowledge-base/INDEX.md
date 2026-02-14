@@ -99,7 +99,7 @@ knowledge-base/
 | MCP | 24 | 19 | 5 | 0 | 3 |
 | XML | 3 | 3 | 0 | 0 | 3 |
 | References | 4 | 2 | 2 | 0 | 0 |
-| Prompt Eng | 4 | 0 | 4 | 0 | 0 |
+| Prompt Eng | 6 | 0 | 6 | 0 | 0 |
 | Cross-Platform | 8 | 2 | 5 | 1 | 0 |
 | Cursor | 16 | 9 | 7 | 0 | 2 |
 | Cursor Skills | 1 | 0 | 1 | 0 | 1 |
