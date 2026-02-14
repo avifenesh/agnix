@@ -1,7 +1,7 @@
 {
   "description": "Machine-readable source of truth for all validation rules. When adding a new rule, add it here AND in VALIDATION-RULES.md. CI parity tests enforce sync.",
   "version": "1.1.0",
-  "total_rules": 200,
+  "total_rules": 205,
   "last_updated": "2026-02-14",
   "schema": {
     "evidence": {
@@ -4117,6 +4117,58 @@
       "bad_example": "# Project\n\nSee [style guide](docs/STYLE.md) for conventions.\nSee [architecture](docs/ARCHITECTURE.md) for design.\n\n(where docs/STYLE.md and docs/ARCHITECTURE.md do not exist)"
     },
     {
+      "id": "REF-003",
+      "name": "Duplicate Import",
+      "description": "Detects when the same file is @imported multiple times, which wastes context window tokens and may cause confusion.",
+      "severity": "MEDIUM",
+      "category": "references",
+      "evidence": {
+        "source_type": "community",
+        "source_urls": [
+          "https://code.claude.com/docs/en/memory"
+        ],
+        "verified_on": "2025-05-01",
+        "applies_to": {},
+        "normative_level": "SHOULD",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      },
+      "good_example": "# Project\n\n@docs/coding-standards.md\n@docs/testing-guide.md",
+      "bad_example": "# Project\n\n@docs/coding-standards.md\n@docs/testing-guide.md\n@docs/coding-standards.md"
+    },
+    {
+      "id": "REF-004",
+      "name": "Non-Markdown Import",
+      "description": "Detects @import directives that reference non-markdown files (e.g., .json, .py, .ts). Only markdown files are reliably processed by @import.",
+      "severity": "MEDIUM",
+      "category": "references",
+      "evidence": {
+        "source_type": "community",
+        "source_urls": [
+          "https://code.claude.com/docs/en/memory"
+        ],
+        "verified_on": "2025-05-01",
+        "applies_to": {},
+        "normative_level": "SHOULD",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      },
+      "good_example": "# Project\n\n@docs/coding-standards.md\n@docs/architecture.md",
+      "bad_example": "# Project\n\n@config.json\n@scripts/deploy.py\n@src/utils.ts"
+    },
+    {
       "id": "PE-001",
       "name": "Lost in the Middle",
       "severity": "MEDIUM",
@@ -4216,6 +4268,58 @@
       },
       "good_example": "# Rules\n\nAlways format output as JSON.\nNever skip test execution.",
       "bad_example": "# Rules\n\nUsually format output as JSON.\nInclude tests if possible.\nSometimes run the linter when appropriate."
+    },
+    {
+      "id": "PE-005",
+      "name": "Redundant Generic Instructions",
+      "description": "Detects instructions that tell the LLM to do things it already does by default (e.g., 'be helpful', 'be accurate'). These waste context window tokens without adding value.",
+      "severity": "MEDIUM",
+      "category": "prompt-engineering",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview"
+        ],
+        "verified_on": "2025-05-01",
+        "applies_to": {},
+        "normative_level": "SHOULD",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      },
+      "good_example": "# Rules\n\nFormat all output as JSON with 2-space indentation.\nAlways include error codes in responses.",
+      "bad_example": "# Rules\n\nBe helpful and accurate.\nBe concise.\nFormat all output as JSON."
+    },
+    {
+      "id": "PE-006",
+      "name": "Negative-Only Instructions",
+      "description": "Detects negative instructions (don't, never, avoid) that lack a positive alternative. Instructions are more effective when they tell the LLM what to do instead of only what not to do.",
+      "severity": "MEDIUM",
+      "category": "prompt-engineering",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview"
+        ],
+        "verified_on": "2025-05-01",
+        "applies_to": {},
+        "normative_level": "SHOULD",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      },
+      "good_example": "# Rules\n\nDon't use global variables. Instead, pass values as function parameters.\nAvoid console.log in production. Use the structured logger instead.",
+      "bad_example": "# Rules\n\nDon't use global variables.\nNever use console.log.\nAvoid inline styles."
     },
     {
       "id": "XP-001",
@@ -4375,6 +4479,34 @@
       },
       "good_example": "# CLAUDE.md\n\nCLAUDE.md takes precedence over AGENTS.md.\n\n## Code Style\n- Use TypeScript\n- Follow ESLint rules",
       "bad_example": "# CLAUDE.md\n\n## Code Style\n- Use TypeScript\n- Follow ESLint rules\n\n# AGENTS.md (separate file, same project)\n\n## Code Style\n- Use JavaScript\n- Follow Prettier rules"
+    },
+    {
+      "id": "XP-007",
+      "name": "AGENTS.md Exceeds Codex Byte Limit",
+      "description": "Codex CLI has a default project_doc_max_bytes limit of 32768 bytes for AGENTS.md. Files exceeding this limit will be silently truncated.",
+      "severity": "MEDIUM",
+      "category": "cross-platform",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://developers.openai.com/codex/guides/agents-md"
+        ],
+        "verified_on": "2025-05-01",
+        "applies_to": {
+          "tool": "codex-cli"
+        },
+        "normative_level": "SHOULD",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      },
+      "good_example": "# AGENTS.md\n\n## Overview\nConcise project instructions under 32KB.\n\n## Commands\n- npm run build\n- npm run test",
+      "bad_example": "# AGENTS.md\n\n(content exceeding 32768 bytes - will be truncated by Codex CLI)"
     },
     {
       "id": "OC-001",
