@@ -1,6 +1,6 @@
 # Rules Reference
 
-This section contains all `200` validation rules generated from `knowledge-base/rules.json`.
+This section contains all `207` validation rules generated from `knowledge-base/rules.json`.
 `59` rules have automatic fixes.
 
 | Rule | Name | Severity | Category | Auto-Fix |
@@ -146,6 +146,13 @@ This section contains all `200` validation rules generated from `knowledge-base/
 | [CUR-007](./generated/cur-007.md) | alwaysApply with Redundant globs | MEDIUM | Cursor | Yes (safe) |
 | [CUR-008](./generated/cur-008.md) | Invalid alwaysApply Type | HIGH | Cursor | Yes (safe) |
 | [CUR-009](./generated/cur-009.md) | Missing Description for Agent-Requested Rule | MEDIUM | Cursor | No |
+| [CUR-010](./generated/cur-010.md) | Invalid Cursor Hooks Schema | HIGH | Cursor | No |
+| [CUR-011](./generated/cur-011.md) | Unknown Cursor Hook Event Name | MEDIUM | Cursor | No |
+| [CUR-012](./generated/cur-012.md) | Hook Entry Missing Required Command Field | HIGH | Cursor | No |
+| [CUR-013](./generated/cur-013.md) | Invalid Cursor Hook Type Value | HIGH | Cursor | No |
+| [CUR-014](./generated/cur-014.md) | Invalid Cursor Subagent Frontmatter | HIGH | Cursor | No |
+| [CUR-015](./generated/cur-015.md) | Empty Cursor Subagent Body | MEDIUM | Cursor | No |
+| [CUR-016](./generated/cur-016.md) | Invalid Cursor Environment Schema | HIGH | Cursor | No |
 | [CLN-001](./generated/cln-001.md) | Empty Cline Rules File | HIGH | Cline | No |
 | [CLN-002](./generated/cln-002.md) | Invalid Paths Glob in Cline Rules | HIGH | Cline | No |
 | [CLN-003](./generated/cln-003.md) | Unknown Frontmatter Key in Cline Rules | MEDIUM | Cline | Yes (unsafe) |
@@ -188,12 +195,6 @@ This section contains all `200` validation rules generated from `knowledge-base/
 | [CDX-003](./generated/cdx-003.md) | AGENTS.override.md in Version Control | MEDIUM | Codex CLI | No |
 | [CDX-004](./generated/cdx-004.md) | Unknown Config Key | MEDIUM | Codex CLI | No |
 | [CDX-005](./generated/cdx-005.md) | project_doc_max_bytes Exceeds Limit | HIGH | Codex CLI | No |
-| [ROO-001](./generated/roo-001.md) | Empty Roo Code Rule File | HIGH | Roo Code | No |
-| [ROO-002](./generated/roo-002.md) | Invalid .roomodes Configuration | HIGH | Roo Code | No |
-| [ROO-003](./generated/roo-003.md) | Invalid .rooignore File | MEDIUM | Roo Code | No |
-| [ROO-004](./generated/roo-004.md) | Invalid Mode Slug in Rule Directory | MEDIUM | Roo Code | No |
-| [ROO-005](./generated/roo-005.md) | Invalid .roo/mcp.json Configuration | HIGH | Roo Code | No |
-| [ROO-006](./generated/roo-006.md) | Mode Slug Not Recognized | MEDIUM | Roo Code | No |
 | [VER-001](./generated/ver-001.md) | No Tool/Spec Versions Pinned | LOW | Version Awareness | No |
 | [CR-SK-001](./generated/cr-sk-001.md) | Cursor Skill Uses Unsupported Field | MEDIUM | Cursor Skills | Yes (safe/unsafe) |
 | [CL-SK-001](./generated/cl-sk-001.md) | Cline Skill Uses Unsupported Field | MEDIUM | Cline Skills | Yes (safe/unsafe) |
@@ -205,3 +206,9 @@ This section contains all `200` validation rules generated from `knowledge-base/
 | [AMP-SK-001](./generated/amp-sk-001.md) | Amp Skill Uses Unsupported Field | MEDIUM | Amp Skills | Yes (safe/unsafe) |
 | [RC-SK-001](./generated/rc-sk-001.md) | Roo Code Skill Uses Unsupported Field | MEDIUM | Roo Code Skills | Yes (safe/unsafe) |
 | [XP-SK-001](./generated/xp-sk-001.md) | Skill Uses Client-Specific Features | LOW | Cross-Platform | No |
+| [ROO-001](./generated/roo-001.md) | Empty Roo Code Rule File | HIGH | roo-code | No |
+| [ROO-002](./generated/roo-002.md) | Invalid .roomodes Configuration | HIGH | roo-code | No |
+| [ROO-003](./generated/roo-003.md) | Invalid .rooignore File | MEDIUM | roo-code | No |
+| [ROO-004](./generated/roo-004.md) | Invalid Mode Slug in Rule Directory | MEDIUM | roo-code | No |
+| [ROO-005](./generated/roo-005.md) | Invalid .roo/mcp.json Configuration | HIGH | roo-code | No |
+| [ROO-006](./generated/roo-006.md) | Mode Slug Not Recognized | MEDIUM | roo-code | No |
