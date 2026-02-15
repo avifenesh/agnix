@@ -90,7 +90,7 @@ knowledge-base/
 |----------|-------|------|--------|-----|----------|
 | Agent Skills | 19 | 15 | 4 | 0 | 9 |
 | Claude Skills | 17 | 11 | 6 | 0 | 11 |
-| Claude Hooks | 19 | 12 | 5 | 2 | 8 |
+| Claude Hooks | 19 | 12 | 5 | 2 | 12 |
 | Claude Agents | 13 | 12 | 1 | 0 | 7 |
 | Claude Memory | 12 | 8 | 4 | 0 | 3 |
 | AGENTS.md | 6 | 1 | 5 | 0 | 1 |
@@ -105,9 +105,9 @@ knowledge-base/
 | Cursor Skills | 1 | 0 | 1 | 0 | 1 |
 | Cline | 4 | 3 | 1 | 0 | 2 |
 | Cline Skills | 1 | 0 | 1 | 0 | 1 |
-| OpenCode | 8 | 4 | 3 | 1 | 1 |
+| OpenCode | 8 | 4 | 3 | 1 | 2 |
 | OpenCode Skills | 1 | 0 | 1 | 0 | 1 |
-| Gemini CLI | 9 | 3 | 4 | 2 | 5 |
+| Gemini CLI | 9 | 3 | 4 | 2 | 3 |
 | Version Awareness | 1 | 0 | 0 | 1 | 0 |
 | Codex CLI | 6 | 4 | 2 | 0 | 3 |
 | Copilot Skills | 1 | 0 | 1 | 0 | 1 |
@@ -115,12 +115,12 @@ knowledge-base/
 | Windsurf Skills | 1 | 0 | 1 | 0 | 1 |
 | Kiro Skills | 1 | 0 | 1 | 0 | 1 |
 | Amp Skills | 1 | 0 | 1 | 0 | 1 |
-| Amp Checks | 4 | 2 | 2 | 0 | 2 |
+| Amp Checks | 4 | 2 | 2 | 0 | 3 |
 | Roo Code Skills | 1 | 0 | 1 | 0 | 1 |
 | Roo Code | 6 | 3 | 3 | 0 | 0 |
 | Windsurf | 4 | 1 | 2 | 1 | 0 |
 | Kiro Steering | 4 | 2 | 2 | 0 | 1 |
-| **TOTAL** | **229** | **135** | **86** | **8** | **95** |
+| **TOTAL** | **229** | **135** | **86** | **8** | **97** |
 
 
 ---
@@ -285,7 +285,7 @@ Standards Covered:     5 (Agent Skills, MCP, Claude Code, Multi-Platform, Prompt
 Sources Consulted:    75+ (specs, docs, research papers, repos)
 Research Agents:       5 (10+ sources each)
 Validation Rules:     229 rules
-Auto-Fixable Rules:   95 rules
+Auto-Fixable Rules:   97 rules
 
 Test Fixtures:        116 files
 Platforms Analyzed:   9 (Claude Code, Codex CLI, OpenCode, Copilot, Cursor, Cline, Roo-Cline, Continue.dev, Aider)
