@@ -222,16 +222,24 @@ impl<'a> ValidationContext<'a> {
         if self.config.is_rule_enabled("AS-001")
             && (!self.parts.has_frontmatter || !self.parts.has_closing)
         {
-            self.diagnostics.push(
-                Diagnostic::error(
-                    self.path.to_path_buf(),
-                    frontmatter_line,
-                    frontmatter_col,
-                    "AS-001",
-                    t!("rules.as_001.message"),
-                )
-                .with_suggestion(t!("rules.as_001.suggestion")),
-            );
+            let mut diagnostic = Diagnostic::error(
+                self.path.to_path_buf(),
+                frontmatter_line,
+                frontmatter_col,
+                "AS-001",
+                t!("rules.as_001.message"),
+            )
+            .with_suggestion(t!("rules.as_001.suggestion"));
+
+            // Insert empty frontmatter block at position 0
+            diagnostic = diagnostic.with_fix(Fix::insert(
+                0,
+                "---\n---\n".to_string(),
+                "Insert empty frontmatter block",
+                false,
+            ));
+
+            self.diagnostics.push(diagnostic);
         }
 
         if self.parts.has_frontmatter && self.parts.has_closing {
@@ -264,30 +272,57 @@ impl<'a> ValidationContext<'a> {
 
         // AS-002: Missing name field
         if self.config.is_rule_enabled("AS-002") && frontmatter.name.is_none() {
-            self.diagnostics.push(
-                Diagnostic::error(
-                    self.path.to_path_buf(),
-                    name_line,
-                    name_col,
-                    "AS-002",
-                    t!("rules.as_002.message"),
-                )
-                .with_suggestion(t!("rules.as_002.suggestion")),
-            );
+            let mut diagnostic = Diagnostic::error(
+                self.path.to_path_buf(),
+                name_line,
+                name_col,
+                "AS-002",
+                t!("rules.as_002.message"),
+            )
+            .with_suggestion(t!("rules.as_002.suggestion"));
+
+            // Insert name field derived from filename
+            let derived_name = self
+                .path
+                .file_stem()
+                .and_then(|s| s.to_str())
+                .map(convert_to_kebab_case)
+                .unwrap_or_default();
+            if !derived_name.is_empty() && self.parts.has_frontmatter && self.parts.has_closing {
+                let insert_pos = self.parts.frontmatter_start;
+                diagnostic = diagnostic.with_fix(Fix::insert(
+                    insert_pos,
+                    format!("name: {}\n", derived_name),
+                    format!("Insert name: {}", derived_name),
+                    false,
+                ));
+            }
+
+            self.diagnostics.push(diagnostic);
         }
 
         // AS-003: Missing description field
         if self.config.is_rule_enabled("AS-003") && frontmatter.description.is_none() {
-            self.diagnostics.push(
-                Diagnostic::error(
-                    self.path.to_path_buf(),
-                    description_line,
-                    description_col,
-                    "AS-003",
-                    t!("rules.as_003.message"),
-                )
-                .with_suggestion(t!("rules.as_003.suggestion")),
-            );
+            let mut diagnostic = Diagnostic::error(
+                self.path.to_path_buf(),
+                description_line,
+                description_col,
+                "AS-003",
+                t!("rules.as_003.message"),
+            )
+            .with_suggestion(t!("rules.as_003.suggestion"));
+
+            if self.parts.has_frontmatter && self.parts.has_closing {
+                let insert_pos = self.parts.frontmatter_start;
+                diagnostic = diagnostic.with_fix(Fix::insert(
+                    insert_pos,
+                    "description: TODO - add skill description\n".to_string(),
+                    "Insert description placeholder",
+                    false,
+                ));
+            }
+
+            self.diagnostics.push(diagnostic);
         }
     }
 
@@ -444,16 +479,33 @@ impl<'a> ValidationContext<'a> {
 
         // AS-009: Description contains XML tags
         if self.config.is_rule_enabled("AS-009") && description_xml_regex().is_match(description) {
-            self.diagnostics.push(
-                Diagnostic::error(
-                    self.path.to_path_buf(),
-                    description_line,
-                    description_col,
-                    "AS-009",
-                    t!("rules.as_009.message"),
-                )
-                .with_suggestion(t!("rules.as_009.suggestion")),
-            );
+            let mut diagnostic = Diagnostic::error(
+                self.path.to_path_buf(),
+                description_line,
+                description_col,
+                "AS-009",
+                t!("rules.as_009.message"),
+            )
+            .with_suggestion(t!("rules.as_009.suggestion"));
+
+            // Strip XML tags from description
+            let stripped = description_xml_regex()
+                .replace_all(description, "")
+                .trim()
+                .to_string();
+            if !stripped.is_empty() && stripped != description {
+                if let Some((start, end)) = self.frontmatter_value_byte_range("description") {
+                    diagnostic = diagnostic.with_fix(Fix::replace(
+                        start,
+                        end,
+                        &stripped,
+                        "Strip XML tags from description",
+                        false,
+                    ));
+                }
+            }
+
+            self.diagnostics.push(diagnostic);
         }
 
         // AS-010: Description should include trigger phrase
@@ -794,16 +846,27 @@ impl<'a> ValidationContext<'a> {
             if DANGEROUS_NAMES.iter().any(|d| name_lower.contains(d))
                 && !frontmatter.disable_model_invocation.unwrap_or(false)
             {
-                self.diagnostics.push(
-                    Diagnostic::error(
-                        self.path.to_path_buf(),
-                        name_line,
-                        name_col,
-                        "CC-SK-006",
-                        t!("rules.cc_sk_006.message", name = schema.name.as_str()),
-                    )
-                    .with_suggestion(t!("rules.cc_sk_006.suggestion")),
-                );
+                let mut diagnostic = Diagnostic::error(
+                    self.path.to_path_buf(),
+                    name_line,
+                    name_col,
+                    "CC-SK-006",
+                    t!("rules.cc_sk_006.message", name = schema.name.as_str()),
+                )
+                .with_suggestion(t!("rules.cc_sk_006.suggestion"));
+
+                // Insert disable-model-invocation: true in frontmatter
+                if self.parts.has_frontmatter && self.parts.has_closing {
+                    let insert_pos = self.parts.frontmatter_start;
+                    diagnostic = diagnostic.with_fix(Fix::insert(
+                        insert_pos,
+                        "disable-model-invocation: true\n".to_string(),
+                        "Add disable-model-invocation: true",
+                        true,
+                    ));
+                }
+
+                self.diagnostics.push(diagnostic);
             }
         }
 
@@ -994,16 +1057,26 @@ impl<'a> ValidationContext<'a> {
 
             if !body.contains("$ARGUMENTS") {
                 let (line, col) = self.frontmatter_key_line_col("argument-hint");
-                self.diagnostics.push(
-                    Diagnostic::warning(
-                        self.path.to_path_buf(),
-                        line,
-                        col,
-                        "CC-SK-012",
-                        t!("rules.cc_sk_012.message"),
-                    )
-                    .with_suggestion(t!("rules.cc_sk_012.suggestion")),
-                );
+                let mut diagnostic = Diagnostic::warning(
+                    self.path.to_path_buf(),
+                    line,
+                    col,
+                    "CC-SK-012",
+                    t!("rules.cc_sk_012.message"),
+                )
+                .with_suggestion(t!("rules.cc_sk_012.suggestion"));
+
+                // Append $ARGUMENTS to the end of body
+                let insert_pos = self.content.len();
+                let prefix = if self.content.ends_with('\n') { "" } else { "\n" };
+                diagnostic = diagnostic.with_fix(Fix::insert(
+                    insert_pos,
+                    format!("{}$ARGUMENTS\n", prefix),
+                    "Append $ARGUMENTS to body",
+                    true,
+                ));
+
+                self.diagnostics.push(diagnostic);
             }
         }
     }

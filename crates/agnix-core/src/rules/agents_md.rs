@@ -10,7 +10,7 @@
 
 use crate::{
     config::LintConfig,
-    diagnostics::Diagnostic,
+    diagnostics::{Diagnostic, Fix},
     rules::{Validator, ValidatorMetadata},
     schemas::agents_md::{
         MarkdownIssueType, WINDSURF_CHAR_LIMIT, check_character_limit, check_markdown_validity,
@@ -52,19 +52,31 @@ impl Validator for AgentsMdValidator {
                     MarkdownIssueType::UnclosedCodeBlock => Diagnostic::error,
                     MarkdownIssueType::MalformedLink => Diagnostic::error,
                 };
-                diagnostics.push(
-                    level_fn(
-                        path.to_path_buf(),
-                        issue.line,
-                        issue.column,
-                        "AGM-001",
-                        t!(
-                            "rules.agm_001.message",
-                            description = issue.description.as_str()
-                        ),
-                    )
-                    .with_suggestion(t!("rules.agm_001.suggestion")),
-                );
+                let mut diagnostic = level_fn(
+                    path.to_path_buf(),
+                    issue.line,
+                    issue.column,
+                    "AGM-001",
+                    t!(
+                        "rules.agm_001.message",
+                        description = issue.description.as_str()
+                    ),
+                )
+                .with_suggestion(t!("rules.agm_001.suggestion"));
+
+                // For unclosed code blocks, append closing fence at end of file
+                if issue.issue_type == MarkdownIssueType::UnclosedCodeBlock {
+                    let insert_pos = content.len();
+                    let prefix = if content.ends_with('\n') { "" } else { "\n" };
+                    diagnostic = diagnostic.with_fix(Fix::insert(
+                        insert_pos,
+                        format!("{}```\n", prefix),
+                        "Append closing code fence",
+                        false,
+                    ));
+                }
+
+                diagnostics.push(diagnostic);
             }
         }
 

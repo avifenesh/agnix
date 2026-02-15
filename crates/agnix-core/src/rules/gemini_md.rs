@@ -8,7 +8,7 @@
 
 use crate::{
     config::LintConfig,
-    diagnostics::Diagnostic,
+    diagnostics::{Diagnostic, Fix},
     rules::{Validator, ValidatorMetadata},
     schemas::agents_md::{
         MarkdownIssueType, check_markdown_validity, check_project_context, check_section_headers,
@@ -48,19 +48,30 @@ impl Validator for GeminiMdValidator {
                     MarkdownIssueType::UnclosedCodeBlock => Diagnostic::error,
                     MarkdownIssueType::MalformedLink => Diagnostic::error,
                 };
-                diagnostics.push(
-                    level_fn(
-                        path_buf.clone(),
-                        issue.line,
-                        issue.column,
-                        "GM-001",
-                        t!(
-                            "rules.gm_001.message",
-                            description = issue.description.as_str()
-                        ),
-                    )
-                    .with_suggestion(t!("rules.gm_001.suggestion")),
-                );
+                let mut diagnostic = level_fn(
+                    path_buf.clone(),
+                    issue.line,
+                    issue.column,
+                    "GM-001",
+                    t!(
+                        "rules.gm_001.message",
+                        description = issue.description.as_str()
+                    ),
+                )
+                .with_suggestion(t!("rules.gm_001.suggestion"));
+
+                if issue.issue_type == MarkdownIssueType::UnclosedCodeBlock {
+                    let insert_pos = content.len();
+                    let prefix = if content.ends_with('\n') { "" } else { "\n" };
+                    diagnostic = diagnostic.with_fix(Fix::insert(
+                        insert_pos,
+                        format!("{}```\n", prefix),
+                        "Append closing code fence",
+                        false,
+                    ));
+                }
+
+                diagnostics.push(diagnostic);
             }
         }
 

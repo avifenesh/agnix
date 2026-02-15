@@ -310,16 +310,33 @@ impl Validator for AgentValidator {
         if config.is_rule_enabled("CC-AG-001")
             && schema.name.as_deref().unwrap_or("").trim().is_empty()
         {
-            diagnostics.push(
-                Diagnostic::error(
-                    path.to_path_buf(),
-                    1,
-                    0,
-                    "CC-AG-001",
-                    t!("rules.cc_ag_001.message"),
-                )
-                .with_suggestion(t!("rules.cc_ag_001.suggestion")),
-            );
+            let mut diagnostic = Diagnostic::error(
+                path.to_path_buf(),
+                1,
+                0,
+                "CC-AG-001",
+                t!("rules.cc_ag_001.message"),
+            )
+            .with_suggestion(t!("rules.cc_ag_001.suggestion"));
+
+            // Derive name from filename (e.g., "reviewer.md" -> "reviewer")
+            let derived_name = path
+                .file_stem()
+                .and_then(|s| s.to_str())
+                .unwrap_or("agent");
+            let parts_fm = split_frontmatter(content);
+            if parts_fm.has_frontmatter && parts_fm.has_closing {
+                // Insert after opening ---\n
+                let insert_pos = parts_fm.frontmatter_start;
+                diagnostic = diagnostic.with_fix(Fix::insert(
+                    insert_pos,
+                    format!("name: {}\n", derived_name),
+                    format!("Insert name: {}", derived_name),
+                    false,
+                ));
+            }
+
+            diagnostics.push(diagnostic);
         }
 
         // CC-AG-002: Missing description field
@@ -331,16 +348,27 @@ impl Validator for AgentValidator {
                 .trim()
                 .is_empty()
         {
-            diagnostics.push(
-                Diagnostic::error(
-                    path.to_path_buf(),
-                    1,
-                    0,
-                    "CC-AG-002",
-                    t!("rules.cc_ag_002.message"),
-                )
-                .with_suggestion(t!("rules.cc_ag_002.suggestion")),
-            );
+            let mut diagnostic = Diagnostic::error(
+                path.to_path_buf(),
+                1,
+                0,
+                "CC-AG-002",
+                t!("rules.cc_ag_002.message"),
+            )
+            .with_suggestion(t!("rules.cc_ag_002.suggestion"));
+
+            let parts_fm = split_frontmatter(content);
+            if parts_fm.has_frontmatter && parts_fm.has_closing {
+                let insert_pos = parts_fm.frontmatter_start;
+                diagnostic = diagnostic.with_fix(Fix::insert(
+                    insert_pos,
+                    "description: TODO - add agent description\n".to_string(),
+                    "Insert description placeholder",
+                    false,
+                ));
+            }
+
+            diagnostics.push(diagnostic);
         }
 
         // CC-AG-003: Invalid model value
@@ -788,16 +816,39 @@ impl Validator for AgentValidator {
             if let Some(skills) = &schema.skills {
                 for skill_name in skills {
                     if !Self::is_valid_skill_name_format(skill_name) {
-                        diagnostics.push(
-                            Diagnostic::warning(
-                                path.to_path_buf(),
-                                1,
-                                0,
-                                "CC-AG-013",
-                                t!("rules.cc_ag_013.message", name = skill_name.as_str()),
-                            )
-                            .with_suggestion(t!("rules.cc_ag_013.suggestion")),
-                        );
+                        let kebab = crate::rules::skill::convert_to_kebab_case(skill_name);
+                        let mut diagnostic = Diagnostic::warning(
+                            path.to_path_buf(),
+                            1,
+                            0,
+                            "CC-AG-013",
+                            t!("rules.cc_ag_013.message", name = skill_name.as_str()),
+                        )
+                        .with_suggestion(t!("rules.cc_ag_013.suggestion"));
+
+                        if !kebab.is_empty() && kebab != skill_name.as_str() {
+                            if let Some((start, end)) =
+                                frontmatter_value_byte_range(content, "skills")
+                            {
+                                // The value range covers the whole skills field which may be
+                                // multi-line. For a single skill, try to find the exact
+                                // occurrence within the frontmatter.
+                                let fm_slice = &content[start..end];
+                                if let Some(offset) = fm_slice.find(skill_name.as_str()) {
+                                    let abs_start = start + offset;
+                                    let abs_end = abs_start + skill_name.len();
+                                    diagnostic = diagnostic.with_fix(Fix::replace(
+                                        abs_start,
+                                        abs_end,
+                                        &kebab,
+                                        format!("Replace '{}' with '{}'", skill_name, kebab),
+                                        false,
+                                    ));
+                                }
+                            }
+                        }
+
+                        diagnostics.push(diagnostic);
                     }
                 }
             }

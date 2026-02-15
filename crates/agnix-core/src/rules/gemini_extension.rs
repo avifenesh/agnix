@@ -6,7 +6,7 @@
 
 use crate::{
     config::LintConfig,
-    diagnostics::Diagnostic,
+    diagnostics::{Diagnostic, Fix},
     rules::{Validator, ValidatorMetadata},
     schemas::gemini_extension::{REQUIRED_FIELDS, is_valid_extension_name, parse_gemini_extension},
 };
@@ -119,19 +119,45 @@ impl Validator for GeminiExtensionValidator {
                     let has_separator = context_file.contains('/') || context_file.contains('\\');
                     if has_separator {
                         let line = find_key_line(content, "contextFileName").unwrap_or(1);
-                        diagnostics.push(
-                            Diagnostic::info(
-                                path_buf.clone(),
-                                line,
-                                0,
-                                "GM-008",
-                                t!(
-                                    "rules.gm_008.message",
-                                    description = t!("rules.gm_008.path_not_filename")
-                                ),
-                            )
-                            .with_suggestion(t!("rules.gm_008.suggestion")),
-                        );
+                        let mut diagnostic = Diagnostic::info(
+                            path_buf.clone(),
+                            line,
+                            0,
+                            "GM-008",
+                            t!(
+                                "rules.gm_008.message",
+                                description = t!("rules.gm_008.path_not_filename")
+                            ),
+                        )
+                        .with_suggestion(t!("rules.gm_008.suggestion"));
+
+                        // Strip directory prefix, keeping only the filename
+                        let filename_only = context_file
+                            .rsplit(['/', '\\'])
+                            .next()
+                            .unwrap_or(context_file);
+                        if !filename_only.is_empty() && filename_only != context_file.as_str() {
+                            if let Some((start, end)) =
+                                crate::rules::find_unique_json_string_value_span(
+                                    content,
+                                    "contextFileName",
+                                    context_file,
+                                )
+                            {
+                                diagnostic = diagnostic.with_fix(Fix::replace(
+                                    start,
+                                    end,
+                                    filename_only,
+                                    format!(
+                                        "Strip directory prefix from contextFileName to '{}'",
+                                        filename_only
+                                    ),
+                                    false,
+                                ));
+                            }
+                        }
+
+                        diagnostics.push(diagnostic);
                     }
                 }
             }
