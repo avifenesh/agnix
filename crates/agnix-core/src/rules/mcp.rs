@@ -636,8 +636,10 @@ fn validate_capability_keys(
 }
 
 fn validate_duplicate_server_names(path: &Path, content: &str, diagnostics: &mut Vec<Diagnostic>) {
-    for duplicate in collect_duplicate_mcp_server_names(content) {
-        let (line, col) = find_json_field_location(content, &duplicate);
+    let line_starts = compute_line_starts(content);
+
+    for (duplicate, duplicate_offset) in collect_duplicate_mcp_server_name_offsets(content) {
+        let (line, col) = line_col_at(duplicate_offset, &line_starts);
         diagnostics.push(
             Diagnostic::error(
                 path.to_path_buf(),
@@ -651,7 +653,7 @@ fn validate_duplicate_server_names(path: &Path, content: &str, diagnostics: &mut
     }
 }
 
-fn collect_duplicate_mcp_server_names(content: &str) -> Vec<String> {
+fn collect_duplicate_mcp_server_name_offsets(content: &str) -> Vec<(String, usize)> {
     use std::collections::HashSet;
 
     let bytes = content.as_bytes();
@@ -663,7 +665,7 @@ fn collect_duplicate_mcp_server_names(content: &str) -> Vec<String> {
     let mut depth = 1usize;
     let mut expecting_key = true;
     let mut seen = HashSet::new();
-    let mut duplicates = HashSet::new();
+    let mut duplicates = Vec::new();
 
     while idx < bytes.len() && depth > 0 {
         let ch = bytes[idx] as char;
@@ -671,7 +673,7 @@ fn collect_duplicate_mcp_server_names(content: &str) -> Vec<String> {
             let (raw, next_idx) = read_json_string_literal(content, idx);
             if depth == 1 && expecting_key {
                 if !seen.insert(raw.clone()) {
-                    duplicates.insert(raw);
+                    duplicates.push((raw, idx));
                 }
                 expecting_key = false;
             }
@@ -690,9 +692,7 @@ fn collect_duplicate_mcp_server_names(content: &str) -> Vec<String> {
         idx += 1;
     }
 
-    let mut result: Vec<String> = duplicates.into_iter().collect();
-    result.sort();
-    result
+    duplicates
 }
 
 fn read_json_string_literal(content: &str, start_quote_idx: usize) -> (String, usize) {
@@ -3047,7 +3047,17 @@ mod tests {
             }
         }"#;
         let diagnostics = validate(content);
-        assert!(diagnostics.iter().any(|d| d.rule == "MCP-023"));
+        let mcp_023: Vec<_> = diagnostics.iter().filter(|d| d.rule == "MCP-023").collect();
+        assert_eq!(mcp_023.len(), 1);
+
+        let duplicate_offset = content
+            .find(r#""dup": { "type": "stdio", "command": "python" }"#)
+            .expect("expected duplicate key occurrence");
+        let (expected_line, expected_col) =
+            line_col_at(duplicate_offset, &compute_line_starts(content));
+
+        assert_eq!(mcp_023[0].line, expected_line);
+        assert_eq!(mcp_023[0].column, expected_col);
     }
 
     #[test]
@@ -3060,7 +3070,44 @@ mod tests {
             }
         }"#;
         let diagnostics = validate(content);
-        assert!(diagnostics.iter().any(|d| d.rule == "MCP-023"));
+        let mcp_023: Vec<_> = diagnostics.iter().filter(|d| d.rule == "MCP-023").collect();
+        assert_eq!(mcp_023.len(), 1);
+
+        let duplicate_offset = content
+            .find(r#""dup": { "type": "stdio", "command": "python" }"#)
+            .expect("expected duplicate key occurrence");
+        let (expected_line, expected_col) =
+            line_col_at(duplicate_offset, &compute_line_starts(content));
+
+        assert_eq!(mcp_023[0].line, expected_line);
+        assert_eq!(mcp_023[0].column, expected_col);
+    }
+
+    #[test]
+    fn test_mcp_023_reports_each_duplicate_occurrence_location() {
+        let content = r#"{
+            "mcpServers": {
+                "dup": { "type": "stdio", "command": "node" },
+                "dup": { "type": "stdio", "command": "python" },
+                "dup": { "type": "stdio", "command": "ruby" }
+            }
+        }"#;
+        let diagnostics = validate(content);
+        let mcp_023: Vec<_> = diagnostics.iter().filter(|d| d.rule == "MCP-023").collect();
+        assert_eq!(mcp_023.len(), 2);
+
+        let second_duplicate_offset = content
+            .find(r#""dup": { "type": "stdio", "command": "python" }"#)
+            .expect("expected second duplicate key occurrence");
+        let third_duplicate_offset = content
+            .find(r#""dup": { "type": "stdio", "command": "ruby" }"#)
+            .expect("expected third duplicate key occurrence");
+        let line_starts = compute_line_starts(content);
+        let second_location = line_col_at(second_duplicate_offset, &line_starts);
+        let third_location = line_col_at(third_duplicate_offset, &line_starts);
+
+        assert_eq!((mcp_023[0].line, mcp_023[0].column), second_location);
+        assert_eq!((mcp_023[1].line, mcp_023[1].column), third_location);
     }
 
     #[test]
