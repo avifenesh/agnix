@@ -1078,14 +1078,19 @@ mod tests {
             "XP-004 read-error diagnostic should be Error level"
         );
 
-        assert_eq!(xp004_errors[0].line, 0, "Read-error diagnostic should have line 0");
+        assert_eq!(
+            xp004_errors[0].line, 0,
+            "Read-error diagnostic should have line 0"
+        );
         assert_eq!(
             xp004_errors[0].column, 0,
             "Read-error diagnostic should have column 0"
         );
 
         assert!(
-            xp004_errors[0].message.contains("Failed to read instruction file"),
+            xp004_errors[0]
+                .message
+                .contains("Failed to read instruction file"),
             "XP-004 message should describe the read failure, got: {}",
             xp004_errors[0].message
         );
