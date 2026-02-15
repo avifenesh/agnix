@@ -221,6 +221,7 @@ pub fn find_weak_imperative_language(content: &str) -> Vec<WeakLanguageInCritica
             }
         }
 
+        // TODO: Extract this newline-advancing logic into a helper function to reduce duplication
         // Advance byte_pos past this line plus its actual line terminator
         byte_pos += line.len();
         if content.as_bytes().get(byte_pos) == Some(&b'\r') {

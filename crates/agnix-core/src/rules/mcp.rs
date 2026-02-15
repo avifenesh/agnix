@@ -1429,12 +1429,7 @@ fn validate_server(
             if let Some((start, end)) =
                 crate::rules::find_unique_json_string_value_span(content, "url", url)
             {
-                let lower = url.to_ascii_lowercase();
-                let fixed_url = if let Some(idx) = lower.find("http://") {
-                    format!("{}https://{}", &url[..idx], &url[idx + 7..])
-                } else {
-                    url.replacen("http://", "https://", 1)
-                };
+                let fixed_url = format!("https://{}", &url[7..]);
                 diagnostic = diagnostic.with_fix(Fix::replace(
                     start,
                     end,
