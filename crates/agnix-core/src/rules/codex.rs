@@ -1102,4 +1102,31 @@ name = "test"
             cdx_000[0].message
         );
     }
+
+    // ===== Autofix Tests =====
+
+    #[test]
+    fn test_cdx_004_has_fix() {
+        let diagnostics = validate_config("totally_unknown_key = true");
+        let cdx_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CDX-004").collect();
+        assert_eq!(cdx_004.len(), 1);
+        assert!(cdx_004[0].has_fixes(), "CDX-004 should have fix");
+        assert!(!cdx_004[0].fixes[0].safe, "CDX-004 fix should be unsafe");
+        assert!(cdx_004[0].fixes[0].is_deletion());
+    }
+
+    #[test]
+    fn test_cdx_004_fix_application() {
+        let content = "model = \"o4-mini\"\ntotally_unknown_key = true\nnotify = true";
+        let diagnostics = validate_config(content);
+        let cdx_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CDX-004").collect();
+        assert_eq!(cdx_004.len(), 1);
+        assert!(cdx_004[0].has_fixes());
+        let fix = &cdx_004[0].fixes[0];
+        let mut fixed = content.to_string();
+        fixed.replace_range(fix.start_byte..fix.end_byte, &fix.replacement);
+        assert!(!fixed.contains("totally_unknown_key"));
+        assert!(fixed.contains("model"));
+        assert!(fixed.contains("notify"));
+    }
 }

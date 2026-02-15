@@ -642,3 +642,100 @@ fn test_ordering_safe_only_integration() {
         "Original content at 10 should remain"
     );
 }
+
+// ============================================================================
+// Round-trip tests for newly added fixes
+// ============================================================================
+
+#[test]
+fn test_e2e_pe_005_fix_removes_redundant_instruction() {
+    // PE-005 is in PromptValidator which runs on ClaudeMd file type
+    let content = "Line one.\nBe helpful and accurate.\nLine three.";
+    let path = Path::new("CLAUDE.md");
+    let config = LintConfig::default();
+    let registry = ValidatorRegistry::with_defaults();
+    let validators = registry.validators_for(FileType::ClaudeMd);
+
+    let mut diags = Vec::new();
+    for v in &validators {
+        diags.extend(v.validate(path, content, &config));
+    }
+    let pe_005: Vec<_> = diags.iter().filter(|d| d.rule == "PE-005" && d.has_fixes()).collect();
+    assert!(!pe_005.is_empty(), "PE-005 should fire with fix");
+
+    let fix = &pe_005[0].fixes[0];
+    let mut fixed = content.to_string();
+    fixed.replace_range(fix.start_byte..fix.end_byte, &fix.replacement);
+    assert_eq!(fixed, "Line one.\nLine three.");
+
+    // Re-validate - PE-005 should not fire on fixed content
+    let mut re_diags = Vec::new();
+    for v in &validators {
+        re_diags.extend(v.validate(path, &fixed, &config));
+    }
+    assert!(
+        !re_diags.iter().any(|d| d.rule == "PE-005"),
+        "PE-005 should not fire after fix"
+    );
+}
+
+#[test]
+fn test_e2e_cop_008_fix_removes_unknown_field() {
+    let content = "---\ndescription: Test agent\nunknown-field: true\n---\nTest body.\n";
+    let path = Path::new(".github/agents/test.agent.md");
+    let config = LintConfig::default();
+    let registry = ValidatorRegistry::with_defaults();
+    let validators = registry.validators_for(FileType::CopilotAgent);
+
+    let mut diags = Vec::new();
+    for v in &validators {
+        diags.extend(v.validate(path, content, &config));
+    }
+    let cop_008: Vec<_> = diags.iter().filter(|d| d.rule == "COP-008" && d.has_fixes()).collect();
+    assert!(!cop_008.is_empty(), "COP-008 should fire with fix");
+
+    let fix = &cop_008[0].fixes[0];
+    let mut fixed = content.to_string();
+    fixed.replace_range(fix.start_byte..fix.end_byte, &fix.replacement);
+
+    // Re-validate - COP-008 should not fire on fixed content
+    let mut re_diags = Vec::new();
+    for v in &validators {
+        re_diags.extend(v.validate(path, &fixed, &config));
+    }
+    assert!(
+        !re_diags.iter().any(|d| d.rule == "COP-008"),
+        "COP-008 should not fire after removing unknown field"
+    );
+}
+
+#[test]
+fn test_e2e_agm_001_fix_closes_code_block() {
+    let content = "# Project\n\n```python\ndef hello():\n    pass";
+    let path = Path::new("AGENTS.md");
+    let config = LintConfig::default();
+    let registry = ValidatorRegistry::with_defaults();
+    let validators = registry.validators_for(FileType::ClaudeMd);
+
+    let mut diags = Vec::new();
+    for v in &validators {
+        diags.extend(v.validate(path, content, &config));
+    }
+    let agm_001: Vec<_> = diags.iter().filter(|d| d.rule == "AGM-001" && d.has_fixes()).collect();
+    assert!(!agm_001.is_empty(), "AGM-001 should fire with fix");
+
+    let fix = &agm_001[0].fixes[0];
+    let mut fixed = content.to_string();
+    fixed.replace_range(fix.start_byte..fix.end_byte, &fix.replacement);
+    assert!(fixed.contains("```\n"), "Fixed content should have closing code fence");
+
+    // Re-validate - AGM-001 unclosed code block should not fire
+    let mut re_diags = Vec::new();
+    for v in &validators {
+        re_diags.extend(v.validate(path, &fixed, &config));
+    }
+    assert!(
+        !re_diags.iter().any(|d| d.rule == "AGM-001" && d.message.contains("Unclosed")),
+        "AGM-001 unclosed code block should not fire after fix"
+    );
+}

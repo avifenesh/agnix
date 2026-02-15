@@ -441,4 +441,17 @@ mod tests {
             "GM-004 should fire for empty command field"
         );
     }
+
+    // ===== Autofix Tests =====
+
+    #[test]
+    fn test_gm_009_unknown_key_has_fix() {
+        let content = "{\n  \"general\": {},\n  \"badKey\": true\n}";
+        let diagnostics = validate(content);
+        let gm_009: Vec<_> = diagnostics.iter().filter(|d| d.rule == "GM-009").collect();
+        assert_eq!(gm_009.len(), 1);
+        assert!(gm_009[0].has_fixes(), "GM-009 should have fix");
+        assert!(!gm_009[0].fixes[0].safe, "GM-009 fix should be unsafe");
+        assert!(gm_009[0].fixes[0].is_deletion());
+    }
 }

@@ -883,4 +883,62 @@ This is not a critical section.
         let pe_006: Vec<_> = diagnostics.iter().filter(|d| d.rule == "PE-006").collect();
         assert!(pe_006.is_empty(), "PE-006 should be disabled");
     }
+
+    // ===== Autofix Tests =====
+
+    #[test]
+    fn test_pe_003_has_fix() {
+        let content = "# Critical Rules\n\nYou should follow the style guide.";
+        let validator = PromptValidator;
+        let diagnostics =
+            validator.validate(Path::new("SKILL.md"), content, &LintConfig::default());
+
+        let pe_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "PE-003").collect();
+        assert_eq!(pe_003.len(), 1);
+        assert!(pe_003[0].has_fixes(), "PE-003 should have auto-fix");
+        assert!(!pe_003[0].fixes[0].safe, "PE-003 fix should be unsafe");
+        assert_eq!(pe_003[0].fixes[0].replacement, "must");
+    }
+
+    #[test]
+    fn test_pe_003_fix_replaces_consider_with_ensure() {
+        let content = "# Critical Rules\n\nConsider doing this.";
+        let validator = PromptValidator;
+        let diagnostics =
+            validator.validate(Path::new("SKILL.md"), content, &LintConfig::default());
+
+        let pe_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "PE-003").collect();
+        assert_eq!(pe_003.len(), 1);
+        assert!(pe_003[0].has_fixes());
+        assert_eq!(pe_003[0].fixes[0].replacement, "ensure");
+    }
+
+    #[test]
+    fn test_pe_005_has_fix() {
+        let content = "Be helpful and accurate when responding.";
+        let validator = PromptValidator;
+        let diagnostics =
+            validator.validate(Path::new("SKILL.md"), content, &LintConfig::default());
+
+        let pe_005: Vec<_> = diagnostics.iter().filter(|d| d.rule == "PE-005").collect();
+        assert_eq!(pe_005.len(), 1);
+        assert!(pe_005[0].has_fixes(), "PE-005 should have auto-fix");
+        assert!(!pe_005[0].fixes[0].safe, "PE-005 fix should be unsafe");
+        assert!(pe_005[0].fixes[0].is_deletion(), "PE-005 fix should be a deletion");
+    }
+
+    #[test]
+    fn test_pe_005_fix_application() {
+        let content = "Line one.\nBe helpful and accurate.\nLine three.";
+        let validator = PromptValidator;
+        let diagnostics =
+            validator.validate(Path::new("SKILL.md"), content, &LintConfig::default());
+
+        let pe_005: Vec<_> = diagnostics.iter().filter(|d| d.rule == "PE-005").collect();
+        assert_eq!(pe_005.len(), 1);
+        let fix = &pe_005[0].fixes[0];
+        let mut fixed = content.to_string();
+        fixed.replace_range(fix.start_byte..fix.end_byte, &fix.replacement);
+        assert_eq!(fixed, "Line one.\nLine three.");
+    }
 }

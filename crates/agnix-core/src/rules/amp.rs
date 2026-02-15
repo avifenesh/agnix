@@ -753,4 +753,31 @@ mod tests {
         let diagnostics = validate_with_config(".amp/settings.json", "{ invalid json", &config);
         assert!(diagnostics.is_empty());
     }
+
+    // ===== Autofix Tests =====
+
+    #[test]
+    fn test_amp_001_unknown_key_has_fix() {
+        let content = "---\nname: security\ndescription: Security checks\nfoo: bar\n---\n# Body";
+        let diagnostics = validate(".agents/checks/security.md", content);
+        let amp_001: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "AMP-001" && d.message.contains("Unknown"))
+            .collect();
+        assert_eq!(amp_001.len(), 1);
+        assert!(amp_001[0].has_fixes(), "AMP-001 unknown key should have fix");
+        assert!(!amp_001[0].fixes[0].safe, "AMP-001 fix should be unsafe");
+        assert!(amp_001[0].fixes[0].is_deletion());
+    }
+
+    #[test]
+    fn test_amp_004_unknown_key_has_fix() {
+        let content = "{\n  \"model\": \"x\",\n  \"badKey\": true\n}";
+        let diagnostics = validate(".amp/settings.json", content);
+        let amp_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AMP-004").collect();
+        assert_eq!(amp_004.len(), 1);
+        assert!(amp_004[0].has_fixes(), "AMP-004 should have fix");
+        assert!(!amp_004[0].fixes[0].safe, "AMP-004 fix should be unsafe");
+        assert!(amp_004[0].fixes[0].is_deletion());
+    }
 }

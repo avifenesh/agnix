@@ -1803,4 +1803,105 @@ jobs:
                 .contains("Invalid copilot-setup-steps workflow YAML")
         }));
     }
+
+    // ===== Autofix Tests for New Fixes =====
+
+    #[test]
+    fn test_cop_008_has_fix() {
+        let diagnostics = validate_agent(
+            r#"---
+description: Review pull requests
+unknown-field: true
+---
+Review pull requests.
+"#,
+        );
+        let cop_008: Vec<_> = diagnostics.iter().filter(|d| d.rule == "COP-008").collect();
+        assert_eq!(cop_008.len(), 1);
+        assert!(cop_008[0].has_fixes(), "COP-008 should have auto-fix");
+        assert!(cop_008[0].fixes[0].safe, "COP-008 fix should be safe");
+        assert!(cop_008[0].fixes[0].is_deletion(), "COP-008 fix should be a deletion");
+    }
+
+    #[test]
+    fn test_cop_010_has_fix() {
+        let diagnostics = validate_agent(
+            r#"---
+description: Review pull requests
+infer: true
+---
+Review pull requests.
+"#,
+        );
+        let cop_010: Vec<_> = diagnostics.iter().filter(|d| d.rule == "COP-010").collect();
+        assert_eq!(cop_010.len(), 1);
+        assert!(cop_010[0].has_fixes(), "COP-010 should have auto-fix");
+        assert!(cop_010[0].fixes[0].safe, "COP-010 fix should be safe");
+    }
+
+    #[test]
+    fn test_cop_012_has_fix() {
+        let diagnostics = validate_agent(
+            r#"---
+description: Review pull requests
+model: gpt-4
+---
+Review pull requests.
+"#,
+        );
+        let cop_012: Vec<_> = diagnostics.iter().filter(|d| d.rule == "COP-012").collect();
+        assert_eq!(cop_012.len(), 1);
+        assert!(cop_012[0].has_fixes(), "COP-012 should have auto-fix");
+        assert!(cop_012[0].fixes[0].safe, "COP-012 fix should be safe");
+    }
+
+    #[test]
+    fn test_cop_014_has_fix() {
+        let diagnostics = validate_prompt(
+            r#"---
+description: Refactor selected code
+mystery: true
+---
+Refactor the selected code.
+"#,
+        );
+        let cop_014: Vec<_> = diagnostics.iter().filter(|d| d.rule == "COP-014").collect();
+        assert_eq!(cop_014.len(), 1);
+        assert!(cop_014[0].has_fixes(), "COP-014 should have auto-fix");
+        assert!(cop_014[0].fixes[0].safe, "COP-014 fix should be safe");
+    }
+
+    #[test]
+    fn test_cop_009_has_fix_for_case_mismatch() {
+        let diagnostics = validate_agent(
+            r#"---
+description: Review pull requests
+target: VSCode
+---
+Review pull requests.
+"#,
+        );
+        let cop_009: Vec<_> = diagnostics.iter().filter(|d| d.rule == "COP-009").collect();
+        assert_eq!(cop_009.len(), 1);
+        assert!(cop_009[0].has_fixes(), "COP-009 should have auto-fix for case mismatch");
+        assert!(!cop_009[0].fixes[0].safe, "COP-009 fix should be unsafe");
+        assert!(cop_009[0].fixes[0].replacement.contains("vscode"));
+    }
+
+    #[test]
+    fn test_cop_015_has_fix_for_case_mismatch() {
+        let diagnostics = validate_prompt(
+            r#"---
+description: Refactor selected code
+agent: Always
+---
+Refactor the selected code.
+"#,
+        );
+        let cop_015: Vec<_> = diagnostics.iter().filter(|d| d.rule == "COP-015").collect();
+        assert_eq!(cop_015.len(), 1);
+        assert!(cop_015[0].has_fixes(), "COP-015 should have auto-fix for case mismatch");
+        assert!(!cop_015[0].fixes[0].safe, "COP-015 fix should be unsafe");
+        assert!(cop_015[0].fixes[0].replacement.contains("always"));
+    }
 }
