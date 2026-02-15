@@ -171,22 +171,31 @@ fn validate_custom_agent(path: &Path, content: &str, config: &LintConfig) -> Vec
     if let Some(parsed) = &parsed {
         if config.is_rule_enabled("COP-008") {
             for unknown in &parsed.unknown_keys {
-                diagnostics.push(
-                    Diagnostic::warning(
-                        path.to_path_buf(),
-                        unknown.line,
-                        unknown.column,
-                        "COP-008",
-                        format!(
-                            "Custom agent has unsupported frontmatter field '{}'",
-                            unknown.key
-                        ),
-                    )
-                    .with_suggestion(format!(
-                        "Remove unknown frontmatter field '{}'.",
+                let mut diagnostic = Diagnostic::warning(
+                    path.to_path_buf(),
+                    unknown.line,
+                    unknown.column,
+                    "COP-008",
+                    format!(
+                        "Custom agent has unsupported frontmatter field '{}'",
                         unknown.key
-                    )),
-                );
+                    ),
+                )
+                .with_suggestion(format!(
+                    "Remove unknown frontmatter field '{}'.",
+                    unknown.key
+                ));
+
+                if let Some((start, end)) = line_byte_range(content, unknown.line) {
+                    diagnostic = diagnostic.with_fix(Fix::delete(
+                        start,
+                        end,
+                        format!("Remove unknown agent field '{}'", unknown.key),
+                        true,
+                    ));
+                }
+
+                diagnostics.push(diagnostic);
             }
         }
 
@@ -196,37 +205,68 @@ fn validate_custom_agent(path: &Path, content: &str, config: &LintConfig) -> Vec
                     const VALID_TARGETS: &[&str] = &["vscode", "github-copilot"];
                     if !VALID_TARGETS.contains(&target.as_str()) {
                         let line = frontmatter_key_line(&parsed.raw, parsed.start_line, "target:");
-                        diagnostics.push(
-                            Diagnostic::error(
-                                path.to_path_buf(),
-                                line,
-                                0,
-                                "COP-009",
-                                format!(
-                                    "Invalid custom agent target '{}'; expected 'vscode' or 'github-copilot'",
-                                    target
-                                ),
-                            )
-                            .with_suggestion("Set target to 'vscode' or 'github-copilot'."),
-                        );
+                        let mut diagnostic = Diagnostic::error(
+                            path.to_path_buf(),
+                            line,
+                            0,
+                            "COP-009",
+                            format!(
+                                "Invalid custom agent target '{}'; expected 'vscode' or 'github-copilot'",
+                                target
+                            ),
+                        )
+                        .with_suggestion("Set target to 'vscode' or 'github-copilot'.");
+
+                        if let Some(suggested) =
+                            super::find_closest_value(target.as_str(), VALID_TARGETS)
+                        {
+                            if let Some((start, end)) =
+                                crate::rules::find_yaml_value_range(content, parsed, "target", true)
+                            {
+                                let slice = content.get(start..end).unwrap_or("");
+                                let replacement = if slice.starts_with('"') {
+                                    format!("\"{}\"", suggested)
+                                } else if slice.starts_with('\'') {
+                                    format!("'{}'", suggested)
+                                } else {
+                                    suggested.to_string()
+                                };
+                                diagnostic = diagnostic.with_fix(Fix::replace(
+                                    start,
+                                    end,
+                                    replacement,
+                                    format!("Replace target with '{}'", suggested),
+                                    false,
+                                ));
+                            }
+                        }
+
+                        diagnostics.push(diagnostic);
                     }
                 }
             }
 
             if config.is_rule_enabled("COP-010") && schema.infer.is_some() {
                 let line = frontmatter_key_line(&parsed.raw, parsed.start_line, "infer:");
-                diagnostics.push(
-                    Diagnostic::warning(
-                        path.to_path_buf(),
-                        line,
-                        0,
-                        "COP-010",
-                        "Custom agent uses deprecated 'infer' field",
-                    )
-                    .with_suggestion(
-                        "Remove 'infer' and use user-invokable custom agents instead.",
-                    ),
-                );
+                let mut diagnostic = Diagnostic::warning(
+                    path.to_path_buf(),
+                    line,
+                    0,
+                    "COP-010",
+                    "Custom agent uses deprecated 'infer' field",
+                )
+                .with_suggestion("Remove 'infer' and use user-invokable custom agents instead.");
+
+                if let Some((start, end)) = line_byte_range(content, line) {
+                    diagnostic = diagnostic.with_fix(Fix::delete(
+                        start,
+                        end,
+                        "Remove deprecated 'infer' field",
+                        true,
+                    ));
+                }
+
+                diagnostics.push(diagnostic);
             }
 
             let applies_to_github = !matches!(schema.target.as_deref(), Some("vscode"));
@@ -244,22 +284,31 @@ fn validate_custom_agent(path: &Path, content: &str, config: &LintConfig) -> Vec
                 for (prefix, present, field_name) in unsupported {
                     if present {
                         let line = frontmatter_key_line(&parsed.raw, parsed.start_line, prefix);
-                        diagnostics.push(
-                            Diagnostic::warning(
-                                path.to_path_buf(),
-                                line,
-                                0,
-                                "COP-012",
-                                format!(
-                                    "Field '{}' is unsupported on GitHub.com custom agents",
-                                    field_name
-                                ),
-                            )
-                            .with_suggestion(format!(
-                                "Remove '{}' for GitHub.com compatibility.",
+                        let mut diagnostic = Diagnostic::warning(
+                            path.to_path_buf(),
+                            line,
+                            0,
+                            "COP-012",
+                            format!(
+                                "Field '{}' is unsupported on GitHub.com custom agents",
                                 field_name
-                            )),
-                        );
+                            ),
+                        )
+                        .with_suggestion(format!(
+                            "Remove '{}' for GitHub.com compatibility.",
+                            field_name
+                        ));
+
+                        if let Some((start, end)) = line_byte_range(content, line) {
+                            diagnostic = diagnostic.with_fix(Fix::delete(
+                                start,
+                                end,
+                                format!("Remove unsupported field '{}'", field_name),
+                                true,
+                            ));
+                        }
+
+                        diagnostics.push(diagnostic);
                     }
                 }
             }
@@ -313,22 +362,31 @@ fn validate_reusable_prompt(path: &Path, content: &str, config: &LintConfig) -> 
     if let Some(parsed) = &parsed {
         if config.is_rule_enabled("COP-014") {
             for unknown in &parsed.unknown_keys {
-                diagnostics.push(
-                    Diagnostic::warning(
-                        path.to_path_buf(),
-                        unknown.line,
-                        unknown.column,
-                        "COP-014",
-                        format!(
-                            "Prompt file has unsupported frontmatter field '{}'",
-                            unknown.key
-                        ),
-                    )
-                    .with_suggestion(format!(
-                        "Remove unknown frontmatter field '{}'.",
+                let mut diagnostic = Diagnostic::warning(
+                    path.to_path_buf(),
+                    unknown.line,
+                    unknown.column,
+                    "COP-014",
+                    format!(
+                        "Prompt file has unsupported frontmatter field '{}'",
                         unknown.key
-                    )),
-                );
+                    ),
+                )
+                .with_suggestion(format!(
+                    "Remove unknown frontmatter field '{}'.",
+                    unknown.key
+                ));
+
+                if let Some((start, end)) = line_byte_range(content, unknown.line) {
+                    diagnostic = diagnostic.with_fix(Fix::delete(
+                        start,
+                        end,
+                        format!("Remove unknown prompt field '{}'", unknown.key),
+                        true,
+                    ));
+                }
+
+                diagnostics.push(diagnostic);
             }
         }
 
@@ -337,19 +395,43 @@ fn validate_reusable_prompt(path: &Path, content: &str, config: &LintConfig) -> 
                 if let Some(agent_mode) = &schema.agent {
                     if !VALID_AGENT_MODES.contains(&agent_mode.as_str()) {
                         let line = frontmatter_key_line(&parsed.raw, parsed.start_line, "agent:");
-                        diagnostics.push(
-                            Diagnostic::error(
-                                path.to_path_buf(),
-                                line,
-                                0,
-                                "COP-015",
-                                format!(
-                                    "Invalid prompt agent mode '{}'; expected one of: none, ask, always",
-                                    agent_mode
-                                ),
-                            )
-                            .with_suggestion("Use agent mode 'none', 'ask', or 'always'."),
-                        );
+                        let mut diagnostic = Diagnostic::error(
+                            path.to_path_buf(),
+                            line,
+                            0,
+                            "COP-015",
+                            format!(
+                                "Invalid prompt agent mode '{}'; expected one of: none, ask, always",
+                                agent_mode
+                            ),
+                        )
+                        .with_suggestion("Use agent mode 'none', 'ask', or 'always'.");
+
+                        if let Some(suggested) =
+                            super::find_closest_value(agent_mode.as_str(), VALID_AGENT_MODES)
+                        {
+                            if let Some((start, end)) =
+                                crate::rules::find_yaml_value_range(content, parsed, "agent", true)
+                            {
+                                let slice = content.get(start..end).unwrap_or("");
+                                let replacement = if slice.starts_with('"') {
+                                    format!("\"{}\"", suggested)
+                                } else if slice.starts_with('\'') {
+                                    format!("'{}'", suggested)
+                                } else {
+                                    suggested.to_string()
+                                };
+                                diagnostic = diagnostic.with_fix(Fix::replace(
+                                    start,
+                                    end,
+                                    replacement,
+                                    format!("Replace agent mode with '{}'", suggested),
+                                    false,
+                                ));
+                            }
+                        }
+
+                        diagnostics.push(diagnostic);
                     }
                 }
             }
@@ -1712,5 +1794,115 @@ jobs:
             d.message
                 .contains("Invalid copilot-setup-steps workflow YAML")
         }));
+    }
+
+    // ===== Autofix Tests for New Fixes =====
+
+    #[test]
+    fn test_cop_008_has_fix() {
+        let diagnostics = validate_agent(
+            r#"---
+description: Review pull requests
+unknown-field: true
+---
+Review pull requests.
+"#,
+        );
+        let cop_008: Vec<_> = diagnostics.iter().filter(|d| d.rule == "COP-008").collect();
+        assert_eq!(cop_008.len(), 1);
+        assert!(cop_008[0].has_fixes(), "COP-008 should have auto-fix");
+        assert!(cop_008[0].fixes[0].safe, "COP-008 fix should be safe");
+        assert!(
+            cop_008[0].fixes[0].is_deletion(),
+            "COP-008 fix should be a deletion"
+        );
+    }
+
+    #[test]
+    fn test_cop_010_has_fix() {
+        let diagnostics = validate_agent(
+            r#"---
+description: Review pull requests
+infer: true
+---
+Review pull requests.
+"#,
+        );
+        let cop_010: Vec<_> = diagnostics.iter().filter(|d| d.rule == "COP-010").collect();
+        assert_eq!(cop_010.len(), 1);
+        assert!(cop_010[0].has_fixes(), "COP-010 should have auto-fix");
+        assert!(cop_010[0].fixes[0].safe, "COP-010 fix should be safe");
+    }
+
+    #[test]
+    fn test_cop_012_has_fix() {
+        let diagnostics = validate_agent(
+            r#"---
+description: Review pull requests
+model: gpt-4
+---
+Review pull requests.
+"#,
+        );
+        let cop_012: Vec<_> = diagnostics.iter().filter(|d| d.rule == "COP-012").collect();
+        assert_eq!(cop_012.len(), 1);
+        assert!(cop_012[0].has_fixes(), "COP-012 should have auto-fix");
+        assert!(cop_012[0].fixes[0].safe, "COP-012 fix should be safe");
+    }
+
+    #[test]
+    fn test_cop_014_has_fix() {
+        let diagnostics = validate_prompt(
+            r#"---
+description: Refactor selected code
+mystery: true
+---
+Refactor the selected code.
+"#,
+        );
+        let cop_014: Vec<_> = diagnostics.iter().filter(|d| d.rule == "COP-014").collect();
+        assert_eq!(cop_014.len(), 1);
+        assert!(cop_014[0].has_fixes(), "COP-014 should have auto-fix");
+        assert!(cop_014[0].fixes[0].safe, "COP-014 fix should be safe");
+    }
+
+    #[test]
+    fn test_cop_009_has_fix_for_case_mismatch() {
+        let diagnostics = validate_agent(
+            r#"---
+description: Review pull requests
+target: VSCode
+---
+Review pull requests.
+"#,
+        );
+        let cop_009: Vec<_> = diagnostics.iter().filter(|d| d.rule == "COP-009").collect();
+        assert_eq!(cop_009.len(), 1);
+        assert!(
+            cop_009[0].has_fixes(),
+            "COP-009 should have auto-fix for case mismatch"
+        );
+        assert!(!cop_009[0].fixes[0].safe, "COP-009 fix should be unsafe");
+        assert!(cop_009[0].fixes[0].replacement.contains("vscode"));
+    }
+
+    #[test]
+    fn test_cop_015_has_fix_for_case_mismatch() {
+        let diagnostics = validate_prompt(
+            r#"---
+description: Refactor selected code
+agent: Always
+---
+Refactor the selected code.
+"#,
+        );
+        let cop_015: Vec<_> = diagnostics.iter().filter(|d| d.rule == "COP-015").collect();
+        assert_eq!(cop_015.len(), 1);
+        assert!(
+            cop_015[0].has_fixes(),
+            "COP-015 should have auto-fix for case mismatch"
+        );
+        assert!(!cop_015[0].fixes[0].safe, "COP-015 fix should be unsafe");
+        assert!(cop_015[0].fixes[0].replacement.contains("always"));
     }
 }

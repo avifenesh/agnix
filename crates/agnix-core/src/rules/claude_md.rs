@@ -84,7 +84,7 @@ impl Validator for ClaudeMdValidator {
                         inst.start_byte,
                         inst.end_byte,
                         t!("rules.cc_mem_005.fix"),
-                        true,
+                        false,
                     )),
                 );
             }
@@ -748,7 +748,7 @@ You should consider this approach.
 
         let fix = &mem005[0].fixes[0];
         assert!(fix.is_deletion());
-        assert!(fix.safe);
+        assert!(!fix.safe);
     }
 
     #[test]

@@ -11,11 +11,11 @@
 
 use crate::{
     config::LintConfig,
-    diagnostics::Diagnostic,
+    diagnostics::{Diagnostic, Fix},
     fs::FileSystem,
     parsers::markdown::{extract_imports, extract_markdown_links},
     parsers::{Import, ImportCache},
-    rules::{Validator, ValidatorMetadata},
+    rules::{Validator, ValidatorMetadata, line_byte_range},
 };
 use rust_i18n::t;
 use std::collections::{HashMap, HashSet};
@@ -120,16 +120,25 @@ impl Validator for ImportsValidator {
                     .unwrap_or(&import.path)
                     .to_string();
                 if !seen_paths.insert(normalized) {
-                    diagnostics.push(
-                        Diagnostic::warning(
-                            path.to_path_buf(),
-                            import.line,
-                            import.column,
-                            "REF-003",
-                            t!("rules.ref_003.message", path = import.path.as_str()),
-                        )
-                        .with_suggestion(t!("rules.ref_003.suggestion")),
-                    );
+                    let mut diagnostic = Diagnostic::warning(
+                        path.to_path_buf(),
+                        import.line,
+                        import.column,
+                        "REF-003",
+                        t!("rules.ref_003.message", path = import.path.as_str()),
+                    )
+                    .with_suggestion(t!("rules.ref_003.suggestion"));
+
+                    if let Some((start, end)) = line_byte_range(content, import.line) {
+                        diagnostic = diagnostic.with_fix(Fix::delete(
+                            start,
+                            end,
+                            format!("Remove duplicate import '{}'", import.path),
+                            false,
+                        ));
+                    }
+
+                    diagnostics.push(diagnostic);
                 }
             }
         }
@@ -1545,6 +1554,33 @@ mod tests {
         let ref_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "REF-003").collect();
         assert_eq!(ref_003.len(), 1, "Should detect one duplicate import");
         assert!(ref_003[0].message.contains("target.md"));
+    }
+
+    #[test]
+    fn test_ref_003_has_fix() {
+        let temp = TempDir::new().unwrap();
+        let target = temp.path().join("target.md");
+        let file_path = temp.path().join("test.md");
+        fs::write(&target, "Target content").unwrap();
+        fs::write(&file_path, "@target.md\n@target.md").unwrap();
+
+        let validator = ImportsValidator;
+        let diagnostics =
+            validator.validate(&file_path, "@target.md\n@target.md", &LintConfig::default());
+
+        let ref_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "REF-003").collect();
+        assert_eq!(ref_003.len(), 1);
+        assert!(
+            ref_003[0].has_fixes(),
+            "REF-003 should have auto-fix to delete duplicate import"
+        );
+        let fix = &ref_003[0].fixes[0];
+        assert!(!fix.safe, "REF-003 fix should be unsafe");
+        // The fix should be a deletion (replacement is empty)
+        assert!(
+            fix.replacement.is_empty(),
+            "Fix should delete the duplicate line"
+        );
     }
 
     #[test]

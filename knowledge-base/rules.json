@@ -52,7 +52,8 @@
         }
       },
       "fix": {
-        "autofix": false
+        "autofix": true,
+        "fix_safety": "safe"
       },
       "good_example": "# Project\n\n```python\ndef hello():\n    print(\"world\")\n```\n\nSee [docs](https://example.com) for more.",
       "bad_example": "# Project\n\n```python\ndef hello():\n    print(\"world\")\n\nThis code block is never closed."
@@ -211,7 +212,8 @@
         }
       },
       "fix": {
-        "autofix": false
+        "autofix": true,
+        "fix_safety": "safe"
       },
       "good_example": "---\nname: security-review\ndescription: Review security-sensitive changes\nseverity-default: high\ntools:\n  - rg\n---\n# Security Review\n\nReview auth, secrets, and shell execution paths.",
       "bad_example": "---\ndescription: Review security-sensitive changes\nunknownKey: true\n---\n# Security Review\n\nMissing required name field."
@@ -238,7 +240,8 @@
         }
       },
       "fix": {
-        "autofix": false
+        "autofix": true,
+        "fix_safety": "safe"
       },
       "good_example": "---\nname: security-review\nseverity-default: high\n---\n# Security Review\n\nReview auth and secret handling.",
       "bad_example": "---\nname: security-review\nseverity-default: urgent\n---\n# Security Review\n\nInvalid severity-default value."
@@ -292,7 +295,8 @@
         }
       },
       "fix": {
-        "autofix": false
+        "autofix": true,
+        "fix_safety": "safe"
       },
       "good_example": "{\n  \"model\": \"amp-default\",\n  \"notify\": true\n}",
       "bad_example": "{\n  \"model\": \"amp-default\",\n  \"unknownKey\": true\n}"
@@ -347,7 +351,8 @@
         }
       },
       "fix": {
-        "autofix": false
+        "autofix": true,
+        "fix_safety": "safe"
       },
       "good_example": "---\nname: deploy-app\ndescription: Use when deploying the application to production\n---\nRun the deploy script with the correct environment variables.",
       "bad_example": "No frontmatter here.\nJust plain markdown content without YAML delimiters."
@@ -374,7 +379,8 @@
         }
       },
       "fix": {
-        "autofix": false
+        "autofix": true,
+        "fix_safety": "safe"
       },
       "good_example": "---\nname: lint-code\ndescription: Use when linting the codebase\n---\nRun eslint on all source files.",
       "bad_example": "---\ndescription: Use when linting the codebase\n---\nRun eslint on all source files."
@@ -401,7 +407,8 @@
         }
       },
       "fix": {
-        "autofix": false
+        "autofix": true,
+        "fix_safety": "safe"
       },
       "good_example": "---\nname: lint-code\ndescription: Use when linting the codebase\n---\nRun eslint on all source files.",
       "bad_example": "---\nname: lint-code\n---\nRun eslint on all source files."
@@ -566,7 +573,8 @@
         }
       },
       "fix": {
-        "autofix": false
+        "autofix": true,
+        "fix_safety": "safe"
       },
       "good_example": "---\nname: review-pr\ndescription: Use when reviewing a pull request for issues\n---\nCheck the PR for bugs.",
       "bad_example": "---\nname: review-pr\ndescription: Use when reviewing a <pull-request> for <issues>\n---\nCheck the PR for bugs."
@@ -867,7 +875,8 @@
         }
       },
       "fix": {
-        "autofix": false
+        "autofix": true,
+        "fix_safety": "safe"
       },
       "good_example": "---\nname: code-reviewer\ndescription: Reviews pull requests for quality\n---\nReview code changes and provide feedback.",
       "bad_example": "---\ndescription: Reviews pull requests for quality\n---\nReview code changes and provide feedback."
@@ -894,7 +903,8 @@
         }
       },
       "fix": {
-        "autofix": false
+        "autofix": true,
+        "fix_safety": "safe"
       },
       "good_example": "---\nname: code-reviewer\ndescription: Reviews pull requests for quality\n---\nReview code changes and provide feedback.",
       "bad_example": "---\nname: code-reviewer\n---\nReview code changes and provide feedback."
@@ -1195,7 +1205,8 @@
         }
       },
       "fix": {
-        "autofix": false
+        "autofix": true,
+        "fix_safety": "unsafe"
       },
       "good_example": "---\nname: my-agent\ndescription: Agent with valid skill names\nskills:\n  - code-review\n  - deploy-prod\n---\nAgent instructions.",
       "bad_example": "---\nname: my-agent\ndescription: Agent with invalid skill name format\nskills:\n  - Code_Review\n  - --bad-name\n---\nAgent instructions."
@@ -1332,7 +1343,8 @@
         }
       },
       "fix": {
-        "autofix": false
+        "autofix": true,
+        "fix_safety": "safe"
       },
       "good_example": "{\n  \"hooks\": {\n    \"Stop\": [\n      {\n        \"hooks\": [\n          { \"type\": \"command\", \"command\": \"echo done\", \"timeout\": 30 }\n        ]\n      }\n    ]\n  }\n}",
       "bad_example": "{\n  \"hooks\": {\n    \"Stop\": [\n      {\n        \"hooks\": [\n          { \"command\": \"echo missing type field\" }\n        ]\n      }\n    ]\n  }\n}"
@@ -1467,7 +1479,8 @@
         }
       },
       "fix": {
-        "autofix": false
+        "autofix": true,
+        "fix_safety": "safe"
       },
       "good_example": "{\n  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Bash\",\n        \"hooks\": [\n          { \"type\": \"command\", \"command\": \"echo ok\", \"timeout\": 30 }\n        ]\n      }\n    ]\n  }\n}",
       "bad_example": "{\n  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Bash\",\n        \"hooks\": [\n          { \"type\": \"command\", \"command\": \"echo ok\" }\n        ]\n      }\n    ]\n  }\n}"
@@ -1577,7 +1590,8 @@
         }
       },
       "fix": {
-        "autofix": false
+        "autofix": true,
+        "fix_safety": "safe"
       },
       "good_example": "{\n  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Bash\",\n        \"hooks\": [\n          { \"type\": \"command\", \"command\": \"echo ok\", \"timeout\": 30 }\n        ]\n      }\n    ]\n  }\n}",
       "bad_example": "{\n  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Bash\",\n        \"hooks\": [\n          { \"type\": \"command\", \"command\": \"echo ok\", \"once\": true, \"timeout\": 30 }\n        ]\n      }\n    ]\n  }\n}"
@@ -1660,7 +1674,8 @@
         }
       },
       "fix": {
-        "autofix": false
+        "autofix": true,
+        "fix_safety": "safe"
       },
       "good_example": "{\n  \"hooks\": {\n    \"Stop\": [\n      {\n        \"hooks\": [\n          { \"type\": \"prompt\", \"prompt\": \"Summarize: $ARGUMENTS\", \"timeout\": 30 }\n        ]\n      }\n    ]\n  }\n}",
       "bad_example": "{\n  \"hooks\": {\n    \"Stop\": [\n      {\n        \"hooks\": [\n          { \"type\": \"prompt\", \"prompt\": \"Summarize what was done\", \"timeout\": 30 }\n        ]\n      }\n    ]\n  }\n}"
@@ -2123,7 +2138,8 @@
         }
       },
       "fix": {
-        "autofix": false
+        "autofix": true,
+        "fix_safety": "safe"
       },
       "good_example": "{\n  \"name\": \"my-plugin\",\n  \"description\": \"A useful plugin\",\n  \"version\": \"1.0.0\"\n}",
       "bad_example": "{\n  \"name\": \"my-plugin\",\n  \"description\": \"A useful plugin\",\n  \"version\": \"1.0\"\n}"
@@ -2481,7 +2497,8 @@
         }
       },
       "fix": {
-        "autofix": false
+        "autofix": true,
+        "fix_safety": "unsafe"
       },
       "good_example": "---\nname: deploy-staging\ndescription: Use when deploying to staging environment\ndisable-model-invocation: true\n---\nDeploy the application to staging.",
       "bad_example": "---\nname: deploy-staging\ndescription: Use when deploying to staging environment\n---\nDeploy the application to staging."
@@ -2645,7 +2662,8 @@
         }
       },
       "fix": {
-        "autofix": false
+        "autofix": true,
+        "fix_safety": "unsafe"
       },
       "good_example": "---\nname: greet-user\ndescription: Use when greeting a user by name\nargument-hint: Enter the user's name\n---\nGreet the user: Hello, $ARGUMENTS!",
       "bad_example": "---\nname: greet-user\ndescription: Use when greeting a user by name\nargument-hint: Enter the user's name\n---\nGreet the user with a friendly message."
@@ -2919,7 +2937,8 @@
         }
       },
       "fix": {
-        "autofix": false
+        "autofix": true,
+        "fix_safety": "safe"
       },
       "good_example": "model = \"o4-mini\"\napprovalMode = \"suggest\"",
       "bad_example": "unknownKey = true"
@@ -3303,7 +3322,8 @@
         }
       },
       "fix": {
-        "autofix": false
+        "autofix": true,
+        "fix_safety": "safe"
       },
       "good_example": "---\ndescription: Review pull requests\ntarget: vscode\n---\nReview pull requests.",
       "bad_example": "---\ndescription: Review pull requests\nmystery-field: true\n---\nReview pull requests."
@@ -3330,7 +3350,8 @@
         }
       },
       "fix": {
-        "autofix": false
+        "autofix": true,
+        "fix_safety": "unsafe"
       },
       "good_example": "---\ndescription: Review pull requests\ntarget: vscode\n---\nReview pull requests.",
       "bad_example": "---\ndescription: Review pull requests\ntarget: desktop\n---\nReview pull requests."
@@ -3357,7 +3378,8 @@
         }
       },
       "fix": {
-        "autofix": false
+        "autofix": true,
+        "fix_safety": "safe"
       },
       "good_example": "---\ndescription: Review pull requests\n---\nReview pull requests.",
       "bad_example": "---\ndescription: Review pull requests\ninfer: true\n---\nReview pull requests."
@@ -3411,7 +3433,8 @@
         }
       },
       "fix": {
-        "autofix": false
+        "autofix": true,
+        "fix_safety": "safe"
       },
       "good_example": "---\ndescription: Review pull requests\n---\nReview pull requests.",
       "bad_example": "---\ndescription: Review pull requests\nmodel: gpt-4.1\nargument-hint: branch-name\n---\nReview pull requests."
@@ -3465,7 +3488,8 @@
         }
       },
       "fix": {
-        "autofix": false
+        "autofix": true,
+        "fix_safety": "safe"
       },
       "good_example": "---\ndescription: Refactor selected code\nagent: ask\n---\nRefactor the selected code.",
       "bad_example": "---\ndescription: Refactor selected code\nunknown-option: true\n---\nRefactor the selected code."
@@ -3492,7 +3516,8 @@
         }
       },
       "fix": {
-        "autofix": false
+        "autofix": true,
+        "fix_safety": "safe"
       },
       "good_example": "---\ndescription: Refactor selected code\nagent: ask\n---\nRefactor the selected code.",
       "bad_example": "---\ndescription: Refactor selected code\nagent: maybe\n---\nRefactor the selected code."
@@ -3903,7 +3928,8 @@
         }
       },
       "fix": {
-        "autofix": false
+        "autofix": true,
+        "fix_safety": "safe"
       },
       "good_example": "{\"version\":1,\"hooks\":{\"sessionStart\":[{\"type\":\"command\",\"command\":\"echo start\"}]}}",
       "bad_example": "{\"version\":1,\"hooks\":{\"unknownEvent\":[{\"type\":\"command\",\"command\":\"echo start\"}]}}"
@@ -3957,7 +3983,8 @@
         }
       },
       "fix": {
-        "autofix": false
+        "autofix": true,
+        "fix_safety": "safe"
       },
       "good_example": "{\"version\":1,\"hooks\":{\"sessionStart\":[{\"type\":\"prompt\",\"command\":\"Summarize changes\"}]}}",
       "bad_example": "{\"version\":1,\"hooks\":{\"sessionStart\":[{\"type\":\"agent\",\"command\":\"echo start\"}]}}"
@@ -4093,7 +4120,8 @@
         }
       },
       "fix": {
-        "autofix": false
+        "autofix": true,
+        "fix_safety": "safe"
       },
       "good_example": "# Project\n\nThis is a web application.\n\n```bash\nnpm install\n```\n\n## Testing\n\nRun npm test.",
       "bad_example": "# Project\n\nThis is a web application.\n\n```bash\nnpm install"
@@ -4282,7 +4310,8 @@
         }
       },
       "fix": {
-        "autofix": false
+        "autofix": true,
+        "fix_safety": "safe"
       },
       "good_example": "{\"contextFileName\":\"CONTEXT.md\"}",
       "bad_example": "{\"contextFileName\":\"docs/context.md\"}"
@@ -4309,7 +4338,8 @@
         }
       },
       "fix": {
-        "autofix": false
+        "autofix": true,
+        "fix_safety": "safe"
       },
       "good_example": "{\"general\":{},\"model\":{}}",
       "bad_example": "{ invalid json }"
@@ -4336,7 +4366,8 @@
         }
       },
       "fix": {
-        "autofix": false
+        "autofix": true,
+        "fix_safety": "safe"
       },
       "good_example": "---\ninclusion: always\n---\n# TypeScript Guidelines\n\nUse strict mode.",
       "bad_example": "---\ninclusion: invalid_mode\n---\n# TypeScript Guidelines\n\nUse strict mode."
@@ -4800,7 +4831,8 @@
         }
       },
       "fix": {
-        "autofix": false
+        "autofix": true,
+        "fix_safety": "safe"
       },
       "good_example": "{\n  \"tools\": [{\n    \"name\": \"read_file.v2\",\n    \"description\": \"Reads file contents\",\n    \"inputSchema\": { \"type\": \"object\" }\n  }]\n}",
       "bad_example": "{\n  \"tools\": [{\n    \"name\": \"read file\",\n    \"description\": \"Reads file contents\",\n    \"inputSchema\": { \"type\": \"object\" }\n  }]\n}"
@@ -4908,7 +4940,8 @@
         }
       },
       "fix": {
-        "autofix": false
+        "autofix": true,
+        "fix_safety": "safe"
       },
       "good_example": "{\n  \"mcpServers\": {\n    \"remote\": {\n      \"type\": \"http\",\n      \"url\": \"https://api.example.com/mcp\"\n    }\n  }\n}",
       "bad_example": "{\n  \"mcpServers\": {\n    \"remote\": {\n      \"type\": \"http\",\n      \"url\": \"http://api.example.com/mcp\"\n    }\n  }\n}"
@@ -5016,7 +5049,8 @@
         }
       },
       "fix": {
-        "autofix": false
+        "autofix": true,
+        "fix_safety": "safe"
       },
       "good_example": "{\n  \"mcpServers\": {\n    \"local\": {\n      \"type\": \"http\",\n      \"url\": \"http://localhost:3000/mcp\"\n    }\n  }\n}",
       "bad_example": "{\n  \"mcpServers\": {\n    \"wild\": {\n      \"type\": \"http\",\n      \"url\": \"http://0.0.0.0:3000/mcp\"\n    }\n  }\n}"
@@ -5287,7 +5321,8 @@
         }
       },
       "fix": {
-        "autofix": false
+        "autofix": true,
+        "fix_safety": "unsafe"
       },
       "good_example": "{\n  \"permission\": {\n    \"read\": \"allow\",\n    \"edit\": \"ask\"\n  }\n}",
       "bad_example": "{\n  \"permission\": {\n    \"read\": \"yes\"\n  }\n}"
@@ -5418,7 +5453,8 @@
         }
       },
       "fix": {
-        "autofix": false
+        "autofix": true,
+        "fix_safety": "unsafe"
       },
       "good_example": "# Critical Rules\n\nYou must follow the style guide.\nAlways run linting before commits.",
       "bad_example": "# Critical Rules\n\nYou should follow the style guide.\nTry to run linting before commits."
@@ -5469,7 +5505,8 @@
         }
       },
       "fix": {
-        "autofix": false
+        "autofix": true,
+        "fix_safety": "safe"
       },
       "good_example": "# Rules\n\nFormat all output as JSON with 2-space indentation.\nAlways include error codes in responses.",
       "bad_example": "# Rules\n\nBe helpful and accurate.\nBe concise.\nFormat all output as JSON."
@@ -5600,7 +5637,8 @@
         }
       },
       "fix": {
-        "autofix": false
+        "autofix": true,
+        "fix_safety": "safe"
       },
       "good_example": "# Project\n\n@docs/coding-standards.md\n@docs/testing-guide.md",
       "bad_example": "# Project\n\n@docs/coding-standards.md\n@docs/testing-guide.md\n@docs/coding-standards.md"

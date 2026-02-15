@@ -253,16 +253,32 @@ fn validate_cursor_hooks_file(path: &Path, content: &str, config: &LintConfig) -
 
     for (event_name, hooks_value) in hooks {
         if config.is_rule_enabled("CUR-011") && !CURSOR_HOOK_EVENTS.contains(&event_name.as_str()) {
-            diagnostics.push(
-                Diagnostic::warning(
-                    path.to_path_buf(),
-                    1,
-                    0,
-                    "CUR-011",
-                    t!("rules.cur_011.message", event = event_name.as_str()),
-                )
-                .with_suggestion(t!("rules.cur_011.suggestion")),
-            );
+            let mut diagnostic = Diagnostic::warning(
+                path.to_path_buf(),
+                1,
+                0,
+                "CUR-011",
+                t!("rules.cur_011.message", event = event_name.as_str()),
+            )
+            .with_suggestion(t!("rules.cur_011.suggestion"));
+
+            if let Some(suggested) =
+                crate::rules::find_closest_value(event_name.as_str(), CURSOR_HOOK_EVENTS)
+            {
+                if let Some((start, end)) =
+                    crate::span_utils::find_event_key_span(content, event_name)
+                {
+                    diagnostic = diagnostic.with_fix(Fix::replace(
+                        start,
+                        end,
+                        format!("\"{}\"", suggested),
+                        format!("Replace hook event with '{}'", suggested),
+                        false,
+                    ));
+                }
+            }
+
+            diagnostics.push(diagnostic);
         }
 
         let hook_array = match hooks_value.as_array() {
@@ -318,20 +334,42 @@ fn validate_cursor_hooks_file(path: &Path, content: &str, config: &LintConfig) -
                 let type_str = type_value.as_str();
                 if type_str.is_none() || !CURSOR_HOOK_TYPES.contains(&type_str.unwrap_or_default())
                 {
-                    diagnostics.push(
-                        Diagnostic::error(
-                            path.to_path_buf(),
-                            1,
-                            0,
-                            "CUR-013",
-                            t!(
-                                "rules.cur_013.message",
-                                event = event_name.as_str(),
-                                index = index + 1
-                            ),
-                        )
-                        .with_suggestion(t!("rules.cur_013.suggestion")),
-                    );
+                    let mut diagnostic = Diagnostic::error(
+                        path.to_path_buf(),
+                        1,
+                        0,
+                        "CUR-013",
+                        t!(
+                            "rules.cur_013.message",
+                            event = event_name.as_str(),
+                            index = index + 1
+                        ),
+                    )
+                    .with_suggestion(t!("rules.cur_013.suggestion"));
+
+                    if let Some(invalid_type) = type_str {
+                        if let Some(suggested) =
+                            crate::rules::find_closest_value(invalid_type, CURSOR_HOOK_TYPES)
+                        {
+                            if let Some((start, end)) =
+                                crate::rules::find_unique_json_string_value_span(
+                                    content,
+                                    "type",
+                                    invalid_type,
+                                )
+                            {
+                                diagnostic = diagnostic.with_fix(Fix::replace(
+                                    start,
+                                    end,
+                                    suggested,
+                                    format!("Replace hook type with '{}'", suggested),
+                                    false,
+                                ));
+                            }
+                        }
+                    }
+
+                    diagnostics.push(diagnostic);
                 }
             }
 
@@ -1564,6 +1602,51 @@ Review the diff and suggest improvements."#;
                 .iter()
                 .any(|d| d.rule == "CUR-016"),
             "Valid environment fixture should not trigger CUR-016",
+        );
+    }
+
+    // ===== CUR-011 auto-fix tests =====
+
+    #[test]
+    fn test_cur_011_has_fix() {
+        // Use a case-insensitive mismatch that find_closest_value can match
+        let content =
+            r#"{"version":1,"hooks":{"SessionStart":[{"type":"command","command":"echo hi"}]}}"#;
+        let diagnostics = validate_cursor_hooks(content);
+        let cur_011: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CUR-011").collect();
+        assert_eq!(cur_011.len(), 1);
+        assert!(
+            cur_011[0].has_fixes(),
+            "CUR-011 should have auto-fix for case-mismatched hook event"
+        );
+        let fix = &cur_011[0].fixes[0];
+        assert!(!fix.safe, "CUR-011 fix should be unsafe");
+        assert!(
+            fix.replacement.contains("sessionStart"),
+            "Fix should suggest closest valid event name, got: {}",
+            fix.replacement
+        );
+    }
+
+    // ===== CUR-013 auto-fix tests =====
+
+    #[test]
+    fn test_cur_013_has_fix() {
+        // Use a case-insensitive mismatch that find_closest_value can match
+        let content =
+            r#"{"version":1,"hooks":{"sessionStart":[{"type":"Command","command":"echo hi"}]}}"#;
+        let diagnostics = validate_cursor_hooks(content);
+        let cur_013: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CUR-013").collect();
+        assert_eq!(cur_013.len(), 1);
+        assert!(
+            cur_013[0].has_fixes(),
+            "CUR-013 should have auto-fix for case-mismatched hook type"
+        );
+        let fix = &cur_013[0].fixes[0];
+        assert!(!fix.safe, "CUR-013 fix should be unsafe");
+        assert_eq!(
+            fix.replacement, "command",
+            "Fix should suggest 'command' as closest match"
         );
     }
 

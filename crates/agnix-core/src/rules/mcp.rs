@@ -950,21 +950,47 @@ fn validate_tool(
             .all(|c| c.is_ascii_alphanumeric() || matches!(c, '_' | '.' | '-'));
         if name.len() > 128 || !valid_chars {
             let (line, col) = find_field("name");
-            diagnostics.push(
-                Diagnostic::error(
-                    path.to_path_buf(),
-                    line,
-                    col,
-                    "MCP-013",
-                    format!(
-                        "{}invalid tool name '{}': expected 1-128 chars using [a-zA-Z0-9_.-]",
-                        tool_prefix, name
-                    ),
-                )
-                .with_suggestion(
-                    "Rename the tool to use only letters, numbers, underscore, dot, or hyphen",
+            let mut diagnostic = Diagnostic::error(
+                path.to_path_buf(),
+                line,
+                col,
+                "MCP-013",
+                format!(
+                    "{}invalid tool name '{}': expected 1-128 chars using [a-zA-Z0-9_.-]",
+                    tool_prefix, name
                 ),
+            )
+            .with_suggestion(
+                "Rename the tool to use only letters, numbers, underscore, dot, or hyphen",
             );
+
+            // Sanitize: replace invalid chars with '_', truncate to 128
+            let sanitized: String = name
+                .chars()
+                .map(|c| {
+                    if c.is_ascii_alphanumeric() || matches!(c, '_' | '.' | '-') {
+                        c
+                    } else {
+                        '_'
+                    }
+                })
+                .take(128)
+                .collect();
+            if !sanitized.is_empty() && sanitized != name {
+                if let Some((start, end)) =
+                    crate::rules::find_unique_json_string_value_span(content, "name", name)
+                {
+                    diagnostic = diagnostic.with_fix(Fix::replace(
+                        start,
+                        end,
+                        &sanitized,
+                        format!("Sanitize tool name to '{}'", sanitized),
+                        false,
+                    ));
+                }
+            }
+
+            diagnostics.push(diagnostic);
         }
     }
 
@@ -1387,19 +1413,33 @@ fn validate_server(
             && let Some(host) = extract_http_host(url)
             && !is_local_http_host(&host)
         {
-            diagnostics.push(
-                Diagnostic::error(
-                    path.to_path_buf(),
-                    line,
-                    col,
-                    "MCP-017",
-                    format!(
-                        "Server '{}' uses insecure HTTP URL '{}'; use HTTPS for non-localhost endpoints",
-                        name, url
-                    ),
-                )
-                .with_suggestion("Change the server URL to https:// for remote endpoints"),
-            );
+            let mut diagnostic = Diagnostic::error(
+                path.to_path_buf(),
+                line,
+                col,
+                "MCP-017",
+                format!(
+                    "Server '{}' uses insecure HTTP URL '{}'; use HTTPS for non-localhost endpoints",
+                    name, url
+                ),
+            )
+            .with_suggestion("Change the server URL to https:// for remote endpoints");
+
+            // Replace http:// with https:// in the URL (case-insensitive)
+            if let Some((start, end)) =
+                crate::rules::find_unique_json_string_value_span(content, "url", url)
+            {
+                let fixed_url = format!("https://{}", &url[7..]);
+                diagnostic = diagnostic.with_fix(Fix::replace(
+                    start,
+                    end,
+                    fixed_url,
+                    "Replace http:// with https://",
+                    false,
+                ));
+            }
+
+            diagnostics.push(diagnostic);
         }
     }
 
@@ -1409,19 +1449,35 @@ fn validate_server(
         && let Some(host) = extract_http_host(url)
         && is_wildcard_http_host(&host)
     {
-        diagnostics.push(
-            Diagnostic::warning(
-                path.to_path_buf(),
-                line,
-                col,
-                "MCP-021",
-                format!(
-                    "Server '{}' binds HTTP to '{}', which exposes all interfaces",
-                    name, host
-                ),
-            )
-            .with_suggestion("Prefer localhost bindings unless remote network access is required"),
-        );
+        let mut diagnostic = Diagnostic::warning(
+            path.to_path_buf(),
+            line,
+            col,
+            "MCP-021",
+            format!(
+                "Server '{}' binds HTTP to '{}', which exposes all interfaces",
+                name, host
+            ),
+        )
+        .with_suggestion("Prefer localhost bindings unless remote network access is required");
+
+        // Replace 0.0.0.0 with localhost in the URL
+        if let Some((start, end)) =
+            crate::rules::find_unique_json_string_value_span(content, "url", url)
+        {
+            let fixed_url = url.replace("0.0.0.0", "localhost");
+            if fixed_url != url {
+                diagnostic = diagnostic.with_fix(Fix::replace(
+                    start,
+                    end,
+                    fixed_url,
+                    "Replace 0.0.0.0 with localhost",
+                    false,
+                ));
+            }
+        }
+
+        diagnostics.push(diagnostic);
     }
 
     if effective_type == "stdio" {
@@ -2920,6 +2976,66 @@ mod tests {
         }"#;
         let diagnostics = validate(content);
         assert!(diagnostics.iter().any(|d| d.rule == "MCP-013"));
+    }
+
+    #[test]
+    fn test_mcp_013_has_fix() {
+        let content = r#"{"tools":[{"name":"bad tool","description":"desc","inputSchema":{"type":"object"}}]}"#;
+        let diagnostics = validate(content);
+        let mcp_013: Vec<_> = diagnostics.iter().filter(|d| d.rule == "MCP-013").collect();
+        assert_eq!(mcp_013.len(), 1);
+        assert!(
+            mcp_013[0].has_fixes(),
+            "MCP-013 should have auto-fix for invalid tool name chars"
+        );
+        let fix = &mcp_013[0].fixes[0];
+        assert!(!fix.safe, "MCP-013 fix should be unsafe");
+        assert!(
+            !fix.replacement.contains(' '),
+            "Fix should sanitize tool name by replacing invalid chars"
+        );
+    }
+
+    #[test]
+    fn test_mcp_017_has_fix() {
+        let content = r#"{"mcpServers":{"s":{"type":"http","url":"http://example.com/mcp"}}}"#;
+        let diagnostics = validate(content);
+        let mcp_017: Vec<_> = diagnostics.iter().filter(|d| d.rule == "MCP-017").collect();
+        assert_eq!(mcp_017.len(), 1);
+        assert!(
+            mcp_017[0].has_fixes(),
+            "MCP-017 should have auto-fix to replace http:// with https://"
+        );
+        let fix = &mcp_017[0].fixes[0];
+        assert!(!fix.safe, "MCP-017 fix should be unsafe");
+        assert!(
+            fix.replacement.starts_with("https://"),
+            "Fix should replace http:// with https://, got: {}",
+            fix.replacement
+        );
+        assert!(
+            fix.replacement.contains("example.com"),
+            "Fix should preserve the rest of the URL"
+        );
+    }
+
+    #[test]
+    fn test_mcp_021_has_fix() {
+        let content = r#"{"mcpServers":{"s":{"type":"http","url":"http://0.0.0.0:3000/mcp"}}}"#;
+        let diagnostics = validate(content);
+        let mcp_021: Vec<_> = diagnostics.iter().filter(|d| d.rule == "MCP-021").collect();
+        assert_eq!(mcp_021.len(), 1);
+        assert!(
+            mcp_021[0].has_fixes(),
+            "MCP-021 should have auto-fix to replace 0.0.0.0 with localhost"
+        );
+        let fix = &mcp_021[0].fixes[0];
+        assert!(!fix.safe, "MCP-021 fix should be unsafe");
+        assert!(
+            fix.replacement.contains("localhost"),
+            "Fix should replace 0.0.0.0 with localhost, got: {}",
+            fix.replacement
+        );
     }
 
     #[test]

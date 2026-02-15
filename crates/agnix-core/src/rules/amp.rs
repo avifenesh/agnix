@@ -9,9 +9,9 @@
 use crate::{
     FileType,
     config::LintConfig,
-    diagnostics::Diagnostic,
+    diagnostics::{Diagnostic, Fix},
     parsers::frontmatter::split_frontmatter,
-    rules::{Validator, ValidatorMetadata},
+    rules::{Validator, ValidatorMetadata, line_byte_range},
 };
 use serde_json::Value as JsonValue;
 use serde_yaml::{Mapping, Value as YamlValue};
@@ -44,6 +44,23 @@ const VALID_AMP_SETTINGS_KEYS: &[&str] = &[
     "history",
     "notify",
 ];
+
+/// Adapter to use raw frontmatter with `find_yaml_value_range`.
+/// `split_frontmatter()` returns `parts.frontmatter` with a leading `\n`
+/// (the first `.lines()` entry is empty), so `start_line` is 0 to avoid
+/// off-by-one errors in `find_yaml_value_range`'s line-number calculation.
+struct YamlFrontmatterAdapter<'a> {
+    raw: &'a str,
+}
+
+impl crate::rules::FrontmatterRanges for YamlFrontmatterAdapter<'_> {
+    fn raw_content(&self) -> &str {
+        self.raw
+    }
+    fn start_line(&self) -> usize {
+        0
+    }
+}
 
 pub struct AmpValidator;
 
@@ -145,18 +162,26 @@ fn validate_amp_check(path: &Path, content: &str, config: &LintConfig) -> Vec<Di
                 continue;
             };
             if !VALID_CHECK_KEYS.contains(&key) {
-                diagnostics.push(
-                    Diagnostic::error(
-                        path.to_path_buf(),
-                        frontmatter_key_line(&parts.frontmatter, key),
-                        0,
-                        "AMP-001",
-                        format!("Unknown Amp check frontmatter key '{key}'"),
-                    )
-                    .with_suggestion(
-                        "Allowed keys are: name, description, severity-default, tools.",
-                    ),
-                );
+                let key_line = frontmatter_key_line(&parts.frontmatter, key);
+                let mut diagnostic = Diagnostic::error(
+                    path.to_path_buf(),
+                    key_line,
+                    0,
+                    "AMP-001",
+                    format!("Unknown Amp check frontmatter key '{key}'"),
+                )
+                .with_suggestion("Allowed keys are: name, description, severity-default, tools.");
+
+                if let Some((start, end)) = line_byte_range(content, key_line) {
+                    diagnostic = diagnostic.with_fix(Fix::delete(
+                        start,
+                        end,
+                        format!("Remove unknown check key '{key}'"),
+                        false,
+                    ));
+                }
+
+                diagnostics.push(diagnostic);
             }
 
             if key == "description" && !value.is_string() {
@@ -207,8 +232,8 @@ fn validate_amp_check(path: &Path, content: &str, config: &LintConfig) -> Vec<Di
         match mapping_value(mapping, "severity-default") {
             Some(value) => match value.as_str() {
                 Some(severity) if VALID_SEVERITY_DEFAULT.contains(&severity) => {}
-                Some(severity) => diagnostics.push(
-                    Diagnostic::warning(
+                Some(severity) => {
+                    let mut diagnostic = Diagnostic::warning(
                         path.to_path_buf(),
                         frontmatter_key_line(&parts.frontmatter, "severity-default"),
                         0,
@@ -219,8 +244,39 @@ fn validate_amp_check(path: &Path, content: &str, config: &LintConfig) -> Vec<Di
                     )
                     .with_suggestion(
                         "Set `severity-default` to one of: low, medium, high, critical.",
-                    ),
-                ),
+                    );
+
+                    if let Some(suggested) =
+                        super::find_closest_value(severity, VALID_SEVERITY_DEFAULT)
+                    {
+                        if let Some((start, end)) = crate::rules::find_yaml_value_range(
+                            content,
+                            &YamlFrontmatterAdapter {
+                                raw: &parts.frontmatter,
+                            },
+                            "severity-default",
+                            true,
+                        ) {
+                            let slice = content.get(start..end).unwrap_or("");
+                            let replacement = if slice.starts_with('"') {
+                                format!("\"{}\"", suggested)
+                            } else if slice.starts_with('\'') {
+                                format!("'{}'", suggested)
+                            } else {
+                                suggested.to_string()
+                            };
+                            diagnostic = diagnostic.with_fix(Fix::replace(
+                                start,
+                                end,
+                                replacement,
+                                format!("Replace severity-default with '{}'", suggested),
+                                false,
+                            ));
+                        }
+                    }
+
+                    diagnostics.push(diagnostic);
+                }
                 None => diagnostics.push(
                     Diagnostic::warning(
                         path.to_path_buf(),
@@ -376,16 +432,26 @@ fn validate_amp_settings(path: &Path, content: &str, config: &LintConfig) -> Vec
 
     for key in settings_obj.keys() {
         if !VALID_AMP_SETTINGS_KEYS.contains(&key.as_str()) {
-            diagnostics.push(
-                Diagnostic::error(
-                    path.to_path_buf(),
-                    find_json_key_line(content, key).unwrap_or(1),
-                    0,
-                    "AMP-004",
-                    format!("Unknown Amp settings key '{key}'"),
-                )
-                .with_suggestion("Remove or rename unknown settings keys."),
-            );
+            let mut diagnostic = Diagnostic::error(
+                path.to_path_buf(),
+                find_json_key_line(content, key).unwrap_or(1),
+                0,
+                "AMP-004",
+                format!("Unknown Amp settings key '{key}'"),
+            )
+            .with_suggestion("Remove or rename unknown settings keys.");
+
+            if let Some((start, end)) = crate::span_utils::find_unique_json_field_line(content, key)
+            {
+                diagnostic = diagnostic.with_fix(Fix::delete(
+                    start,
+                    end,
+                    format!("Remove unknown settings key '{key}'"),
+                    false,
+                ));
+            }
+
+            diagnostics.push(diagnostic);
         }
     }
 
@@ -685,5 +751,50 @@ mod tests {
         config.rules_mut().disabled_rules = vec!["AMP-004".to_string()];
         let diagnostics = validate_with_config(".amp/settings.json", "{ invalid json", &config);
         assert!(diagnostics.is_empty());
+    }
+
+    // ===== Autofix Tests =====
+
+    #[test]
+    fn test_amp_001_unknown_key_has_fix() {
+        let content = "---\nname: security\ndescription: Security checks\nfoo: bar\n---\n# Body";
+        let diagnostics = validate(".agents/checks/security.md", content);
+        let amp_001: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "AMP-001" && d.message.contains("Unknown"))
+            .collect();
+        assert_eq!(amp_001.len(), 1);
+        assert!(
+            amp_001[0].has_fixes(),
+            "AMP-001 unknown key should have fix"
+        );
+        assert!(!amp_001[0].fixes[0].safe, "AMP-001 fix should be unsafe");
+        assert!(amp_001[0].fixes[0].is_deletion());
+    }
+
+    #[test]
+    fn test_amp_004_unknown_key_has_fix() {
+        let content = "{\n  \"model\": \"x\",\n  \"badKey\": true\n}";
+        let diagnostics = validate(".amp/settings.json", content);
+        let amp_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AMP-004").collect();
+        assert_eq!(amp_004.len(), 1);
+        assert!(amp_004[0].has_fixes(), "AMP-004 should have fix");
+        assert!(!amp_004[0].fixes[0].safe, "AMP-004 fix should be unsafe");
+        assert!(amp_004[0].fixes[0].is_deletion());
+    }
+
+    #[test]
+    fn test_amp_002_severity_default_has_fix() {
+        // "High" -> closest match is "high" (case-insensitive)
+        let content = "---\nname: test\nseverity-default: High\n---\n# Body";
+        let diagnostics = validate(".agents/checks/test.md", content);
+        let amp_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AMP-002").collect();
+        assert_eq!(amp_002.len(), 1);
+        assert!(
+            amp_002[0].has_fixes(),
+            "AMP-002 should have auto-fix for closest match"
+        );
+        assert!(!amp_002[0].fixes[0].safe, "AMP-002 fix should be unsafe");
+        assert_eq!(amp_002[0].fixes[0].replacement, "high");
     }
 }

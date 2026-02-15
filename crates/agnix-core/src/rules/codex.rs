@@ -111,16 +111,25 @@ impl Validator for CodexValidator {
         // even when schema extraction fails.
         if cdx_004_enabled {
             for unknown in &parsed.unknown_keys {
-                diagnostics.push(
-                    Diagnostic::warning(
-                        path.to_path_buf(),
-                        unknown.line,
-                        unknown.column,
-                        "CDX-004",
-                        t!("rules.cdx_004.message", key = unknown.key.as_str()),
-                    )
-                    .with_suggestion(t!("rules.cdx_004.suggestion")),
-                );
+                let mut diagnostic = Diagnostic::warning(
+                    path.to_path_buf(),
+                    unknown.line,
+                    unknown.column,
+                    "CDX-004",
+                    t!("rules.cdx_004.message", key = unknown.key.as_str()),
+                )
+                .with_suggestion(t!("rules.cdx_004.suggestion"));
+
+                if let Some((start, end)) = crate::rules::line_byte_range(content, unknown.line) {
+                    diagnostic = diagnostic.with_fix(Fix::delete(
+                        start,
+                        end,
+                        format!("Remove unknown config key '{}'", unknown.key),
+                        false,
+                    ));
+                }
+
+                diagnostics.push(diagnostic);
             }
         }
 
@@ -1090,5 +1099,32 @@ name = "test"
             "CDX-000 message should use localized text, got: {}",
             cdx_000[0].message
         );
+    }
+
+    // ===== Autofix Tests =====
+
+    #[test]
+    fn test_cdx_004_has_fix() {
+        let diagnostics = validate_config("totally_unknown_key = true");
+        let cdx_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CDX-004").collect();
+        assert_eq!(cdx_004.len(), 1);
+        assert!(cdx_004[0].has_fixes(), "CDX-004 should have fix");
+        assert!(!cdx_004[0].fixes[0].safe, "CDX-004 fix should be unsafe");
+        assert!(cdx_004[0].fixes[0].is_deletion());
+    }
+
+    #[test]
+    fn test_cdx_004_fix_application() {
+        let content = "model = \"o4-mini\"\ntotally_unknown_key = true\nnotify = true";
+        let diagnostics = validate_config(content);
+        let cdx_004: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CDX-004").collect();
+        assert_eq!(cdx_004.len(), 1);
+        assert!(cdx_004[0].has_fixes());
+        let fix = &cdx_004[0].fixes[0];
+        let mut fixed = content.to_string();
+        fixed.replace_range(fix.start_byte..fix.end_byte, &fix.replacement);
+        assert!(!fixed.contains("totally_unknown_key"));
+        assert!(fixed.contains("model"));
+        assert!(fixed.contains("notify"));
     }
 }

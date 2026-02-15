@@ -8,7 +8,7 @@
 
 use crate::{
     config::LintConfig,
-    diagnostics::Diagnostic,
+    diagnostics::{Diagnostic, Fix},
     rules::{Validator, ValidatorMetadata},
     schemas::agents_md::{
         MarkdownIssueType, check_markdown_validity, check_project_context, check_section_headers,
@@ -48,19 +48,30 @@ impl Validator for GeminiMdValidator {
                     MarkdownIssueType::UnclosedCodeBlock => Diagnostic::error,
                     MarkdownIssueType::MalformedLink => Diagnostic::error,
                 };
-                diagnostics.push(
-                    level_fn(
-                        path_buf.clone(),
-                        issue.line,
-                        issue.column,
-                        "GM-001",
-                        t!(
-                            "rules.gm_001.message",
-                            description = issue.description.as_str()
-                        ),
-                    )
-                    .with_suggestion(t!("rules.gm_001.suggestion")),
-                );
+                let mut diagnostic = level_fn(
+                    path_buf.clone(),
+                    issue.line,
+                    issue.column,
+                    "GM-001",
+                    t!(
+                        "rules.gm_001.message",
+                        description = issue.description.as_str()
+                    ),
+                )
+                .with_suggestion(t!("rules.gm_001.suggestion"));
+
+                if issue.issue_type == MarkdownIssueType::UnclosedCodeBlock {
+                    let insert_pos = content.len();
+                    let prefix = if content.ends_with('\n') { "" } else { "\n" };
+                    diagnostic = diagnostic.with_fix(Fix::insert(
+                        insert_pos,
+                        format!("{}```\n", prefix),
+                        "Append closing code fence",
+                        false,
+                    ));
+                }
+
+                diagnostics.push(diagnostic);
             }
         }
 
@@ -216,6 +227,24 @@ fn main() {}
         assert_eq!(gm_001.len(), 1);
         assert_eq!(gm_001[0].level, DiagnosticLevel::Error);
         assert!(gm_001[0].message.contains("Unclosed code block"));
+    }
+
+    #[test]
+    fn test_gm_001_has_fix() {
+        let content = "# Project\n```rust\nfn main() {}\n";
+        let diagnostics = validate(content);
+        let gm_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "GM-001").collect();
+        assert_eq!(gm_001.len(), 1);
+        assert!(
+            gm_001[0].has_fixes(),
+            "GM-001 should have auto-fix for unclosed code block"
+        );
+        let fix = &gm_001[0].fixes[0];
+        assert!(!fix.safe, "GM-001 fix should be unsafe");
+        assert!(
+            fix.replacement.contains("```"),
+            "Fix should append closing code fence"
+        );
     }
 
     #[test]

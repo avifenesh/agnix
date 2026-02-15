@@ -229,16 +229,36 @@ impl Validator for PluginValidator {
             if let Some(version) = raw_value.get("version").and_then(|v| v.as_str()) {
                 let trimmed = version.trim();
                 if !trimmed.is_empty() && !is_valid_semver(trimmed) {
-                    diagnostics.push(
-                        Diagnostic::error(
-                            path.to_path_buf(),
-                            1,
-                            0,
-                            "CC-PL-003",
-                            t!("rules.cc_pl_003.message", version = version),
-                        )
-                        .with_suggestion(t!("rules.cc_pl_003.suggestion")),
-                    );
+                    let mut diagnostic = Diagnostic::error(
+                        path.to_path_buf(),
+                        1,
+                        0,
+                        "CC-PL-003",
+                        t!("rules.cc_pl_003.message", version = version),
+                    )
+                    .with_suggestion(t!("rules.cc_pl_003.suggestion"));
+
+                    // Normalize partial semver: "1" -> "1.0.0", "1.2" -> "1.2.0"
+                    let normalized = normalize_partial_semver(trimmed);
+                    if let Some(norm) = &normalized {
+                        if norm != trimmed {
+                            if let Some((start, end)) =
+                                crate::rules::find_unique_json_string_value_span(
+                                    content, "version", version,
+                                )
+                            {
+                                diagnostic = diagnostic.with_fix(Fix::replace(
+                                    start,
+                                    end,
+                                    norm.as_str(),
+                                    format!("Normalize version to '{}'", norm),
+                                    false,
+                                ));
+                            }
+                        }
+                    }
+
+                    diagnostics.push(diagnostic);
                 }
             }
         }
@@ -296,6 +316,28 @@ fn check_recommended_field(
 
 fn is_valid_semver(version: &str) -> bool {
     semver::Version::parse(version).is_ok()
+}
+
+/// Normalize partial semver strings: "1" -> "1.0.0", "1.2" -> "1.2.0"
+fn normalize_partial_semver(version: &str) -> Option<String> {
+    let parts: Vec<&str> = version.split('.').collect();
+    match parts.len() {
+        1 => {
+            if parts[0].chars().all(|c| c.is_ascii_digit()) {
+                Some(format!("{}.0.0", parts[0]))
+            } else {
+                None
+            }
+        }
+        2 => {
+            if parts.iter().all(|p| p.chars().all(|c| c.is_ascii_digit())) {
+                Some(format!("{}.{}.0", parts[0], parts[1]))
+            } else {
+                None
+            }
+        }
+        _ => None,
+    }
 }
 
 /// Find a unique string value span for a JSON key.
@@ -512,6 +554,33 @@ mod tests {
         );
 
         assert!(diagnostics.iter().any(|d| d.rule == "CC-PL-003"));
+    }
+
+    #[test]
+    fn test_cc_pl_003_has_fix() {
+        let temp = TempDir::new().unwrap();
+        let plugin_path = temp.path().join(".claude-plugin").join("plugin.json");
+        let content = r#"{"name":"test-plugin","description":"desc","version":"1.0"}"#;
+        write_plugin(&plugin_path, content);
+
+        let validator = PluginValidator;
+        let diagnostics = validator.validate(&plugin_path, content, &LintConfig::default());
+
+        let cc_pl_003: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-PL-003")
+            .collect();
+        assert_eq!(cc_pl_003.len(), 1);
+        assert!(
+            cc_pl_003[0].has_fixes(),
+            "CC-PL-003 should have auto-fix for partial semver"
+        );
+        let fix = &cc_pl_003[0].fixes[0];
+        assert!(!fix.safe, "CC-PL-003 fix should be unsafe");
+        assert_eq!(
+            fix.replacement, "1.0.0",
+            "Fix should normalize '1.0' to '1.0.0'"
+        );
     }
 
     #[test]

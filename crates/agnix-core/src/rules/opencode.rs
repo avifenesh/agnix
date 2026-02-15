@@ -297,16 +297,32 @@ impl Validator for OpenCodeValidator {
                 if let Some(perm_str) = perm_value.as_str() {
                     // Global string shorthand
                     if !VALID_PERMISSION_MODES.contains(&perm_str) {
-                        diagnostics.push(
-                            Diagnostic::error(
-                                path.to_path_buf(),
-                                perm_line,
-                                0,
-                                "OC-008",
-                                t!("rules.oc_008.message", value = perm_str, tool = "*"),
-                            )
-                            .with_suggestion(t!("rules.oc_008.suggestion")),
-                        );
+                        let mut diagnostic = Diagnostic::error(
+                            path.to_path_buf(),
+                            perm_line,
+                            0,
+                            "OC-008",
+                            t!("rules.oc_008.message", value = perm_str, tool = "*"),
+                        )
+                        .with_suggestion(t!("rules.oc_008.suggestion"));
+
+                        if let Some(suggested) =
+                            find_closest_value(perm_str, VALID_PERMISSION_MODES)
+                        {
+                            if let Some((start, end)) =
+                                find_unique_json_string_value_span(content, "permission", perm_str)
+                            {
+                                diagnostic = diagnostic.with_fix(Fix::replace(
+                                    start,
+                                    end,
+                                    suggested,
+                                    format!("Replace permission with '{}'", suggested),
+                                    false,
+                                ));
+                            }
+                        }
+
+                        diagnostics.push(diagnostic);
                     }
                 } else if let Some(perm_obj) = perm_value.as_object() {
                     for (tool, mode_value) in perm_obj {
@@ -1076,6 +1092,25 @@ mod tests {
         assert_eq!(oc_008[0].level, DiagnosticLevel::Error);
         assert!(oc_008[0].message.contains("yes"));
         assert!(oc_008[0].message.contains("read"));
+    }
+
+    #[test]
+    fn test_oc_008_has_fix() {
+        // Use a case-insensitive mismatch that find_closest_value can match
+        let content = r#"{"permission": "Allow"}"#;
+        let diagnostics = validate(content);
+        let oc_008: Vec<_> = diagnostics.iter().filter(|d| d.rule == "OC-008").collect();
+        assert_eq!(oc_008.len(), 1);
+        assert!(
+            oc_008[0].has_fixes(),
+            "OC-008 should have auto-fix for case-mismatched permission mode"
+        );
+        let fix = &oc_008[0].fixes[0];
+        assert!(!fix.safe, "OC-008 fix should be unsafe");
+        assert_eq!(
+            fix.replacement, "allow",
+            "Fix should suggest 'allow' as closest match"
+        );
     }
 
     #[test]

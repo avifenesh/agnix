@@ -28,7 +28,7 @@
 knowledge-base/
 ├── INDEX.md                        # This file
 ├── README.md                       # Detailed navigation guide
-├── VALIDATION-RULES.md             # ⭐ Master validation reference (224 rules)
+├── VALIDATION-RULES.md             # ⭐ Master validation reference (229 rules)
 
 ├── PATTERNS-CATALOG.md             # 70 production-tested patterns
 ├── RESEARCH-TRACKING.md            # Tool inventory and monitoring process
@@ -88,39 +88,39 @@ knowledge-base/
 
 | Category | Rules | HIGH | MEDIUM | LOW | Auto-Fix |
 |----------|-------|------|--------|-----|----------|
-| Agent Skills | 19 | 15 | 4 | 0 | 5 |
-| Claude Skills | 17 | 11 | 6 | 0 | 9 |
-| Claude Hooks | 19 | 12 | 5 | 2 | 4 |
-| Claude Agents | 13 | 12 | 1 | 0 | 2 |
+| Agent Skills | 19 | 15 | 4 | 0 | 9 |
+| Claude Skills | 17 | 11 | 6 | 0 | 11 |
+| Claude Hooks | 19 | 12 | 5 | 2 | 12 |
+| Claude Agents | 13 | 12 | 1 | 0 | 7 |
 | Claude Memory | 12 | 8 | 4 | 0 | 3 |
-| AGENTS.md | 6 | 1 | 5 | 0 | 0 |
-| Claude Plugins | 10 | 8 | 2 | 0 | 2 |
-| GitHub Copilot | 17 | 11 | 6 | 0 | 1 |
-| MCP | 24 | 19 | 5 | 0 | 3 |
+| AGENTS.md | 6 | 1 | 5 | 0 | 1 |
+| Claude Plugins | 10 | 8 | 2 | 0 | 3 |
+| GitHub Copilot | 17 | 11 | 6 | 0 | 9 |
+| MCP | 24 | 19 | 5 | 0 | 7 |
 | XML | 3 | 3 | 0 | 0 | 3 |
-| References | 4 | 2 | 2 | 0 | 0 |
-| Prompt Eng | 6 | 0 | 6 | 0 | 0 |
+| References | 4 | 2 | 2 | 0 | 1 |
+| Prompt Eng | 6 | 0 | 6 | 0 | 2 |
 | Cross-Platform | 8 | 2 | 5 | 1 | 0 |
-| Cursor | 16 | 9 | 7 | 0 | 2 |
+| Cursor | 16 | 9 | 7 | 0 | 6 |
 | Cursor Skills | 1 | 0 | 1 | 0 | 1 |
 | Cline | 4 | 3 | 1 | 0 | 2 |
 | Cline Skills | 1 | 0 | 1 | 0 | 1 |
-| OpenCode | 8 | 4 | 3 | 1 | 0 |
+| OpenCode | 8 | 4 | 3 | 1 | 2 |
 | OpenCode Skills | 1 | 0 | 1 | 0 | 1 |
 | Gemini CLI | 9 | 3 | 4 | 2 | 3 |
 | Version Awareness | 1 | 0 | 0 | 1 | 0 |
-| Codex CLI | 6 | 4 | 2 | 0 | 0 |
+| Codex CLI | 6 | 4 | 2 | 0 | 3 |
 | Copilot Skills | 1 | 0 | 1 | 0 | 1 |
 | Codex Skills | 1 | 0 | 1 | 0 | 1 |
 | Windsurf Skills | 1 | 0 | 1 | 0 | 1 |
 | Kiro Skills | 1 | 0 | 1 | 0 | 1 |
 | Amp Skills | 1 | 0 | 1 | 0 | 1 |
-| Amp Checks | 4 | 2 | 2 | 0 | 0 |
+| Amp Checks | 4 | 2 | 2 | 0 | 3 |
 | Roo Code Skills | 1 | 0 | 1 | 0 | 1 |
 | Roo Code | 6 | 3 | 3 | 0 | 0 |
 | Windsurf | 4 | 1 | 2 | 1 | 0 |
-| Kiro Steering | 4 | 2 | 2 | 0 | 0 |
-| **TOTAL** | **229** | **135** | **86** | **8** | **59** |
+| Kiro Steering | 4 | 2 | 2 | 0 | 1 |
+| **TOTAL** | **229** | **135** | **86** | **8** | **97** |
 
 
 ---
@@ -284,8 +284,8 @@ Total Size:           650KB
 Standards Covered:     5 (Agent Skills, MCP, Claude Code, Multi-Platform, Prompt Eng)
 Sources Consulted:    75+ (specs, docs, research papers, repos)
 Research Agents:       5 (10+ sources each)
-Validation Rules:     224 rules
-Auto-Fixable Rules:   59 rules
+Validation Rules:     229 rules
+Auto-Fixable Rules:   97 rules
 
 Test Fixtures:        116 files
 Platforms Analyzed:   9 (Claude Code, Codex CLI, OpenCode, Copilot, Cursor, Cline, Roo-Cline, Continue.dev, Aider)
