@@ -1190,7 +1190,11 @@ impl<'a> ValidationContext<'a> {
 
                 // Append $ARGUMENTS to the end of body
                 let insert_pos = self.content.len();
-                let prefix = if self.content.ends_with('\n') { "" } else { "\n" };
+                let prefix = if self.content.ends_with('\n') {
+                    ""
+                } else {
+                    "\n"
+                };
                 diagnostic = diagnostic.with_fix(Fix::insert(
                     insert_pos,
                     format!("{}$ARGUMENTS\n", prefix),

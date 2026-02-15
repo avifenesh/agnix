@@ -116,10 +116,7 @@ impl Validator for PromptValidator {
                             issue.byte_offset,
                             end,
                             repl,
-                            format!(
-                                "Replace '{}' with stronger language",
-                                issue.weak_term
-                            ),
+                            format!("Replace '{}' with stronger language", issue.weak_term),
                             false,
                         ));
                     }
@@ -924,7 +921,10 @@ This is not a critical section.
         assert_eq!(pe_005.len(), 1);
         assert!(pe_005[0].has_fixes(), "PE-005 should have auto-fix");
         assert!(!pe_005[0].fixes[0].safe, "PE-005 fix should be unsafe");
-        assert!(pe_005[0].fixes[0].is_deletion(), "PE-005 fix should be a deletion");
+        assert!(
+            pe_005[0].fixes[0].is_deletion(),
+            "PE-005 fix should be a deletion"
+        );
     }
 
     #[test]

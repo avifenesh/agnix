@@ -88,8 +88,8 @@ knowledge-base/
 
 | Category | Rules | HIGH | MEDIUM | LOW | Auto-Fix |
 |----------|-------|------|--------|-----|----------|
-| Agent Skills | 16 | 14 | 2 | 0 | 9 |
-| Claude Skills | 15 | 11 | 4 | 0 | 11 |
+| Agent Skills | 19 | 15 | 4 | 0 | 9 |
+| Claude Skills | 17 | 11 | 6 | 0 | 11 |
 | Claude Hooks | 19 | 12 | 5 | 2 | 8 |
 | Claude Agents | 13 | 12 | 1 | 0 | 7 |
 | Claude Memory | 12 | 8 | 4 | 0 | 3 |
@@ -120,7 +120,7 @@ knowledge-base/
 | Roo Code | 6 | 3 | 3 | 0 | 0 |
 | Windsurf | 4 | 1 | 2 | 1 | 0 |
 | Kiro Steering | 4 | 2 | 2 | 0 | 1 |
-| **TOTAL** | **224** | **134** | **82** | **8** | **95** |
+| **TOTAL** | **229** | **135** | **86** | **8** | **95** |
 
 
 ---
@@ -284,7 +284,7 @@ Total Size:           650KB
 Standards Covered:     5 (Agent Skills, MCP, Claude Code, Multi-Platform, Prompt Eng)
 Sources Consulted:    75+ (specs, docs, research papers, repos)
 Research Agents:       5 (10+ sources each)
-Validation Rules:     224 rules
+Validation Rules:     229 rules
 Auto-Fixable Rules:   95 rules
 
 Test Fixtures:        116 files

@@ -116,7 +116,10 @@ impl Validator for KiroSteeringValidator {
                                 raw: &parts.frontmatter,
                             };
                             if let Some((start, end)) = crate::rules::find_yaml_value_range(
-                                content, &adapter, "inclusion", true,
+                                content,
+                                &adapter,
+                                "inclusion",
+                                true,
                             ) {
                                 let slice = content.get(start..end).unwrap_or("");
                                 let replacement = if slice.starts_with('"') {

@@ -1074,7 +1074,10 @@ Agent instructions"#;
             "Fix should replace with kebab-case version"
         );
         let target = &content[fix.start_byte..fix.end_byte];
-        assert_eq!(target, "my_Skill", "Fix should target the original skill name");
+        assert_eq!(
+            target, "my_Skill",
+            "Fix should target the original skill name"
+        );
     }
 
     // ===== CC-AG-001 YAML injection prevention =====
@@ -1082,8 +1085,7 @@ Agent instructions"#;
     #[test]
     fn test_cc_ag_001_sanitizes_special_filename() {
         let content = "---\ndescription: A test agent\n---\nAgent instructions";
-        let diagnostics =
-            validate_with_path(Path::new("agents/my: agent\"file.md"), content);
+        let diagnostics = validate_with_path(Path::new("agents/my: agent\"file.md"), content);
         let cc_ag_001: Vec<_> = diagnostics
             .iter()
             .filter(|d| d.rule == "CC-AG-001")

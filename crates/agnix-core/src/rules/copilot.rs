@@ -220,12 +220,9 @@ fn validate_custom_agent(path: &Path, content: &str, config: &LintConfig) -> Vec
                         if let Some(suggested) =
                             super::find_closest_value(target.as_str(), VALID_TARGETS)
                         {
-                            if let Some((start, end)) = crate::rules::find_yaml_value_range(
-                                content,
-                                parsed,
-                                "target",
-                                true,
-                            ) {
+                            if let Some((start, end)) =
+                                crate::rules::find_yaml_value_range(content, parsed, "target", true)
+                            {
                                 let slice = content.get(start..end).unwrap_or("");
                                 let replacement = if slice.starts_with('"') {
                                     format!("\"{}\"", suggested)
@@ -258,9 +255,7 @@ fn validate_custom_agent(path: &Path, content: &str, config: &LintConfig) -> Vec
                     "COP-010",
                     "Custom agent uses deprecated 'infer' field",
                 )
-                .with_suggestion(
-                    "Remove 'infer' and use user-invokable custom agents instead.",
-                );
+                .with_suggestion("Remove 'infer' and use user-invokable custom agents instead.");
 
                 if let Some((start, end)) = line_byte_range(content, line) {
                     diagnostic = diagnostic.with_fix(Fix::delete(
@@ -415,12 +410,9 @@ fn validate_reusable_prompt(path: &Path, content: &str, config: &LintConfig) -> 
                         if let Some(suggested) =
                             super::find_closest_value(agent_mode.as_str(), VALID_AGENT_MODES)
                         {
-                            if let Some((start, end)) = crate::rules::find_yaml_value_range(
-                                content,
-                                parsed,
-                                "agent",
-                                true,
-                            ) {
+                            if let Some((start, end)) =
+                                crate::rules::find_yaml_value_range(content, parsed, "agent", true)
+                            {
                                 let slice = content.get(start..end).unwrap_or("");
                                 let replacement = if slice.starts_with('"') {
                                     format!("\"{}\"", suggested)
@@ -1820,7 +1812,10 @@ Review pull requests.
         assert_eq!(cop_008.len(), 1);
         assert!(cop_008[0].has_fixes(), "COP-008 should have auto-fix");
         assert!(cop_008[0].fixes[0].safe, "COP-008 fix should be safe");
-        assert!(cop_008[0].fixes[0].is_deletion(), "COP-008 fix should be a deletion");
+        assert!(
+            cop_008[0].fixes[0].is_deletion(),
+            "COP-008 fix should be a deletion"
+        );
     }
 
     #[test]
@@ -1883,7 +1878,10 @@ Review pull requests.
         );
         let cop_009: Vec<_> = diagnostics.iter().filter(|d| d.rule == "COP-009").collect();
         assert_eq!(cop_009.len(), 1);
-        assert!(cop_009[0].has_fixes(), "COP-009 should have auto-fix for case mismatch");
+        assert!(
+            cop_009[0].has_fixes(),
+            "COP-009 should have auto-fix for case mismatch"
+        );
         assert!(!cop_009[0].fixes[0].safe, "COP-009 fix should be unsafe");
         assert!(cop_009[0].fixes[0].replacement.contains("vscode"));
     }
@@ -1900,7 +1898,10 @@ Refactor the selected code.
         );
         let cop_015: Vec<_> = diagnostics.iter().filter(|d| d.rule == "COP-015").collect();
         assert_eq!(cop_015.len(), 1);
-        assert!(cop_015[0].has_fixes(), "COP-015 should have auto-fix for case mismatch");
+        assert!(
+            cop_015[0].has_fixes(),
+            "COP-015 should have auto-fix for case mismatch"
+        );
         assert!(!cop_015[0].fixes[0].safe, "COP-015 fix should be unsafe");
         assert!(cop_015[0].fixes[0].replacement.contains("always"));
     }

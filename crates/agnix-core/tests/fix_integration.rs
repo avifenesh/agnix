@@ -417,7 +417,10 @@ fn test_cc_mem_005_fix_is_safe() {
         !mem_005.is_empty(),
         "Expected CC-MEM-005 diagnostic with fix"
     );
-    assert!(!mem_005[0].fixes[0].safe, "CC-MEM-005 fix should be unsafe (content deletion needs review)");
+    assert!(
+        !mem_005[0].fixes[0].safe,
+        "CC-MEM-005 fix should be unsafe (content deletion needs review)"
+    );
 }
 
 #[test]
@@ -660,7 +663,10 @@ fn test_e2e_pe_005_fix_removes_redundant_instruction() {
     for v in &validators {
         diags.extend(v.validate(path, content, &config));
     }
-    let pe_005: Vec<_> = diags.iter().filter(|d| d.rule == "PE-005" && d.has_fixes()).collect();
+    let pe_005: Vec<_> = diags
+        .iter()
+        .filter(|d| d.rule == "PE-005" && d.has_fixes())
+        .collect();
     assert!(!pe_005.is_empty(), "PE-005 should fire with fix");
 
     let fix = &pe_005[0].fixes[0];
@@ -691,7 +697,10 @@ fn test_e2e_cop_008_fix_removes_unknown_field() {
     for v in &validators {
         diags.extend(v.validate(path, content, &config));
     }
-    let cop_008: Vec<_> = diags.iter().filter(|d| d.rule == "COP-008" && d.has_fixes()).collect();
+    let cop_008: Vec<_> = diags
+        .iter()
+        .filter(|d| d.rule == "COP-008" && d.has_fixes())
+        .collect();
     assert!(!cop_008.is_empty(), "COP-008 should fire with fix");
 
     let fix = &cop_008[0].fixes[0];
@@ -721,13 +730,19 @@ fn test_e2e_agm_001_fix_closes_code_block() {
     for v in &validators {
         diags.extend(v.validate(path, content, &config));
     }
-    let agm_001: Vec<_> = diags.iter().filter(|d| d.rule == "AGM-001" && d.has_fixes()).collect();
+    let agm_001: Vec<_> = diags
+        .iter()
+        .filter(|d| d.rule == "AGM-001" && d.has_fixes())
+        .collect();
     assert!(!agm_001.is_empty(), "AGM-001 should fire with fix");
 
     let fix = &agm_001[0].fixes[0];
     let mut fixed = content.to_string();
     fixed.replace_range(fix.start_byte..fix.end_byte, &fix.replacement);
-    assert!(fixed.contains("```\n"), "Fixed content should have closing code fence");
+    assert!(
+        fixed.contains("```\n"),
+        "Fixed content should have closing code fence"
+    );
 
     // Re-validate - AGM-001 unclosed code block should not fire
     let mut re_diags = Vec::new();
@@ -735,7 +750,9 @@ fn test_e2e_agm_001_fix_closes_code_block() {
         re_diags.extend(v.validate(path, &fixed, &config));
     }
     assert!(
-        !re_diags.iter().any(|d| d.rule == "AGM-001" && d.message.contains("Unclosed")),
+        !re_diags
+            .iter()
+            .any(|d| d.rule == "AGM-001" && d.message.contains("Unclosed")),
         "AGM-001 unclosed code block should not fire after fix"
     );
 }

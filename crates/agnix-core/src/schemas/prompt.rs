@@ -919,7 +919,8 @@ Code could be cleaner.
         assert_eq!(results.len(), 1);
         assert_eq!(results[0].weak_term.to_lowercase(), "should");
         // Verify the byte offset points to the actual position of "should"
-        let found = &content[results[0].byte_offset..results[0].byte_offset + results[0].weak_term.len()];
+        let found =
+            &content[results[0].byte_offset..results[0].byte_offset + results[0].weak_term.len()];
         assert_eq!(
             found.to_lowercase(),
             results[0].weak_term.to_lowercase(),

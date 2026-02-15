@@ -120,9 +120,7 @@ impl Validator for CodexValidator {
                 )
                 .with_suggestion(t!("rules.cdx_004.suggestion"));
 
-                if let Some((start, end)) =
-                    crate::rules::line_byte_range(content, unknown.line)
-                {
+                if let Some((start, end)) = crate::rules::line_byte_range(content, unknown.line) {
                     diagnostic = diagnostic.with_fix(Fix::delete(
                         start,
                         end,

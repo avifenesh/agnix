@@ -168,9 +168,7 @@ fn validate_amp_check(path: &Path, content: &str, config: &LintConfig) -> Vec<Di
                     "AMP-001",
                     format!("Unknown Amp check frontmatter key '{key}'"),
                 )
-                .with_suggestion(
-                    "Allowed keys are: name, description, severity-default, tools.",
-                );
+                .with_suggestion("Allowed keys are: name, description, severity-default, tools.");
 
                 if let Some((start, end)) = line_byte_range(content, key_line) {
                     diagnostic = diagnostic.with_fix(Fix::delete(
@@ -441,8 +439,7 @@ fn validate_amp_settings(path: &Path, content: &str, config: &LintConfig) -> Vec
             )
             .with_suggestion("Remove or rename unknown settings keys.");
 
-            if let Some((start, end)) =
-                crate::span_utils::find_unique_json_field_line(content, key)
+            if let Some((start, end)) = crate::span_utils::find_unique_json_field_line(content, key)
             {
                 diagnostic = diagnostic.with_fix(Fix::delete(
                     start,
@@ -765,7 +762,10 @@ mod tests {
             .filter(|d| d.rule == "AMP-001" && d.message.contains("Unknown"))
             .collect();
         assert_eq!(amp_001.len(), 1);
-        assert!(amp_001[0].has_fixes(), "AMP-001 unknown key should have fix");
+        assert!(
+            amp_001[0].has_fixes(),
+            "AMP-001 unknown key should have fix"
+        );
         assert!(!amp_001[0].fixes[0].safe, "AMP-001 fix should be unsafe");
         assert!(amp_001[0].fixes[0].is_deletion());
     }

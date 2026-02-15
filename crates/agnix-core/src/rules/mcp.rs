@@ -3003,8 +3003,7 @@ mod tests {
 
     #[test]
     fn test_mcp_017_has_fix() {
-        let content =
-            r#"{"mcpServers":{"s":{"type":"http","url":"http://example.com/mcp"}}}"#;
+        let content = r#"{"mcpServers":{"s":{"type":"http","url":"http://example.com/mcp"}}}"#;
         let diagnostics = validate(content);
         let mcp_017: Vec<_> = diagnostics.iter().filter(|d| d.rule == "MCP-017").collect();
         assert_eq!(mcp_017.len(), 1);
@@ -3027,8 +3026,7 @@ mod tests {
 
     #[test]
     fn test_mcp_021_has_fix() {
-        let content =
-            r#"{"mcpServers":{"s":{"type":"http","url":"http://0.0.0.0:3000/mcp"}}}"#;
+        let content = r#"{"mcpServers":{"s":{"type":"http","url":"http://0.0.0.0:3000/mcp"}}}"#;
         let diagnostics = validate(content);
         let mcp_021: Vec<_> = diagnostics.iter().filter(|d| d.rule == "MCP-021").collect();
         assert_eq!(mcp_021.len(), 1);

@@ -3792,11 +3792,17 @@ fn test_cc_sk_006_has_fix() {
     let content = "---\nname: deploy-app\ndescription: Use when deploying the app\n---\nDeploy the application.";
     let validator = SkillValidator;
     let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
-    let cc_sk_006: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CC-SK-006").collect();
+    let cc_sk_006: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-SK-006")
+        .collect();
     assert_eq!(cc_sk_006.len(), 1);
     assert!(cc_sk_006[0].has_fixes(), "CC-SK-006 should have auto-fix");
     let fix = &cc_sk_006[0].fixes[0];
-    assert!(!fix.safe, "CC-SK-006 fix should be unsafe (changes runtime behavior)");
+    assert!(
+        !fix.safe,
+        "CC-SK-006 fix should be unsafe (changes runtime behavior)"
+    );
     assert!(
         fix.replacement.contains("disable-model-invocation: true"),
         "Fix should insert disable-model-invocation: true"
@@ -3811,11 +3817,17 @@ fn test_cc_sk_012_has_fix() {
     let content = "---\nname: greet-user\ndescription: Use when greeting users\nargument-hint: Name of person to greet\n---\nGreet the user warmly.";
     let validator = SkillValidator;
     let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
-    let cc_sk_012: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CC-SK-012").collect();
+    let cc_sk_012: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.rule == "CC-SK-012")
+        .collect();
     assert_eq!(cc_sk_012.len(), 1);
     assert!(cc_sk_012[0].has_fixes(), "CC-SK-012 should have auto-fix");
     let fix = &cc_sk_012[0].fixes[0];
-    assert!(!fix.safe, "CC-SK-012 fix should be unsafe (appends to body)");
+    assert!(
+        !fix.safe,
+        "CC-SK-012 fix should be unsafe (appends to body)"
+    );
     assert!(
         fix.replacement.contains("$ARGUMENTS"),
         "Fix should append $ARGUMENTS"
@@ -3846,7 +3858,8 @@ fn test_as_001_has_fix() {
 fn test_as_002_has_fix() {
     let content = "---\ndescription: Use when testing\n---\nBody";
     let validator = SkillValidator;
-    let diagnostics = validator.validate(Path::new("test-skill.md"), content, &LintConfig::default());
+    let diagnostics =
+        validator.validate(Path::new("test-skill.md"), content, &LintConfig::default());
     let as_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-002").collect();
     assert_eq!(as_002.len(), 1);
     assert!(as_002[0].has_fixes(), "AS-002 should have auto-fix");
@@ -3885,7 +3898,10 @@ fn test_as_009_has_fix() {
     let diagnostics = validator.validate(Path::new("test.md"), content, &LintConfig::default());
     let as_009: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AS-009").collect();
     assert_eq!(as_009.len(), 1);
-    assert!(as_009[0].has_fixes(), "AS-009 should have auto-fix to strip XML tags");
+    assert!(
+        as_009[0].has_fixes(),
+        "AS-009 should have auto-fix to strip XML tags"
+    );
     let fix = &as_009[0].fixes[0];
     assert!(!fix.safe, "AS-009 fix should be unsafe");
     assert!(
