@@ -557,6 +557,33 @@ mod tests {
     }
 
     #[test]
+    fn test_cc_pl_003_has_fix() {
+        let temp = TempDir::new().unwrap();
+        let plugin_path = temp.path().join(".claude-plugin").join("plugin.json");
+        let content = r#"{"name":"test-plugin","description":"desc","version":"1.0"}"#;
+        write_plugin(&plugin_path, content);
+
+        let validator = PluginValidator;
+        let diagnostics = validator.validate(&plugin_path, content, &LintConfig::default());
+
+        let cc_pl_003: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-PL-003")
+            .collect();
+        assert_eq!(cc_pl_003.len(), 1);
+        assert!(
+            cc_pl_003[0].has_fixes(),
+            "CC-PL-003 should have auto-fix for partial semver"
+        );
+        let fix = &cc_pl_003[0].fixes[0];
+        assert!(!fix.safe, "CC-PL-003 fix should be unsafe");
+        assert_eq!(
+            fix.replacement, "1.0.0",
+            "Fix should normalize '1.0' to '1.0.0'"
+        );
+    }
+
+    #[test]
     fn test_cc_pl_003_valid_prerelease_version() {
         let temp = TempDir::new().unwrap();
         let plugin_path = temp.path().join(".claude-plugin").join("plugin.json");

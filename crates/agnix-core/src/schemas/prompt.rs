@@ -221,10 +221,13 @@ pub fn find_weak_imperative_language(content: &str) -> Vec<WeakLanguageInCritica
             }
         }
 
-        // Advance byte_pos past this line plus its newline
+        // Advance byte_pos past this line plus its actual line terminator
         byte_pos += line.len();
-        if byte_pos < content.len() {
-            byte_pos += 1; // for '\n'
+        if content.as_bytes().get(byte_pos) == Some(&b'\r') {
+            byte_pos += 1;
+        }
+        if content.as_bytes().get(byte_pos) == Some(&b'\n') {
+            byte_pos += 1;
         }
     }
 
@@ -364,14 +367,20 @@ pub fn find_redundant_instructions(content: &str) -> Vec<RedundantInstruction> {
         if line.trim_start().starts_with("```") {
             in_code_block = !in_code_block;
             byte_pos += line.len();
-            if byte_pos < content.len() {
+            if content.as_bytes().get(byte_pos) == Some(&b'\r') {
+                byte_pos += 1;
+            }
+            if content.as_bytes().get(byte_pos) == Some(&b'\n') {
                 byte_pos += 1;
             }
             continue;
         }
         if in_code_block {
             byte_pos += line.len();
-            if byte_pos < content.len() {
+            if content.as_bytes().get(byte_pos) == Some(&b'\r') {
+                byte_pos += 1;
+            }
+            if content.as_bytes().get(byte_pos) == Some(&b'\n') {
                 byte_pos += 1;
             }
             continue;
@@ -388,7 +397,10 @@ pub fn find_redundant_instructions(content: &str) -> Vec<RedundantInstruction> {
         }
 
         byte_pos += line.len();
-        if byte_pos < content.len() {
+        if content.as_bytes().get(byte_pos) == Some(&b'\r') {
+            byte_pos += 1;
+        }
+        if content.as_bytes().get(byte_pos) == Some(&b'\n') {
             byte_pos += 1;
         }
     }
@@ -895,6 +907,38 @@ Code could be cleaner.
         assert!(weak.is_empty());
         // No ambiguous terms in this specific line
         assert!(ambiguous.is_empty());
+    }
+
+    // ===== CRLF byte offset tests =====
+
+    #[test]
+    fn test_pe_003_crlf_byte_offsets() {
+        // Use CRLF line endings to verify byte offsets account for \r\n
+        let content = "# Critical Rules\r\n\r\nYou should follow the style.\r\nAnother line.\r\n";
+        let results = find_weak_imperative_language(content);
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0].weak_term.to_lowercase(), "should");
+        // Verify the byte offset points to the actual position of "should"
+        let found = &content[results[0].byte_offset..results[0].byte_offset + results[0].weak_term.len()];
+        assert_eq!(
+            found.to_lowercase(),
+            results[0].weak_term.to_lowercase(),
+            "Byte offset should correctly point to the weak term in CRLF content"
+        );
+    }
+
+    #[test]
+    fn test_pe_005_crlf_byte_offsets() {
+        let content = "# Rules\r\n\r\nBe helpful in all interactions.\r\nAnother line.\r\n";
+        let results = find_redundant_instructions(content);
+        assert_eq!(results.len(), 1);
+        // Verify the byte offset points to the actual position of "Be helpful"
+        let found = &content[results[0].byte_offset..results[0].byte_offset + results[0].byte_len];
+        assert_eq!(
+            found.to_lowercase(),
+            results[0].phrase.to_lowercase(),
+            "Byte offset should correctly point to the redundant phrase in CRLF content"
+        );
     }
 
     // ===== ReDoS Protection Tests =====

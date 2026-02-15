@@ -320,10 +320,13 @@ impl Validator for AgentValidator {
             .with_suggestion(t!("rules.cc_ag_001.suggestion"));
 
             // Derive name from filename (e.g., "reviewer.md" -> "reviewer")
+            // Sanitize via kebab-case conversion to prevent YAML injection from special chars
             let derived_name = path
                 .file_stem()
                 .and_then(|s| s.to_str())
-                .unwrap_or("agent");
+                .map(crate::rules::skill::convert_to_kebab_case)
+                .filter(|s| !s.is_empty())
+                .unwrap_or_else(|| "agent".to_string());
             let parts_fm = split_frontmatter(content);
             if parts_fm.has_frontmatter && parts_fm.has_closing {
                 // Insert after opening ---\n
@@ -1007,6 +1010,93 @@ Agent instructions"#;
             .collect();
 
         assert_eq!(cc_ag_002.len(), 0);
+    }
+
+    // ===== CC-AG-001 auto-fix tests =====
+
+    #[test]
+    fn test_cc_ag_001_has_fix() {
+        let content = "---\ndescription: A test agent\n---\nAgent instructions";
+        let diagnostics = validate_with_path(Path::new("agents/reviewer.md"), content);
+        let cc_ag_001: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-AG-001")
+            .collect();
+        assert_eq!(cc_ag_001.len(), 1);
+        assert!(cc_ag_001[0].has_fixes(), "CC-AG-001 should have auto-fix");
+        let fix = &cc_ag_001[0].fixes[0];
+        assert!(!fix.safe, "CC-AG-001 fix should be unsafe");
+        assert!(
+            fix.replacement.contains("name: reviewer"),
+            "Fix should insert name derived from filename, got: {}",
+            fix.replacement
+        );
+    }
+
+    // ===== CC-AG-002 auto-fix tests =====
+
+    #[test]
+    fn test_cc_ag_002_has_fix() {
+        let content = "---\nname: my-agent\n---\nAgent instructions";
+        let diagnostics = validate(content);
+        let cc_ag_002: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-AG-002")
+            .collect();
+        assert_eq!(cc_ag_002.len(), 1);
+        assert!(cc_ag_002[0].has_fixes(), "CC-AG-002 should have auto-fix");
+        let fix = &cc_ag_002[0].fixes[0];
+        assert!(!fix.safe, "CC-AG-002 fix should be unsafe");
+        assert!(
+            fix.replacement.contains("description:"),
+            "Fix should insert description placeholder"
+        );
+    }
+
+    // ===== CC-AG-013 auto-fix tests =====
+
+    #[test]
+    fn test_cc_ag_013_has_fix() {
+        // Use inline YAML list format so frontmatter_value_byte_range can find the value
+        // Use underscored name that convert_to_kebab_case will transform with hyphens
+        let content = "---\nname: my-agent\ndescription: A test agent\nskills: [my_Skill]\n---\nAgent instructions";
+        let diagnostics = validate(content);
+        let cc_ag_013: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-AG-013")
+            .collect();
+        assert_eq!(cc_ag_013.len(), 1);
+        assert!(cc_ag_013[0].has_fixes(), "CC-AG-013 should have auto-fix");
+        let fix = &cc_ag_013[0].fixes[0];
+        assert!(!fix.safe, "CC-AG-013 fix should be unsafe");
+        assert_eq!(
+            fix.replacement, "my-skill",
+            "Fix should replace with kebab-case version"
+        );
+        let target = &content[fix.start_byte..fix.end_byte];
+        assert_eq!(target, "my_Skill", "Fix should target the original skill name");
+    }
+
+    // ===== CC-AG-001 YAML injection prevention =====
+
+    #[test]
+    fn test_cc_ag_001_sanitizes_special_filename() {
+        let content = "---\ndescription: A test agent\n---\nAgent instructions";
+        let diagnostics =
+            validate_with_path(Path::new("agents/my: agent\"file.md"), content);
+        let cc_ag_001: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "CC-AG-001")
+            .collect();
+        assert_eq!(cc_ag_001.len(), 1);
+        assert!(cc_ag_001[0].has_fixes(), "CC-AG-001 should have auto-fix");
+        let fix = &cc_ag_001[0].fixes[0];
+        // The name should be sanitized - no colons or quotes
+        assert!(
+            !fix.replacement.contains(':') || fix.replacement.starts_with("name:"),
+            "Derived name should be sanitized to prevent YAML injection, got: {}",
+            fix.replacement
+        );
     }
 
     // ===== CC-AG-003 Tests: Invalid Model Value =====

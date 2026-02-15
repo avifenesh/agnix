@@ -28,7 +28,11 @@ impl crate::rules::FrontmatterRanges for FrontmatterAdapter<'_> {
         self.raw
     }
     fn start_line(&self) -> usize {
-        1
+        // split_frontmatter includes a leading \n in the frontmatter string,
+        // so the first content line is at index 1 within raw_content().
+        // With the formula `start_line + 1 + idx`, start_line=0 maps idx=1
+        // to full-content line 2 (the first frontmatter content line).
+        0
     }
 }
 
@@ -324,6 +328,29 @@ mod tests {
             .filter(|d| d.rule == "KIRO-001")
             .collect();
         assert!(kiro_001.is_empty());
+    }
+
+    #[test]
+    fn test_kiro_001_has_fix() {
+        // Use a case-insensitive mismatch that find_closest_value can match
+        let content = "---\ninclusion: Always\n---\n# Steering\n";
+        let diagnostics = validate_steering(content);
+        let kiro_001: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "KIRO-001")
+            .collect();
+        assert_eq!(kiro_001.len(), 1);
+        assert!(
+            kiro_001[0].has_fixes(),
+            "KIRO-001 should have auto-fix for case-mismatched inclusion mode"
+        );
+        let fix = &kiro_001[0].fixes[0];
+        assert!(!fix.safe, "KIRO-001 fix should be unsafe");
+        assert!(
+            fix.replacement.contains("always"),
+            "Fix should suggest 'always' as closest match, got: {}",
+            fix.replacement
+        );
     }
 
     #[test]

@@ -256,6 +256,24 @@ mod tests {
     }
 
     #[test]
+    fn test_gm_008_has_fix() {
+        let content = r#"{"name": "ext", "version": "1.0.0", "description": "Test", "contextFileName": "docs/context.md"}"#;
+        let diagnostics = validate(content);
+        let gm_008: Vec<_> = diagnostics.iter().filter(|d| d.rule == "GM-008").collect();
+        assert_eq!(gm_008.len(), 1);
+        assert!(
+            gm_008[0].has_fixes(),
+            "GM-008 should have auto-fix to strip directory path"
+        );
+        let fix = &gm_008[0].fixes[0];
+        assert!(!fix.safe, "GM-008 fix should be unsafe");
+        assert_eq!(
+            fix.replacement, "context.md",
+            "Fix should strip directory prefix, keeping only filename"
+        );
+    }
+
+    #[test]
     fn test_gm_008_valid_context_file() {
         let content = r#"{"name": "ext", "version": "1.0.0", "description": "Test", "contextFileName": "CONTEXT.md"}"#;
         let diagnostics = validate(content);

@@ -862,7 +862,7 @@ impl<'a> ValidationContext<'a> {
                         insert_pos,
                         "disable-model-invocation: true\n".to_string(),
                         "Add disable-model-invocation: true",
-                        true,
+                        false, // unsafe: changes runtime behavior by disabling model invocation
                     ));
                 }
 
@@ -1073,7 +1073,7 @@ impl<'a> ValidationContext<'a> {
                     insert_pos,
                     format!("{}$ARGUMENTS\n", prefix),
                     "Append $ARGUMENTS to body",
-                    true,
+                    false, // unsafe: appends content that may not suit all body formats
                 ));
 
                 self.diagnostics.push(diagnostic);

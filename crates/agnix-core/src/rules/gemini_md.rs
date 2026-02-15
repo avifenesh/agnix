@@ -230,6 +230,24 @@ fn main() {}
     }
 
     #[test]
+    fn test_gm_001_has_fix() {
+        let content = "# Project\n```rust\nfn main() {}\n";
+        let diagnostics = validate(content);
+        let gm_001: Vec<_> = diagnostics.iter().filter(|d| d.rule == "GM-001").collect();
+        assert_eq!(gm_001.len(), 1);
+        assert!(
+            gm_001[0].has_fixes(),
+            "GM-001 should have auto-fix for unclosed code block"
+        );
+        let fix = &gm_001[0].fixes[0];
+        assert!(!fix.safe, "GM-001 fix should be unsafe");
+        assert!(
+            fix.replacement.contains("```"),
+            "Fix should append closing code fence"
+        );
+    }
+
+    #[test]
     fn test_gm_001_valid_markdown() {
         let content = r#"# Project
 ```rust

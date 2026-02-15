@@ -1603,6 +1603,49 @@ Review the diff and suggest improvements."#;
         );
     }
 
+    // ===== CUR-011 auto-fix tests =====
+
+    #[test]
+    fn test_cur_011_has_fix() {
+        // Use a case-insensitive mismatch that find_closest_value can match
+        let content = r#"{"version":1,"hooks":{"SessionStart":[{"type":"command","command":"echo hi"}]}}"#;
+        let diagnostics = validate_cursor_hooks(content);
+        let cur_011: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CUR-011").collect();
+        assert_eq!(cur_011.len(), 1);
+        assert!(
+            cur_011[0].has_fixes(),
+            "CUR-011 should have auto-fix for case-mismatched hook event"
+        );
+        let fix = &cur_011[0].fixes[0];
+        assert!(!fix.safe, "CUR-011 fix should be unsafe");
+        assert!(
+            fix.replacement.contains("sessionStart"),
+            "Fix should suggest closest valid event name, got: {}",
+            fix.replacement
+        );
+    }
+
+    // ===== CUR-013 auto-fix tests =====
+
+    #[test]
+    fn test_cur_013_has_fix() {
+        // Use a case-insensitive mismatch that find_closest_value can match
+        let content = r#"{"version":1,"hooks":{"sessionStart":[{"type":"Command","command":"echo hi"}]}}"#;
+        let diagnostics = validate_cursor_hooks(content);
+        let cur_013: Vec<_> = diagnostics.iter().filter(|d| d.rule == "CUR-013").collect();
+        assert_eq!(cur_013.len(), 1);
+        assert!(
+            cur_013[0].has_fixes(),
+            "CUR-013 should have auto-fix for case-mismatched hook type"
+        );
+        let fix = &cur_013[0].fixes[0];
+        assert!(!fix.safe, "CUR-013 fix should be unsafe");
+        assert_eq!(
+            fix.replacement, "command",
+            "Fix should suggest 'command' as closest match"
+        );
+    }
+
     // ===== Config Integration =====
 
     #[test]

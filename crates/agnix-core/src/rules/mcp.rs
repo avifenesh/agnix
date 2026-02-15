@@ -1425,11 +1425,16 @@ fn validate_server(
             )
             .with_suggestion("Change the server URL to https:// for remote endpoints");
 
-            // Replace http:// with https:// in the URL
+            // Replace http:// with https:// in the URL (case-insensitive)
             if let Some((start, end)) =
                 crate::rules::find_unique_json_string_value_span(content, "url", url)
             {
-                let fixed_url = url.replacen("http://", "https://", 1);
+                let lower = url.to_ascii_lowercase();
+                let fixed_url = if let Some(idx) = lower.find("http://") {
+                    format!("{}https://{}", &url[..idx], &url[idx + 7..])
+                } else {
+                    url.replacen("http://", "https://", 1)
+                };
                 diagnostic = diagnostic.with_fix(Fix::replace(
                     start,
                     end,
@@ -2976,6 +2981,68 @@ mod tests {
         }"#;
         let diagnostics = validate(content);
         assert!(diagnostics.iter().any(|d| d.rule == "MCP-013"));
+    }
+
+    #[test]
+    fn test_mcp_013_has_fix() {
+        let content = r#"{"tools":[{"name":"bad tool","description":"desc","inputSchema":{"type":"object"}}]}"#;
+        let diagnostics = validate(content);
+        let mcp_013: Vec<_> = diagnostics.iter().filter(|d| d.rule == "MCP-013").collect();
+        assert_eq!(mcp_013.len(), 1);
+        assert!(
+            mcp_013[0].has_fixes(),
+            "MCP-013 should have auto-fix for invalid tool name chars"
+        );
+        let fix = &mcp_013[0].fixes[0];
+        assert!(!fix.safe, "MCP-013 fix should be unsafe");
+        assert!(
+            !fix.replacement.contains(' '),
+            "Fix should sanitize tool name by replacing invalid chars"
+        );
+    }
+
+    #[test]
+    fn test_mcp_017_has_fix() {
+        let content =
+            r#"{"mcpServers":{"s":{"type":"http","url":"http://example.com/mcp"}}}"#;
+        let diagnostics = validate(content);
+        let mcp_017: Vec<_> = diagnostics.iter().filter(|d| d.rule == "MCP-017").collect();
+        assert_eq!(mcp_017.len(), 1);
+        assert!(
+            mcp_017[0].has_fixes(),
+            "MCP-017 should have auto-fix to replace http:// with https://"
+        );
+        let fix = &mcp_017[0].fixes[0];
+        assert!(!fix.safe, "MCP-017 fix should be unsafe");
+        assert!(
+            fix.replacement.starts_with("https://"),
+            "Fix should replace http:// with https://, got: {}",
+            fix.replacement
+        );
+        assert!(
+            fix.replacement.contains("example.com"),
+            "Fix should preserve the rest of the URL"
+        );
+    }
+
+    #[test]
+    fn test_mcp_021_has_fix() {
+        let content =
+            r#"{"mcpServers":{"s":{"type":"http","url":"http://0.0.0.0:3000/mcp"}}}"#;
+        let diagnostics = validate(content);
+        let mcp_021: Vec<_> = diagnostics.iter().filter(|d| d.rule == "MCP-021").collect();
+        assert_eq!(mcp_021.len(), 1);
+        assert!(
+            mcp_021[0].has_fixes(),
+            "MCP-021 should have auto-fix to replace 0.0.0.0 with localhost"
+        );
+        let fix = &mcp_021[0].fixes[0];
+        assert!(!fix.safe, "MCP-021 fix should be unsafe");
+        assert!(
+            fix.replacement.contains("localhost"),
+            "Fix should replace 0.0.0.0 with localhost, got: {}",
+            fix.replacement
+        );
     }
 
     #[test]

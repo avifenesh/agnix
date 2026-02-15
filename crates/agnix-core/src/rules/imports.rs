@@ -1557,6 +1557,33 @@ mod tests {
     }
 
     #[test]
+    fn test_ref_003_has_fix() {
+        let temp = TempDir::new().unwrap();
+        let target = temp.path().join("target.md");
+        let file_path = temp.path().join("test.md");
+        fs::write(&target, "Target content").unwrap();
+        fs::write(&file_path, "@target.md\n@target.md").unwrap();
+
+        let validator = ImportsValidator;
+        let diagnostics =
+            validator.validate(&file_path, "@target.md\n@target.md", &LintConfig::default());
+
+        let ref_003: Vec<_> = diagnostics.iter().filter(|d| d.rule == "REF-003").collect();
+        assert_eq!(ref_003.len(), 1);
+        assert!(
+            ref_003[0].has_fixes(),
+            "REF-003 should have auto-fix to delete duplicate import"
+        );
+        let fix = &ref_003[0].fixes[0];
+        assert!(!fix.safe, "REF-003 fix should be unsafe");
+        // The fix should be a deletion (replacement is empty)
+        assert!(
+            fix.replacement.is_empty(),
+            "Fix should delete the duplicate line"
+        );
+    }
+
+    #[test]
     fn test_ref_003_no_duplicate() {
         let temp = TempDir::new().unwrap();
         let a = temp.path().join("a.md");

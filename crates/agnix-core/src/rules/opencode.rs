@@ -1095,6 +1095,25 @@ mod tests {
     }
 
     #[test]
+    fn test_oc_008_has_fix() {
+        // Use a case-insensitive mismatch that find_closest_value can match
+        let content = r#"{"permission": "Allow"}"#;
+        let diagnostics = validate(content);
+        let oc_008: Vec<_> = diagnostics.iter().filter(|d| d.rule == "OC-008").collect();
+        assert_eq!(oc_008.len(), 1);
+        assert!(
+            oc_008[0].has_fixes(),
+            "OC-008 should have auto-fix for case-mismatched permission mode"
+        );
+        let fix = &oc_008[0].fixes[0];
+        assert!(!fix.safe, "OC-008 fix should be unsafe");
+        assert_eq!(
+            fix.replacement, "allow",
+            "Fix should suggest 'allow' as closest match"
+        );
+    }
+
+    #[test]
     fn test_oc_008_global_string_valid() {
         let diagnostics = validate(r#"{"permission": "allow"}"#);
         let oc_008: Vec<_> = diagnostics.iter().filter(|d| d.rule == "OC-008").collect();
