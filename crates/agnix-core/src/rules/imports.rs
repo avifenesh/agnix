@@ -1280,6 +1280,30 @@ mod tests {
         let ref_002_diags: Vec<_> = diagnostics.iter().filter(|d| d.rule == "REF-002").collect();
         assert_eq!(ref_002_diags.len(), 1, "Expected exactly 1 REF-002 diagnostic");
         assert!(ref_002_diags[0].message.contains("nonexistent.md"));
+        assert!(
+            !ref_002_diags
+                .iter()
+                .any(|d| d.message.contains("outside.md")),
+            "outside.md should be silently skipped, not reported"
+        );
+    }
+
+    #[test]
+    fn test_ref_002_nonexistent_root_dir_skips_traversal_check() {
+        let temp = TempDir::new().unwrap();
+        let file_path = temp.path().join("CLAUDE.md");
+        let content = "See [missing](nonexistent.md) for more.";
+        fs::write(&file_path, content).unwrap();
+
+        // Set root_dir to a path that does not exist - canonical_base will be None
+        let mut config = LintConfig::default();
+        config.set_root_dir(PathBuf::from("/nonexistent/root/path"));
+
+        let validator = ImportsValidator;
+        let diagnostics = validator.validate(&file_path, content, &config);
+
+        // Traversal check is skipped (canonical_base is None), but existence check still runs
+        assert!(diagnostics.iter().any(|d| d.rule == "REF-002"));
     }
 
     // ===== Shared Import Cache Tests =====
