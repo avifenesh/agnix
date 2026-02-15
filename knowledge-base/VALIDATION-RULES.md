@@ -1903,6 +1903,40 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | XML-001 | Add missing closing tag | unsafe |
 | XML-002 | Fix mismatched closing tag | unsafe |
 | XML-003 | Remove orphaned closing tag | unsafe |
+| AS-001 | Insert empty frontmatter block | unsafe |
+| AS-002 | Insert name field derived from filename | unsafe |
+| AS-003 | Insert description placeholder | unsafe |
+| AS-009 | Strip XML tags from skill description | unsafe |
+| CC-AG-001 | Insert name field derived from filename | unsafe |
+| CC-AG-002 | Insert description placeholder | unsafe |
+| CC-AG-013 | Replace skill name with kebab-case version | unsafe |
+| CC-SK-006 | Insert disable-model-invocation: true | unsafe |
+| CC-SK-012 | Append $ARGUMENTS to body | unsafe |
+| CC-PL-003 | Normalize partial semver | unsafe |
+| AGM-001 | Append closing code fence for unclosed blocks | unsafe |
+| GM-001 | Append closing code fence for unclosed blocks | unsafe |
+| GM-008 | Strip directory prefix from contextFileName | unsafe |
+| PE-003 | Replace weak language with stronger alternative | unsafe |
+| PE-005 | Delete redundant instruction line | unsafe |
+| REF-003 | Delete duplicate import line | unsafe |
+| CUR-011 | Replace invalid cursor hook event with closest match | unsafe |
+| CUR-013 | Replace invalid cursor hook type with closest match | unsafe |
+| KIRO-001 | Replace invalid inclusion mode with closest match | unsafe |
+| OC-008 | Replace invalid permission mode with closest match | unsafe |
+| MCP-013 | Sanitize invalid tool name characters | unsafe |
+| MCP-017 | Replace http:// with https:// in non-localhost URL | unsafe |
+| MCP-021 | Replace 0.0.0.0 with localhost in URL | unsafe |
+| COP-008 | Delete unknown agent frontmatter key | safe |
+| COP-009 | Replace invalid agent target | unsafe |
+| COP-010 | Delete deprecated 'infer' field | safe |
+| COP-012 | Delete unsupported GitHub.com agent field | safe |
+| COP-014 | Delete unknown prompt frontmatter key | safe |
+| COP-015 | Replace invalid prompt type | unsafe |
+| AMP-001 | Delete unknown check frontmatter key | unsafe |
+| AMP-004 | Delete unknown settings JSON key | unsafe |
+| GM-009 | Delete unknown settings JSON key | unsafe |
+| CDX-004 | Delete unknown TOML config key | unsafe |
+| AMP-002 | Replace invalid severity-default with closest match | unsafe |
 
 ---
 
@@ -1910,24 +1944,24 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 
 | Category | Total Rules | HIGH | MEDIUM | LOW | Auto-Fixable |
 |----------|-------------|------|--------|-----|--------------|
-| Agent Skills | 16 | 14 | 2 | 0 | 5 |
-| Claude Skills | 15 | 11 | 4 | 0 | 9 |
+| Agent Skills | 16 | 14 | 2 | 0 | 9 |
+| Claude Skills | 15 | 11 | 4 | 0 | 11 |
 | Claude Hooks | 19 | 12 | 5 | 2 | 8 |
-| Claude Agents | 13 | 12 | 1 | 0 | 4 |
+| Claude Agents | 13 | 12 | 1 | 0 | 7 |
 | Claude Memory | 12 | 8 | 4 | 0 | 3 |
-| AGENTS.md | 6 | 1 | 5 | 0 | 0 |
-| Claude Plugins | 10 | 8 | 2 | 0 | 2 |
-| GitHub Copilot | 17 | 11 | 6 | 0 | 3 |
-| Cursor | 16 | 9 | 7 | 0 | 4 |
+| AGENTS.md | 6 | 1 | 5 | 0 | 1 |
+| Claude Plugins | 10 | 8 | 2 | 0 | 3 |
+| GitHub Copilot | 17 | 11 | 6 | 0 | 9 |
+| Cursor | 16 | 9 | 7 | 0 | 6 |
 | Cline | 4 | 3 | 1 | 0 | 2 |
 | OpenCode | 8 | 4 | 3 | 1 | 1 |
-| Gemini CLI | 9 | 3 | 4 | 2 | 3 |
-| Codex CLI | 6 | 4 | 2 | 0 | 2 |
+| Gemini CLI | 9 | 3 | 4 | 2 | 5 |
+| Codex CLI | 6 | 4 | 2 | 0 | 3 |
 | Windsurf | 4 | 1 | 2 | 1 | 0 |
-| MCP | 24 | 19 | 5 | 0 | 4 |
+| MCP | 24 | 19 | 5 | 0 | 7 |
 | XML | 3 | 3 | 0 | 0 | 3 |
-| References | 4 | 2 | 2 | 0 | 0 |
-| Prompt Eng | 6 | 0 | 6 | 0 | 0 |
+| References | 4 | 2 | 2 | 0 | 1 |
+| Prompt Eng | 6 | 0 | 6 | 0 | 2 |
 | Cross-Platform | 8 | 2 | 5 | 1 | 0 |
 | Cursor Skills | 1 | 0 | 1 | 0 | 1 |
 | Cline Skills | 1 | 0 | 1 | 0 | 1 |
@@ -1936,13 +1970,13 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | OpenCode Skills | 1 | 0 | 1 | 0 | 1 |
 | Windsurf Skills | 1 | 0 | 1 | 0 | 1 |
 | Kiro Skills | 1 | 0 | 1 | 0 | 1 |
-| Kiro Steering | 4 | 2 | 2 | 0 | 0 |
+| Kiro Steering | 4 | 2 | 2 | 0 | 1 |
 | Amp Skills | 1 | 0 | 1 | 0 | 1 |
-| Amp Checks | 4 | 2 | 2 | 0 | 0 |
+| Amp Checks | 4 | 2 | 2 | 0 | 2 |
 | Roo Code Skills | 1 | 0 | 1 | 0 | 1 |
 | Roo Code | 6 | 3 | 3 | 0 | 0 |
 | Version Awareness | 1 | 0 | 0 | 1 | 0 |
-| **TOTAL** | **224** | **134** | **82** | **8** | **59** |
+| **TOTAL** | **224** | **134** | **82** | **8** | **95** |
 
 
 ---
@@ -1976,4 +2010,4 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 
 **Knowledge Base**: 11,036 lines, 320KB, 75+ sources
 **Certainty**: 130 HIGH, 78 MEDIUM, 8 LOW
-**Auto-Fixable**: 59 rules (27%)
+**Auto-Fixable**: 95 rules (42%)
