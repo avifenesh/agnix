@@ -1,5 +1,5 @@
 ---
-name: with-context-agent-skill
+name: with-context-agent
 description: Use when testing valid context and agent configuration
 context: fork
 agent: Explore

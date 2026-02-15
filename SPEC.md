@@ -7,7 +7,7 @@
 
 | Type | Files | Rules |
 |------|-------|-------|
-| Skills | SKILL.md | 31 |
+| Skills | SKILL.md | 36 |
 | Hooks | settings.json | 19 |
 | Memory (Claude Code) | CLAUDE.md, CLAUDE.local.md, .claude/rules/*.md | 12 |
 | Instructions (Cross-Tool) | AGENTS.md, AGENTS.local.md, AGENTS.override.md | 6 |
@@ -54,7 +54,7 @@ agnix/
 │   ├── agnix-mcp/      # MCP server
 │   └── agnix-wasm/     # WebAssembly bindings
 ├── editors/            # Neovim, VS Code, JetBrains, Zed integrations
-├── knowledge-base/     # 224 rules documented
+├── knowledge-base/     # 229 rules documented
 
 ├── scripts/            # Build/dev automation scripts
 ├── website/            # Docusaurus documentation website

@@ -53,6 +53,15 @@ rules:
   as_016:
     message: "解析 SKILL.md 失败: %{error}"
     suggestion: "检查 YAML frontmatter 语法 -- 确保正确的缩进、冒号间距和匹配的引号"
+  as_017:
+    message: "Skill 名称 '%{name}' 必须与父目录 '%{directory}' 匹配"
+    suggestion: "重命名 skill 目录或更新 name 字段以保持一致"
+  as_018:
+    message: "描述应避免使用第一人称或第二人称措辞"
+    suggestion: "将描述改写为第三人称"
+  as_019:
+    message: "Skill 名称 '%{name}' 过于笼统，不利于可靠路由"
+    suggestion: "使用能描述技能用途的具体 kebab-case 名称"
 
   # --- Claude Code Skills (skill/mod.rs) ---
   cc_sk_001:
@@ -83,6 +92,12 @@ rules:
   cc_sk_009:
     message: "动态注入过多（%{count} 个）。限制为 %{max} 个以获得更好性能"
     suggestion: "考虑将复杂逻辑移至 scripts/ 目录或减少注入"
+  cc_sk_016:
+    message: "正文使用了索引形式的 $ARGUMENTS[n]，但缺少 argument-hint"
+    suggestion: "在 frontmatter 中添加 argument-hint，说明应如何提供参数"
+  cc_sk_017:
+    message: "未知的 frontmatter 字段 '%{field}'"
+    suggestion: "删除不受支持的字段或修正 frontmatter 键名拼写"
 
   # --- Per-Client Skills (per_client_skill.rs) ---
   cr_sk_001:

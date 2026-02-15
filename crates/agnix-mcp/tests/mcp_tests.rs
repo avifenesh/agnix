@@ -21,7 +21,7 @@ fn fixtures_dir() -> PathBuf {
 fn create_temp_project() -> TempDir {
     let temp = TempDir::new().unwrap();
 
-    // Create a valid SKILL.md
+    // Create a valid SKILL.md in a matching directory for AS-017
     let skill_content = r#"---
 name: test-skill
 description: A test skill for MCP testing
@@ -34,7 +34,12 @@ tools:
 
 This is a test skill.
 "#;
-    fs::write(temp.path().join("SKILL.md"), skill_content).unwrap();
+    fs::create_dir_all(temp.path().join("test-skill")).unwrap();
+    fs::write(
+        temp.path().join("test-skill").join("SKILL.md"),
+        skill_content,
+    )
+    .unwrap();
 
     // Create an invalid SKILL.md in a subdirectory
     fs::create_dir_all(temp.path().join("subdir")).unwrap();
@@ -117,7 +122,7 @@ mod validation_tests {
     #[test]
     fn test_validate_valid_skill_file() {
         let temp = create_temp_project();
-        let skill_path = temp.path().join("SKILL.md");
+        let skill_path = temp.path().join("test-skill").join("SKILL.md");
 
         let config = LintConfig::default();
         let result = validate_file(&skill_path, &config);
@@ -205,7 +210,7 @@ mod validation_tests {
     #[test]
     fn test_validate_with_target_claude_code() {
         let temp = create_temp_project();
-        let skill_path = temp.path().join("SKILL.md");
+        let skill_path = temp.path().join("test-skill").join("SKILL.md");
 
         let mut config = LintConfig::default();
         config.set_target(agnix_core::config::TargetTool::ClaudeCode);
@@ -234,7 +239,7 @@ mod rules_tests {
     #[test]
     fn test_rules_count() {
         // Should match the current source-of-truth total in knowledge-base/rules.json.
-        assert_eq!(agnix_rules::rule_count(), 224);
+        assert_eq!(agnix_rules::rule_count(), 229);
     }
 
     #[test]

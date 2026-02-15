@@ -1,7 +1,7 @@
 {
   "description": "Machine-readable source of truth for all validation rules. When adding a new rule, add it here AND in VALIDATION-RULES.md. CI parity tests enforce sync.",
   "version": "1.1.0",
-  "total_rules": 224,
+  "total_rules": 229,
   "last_updated": "2026-02-14",
   "schema": {
     "evidence": {
@@ -763,6 +763,87 @@
       },
       "good_example": "---\nname: valid-yaml\ndescription: Use when demonstrating valid YAML frontmatter\n---\nBody content here.",
       "bad_example": "---\nname: broken-yaml\ndescription: [unclosed bracket\n---\nBody content here."
+    },
+    {
+      "id": "AS-017",
+      "name": "Name Must Match Parent Directory",
+      "severity": "HIGH",
+      "category": "agent-skills",
+      "evidence": {
+        "source_type": "spec",
+        "source_urls": [
+          "https://agentskills.io/specification"
+        ],
+        "verified_on": "2026-02-14",
+        "applies_to": {
+          "spec_revision": "1.0"
+        },
+        "normative_level": "MUST",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      },
+      "good_example": "---\nname: code-review\ndescription: Use when reviewing pull requests\n---\nReview changed files and report findings.",
+      "bad_example": "---\nname: deploy-helper\ndescription: Use when validating deployment checks\n---\nThis file is stored in code-review/SKILL.md."
+    },
+    {
+      "id": "AS-018",
+      "name": "Description Uses First or Second Person",
+      "severity": "MEDIUM",
+      "category": "agent-skills",
+      "evidence": {
+        "source_type": "spec",
+        "source_urls": [
+          "https://agentskills.io/specification"
+        ],
+        "verified_on": "2026-02-14",
+        "applies_to": {
+          "spec_revision": "1.0"
+        },
+        "normative_level": "SHOULD",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      },
+      "good_example": "---\nname: code-review\ndescription: Use when reviewing pull requests for defects\n---\nReview code and summarize critical findings.",
+      "bad_example": "---\nname: code-review\ndescription: You can use this skill when reviewing pull requests\n---\nReview code and summarize critical findings."
+    },
+    {
+      "id": "AS-019",
+      "name": "Vague Skill Name",
+      "severity": "MEDIUM",
+      "category": "agent-skills",
+      "evidence": {
+        "source_type": "spec",
+        "source_urls": [
+          "https://agentskills.io/specification"
+        ],
+        "verified_on": "2026-02-14",
+        "applies_to": {
+          "spec_revision": "1.0"
+        },
+        "normative_level": "SHOULD",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      },
+      "good_example": "---\nname: postgres-query-planner\ndescription: Use when optimizing PostgreSQL queries\n---\nAnalyze query plans and suggest improvements.",
+      "bad_example": "---\nname: helper\ndescription: Use when handling tasks\n---\nExecute helper routines."
     },
     {
       "id": "CC-AG-001",
@@ -2651,6 +2732,60 @@
       },
       "good_example": "---\nname: slash-cmd\ndescription: Use when user types the slash command\nuser-invocable: true\n---\nHandle the slash command.",
       "bad_example": "---\nname: slash-cmd\ndescription: Use when user types the slash command\nuser-invocable: \"false\"\n---\nHandle the slash command."
+    },
+    {
+      "id": "CC-SK-016",
+      "name": "Indexed $ARGUMENTS Without argument-hint",
+      "severity": "MEDIUM",
+      "category": "claude-skills",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://code.claude.com/docs/en/skills"
+        ],
+        "verified_on": "2026-02-14",
+        "applies_to": {
+          "tool": "claude-code"
+        },
+        "normative_level": "SHOULD",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      },
+      "good_example": "---\nname: run-check\ndescription: Use when validating a provided path\nargument-hint: path-to-target\n---\nRun checks against $ARGUMENTS[0].",
+      "bad_example": "---\nname: run-check\ndescription: Use when validating a provided path\n---\nRun checks against $ARGUMENTS[0]."
+    },
+    {
+      "id": "CC-SK-017",
+      "name": "Unknown Frontmatter Field",
+      "severity": "MEDIUM",
+      "category": "claude-skills",
+      "evidence": {
+        "source_type": "vendor_docs",
+        "source_urls": [
+          "https://code.claude.com/docs/en/skills"
+        ],
+        "verified_on": "2026-02-14",
+        "applies_to": {
+          "tool": "claude-code"
+        },
+        "normative_level": "SHOULD",
+        "tests": {
+          "unit": true,
+          "fixtures": true,
+          "e2e": false
+        }
+      },
+      "fix": {
+        "autofix": false
+      },
+      "good_example": "---\nname: lint-config\ndescription: Use when validating configuration files\nallowed-tools: Read, Grep\n---\nLint project configuration files.",
+      "bad_example": "---\nname: lint-config\ndescription: Use when validating configuration files\nallowed_tools: Read, Grep\n---\nLint project configuration files."
     },
     {
       "id": "CDX-000",
@@ -6113,12 +6248,12 @@
   "categories": {
     "agent-skills": {
       "prefix": "AS",
-      "count": 16,
+      "count": 19,
       "description": "Agent Skills specification rules"
     },
     "claude-skills": {
       "prefix": "CC-SK",
-      "count": 15,
+      "count": 17,
       "description": "Claude Code Skills rules"
     },
     "claude-hooks": {
@@ -6280,7 +6415,10 @@
               "AS-002",
               "AS-004",
               "AS-005",
-              "AS-006"
+              "AS-006",
+              "AS-007",
+              "AS-017",
+              "AS-019"
             ],
             "values": [],
             "snippet": "name: my-skill"
@@ -6291,7 +6429,8 @@
             "rules": [
               "AS-003",
               "AS-008",
-              "AS-010"
+              "AS-010",
+              "AS-018"
             ],
             "values": [],
             "snippet": "description: Use when user wants to ..."
@@ -6322,6 +6461,7 @@
               "ExitPlanMode",
               "Skill",
               "StatusBarMessageTool",
+              "SendMessageTool",
               "TaskOutput"
             ],
             "snippet": "allowed-tools: Read, Grep, Bash(git:*)"
@@ -6330,7 +6470,8 @@
             "key": "argument-hint",
             "docs": "Optional hint shown to users for skill arguments.",
             "rules": [
-              "CC-SK-012"
+              "CC-SK-012",
+              "CC-SK-016"
             ],
             "values": [],
             "snippet": "argument-hint: path/to/file"
@@ -6490,6 +6631,7 @@
               "ExitPlanMode",
               "Skill",
               "StatusBarMessageTool",
+              "SendMessageTool",
               "TaskOutput"
             ],
             "snippet": "tools:\n  - Read\n  - Grep"
@@ -6520,6 +6662,7 @@
               "ExitPlanMode",
               "Skill",
               "StatusBarMessageTool",
+              "SendMessageTool",
               "TaskOutput"
             ],
             "snippet": "disallowedTools:\n  - Bash"

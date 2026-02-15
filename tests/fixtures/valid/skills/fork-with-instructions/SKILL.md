@@ -1,5 +1,5 @@
 ---
-name: code-analyzer
+name: fork-with-instructions
 description: Use when analyzing code quality
 context: fork
 agent: general-purpose

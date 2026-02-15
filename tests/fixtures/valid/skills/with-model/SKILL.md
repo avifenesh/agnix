@@ -1,5 +1,5 @@
 ---
-name: with-model-skill
+name: with-model
 description: Use when testing valid model configuration
 model: opus
 ---

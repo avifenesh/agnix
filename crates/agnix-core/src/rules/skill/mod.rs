@@ -54,6 +54,8 @@ static_regex!(fn windows_path_regex, r"(?i)\b(?:[a-z]:)?[a-z0-9._-]+(?:\\[a-z0-9
 static_regex!(fn windows_path_token_regex, r"[^\s]+\\[^\s]+");
 static_regex!(fn plain_bash_regex, r"\bBash\b");
 static_regex!(fn imperative_verb_regex, r"(?i)\b(run|execute|create|build|deploy|install|configure|update|delete|remove|add|write|read|check|test|validate|ensure|make|use|call|invoke|start|stop|send|fetch|generate|implement|fix|analyze|review|search|find|move|copy|replace|push|pull|commit|clean|format|lint|parse|process|handle|prepare|download|upload|export|import|open|save|load|connect|verify|apply|enable|disable)\b");
+static_regex!(fn first_second_person_regex, r"(?i)(^\s*(?:i|you|we)\b|\b(?:i will|you can|you should|we can|we should|we will)\b)");
+static_regex!(fn indexed_arguments_regex, r"\$ARGUMENTS\[\d+\]");
 
 /// Valid model values for CC-SK-001
 const VALID_MODELS: &[&str] = &["sonnet", "opus", "haiku", "inherit"];
@@ -81,7 +83,30 @@ const KNOWN_TOOLS: &[&str] = &[
     "ExitPlanMode",
     "Skill",
     "StatusBarMessageTool",
+    "SendMessageTool",
     "TaskOutput",
+];
+
+/// Known top-level frontmatter fields for CC-SK-017
+const KNOWN_FRONTMATTER_FIELDS: &[&str] = &[
+    "name",
+    "description",
+    "license",
+    "compatibility",
+    "metadata",
+    "allowed-tools",
+    "argument-hint",
+    "disable-model-invocation",
+    "user-invocable",
+    "model",
+    "context",
+    "agent",
+    "hooks",
+];
+
+/// Vague skill names that provide little routing signal for invocation
+const VAGUE_SKILL_NAMES: &[&str] = &[
+    "helper", "utils", "tools", "misc", "general", "common", "base", "main", "default",
 ];
 
 /// Maximum dynamic injections for CC-SK-009
@@ -179,6 +204,8 @@ struct ValidationContext<'a> {
     line_starts: Vec<usize>,
     /// Parsed frontmatter YAML (populated by validate_frontmatter_structure, consumed after)
     frontmatter: Option<SkillFrontmatter>,
+    /// Parsed generic YAML frontmatter (lazily populated when rules need key-level access)
+    frontmatter_yaml: Option<serde_yaml::Value>,
     /// Accumulated diagnostics (errors, warnings)
     diagnostics: Vec<Diagnostic>,
 }
@@ -194,6 +221,7 @@ impl<'a> ValidationContext<'a> {
             parts,
             line_starts,
             frontmatter: None,
+            frontmatter_yaml: None,
             diagnostics: Vec::new(),
         }
     }
@@ -212,6 +240,13 @@ impl<'a> ValidationContext<'a> {
 
     fn frontmatter_key_line_byte_range(&self, key: &str) -> Option<(usize, usize)> {
         frontmatter_key_line_byte_range(self.content, &self.parts, key)
+    }
+
+    fn parsed_frontmatter_yaml(&mut self) -> Option<&serde_yaml::Value> {
+        if self.frontmatter_yaml.is_none() {
+            self.frontmatter_yaml = serde_yaml::from_str(&self.parts.frontmatter).ok();
+        }
+        self.frontmatter_yaml.as_ref()
     }
 
     /// AS-001, AS-016: Validate frontmatter structure and parse
@@ -326,7 +361,7 @@ impl<'a> ValidationContext<'a> {
         }
     }
 
-    /// AS-004, AS-005, AS-006, AS-007: Validate name format and rules
+    /// AS-004, AS-005, AS-006, AS-007, AS-019: Validate name format and rules
     fn validate_name_rules(&mut self, name: &str) {
         let (name_line, name_col) = self.frontmatter_key_line_col("name");
         let name_trimmed = name.trim();
@@ -438,24 +473,95 @@ impl<'a> ValidationContext<'a> {
         }
 
         // AS-007: Reserved name
-        if self.config.is_rule_enabled("AS-007") && !name_trimmed.is_empty() {
+        let name_lower = if (self.config.is_rule_enabled("AS-007")
+            || self.config.is_rule_enabled("AS-019"))
+            && !name_trimmed.is_empty()
+        {
+            Some(name_trimmed.to_lowercase())
+        } else {
+            None
+        };
+
+        if self.config.is_rule_enabled("AS-007") {
             let reserved = ["anthropic", "claude", "skill"];
-            if reserved.contains(&name_trimmed.to_lowercase().as_str()) {
-                self.diagnostics.push(
-                    Diagnostic::error(
-                        self.path.to_path_buf(),
-                        name_line,
-                        name_col,
-                        "AS-007",
-                        t!("rules.as_007.message", name = name_trimmed),
-                    )
-                    .with_suggestion(t!("rules.as_007.suggestion")),
-                );
+            if let Some(name_lower) = name_lower.as_deref() {
+                if reserved.contains(&name_lower) {
+                    self.diagnostics.push(
+                        Diagnostic::error(
+                            self.path.to_path_buf(),
+                            name_line,
+                            name_col,
+                            "AS-007",
+                            t!("rules.as_007.message", name = name_trimmed),
+                        )
+                        .with_suggestion(t!("rules.as_007.suggestion")),
+                    );
+                }
+            }
+        }
+
+        // AS-019: Vague skill name
+        if self.config.is_rule_enabled("AS-019") {
+            if let Some(name_lower) = name_lower.as_deref() {
+                if VAGUE_SKILL_NAMES.contains(&name_lower) {
+                    self.diagnostics.push(
+                        Diagnostic::warning(
+                            self.path.to_path_buf(),
+                            name_line,
+                            name_col,
+                            "AS-019",
+                            t!("rules.as_019.message", name = name_trimmed),
+                        )
+                        .with_suggestion(t!("rules.as_019.suggestion")),
+                    );
+                }
             }
         }
     }
 
-    /// AS-008, AS-009, AS-010: Validate description format and rules
+    /// AS-017: Validate frontmatter name matches parent directory
+    fn validate_name_directory_match(&mut self, name: &str) {
+        if !self.config.is_rule_enabled("AS-017") {
+            return;
+        }
+
+        // Applies to canonical skill files in named directories.
+        if self.path.file_name().and_then(|n| n.to_str()) != Some("SKILL.md") {
+            return;
+        }
+
+        let Some(parent_name) = self
+            .path
+            .parent()
+            .and_then(|p| p.file_name())
+            .and_then(|n| n.to_str())
+        else {
+            return;
+        };
+
+        let name_trimmed = name.trim();
+        if name_trimmed.is_empty() || parent_name == name_trimmed {
+            return;
+        }
+
+        let (name_line, name_col) = self.frontmatter_key_line_col("name");
+        self.diagnostics.push(
+            Diagnostic::error(
+                self.path.to_path_buf(),
+                name_line,
+                name_col,
+                "AS-017",
+                t!(
+                    "rules.as_017.message",
+                    name = name_trimmed,
+                    directory = parent_name
+                ),
+            )
+            .with_suggestion(t!("rules.as_017.suggestion")),
+        );
+    }
+
+    /// AS-008, AS-009, AS-010, AS-018: Validate description format and rules
     fn validate_description_rules(&mut self, description: &str) {
         let (description_line, description_col) = self.frontmatter_key_line_col("description");
         let description_trimmed = description.trim();
@@ -539,6 +645,23 @@ impl<'a> ValidationContext<'a> {
 
                 self.diagnostics.push(diagnostic);
             }
+        }
+
+        // AS-018: Description uses first/second person language
+        if self.config.is_rule_enabled("AS-018")
+            && !description_trimmed.is_empty()
+            && first_second_person_regex().is_match(description_trimmed)
+        {
+            self.diagnostics.push(
+                Diagnostic::warning(
+                    self.path.to_path_buf(),
+                    description_line,
+                    description_col,
+                    "AS-018",
+                    t!("rules.as_018.message"),
+                )
+                .with_suggestion(t!("rules.as_018.suggestion")),
+            );
         }
     }
 
@@ -912,10 +1035,9 @@ impl<'a> ValidationContext<'a> {
 
         let (hooks_line, hooks_col) = self.frontmatter_key_line_col("hooks");
 
-        // Try to parse the full frontmatter as a generic YAML Value to extract hooks
-        let yaml_value: serde_yaml::Value = match serde_yaml::from_str(frontmatter) {
-            Ok(v) => v,
-            Err(_) => return, // Parse errors handled by AS-016
+        // Parse once and share with other key-based rules.
+        let Some(yaml_value) = self.parsed_frontmatter_yaml().cloned() else {
+            return;
         };
 
         let hooks_value = match yaml_value.get("hooks") {
@@ -1077,6 +1199,70 @@ impl<'a> ValidationContext<'a> {
                 ));
 
                 self.diagnostics.push(diagnostic);
+            }
+        }
+    }
+
+    /// CC-SK-016: Validate indexed $ARGUMENTS[n] has argument-hint
+    fn validate_cc_indexed_arguments(&mut self, frontmatter: &SkillFrontmatter) {
+        if !self.config.is_rule_enabled("CC-SK-016") || frontmatter.argument_hint.is_some() {
+            return;
+        }
+
+        let body = if self.parts.body_start <= self.content.len() {
+            &self.content[self.parts.body_start..]
+        } else {
+            ""
+        };
+
+        let Some(first_match) = indexed_arguments_regex().find(body) else {
+            return;
+        };
+
+        let (line, col) = self.line_col_at(self.parts.body_start + first_match.start());
+        self.diagnostics.push(
+            Diagnostic::warning(
+                self.path.to_path_buf(),
+                line,
+                col,
+                "CC-SK-016",
+                t!("rules.cc_sk_016.message"),
+            )
+            .with_suggestion(t!("rules.cc_sk_016.suggestion")),
+        );
+    }
+
+    /// CC-SK-017: Validate unknown frontmatter keys
+    fn validate_cc_unknown_frontmatter_fields(&mut self) {
+        if !self.config.is_rule_enabled("CC-SK-017") {
+            return;
+        }
+
+        let Some(yaml_value) = self.parsed_frontmatter_yaml().cloned() else {
+            return;
+        };
+
+        let Some(map) = yaml_value.as_mapping() else {
+            return;
+        };
+
+        for key in map.keys() {
+            let Some(field_name) = key.as_str() else {
+                continue;
+            };
+
+            if !KNOWN_FRONTMATTER_FIELDS.contains(&field_name) {
+                let (line, col) = self.frontmatter_key_line_col(field_name);
+                self.diagnostics.push(
+                    Diagnostic::warning(
+                        self.path.to_path_buf(),
+                        line,
+                        col,
+                        "CC-SK-017",
+                        t!("rules.cc_sk_017.message", field = field_name),
+                    )
+                    .with_suggestion(t!("rules.cc_sk_017.suggestion")),
+                );
             }
         }
     }
@@ -1323,6 +1509,9 @@ const RULE_IDS: &[&str] = &[
     "AS-014",
     "AS-015",
     "AS-016",
+    "AS-017",
+    "AS-018",
+    "AS-019",
     "CC-SK-001",
     "CC-SK-002",
     "CC-SK-003",
@@ -1338,6 +1527,8 @@ const RULE_IDS: &[&str] = &[
     "CC-SK-013",
     "CC-SK-014",
     "CC-SK-015",
+    "CC-SK-016",
+    "CC-SK-017",
 ];
 
 pub struct SkillValidator;
@@ -1379,12 +1570,13 @@ impl Validator for SkillValidator {
         // Phase 2: Required fields (AS-002, AS-003)
         ctx.validate_required_fields(&frontmatter);
 
-        // Phase 3: Name validation (AS-004, AS-005, AS-006, AS-007)
+        // Phase 3: Name validation (AS-004, AS-005, AS-006, AS-007, AS-017, AS-019)
         if let Some(name) = frontmatter.name.as_deref() {
             ctx.validate_name_rules(name);
+            ctx.validate_name_directory_match(name);
         }
 
-        // Phase 4: Description validation (AS-008, AS-009, AS-010)
+        // Phase 4: Description validation (AS-008, AS-009, AS-010, AS-018)
         if let Some(description) = frontmatter.description.as_deref() {
             ctx.validate_description_rules(description);
         }
@@ -1401,10 +1593,16 @@ impl Validator for SkillValidator {
         // Phase 8: CC-SK-012 (argument-hint without $ARGUMENTS)
         ctx.validate_cc_argument_hint(&frontmatter);
 
-        // Phase 9: CC-SK-013 (fork without actionable instructions)
+        // Phase 9: CC-SK-016 ($ARGUMENTS[n] without argument-hint)
+        ctx.validate_cc_indexed_arguments(&frontmatter);
+
+        // Phase 10: CC-SK-013 (fork without actionable instructions)
         ctx.validate_cc_fork_instructions(&frontmatter);
 
-        // Phase 10-13: Claude Code rules (CC-SK-001-009)
+        // Phase 11: CC-SK-017 (unknown frontmatter fields)
+        ctx.validate_cc_unknown_frontmatter_fields();
+
+        // Phase 12-15: Claude Code rules (CC-SK-001-009)
         // These require both name and description to be non-empty
         if let (Some(name), Some(description)) = (
             frontmatter.name.as_deref(),
@@ -1442,10 +1640,10 @@ impl Validator for SkillValidator {
             }
         }
 
-        // Phase 14: Body validation (AS-012, AS-013, AS-014)
+        // Phase 16: Body validation (AS-012, AS-013, AS-014)
         ctx.validate_body_rules();
 
-        // Phase 15: Directory validation (AS-015)
+        // Phase 17: Directory validation (AS-015)
         ctx.validate_directory();
 
         ctx.diagnostics

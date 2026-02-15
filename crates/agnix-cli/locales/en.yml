@@ -53,6 +53,15 @@ rules:
   as_016:
     message: "Failed to parse SKILL.md: %{error}"
     suggestion: "Check YAML frontmatter syntax -- ensure proper indentation, colon spacing, and matching quotes"
+  as_017:
+    message: "Skill name '%{name}' must match parent directory '%{directory}'"
+    suggestion: "Rename the skill directory or update the name field so they match"
+  as_018:
+    message: "Description should avoid first/second person phrasing"
+    suggestion: "Rewrite the description in third person (for example: 'Use when reviewing code quality')"
+  as_019:
+    message: "Skill name '%{name}' is too vague for reliable routing"
+    suggestion: "Use a specific kebab-case name that describes the skill purpose"
 
   # --- Claude Code Skills (skill/mod.rs) ---
   cc_sk_001:
@@ -105,6 +114,12 @@ rules:
     message: "user-invocable must be a boolean, got string '%{value}'"
     suggestion: "Use true/false without quotes"
     fix: "Convert string '%{value}' to boolean %{fixed}"
+  cc_sk_016:
+    message: "Body uses indexed $ARGUMENTS[n] but argument-hint is missing"
+    suggestion: "Add argument-hint to frontmatter so users know how to provide arguments"
+  cc_sk_017:
+    message: "Unknown frontmatter field '%{field}'"
+    suggestion: "Remove unsupported fields or fix typos in frontmatter keys"
 
   # --- Per-Client Skills (per_client_skill.rs) ---
   cr_sk_001:
