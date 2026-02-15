@@ -6,7 +6,7 @@
 
 use crate::{
     config::LintConfig,
-    diagnostics::Diagnostic,
+    diagnostics::{Diagnostic, Fix},
     rules::{Validator, ValidatorMetadata},
     schemas::gemini_settings::{GeminiHook, VALID_HOOK_EVENTS, parse_gemini_settings},
 };
@@ -57,16 +57,27 @@ impl Validator for GeminiSettingsValidator {
         if config.is_rule_enabled("GM-009") {
             for key in &parsed.unknown_top_keys {
                 let line = find_key_line(content, key).unwrap_or(1);
-                diagnostics.push(
-                    Diagnostic::warning(
-                        path_buf.clone(),
-                        line,
-                        0,
-                        "GM-009",
-                        t!("rules.gm_009.unknown_key", key = key.as_str()),
-                    )
-                    .with_suggestion(t!("rules.gm_009.suggestion")),
-                );
+                let mut diagnostic = Diagnostic::warning(
+                    path_buf.clone(),
+                    line,
+                    0,
+                    "GM-009",
+                    t!("rules.gm_009.unknown_key", key = key.as_str()),
+                )
+                .with_suggestion(t!("rules.gm_009.suggestion"));
+
+                if let Some((start, end)) =
+                    crate::span_utils::find_unique_json_field_line(content, key)
+                {
+                    diagnostic = diagnostic.with_fix(Fix::delete(
+                        start,
+                        end,
+                        format!("Remove unknown settings key '{key}'"),
+                        false,
+                    ));
+                }
+
+                diagnostics.push(diagnostic);
             }
         }
 

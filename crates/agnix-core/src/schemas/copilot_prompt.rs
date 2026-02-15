@@ -52,6 +52,15 @@ pub struct UnknownKey {
     pub column: usize,
 }
 
+impl crate::rules::FrontmatterRanges for ParsedPromptFrontmatter {
+    fn raw_content(&self) -> &str {
+        &self.raw
+    }
+    fn start_line(&self) -> usize {
+        self.start_line
+    }
+}
+
 /// Parse optional frontmatter from `.prompt.md` content.
 pub fn parse_prompt_frontmatter(content: &str) -> Option<ParsedPromptFrontmatter> {
     if !content.starts_with("---") {

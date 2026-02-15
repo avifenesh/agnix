@@ -58,6 +58,15 @@ pub struct UnknownKey {
     pub column: usize,
 }
 
+impl crate::rules::FrontmatterRanges for ParsedAgentFrontmatter {
+    fn raw_content(&self) -> &str {
+        &self.raw
+    }
+    fn start_line(&self) -> usize {
+        self.start_line
+    }
+}
+
 /// Parse frontmatter from `.agent.md` content.
 pub fn parse_agent_frontmatter(content: &str) -> Option<ParsedAgentFrontmatter> {
     if !content.starts_with("---") {

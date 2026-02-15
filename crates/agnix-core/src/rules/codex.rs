@@ -111,16 +111,27 @@ impl Validator for CodexValidator {
         // even when schema extraction fails.
         if cdx_004_enabled {
             for unknown in &parsed.unknown_keys {
-                diagnostics.push(
-                    Diagnostic::warning(
-                        path.to_path_buf(),
-                        unknown.line,
-                        unknown.column,
-                        "CDX-004",
-                        t!("rules.cdx_004.message", key = unknown.key.as_str()),
-                    )
-                    .with_suggestion(t!("rules.cdx_004.suggestion")),
-                );
+                let mut diagnostic = Diagnostic::warning(
+                    path.to_path_buf(),
+                    unknown.line,
+                    unknown.column,
+                    "CDX-004",
+                    t!("rules.cdx_004.message", key = unknown.key.as_str()),
+                )
+                .with_suggestion(t!("rules.cdx_004.suggestion"));
+
+                if let Some((start, end)) =
+                    crate::rules::line_byte_range(content, unknown.line)
+                {
+                    diagnostic = diagnostic.with_fix(Fix::delete(
+                        start,
+                        end,
+                        format!("Remove unknown config key '{}'", unknown.key),
+                        false,
+                    ));
+                }
+
+                diagnostics.push(diagnostic);
             }
         }
 
