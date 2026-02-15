@@ -612,6 +612,15 @@ fn validate_markdown_links(
     let links = extract_markdown_links(content);
     let base_dir = path.parent().unwrap_or(Path::new("."));
 
+    // Precompute containment boundary and its canonical form once, outside the loop.
+    // Both values depend only on config.root_dir() and base_dir, which are
+    // loop-invariant, so this eliminates N-1 redundant canonicalize syscalls.
+    let containment_dir = config
+        .root_dir()
+        .cloned()
+        .unwrap_or_else(|| base_dir.to_path_buf());
+    let canonical_base = fs.canonicalize(&containment_dir).ok();
+
     for link in links {
         // Skip non-local links (external URLs, anchors, etc.)
         if !is_local_file_link(&link.url) {
@@ -640,15 +649,9 @@ fn validate_markdown_links(
         let resolved = resolve_import_path(file_path, base_dir);
 
         // Security: Verify resolved path stays within project root
-        // Use project root if available, otherwise fall back to file's parent dir
-        let containment_dir = config
-            .root_dir()
-            .cloned()
-            .unwrap_or_else(|| base_dir.to_path_buf());
-        if let Ok(canonical_resolved) = fs.canonicalize(&resolved) {
-            if let Ok(canonical_base) = fs.canonicalize(&containment_dir) {
-                if !canonical_resolved.starts_with(&canonical_base) {
-                    // Path traversal attempt detected - skip this link
+        if let Some(ref canonical_base) = canonical_base {
+            if let Ok(canonical_resolved) = fs.canonicalize(&resolved) {
+                if !canonical_resolved.starts_with(canonical_base) {
                     continue;
                 }
             }
@@ -1248,6 +1251,69 @@ mod tests {
 
         // Relative path should resolve correctly
         assert!(!diagnostics.iter().any(|d| d.rule == "REF-002"));
+    }
+
+    #[test]
+    fn test_ref_002_path_traversal_blocked_by_root_dir() {
+        let temp = TempDir::new().unwrap();
+
+        // Create directory structure: temp/sub/CLAUDE.md and temp/outside.md
+        let sub = temp.path().join("sub");
+        fs::create_dir(&sub).unwrap();
+        let outside = temp.path().join("outside.md");
+        fs::write(&outside, "Outside content").unwrap();
+
+        let file_path = sub.join("CLAUDE.md");
+        let content =
+            "See [escape](../outside.md) for more.\nSee [missing](nonexistent.md) for more.";
+        fs::write(&file_path, content).unwrap();
+
+        // Set root_dir to sub/ so ../outside.md escapes the boundary
+        let mut config = LintConfig::default();
+        config.set_root_dir(sub.clone());
+
+        let validator = ImportsValidator;
+        let diagnostics = validator.validate(&file_path, content, &config);
+
+        // The ../outside.md link should be silently skipped (path traversal blocked)
+        // but nonexistent.md should still produce REF-002 (within root, but missing)
+        let ref_002_diags: Vec<_> = diagnostics.iter().filter(|d| d.rule == "REF-002").collect();
+        assert_eq!(
+            ref_002_diags.len(),
+            1,
+            "Expected exactly 1 REF-002 diagnostic, but found {}: {:?}",
+            ref_002_diags.len(),
+            ref_002_diags
+        );
+        assert!(ref_002_diags[0].message.contains("nonexistent.md"));
+        assert!(
+            !ref_002_diags
+                .iter()
+                .any(|d| d.message.contains("outside.md")),
+            "outside.md should be silently skipped, not reported"
+        );
+    }
+
+    #[test]
+    fn test_ref_002_nonexistent_root_dir_skips_traversal_check() {
+        let temp = TempDir::new().unwrap();
+        let file_path = temp.path().join("CLAUDE.md");
+        let content = "See [missing](nonexistent.md) for more.";
+        fs::write(&file_path, content).unwrap();
+
+        // Set root_dir to a path that does not exist - canonical_base will be None
+        let mut config = LintConfig::default();
+        config.set_root_dir(PathBuf::from("/nonexistent/root/path"));
+
+        let validator = ImportsValidator;
+        let diagnostics = validator.validate(&file_path, content, &config);
+
+        // Traversal check is skipped (canonical_base is None), but existence check still runs
+        assert!(
+            diagnostics.iter().any(|d| d.rule == "REF-002"),
+            "Expected at least one REF-002 diagnostic, but found none in: {:?}",
+            diagnostics
+        );
     }
 
     // ===== Shared Import Cache Tests =====
