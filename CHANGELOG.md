@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- **Expanded autofix coverage**: Added `with_fix()` autofix support to 36 additional validation rules across PE, REF, CUR, KIRO, OC, MCP, WS, ROO, GM, CDX, XP, and CC-AG categories, bringing total fixable rules from 59 to 97 (42% of all rules)
+- **Expanded autofix coverage**: Added `with_fix()` autofix support to 38 additional validation rules across AGM, AMP, AS, CC-AG, CC-HK, CC-PL, CC-SK, CDX, COP, CUR, GM, KIRO, MCP, OC, PE, and REF categories, bringing total fixable rules from 59 to 97 (42% of all rules)
 - **Kiro steering file validation**: 4 new validation rules (KIRO-001 through KIRO-004) for `.kiro/steering/*.md` files - validates inclusion modes (`always`, `fileMatch`, `manual`, `auto`), required companion fields, glob pattern syntax, and empty file detection
 - **Cross-platform and reference validation expansion**: 5 new rules - XP-007 (AGENTS.md exceeds Codex CLI 32KB byte limit), REF-003 (duplicate @import detection), REF-004 (non-markdown @import warning), PE-005 (redundant LLM instructions), PE-006 (negative instructions without positive alternatives)
 - **Roo Code support**: 6 new validation rules (ROO-001 through ROO-006) for `.roorules`, `.roomodes`, `.rooignore`, `.roo/rules/*.md`, `.roo/rules-{slug}/*.md`, and `.roo/mcp.json` configuration files

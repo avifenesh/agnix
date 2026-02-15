@@ -176,6 +176,17 @@ pub struct WeakLanguageInCritical {
     pub byte_offset: usize,
 }
 
+/// Advance a byte position past the current line's terminator (LF or CRLF).
+/// Call after adding `line.len()` to `byte_pos`.
+fn advance_past_line_ending(content: &[u8], byte_pos: &mut usize) {
+    if content.get(*byte_pos) == Some(&b'\r') {
+        *byte_pos += 1;
+    }
+    if content.get(*byte_pos) == Some(&b'\n') {
+        *byte_pos += 1;
+    }
+}
+
 /// Find weak imperative language in critical sections
 ///
 /// Critical sections should use strong language (must/always/never) rather than
@@ -221,15 +232,9 @@ pub fn find_weak_imperative_language(content: &str) -> Vec<WeakLanguageInCritica
             }
         }
 
-        // TODO: Extract this newline-advancing logic into a helper function to reduce duplication
         // Advance byte_pos past this line plus its actual line terminator
         byte_pos += line.len();
-        if content.as_bytes().get(byte_pos) == Some(&b'\r') {
-            byte_pos += 1;
-        }
-        if content.as_bytes().get(byte_pos) == Some(&b'\n') {
-            byte_pos += 1;
-        }
+        advance_past_line_ending(content.as_bytes(), &mut byte_pos);
     }
 
     results
@@ -368,22 +373,12 @@ pub fn find_redundant_instructions(content: &str) -> Vec<RedundantInstruction> {
         if line.trim_start().starts_with("```") {
             in_code_block = !in_code_block;
             byte_pos += line.len();
-            if content.as_bytes().get(byte_pos) == Some(&b'\r') {
-                byte_pos += 1;
-            }
-            if content.as_bytes().get(byte_pos) == Some(&b'\n') {
-                byte_pos += 1;
-            }
+            advance_past_line_ending(content.as_bytes(), &mut byte_pos);
             continue;
         }
         if in_code_block {
             byte_pos += line.len();
-            if content.as_bytes().get(byte_pos) == Some(&b'\r') {
-                byte_pos += 1;
-            }
-            if content.as_bytes().get(byte_pos) == Some(&b'\n') {
-                byte_pos += 1;
-            }
+            advance_past_line_ending(content.as_bytes(), &mut byte_pos);
             continue;
         }
 
@@ -398,12 +393,7 @@ pub fn find_redundant_instructions(content: &str) -> Vec<RedundantInstruction> {
         }
 
         byte_pos += line.len();
-        if content.as_bytes().get(byte_pos) == Some(&b'\r') {
-            byte_pos += 1;
-        }
-        if content.as_bytes().get(byte_pos) == Some(&b'\n') {
-            byte_pos += 1;
-        }
+        advance_past_line_ending(content.as_bytes(), &mut byte_pos);
     }
 
     results

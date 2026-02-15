@@ -329,8 +329,9 @@ impl Validator for AgentValidator {
                 .unwrap_or_else(|| "agent".to_string());
             let parts_fm = split_frontmatter(content);
             if parts_fm.has_frontmatter && parts_fm.has_closing {
-                // Insert after opening ---\n
-                let insert_pos = parts_fm.frontmatter_start;
+                // Insert after opening --- and its line ending
+                let insert_pos =
+                    crate::rules::frontmatter_content_offset(content, parts_fm.frontmatter_start);
                 diagnostic = diagnostic.with_fix(Fix::insert(
                     insert_pos,
                     format!("name: {}\n", derived_name),
@@ -362,7 +363,8 @@ impl Validator for AgentValidator {
 
             let parts_fm = split_frontmatter(content);
             if parts_fm.has_frontmatter && parts_fm.has_closing {
-                let insert_pos = parts_fm.frontmatter_start;
+                let insert_pos =
+                    crate::rules::frontmatter_content_offset(content, parts_fm.frontmatter_start);
                 diagnostic = diagnostic.with_fix(Fix::insert(
                     insert_pos,
                     "description: TODO - add agent description\n".to_string(),
@@ -830,24 +832,33 @@ impl Validator for AgentValidator {
                         .with_suggestion(t!("rules.cc_ag_013.suggestion"));
 
                         if !kebab.is_empty() && kebab != skill_name.as_str() {
-                            if let Some((start, end)) =
-                                frontmatter_value_byte_range(content, "skills")
-                            {
-                                // The value range covers the whole skills field which may be
-                                // multi-line. For a single skill, try to find the exact
-                                // occurrence within the frontmatter.
-                                let fm_slice = &content[start..end];
-                                if let Some(offset) = fm_slice.find(skill_name.as_str()) {
-                                    let abs_start = start + offset;
-                                    let abs_end = abs_start + skill_name.len();
-                                    diagnostic = diagnostic.with_fix(Fix::replace(
-                                        abs_start,
-                                        abs_end,
-                                        &kebab,
-                                        format!("Replace '{}' with '{}'", skill_name, kebab),
-                                        false,
-                                    ));
-                                }
+                            // Try to get the precise byte range for the `skills` field in
+                            // the frontmatter; if unavailable (e.g. multi-line YAML lists),
+                            // fall back to searching the entire frontmatter.
+                            let (search_start, search_end) =
+                                if let Some((start, end)) =
+                                    frontmatter_value_byte_range(content, "skills")
+                                {
+                                    (start, end)
+                                } else {
+                                    let parts_fm = split_frontmatter(content);
+                                    (0, parts_fm.frontmatter_start + parts_fm.frontmatter.len())
+                                };
+
+                            // The value range covers the whole skills field which may be
+                            // multi-line. For a single skill, try to find the exact
+                            // occurrence within that range.
+                            let fm_slice = &content[search_start..search_end];
+                            if let Some(offset) = fm_slice.find(skill_name.as_str()) {
+                                let abs_start = search_start + offset;
+                                let abs_end = abs_start + skill_name.len();
+                                diagnostic = diagnostic.with_fix(Fix::replace(
+                                    abs_start,
+                                    abs_end,
+                                    &kebab,
+                                    format!("Replace '{}' with '{}'", skill_name, kebab),
+                                    false,
+                                ));
                             }
                         }
 

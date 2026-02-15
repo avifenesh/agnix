@@ -324,7 +324,10 @@ impl<'a> ValidationContext<'a> {
                 .map(convert_to_kebab_case)
                 .unwrap_or_default();
             if !derived_name.is_empty() && self.parts.has_frontmatter && self.parts.has_closing {
-                let insert_pos = self.parts.frontmatter_start;
+                let insert_pos = crate::rules::frontmatter_content_offset(
+                    self.content,
+                    self.parts.frontmatter_start,
+                );
                 diagnostic = diagnostic.with_fix(Fix::insert(
                     insert_pos,
                     format!("name: {}\n", derived_name),
@@ -348,7 +351,10 @@ impl<'a> ValidationContext<'a> {
             .with_suggestion(t!("rules.as_003.suggestion"));
 
             if self.parts.has_frontmatter && self.parts.has_closing {
-                let insert_pos = self.parts.frontmatter_start;
+                let insert_pos = crate::rules::frontmatter_content_offset(
+                    self.content,
+                    self.parts.frontmatter_start,
+                );
                 diagnostic = diagnostic.with_fix(Fix::insert(
                     insert_pos,
                     "description: TODO - add skill description\n".to_string(),
@@ -980,7 +986,10 @@ impl<'a> ValidationContext<'a> {
 
                 // Insert disable-model-invocation: true in frontmatter
                 if self.parts.has_frontmatter && self.parts.has_closing {
-                    let insert_pos = self.parts.frontmatter_start;
+                    let insert_pos = crate::rules::frontmatter_content_offset(
+                        self.content,
+                        self.parts.frontmatter_start,
+                    );
                     diagnostic = diagnostic.with_fix(Fix::insert(
                         insert_pos,
                         "disable-model-invocation: true\n".to_string(),

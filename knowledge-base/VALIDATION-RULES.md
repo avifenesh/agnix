@@ -284,7 +284,7 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 <a id="cc-sk-008"></a>
 ### CC-SK-008 [HIGH] Unknown Tool Name
 **Requirement**: Tool names MUST match Claude Code tools
-**Known Tools**: Bash, Read, Write, Edit, Grep, Glob, Task, WebFetch, WebSearch, AskUserQuestion, TodoRead, TodoWrite, MultiTool, NotebookEdit, EnterPlanMode, ExitPlanMode, Skill, StatusBarMessageTool, TaskOutput
+**Known Tools**: Bash, Read, Write, Edit, Grep, Glob, Task, WebFetch, WebSearch, AskUserQuestion, TodoRead, TodoWrite, MultiTool, NotebookEdit, EnterPlanMode, ExitPlanMode, Skill, StatusBarMessageTool, SendMessageTool, TaskOutput
 **Detection**: Check against tool list; MCP tools with lowercase `mcp__<server>__<tool>` format are accepted (case-sensitive prefix)
 **Fix**: Suggest closest match
 **Source**: code.claude.com/docs/en/settings
@@ -314,7 +314,7 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 ### CC-SK-012 [MEDIUM] Argument Hint Without $ARGUMENTS
 **Requirement**: If `argument-hint` is set, body SHOULD reference `$ARGUMENTS`
 **Detection**: `argument_hint.is_some() && !body.contains("$ARGUMENTS")`
-**Fix**: [AUTO-FIX] No auto-fix
+**Fix**: Auto-fix (unsafe) - append `$ARGUMENTS` to skill body
 **Source**: code.claude.com/docs/en/skills
 
 <a id="cc-sk-013"></a>
@@ -1391,7 +1391,7 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 ### OC-008 [HIGH] Invalid Permission Config
 **Requirement**: Permission values MUST be `"allow"`, `"ask"`, or `"deny"`
 **Detection**: Parse JSON, validate each permission value against allowed set
-**Fix**: [AUTO-FIX] No auto-fix (must be manually corrected)
+**Fix**: [AUTO-FIX] Replace invalid permission value with the closest valid mode (`"allow"`, `"ask"`, or `"deny"`)
 **Source**: opencode.ai/docs/config
 
 <a id="oc-009"></a>
@@ -1981,7 +1981,7 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 |----------|-------------|------|--------|-----|--------------|
 | Agent Skills | 19 | 15 | 4 | 0 | 9 |
 | Claude Skills | 17 | 11 | 6 | 0 | 11 |
-| Claude Hooks | 19 | 12 | 5 | 2 | 8 |
+| Claude Hooks | 19 | 12 | 5 | 2 | 12 |
 | Claude Agents | 13 | 12 | 1 | 0 | 7 |
 | Claude Memory | 12 | 8 | 4 | 0 | 3 |
 | AGENTS.md | 6 | 1 | 5 | 0 | 1 |
@@ -1989,8 +1989,8 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | GitHub Copilot | 17 | 11 | 6 | 0 | 9 |
 | Cursor | 16 | 9 | 7 | 0 | 6 |
 | Cline | 4 | 3 | 1 | 0 | 2 |
-| OpenCode | 8 | 4 | 3 | 1 | 1 |
-| Gemini CLI | 9 | 3 | 4 | 2 | 5 |
+| OpenCode | 8 | 4 | 3 | 1 | 2 |
+| Gemini CLI | 9 | 3 | 4 | 2 | 3 |
 | Codex CLI | 6 | 4 | 2 | 0 | 3 |
 | Windsurf | 4 | 1 | 2 | 1 | 0 |
 | MCP | 24 | 19 | 5 | 0 | 7 |
@@ -2007,11 +2007,11 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 | Kiro Skills | 1 | 0 | 1 | 0 | 1 |
 | Kiro Steering | 4 | 2 | 2 | 0 | 1 |
 | Amp Skills | 1 | 0 | 1 | 0 | 1 |
-| Amp Checks | 4 | 2 | 2 | 0 | 2 |
+| Amp Checks | 4 | 2 | 2 | 0 | 3 |
 | Roo Code Skills | 1 | 0 | 1 | 0 | 1 |
 | Roo Code | 6 | 3 | 3 | 0 | 0 |
 | Version Awareness | 1 | 0 | 0 | 1 | 0 |
-| **TOTAL** | **229** | **135** | **86** | **8** | **95** |
+| **TOTAL** | **229** | **135** | **86** | **8** | **97** |
 
 
 ---

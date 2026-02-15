@@ -1206,7 +1206,7 @@
       },
       "fix": {
         "autofix": true,
-        "fix_safety": "safe"
+        "fix_safety": "unsafe"
       },
       "good_example": "---\nname: my-agent\ndescription: Agent with valid skill names\nskills:\n  - code-review\n  - deploy-prod\n---\nAgent instructions.",
       "bad_example": "---\nname: my-agent\ndescription: Agent with invalid skill name format\nskills:\n  - Code_Review\n  - --bad-name\n---\nAgent instructions."
@@ -2498,7 +2498,7 @@
       },
       "fix": {
         "autofix": true,
-        "fix_safety": "safe"
+        "fix_safety": "unsafe"
       },
       "good_example": "---\nname: deploy-staging\ndescription: Use when deploying to staging environment\ndisable-model-invocation: true\n---\nDeploy the application to staging.",
       "bad_example": "---\nname: deploy-staging\ndescription: Use when deploying to staging environment\n---\nDeploy the application to staging."
@@ -2663,7 +2663,7 @@
       },
       "fix": {
         "autofix": true,
-        "fix_safety": "safe"
+        "fix_safety": "unsafe"
       },
       "good_example": "---\nname: greet-user\ndescription: Use when greeting a user by name\nargument-hint: Enter the user's name\n---\nGreet the user: Hello, $ARGUMENTS!",
       "bad_example": "---\nname: greet-user\ndescription: Use when greeting a user by name\nargument-hint: Enter the user's name\n---\nGreet the user with a friendly message."
@@ -3351,7 +3351,7 @@
       },
       "fix": {
         "autofix": true,
-        "fix_safety": "safe"
+        "fix_safety": "unsafe"
       },
       "good_example": "---\ndescription: Review pull requests\ntarget: vscode\n---\nReview pull requests.",
       "bad_example": "---\ndescription: Review pull requests\ntarget: desktop\n---\nReview pull requests."
@@ -5322,7 +5322,7 @@
       },
       "fix": {
         "autofix": true,
-        "fix_safety": "safe"
+        "fix_safety": "unsafe"
       },
       "good_example": "{\n  \"permission\": {\n    \"read\": \"allow\",\n    \"edit\": \"ask\"\n  }\n}",
       "bad_example": "{\n  \"permission\": {\n    \"read\": \"yes\"\n  }\n}"
@@ -5454,7 +5454,7 @@
       },
       "fix": {
         "autofix": true,
-        "fix_safety": "safe"
+        "fix_safety": "unsafe"
       },
       "good_example": "# Critical Rules\n\nYou must follow the style guide.\nAlways run linting before commits.",
       "bad_example": "# Critical Rules\n\nYou should follow the style guide.\nTry to run linting before commits."

@@ -46,7 +46,9 @@ const VALID_AMP_SETTINGS_KEYS: &[&str] = &[
 ];
 
 /// Adapter to use raw frontmatter with `find_yaml_value_range`.
-/// The frontmatter starts at line 1 (after the opening `---`).
+/// `split_frontmatter()` returns `parts.frontmatter` with a leading `\n`
+/// (the first `.lines()` entry is empty), so `start_line` is 0 to avoid
+/// off-by-one errors in `find_yaml_value_range`'s line-number calculation.
 struct YamlFrontmatterAdapter<'a> {
     raw: &'a str,
 }
@@ -56,7 +58,7 @@ impl crate::rules::FrontmatterRanges for YamlFrontmatterAdapter<'_> {
         self.raw
     }
     fn start_line(&self) -> usize {
-        1 // frontmatter starts at line 1 (after opening ---)
+        0
     }
 }
 
@@ -779,5 +781,23 @@ mod tests {
         assert!(amp_004[0].has_fixes(), "AMP-004 should have fix");
         assert!(!amp_004[0].fixes[0].safe, "AMP-004 fix should be unsafe");
         assert!(amp_004[0].fixes[0].is_deletion());
+    }
+
+    #[test]
+    fn test_amp_002_severity_default_has_fix() {
+        // "High" -> closest match is "high" (case-insensitive)
+        let content = "---\nname: test\nseverity-default: High\n---\n# Body";
+        let diagnostics = validate(".agents/checks/test.md", content);
+        let amp_002: Vec<_> = diagnostics.iter().filter(|d| d.rule == "AMP-002").collect();
+        assert_eq!(amp_002.len(), 1);
+        assert!(
+            amp_002[0].has_fixes(),
+            "AMP-002 should have auto-fix for closest match"
+        );
+        assert!(
+            !amp_002[0].fixes[0].safe,
+            "AMP-002 fix should be unsafe"
+        );
+        assert_eq!(amp_002[0].fixes[0].replacement, "high");
     }
 }

@@ -133,6 +133,21 @@ pub(crate) fn line_byte_range(content: &str, line_number: usize) -> Option<(usiz
     }
 }
 
+/// Compute the byte offset where frontmatter content begins - after the opening
+/// `---` delimiter and its line ending. This is the correct insertion point for
+/// new frontmatter keys. Handles both LF and CRLF line endings.
+pub(crate) fn frontmatter_content_offset(content: &str, frontmatter_start: usize) -> usize {
+    let mut pos = frontmatter_start;
+    let bytes = content.as_bytes();
+    if bytes.get(pos) == Some(&b'\r') {
+        pos += 1;
+    }
+    if bytes.get(pos) == Some(&b'\n') {
+        pos += 1;
+    }
+    pos
+}
+
 /// Find the byte range of a YAML value for a given key in frontmatter.
 /// Returns the range including quotes if the value is quoted.
 /// Handles `#` comments correctly (ignores them inside quotes).
