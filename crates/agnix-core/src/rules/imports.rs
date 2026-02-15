@@ -11,11 +11,11 @@
 
 use crate::{
     config::LintConfig,
-    diagnostics::Diagnostic,
+    diagnostics::{Diagnostic, Fix},
     fs::FileSystem,
     parsers::markdown::{extract_imports, extract_markdown_links},
     parsers::{Import, ImportCache},
-    rules::{Validator, ValidatorMetadata},
+    rules::{Validator, ValidatorMetadata, line_byte_range},
 };
 use rust_i18n::t;
 use std::collections::{HashMap, HashSet};
@@ -120,16 +120,25 @@ impl Validator for ImportsValidator {
                     .unwrap_or(&import.path)
                     .to_string();
                 if !seen_paths.insert(normalized) {
-                    diagnostics.push(
-                        Diagnostic::warning(
-                            path.to_path_buf(),
-                            import.line,
-                            import.column,
-                            "REF-003",
-                            t!("rules.ref_003.message", path = import.path.as_str()),
-                        )
-                        .with_suggestion(t!("rules.ref_003.suggestion")),
-                    );
+                    let mut diagnostic = Diagnostic::warning(
+                        path.to_path_buf(),
+                        import.line,
+                        import.column,
+                        "REF-003",
+                        t!("rules.ref_003.message", path = import.path.as_str()),
+                    )
+                    .with_suggestion(t!("rules.ref_003.suggestion"));
+
+                    if let Some((start, end)) = line_byte_range(content, import.line) {
+                        diagnostic = diagnostic.with_fix(Fix::delete(
+                            start,
+                            end,
+                            format!("Remove duplicate import '{}'", import.path),
+                            false,
+                        ));
+                    }
+
+                    diagnostics.push(diagnostic);
                 }
             }
         }

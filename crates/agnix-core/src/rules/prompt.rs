@@ -10,8 +10,8 @@
 
 use crate::{
     config::LintConfig,
-    diagnostics::Diagnostic,
-    rules::{Validator, ValidatorMetadata},
+    diagnostics::{Diagnostic, Fix},
+    rules::{Validator, ValidatorMetadata, line_byte_range},
     schemas::prompt::{
         find_ambiguous_instructions, find_cot_on_simple_tasks, find_critical_in_middle_pe,
         find_negative_only_instructions, find_redundant_instructions,
@@ -82,20 +82,50 @@ impl Validator for PromptValidator {
         if config.is_rule_enabled("PE-003") {
             let weak_language = find_weak_imperative_language(content);
             for issue in weak_language {
-                diagnostics.push(
-                    Diagnostic::warning(
-                        path.to_path_buf(),
-                        issue.line,
-                        issue.column,
-                        "PE-003",
-                        t!(
-                            "rules.pe_003.message",
-                            term = issue.weak_term.as_str(),
-                            section = issue.section_name.as_str()
-                        ),
-                    )
-                    .with_suggestion(t!("rules.pe_003.suggestion")),
-                );
+                let replacement = match issue.weak_term.to_lowercase().as_str() {
+                    "should" => Some("must"),
+                    "try to" => Some("must"),
+                    "consider" => Some("ensure"),
+                    "maybe" => Some(""),
+                    "might" => Some("must"),
+                    "could" => Some("must"),
+                    "possibly" => Some(""),
+                    "preferably" => Some(""),
+                    "ideally" => Some(""),
+                    "optionally" => Some(""),
+                    _ => None,
+                };
+
+                let mut diagnostic = Diagnostic::warning(
+                    path.to_path_buf(),
+                    issue.line,
+                    issue.column,
+                    "PE-003",
+                    t!(
+                        "rules.pe_003.message",
+                        term = issue.weak_term.as_str(),
+                        section = issue.section_name.as_str()
+                    ),
+                )
+                .with_suggestion(t!("rules.pe_003.suggestion"));
+
+                if let Some(repl) = replacement {
+                    let end = issue.byte_offset + issue.weak_term.len();
+                    if end <= content.len() {
+                        diagnostic = diagnostic.with_fix(Fix::replace(
+                            issue.byte_offset,
+                            end,
+                            repl,
+                            format!(
+                                "Replace '{}' with stronger language",
+                                issue.weak_term
+                            ),
+                            false,
+                        ));
+                    }
+                }
+
+                diagnostics.push(diagnostic);
             }
         }
 
@@ -120,16 +150,25 @@ impl Validator for PromptValidator {
         if config.is_rule_enabled("PE-005") {
             let redundant = find_redundant_instructions(content);
             for issue in redundant {
-                diagnostics.push(
-                    Diagnostic::warning(
-                        path.to_path_buf(),
-                        issue.line,
-                        issue.column,
-                        "PE-005",
-                        t!("rules.pe_005.message", phrase = issue.phrase.as_str()),
-                    )
-                    .with_suggestion(t!("rules.pe_005.suggestion")),
-                );
+                let mut diagnostic = Diagnostic::warning(
+                    path.to_path_buf(),
+                    issue.line,
+                    issue.column,
+                    "PE-005",
+                    t!("rules.pe_005.message", phrase = issue.phrase.as_str()),
+                )
+                .with_suggestion(t!("rules.pe_005.suggestion"));
+
+                if let Some((start, end)) = line_byte_range(content, issue.line) {
+                    diagnostic = diagnostic.with_fix(Fix::delete(
+                        start,
+                        end,
+                        format!("Remove redundant instruction '{}'", issue.phrase),
+                        false,
+                    ));
+                }
+
+                diagnostics.push(diagnostic);
             }
         }
 

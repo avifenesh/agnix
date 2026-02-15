@@ -8,7 +8,7 @@
 
 use crate::{
     config::LintConfig,
-    diagnostics::Diagnostic,
+    diagnostics::{Diagnostic, Fix},
     parsers::frontmatter::split_frontmatter,
     rules::{Validator, ValidatorMetadata},
 };
@@ -17,6 +17,20 @@ use std::path::Path;
 
 const RULE_IDS: &[&str] = &["KIRO-001", "KIRO-002", "KIRO-003", "KIRO-004"];
 const VALID_INCLUSION_MODES: &[&str] = &["always", "fileMatch", "manual", "auto"];
+
+/// Adapter to use raw frontmatter with `find_yaml_value_range`.
+struct FrontmatterAdapter<'a> {
+    raw: &'a str,
+}
+
+impl crate::rules::FrontmatterRanges for FrontmatterAdapter<'_> {
+    fn raw_content(&self) -> &str {
+        self.raw
+    }
+    fn start_line(&self) -> usize {
+        1
+    }
+}
 
 pub struct KiroSteeringValidator;
 
@@ -81,16 +95,44 @@ impl Validator for KiroSteeringValidator {
                         // Valid mode - no diagnostic
                     }
                     Some(inclusion) => {
-                        diagnostics.push(
-                            Diagnostic::error(
-                                path.to_path_buf(),
-                                1,
-                                0,
-                                "KIRO-001",
-                                t!("rules.kiro_001.message", value = inclusion),
-                            )
-                            .with_suggestion(t!("rules.kiro_001.suggestion")),
-                        );
+                        let mut diagnostic = Diagnostic::error(
+                            path.to_path_buf(),
+                            1,
+                            0,
+                            "KIRO-001",
+                            t!("rules.kiro_001.message", value = inclusion),
+                        )
+                        .with_suggestion(t!("rules.kiro_001.suggestion"));
+
+                        if let Some(suggested) =
+                            crate::rules::find_closest_value(inclusion, VALID_INCLUSION_MODES)
+                        {
+                            // Find byte range of the value in the frontmatter
+                            let adapter = FrontmatterAdapter {
+                                raw: &parts.frontmatter,
+                            };
+                            if let Some((start, end)) = crate::rules::find_yaml_value_range(
+                                content, &adapter, "inclusion", true,
+                            ) {
+                                let slice = content.get(start..end).unwrap_or("");
+                                let replacement = if slice.starts_with('"') {
+                                    format!("\"{}\"", suggested)
+                                } else if slice.starts_with('\'') {
+                                    format!("'{}'", suggested)
+                                } else {
+                                    suggested.to_string()
+                                };
+                                diagnostic = diagnostic.with_fix(Fix::replace(
+                                    start,
+                                    end,
+                                    replacement,
+                                    format!("Replace inclusion mode with '{}'", suggested),
+                                    false,
+                                ));
+                            }
+                        }
+
+                        diagnostics.push(diagnostic);
                     }
                     None => {
                         // Non-string value (number, bool, etc.) - also invalid

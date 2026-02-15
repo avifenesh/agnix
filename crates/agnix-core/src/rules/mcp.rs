@@ -950,21 +950,47 @@ fn validate_tool(
             .all(|c| c.is_ascii_alphanumeric() || matches!(c, '_' | '.' | '-'));
         if name.len() > 128 || !valid_chars {
             let (line, col) = find_field("name");
-            diagnostics.push(
-                Diagnostic::error(
-                    path.to_path_buf(),
-                    line,
-                    col,
-                    "MCP-013",
-                    format!(
-                        "{}invalid tool name '{}': expected 1-128 chars using [a-zA-Z0-9_.-]",
-                        tool_prefix, name
-                    ),
-                )
-                .with_suggestion(
-                    "Rename the tool to use only letters, numbers, underscore, dot, or hyphen",
+            let mut diagnostic = Diagnostic::error(
+                path.to_path_buf(),
+                line,
+                col,
+                "MCP-013",
+                format!(
+                    "{}invalid tool name '{}': expected 1-128 chars using [a-zA-Z0-9_.-]",
+                    tool_prefix, name
                 ),
+            )
+            .with_suggestion(
+                "Rename the tool to use only letters, numbers, underscore, dot, or hyphen",
             );
+
+            // Sanitize: replace invalid chars with '_', truncate to 128
+            let sanitized: String = name
+                .chars()
+                .map(|c| {
+                    if c.is_ascii_alphanumeric() || matches!(c, '_' | '.' | '-') {
+                        c
+                    } else {
+                        '_'
+                    }
+                })
+                .take(128)
+                .collect();
+            if !sanitized.is_empty() && sanitized != name {
+                if let Some((start, end)) =
+                    crate::rules::find_unique_json_string_value_span(content, "name", name)
+                {
+                    diagnostic = diagnostic.with_fix(Fix::replace(
+                        start,
+                        end,
+                        &sanitized,
+                        format!("Sanitize tool name to '{}'", sanitized),
+                        false,
+                    ));
+                }
+            }
+
+            diagnostics.push(diagnostic);
         }
     }
 
@@ -1387,19 +1413,33 @@ fn validate_server(
             && let Some(host) = extract_http_host(url)
             && !is_local_http_host(&host)
         {
-            diagnostics.push(
-                Diagnostic::error(
-                    path.to_path_buf(),
-                    line,
-                    col,
-                    "MCP-017",
-                    format!(
-                        "Server '{}' uses insecure HTTP URL '{}'; use HTTPS for non-localhost endpoints",
-                        name, url
-                    ),
-                )
-                .with_suggestion("Change the server URL to https:// for remote endpoints"),
-            );
+            let mut diagnostic = Diagnostic::error(
+                path.to_path_buf(),
+                line,
+                col,
+                "MCP-017",
+                format!(
+                    "Server '{}' uses insecure HTTP URL '{}'; use HTTPS for non-localhost endpoints",
+                    name, url
+                ),
+            )
+            .with_suggestion("Change the server URL to https:// for remote endpoints");
+
+            // Replace http:// with https:// in the URL
+            if let Some((start, end)) =
+                crate::rules::find_unique_json_string_value_span(content, "url", url)
+            {
+                let fixed_url = url.replacen("http://", "https://", 1);
+                diagnostic = diagnostic.with_fix(Fix::replace(
+                    start,
+                    end,
+                    fixed_url,
+                    "Replace http:// with https://",
+                    false,
+                ));
+            }
+
+            diagnostics.push(diagnostic);
         }
     }
 
@@ -1409,19 +1449,35 @@ fn validate_server(
         && let Some(host) = extract_http_host(url)
         && is_wildcard_http_host(&host)
     {
-        diagnostics.push(
-            Diagnostic::warning(
-                path.to_path_buf(),
-                line,
-                col,
-                "MCP-021",
-                format!(
-                    "Server '{}' binds HTTP to '{}', which exposes all interfaces",
-                    name, host
-                ),
-            )
-            .with_suggestion("Prefer localhost bindings unless remote network access is required"),
-        );
+        let mut diagnostic = Diagnostic::warning(
+            path.to_path_buf(),
+            line,
+            col,
+            "MCP-021",
+            format!(
+                "Server '{}' binds HTTP to '{}', which exposes all interfaces",
+                name, host
+            ),
+        )
+        .with_suggestion("Prefer localhost bindings unless remote network access is required");
+
+        // Replace 0.0.0.0 with localhost in the URL
+        if let Some((start, end)) =
+            crate::rules::find_unique_json_string_value_span(content, "url", url)
+        {
+            let fixed_url = url.replace("0.0.0.0", "localhost");
+            if fixed_url != url {
+                diagnostic = diagnostic.with_fix(Fix::replace(
+                    start,
+                    end,
+                    fixed_url,
+                    "Replace 0.0.0.0 with localhost",
+                    false,
+                ));
+            }
+        }
+
+        diagnostics.push(diagnostic);
     }
 
     if effective_type == "stdio" {
