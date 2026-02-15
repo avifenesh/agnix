@@ -94,7 +94,7 @@ const MAX_INJECTIONS: usize = 3;
 /// - Collapse consecutive hyphens
 /// - Trim leading/trailing hyphens
 /// - Truncate to 64 characters
-fn convert_to_kebab_case(name: &str) -> String {
+pub(crate) fn convert_to_kebab_case(name: &str) -> String {
     let mut kebab = String::with_capacity(name.len());
     let mut last_was_hyphen = true; // Use to trim leading hyphens and collapse consecutive ones
 
