@@ -835,15 +835,14 @@ impl Validator for AgentValidator {
                             // Try to get the precise byte range for the `skills` field in
                             // the frontmatter; if unavailable (e.g. multi-line YAML lists),
                             // fall back to searching the entire frontmatter.
-                            let (search_start, search_end) =
-                                if let Some((start, end)) =
-                                    frontmatter_value_byte_range(content, "skills")
-                                {
-                                    (start, end)
-                                } else {
-                                    let parts_fm = split_frontmatter(content);
-                                    (0, parts_fm.frontmatter_start + parts_fm.frontmatter.len())
-                                };
+                            let (search_start, search_end) = if let Some((start, end)) =
+                                frontmatter_value_byte_range(content, "skills")
+                            {
+                                (start, end)
+                            } else {
+                                let parts_fm = split_frontmatter(content);
+                                (0, parts_fm.frontmatter_start + parts_fm.frontmatter.len())
+                            };
 
                             // The value range covers the whole skills field which may be
                             // multi-line. For a single skill, try to find the exact

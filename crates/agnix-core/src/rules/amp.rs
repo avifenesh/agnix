@@ -794,10 +794,7 @@ mod tests {
             amp_002[0].has_fixes(),
             "AMP-002 should have auto-fix for closest match"
         );
-        assert!(
-            !amp_002[0].fixes[0].safe,
-            "AMP-002 fix should be unsafe"
-        );
+        assert!(!amp_002[0].fixes[0].safe, "AMP-002 fix should be unsafe");
         assert_eq!(amp_002[0].fixes[0].replacement, "high");
     }
 }
