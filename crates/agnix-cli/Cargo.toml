@@ -28,7 +28,7 @@ colored.workspace = true
 anyhow.workspace = true
 serde.workspace = true
 serde_json.workspace = true
-toml = "0.8"
+toml = "1.0"
 similar = "2"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
