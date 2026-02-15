@@ -222,7 +222,7 @@ fn validate_custom_agent(path: &Path, content: &str, config: &LintConfig) -> Vec
                         {
                             if let Some((start, end)) = crate::rules::find_yaml_value_range(
                                 content,
-                                &parsed,
+                                parsed,
                                 "target",
                                 true,
                             ) {
@@ -417,7 +417,7 @@ fn validate_reusable_prompt(path: &Path, content: &str, config: &LintConfig) -> 
                         {
                             if let Some((start, end)) = crate::rules::find_yaml_value_range(
                                 content,
-                                &parsed,
+                                parsed,
                                 "agent",
                                 true,
                             ) {

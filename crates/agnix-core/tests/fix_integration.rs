@@ -417,7 +417,7 @@ fn test_cc_mem_005_fix_is_safe() {
         !mem_005.is_empty(),
         "Expected CC-MEM-005 diagnostic with fix"
     );
-    assert!(mem_005[0].fixes[0].safe, "CC-MEM-005 fix should be safe");
+    assert!(!mem_005[0].fixes[0].safe, "CC-MEM-005 fix should be unsafe (content deletion needs review)");
 }
 
 #[test]
