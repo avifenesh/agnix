@@ -95,21 +95,21 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 ### AS-001 [HIGH] Missing Frontmatter
 **Requirement**: SKILL.md MUST have YAML frontmatter between `---` delimiters
 **Detection**: `!content.starts_with("---")` or no closing `---`
-**Fix**: Add template frontmatter
+**Fix**: [AUTO-FIX] Add template frontmatter
 **Source**: agentskills.io/specification
 
 <a id="as-002"></a>
 ### AS-002 [HIGH] Missing Required Field: name
 **Requirement**: `name` field REQUIRED in frontmatter
 **Detection**: Parse YAML, check for `name` key
-**Fix**: Add `name: directory-name`
+**Fix**: [AUTO-FIX] Add `name: directory-name`
 **Source**: agentskills.io/specification
 
 <a id="as-003"></a>
 ### AS-003 [HIGH] Missing Required Field: description
 **Requirement**: `description` field REQUIRED in frontmatter
 **Detection**: Parse YAML, check for `description` key
-**Fix**: Add `description: "Use when..."`
+**Fix**: [AUTO-FIX] Add `description: "Use when..."`
 **Source**: agentskills.io/specification
 
 <a id="as-004"></a>
@@ -155,7 +155,7 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 ### AS-009 [HIGH] Description Contains XML
 **Requirement**: description MUST NOT contain XML tags
 **Detection**: `Regex::new(r"<[^>]+>").is_match(description)`
-**Fix**: Remove XML tags
+**Fix**: [AUTO-FIX] Remove XML tags
 **Source**: platform.claude.com/docs
 
 <a id="as-010"></a>
@@ -207,6 +207,27 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 **Fix**: Fix YAML syntax errors in frontmatter
 **Source**: agentskills.io/specification
 
+<a id="as-017"></a>
+### AS-017 [HIGH] Name Must Match Parent Directory
+**Requirement**: Skill name MUST match parent directory name
+**Detection**: name field does not match directory containing SKILL.md
+**Fix**: Manual fix required - rename directory or update name field
+**Source**: agentskills.io/specification
+
+<a id="as-018"></a>
+### AS-018 [MEDIUM] Description Uses First or Second Person
+**Requirement**: Description SHOULD NOT use first or second person pronouns
+**Detection**: Description contains "I", "we", "you", "your", etc.
+**Fix**: Manual fix required - rewrite description in imperative mood
+**Source**: agentskills.io/specification
+
+<a id="as-019"></a>
+### AS-019 [MEDIUM] Vague Skill Name
+**Requirement**: Skill name SHOULD be descriptive and specific
+**Detection**: Name contains vague terms like "helper", "utility", "handler"
+**Fix**: Manual fix required - use more descriptive name
+**Source**: agentskills.io/specification
+
 ---
 
 ## CLAUDE CODE RULES (SKILLS)
@@ -250,7 +271,7 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 ### CC-SK-006 [HIGH] Dangerous Auto-Invocation
 **Requirement**: Side-effect skills MUST have `disable-model-invocation: true`
 **Detection**: `name.contains("deploy|ship|publish|delete|drop") && !disable_model_invocation`
-**Fix**: Add `disable-model-invocation: true`
+**Fix**: [AUTO-FIX] Add `disable-model-invocation: true`
 **Source**: code.claude.com/docs/en/skills
 
 <a id="cc-sk-007"></a>
@@ -293,7 +314,7 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 ### CC-SK-012 [MEDIUM] Argument Hint Without $ARGUMENTS
 **Requirement**: If `argument-hint` is set, body SHOULD reference `$ARGUMENTS`
 **Detection**: `argument_hint.is_some() && !body.contains("$ARGUMENTS")`
-**Fix**: No auto-fix
+**Fix**: [AUTO-FIX] No auto-fix
 **Source**: code.claude.com/docs/en/skills
 
 <a id="cc-sk-013"></a>
@@ -315,6 +336,20 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 **Requirement**: `user-invocable` MUST be a boolean, not a string
 **Detection**: Raw YAML parsing detects quoted "true"/"false" strings
 **Fix**: [AUTO-FIX, safe] Convert string to boolean
+**Source**: code.claude.com/docs/en/skills
+
+<a id="cc-sk-016"></a>
+### CC-SK-016 [MEDIUM] Indexed $ARGUMENTS Without argument-hint
+**Requirement**: If body uses indexed $ARGUMENTS (e.g., $ARGUMENTS[0]), SHOULD have argument-hint field
+**Detection**: Body contains indexed $ARGUMENTS syntax without argument-hint field
+**Fix**: Manual fix required - add argument-hint field describing expected arguments
+**Source**: code.claude.com/docs/en/skills
+
+<a id="cc-sk-017"></a>
+### CC-SK-017 [MEDIUM] Unknown Frontmatter Field
+**Requirement**: Skill frontmatter SHOULD only use recognized fields
+**Detection**: Frontmatter contains fields not in the Claude Code skill schema
+**Fix**: Manual fix required - remove unknown field or correct typo
 **Source**: code.claude.com/docs/en/skills
 
 ---
@@ -381,14 +416,14 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 ### AMP-001 [HIGH] Invalid Amp Check Frontmatter
 **Requirement**: `.agents/checks/*.md` files MUST include valid YAML frontmatter with required `name` and known optional fields
 **Detection**: Missing frontmatter OR invalid YAML OR missing `name` OR unknown key outside `name`, `description`, `severity-default`, `tools`
-**Fix**: Add valid frontmatter with required fields and remove unknown keys
+**Fix**: [AUTO-FIX] Add valid frontmatter with required fields and remove unknown keys
 **Source**: ampcode.com/manual#code-review-checks
 
 <a id="amp-002"></a>
 ### AMP-002 [MEDIUM] Invalid Amp severity-default
 **Requirement**: `severity-default` SHOULD be one of `low`, `medium`, `high`, `critical`
 **Detection**: Frontmatter `severity-default` value is missing, non-string, or outside allowed values
-**Fix**: Set `severity-default` to a valid value
+**Fix**: [AUTO-FIX] Set `severity-default` to a valid value
 **Source**: ampcode.com/manual#code-review-checks
 
 <a id="amp-003"></a>
@@ -402,7 +437,7 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 ### AMP-004 [HIGH] Invalid Amp Settings Configuration
 **Requirement**: `.amp/settings.json` MUST be valid JSON and use known top-level keys
 **Detection**: JSON parse error OR unknown top-level key in `.amp/settings.json` / `.amp/settings.local.json`
-**Fix**: Fix JSON syntax and remove unknown keys
+**Fix**: [AUTO-FIX] Fix JSON syntax and remove unknown keys
 **Source**: ampcode.com/manual#settings
 
 <a id="rc-sk-001"></a>
@@ -450,7 +485,7 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 ### CC-HK-005 [HIGH] Missing Type Field
 **Requirement**: Hook MUST have `type: "command"` or `type: "prompt"`
 **Detection**: `hook.type.is_none()`
-**Fix**: Add `"type": "command"`
+**Fix**: [AUTO-FIX] Add `"type": "command"`
 **Source**: code.claude.com/docs/en/hooks
 
 <a id="cc-hk-006"></a>
@@ -489,7 +524,7 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
   - `hook.timeout.is_none()` - missing timeout
   - Command: `timeout > 600` exceeds 10-min default
   - Prompt: `timeout > 30` exceeds 30s default
-**Fix**: Add explicit timeout within default limits (600s for commands, 30s for prompts)
+**Fix**: [AUTO-FIX] Add explicit timeout within default limits (600s for commands, 30s for prompts)
 **Source**: code.claude.com/docs/en/hooks
 **Version-Aware**: When Claude Code version is not pinned in `.agnix.toml [tool_versions]`, an assumption note is added indicating default timeout behavior is assumed. Pin the version for version-specific validation.
 
@@ -518,7 +553,7 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 ### CC-HK-014 [MEDIUM] Once Outside Skill/Agent Frontmatter
 **Requirement**: `once` field SHOULD only appear in skill/agent frontmatter hooks
 **Detection**: Check for `once` field in settings.json hooks
-**Fix**: Remove the once field from settings.json hooks
+**Fix**: [AUTO-FIX] Remove the once field from settings.json hooks
 **Source**: code.claude.com/docs/en/hooks
 
 <a id="cc-hk-015"></a>
@@ -539,7 +574,7 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 ### CC-HK-017 [MEDIUM] Prompt/Agent Hook Missing $ARGUMENTS
 **Requirement**: Prompt and agent hooks SHOULD reference `$ARGUMENTS` to receive event data
 **Detection**: Check prompt or agent hook text for `$ARGUMENTS` reference
-**Fix**: Include `$ARGUMENTS` in the prompt or agent hook
+**Fix**: [AUTO-FIX] Include `$ARGUMENTS` in the prompt or agent hook
 **Source**: code.claude.com/docs/en/hooks
 
 <a id="cc-hk-018"></a>
@@ -564,14 +599,14 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 ### CC-AG-001 [HIGH] Missing Name Field
 **Requirement**: Agent frontmatter REQUIRES `name` field
 **Detection**: Parse frontmatter, check for `name`
-**Fix**: Add `name: agent-name`
+**Fix**: [AUTO-FIX] Add `name: agent-name`
 **Source**: code.claude.com/docs/en/sub-agents
 
 <a id="cc-ag-002"></a>
 ### CC-AG-002 [HIGH] Missing Description Field
 **Requirement**: Agent frontmatter REQUIRES `description` field
 **Detection**: Parse frontmatter, check for `description`
-**Fix**: Add description
+**Fix**: [AUTO-FIX] Add description
 **Source**: code.claude.com/docs/en/sub-agents
 
 <a id="cc-ag-003"></a>
@@ -648,7 +683,7 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 ### CC-AG-013 [MEDIUM] Invalid Skill Name Format
 **Requirement**: Skill names in `skills` array SHOULD follow valid naming format (lowercase, hyphens)
 **Detection**: Check skill name matches kebab-case pattern
-**Fix**: Use kebab-case format (e.g., 'my-skill-name')
+**Fix**: [AUTO-FIX] Use kebab-case format (e.g., 'my-skill-name')
 **Source**: code.claude.com/docs/en/sub-agents
 
 ---
@@ -748,7 +783,7 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 ### AGM-001 [HIGH] Valid Markdown Structure
 **Requirement**: AGENTS.md MUST be valid markdown
 **Detection**: Parse as markdown, check for syntax errors
-**Fix**: Fix markdown syntax issues
+**Fix**: [AUTO-FIX] Fix markdown syntax issues
 **Source**: developers.openai.com/codex/guides/agents-md, docs.cursor.com/en/context, docs.cline.bot/features/custom-instructions
 
 <a id="agm-002"></a>
@@ -808,7 +843,7 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 ### CC-PL-003 [HIGH] Invalid Semver
 **Requirement**: version MUST be semver format (major.minor.patch)
 **Detection**: `!Regex::new(r"^\d+\.\d+\.\d+$").matches(version)`
-**Fix**: Suggest valid semver
+**Fix**: [AUTO-FIX] Suggest valid semver
 **Source**: code.claude.com/docs/en/plugins-reference
 
 <a id="cc-pl-004"></a>
@@ -955,7 +990,7 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 ### MCP-013 [HIGH] Invalid Tool Name Format
 **Requirement**: Tool name MUST be 1-128 chars and match `[a-zA-Z0-9_.-]+`
 **Detection**: Check `tools[].name` length and allowed characters
-**Fix**: Rename tool to a compliant identifier
+**Fix**: [AUTO-FIX] Rename tool to a compliant identifier
 **Source**: modelcontextprotocol.io/specification/2025-11-25/server/tools
 
 <a id="mcp-014"></a>
@@ -983,7 +1018,7 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 ### MCP-017 [HIGH] Non-HTTPS Remote HTTP Server URL
 **Requirement**: Non-localhost HTTP MCP endpoints MUST use HTTPS
 **Detection**: For `type: "http"`, flag `http://` URLs when host is not localhost/loopback
-**Fix**: Change remote MCP URL to `https://`
+**Fix**: [AUTO-FIX] Change remote MCP URL to `https://`
 **Source**: modelcontextprotocol.io/specification/2025-11-25/basic/transports
 
 <a id="mcp-018"></a>
@@ -1011,7 +1046,7 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 ### MCP-021 [MEDIUM] Wildcard HTTP Interface Binding
 **Requirement**: HTTP servers SHOULD avoid wildcard/all-interface binds by default
 **Detection**: Flag `http://0.0.0.0...` and IPv6 wildcard binds
-**Fix**: Prefer localhost binding unless remote exposure is required
+**Fix**: [AUTO-FIX] Prefer localhost binding unless remote exposure is required
 **Source**: modelcontextprotocol.io/specification/2025-11-25/basic/security_best_practices
 
 <a id="mcp-022"></a>
@@ -1092,21 +1127,21 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 ### COP-008 [MEDIUM] Custom Agent Unknown Frontmatter Field
 **Requirement**: Custom agent frontmatter SHOULD only use supported keys
 **Detection**: Parse frontmatter and detect unknown top-level keys
-**Fix**: Remove unsupported keys
+**Fix**: [AUTO-FIX] Remove unsupported keys
 **Source**: docs.github.com/en/copilot/reference/custom-agents-configuration
 
 <a id="cop-009"></a>
 ### COP-009 [HIGH] Custom Agent Invalid Target
 **Requirement**: Custom agent `target` MUST be `vscode` or `github-copilot`
 **Detection**: Parse `target` and validate against allowed values
-**Fix**: Set `target` to `vscode` or `github-copilot`
+**Fix**: [AUTO-FIX] Set `target` to `vscode` or `github-copilot`
 **Source**: docs.github.com/en/copilot/reference/custom-agents-configuration
 
 <a id="cop-010"></a>
 ### COP-010 [MEDIUM] Custom Agent Uses Deprecated infer Field
 **Requirement**: Custom agent files SHOULD NOT use deprecated `infer` frontmatter
 **Detection**: Detect `infer` key in custom agent frontmatter
-**Fix**: Remove `infer` and use user-invokable custom agents
+**Fix**: [AUTO-FIX] Remove `infer` and use user-invokable custom agents
 **Source**: github.com/avifenesh/agnix/issues/400
 
 <a id="cop-011"></a>
@@ -1120,7 +1155,7 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 ### COP-012 [MEDIUM] Custom Agent Uses GitHub.com Unsupported Fields
 **Requirement**: Custom agents for GitHub.com SHOULD NOT use unsupported fields (`model`, `argument-hint`, `handoffs`)
 **Detection**: Parse frontmatter and detect unsupported field presence
-**Fix**: Remove unsupported fields for GitHub.com compatibility
+**Fix**: [AUTO-FIX] Remove unsupported fields for GitHub.com compatibility
 **Source**: docs.github.com/en/copilot/reference/custom-agents-configuration
 
 <a id="cop-013"></a>
@@ -1134,14 +1169,14 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 ### COP-014 [MEDIUM] Prompt File Unknown Frontmatter Field
 **Requirement**: Prompt file frontmatter SHOULD only use supported keys
 **Detection**: Parse frontmatter and detect unknown top-level keys
-**Fix**: Remove unsupported keys
+**Fix**: [AUTO-FIX] Remove unsupported keys
 **Source**: code.visualstudio.com/docs/copilot/customization/prompt-files
 
 <a id="cop-015"></a>
 ### COP-015 [HIGH] Prompt File Invalid Agent Mode
 **Requirement**: Prompt file `agent` field MUST be one of `none`, `ask`, or `always`
 **Detection**: Parse frontmatter and validate `agent` value
-**Fix**: Set `agent` to a supported mode
+**Fix**: [AUTO-FIX] Set `agent` to a supported mode
 **Source**: code.visualstudio.com/docs/copilot/customization/prompt-files
 
 <a id="cop-017"></a>
@@ -1236,7 +1271,7 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 ### CUR-011 [MEDIUM] Unknown Cursor Hook Event Name
 **Requirement**: Hook event names in `.cursor/hooks.json` SHOULD use documented Cursor events
 **Detection**: Validate each `hooks.<event>` key against allowlisted event names
-**Fix**: Rename event keys to supported Cursor hook events
+**Fix**: [AUTO-FIX] Rename event keys to supported Cursor hook events
 **Source**: cursor.com/docs/agent/hooks
 
 <a id="cur-012"></a>
@@ -1250,7 +1285,7 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 ### CUR-013 [HIGH] Invalid Cursor Hook Type Value
 **Requirement**: Hook `type` MUST be `command` or `prompt` when present
 **Detection**: Parse hook entries and validate `type` values
-**Fix**: Change invalid `type` values to supported values
+**Fix**: [AUTO-FIX] Change invalid `type` values to supported values
 **Source**: cursor.com/docs/agent/hooks
 
 <a id="cur-014"></a>
@@ -1356,7 +1391,7 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 ### OC-008 [HIGH] Invalid Permission Config
 **Requirement**: Permission values MUST be `"allow"`, `"ask"`, or `"deny"`
 **Detection**: Parse JSON, validate each permission value against allowed set
-**Fix**: No auto-fix (must be manually corrected)
+**Fix**: [AUTO-FIX] No auto-fix (must be manually corrected)
 **Source**: opencode.ai/docs/config
 
 <a id="oc-009"></a>
@@ -1374,7 +1409,7 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 ### GM-001 [HIGH] Invalid Markdown Structure in GEMINI.md
 **Requirement**: GEMINI.md MUST have valid markdown (no unclosed code blocks or malformed links)
 **Detection**: Parse markdown, check for unclosed ``` blocks and malformed [text]( links
-**Fix**: No auto-fix (manual correction required)
+**Fix**: [AUTO-FIX] No auto-fix (manual correction required)
 **Source**: geminicli.com/docs/cli/gemini-md/
 
 <a id="gm-002"></a>
@@ -1423,14 +1458,14 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 ### GM-008 [LOW] Invalid Context File Name Configuration
 **Requirement**: contextFileName in gemini-extension.json MAY reference a valid filename
 **Detection**: Check if contextFileName contains path separators (should be a filename only)
-**Fix**: No auto-fix (manual correction required)
+**Fix**: [AUTO-FIX] No auto-fix (manual correction required)
 **Source**: geminicli.com/docs/extensions/reference
 
 <a id="gm-009"></a>
 ### GM-009 [HIGH] Settings.json Parse Error
 **Requirement**: .gemini/settings.json MUST have valid JSON/JSONC syntax
 **Detection**: Attempt to parse as JSONC; report parse errors with line/column. Detect unknown top-level keys.
-**Fix**: No auto-fix (correct the JSON syntax)
+**Fix**: [AUTO-FIX] No auto-fix (correct the JSON syntax)
 **Source**: geminicli.com/docs/cli/settings
 
 ---
@@ -1470,7 +1505,7 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 ### CDX-004 [MEDIUM] Unknown Config Key
 **Requirement**: Top-level keys in `.codex/config.toml` SHOULD be from the known configuration schema
 **Detection**: Parse TOML, compare top-level keys against known key and table allowlists
-**Fix**: Remove unrecognized keys
+**Fix**: [AUTO-FIX] Remove unrecognized keys
 **Source**: developers.openai.com/codex/
 
 <a id="cdx-005"></a>
@@ -1566,7 +1601,7 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 ### KIRO-001 [HIGH] Invalid Steering File Inclusion Mode
 **Requirement**: Kiro steering files MUST use a valid inclusion mode
 **Detection**: Frontmatter `inclusion` field is not one of: always, fileMatch, manual, auto
-**Fix**: Use one of: always, fileMatch, manual, auto
+**Fix**: [AUTO-FIX] Use one of: always, fileMatch, manual, auto
 **Source**: kiro.dev/docs/steering/
 
 <a id="kiro-002"></a>
@@ -1637,7 +1672,7 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 ### REF-003 [MEDIUM] Duplicate Import
 **Requirement**: Each @import path SHOULD appear only once per file
 **Detection**: Extract @imports, normalize paths (strip `./` prefix), flag duplicates
-**Fix**: Remove the duplicate @import line
+**Fix**: [AUTO-FIX] Remove the duplicate @import line
 **Source**: Claude Code memory docs
 
 <a id="ref-004"></a>
@@ -1669,7 +1704,7 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 ### PE-003 [MEDIUM] Weak Imperative Language
 **Requirement**: Use strong language (must/always/never) for critical rules
 **Detection**: Critical section with `should|could|try|consider|maybe`
-**Fix**: Replace with must/always/required
+**Fix**: [AUTO-FIX] Replace with must/always/required
 **Source**: Multiple prompt engineering studies
 
 <a id="pe-004"></a>
@@ -1683,7 +1718,7 @@ Rules with an empty `applies_to` object (`{}`) apply universally.
 ### PE-005 [MEDIUM] Redundant Generic Instructions
 **Requirement**: Instructions SHOULD NOT include generic directives that LLMs already follow by default
 **Detection**: Check for phrases like "be helpful", "be accurate", "be concise", "follow instructions", etc.
-**Fix**: Remove generic instructions and focus on project-specific behavior
+**Fix**: [AUTO-FIX] Remove generic instructions and focus on project-specific behavior
 **Source**: Anthropic prompt engineering guide
 
 <a id="pe-006"></a>
@@ -2010,4 +2045,4 @@ pub fn validate_skill(path: &Path, content: &str) -> Vec<Diagnostic> {
 
 **Knowledge Base**: 11,036 lines, 320KB, 75+ sources
 **Certainty**: 135 HIGH, 86 MEDIUM, 8 LOW
-**Auto-Fixable**: 95 rules (42%)
+**Auto-Fixable**: 97 rules (42%)
