@@ -1033,4 +1033,71 @@ mod tests {
             Err(CoreError::Config(ConfigError::InvalidExcludePattern { .. }))
         ));
     }
+
+    #[test]
+    fn test_xp004_read_error_for_missing_instruction_file() {
+        use crate::DiagnosticLevel;
+
+        let temp = tempfile::TempDir::new().unwrap();
+
+        // Write a real CLAUDE.md so one file is readable
+        let claude_md = temp.path().join("CLAUDE.md");
+        std::fs::write(&claude_md, "# Project\n\nRun cargo test to run tests.\n").unwrap();
+
+        // AGENTS.md deliberately does NOT exist on disk
+        let agents_md = temp.path().join("AGENTS.md");
+
+        let instruction_file_paths = vec![claude_md, agents_md.clone()];
+
+        let diagnostics = run_project_level_checks(
+            &[],
+            &instruction_file_paths,
+            &LintConfig::default(),
+            temp.path(),
+        );
+
+        let xp004_errors: Vec<_> = diagnostics
+            .iter()
+            .filter(|d| d.rule == "XP-004" && d.level == DiagnosticLevel::Error)
+            .collect();
+
+        assert_eq!(
+            xp004_errors.len(),
+            1,
+            "Expected exactly one XP-004 error for the unreadable AGENTS.md, got: {xp004_errors:?}"
+        );
+
+        assert_eq!(
+            xp004_errors[0].file, agents_md,
+            "XP-004 error should reference the missing AGENTS.md path"
+        );
+
+        assert_eq!(
+            xp004_errors[0].level,
+            DiagnosticLevel::Error,
+            "XP-004 read-error diagnostic should be Error level"
+        );
+
+        assert_eq!(
+            xp004_errors[0].line, 0,
+            "Read-error diagnostic should have line 0"
+        );
+        assert_eq!(
+            xp004_errors[0].column, 0,
+            "Read-error diagnostic should have column 0"
+        );
+
+        assert!(
+            xp004_errors[0]
+                .message
+                .contains("Failed to read instruction file"),
+            "XP-004 message should describe the read failure, got: {}",
+            xp004_errors[0].message
+        );
+
+        assert!(
+            xp004_errors[0].suggestion.is_some(),
+            "XP-004 read-error diagnostic should include a suggestion"
+        );
+    }
 }
