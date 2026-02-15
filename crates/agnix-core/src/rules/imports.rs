@@ -1278,7 +1278,13 @@ mod tests {
         // The ../outside.md link should be silently skipped (path traversal blocked)
         // but nonexistent.md should still produce REF-002 (within root, but missing)
         let ref_002_diags: Vec<_> = diagnostics.iter().filter(|d| d.rule == "REF-002").collect();
-        assert_eq!(ref_002_diags.len(), 1, "Expected exactly 1 REF-002 diagnostic");
+        assert_eq!(
+            ref_002_diags.len(),
+            1,
+            "Expected exactly 1 REF-002 diagnostic, but found {}: {:?}",
+            ref_002_diags.len(),
+            ref_002_diags
+        );
         assert!(ref_002_diags[0].message.contains("nonexistent.md"));
         assert!(
             !ref_002_diags
@@ -1303,7 +1309,11 @@ mod tests {
         let diagnostics = validator.validate(&file_path, content, &config);
 
         // Traversal check is skipped (canonical_base is None), but existence check still runs
-        assert!(diagnostics.iter().any(|d| d.rule == "REF-002"));
+        assert!(
+            diagnostics.iter().any(|d| d.rule == "REF-002"),
+            "Expected at least one REF-002 diagnostic, but found none in: {:?}",
+            diagnostics
+        );
     }
 
     // ===== Shared Import Cache Tests =====
